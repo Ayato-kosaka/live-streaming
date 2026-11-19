@@ -29,7 +29,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
   "date": "2026-10-15"
  },
  "title": "スコピエ観光ガイド【2026年】見どころマップ・やりたいこと・グルメ｜北マケドニア",
- "description": "北マケドニアの首都スコピエの観光ガイド。見どころマップと、やりたいこと7つ（銅像だらけのマケドニア広場、旧市街のバザール、マザー・テレサ記念館、マトカ渓谷への日帰り）、国民食タヴチェ・グラフチェ。2026年10月に行った配信者の体験つき。",
+ "description": "北マケドニアの首都スコピエの観光ガイド。見どころマップと、やりたいこと8つ（銅像だらけのマケドニア広場、旧市街のバザール、マザー・テレサ記念館、マトカ渓谷への日帰り）、国民食タヴチェ・グラフチェ。2026年10月に行った配信者の体験つき。",
  "rate": {
   "unit": "デナル",
   "yen": 2.88,
@@ -466,6 +466,45 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "by": "kallerna",
      "lic": "CC BY-SA 4.0",
      "page": "https://commons.wikimedia.org/wiki/File:Memorial_House_of_Mother_Teresa.jpg"
+    }
+   }
+  },
+  {
+   "id": "quake-clock",
+   "title": "地震で止まった駅の時計を見たい！",
+   "lead": "1963年の朝5時17分を指したままの旧駅舎",
+   "what": "旧駅舎（いまはスコピエ市博物館）の壁の時計を見上げる。針は1963年の地震の時刻で止まったまま。1963年7月26日の朝5時17分、マグニチュード6.1の地震で街の約8割が壊れ、1,000人以上が亡くなった。博物館は、大きく壊れた旧駅舎の残った3分の1に1970年から入っていて、紀元前3000年ごろからの街の歴史を並べている。",
+   "how": "",
+   "time": "",
+   "money": "",
+   "tip": "",
+   "route": "",
+   "see": [
+    "museum"
+   ],
+   "src": [
+    {
+     "name": "Wikipedia「1963 Skopje earthquake」",
+     "url": "https://en.wikipedia.org/wiki/1963_Skopje_earthquake",
+     "seen": "2026-11-20"
+    },
+    {
+     "name": "Wikipedia「Museum of the City of Skopje」",
+     "url": "https://en.wikipedia.org/wiki/Museum_of_the_City_of_Skopje",
+     "seen": "2026-11-20"
+    }
+   ],
+   "pic": {
+    "src": "/guide/north-macedonia/skopje/photos/antigua-estacion-de-ferrocarril-d588a667-960.webp",
+    "small": "/guide/north-macedonia/skopje/photos/antigua-estacion-de-ferrocarril-d588a667-500.webp",
+    "w": 960,
+    "h": 487,
+    "alt": "地震で半分が壊れたまま残る旧駅舎（いまはスコピエ市博物館）",
+    "kind": "photo",
+    "credit": {
+     "by": "Diego Delso",
+     "lic": "CC BY-SA 3.0",
+     "page": "https://commons.wikimedia.org/wiki/File:Antigua_estaci%C3%B3n_de_ferrocarril%2C_Skopie%2C_Macedonia%2C_2014-04-17%2C_DD_15.JPG"
     }
    }
   },
@@ -4225,6 +4264,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-14",
  "updated": "2026-11-20",
- "hash": "c6a82cf6687d66e6"
+ "hash": "a455b4f122e2bd45"
 }
 /* END GUIDE */;
