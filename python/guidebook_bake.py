@@ -816,13 +816,14 @@ def bake(key: str, *, check: bool = False, today: str | None = None, root: Path 
     return 0
 
 
-def fetch_cards(key: str, root: Path = ROOT) -> int:
-    """組み立てのカードのうち、置き場に無いものを本番の口から取る（`guide_bake.fetch_photos` と同じ口と同じ寸法）"""
+def fetch_cards(key: str, root: Path = ROOT, script: str = "compose.json") -> int:
+    """組み立てのカードのうち、置き場に無いものを本番の口から取る（`guide_bake.fetch_photos` と同じ口と同じ寸法）。
+    `script` は組み立ての名前（手で組んだ街の「行った」だけの組み立ては `went.json`。`python/guidebook_went.py`）"""
     from io import BytesIO
 
     from PIL import Image
 
-    c = json.loads((root / "python/data/guide" / key / "compose.json").read_text(encoding="utf-8"))
+    c = json.loads((root / "python/data/guide" / key / script).read_text(encoding="utf-8"))
     out = root / "site/public/travel" / key
     want = {k: v for k, v in (c.get("cards") or {}).items() if not all((out / f"{k}-{w}.webp").exists() for w in gb.WIDTHS)}
     if not want:

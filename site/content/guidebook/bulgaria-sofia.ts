@@ -14,6 +14,7 @@ import {
 
 import { mapsSearch } from "@/lib/mapsSearch";
 
+import { SOFIA_WENT } from "./bulgaria-sofia-went";
 import { GUIDE_LABEL, GUIDE_TOPICS } from "./heading";
 import type { Area, Fact, Guidebook, Guide, Item, Mark, MyMap, Pic, Place, Src, Todo } from "./types";
 
@@ -846,6 +847,42 @@ const FAR: Place[] = BG_SPOTS.filter((s) => s.far > 0).map((s) => ({
 }));
 
 // ---------------------------------------------------------------------------
+// 行った（肉付け）
+
+/**
+ * あやとが行った所・食べたもの（2026-11-13〜。`docs/guide-design.md` ★1）。行った項目に「行った」の印・その日のあやと島カード・
+ * 短い話・配信の場面が乗る。**字・場面の秒・写真は焼いたもの**（`./bulgaria-sofia-went.ts`。元は
+ * `python/data/guide/bulgaria/sofia/went.json` と配信の facts。焼くのは `python/guidebook_went.py`）。ここでは id で当てるだけ。
+ * **骨組みは消さない**——行っていない所もそのまま並ぶ。カードの無い日の行った項目は、今の絵のまま
+ */
+function wear(sec: "todo" | "see" | "eat" | "buy", xs: (Item | Todo)[]): void {
+  for (const x of xs) {
+    const w = SOFIA_WENT.items[`${sec}/${x.id}`];
+    if (!w) continue;
+    x.went = w.went;
+    if (w.pic) x.pic = w.pic;
+  }
+}
+wear("todo", TODO);
+wear("see", SEE);
+wear("eat", EAT);
+wear("buy", BUY);
+/* 名前を打ち間違えた「行った」を、黙って落とさない */
+{
+  const ids = new Set([
+    ...TODO.map((x) => `todo/${x.id}`),
+    ...SEE.map((x) => `see/${x.id}`),
+    ...EAT.map((x) => `eat/${x.id}`),
+    ...BUY.map((x) => `buy/${x.id}`),
+  ]);
+  const miss = Object.keys(SOFIA_WENT.items).filter((k) => !ids.has(k));
+  if (miss.length) throw new Error(`content/guidebook/bulgaria-sofia.ts: 「行った」が無い項目を指している（${miss.join("、")}）`);
+}
+
+/** 手で書いた中身の最終更新。行った箱の最終更新（焼いた日）と遅いほうを面に出す */
+const UPDATED = "2026-11-18";
+
+// ---------------------------------------------------------------------------
 
 const hero = photo(BG_HERO);
 if (!hero) throw new Error("content/guidebook/bulgaria-sofia.ts: 表紙の写真（BG_HERO）が無い");
@@ -867,14 +904,15 @@ export const SOFIA: Guidebook = {
   title: `ソフィア${GUIDE_LABEL}【2026年】${GUIDE_TOPICS}｜ブルガリア`,
   description: `ブルガリアの首都ソフィアの観光ガイド。見どころマップと、やりたいこと${TODO.length}つ（本場ヨーグルトの食べ比べ、バラのお土産、街なかで湧く無料の温泉、冬のクリスマスマーケット、世界遺産リラ修道院への日帰り）、名物料理とお土産、2026年のユーロの値段まで。`,
   published: "2026-11-06",
-  updated: "2026-11-18",
+  updated: SOFIA_WENT.updated > UPDATED ? SOFIA_WENT.updated : UPDATED,
   rate: RATE,
   about: { cards: ABOUT, areas: AREAS },
   todo: TODO,
   see: { items: SEE, map: mymap("see"), far: FAR },
   eat: { kinds: KINDS, items: EAT, places: PLACES.filter((p) => BG_FOOD.some((f) => placeIds(f.pins).includes(p.id))), map: mymap("eat") },
   buy: { items: BUY, places: PLACES.filter((p) => BG_BUY.some((x) => placeIds(x.pins).includes(p.id))), map: mymap("buy") },
-  /* ソフィアのショートはまだ無い（`content/shorts.ts` に「ブルガリア」「ソフィア」の題の回が無い。2026-11-15）。
+  /* ソフィアのショートはまだ無い（`content/shorts.ts` に「ブルガリア」「ソフィア」の題の回が無い。2026-11-19 に見直した）。
+     行った項目の動画は ② 配信の場面だけ（ショートができたら `went.json` の項目に `short` を足す）。
      アーカイブは国の鍵（`ブルガリア`）に積まれていく */
   videos: { streams: { country: "bulgaria", city: "ブルガリア" }, shorts: [] },
   basics: {

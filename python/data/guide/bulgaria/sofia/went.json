@@ -1,0 +1,208 @@
+{
+  "_meta": {
+    "何か": "ソフィアのガイドブックの面（/travel/bulgaria/sofia）に乗せる「行った」の組み立て。ソフィアの面は手で組んだ TS（site/content/guidebook/bulgaria-sofia.ts）で材料（guidebook.json）が無いので、行った箱だけをここから焼く。焼くのは python/guidebook_went.py（site/content/guidebook/bulgaria-sofia-went.ts）",
+    "鍵": "items の鍵は「節/項目の id」（todo・see・eat・buy）。項目の id は bulgaria-sofia.ts の窓の id（#see-<id>）と同じ。無い id を指すと、面の書き出しが止まる",
+    "結び": "facts は streams/YYYY/MM/*.facts.json の行（動画@秒#種類）。行った日はここから写す（いちばん早い日）。scene は場面のリンクに使う行で、facts の中から1つ（場面のリンクは箱に1つ。docs/island-misses.md #323）",
+    "話": "story は facts の行をつないだ案内鳥の文。結んだ行に無い数を書くと、焼く道具が止める。言っていないことを言ったことにしない。確かめが要る行（verify）は結ばない",
+    "一言": "say は節ごとに1つまで。字は facts の場面の行（quote）から写す——ここには、どの項目の一言を使うかだけを書く",
+    "写真": "cards は、あやと島カードのその日の写真。置き場は site/public/travel/bulgaria/sofia/<名前>-{480,960}.webp（python/guidebook_went.py --photos が本番の口から取る）。カードの日は、その項目の行った日のどれか。カードの無い日（11月15日〜）の項目は、面の今の絵のまま",
+    "名前の揺れ": "national-theatre は facts で「アタ劇場」。11月14日の配信で「クリスマスマーケット 国立劇場前」、11月17日に同じ公園の噴水とマーケットの間で撮っているので、イヴァン・ヴァゾフ国立劇場と読んだ。ayryan は facts で「アイラン」。カードの瓶の字が Айрян",
+    "結ばなかった行": "中央市場（外観だけ見て入らなかった）・聖ネデリャ教会（前を通っただけ。ヴィトシャ大通りの話に入れた）・七聖人教会とクリスマスマーケットの準備会場（面の項目に無い）・ボザの2本目（verify）"
+  },
+  "cards": {
+    "yogurt-shop": {
+      "id": "qiBZyTsXEPY03uiJXN1Y",
+      "day": "2026-11-13",
+      "alt": "ソフィアの乳製品の店（Млекарница）の前で、イチゴのアイリャンの瓶を持つ手（2026年11月13日）"
+    },
+    "zhenski-pazar": {
+      "id": "8YwCCFEEpxs9VEJq7xKU",
+      "day": "2026-11-13",
+      "alt": "ソフィアの女性市場。瓶に入った紅茶やスパイスと、木箱に盛ったナッツ（2026年11月13日）"
+    },
+    "serdica": {
+      "id": "yIJnzn0a2qZnHYcDrL9C",
+      "day": "2026-11-13",
+      "alt": "ソフィアの中心。バーニャ・バシ・モスクと、手前の掘り下げた石の遺構（2026年11月13日）"
+    },
+    "xmas-market": {
+      "id": "R8LfrIv0HsjWOWCcgplS",
+      "day": "2026-11-14",
+      "alt": "ソフィアのクリスマスマーケット。赤い飾りのツリーと、屋台に集まる人たち（2026年11月14日）"
+    },
+    "boza": {
+      "id": "vZu8cQyvPsYG9a9SxTYL",
+      "day": "2026-11-14",
+      "alt": "1L入りのボザの瓶と、ピンクのお菓子（2026年11月14日）"
+    }
+  },
+  "say": {
+    "todo": "hotspring",
+    "see": "nevsky",
+    "eat": "ayryan"
+  },
+  "items": {
+    "todo/yogurt": {
+      "card": "yogurt-shop",
+      "facts": ["jnKVIXn4qQs@2100#fact", "jnKVIXn4qQs@5285#place", "jnKVIXn4qQs@5370#fact", "jnKVIXn4qQs@5470#food"],
+      "scene": "jnKVIXn4qQs@5370#fact",
+      "story": [
+        {
+          "text": "女性市場ではヨーグルトがなかなか見つからず、やっと見つけたのはふつうのプレーンで、買うほどではなかった。",
+          "facts": ["jnKVIXn4qQs@2100#fact"]
+        },
+        {
+          "text": "乳製品専門店まで行くと、プレーンやイチゴ味など、ヨーグルトの種類がとても多かった。あやとが選んだのはイチゴのアイリャン。",
+          "facts": ["jnKVIXn4qQs@5285#place", "jnKVIXn4qQs@5370#fact", "jnKVIXn4qQs@5470#food"]
+        }
+      ]
+    },
+    "todo/hotspring": {
+      "facts": ["2EKBYEnv850@1620#food", "2EKBYEnv850@1780#quote"],
+      "scene": "2EKBYEnv850@1780#quote",
+      "story": [
+        {
+          "text": "あやとも蛇口の湯を飲んでみた。温泉卵の汁のような味で、ぬめぬめしていた。",
+          "facts": ["2EKBYEnv850@1620#food"]
+        }
+      ]
+    },
+    "todo/banitsa": {
+      "facts": ["hJ6vFAGX3rI@1860#place", "hJ6vFAGX3rI@1925#fact"],
+      "scene": "hJ6vFAGX3rI@1925#fact",
+      "story": [
+        {
+          "text": "あやとが入ったパン屋は、パンの種類が多く、ヨーグルトも売っていた。丸いバニツァを想像していたら、形も中身もさまざまで、アップルシナモンとくるみ、ポテト入りのビーガン、ほうれん草とチーズと卵などが並んでいた。",
+          "facts": ["hJ6vFAGX3rI@1860#place", "hJ6vFAGX3rI@1925#fact"]
+        }
+      ]
+    },
+    "todo/xmas": {
+      "card": "xmas-market",
+      "facts": ["zDHHuafmP1A@10320#caution", "zDHHuafmP1A@11050#food", "aGOz5otlEs8@1170#food", "aGOz5otlEs8@1230#place"],
+      "scene": "zDHHuafmP1A@11050#food",
+      "story": [
+        {
+          "text": "あやとが行ったときは開いた初日の夜で、準備が間に合わず、ホットチョコの店はまだ開いていなかった。ワッフル屋でバナナとストロベリーの両方を頼むと、ミックスにしてくれた。",
+          "facts": ["zDHHuafmP1A@10320#caution", "zDHHuafmP1A@11050#food"]
+        },
+        {
+          "text": "昼にもう一度通ると、ソーセージの匂いが漂い、夜には分からなかったツリーの飾りまで見えた。",
+          "facts": ["aGOz5otlEs8@1170#food", "aGOz5otlEs8@1230#place"]
+        }
+      ]
+    },
+    "see/zhenski-pazar": {
+      "card": "zhenski-pazar",
+      "facts": ["jnKVIXn4qQs@1175#place", "jnKVIXn4qQs@1350#fact", "jnKVIXn4qQs@1500#fact", "jnKVIXn4qQs@1800#quote", "jnKVIXn4qQs@1920#fact", "2EKBYEnv850@480#place", "aGOz5otlEs8@6005#place"],
+      "scene": "jnKVIXn4qQs@1800#quote",
+      "story": [
+        {
+          "text": "あやとが初めて行ったとき、お土産屋の並びを見て想像以上だと驚いた。紅茶やスパイスが瓶で量り売りされ、陶器屋にはコップなどかわいい器が並ぶ。北マケドニアやアルバニアの市場より清潔だと感じたそう。",
+          "facts": ["jnKVIXn4qQs@1175#place", "jnKVIXn4qQs@1800#quote", "jnKVIXn4qQs@1350#fact", "jnKVIXn4qQs@1920#fact", "jnKVIXn4qQs@1500#fact", "2EKBYEnv850@480#place", "aGOz5otlEs8@6005#place"]
+        }
+      ]
+    },
+    "see/serdica": {
+      "card": "serdica",
+      "facts": ["jnKVIXn4qQs@3810#place", "2EKBYEnv850@5050#fact", "2EKBYEnv850@5070#quote"],
+      "scene": "2EKBYEnv850@5050#fact",
+      "story": [
+        {
+          "text": "あやとは初め、石の遺構を温泉の跡だと思った。調べると、古代ローマの都市セルディカの遺跡で、セルディカはソフィアの元の名前だった。",
+          "facts": ["jnKVIXn4qQs@3810#place"]
+        },
+        {
+          "text": "別の日に地下道へ入ると、急にローマ時代の遺跡が現れて、異世界のようだと驚いた。",
+          "facts": ["2EKBYEnv850@5050#fact", "2EKBYEnv850@5070#quote"]
+        }
+      ]
+    },
+    "see/mineral-bath": {
+      "facts": ["2EKBYEnv850@1270#place", "2EKBYEnv850@1410#caution", "2EKBYEnv850@1805#fact"],
+      "scene": "2EKBYEnv850@1270#place",
+      "story": [
+        {
+          "text": "温泉の蛇口から湯気が立ち、地元の人たちが並んで温泉水を汲んでいた。あやとが触ると湯は熱く、ぬめぬめしていた。",
+          "facts": ["2EKBYEnv850@1270#place", "2EKBYEnv850@1805#fact", "2EKBYEnv850@1410#caution"]
+        }
+      ]
+    },
+    "see/nevsky": {
+      "facts": ["aGOz5otlEs8@2225#place", "aGOz5otlEs8@2290#quote", "aGOz5otlEs8@2370#fact", "aGOz5otlEs8@2470#fact", "aGOz5otlEs8@2650#caution"],
+      "scene": "aGOz5otlEs8@2290#quote",
+      "story": [
+        {
+          "text": "あやとの第一印象は、大きくてかっこいい。中には、あやとが正教会では珍しいと話したステンドグラスがあり、壁画は古く、歴史を感じる色合いだった。あやとが行ったときは、2階の入口が閉じていて上がれなかった。",
+          "facts": ["aGOz5otlEs8@2225#place", "aGOz5otlEs8@2370#fact", "aGOz5otlEs8@2470#fact", "aGOz5otlEs8@2650#caution"]
+        }
+      ]
+    },
+    "see/vitosha-blvd": {
+      "facts": ["2EKBYEnv850@5310#place", "2EKBYEnv850@5470#fact", "2EKBYEnv850@6465#quote"],
+      "scene": "2EKBYEnv850@6465#quote",
+      "story": [
+        {
+          "text": "聖ネデリャ教会の前から歩き出すと、高い建物は少なく、路面の店が続く。あやとは、何でも揃う商店街のようだと言った。",
+          "facts": ["2EKBYEnv850@5310#place", "2EKBYEnv850@5470#fact", "2EKBYEnv850@6465#quote"]
+        }
+      ]
+    },
+    "see/national-theatre": {
+      "facts": ["aGOz5otlEs8@845#place"],
+      "scene": "aGOz5otlEs8@845#place",
+      "story": [
+        {
+          "text": "あやとは、かっこいい劇場だと言って写真を撮った。",
+          "facts": ["aGOz5otlEs8@845#place"]
+        }
+      ]
+    },
+    "eat/ayryan": {
+      "card": "yogurt-shop",
+      "facts": ["jnKVIXn4qQs@5470#food", "jnKVIXn4qQs@5760#food", "jnKVIXn4qQs@5850#food", "jnKVIXn4qQs@6000#caution", "jnKVIXn4qQs@6060#food", "jnKVIXn4qQs@6090#quote"],
+      "scene": "jnKVIXn4qQs@6090#quote",
+      "story": [
+        {
+          "text": "あやとが乳製品専門店で選んだのは、イチゴのアイリャン。真っピンクでトロトロ、塩気はまったく無く、日本の飲むヨーグルトによく似ていた。",
+          "facts": ["jnKVIXn4qQs@5470#food", "jnKVIXn4qQs@5760#food", "jnKVIXn4qQs@6060#food", "jnKVIXn4qQs@5850#food"]
+        },
+        {
+          "text": "アルメニアで飲んだヨーグルトの飲みものがとてもまずかったので警戒していたが、想像よりずっとおいしかった。",
+          "facts": ["jnKVIXn4qQs@6000#caution", "jnKVIXn4qQs@6090#quote"]
+        }
+      ]
+    },
+    "eat/banitsa": {
+      "facts": ["hJ6vFAGX3rI@2290#food", "hJ6vFAGX3rI@2370#price", "hJ6vFAGX3rI@2490#food"],
+      "scene": "hJ6vFAGX3rI@2370#price",
+      "story": [
+        {
+          "text": "迷った末に選んだのは、定番らしいチーズと卵のバニツァ。3.6ユーロ（638円）。2階のイートインで食べてみると、チーズは濃厚でしょっぱく、外はパリパリ、中はねっとりしたパイ生地だった。",
+          "facts": ["hJ6vFAGX3rI@2290#food", "hJ6vFAGX3rI@2370#price", "hJ6vFAGX3rI@2490#food"]
+        }
+      ]
+    },
+    "eat/musaka": {
+      "facts": ["aGOz5otlEs8@6005#place", "aGOz5otlEs8@6155#price", "aGOz5otlEs8@6245#price", "aGOz5otlEs8@6370#food", "aGOz5otlEs8@6525#quote"],
+      "scene": "aGOz5otlEs8@6370#food",
+      "story": [
+        {
+          "text": "女性市場の中の、ブルガリア料理のファストフード店「ピストル36」で、4ユーロぐらいでお任せにしてもらうと、出てきたのは3ユーロのムサカ。挽き肉・じゃがいも・にんじんにヨーグルトと卵のソースをかけて焼いた家庭料理で、食べてみたあやとのたとえは、肉じゃがの分厚いオムレツ。",
+          "facts": ["aGOz5otlEs8@6005#place", "aGOz5otlEs8@6155#price", "aGOz5otlEs8@6245#price", "aGOz5otlEs8@6370#food", "aGOz5otlEs8@6525#quote"]
+        }
+      ]
+    },
+    "eat/boza": {
+      "card": "boza",
+      "facts": ["zDHHuafmP1A@2945#price"],
+      "scene": "zDHHuafmP1A@2945#price",
+      "story": [
+        {
+          "text": "あやとが買ったボザは、1L入りで150円ぐらいだった。",
+          "facts": ["zDHHuafmP1A@2945#price"]
+        }
+      ]
+    }
+  }
+}

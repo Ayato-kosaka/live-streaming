@@ -38,7 +38,7 @@ description: 街のガイドの面（ガイドブック型。`/travel/<国>/<街
 ## 1. いつ使うか
 
 - 「次の街のガイドを作る」「◯◯もソフィアの型で」「ガイドブック型の面」
-- 行った街に「行った」を乗せ直す（行く前の面 → 行ったあとの面）
+- 行った街に「行った」を乗せ直す（行く前の面 → 行ったあとの面）。手で組んだ面（ソフィア）は、行った箱だけを `guidebook_went.py` で焼いて乗せる（5章）
 - **使わないとき**: 配信から「実際に行った」を抜くだけ → `/guide-facts`。1つの話の記事（物価など）だけ → `python/guide_article.py`。
   国の面だけ → `docs/country-guide.md` 6章。絵だけ描き直す → `/chatgpt-image` 6
 
@@ -202,6 +202,7 @@ EC2 の Chrome（札 `ytstudio`。`/ec2-chrome`）で Search Console の URL 検
 | 人物像と狙う語 | **無い** | — | サジェストは curl（`G_skopje_intent.md` の測りかた） |
 | 写真（Commons） | `gh workflow run commons_photos.yml -f 'queries={"<料理>":"<1語>"}' -f limit=10`（artifact `photos`）→ `python3 python/guide_photos.py --lookup "File:<名前>.jpg" …`（材料の写真の欄を組む。外に出る）／`--check <国>/<街>` | `--check` 0・ワークフローは `gh workflow view` で入力を見た | — |
 | カードの写真 | `python3 python/guidebook_bake.py <国>/<街> --photos` | `--help` | 外に出る |
+| 行った（手で組んだ街） | `python3 python/guidebook_went.py <国>/<街>`（組み立ては `python/data/guide/<国>/<街>/went.json`。`--photos` でカード・`--check` で比べる）。焼いた `<国>-<街>-went.ts` を面の TS が id で当てる | `guidebook_went_selftest.py`（崩した組み立てを1点ずつ止める） | ソフィアだけ。材料を焼く道に移したら要らない |
 | 焼く | `python3 python/guidebook_bake.py <国>/<街>`（`--check` で焼かずに比べる） | `--check` 0 | **通貨がスコピエ固定**（`デナル`・`eur_mkd`・レートの日付）。行く前の街（facts の無い街）を焼いたことはまだ無い |
 | 面 | **無い**（スコピエの `page.tsx` を写す） | — | — |
 | 絵 | `python3 .claude/skills/chatgpt-image/guide_art.py <国>/<街> plan｜layout｜run｜status｜fetch｜finalize｜sheet｜check --work <scratch>/guide-art/<国>/<街>` | `plan`・`check` 0 | — |
