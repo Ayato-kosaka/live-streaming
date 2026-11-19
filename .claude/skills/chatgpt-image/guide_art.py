@@ -37,14 +37,19 @@
   `photos`（実在の建物の形を合わせる写真）
   - **表紙に題を焼く**なら、頼み書きの頭に `title`（`name` 街の名前・`label`「観光ガイド」・`catch` 面のキャッチと同じ字・`kicker` 国）、
     `cover` `cover_tall` にそれぞれ `title`（札の置き場 `x`・`y`・`anchor`・`scale`。`guide_layout.bake_title`）と `file`（絵の名前。
-    ソフィアは「ソフィア-観光ガイド」）。画像検索に出る絵に街の名前が写るように（あやと 2026-11-18 #1228）。横の表紙は og の
-    1200x630 の JPEG（`<街>-guide-og.jpg`。英数字だけの名前）も書き出す。焼く前の1枚は頼み書きの隣（`<街>-cover-base.webp`・`<街>-cover-tall-base.webp`）に
-    残すので、キャッチを変えた日は `finalize` だけで焼き直せる
+    ソフィアは「ソフィア-観光ガイド」）。画像検索に出る絵に街の名前が写るように（あやと 2026-11-18 #1228）。焼く前の1枚は頼み書きの隣
+    （`<街>-cover-base.webp`・`<街>-cover-tall-base.webp`）に残すので、キャッチを変えた日は `finalize` だけで焼き直せる
+  - **貼られたときの絵（og の 1200x630）と記事の構造化データの絵（16:9・4:3・1:1）は、字の無い表紙から切る**（`share_pics`。
+    `<街>-cover-1200x630.jpg`・`<街>-cover-16x9.jpg`…。英数字だけの名前）。Google は og:image と構造化データの絵に字の多い絵を
+    避けるよう言っている（#332 の決めごと3）。主役が切れる街は `cover.share.<形>` に `from`・`bias`
 - `areamap`: `prompt`（街の地図の文。目印の番号つき）・`fix`・`layout`（字の無い下敷き。`--work` の中）・`alt`・`note`・
   `areas`（札の位置 x・y は描けた絵を見て決める）・`bbox`・`beyond`（地図の外の行き先）・`base`・`v`
   - 下敷きを道具で作るなら `districts`（地区の多角形。緯度経度）と `marks`（目印の番号と緯度経度）。`layout` が `bbox` の範囲で作る
   - **地区の名前を絵に焼く**なら `areas[].label`（札の行の並び）。焼いた札の箱が manifest に載り（`baked`）、面は透明の押しどころを重ねる。
     焼く前の1枚は頼み書きの隣（`<街>-areamap-base.webp`）に残すので、名前を直した日は `finalize` だけで焼き直せる（#1262）
+  - **題の帯と目印の名前**（画像検索の上位の地図の形。#332）: `title`（`name` 街の名前・`label`「見どころマップ」）で絵のいちばん上に帯、
+    `names[]`（`label` 行の並び・札の中心 `x`・`y`。描けた絵を見て、目印の絵の真下か脇に）で目印の名前。**番号の点は足さない**
+    （あやと 2026-11-16「詳しすぎてダサい、概要だけ」）。名前を焼くのは絵に描いてある目印だけ
   - `file`（絵の名前。ソフィアは「ソフィア-見どころマップ-地区分け」）・`ratio`（切る比。幅÷高さ）・`sizes`（書き出す幅。大きいほうが画像検索に出る版）
 - `food` `buy`: `model`（手本 `<国>/<街>:<名前>`）・`note`・`items.<鍵>` = `desc`（英語の描写）・`alt`・`fix`・`v`・`model`・
   `ref`（見比べの参考写真の URL）か `wiki`（英語版 Wikipedia の記事名）
@@ -629,8 +634,48 @@ def cover_base(spec: dict, slot: str, where: Path | None = None) -> Path:
     return (where or SPECS) / f"{spec['_city']}-{SHAPE[slot][0]}-base.webp"
 
 
-#: og の絵の形（`lib/share.ts` と同じ 1200x630）。横の表紙の真ん中を切る
-OG_SIZE = (1200, 630)
+#: 貼られたときの絵（og。`lib/share.ts` と同じ 1200x630）と、記事の構造化データの絵（Google の Article の手引きの 16:9・4:3・1:1。
+#: 横 1200px 以上）。**どれも字の無い表紙から切る**——Google は og:image と構造化データの絵に字の多い絵を避けるよう言っている
+#: （Discover の手引き。`docs/island-misses.md` #332 の決めごと3）。題を焼いた表紙は面に出す絵（画像検索に出す絵）で、こちらとは別
+SHARE = {"og": (1200, 630), "16x9": (1200, 675), "4x3": (1200, 900), "1x1": (1200, 1200)}
+
+
+def share_pics(spec: dict, plain: dict, out: Path) -> dict:
+    """字の無い表紙（`plain`。横と縦）から、貼られたときの絵（`og`）と記事の絵3枚（`ld`）を切って書き出す。
+
+    既定は 16:9・4:3・og が横の表紙、1:1 が縦の表紙（横の 1600x900 からは 1200px の正方形が取れない）。頼み書きの
+    `cover.share.<形>` に `from`（`cover`／`cover_tall`）と `bias`（切るとき、上か左を 0・下か右を 1 としてどこを残すか）を
+    書けば、街ごとに主役が切れない所を選べる。SNS は webp を読まない所があるので JPEG。
+    **名前は英数字だけ**（`<街>-cover-16x9.jpg`）。日本語の名前は URL で %E3… に化け、貼られた先の読み手と
+    見張り（`tools/sprites/ogmeta.mjs` は配ったものの中を化けたままの道で探す）で取りこぼす（2026-11-18 に後者で赤）
+    """
+    from PIL import Image
+    town = spec["_city"].split("/")[-1]
+    how = spec.get("cover", {}).get("share", {})
+    got = {}
+    for k, (w, h) in SHARE.items():
+        c = how.get(k, {})
+        src = c.get("from") or ("cover_tall" if k == "1x1" else "cover")
+        im = plain[src] if src in plain else plain["cover"]
+        p = out / f"{town}-cover-{'1200x630' if k == 'og' else k}.jpg"
+        crop(im, w / h, c.get("bias", 0.5)).resize((w, h), Image.LANCZOS).save(p, "JPEG", quality=86, optimize=True, progressive=True)
+        got[k] = {"src": url_dir(spec) + p.name, "w": w, "h": h}
+    # og の alt は、題を焼く前の絵の字（頼み書きの `cover.alt`）。焼いた表紙の alt は焼いた字で始まるので、字の無い絵には合わない
+    return {"og": {**got["og"], "alt": spec["cover"]["alt"]}, "ld": [got["16x9"], got["4x3"], got["1x1"]]}
+
+
+def bake_map(im, am: dict):
+    """見どころマップに、目印の名前 → 地区の名前 → 題の帯 の順で焼く（あとのものほど上）。
+
+    目印の名前（`am.names`）と題の帯（`am.title`）は、画像検索の上位の地図の形（#332）。どちらも無ければ地区の名前だけ。
+    目印の名前は地区の札と題の帯に、地区の札は題の帯に重ねない（重なるときは止める）
+    """
+    W, H = im.size
+    band = {"題の帯": gl().map_title_box(W, H)} if "title" in am else {}
+    if am.get("names"):
+        im = gl().bake_names(im, am["names"], {**gl().area_boxes(am["areas"], W, H), **band})
+    im = gl().bake(im, am["areas"], band)
+    return gl().bake_map_title(im, am["title"]) if "title" in am else im
 
 
 def entry(s: dict, spec: dict) -> dict:
@@ -652,6 +697,14 @@ def entry(s: dict, spec: dict) -> dict:
         if baked(spec):
             r = a.get("ratio", 1.0)
             e["areas"] = [{**x, **gl().box(x["label"], r), "x": x["x"], "y": x["y"]} for x in a["areas"]]
+            # 絵に焼いた題の帯と目印の名前の箱。面は押しどころを重ねないが、地図の外の矢印（HTML）をこの上に置かない
+            # （`content/guidebook/spotmap.ts` の `place` が止める）
+            W, H = 1200, 1200 / r
+            painted = [{"name": f"{a['title']['name']} {a['title']['label']}", **gl().map_title_box(W, H)}] if "title" in a else []
+            painted += [{"name": "".join(gl()._lines(n["label"])), "x": n["x"], "y": n["y"], **gl().name_box(n["label"], W, H)}
+                        for n in a.get("names", [])]
+            if painted:
+                e["painted"] = [{k: round(v, 4) if isinstance(v, float) else v for k, v in p.items()} for p in painted]
     return e
 
 
@@ -671,6 +724,7 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
     man: dict = {}
     missing = []
     dos: dict = {}
+    plain: dict = {}   # 字の無い表紙（題を焼く前）。貼られたときの絵と記事の絵は、ここから切る（#332 の決めごと3）
     for s in slots(spec, root):
         if s["sec"] == "do":
             if not finalize_do(s, spec, work, out, old, dos.setdefault(s["key"], {"variants": {}, "order": []})):
@@ -693,8 +747,8 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
             elif base.is_file():
                 im = Image.open(base).convert("RGB")
             if im is not None:
-                # 描いたあとで足した地区（`districts[].paint`）の色を重ねてから、名前を焼く
-                im = gl().bake(gl().wash(im, spec["areamap"], s["bias"]), spec["areamap"]["areas"])
+                # 描いたあとで足した地区（`districts[].paint`）の色を重ねてから、目印の名前・地区の名前・題の帯を焼く
+                im = bake_map(gl().wash(im, spec["areamap"], s["bias"]), spec["areamap"])
         if titled(spec, s["slot"]):
             # 表紙の題も地図の名前と同じ回しかた: いちばん大きい版に焼いてから縮める。焼く前の1枚を残し、
             # 持ち帰った絵が無い日（キャッチだけ直した日）はそこから焼き直す
@@ -707,7 +761,10 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
             elif bp.is_file():
                 im = Image.open(bp).convert("RGB")
             if im is not None:
+                plain[s["slot"]] = im
                 im = gl().bake_title(im, spec["title"], spec[s["slot"]]["title"])
+        elif s["slot"] in ("cover", "cover_tall") and im is not None:
+            plain[s["slot"]] = im.resize((sizes[0], round(im.height * sizes[0] / im.width)), Image.LANCZOS)
         if im is not None:
             pics = []
             for w in sizes:
@@ -716,17 +773,9 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
                 im.resize((w, h), Image.LANCZOS).save(p, "WEBP", quality=84, method=6)
                 pics.append((url_dir(spec) + p.name, w, h))
             pic = {"src": pics[0][0], "src_small": pics[1][0], "w": pics[0][1], "h": pics[0][2]}
-            if titled(spec, s["slot"]) and s["slot"] == "cover":
-                # 貼られたときの絵（og）。SNS は webp を読まない所があるので JPEG。真ん中を 1.91:1 に切る（札は端から離してある）。
-                # **名前は英数字だけ**（`<街>-guide-og.jpg`）。日本語の名前は URL で %E3… に化け、貼られた先の読み手と
-                # 見張り（`tools/sprites/ogmeta.mjs` は配ったものの中を化けたままの道で探す）で取りこぼす（2026-11-18 に後者で赤）
-                og = crop(im, OG_SIZE[0] / OG_SIZE[1]).resize(OG_SIZE, Image.LANCZOS)
-                p = out / f"{spec['_city'].split('/')[-1]}-guide-og.jpg"
-                og.save(p, "JPEG", quality=86, optimize=True, progressive=True)
-                pic["og"] = {"src": url_dir(spec) + p.name, "w": OG_SIZE[0], "h": OG_SIZE[1]}
         elif prev and (out / Path(prev["src"]).name).is_file():
             # 持ち帰った絵が無い品は、いまの絵のまま残す（字の欄だけ頼み書きに合わせる）
-            pic = {k: prev[k] for k in ("src", "src_small", "w", "h", "og") if k in prev}
+            pic = {k: prev[k] for k in ("src", "src_small", "w", "h", "og", "ld") if k in prev}
         else:
             missing.append(s["slot"])
             continue
@@ -735,6 +784,8 @@ def finalize(spec: dict, root: Path, work: Path | None, out: Path | None = None,
             man.setdefault(s["sec"], {})[s["key"]] = e
         else:
             man[s["key"]] = e
+    if "cover" in man and "cover" in plain:
+        man["cover"].update(share_pics(spec, plain, out))
     for sec in ("food", "buy"):
         man.setdefault(sec, {})
     if "do" in spec:

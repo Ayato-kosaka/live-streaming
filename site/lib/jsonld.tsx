@@ -227,7 +227,11 @@ export function articleLd(o: {
   description: string;
   datePublished: string;
   dateModified?: string;
-  image?: string;
+  /**
+   * 記事の絵。**並べて渡せる**——Google の Article の手引きは 16:9・4:3・1:1 の3枚（横 1200px 以上）を勧めている。
+   * 街のガイドは字の無い表紙を3つの比に切って渡す（`content/guidebook/manifest.ts` の `ld`。#332）
+   */
+  image?: string | string[];
 }): Ld {
   const person = personLd();
   const org = { "@type": "Organization", "@id": ID.org, name: SITE.name, url: abs("/"), founder: person };
@@ -241,7 +245,7 @@ export function articleLd(o: {
     datePublished: o.datePublished,
     ...(o.dateModified ? { dateModified: o.dateModified } : {}),
     /* 借りた写真（Wikimedia）は道が丸ごと外の URL。島の道だけ島の頭を付ける */
-    ...(o.image ? { image: [/^https?:\/\//.test(o.image) ? o.image : abs(o.image)] } : {}),
+    ...(o.image?.length ? { image: [o.image].flat().map(absAny) } : {}),
     author: org,
     publisher: org,
     about: person,

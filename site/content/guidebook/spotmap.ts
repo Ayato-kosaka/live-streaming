@@ -104,7 +104,13 @@ const rectHit = (a: Rect, b: Rect, gx = GAP_X, gy = GAP_Y) => Math.abs(a.x - b.x
  * 矢印を先に置く（縁の向きは動かせない）。札は manifest の位置から近い順に空いた所へ（横に動かすほうを重く見る。
  * 横の位置は地区の意味が強い）
  */
-export function place(aspect: number, tags: In[], arrows: In[], fixed: (In & { w: number; h: number })[] = []): Placed {
+export function place(
+  aspect: number,
+  tags: In[],
+  arrows: In[],
+  fixed: (In & { w: number; h: number })[] = [],
+  painted: { name: string; x: number; y: number; w: number; h: number }[] = [],
+): Placed {
   const W = NARROW;
   const H = NARROW * aspect;
   const px = (p: { x: number; y: number }) => ({ x: p.x * W, y: p.y * H });
@@ -122,6 +128,10 @@ export function place(aspect: number, tags: In[], arrows: In[], fixed: (In & { w
     boxes.push(r);
     out.tags.push({ id: f.id, x: f.x, y: f.y });
   }
+
+  /* 0' 絵に焼いた題の帯と目印の名前（押しどころは無い）。矢印と札をこの上に置かない（焼いた字が隠れる。#332）。
+     焼いたものどうしの重なりは、焼く道具（`guide_layout.bake_names`）が止めている */
+  for (const p of painted) boxes.push({ id: p.name, ...px(p), w: p.w * W, h: p.h * H });
 
   /* 1 矢印。絵の縁に置く。はみ出すぶんは内側へ寄せる（動かすのはそれだけ） */
   for (const a of arrows) {

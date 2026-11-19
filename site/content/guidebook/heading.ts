@@ -20,3 +20,21 @@ export const GUIDE_TOPICS = "見どころマップ・やりたいこと・グル
 export function guideCardLabel(g: Pick<Guidebook, "about" | "see">): string {
   return g.about.areas.length || g.see.map ? `${GUIDE_LABEL}・見どころマップ` : GUIDE_LABEL;
 }
+
+/**
+ * 面のいちばん下の書き手の枠（`components/travel/article/Writer.tsx`）の字。署名は「あやと島案内鳥」。
+ * 行く前の街は出どころを確かめてまとめた面、行ったあとの街はそこに配信の「行った」を乗せた面（`docs/guide-design.md` ★1）
+ */
+export const GUIDE_BY = {
+  before: "あやと島案内鳥が、出どころを確かめてまとめています。",
+  after: "あやとの配信と、確かめた出どころから、あやと島案内鳥がまとめています。",
+};
+
+/**
+ * 行った最初の日（配信の facts から焼いた「行った」の日のうち、いちばん早い日）。行っていない街は `undefined`。
+ * 表紙の「あやとが◯日いた」（`stay`）は国に入った日から数えるので、こちらは facts の日で別に数える
+ */
+export function firstWent(g: Pick<Guidebook, "todo" | "see" | "eat" | "buy">): string | undefined {
+  const days = [...g.todo, ...g.see.items, ...g.eat.items, ...g.buy.items].flatMap((it) => (it.went?.date ? [it.went.date] : []));
+  return days.sort()[0];
+}

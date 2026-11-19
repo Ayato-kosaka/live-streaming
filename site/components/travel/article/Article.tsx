@@ -5,7 +5,6 @@ import { Vid } from "@/components/streams/Vid";
 import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import type { CityStream } from "@/content/cityStreams";
-import { LINKS, PROFILE } from "@/content/site";
 import { AYATO_SRC } from "@/lib/ayatoArt";
 
 import { hms, jpDate, md, videoUrl, watchUrl } from "./scene";
@@ -398,39 +397,8 @@ export function NextRead({ items }: { items: { href: string; title: string; note
   );
 }
 
-/** 書き手の枠。**文を書いているのは案内鳥、体験はあやと**（guide-design 9章の1） */
-export function Writer() {
-  const yt = LINKS.find((l) => l.id === "youtube");
-  return (
-    <aside className="ta-writer" aria-label="書き手">
-      <img className="ta-writer-face" src={AYATO_SRC} alt={`${PROFILE.name}（あやと島の絵）`} width={66} height={96} loading="lazy" />
-      <div className="ta-writer-b">
-        <p className="ta-writer-name">
-          <b>{PROFILE.name}</b>
-        </p>
-        <p className="ta-writer-sign">毎晩22時、世界のどこかから生配信</p>
-        <p className="ta-writer-sub">旅して、食べて、グルメアプリを作る、夜の居場所</p>
-        <p className="ta-writer-by">あやとの配信から、あやと島案内鳥がまとめています。</p>
-        <div className="ta-writer-go">
-          {yt && (
-            <a className="ta-go" href={yt.href} target="_blank" rel="noopener noreferrer">
-              <Icon name="youtube" size={20} />
-              YouTube チャンネル
-            </a>
-          )}
-          <Link className="ta-go" href="/about" prefetch={false}>
-            <Icon name="island" size={20} />
-            あやとのこと
-          </Link>
-          <Link className="ta-go" href="/" prefetch={false}>
-            <Icon name="home" size={20} />
-            あやと島へ
-          </Link>
-        </div>
-      </div>
-    </aside>
-  );
-}
+/** 書き手の枠は `Writer.tsx`（街のガイドでも使う）。記事の面は前のとおりここから読む */
+export { default as Writer } from "./Writer";
 
 /** 出どころの一覧 */
 export function Sources({ ext }: { ext: Ext[] }) {
