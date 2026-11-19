@@ -106,6 +106,8 @@ OUT_CSS = SITE / "app" / "css" / "fonts.css"
 REPORT = Path(__file__).resolve().parent / "buckets.txt"
 # 面ごと・太さごとに「画面に出る字」。`tools/sprites/fontweigh.mjs` が書く
 SEEN = Path(__file__).resolve().parent / "weights.json"
+# 面が島の書体で描くのに、Zen Maru Gothic が字形を持っていない字（太さごと）。`fontbudget_selftest.mjs` が読む
+ABSENT = Path(__file__).resolve().parent / "absent.json"
 CACHE = Path("/tmp/zenmaru-src")
 
 # 太さは3つ。1本ずつ抜いて撮り比べた結果がこれ（app/layout.tsx に経緯）。
@@ -206,6 +208,87 @@ STRUT = {" ", "…"}
 # ブラウザがこの束から取るのは空白と「…」だけ——詰め物は誰にも使われない（80B の重し）。
 # 詰め物を抜くと、**見た目が変わったまま赤くならない。**
 STRUT_FILL = {"0"}
+
+# ── 面ひとりぶんの書体（`SOLO`） ─────────────────────────────────────
+#
+# 束は「どの面で使われるか」が同じ字どうしをまとめて、**面どうしで分け合う**。
+# 字の少ない面はそれで安くなるが、**字の多い面は、分け合っている束を全部引く。**
+# 街のガイドの面がそれで、2026-11-19 に測り直した表で数えると:
+#
+#   面                                  引く束     表の見積もり   面の字（400/700/900）
+#   /travel/bulgaria/sofia            36 / 39本   1,206.6KB     1,088 / 449 / 408
+#   /travel/north-macedonia/skopje    38 / 39本   1,252.2KB       939 / 572 / 353
+#
+# 束が39本で合計 1.4MB なので、**ほぼ全部**を取りに行っていた。字そのものは
+# 2,000字に届かないのに、束の残りの字（ほかの面が使う字）のぶんまで払っている。
+# **切り分けを変えても直らない。** 分け合う限り、字の多い面は相手の字まで背負う。
+#
+# そこで、ここに並べた面は**その面が描く字だけで、太さごとに1本ずつ焼く。**
+# 名前は `"Maru Island <面>"` で、その面を開いているあいだだけ `body` の書体の
+# 頭に足す（下の `solo_rule()`）。焼いた字はその1本から、**無い字は次の
+# `"Maru Island"`（ふつうの束）から**出る。どちらも同じ Zen Maru Gothic の同じ太さ
+# なので、**見た目は1画素も変わらない。** 1本に入れ忘れた字があっても、
+# 束のほうに落ちるだけで豆腐（□）にはならない。
+#
+# 実測（2026-11-19。同じ日の書き出し・390幅）:
+#
+#                                     表の見積もり            ブラウザで下まで送った実測
+#   /travel/bulgaria/sofia            1,206.6 → 332.2KB      901.4KB（32本）→ 332.2KB（6本）
+#   /travel/north-macedonia/skopje    1,252.2 → 312.5KB    1,206.6KB（36本）→ 312.5KB（6本）
+#
+# 見積もりのほうが重いのは、閉じた窓（`<dialog>`）の字も数えるから（読む人は開く）。
+# 同じ面を前と後で撮り比べて、島の字は1画素も違わなかった（違ったのは埋め込みの地図だけ）。
+#
+# **ここに並べた面は束の切り分け（`plan()`）に入れない。** 入れると、その面の
+# 字の並びが束の形を決めるのに、その面はもう束を引かない——ほかの面が
+# 形の合わない束を払うだけになる。並べた面だけが描く字は冷たい束に回るので、
+# 焼き忘れの受け皿は残る。
+#
+# **3つの太さを必ず焼く。** その面が 900 を1字も描かなくても、900 の1本を置く。
+# 置かないと、ブラウザは `"Maru Island <面>"` の中でいちばん近い太さ（700）を
+# 選んで、**900 の字を 700 で描く**（CSS の太さ合わせは、`unicode-range` を
+# 見る前に家族の中で太さを決める）。1字も描かない太さの1本は、取りに行かれない
+# ので置き場が増えるだけ。
+#
+# 足すのは**字の多い面だけ。** 分け合わないぶん、隣の面へ移ったときに
+# キャッシュが効かない（ソフィア → スコピエでは、かなの字まで取り直す）。
+# ふつうの面は束のほうが安い。足す目安は `fontbudget_selftest.mjs` の上限を
+# 超えたとき——**上限を上げる前に、ここに足せないかを見る。**
+#
+# 面を足したら、その面の書き出しに `<link rel="canonical">` があることを確かめる
+# （`solo_rule()` の当たり判定がそれを見る。`fontbudget_selftest.mjs` が書き出しで当てる）。
+SOLO = [
+    "travel/bulgaria/sofia",
+    "travel/north-macedonia/skopje",
+]
+
+
+def solo_family(page: str) -> str:
+    return f"{FAMILY} {page}"
+
+
+def solo_file(page: str, weight: str) -> str:
+    return f"maru-{page.replace('/', '_')}-{weight}.woff2"
+
+
+def solo_rule(page: str) -> str:
+    """その面を開いているあいだだけ、`body` の書体の頭に1本を足す。
+
+    **面の側に印を置かない。** どの面にも `<link rel="canonical">` が焼かれている
+    （`lib/share.ts`）ので、それを `:has()` で見る。面に印を書かせると、新しく
+    並べた面で書き忘れたときに**黙って束のほうへ戻る**（重いまま緑）。
+
+    `--font-body` は `app/css/tokens.css` の `body` が持つ、ふだんの並び。
+    無い日（名前が変わった日）は控えの `"Maru Island", sans-serif` で出る。
+    `:has()` を読めないブラウザでは、この宣言ごと無かったことになって、
+    ふだんの束で出る（見た目は同じ。重いだけ）。
+    """
+    return (
+        f':root:has(link[rel="canonical"][href$="/{page}"]) body {{\n'
+        f'  font-family: "{solo_family(page)}", var(--font-body, "{FAMILY}", sans-serif);\n'
+        f"}}"
+    )
+
 
 # データの置き場所が1枚のページに対応するもの。読み込む側（[slug] のページ）からは
 # 「7か国ぶん全部」に見えてしまうので、ここだけは置き場所で1枚に結びつける。
@@ -522,11 +605,33 @@ def fetch(style: str) -> Path:
     return dst
 
 
-def bake(weight: str, index: int, chars: set[str]) -> int:
-    """束1つ・太さ1つを焼いて、焼けた大きさを返す。"""
-    txt = CACHE / f"chars-{weight}-{index}.txt"
+def glyphs(weight: str) -> set[str]:
+    """その太さの元の書体が、字形を持っている字。
+
+    ## 字形の無い字を `unicode-range` に入れない（2026-11-19）
+
+    `unicode-range` は「この1本はこの字を持っている」という申告で、ブラウザはそれを信じて
+    **取りに行ってから**字形が無いことを知る。無ければ次の1本、それも無ければ端末の書体へ進む。
+    ソフィアの面は動画の題の 🇧🇬（太さ 700）のために、字形を1つも持たない束を
+    **2本・90KB 取りに行っていた**（束を1字ずつ別の URL に割って確かめた）。
+    表の字のうち書体に無いものは 400 で11字・700 で51字・900 で117字あり（絵文字・旗・
+    キリルやラテンの一部）、900 は63面に出ている。
+
+    焼いたファイルには元から入っていない（fontTools が落とす）ので、**外しても見た目は変わらない。**
+    はじめから端末の書体で出ていた字が、取りに行く回り道なしに端末の書体で出るだけ。
+    """
+    from fontTools.ttLib import TTFont
+
+    cmap = TTFont(fetch(WEIGHTS[weight]), lazy=True).getBestCmap()
+    return {chr(cp) for cp in cmap}
+
+
+def bake(weight: str, index: int | str, chars: set[str]) -> int:
+    """束1つ・太さ1つを焼いて、焼けた大きさを返す。`index` が字なら面ひとりぶんの1本（`SOLO`）。"""
+    name = solo_file(index, weight) if isinstance(index, str) else f"maru-{weight}-{index}.woff2"
+    txt = CACHE / f"chars-{name}.txt"
     txt.write_text("".join(sorted(chars)), encoding="utf8")
-    dst = OUT_FONTS / f"maru-{weight}-{index}.woff2"
+    dst = OUT_FONTS / name
     subprocess.run(
         [
             sys.executable, "-m", "fontTools.subset", str(fetch(WEIGHTS[weight])),
@@ -586,6 +691,12 @@ def main() -> None:
     shown = {w: {p: set(cs) for p, cs in per[w].items()} for w in WEIGHTS}
     pages = sorted(per["400"])
     print(f"数えた面 {len(pages)} 枚")
+    # **表に無い面を、ひとりぶんで焼かない。** 黙って飛ばすと、その面は束のほうで
+    # 重いまま出て、並べた人は軽くなったつもりでいる
+    unknown = [p for p in SOLO if p not in per["400"]]
+    if unknown:
+        print(f"✕ SOLO に並べた面が表に無い: {', '.join(unknown)}（先に fontweigh.mjs で数える）", file=sys.stderr)
+        sys.exit(2)
 
     # ── 冷たい束（押してから出る字） ──────────────────────────────
     #
@@ -614,13 +725,27 @@ def main() -> None:
     # 下敷きは全区画に。北欧の綴りは使う区画だけに。
     core = ranges(CORE_RANGES) | set(CORE_EXTRA)
     latin = ranges(LATIN_EXT)
+    # 字形の無い字（`glyphs()`）。束にも、ひとりぶんの1本にも、冷たい束にも入れない
+    have = {w: glyphs(w) for w in WEIGHTS}
+    absent = {w: sorted({c for cs in shown[w].values() for c in cs if c.isprintable() and ord(c) > 0x1F} - have[w])
+              for w in WEIGHTS}
+    print("  書体に字形が無い字 " + "  ".join(f"{w}:{len(absent[w])}" for w in WEIGHTS))
     for w in WEIGHTS:
         for f in per[w]:
             per[w][f] |= core
             if any(f == x or f.startswith(x + "/") for x in LATIN_FAMS):
                 per[w][f] |= latin
-            per[w][f] = {c for c in per[w][f] if c.isprintable() and ord(c) > 0x1F}
-    cold = {w: everything - set().union(*per[w].values()) for w in WEIGHTS}
+            per[w][f] = {c for c in per[w][f] if c.isprintable() and ord(c) > 0x1F and c in have[w]}
+    # 面ひとりぶんの1本（`SOLO`）。その面が描く字と下敷き（かな・英数）だけで、北欧の綴りの
+    # 区画は足さない（描く綴りは表に載っている）。束の切り分けからは外す（上の `SOLO` の見出し）。
+    # 空白と「…」は入れない——行の高さの代表は、いままでどおり `STRUT` の小さな1本から出る
+    # （`fontstrut_selftest.mjs` が「空白を持つのは太さごとに1本」を見ている）
+    solo: dict[str, dict[str, set[str]]] = {w: {} for w in WEIGHTS}
+    for w in WEIGHTS:
+        for p in SOLO:
+            per[w].pop(p)
+            solo[w][p] = {c for c in shown[w][p] | core if c.isprintable() and ord(c) > 0x1F and c in have[w]} - STRUT
+    cold = {w: (everything & have[w]) - set().union(*per[w].values()) for w in WEIGHTS}
     print(f"  冷たい束に回した字 400:{len(cold['400'])} 700:{len(cold['700'])} 900:{len(cold['900'])}")
 
     OUT_FONTS.mkdir(parents=True, exist_ok=True)
@@ -657,18 +782,45 @@ def main() -> None:
                 f'}}'
             )
 
-    if args.dry:
-        cost = {
-            f: sum(sz for w in WEIGHTS for mask, chars, sz in baked[w]
+    # 面ひとりぶんの1本。束のあとに並べる（家族が違うので、並びは引く順に効かない）
+    solo_baked: dict[str, dict[str, int]] = {p: {} for p in SOLO}
+    for p in SOLO:
+        for w in WEIGHTS:
+            chars = solo[w][p]
+            size = guess(chars) if args.dry else bake(w, p, chars)
+            solo_baked[p][w] = size
+            total += size
+            print(f"  {p} {w}  {len(chars):5}字  {size // 1024:4}KB"
+                  + ("" if shown[w][p] else "（この太さは1字も描かない。太さ合わせのためだけに置く）"))
+            report.append(f"{w}\t{p}\t{len(chars)}字\t{size // 1024}KB\t{p}")
+            faces.append(
+                f'@font-face {{\n'
+                f'  font-family: "{solo_family(p)}";\n'
+                f'  font-style: normal;\n'
+                f'  font-weight: {w};\n'
+                f'  font-display: swap;\n'
+                f'  src: url("/fonts/{solo_file(p, w)}") format("woff2");\n'
+                f'  unicode-range: {unicode_range(chars)};\n'
+                f'}}'
+            )
+    faces.extend(solo_rule(p) for p in SOLO)
+
+    def paid(f: str) -> int:
+        """その面が払う量の見積もり。ひとりぶんの面は、描く太さの1本ずつ"""
+        if f in solo_baked:
+            return sum(solo_baked[f][w] for w in WEIGHTS if shown[w].get(f))
+        return sum(sz for w in WEIGHTS for mask, chars, sz in baked[w]
                    if shown[w].get(f) and (shown[w][f] | core) & chars)
-            for f in pages
-        }
+
+    if args.dry:
+        cost = {f: paid(f) for f in pages}
         v = sorted(cost.values())
         top = sorted(cost, key=cost.get, reverse=True)[:3]
         print(f"[見積もり] 束{args.buckets}  中央 {v[len(v)//2]//1024}KB  "
               f"最大 {v[-1]//1024}KB  合計 {sum(v)//1024//1024}MB  焼く量 {total//1024}KB  "
-              f"finland {cost['nordic/finland']//1024}KB  index {cost['index']//1024}KB  "
-              f"board {cost['board']//1024}KB  重い順 {[(t, cost[t]//1024) for t in top]}")
+              f"finland {cost.get('travel/finland', 0)//1024}KB  index {cost['index']//1024}KB  "
+              f"board {cost['board']//1024}KB  重い順 {[(t, cost[t]//1024) for t in top]}  "
+              f"ひとりぶん {[(p, cost[p]//1024) for p in SOLO]}")
         return
     OUT_CSS.write_text(
         "/*\n"
@@ -680,6 +832,9 @@ def main() -> None:
         " *（tools/fonts/buckets.txt）。400 で37字しか描かない面が、700 の\n"
         " * 切り分け（島じゅうの漢字）を背負っていたのを切り離してある（#692）。\n"
         " *\n"
+        " * 字の多い面（subset.py の SOLO）は、その面の字だけを焼いた1本を太さごとに持ち、\n"
+        " * その面でだけ body の並びの頭に足す（いちばん下の :root:has(...)）。\n"
+        " *\n"
         " * ここに無い字（掲示板や付箋に視聴者さんが書いた字）は、tokens.css の\n"
         " * font-family の次 — 端末の丸ゴシック（iPhone・Mac は Hiragino Maru\n"
         " * Gothic ProN）— に落ちる。Google の切り分けを2本目に置くのはやめた。\n"
@@ -688,17 +843,18 @@ def main() -> None:
         encoding="utf8",
     )
     REPORT.write_text("\n".join(report) + "\n", encoding="utf8")
+    ABSENT.write_text(json.dumps({w: "".join(absent[w]) for w in WEIGHTS}, ensure_ascii=False, indent=1) + "\n",
+                      encoding="utf8")
     print("■ 面ごとに落ちる書体（焼いた実寸。ここに無い字は端末の書体に落ちる）")
     big = ["index", "island/nordic", "travel", "kitchen", "streams", "next", "board", "friends", "travel/finland"]
     for f in big + [x for x in pages if x not in big]:
-        if f not in per["400"]:
+        if f not in shown["400"]:
             continue
-        n = sum(sz for w in WEIGHTS for mask, chars, sz in baked[w]
-                if shown[w].get(f) and (shown[w][f] | core) & chars)
-        print(f"  {f:16} {n // 1024:5}KB")
-    print(f"全部で {total // 1024}KB / {sum(len(v) for v in baked.values())} 本"
-          f"（うち冷たい束 {sum(1 for v in baked.values() for mask, _, _ in v if not mask)} 本。先には取りに行かれない）")
-    print(f"書いた: {OUT_CSS.relative_to(ROOT)}, {REPORT.relative_to(ROOT)}")
+        print(f"  {f:16} {paid(f) // 1024:5}KB" + ("（ひとりぶん）" if f in solo_baked else ""))
+    print(f"全部で {total // 1024}KB / {sum(len(v) for v in baked.values()) + len(SOLO) * len(WEIGHTS)} 本"
+          f"（うち冷たい束 {sum(1 for v in baked.values() for mask, _, _ in v if not mask)} 本。先には取りに行かれない。"
+          f"ひとりぶん {len(SOLO) * len(WEIGHTS)} 本）")
+    print(f"書いた: {OUT_CSS.relative_to(ROOT)}, {REPORT.relative_to(ROOT)}, {ABSENT.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

@@ -16,8 +16,18 @@
  * 違えば当たっている。`document.fonts.check()` は嘘をつくので使わない
  * （落ちた書体でも true を返す。`docs/island-standards.md`）。
  *
+ * ## 書き出しを渡されたら、表の古さも見る（2026-11-19）
+ *
+ * `DIST=` を渡されたときは、続けて `fontbudget_selftest.mjs` を同じ `DIST=` で回し、
+ * 終了コードを重ねる。あちらは**書き出しがあるときだけ**、表の記録を全部の面の HTML と
+ * 突き合わせる（「記録の古さ」）——ここが画面で見る3面だけでなく、**全部の面で**
+ * 「表に無い字・どの1本にも焼いていない字」を見る。書き出しを持つ CI の job は
+ * `selftest.yml` の reachkeys で、そこがここを `DIST=` つきで呼んでいる。
+ * 書体の見張りの関所を1か所に寄せるために、ここから起こす。
+ *
  * 終了コード 0=全部出ている / 1=落ちている字がある / 2=測れなかった
  */
+import { spawnSync } from "node:child_process";
 import { chromium } from "playwright-core";
 import { fromRoot } from "./repo.mjs";
 import { loadRedirects, redirectOf } from "./routemoves.mjs";
@@ -142,4 +152,12 @@ async function main() {
   return bad ? 1 : 0;
 }
 
-process.exit(await main());
+const own = await main();
+let budget = 0;
+if (process.env.DIST && own !== 2) {
+  console.log("\n── 表の古さ（fontbudget_selftest.mjs を同じ書き出しで）");
+  const r = spawnSync(process.execPath, [fromRoot("tools/sprites/fontbudget_selftest.mjs")], { stdio: "inherit", env: process.env });
+  budget = r.status ?? 2;
+}
+/* 2（測れなかった）は 1 より重い。どちらかが測れなければ 2 */
+process.exit(own === 2 || budget === 2 ? 2 : Math.max(own, budget));

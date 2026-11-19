@@ -726,9 +726,14 @@ body {
 
      字のほうは、site 全体を数えて 83 字（竹・停・，など。多くは料理の引用文）が
      焼いた束から漏れているだけで、島の入口には出てこない。
-     漏れたぶんは端末の丸ゴシックで出る。**1秒のために持つには高すぎた。** */
-  font-family: "Maru Island", ui-rounded, -apple-system, "Hiragino Maru Gothic ProN",
+     漏れたぶんは端末の丸ゴシックで出る。**1秒のために持つには高すぎた。**
+
+     並びは `--font-body` に置いて、そこから引く。字の多い面（街のガイド）は、その面の字だけを
+     焼いた1本をこの並びの頭に足す（`fonts.css` の末尾。`tools/fonts/subset.py` の `SOLO`）。
+     向こうはこの名前で並びを受け取るので、**名前を変えるなら向こうも変える。** */
+  --font-body: "Maru Island", ui-rounded, -apple-system, "Hiragino Maru Gothic ProN",
     "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  font-family: var(--font-body);
   color: var(--ink);
   background: var(--page-bg);
   overflow-x: hidden;

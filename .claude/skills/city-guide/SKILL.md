@@ -213,7 +213,7 @@ EC2 の Chrome（札 `ytstudio`。`/ec2-chrome`）で Search Console の URL 検
 | 形の見張り | `DIST=… SPORT=… PAGE=/travel/<国>/<街> node tools/sprites/guidebook.mjs` | 配っていない口で 2 | **Actions に乗っていない**（`heavy_watch.yml` に無い）。手元の書き出しで回す |
 | 重い見張り | `gh workflow run heavy_watch.yml --ref <枝>`（reachwatch・firstload・nospec。`apply` は付けない＝見るだけ） | `gh workflow view` で入力を見た | — |
 | 検索の作り | `python3 python/seo_audit.py --no-site --detail /travel/<国>/<街>`（本番）／`--dist site/.next-<port>`（出す前。置き場に `sitemap.xml` が要る） | 本番で 0・`--dist` も 0 | — |
-| 字の束 | `ONLY=/travel/<国>/<街>.html OUT=… DIST=… SPORT=… node tools/sprites/fontweigh.mjs` → `python3 tools/fonts/subset.py --export site/.next-<port>` | `--help`・構文 | — |
+| 字の束 | 街の面を `tools/fonts/subset.py` の `SOLO` に足す（その面の字だけの1本。ソフィア 1,206.6 → 332.2KB）→ `ONLY=/travel/<国>/<街>.html OUT=… DIST=… SPORT=… node tools/sprites/fontweigh.mjs` で測って表へ差し込む → `python3 tools/fonts/subset.py --export site/.next-<port>` → `DIST=site/.next-<port> node tools/sprites/fontbudget_selftest.mjs`（書き出しを渡すと、表の古さまで見る） | `--help`・構文 | — |
 | あやとを呼ぶ | `gh api -X POST repos/Ayato-kosaka/live-streaming/actions/workflows/call_ayato.yml/dispatches -f ref=master -f 'inputs[issue]=<番号>' -f 'inputs[text]=<何を決めてほしいか>'` | `gh workflow view` で入力を見た（押すと通知が飛ぶので押していない） | 字は公開のログに出る |
 | インデックス登録 | **無い**（EC2 の Chrome で手で） | — | — |
 | 週の表 | 月曜の朝にひとりでに。手で見るなら `gh workflow run seo_weekly.yml -f dry_run=true`（issue に書かずに要約へ） | `gh workflow view` で入力を見た | — |
