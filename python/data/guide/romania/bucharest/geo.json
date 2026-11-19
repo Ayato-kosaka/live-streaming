@@ -1,0 +1,290 @@
+{
+ "anapan": {
+  "q": "Ana Pan București（チシミジウ公園の西の店）",
+  "lat": 44.438955,
+  "lon": 26.078951,
+  "name": "Ana Pan",
+  "osm": "https://www.openstreetmap.org/node/7015451321",
+  "type": "bakery",
+  "addr": "Ana Pan, 166, Strada Știrbei Vodă, Berzei, Cișmigiu, Sector 1, București"
+ },
+ "arc": {
+  "q": "Arcul de Triumf, București",
+  "lat": 44.46719,
+  "lon": 26.078127,
+  "name": "Arcul de Triumf",
+  "osm": "https://www.openstreetmap.org/way/217851530",
+  "type": "attraction",
+  "addr": "Arcul de Triumf, Piața Arcul de Triumf, Herăstrău, Sector 1, București, 011344, România"
+ },
+ "athenaeum": {
+  "q": "Ateneul Român",
+  "lat": 44.441357,
+  "lon": 26.097361,
+  "name": "Ateneul Român",
+  "osm": "https://www.openstreetmap.org/way/16291602",
+  "type": "theatre",
+  "addr": "Ateneul Român, 1-3, Strada Benjamin Franklin, Teatrului, Pitar Moș, Amzei, Sector 1, București, 010287, România"
+ },
+ "berarilor": {
+  "q": "Curtea Berarilor Șelari București",
+  "lat": 44.430684,
+  "lon": 26.101246,
+  "name": "Curtea Berarilor",
+  "osm": "https://www.openstreetmap.org/node/1416623907",
+  "type": "pub",
+  "addr": "Curtea Berarilor, 9-11, Strada Șelari, Sf. Anton, Centrul Istoric, Sector 3, București, 030068, România"
+ },
+ "bran": {
+  "q": "Castelul Bran",
+  "lat": 45.515077,
+  "lon": 25.367237,
+  "name": "Castelul Bran",
+  "osm": "https://www.openstreetmap.org/relation/3300200",
+  "type": "castle",
+  "addr": "Castelul Bran, 495-498, Strada General Traian Moșoiu, Predeluț, Bran, Brașov, 507025, România"
+ },
+ "caru": {
+  "q": "Caru' cu Bere, București",
+  "lat": 44.432001,
+  "lon": 26.098106,
+  "name": "Caru' cu Bere",
+  "osm": "https://www.openstreetmap.org/node/916075216",
+  "type": "restaurant",
+  "addr": "Caru' cu Bere, 5, Strada Stavropoleos, Sf. Anton, Centrul Istoric, Sector 3, București, 030081, România"
+ },
+ "carusel": {
+  "q": "Cărturești Carusel, București",
+  "lat": 44.431894,
+  "lon": 26.101578,
+  "name": "Cărturești Carusel",
+  "osm": "https://www.openstreetmap.org/node/3355049764",
+  "type": "books",
+  "addr": "Cărturești Carusel, 55, Strada Lipscani, Sf. Gheorghe, Centrul Vechi, Sector 3, București, 030033, România"
+ },
+ "ceausescu": {
+  "q": "Palatul Primăverii, București",
+  "lat": 44.468877,
+  "lon": 26.092324,
+  "name": "Palatul Primăverii (fosta locuință a lui Nicolae Ceaușescu)",
+  "osm": "https://www.openstreetmap.org/way/38236017",
+  "type": "museum",
+  "addr": "Palatul Primăverii (fosta locuință a lui Nicolae Ceaușescu), Strada Honore de Balzac, Primăverii, Sector 1, București, 0"
+ },
+ "cec": {
+  "q": "Palatul Casei de Depuneri și Consemnațiuni",
+  "lat": 44.432013,
+  "lon": 26.096478,
+  "name": "Palatul Casei de Economii şi Consemnaţiuni",
+  "osm": "https://www.openstreetmap.org/way/973712798",
+  "type": "public",
+  "addr": "Palatul Casei de Economii şi Consemnaţiuni, 13, Calea Victoriei, Blanduzia, Lipscani, Sector 3, București, 030022, Român"
+ },
+ "cismigiu": {
+  "q": "Parcul Cișmigiu București",
+  "lat": 44.43726,
+  "lon": 26.0906,
+  "name": "Parcul Cișmigiu",
+  "osm": "https://www.openstreetmap.org/way/16291869",
+  "type": "park",
+  "addr": "Parcul Cișmigiu, Cișmigiu, Sector 1, București, România"
+ },
+ "curtea": {
+  "q": "Curtea Veche, București",
+  "lat": 44.430094,
+  "lon": 26.102063,
+  "name": "Biserica „Sfântul Anton - Curtea Veche”",
+  "osm": "https://www.openstreetmap.org/way/150803286",
+  "type": "place_of_worship",
+  "addr": "Biserica „Sfântul Anton - Curtea Veche”, 33, Strada Franceză, Sf. Anton, Centrul Istoric, Sector 3, București, 030103, R"
+ },
+ "dristor": {
+  "q": "Dristor Kebap București（旧市街の店）",
+  "lat": 44.430046,
+  "lon": 26.100283,
+  "name": "Dristor Kebap",
+  "osm": "https://www.openstreetmap.org/node/1731040881",
+  "type": "fast_food",
+  "addr": "Dristor Kebap, 17, Strada Franceză, Sf. Anton, Centrul Istoric, Sector 3, București"
+ },
+ "embassy": {
+  "q": "Ambasada Japoniei, București",
+  "lat": 44.452499,
+  "lon": 26.082184,
+  "name": "Ambasada Japoniei",
+  "osm": "https://www.openstreetmap.org/node/4281742495",
+  "type": "diplomatic",
+  "addr": "Ambasada Japoniei, 4-8, Șoseaua Nicolae Titulescu, Buzești, Căderea Bastiliei, Sector 1, București, 011131, România"
+ },
+ "gerovital2": {
+  "q": "Gerovital, București",
+  "lat": 44.419849,
+  "lon": 26.148373,
+  "name": "Gerovital",
+  "osm": "https://www.openstreetmap.org/node/11009898049",
+  "type": "cosmetics",
+  "addr": "Gerovital, 4, Strada Liviu Rebreanu, Balta Albă - Titan, Sector 3, București, 031773, România"
+ },
+ "lamamauni": {
+  "q": "La Mama Bulevardul Regina Elisabeta București",
+  "lat": 44.434841,
+  "lon": 26.099416,
+  "name": "La Mama",
+  "osm": "https://www.openstreetmap.org/node/2448573340",
+  "type": "restaurant",
+  "addr": "La Mama, Bulevardul Regina Elisabeta, Blanduzia, Centrul Istoric, Sector 3, București, 030017, România"
+ },
+ "luca": {
+  "q": "Luca, Bulevardul Regina Elisabeta, București",
+  "lat": 44.435257,
+  "lon": 26.099385,
+  "name": "Luca",
+  "osm": "https://www.openstreetmap.org/node/9410316001",
+  "type": "bakery",
+  "addr": "Luca, 16, Bulevardul Regina Elisabeta, Blanduzia, Centrul Istoric, Sector 3, București, 030019, România"
+ },
+ "macca": {
+  "q": "Pasajul Macca-Vilacrosse",
+  "lat": 44.433016,
+  "lon": 26.098887,
+  "name": "Pasajul Macca - Vilacrosse",
+  "osm": "https://www.openstreetmap.org/way/657740103",
+  "type": "pedestrian",
+  "addr": "Pasajul Macca - Vilacrosse, Sf. Anton, Centrul Istoric, Sector 3, București, 030094, România"
+ },
+ "manuc": {
+  "q": "Hanu' lui Manuc, București",
+  "lat": 44.42972,
+  "lon": 26.102347,
+  "name": "Hanu' lui Manuc",
+  "osm": "https://www.openstreetmap.org/node/2486324769",
+  "type": "restaurant",
+  "addr": "Hanu' lui Manuc, Strada Franceză, Sf. Anton, Centrul Istoric, Sector 3, București, 030102, România"
+ },
+ "megaimage": {
+  "q": "Mega Image, Piața Unirii, București",
+  "lat": 44.428449,
+  "lon": 26.104556,
+  "name": "Mega Image",
+  "osm": "https://www.openstreetmap.org/node/1439628129",
+  "type": "supermarket",
+  "addr": "Mega Image, 1, Piața Unirii, Sf. Vineri, Principatele Unite, Centrul Civic, Sector 3, București, 030119, România"
+ },
+ "national-art": {
+  "q": "Muzeul Național de Artă al României",
+  "lat": 44.440074,
+  "lon": 26.095788,
+  "name": "Muzeul Național de Artă al României",
+  "osm": "https://www.openstreetmap.org/node/2634652837",
+  "type": "museum",
+  "addr": "Muzeul Național de Artă al României, 49-53, Calea Victoriei, Teatrului, Pitar Moș, Amzei, Sector 1, București, 010063, R"
+ },
+ "oldtown": {
+  "q": "Centrul Vechi, București",
+  "lat": 44.43151,
+  "lon": 26.1002,
+  "name": "Centrul Vechi",
+  "osm": "https://www.openstreetmap.org/way/240572668",
+  "type": "suburb",
+  "addr": "Centrul Vechi, Sector 3, București, România"
+ },
+ "palace": {
+  "q": "Palatul Parlamentului, București",
+  "lat": 44.42751,
+  "lon": 26.087248,
+  "name": "Palatul Parlamentului",
+  "osm": "https://www.openstreetmap.org/relation/2230391",
+  "type": "government",
+  "addr": "Palatul Parlamentului, 2-4, Strada Izvor, Dealul Spirii, Mihai Vodă, Centrul Civic, Sector 5, București, 050563, România"
+ },
+ "park": {
+  "q": "Parcul Regele Mihai I, București",
+  "lat": 44.473553,
+  "lon": 26.089427,
+  "name": "Parcul Regele Mihai I",
+  "osm": "https://www.openstreetmap.org/node/725321807",
+  "type": "bus_stop",
+  "addr": "Parcul Regele Mihai I, Bulevardul Beijing, Domenii, Sector 1, București, 114192, România"
+ },
+ "patriarchal": {
+  "q": "Catedrala Patriarhală, București",
+  "lat": 44.424563,
+  "lon": 26.097951,
+  "name": "Catedrala Patriarhală \"Sfinții Împărați Constantin și Elena\"",
+  "osm": "https://www.openstreetmap.org/way/232296927",
+  "type": "place_of_worship",
+  "addr": "Catedrala Patriarhală \"Sfinții Împărați Constantin și Elena\", Strada Patriarhiei, Dealul Mitropoliei, Principatele Unite"
+ },
+ "peasant": {
+  "q": "Muzeul Național al Țăranului Român",
+  "lat": 44.454423,
+  "lon": 26.083983,
+  "name": "Muzeul Național al Țăranului Român",
+  "osm": "https://www.openstreetmap.org/node/2634652844",
+  "type": "museum",
+  "addr": "Muzeul Național al Țăranului Român, 3, Șoseaua Pavel Dimitrievici Kiseleff, Aviatorilor, Sector 1, București, 011341, Ro"
+ },
+ "peles": {
+  "q": "Castelul Peleș",
+  "lat": 45.360085,
+  "lon": 25.542733,
+  "name": "Castelul Peleș",
+  "osm": "https://www.openstreetmap.org/way/1454368027",
+  "type": "yes",
+  "addr": "Castelul Peleș, Aleea Peleșului, Sinaia, Prahova, 106100, România"
+ },
+ "revolution": {
+  "q": "Piața Revoluției, București",
+  "lat": 44.438657,
+  "lon": 26.097498,
+  "name": "Piața Revoluției",
+  "osm": "https://www.openstreetmap.org/way/1454580957",
+  "type": "square",
+  "addr": "Piața Revoluției, Teatrului, Pitar Moș, Amzei, Sector 1, București, România"
+ },
+ "salvation": {
+  "q": "Catedrala Națională București",
+  "lat": 44.425905,
+  "lon": 26.082294,
+  "name": "Catedrala Națională",
+  "osm": "https://www.openstreetmap.org/way/232332568",
+  "type": "place_of_worship",
+  "addr": "Catedrala Națională, Calea 13 Septembrie, Dealul Spirii, Mihai Vodă, Centrul Civic, Sector 5, București, 050864, România"
+ },
+ "snagov": {
+  "q": "Mănăstirea Snagov",
+  "lat": 44.729703,
+  "lon": 26.175741,
+  "name": "Mănăstirea Snagov",
+  "osm": "https://www.openstreetmap.org/way/25511874",
+  "type": "monastery",
+  "addr": "Mănăstirea Snagov, Strada Mânăstirea Vlad Țepeș, Siliștea Snagovului, Snagov, Ilfov, 077117, România"
+ },
+ "stavropoleos": {
+  "q": "Biserica Stavropoleos, București",
+  "lat": 44.431783,
+  "lon": 26.098829,
+  "name": "Biserica Mănăstirii \"Stavropoleos\"",
+  "osm": "https://www.openstreetmap.org/way/78444014",
+  "type": "place_of_worship",
+  "addr": "Biserica Mănăstirii \"Stavropoleos\", 4, Strada Stavropoleos, Sf. Anton, Centrul Istoric, Sector 3, București, 030083, Rom"
+ },
+ "unirii": {
+  "q": "Piața Unirii, București",
+  "lat": 44.428006,
+  "lon": 26.10251,
+  "name": "Piața Unirii",
+  "osm": "https://www.openstreetmap.org/way/1457676979",
+  "type": "square",
+  "addr": "Piața Unirii, Calicilor, Principatele Unite, Centrul Civic, Sector 3, București, România"
+ },
+ "village": {
+  "q": "Muzeul Național al Satului Dimitrie Gusti",
+  "lat": 44.471581,
+  "lon": 26.077914,
+  "name": "Muzeul Național al Satului Dimitrie Gusti",
+  "osm": "https://www.openstreetmap.org/way/29701978",
+  "type": "museum",
+  "addr": "Muzeul Național al Satului Dimitrie Gusti, 28-30, Bulevardul „Regele Mihai I”, Herăstrău, Sector 1, București, 011347, R"
+ }
+}
