@@ -11,7 +11,7 @@
  "title": {
   "name": "ブカレスト",
   "label": "観光ガイド",
-  "catch": "「小パリ」と称えられた街",
+  "catch": "「東欧のパリ」と称えられた街",
   "kicker": "ルーマニア"
  },
  "cover": {
@@ -365,6 +365,66 @@
    "tuica": {
     "desc": "Romanian țuică: a small clear glass bottle with NO label, filled with clear plum brandy, and two small filled shot glasses beside it, with three dark purple plums.",
     "alt": "すももの蒸留酒ツイカの瓶と小さなグラス、すもも"
+   },
+   "ciorba-perisoare": {
+    "desc": "Romanian ciorbă de perișoare: a deep plain bowl of clear, golden, slightly sour broth with five or six round meatballs of minced pork and rice, small cubes of carrot, celery root and red pepper, a few slices of tomato, and a generous sprinkle of finely chopped fresh green lovage on top; one long thin green hot pepper lies beside the bowl.",
+    "alt": "肉団子と野菜の入った澄んだ酸っぱいスープ、チョルバ・デ・ペリショアレ。刻んだ香草をのせて"
+   },
+   "tochitura": {
+    "desc": "Romanian tochitură: a plain plate with a dark, glossy stew of small chunks of pork and pieces of sausage in a rich red-brown sauce, a fried egg on top with a bright runny yolk, a soft mound of yellow mămăligă (polenta) beside it sprinkled with grated white sheep cheese.",
+    "alt": "濃い色の肉の煮込みトキトゥーラに目玉焼き。黄色いママリガと白いチーズを添えて"
+   },
+   "fasole": {
+    "desc": "Romanian fasole cu cârnați: a round crusty bread loaf hollowed out and used as a bowl, filled with a thick stew of white beans in a light orange-red tomato and paprika sauce, with two thick slices of grilled smoked sausage on top and a few rings of red onion beside the bread.",
+    "alt": "パンの器に入った白いんげん豆の煮込みと、焼いた腸詰めのファソレ・ク・カルナツィ"
+   },
+   "salata-de-vinete": {
+    "desc": "Romanian salată de vinete: a round shallow bowl of smooth, creamy pale beige-green roasted eggplant spread mixed with finely chopped white onion, its surface swirled with a spoon, with a few thin slices of fresh red tomato and two slices of rustic bread beside it.",
+    "alt": "焼きなすのなめらかなペースト、サラタ・デ・ヴィネテ。トマトの薄切りとパン"
+   },
+   "bulz": {
+    "desc": "Romanian bulz: a round ball of mămăligă (polenta) baked with a crisp golden crust, cut open so melted white sheep cheese oozes out of the middle, topped with a fried egg with a bright runny yolk and a spoonful of thick white sour cream, on a plain plate.",
+    "alt": "チーズを包んで焼いた丸いママリガ、ブルズ。目玉焼きとサワークリームをのせて"
+   },
+   "telemea": {
+    "desc": "Romanian telemea: a thick slab and several neat cubes of soft, snow-white brined sheep cheese with a few tiny holes, on a small plain wooden board, with two halved red tomatoes and one long pale-green hot pepper.",
+    "alt": "四角く切った白いチーズ、テレメア。トマトと青唐辛子を添えて"
+   },
+   "placinta": {
+    "desc": "Romanian plăcintă cu brânză: two square pieces of flaky pastry made of many paper-thin layers of dough, baked golden brown and lightly dusted with powdered sugar, on a plain plate; one piece is cut open to show the soft sweet white cheese filling with a few raisins between the layers.",
+    "alt": "薄い生地を重ねて焼いた四角いパイ、プラチンタ。白いチーズの具が見える切り口"
+   },
+   "shaorma": {
+    "desc": "Romanian shaorma: one thick, generous wrap of thin soft flatbread rolled around grilled chicken pieces, French fries, shredded cabbage and carrot, tomato and white garlic sauce, cut in half to show the filling; the lower half is wrapped in plain white paper with no printing.",
+    "alt": "鶏肉とポテトと野菜を薄いパンで巻いた太いシャオルマ。半分に切った断面"
+   },
+   "gogosi": {
+    "desc": "Romanian gogoși: five round, fluffy, golden-brown fried doughnuts without holes, piled loosely on a plain plate and generously dusted with powdered sugar; one is torn open to show its soft, airy white inside.",
+    "alt": "粉砂糖をまぶした丸い揚げドーナツ、ゴゴシ"
+   },
+   "savarina": {
+    "desc": "Romanian savarină: a ring-shaped yeast cake soaked in syrup, glossy golden-brown, its hollow center and top filled with a tall swirl of whipped cream, on a plain plate with a little syrup pooled around it and a dessert fork beside it.",
+    "alt": "シロップを含ませた輪の菓子に、たっぷりのホイップクリームをのせたサヴァリナ"
+   },
+   "amandina": {
+    "desc": "Romanian amandină: two rectangular slices of dark chocolate sponge cake soaked in syrup, layered with chocolate cream, topped with a shiny dark-chocolate fondant glaze and a small piped rosette of chocolate cream, on a plain plate, placed so the layers show.",
+    "alt": "チョコクリームを挟み、チョコの糖衣をかけた四角いケーキ、アマンディナ"
+   },
+   "kurtos": {
+    "desc": "Kürtőskalács (chimney cake) as sold in Romania: one long hollow cylinder of sweet yeast dough baked in a spiral, crisp and caramelized golden brown on the outside and coated with sugar and cinnamon, lying on the table, with one end torn open to show the soft, steaming inside.",
+    "alt": "筒の形に巻いて焼いた煙突菓子、クルトシュ・カラーチ。砂糖とシナモンをまぶして"
+   },
+   "bere": {
+    "desc": "Romanian beer: one tall plain glass beer mug with a handle (no logo, no printing) full of clear golden lager with a thick white foam head and drops of condensation, beside a small plain plate of snacks: a few slices of smoked sausage, small cubes of white cheese and a few salted pretzel sticks.",
+    "alt": "金色のビールのジョッキと、腸詰めとチーズの小さなつまみ"
+   },
+   "vin": {
+    "desc": "Romanian red wine (Fetească Neagră): one dark glass wine bottle with NO label, a stemmed wine glass filled with deep ruby-red wine, and one bunch of dark purple-black grapes.",
+    "alt": "ラベルの無い赤ワインの瓶と、注いだグラス、黒ぶどう"
+   },
+   "visinata": {
+    "desc": "Romanian vișinată: one small round glass bottle with NO label, filled with dark ruby-red sour-cherry liqueur, a small stemmed liqueur glass filled with it, and a handful of shiny dark-red sour cherries with stems.",
+    "alt": "濃い赤のさくらんぼのリキュール、ヴィシナータの小瓶とグラス、サワーチェリー"
    }
   }
  },
@@ -388,6 +448,85 @@
    "tuica": {
     "desc": "Two glass bottles of Romanian fruit brandy with NO labels — one tall clear bottle of țuică and one round flat flask of pălincă — with a few dark purple plums and one small filled glass.",
     "alt": "ツイカとパーリンカの瓶、すもも"
+   },
+   "rom": {
+    "desc": "Romanian ROM chocolate bars: four flat rectangular chocolate bars in wrappers printed only with the colors of the Romanian flag (three bands of blue, yellow and red; no letters, no logo), stacked loosely; one wrapper is opened at the end to show the dark chocolate bar.",
+    "alt": "ルーマニアの国旗の三色の包みのチョコバー、ROM"
+   },
+   "gerovital": {
+    "desc": "Romanian Gerovital face cream: one round white cream jar with a gold lid, opened to show the smooth white cream, and two slim white tubes with gold caps, all plain with no label and no writing.",
+    "alt": "白と金のクリームの瓶とチューブ。ゲロヴィタールの化粧品"
+   },
+   "magiun": {
+    "desc": "Romanian magiun de prune: an open glass jar with NO label, full of very thick, glossy dark-brown plum jam, its lid covered with a plain circle of brown paper tied with string, set beside it; a wooden spoon holds a scoop of the jam, and a few dark blue-purple plums lie nearby.",
+    "alt": "濃い茶色のすもものジャム、マジウンの瓶と、すもも"
+   },
+   "wine": {
+    "desc": "Two bottles of Romanian wine with NO labels, one dark bottle of red wine and one pale green bottle of white wine, standing beside a plain brown kraft paper gift bag with rope handles and no printing.",
+    "alt": "ラベルの無い赤と白のワインの瓶2本と、無地の土産の袋"
+   },
+   "eugenia": {
+    "desc": "Romanian Eugenia biscuits: a plain, unprinted paper wrapper torn open, with four rectangular cocoa biscuits laid out in front of it, each sandwiching a thin layer of chocolate cream; one is broken in half to show the cream.",
+    "alt": "チョコクリームを挟んだ長方形のビスケット、オイゲニア"
+   }
+  }
+ },
+ "do": {
+  "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。ブラン城とカルセルは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+  "shape": "card43",
+  "items": {
+   "palace": {
+    "ja": "国民の館を見学",
+    "desc": "a guided tour inside the Palace of the Parliament in Bucharest, one of the largest buildings in the world; the architecture is the hero. Composition: a deep, symmetrical one-point perspective down a vast, very tall marble hall: rows of massive cream-and-ivory marble columns and pilasters, a richly carved and gilded coffered ceiling, several enormous crystal chandeliers hanging in a line, tall windows with heavy gold-and-crimson draperies, and a polished marble floor with a geometric inlay that mirrors the chandeliers. Far down the hall, a small tour group of seven or eight visitors, seen from behind, follows a guide; they are tiny against the scale of the room. Light: cool, pale daylight falling in from the tall windows on the left, mixed with the warm glow of the chandeliers. Palette: ivory and warm cream marble, champagne gold, deep crimson, with cool grey-blue shadows.",
+    "alt": "国民の館の、大理石の柱とシャンデリアが続く大広間。奥をガイドについて歩く小さな見学の一行の絵"
+   },
+   "bran": {
+    "ja": "ブラン城へ日帰り",
+    "desc": "Bran Castle in the Carpathian foothills, a day trip from Bucharest; a landscape with the castle as the hero. Composition: seen from the winding path below at a slightly low angle, the castle stands on its steep rocky crag in the upper middle of the picture, faithful to the photo: white plastered walls, steep red-tiled roofs, several towers of different shapes and heights (a round tower, square towers with pointed roofs), small deep-set windows and a wooden gallery. The crag and the hills behind are covered with autumn beech forest in gold, orange and rust red. In the lower left foreground the path climbs between the trees and one small traveler with a backpack, seen from behind, walks up toward the castle. Light: late-afternoon autumn sun from the right, warm on the white walls, long soft shadows, a light mist in the valley. Palette: terracotta red, chalk white, burnt orange and gold, with cool blue-grey mountains in the distance.",
+    "alt": "色づいた秋の森の岩山に立つ、白い壁と赤い屋根のブラン城。坂道を登っていく小さな旅人の後ろ姿の絵",
+    "photos": [
+     ".claude/skills/chatgpt-image/guide/romania/bucharest-ref-bran.webp"
+    ],
+    "ref": [
+     ".claude/skills/chatgpt-image/guide/romania/bucharest-ref-bran.webp"
+    ]
+   },
+   "caru": {
+    "ja": "カル・ク・ベレで乾杯",
+    "desc": "an evening in Caru' cu Bere, Bucharest's historic beer hall from 1879; the room and the table are the hero. Composition: a medium-close view from slightly above a bare, dark polished wooden table in the foreground, looking across it into the tall hall. On the table: a plate of mititei (short, skinless grilled sausages) with a dab of yellow mustard, and a small clay bowl of sarmale (cabbage rolls) with sour cream. Two hands (only the hands and sleeves) clink tall glass mugs of golden beer with thick white foam in a toast above the table. Behind, softly out of focus: richly carved dark-wood neo-Gothic arches and columns, painted and gilded vaulted ceilings, tall stained-glass windows glowing in jewel colors, and brass chandeliers. Light: warm amber lamplight at night, glints on the beer and the glass, and colored light from the stained glass. Palette: dark walnut brown, amber and honey gold, with jewel accents of ruby, emerald and sapphire.",
+    "alt": "木彫りのアーチとステンドグラスのビアホール、カル・ク・ベレ。ミティテイとサルマーレの卓の上で、ビールのジョッキが乾杯している夜の絵"
+   },
+   "sarmale": {
+    "ja": "本場のサルマーレ",
+    "desc": "a homely Romanian lunch of sarmale; the food is the hero. Composition: a close, intimate view at a low angle across a rustic wooden table: in the center a round, unglazed terracotta clay pot full of plump cabbage rolls (soft pale-green pickled cabbage leaves wrapped around minced meat and rice) in a rich reddish-brown sauce, with fragrant steam rising; one hand (only the hand) lifts a cabbage roll with a wooden spoon onto a plate where a mound of bright yellow mămăligă (polenta), a dollop of thick white sour cream and one small green hot pepper are waiting. Behind, softly out of focus, a whitewashed wall and a window with potted red geraniums. Light: soft warm midday light from a window on the right, the steam backlit and glowing. Palette: terracotta and paprika red-brown, bright corn yellow, creamy white and fresh green.",
+    "alt": "素焼きの鍋から湯気の立つサルマーレを取り分ける手元。黄色いママリガとサワークリームの皿の絵"
+   },
+   "papanasi": {
+    "ja": "揚げたてのパパナシ",
+    "desc": "Romanian papanași, the famous dessert, in a close-up still life. Composition: very close, seen at a 30-degree angle: on a white plate, a big golden-brown fried ring-shaped doughnut with a small round doughnut ball on top, covered with thick white sour cream and glossy dark-red sour-cherry jam that runs down the sides, a few whole sour cherries around; a fork held by one hand (only the hand) cuts into the side and shows the soft, steaming cheese dough inside. Behind, softly out of focus, a café table by a window. Light: bright, fresh afternoon daylight from the left with glossy highlights on the jam and the cream. Palette: golden brown, snowy white and deep cherry red against a soft pale mint and sky-blue background.",
+    "alt": "サワークリームとさくらんぼのジャムがとろりとかかった揚げたてのパパナシに、フォークを入れる手元の絵"
+   },
+   "carusel": {
+    "ja": "光の本屋さんカルセル",
+    "desc": "the Cărturești Carusel bookshop in Bucharest's Old Town, famous for its white interior; the architecture is the hero. Composition: a view from the top-floor balcony looking down into the tall atrium, faithful to the photo: brilliant white curving balconies with white balustrades and slender white columns on several floors, wrapping around an open central space; wooden bookshelves full of books line every floor, and a white winding staircase connects the levels. Far below, a few small visitors seen from above browse at a table of books; one person seen from behind leans on a balcony rail. Light: bright, soft daylight pouring down from the skylight above and filling the white space. Palette: luminous white and pale cream, warm honey wood, with many small spots of color from the book spines.",
+    "alt": "白い吹き抜けとらせん状の手すりのカルトゥレシュティ・カルセル。何層もの本棚を、上の階から見下ろす小さな人の絵",
+    "photos": [
+     ".claude/skills/chatgpt-image/guide/romania/bucharest-ref-carusel.webp"
+    ],
+    "ref": [
+     ".claude/skills/chatgpt-image/guide/romania/bucharest-ref-carusel.webp"
+    ]
+   },
+   "athenaeum": {
+    "ja": "アテネ音楽堂で名曲",
+    "desc": "an evening concert inside the Romanian Athenaeum; the round concert hall is the hero. Composition: from the back of the hall, slightly raised: rows of deep red velvet seats in the foreground with the dark silhouettes of a few listeners' heads; the circular hall rises to a shallow dome decorated with gilded ribs and ornaments around a central light; a continuous band of painted fresco (figures in muted earthy colors) runs all the way around the wall below the dome, between pink-marble columns; at the far end, small on the stage, an orchestra in black plays under warm light. Light: warm golden light from the chandelier and the stage, with the rest of the hall in soft shadow. Palette: crimson and deep red, antique gold, ivory, the ochre and sienna of the fresco, deep brown shadows.",
+    "alt": "金の丸天井とぐるりと続く壁画のアテネ音楽堂。赤い客席の後ろから、舞台のオーケストラを見る夜の絵"
+   },
+   "xmas": {
+    "ja": "冬のクリスマスマーケット",
+    "desc": "the Christmas market on Constitution Square in Bucharest at dusk. Composition: a wide view at eye level from inside the market: two rows of small wooden chalet stalls with warm string lights and fir garlands lead the eye toward the back; a huge Christmas tree covered in lights stands on one side; small figures in winter coats and hats, seen from behind, stroll between the stalls, one holding a steaming mug. At the far end rises the enormous, long, symmetrical white facade of the Palace of the Parliament, rows and rows of windows and colonnades, softly lit in warm light. A little frost on the stall roofs, no deep snow. Light: early dusk, the sky a smooth gradient from deep violet at the top to rose and peach at the horizon, everything below lit by warm bulbs. Palette: violet and dusty rose sky, warm gold and amber lights, dark fir green, and the pale glowing palace.",
+    "alt": "夕暮れの憲法広場のクリスマスマーケット。木の屋台の明かりと大きなツリーの奥に、国民の館が光る絵",
+    "fix": "Stall fronts have no signs or writing. "
    }
   }
  }
