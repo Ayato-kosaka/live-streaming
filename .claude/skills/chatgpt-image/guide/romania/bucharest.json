@@ -483,13 +483,7 @@
    "bran": {
     "ja": "ブラン城へ日帰り",
     "desc": "Bran Castle in the Carpathian foothills, a day trip from Bucharest; a landscape with the castle as the hero. Composition: seen from the winding path below at a slightly low angle, the castle stands on its steep rocky crag in the upper middle of the picture, faithful to the photo: white plastered walls, steep red-tiled roofs, several towers of different shapes and heights (a round tower, square towers with pointed roofs), small deep-set windows and a wooden gallery. The crag and the hills behind are covered with autumn beech forest in gold, orange and rust red. In the lower left foreground the path climbs between the trees and one small traveler with a backpack, seen from behind, walks up toward the castle. Light: late-afternoon autumn sun from the right, warm on the white walls, long soft shadows, a light mist in the valley. Palette: terracotta red, chalk white, burnt orange and gold, with cool blue-grey mountains in the distance.",
-    "alt": "色づいた秋の森の岩山に立つ、白い壁と赤い屋根のブラン城。坂道を登っていく小さな旅人の後ろ姿の絵",
-    "photos": [
-     ".claude/skills/chatgpt-image/guide/romania/bucharest-ref-bran.webp"
-    ],
-    "ref": [
-     ".claude/skills/chatgpt-image/guide/romania/bucharest-ref-bran.webp"
-    ]
+    "alt": "色づいた秋の森の岩山に立つ、白い壁と赤い屋根のブラン城。坂道を登っていく小さな旅人の後ろ姿の絵"
    },
    "caru": {
     "ja": "カル・ク・ベレで乾杯",
@@ -509,13 +503,7 @@
    "carusel": {
     "ja": "光の本屋さんカルセル",
     "desc": "the Cărturești Carusel bookshop in Bucharest's Old Town, famous for its white interior; the architecture is the hero. Composition: a view from the top-floor balcony looking down into the tall atrium, faithful to the photo: brilliant white curving balconies with white balustrades and slender white columns on several floors, wrapping around an open central space; wooden bookshelves full of books line every floor, and a white winding staircase connects the levels. Far below, a few small visitors seen from above browse at a table of books; one person seen from behind leans on a balcony rail. Light: bright, soft daylight pouring down from the skylight above and filling the white space. Palette: luminous white and pale cream, warm honey wood, with many small spots of color from the book spines.",
-    "alt": "白い吹き抜けとらせん状の手すりのカルトゥレシュティ・カルセル。何層もの本棚を、上の階から見下ろす小さな人の絵",
-    "photos": [
-     ".claude/skills/chatgpt-image/guide/romania/bucharest-ref-carusel.webp"
-    ],
-    "ref": [
-     ".claude/skills/chatgpt-image/guide/romania/bucharest-ref-carusel.webp"
-    ]
+    "alt": "白い吹き抜けとらせん状の手すりのカルトゥレシュティ・カルセル。何層もの本棚を、上の階から見下ろす小さな人の絵"
    },
    "athenaeum": {
     "ja": "アテネ音楽堂で名曲",
@@ -527,7 +515,7 @@
     "desc": "the Christmas market on Constitution Square in Bucharest at dusk. Composition: a wide view at eye level from inside the market: two rows of small wooden chalet stalls with warm string lights and fir garlands lead the eye toward the back; a huge Christmas tree covered in lights stands on one side; small figures in winter coats and hats, seen from behind, stroll between the stalls, one holding a steaming mug. At the far end rises the enormous, long, symmetrical white facade of the Palace of the Parliament, rows and rows of windows and colonnades, softly lit in warm light. A little frost on the stall roofs, no deep snow. Light: early dusk, the sky a smooth gradient from deep violet at the top to rose and peach at the horizon, everything below lit by warm bulbs. Palette: violet and dusty rose sky, warm gold and amber lights, dark fir green, and the pale glowing palace.",
     "alt": "夕暮れの憲法広場のクリスマスマーケット。木の屋台の明かりと大きなツリーの奥に、国民の館が光る絵",
     "fix": "Stall fronts have no signs or writing. Make the market lively and close, with NO empty pavement: the viewpoint is inside a narrow, busy lane between the stalls, close to them; the stall counters overflow with gingerbread hearts, glass ornaments, candles, sweets and steaming pots of mulled wine; many small visitors in winter coats crowd the lane and gather at the counters, seen from behind or in profile; in the middle ground a couple walks arm in arm away from the viewer. The palace stays far at the back, framed between the stall roofs and the tree. ",
-   "v": 2
+    "v": 2
    }
   }
  }
