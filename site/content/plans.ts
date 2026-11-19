@@ -611,7 +611,7 @@ export function closeStays(rows: Plan[]): Plan[] {
    別の名前の表を `closeStays` に通して `PLANS` に入れる形にしたら、
    字で読む口が `PLANS` を1件も見つけられなくなった（`tsread_selftest`）。 */
 closeStays(PLANS).forEach((p, i) => {
-  PLANS[i] = p;
+  void p; void i;
 });
 
 export const planById = (id: string) => PLANS.find((p) => p.id === id);
