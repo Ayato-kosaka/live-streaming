@@ -330,6 +330,10 @@
     "desc": "Burek: a large round metal baking tray of golden, flaky burek made of many very thin, flat layered phyllo sheets (NOT a spiral), baked crisp and golden on top; one big wedge has been cut out and placed on a plate in front, showing the many thin flaky layers with a white crumbled-cheese filling; beside it a glass of thick white drinking yogurt.",
     "alt": "薄い生地を何枚も重ねて焼いたブレク。切り分けた1切れに白いチーズの層が見え、ヨーグルトの飲み物が添えてある"
    },
+   "bakery": {
+    "desc": "A small Balkan neighborhood bakery counter seen up close: a glass display case with trays of golden burek pies, small crescent rolls (kifli) and round sesame buns, a few loaves of crusty bread behind; warm morning light.",
+    "alt": "ガラスのケースに、焼きたてのブレクと小さなパンが並ぶ街角のベーカリー"
+   },
    "shopska": {
     "desc": "Shopska salad as served in North Macedonia: in a shallow plain white bowl, diced ripe red tomatoes, diced cucumbers, chopped roasted green peppers and thin raw onion slices, topped with a thick, fluffy heap of finely grated white brined cheese (sirenje) and one small sprig of parsley.",
     "alt": "刻んだトマトときゅうり、ピーマンの上に、白いチーズをたっぷり削りかけたショプスカ・サラダ",
@@ -387,10 +391,6 @@
   "model": "bulgaria/sofia:buy-rose-oil",
   "note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・布巾・光でそろえた。瓶・袋・箱は字なし",
   "items": {
-   "cookie": {
-    "desc": "Macedonian supermarket butter cookies: an opened plain cardboard box (plain cream-colored, NO printing at all) full of round and flower-shaped golden butter biscuits, some topped with sliced almonds and some sprinkled with shredded coconut, with a few cookies stacked on the table in front of the box.",
-    "alt": "無地の箱に入ったバタークッキー。アーモンドやココナッツをのせたものもある"
-   },
    "ajvar": {
     "desc": "A short, wide glass jar of ajvar (a thick, smooth, deep orange-red relish of roasted red peppers) with a plain metal lid and no label, next to a small open bowl of it and a slice of rustic bread spread with ajvar; one whole roasted red pepper beside them.",
     "alt": "瓶詰のアイヴァルと、小鉢に出したもの、アイヴァルを塗ったパン、焼いた赤いパプリカ"
@@ -413,18 +413,6 @@
     "desc": "Homemade rakija from the farmers' market: a plain round glass bottle (reused, no label) of clear colorless fruit brandy closed with a cork, a second smaller flat glass flask of pale golden plum rakija, and a few ripe purple plums and green grapes beside them.",
     "alt": "ラベルの無い瓶に詰めた自家製のラキヤと、プラムとぶどう",
     "wiki": "Rakia"
-   },
-   "market": {
-    "desc": "Groceries from a Skopje food market: a small bundle of dried mountain tea (greenish-grey herb sprigs with small yellow flowers, tied with string), two small open paper bags of ground red paprika and dried chili flakes, a short string of dried red peppers, and a block of white brined sirenje cheese on wax paper.",
-    "alt": "束ねた山のお茶、パプリカと唐辛子の粉、干した赤唐辛子、白いチーズ"
-   },
-   "winter": {
-    "desc": "Winter accessories bought in Skopje: a long black knit scarf, neatly folded, a pair of dark grey knit gloves, and a soft charcoal-grey knit beanie hat, arranged together.",
-    "alt": "黒い長いマフラーと、灰色の手袋とニット帽"
-   },
-   "grocery": {
-    "desc": "A supermarket grocery haul for cooking in a guesthouse kitchen: a reusable cloth shopping bag with a clear plain bag of dry pasta (no printing), a bunch of carrots with green tops, a bunch of yellow bananas, a few tomatoes and a round loaf of bread, spilling out onto the table.",
-    "alt": "布の買い物袋からこぼれたパスタ・にんじん・バナナ・トマト・パン"
    },
    "crafts": {
     "desc": "Silver filigree jewelry from the Old Bazaar of Skopje: a delicate pair of silver filigree earrings, a round silver filigree brooch made of fine twisted silver wire in lace-like flower patterns, a filigree pendant on a thin silver chain, and one thin gold ring, arranged on a small dark-blue velvet cloth.",

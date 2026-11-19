@@ -72,7 +72,10 @@ export type Scene = { v: string; t: number; date: string };
 export type Went = {
   /** 行った日（`YYYY-MM-DD`） */
   date: string;
-  /** その日の写真（あやと島カード） */
+  /**
+   * その日の写真（あやと島カード）。**窓の中の「あやとの旅の記録」に出す。札の絵には使わない**（あやと 2026-11-19
+   * 「やりたいことの札の絵は、あやと島カードの写真に替えなくていい」）。ガイドの絵の無い項目だけ、面の側が札に回す（`manifest.ts` の `dress`）
+   */
   pic?: Pic;
   /** 本人の一言。字幕の字のまま */
   say?: string;
@@ -81,7 +84,7 @@ export type Went = {
   /** ② 配信アーカイブの場面（その時刻から開く） */
   scene?: Scene;
   /**
-   * 短い話（案内鳥の文。言っていないことを足さない）。段落ごと。**数は結んだ facts の行どおり**
+   * 短い話（**あやとの一人称**の旅の記録。書きかたは `docs/guide-blog.md`。言っていないことを足さない）。段落ごと。**数は結んだ facts の行どおり**
    * （焼く道具 `python/guidebook_bake.py` が止める）
    */
   story?: string[];

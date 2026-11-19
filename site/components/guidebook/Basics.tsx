@@ -225,7 +225,7 @@ function GuideSheet({ x }: { x: Guide }) {
   return (
     <Sheet id={sheetId("guide", x.id)} kicker="旅の実用ガイド" title={x.title}>
       <p className="gb-lead">{x.lead}</p>
-      {x.went && <WentBox w={x.went} of={x.title} label="あやとは" />}
+      {x.went && <WentBox w={x.went} of={x.title} label={null} />}
       <Ext>
         {x.parts.map((p, i) => (
           <div key={i} className="gb-part">

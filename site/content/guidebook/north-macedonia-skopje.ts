@@ -169,6 +169,26 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "text": "Дебар Маало",
      "lang": "mk",
      "roman": "Debar Maalo"
+    },
+    "went": {
+     "date": "2026-10-27",
+     "scene": {
+      "v": "_XzkJJIvpOE",
+      "t": 2490,
+      "date": "2026-10-27"
+     },
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/terrace-960.webp",
+      "small": "/travel/north-macedonia/skopje/terrace-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "スコピエの、テラス席のあるカフェが並ぶ通り（2026年10月27日）",
+      "kind": "card",
+      "date": "2026-10-27"
+     },
+     "story": [
+      "自分で「おしゃれ地区」と呼んでいた一角です。歩いて着くと、テラス席のあるカフェが並び、中東風のパン屋がぽつぽつ。飲食店ばかりで、服屋は見当たりませんでした。"
+     ]
     }
    },
    {
@@ -283,13 +303,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     }
    ],
    "pic": {
-    "src": "/travel/north-macedonia/skopje/warrior-top-960.webp",
-    "small": "/travel/north-macedonia/skopje/warrior-top-480.webp",
+    "src": "/guide/north-macedonia/skopje/photos/plaza-de-macedonia-skopie-macedo-a122463b-960.webp",
+    "small": "/guide/north-macedonia/skopje/photos/plaza-de-macedonia-skopie-macedo-a122463b-500.webp",
     "w": 960,
-    "h": 720,
-    "alt": "マケドニア広場の、騎馬の戦士像をのせた柱と噴水（2026年10月15日）",
-    "kind": "card",
-    "date": "2026-10-15"
+    "h": 639,
+    "alt": "マケドニア広場と、噴水の上の騎馬像",
+    "kind": "photo",
+    "credit": {
+     "by": "Diego Delso",
+     "lic": "CC BY-SA 3.0",
+     "page": "https://commons.wikimedia.org/wiki/File:Plaza_de_Macedonia%2C_Skopie%2C_Macedonia%2C_2014-04-16%2C_DD_29.JPG"
+    }
    },
    "went": {
     "date": "2026-10-15",
@@ -298,9 +322,18 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "t": 690,
      "date": "2026-10-15"
     },
+    "pic": {
+     "src": "/travel/north-macedonia/skopje/warrior-top-960.webp",
+     "small": "/travel/north-macedonia/skopje/warrior-top-480.webp",
+     "w": 960,
+     "h": 720,
+     "alt": "マケドニア広場の、騎馬の戦士像をのせた柱と噴水（2026年10月15日）",
+     "kind": "card",
+     "date": "2026-10-15"
+    },
     "story": [
-     "広場に着いて、あやとがまず驚いたのは銅像の多さ。これまで見たどの広場よりも多かった。最後の日には、ロンドンバスや凱旋門まで、ヨーロッパの名所をまねたものだらけなのがこの国の印象だと振り返った。",
-     "あやとが見つけたのは、左手にショットガン、右手に拳銃の像と、鼻先だけピカピカの牛の像。"
+     "マケドニア広場に着いて、まず驚いたのは銅像の多さです。これまで見たどの広場よりも多かった！ 最後の日に思い返すと、ロンドンバスに凱旋門と、ヨーロッパの名所をまねたものだらけ。それがこの国のいちばんの印象です。",
+     "歩いていて見つけた変わり種は、左手にショットガン、右手に拳銃を持った像。牛の像は、みんなにさわられたのか鼻先だけピカピカでした。"
     ],
     "short": "frcgM9wiRr8"
    }
@@ -346,13 +379,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     }
    ],
    "pic": {
-    "src": "/travel/north-macedonia/skopje/umbrellas-960.webp",
-    "small": "/travel/north-macedonia/skopje/umbrellas-480.webp",
+    "src": "/guide/north-macedonia/skopje/photos/0524ba57-960.webp",
+    "small": "/guide/north-macedonia/skopje/photos/0524ba57-500.webp",
     "w": 960,
-    "h": 1280,
-    "alt": "スコピエの旧市街。傘が吊られた石畳の通り（2026年10月13日）",
-    "kind": "card",
-    "date": "2026-10-13"
+    "h": 639,
+    "alt": "スリ・アンの屋根と、旧市街の家並み",
+    "kind": "photo",
+    "credit": {
+     "by": "Stotosenik",
+     "lic": "CC BY-SA 3.0",
+     "page": "https://commons.wikimedia.org/wiki/File:%D0%9F%D0%BE%D0%B3%D0%BB%D0%B5%D0%B4_%D0%BA%D0%BE%D0%BD_%D0%A1%D1%83%D0%BB%D0%B8_%D0%90%D0%BD_%D0%B8_%D0%A1%D1%82%D0%B0%D1%80%D0%B0%D1%82%D0%B0_%D1%81%D0%BA%D0%BE%D0%BF%D1%81%D0%BA%D0%B0_%D1%87%D0%B0%D1%80%D1%88%D0%B8%D1%98%D0%B0.JPG"
+    }
    },
    "went": {
     "date": "2026-10-12",
@@ -361,10 +398,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "t": 1200,
      "date": "2026-10-14"
     },
+    "pic": {
+     "src": "/travel/north-macedonia/skopje/umbrellas-960.webp",
+     "small": "/travel/north-macedonia/skopje/umbrellas-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "スコピエの旧市街。傘が吊られた石畳の通り（2026年10月13日）",
+     "kind": "card",
+     "date": "2026-10-13"
+    },
     "story": [
-     "初めて歩いた日、モスクと古めかしい建物が並ぶ通りを、あやとは美しいと言った。店はジュエリー屋が9割ほどで、食堂がもっと並んでいてほしかったそう。傘が吊られた通りもあった。",
-     "晴れた日に歩く。あやとは雨の日に土産のアクセサリーくらいしか見られず、晴れた日にもう一度歩くと通りの様子がまるで違った。",
-     "月曜と祝日は閉まる店が多い。"
+     "旧市街には、スコピエに着いた初日に行きました。まず思ったのは、モスクや古めかしい建物が並んでいて、すごく美しいということ。ただ、店は9割ほどがジュエリー屋で、ドレス屋も多め。食堂がもっと並んでいてほしかったです。傘が吊られた通りもありました。",
+     "次の日は雨で、見られたのは土産物のアクセサリーくらい。晴れた日にもう一度歩くと、通りの様子がまるで違いました。紅茶には、トルコっぽさを感じました。歩くなら晴れた日がいちばんです。",
+     "着いた日は月曜で、開いていない店が多かったです。次の日に聞くと、着いた日は北マケドニアの大きな祝日だったらしいです。月曜と祝日は、閉まる店が多いと思っておくと安心です。"
     ]
    }
   },
@@ -459,13 +505,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     }
    ],
    "pic": {
-    "src": "/travel/north-macedonia/skopje/matka-960.webp",
-    "small": "/travel/north-macedonia/skopje/matka-480.webp",
+    "src": "/guide/north-macedonia/skopje/photos/matka-canyon-skopje-3-802a6d2f-960.webp",
+    "small": "/guide/north-macedonia/skopje/photos/matka-canyon-skopje-3-802a6d2f-500.webp",
     "w": 960,
-    "h": 1280,
-    "alt": "マトカ渓谷。岩山のあいだの湖と、紅葉の木（2026年10月24日）",
-    "kind": "card",
-    "date": "2026-10-24"
+    "h": 640,
+    "alt": "マトカ渓谷の湖と岩山",
+    "kind": "photo",
+    "credit": {
+     "by": "kallerna",
+     "lic": "CC BY-SA 4.0",
+     "page": "https://commons.wikimedia.org/wiki/File:Matka_Canyon_Skopje_3.jpg"
+    }
    },
    "went": {
     "date": "2026-10-24",
@@ -474,13 +524,22 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "t": 4860,
      "date": "2026-10-24"
     },
+    "pic": {
+     "src": "/travel/north-macedonia/skopje/matka-960.webp",
+     "small": "/travel/north-macedonia/skopje/matka-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "マトカ渓谷。岩山のあいだの湖と、紅葉の木（2026年10月24日）",
+     "kind": "card",
+     "date": "2026-10-24"
+    },
     "story": [
-     "ボートに乗れなかったあと、あやとは、1つずつのんびり味わっていたら乗りそびれた、まずボートを押さえるべきだったと振り返った。",
-     "あやとが着いたとき、岩山と紅葉と川が一度に見えて、水が澄んでいた。",
-     "あやとは60番に乗ってから、渓谷の手前で降ろされるまで約49分。その日は終点まで行かず手前で折り返し、そこから歩いて30分だった。",
-     "この日の渓谷行きのバスは2本しか無かった。帰りのバスはもう終わっていて、夜のバスでようやく帰った。",
-     "エンジンのボートは客が5人集まるまで出ない。乗り場は6時に閉まり、あやとは夕方に5人集まらず乗れなかった。ボートに乗るなら早い時間に。",
-     "道の看板には狼・毒ヘビ・イノシシ・クマ・キツネがいると書いてある。"
+     "いちばん心残りなのは、ボートに乗れなかったことです。1つずつのんびり味わっていたら、乗りそびれてしまいました。マトカ渓谷に着いたら、まずボートを押さえるべきでした。",
+     "渓谷に着いてまず目に入ったのは、岩山と紅葉と川。それが一度に見えて、水も澄んでいました。",
+     "行きは60番のバスで、渓谷の手前で降ろされるまで約49分。首都からバスで1時間ほどで来られるのは、うれしいところです。ただこの日は終点まで行かずに手前で折り返されて、そこから30分歩きました。",
+     "この日、渓谷行きのバスは2本だけ。帰りは、調べたらもうバスが終わっていて、最悪だと思いました。しばらくすると夜のバスのようなものが来て、なんとか帰れました。",
+     "エンジンのボートは、客が5人集まるまで出ません。乗り場は6時に閉まるらしく、5時半を最終便にしたいと言われましたが、その時間に5人は集まらず、乗れないまま閉店。ボートに乗るなら、早い時間に行くのが安心です。",
+     "道の看板には、狼・毒ヘビ・イノシシ・クマ・キツネがいると書いてあって、動物がこんなにいるのかと驚きました。"
     ],
     "say": "岩山に紅葉に川"
    }
@@ -522,13 +581,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     "tavche"
    ],
    "pic": {
-    "src": "/travel/north-macedonia/skopje/kosmos-beans-960.webp",
-    "small": "/travel/north-macedonia/skopje/kosmos-beans-480.webp",
-    "w": 720,
-    "h": 720,
-    "alt": "食堂コスモスの豆の煮込み（2026年10月14日）",
-    "kind": "card",
-    "date": "2026-10-14"
+    "src": "/guide/north-macedonia/skopje/photos/3-ee18b240-960.webp",
+    "small": "/guide/north-macedonia/skopje/photos/3-ee18b240-500.webp",
+    "w": 960,
+    "h": 641,
+    "alt": "素焼きの土鍋で焼いた、赤い豆の料理タヴチェ・グラフチェ",
+    "kind": "photo",
+    "credit": {
+     "by": "Oliver Manev",
+     "lic": "CC BY-SA 4.0",
+     "page": "https://commons.wikimedia.org/wiki/File:%D0%93%D1%80%D0%B0%D0%B2_%D0%B2%D0%BE_%D1%82%D0%B0%D0%B2%D0%B0(%D1%82%D0%B0%D1%84%D1%87%D0%B5_%D0%B3%D1%80%D0%B0%D0%B2%D1%87%D0%B5)_(3).jpg"
+    }
    },
    "went": {
     "date": "2026-10-14",
@@ -537,10 +600,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "t": 4470,
      "date": "2026-10-14"
     },
+    "pic": {
+     "src": "/travel/north-macedonia/skopje/kosmos-beans-960.webp",
+     "small": "/travel/north-macedonia/skopje/kosmos-beans-480.webp",
+     "w": 720,
+     "h": 720,
+     "alt": "食堂コスモスの豆の煮込み（2026年10月14日）",
+     "kind": "card",
+     "date": "2026-10-14"
+    },
     "story": [
-     "食堂コスモスで豆の煮込みをひと口食べたあやとの感想は、大当たり。トマトとチーズでクリーミーで、大きい豆が甘く、トマトパスタとクリームパスタを合わせたような味だった。後日、店の前を通ったときも、もう一度来たいと言っていた。",
-     "旧市街の食堂コスモスは、あやとが行列に並んで入った店。チェバピと豆の煮込みを食べた。",
-     "11月9日の配信で、あやとはコスモスの豆の煮込みのほうがクリーミーだったと振り返った。"
+     "食堂コスモスで豆の煮込みをひと口食べて、これは大当たりだと思いました。トマトとチーズでクリーミーで、大きい豆が甘い。トマトパスタとクリームパスタを合わせたような味です。後日、店の前を通ったときも、もう1回来たいと思ったほど。",
+     "旧市街の食堂コスモスには行列ができていて、先に3人と2人のグループが並んでいました。5分ぐらいと言われましたが、海外の5分なので10分は見ておいたほうがいいです。頼んだのはチェバピと豆の煮込み。",
+     "11月9日に自分でも作ってみたら、コスモスのほうが、生クリームでも入っているのかと思うくらいクリーミーだった気がします。本場の味を確かめに、もう一度食べに行きたいです。"
     ]
    }
   },
@@ -576,13 +648,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     }
    ],
    "pic": {
-    "src": "/travel/north-macedonia/skopje/fortress-960.webp",
-    "small": "/travel/north-macedonia/skopje/fortress-480.webp",
+    "src": "/guide/north-macedonia/skopje/photos/kalefortress-skopje1-cb4644aa-960.webp",
+    "small": "/guide/north-macedonia/skopje/photos/kalefortress-skopje1-cb4644aa-500.webp",
     "w": 960,
-    "h": 1280,
-    "alt": "スコピエ城塞の石の塔と城壁（2026年10月18日）",
-    "kind": "card",
-    "date": "2026-10-18"
+    "h": 720,
+    "alt": "スコピエ城塞の城壁",
+    "kind": "photo",
+    "credit": {
+     "by": "Yemc",
+     "lic": "PD",
+     "page": "https://commons.wikimedia.org/wiki/File:KaleFortress-Skopje1.JPG"
+    }
    },
    "went": {
     "date": "2026-10-18",
@@ -591,10 +667,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "t": 9930,
      "date": "2026-10-18"
     },
+    "pic": {
+     "src": "/travel/north-macedonia/skopje/fortress-960.webp",
+     "small": "/travel/north-macedonia/skopje/fortress-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "スコピエ城塞の石の塔と城壁（2026年10月18日）",
+     "kind": "card",
+     "date": "2026-10-18"
+    },
     "story": [
-     "初めて城塞を見たあやとは、城壁がよく見える、とても大きなお城だと驚いた。夕日を見に行った日は地平線に雲が降りていて、空は少し焼けただけ。惜しかったそう。",
-     "夕日を見るなら早めに。あやとが日の入りに合わせて行くと門はもう閉まっていて、入口の隣の駐車場から日が沈むのを見た。",
-     "城塞の手前の堀に架かる橋は、あやとが渡るのをやめたほど傷んで見えた。"
+     "初めて城塞を見たときは、城壁がよく見える、とても大きなお城だと思いました。夕日を見に行った日は、地平線に雲が降りていて、空は少し焼けただけ。惜しかったです。",
+     "夕日の時間に間に合うように歩いて行ったら、入口の門はもう閉まっていました。そこにいた日本人の方が教えてくれて、入口の隣の駐車場から日が沈むのを見ました。夕日を見るなら、門が閉まる前に早めに。",
+     "城塞の手前の堀に架かる橋は、壊れかけに見えました。下はがけの堀なので、渡るのはやめて別の道を探しました。"
     ],
     "short": "ieMGyM2QjCA"
    }
@@ -656,15 +741,15 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "date": "2026-11-08"
     },
     "story": [
-     "木の多い道で、登るあいだは街の景色が見えず、十字架も上の方だけ。下りの途中、木の間から街が見えたとき、あやとは、本当はあの十字架から見下ろしたかったとこぼした。",
-     "あやとは宿から歩いて登り、山の途中の駐車場に並ぶ出店で、梨ジュースとクッキーを買ってひと休みした。15時20分、あと1時間で日が暮れるので、十字架の手前で引き返した。",
-     "歩くなら、街から山道を登る。あやとが見た地図アプリでは、十字架まで歩いて2時間6分の道だった。",
-     "あやとが行く前の晩に調べると、昔の案内にはバスがあると書いてあるのに、地図アプリでは歩きの道しか出なかった。",
-     "あやとは宿から、山の途中の出店のある駐車場まで1時間ちょいだった。",
-     "山の途中の駐車場の出店では、クレジットカードが使えた。",
-     "あやとが行った11月8日は、地図アプリの口コミに、工事でロープウェイが使えないとあった。動いているかを先に確かめる。",
-     "日が沈むと、山道はすぐ暗くなる。あやとは携帯のライトで足元だけを見て下りた。下りの道は急で滑りやすく、野良犬もいた。",
-     "登る途中で見つけたスーパーは、日曜で休みだった。"
+     "ヴォドノ山は木の多い道で、登っているあいだは街の景色が見えず、十字架も上の方だけ。下りの途中、木の間から街が見えたときは、本当はあの十字架から見下ろしたかったなと思いました。",
+     "宿から歩いて登りました。20分ほどで街を抜けて、ゆるやかな坂道に。山の途中の駐車場に着くと店が無くてがっかりしましたが、出店が並んでいて、北マケドニアで有名な梨ジュースが買えました。冷たかったです。15時20分、あと1時間で日が暮れるので、十字架の手前で引き返しました。",
+     "地図アプリで調べると、十字架までは歩いて2時間6分の道でした。",
+     "行く前に調べたときは、昔の案内にはバスがあると書いてあるのに、いまの地図アプリでは歩きの道しか出ませんでした。最悪、歩くつもりで出かけました。",
+     "宿から出店のある駐車場までは、1時間ちょっとで来られました。",
+     "駐車場の出店では、クレジットカードが使えました。",
+     "行った11月8日は、地図アプリの口コミに、工事でロープウェイが使えないとありました。本来はバスで行って、そこからロープウェイで登る道です。動いているかは、先に確かめておくと安心です。",
+     "日が沈むと山道はすぐに暗くなって、携帯のライトで地面だけを照らして下りました。下りの道は急で滑りやすく、何回も足をふみ外しました。下り始めてすぐ、野良犬が3びきいて、ほえられないようににげました。",
+     "登る途中でスーパーを見つけて喜んだのに、日曜日で休みでした。"
     ]
    }
   }
@@ -680,15 +765,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Stara čaršija"
     },
     "rank": 1,
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/umbrellas-960.webp",
-     "small": "/travel/north-macedonia/skopje/umbrellas-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "スコピエの旧市街。傘が吊られた石畳の通り（2026年10月13日）",
-     "kind": "card",
-     "date": "2026-10-13"
-    },
     "body": "少なくとも12世紀から商いが続く、バルカンでも指折りの古くて大きな市場。オスマン時代のモスクがおよそ30、隊商宿（ハン）もいくつも残っていて、石畳の細い路地に小さな店が並ぶ。石橋からビト・パザルの市場まで、城塞の下からセラヴァ川まで広がっている。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D1%82%D0%B0%D1%80%D0%B0+%D1%87%D0%B0%D1%80%D1%88%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
@@ -709,9 +785,19 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "t": 1200,
       "date": "2026-10-14"
      },
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/umbrellas-960.webp",
+      "small": "/travel/north-macedonia/skopje/umbrellas-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "スコピエの旧市街。傘が吊られた石畳の通り（2026年10月13日）",
+      "kind": "card",
+      "date": "2026-10-13"
+     },
      "story": [
-      "着いた日は月曜で、閉まっている店が多かった。次の日は雨で、見られたのは土産物のアクセサリーくらい。晴れた日にもう一度歩くと、通りの様子がまるで違って見えた。"
-     ]
+      "着いた日は月曜で、閉まっている店ばかり。次の日は雨で、見られたのは土産物のアクセサリーくらいでした。晴れた日にもう一度歩くと、同じ通りがまるで違って見えて、やっぱり晴れの日がいいなと思いました。"
+     ],
+     "say": "やっぱ晴れてる時に限るな"
     },
     "geo": {
      "lat": 42.0018,
@@ -774,15 +860,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Ploštad Makedonija"
     },
     "rank": 1,
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/warrior-960.webp",
-     "small": "/travel/north-macedonia/skopje/warrior-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "マケドニア広場。騎馬像をのせた柱と噴水、獅子の像（2026年10月15日）",
-     "kind": "card",
-     "date": "2026-10-15"
-    },
     "body": "国でいちばん大きな広場（18,500m²）で、川をまたいで広がる。ユーゴスラビアからの独立は、ここで宣言された。広場とそのまわりの像・噴水・柱の並ぶ建物の多くは、2010〜2014年の「スコピエ2014」計画で建ったもの。136の建造物に、見積もりで8,000万〜5億ユーロがかかり、費用と歴史の描きかたをめぐって国の中でも評判が割れている。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9F%D0%BB%D0%BE%D1%88%D1%82%D0%B0%D0%B4+%D0%9C%D0%B0%D0%BA%D0%B5%D0%B4%D0%BE%D0%BD%D0%B8%D1%98%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
@@ -808,8 +885,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "t": 690,
       "date": "2026-10-15"
      },
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/warrior-960.webp",
+      "small": "/travel/north-macedonia/skopje/warrior-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "マケドニア広場。騎馬像をのせた柱と噴水、獅子の像（2026年10月15日）",
+      "kind": "card",
+      "date": "2026-10-15"
+     },
      "story": [
-      "広場の噴水は、あやとがこれまで見た中でいちばん大きいかもしれないほど。銅像の並ぶ橋には、橋だけで20体はいて、30体ほどいそうだった。"
+      "広場の噴水は、今まで見た噴水の中でいちばん大きいかもしれません。銅像の並ぶ橋は、橋だけで20体はいて、30体ほどいそうでした。"
      ],
      "short": "frcgM9wiRr8"
     },
@@ -828,15 +914,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Skopsko kale"
     },
     "rank": 1,
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/fortress-960.webp",
-     "small": "/travel/north-macedonia/skopje/fortress-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "スコピエ城塞の石の塔と城壁（2026年10月18日）",
-     "kind": "card",
-     "date": "2026-10-18"
-    },
     "body": "旧市街の上、街でいちばん高い所からヴァルダル川を見下ろす城塞。最初の砦は6世紀に、ローマの町の石を使って築かれた。石橋と並んで、街の紋章と旗に描かれている。",
     "facts": [
      {
@@ -867,8 +944,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "t": 2220,
       "date": "2026-10-18"
      },
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/fortress-960.webp",
+      "small": "/travel/north-macedonia/skopje/fortress-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "スコピエ城塞の石の塔と城壁（2026年10月18日）",
+      "kind": "card",
+      "date": "2026-10-18"
+     },
      "story": [
-      "入口で料金はかからず、そのまま中に入れた。"
+      "城塞の入口を見つけて入ってみると、料金はかからず、無料でした。"
      ],
      "short": "ieMGyM2QjCA"
     },
@@ -887,15 +973,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Soborna crkva Sv. Kliment Ohridski"
     },
     "rank": 2,
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/clement-960.webp",
-     "small": "/travel/north-macedonia/skopje/clement-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "聖クリメント・オフリド大聖堂。丸屋根が重なる外観と噴水（2026年10月20日）",
-     "kind": "card",
-     "date": "2026-10-20"
-    },
     "body": "マケドニア正教会でいちばん大きな大聖堂。1972年に建てはじめ、1990年8月12日に聖別された。丸屋根とアーチだけでできた、36m四方の円堂。主の丸屋根のキリストの壁画は70m²、目の長さが1.5mある。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A1%D0%B2.+%D0%9A%D0%BB%D0%B8%D0%BC%D0%B5%D0%BD%D1%82+%D0%9E%D1%85%D1%80%D0%B8%D0%B4%D1%81%D0%BA%D0%B8+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
@@ -921,8 +998,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "t": 6360,
       "date": "2026-10-20"
      },
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/clement-960.webp",
+      "small": "/travel/north-macedonia/skopje/clement-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "聖クリメント・オフリド大聖堂。丸屋根が重なる外観と噴水（2026年10月20日）",
+      "kind": "card",
+      "date": "2026-10-20"
+     },
      "story": [
-      "大聖堂は大きく、現代建築のような見た目だった。中は礼拝の最中で、観光客は誰もおらず、みんなが真剣。あやとはじっと様子を見てから、いったん外へ出た。"
+      "聖クリメント・オフリド大聖堂は大きくて、現代建築のような見た目です。中に入ると礼拝の最中で、観光客は誰もおらず、みんな真剣。じっとしてまわりの様子を見てから、いったん外へ出ました。"
      ]
     },
     "geo": {
@@ -1094,7 +1180,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "date": "2026-10-17"
      },
      "story": [
-      "新市街を探して歩いていて、凱旋門とナポレオン風の騎馬像のある広場に出たところで、ここが新市街だと気づいた。"
+      "凱旋門とナポレオン風の騎馬像のある広場に出て、このあたりが新市街なんだと気づきました。"
      ]
     },
     "geo": {
@@ -1214,15 +1300,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Vardar"
     },
     "rank": 3,
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/ship-960.webp",
-     "small": "/travel/north-macedonia/skopje/ship-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "スコピエの川沿い。川に浮かぶ木の帆船（2026年10月12日）",
-     "kind": "card",
-     "date": "2026-10-12"
-    },
     "body": "北マケドニアでいちばん長い川（388km）。ギリシャに入るとアクシオス川と名を変え、テッサロニキでエーゲ海に注ぐ。スコピエでは、この川を境に旧市街と広場が向かい合う。川沿いには、自転車道と歩道・公園・カフェの並ぶ岸辺の道がある。",
     "facts": [],
     "src": [
@@ -1244,63 +1321,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "t": 2940,
       "date": "2026-10-12"
      },
-     "story": [
-      "着いた日に川沿いを歩くと、川が臭くない。船が何隻も泊まっていた。あやとは、川の匂いでその国のインフラが分かると話した。"
-     ]
-    }
-   },
-   {
-    "id": "frescoes",
-    "name": "壁画だらけの正教会（名前は確かめていない）",
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/frescoes-960.webp",
-     "small": "/travel/north-macedonia/skopje/frescoes-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "正教会の中。金色のシャンデリアと壁一面の絵（2026年10月17日）",
-     "kind": "card",
-     "date": "2026-10-17"
-    },
-    "body": "",
-    "facts": [],
-    "src": [],
-    "went": {
-     "date": "2026-10-17",
-     "scene": {
-      "v": "hk39U7ZEKCQ",
-      "t": 3420,
-      "date": "2026-10-17"
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/ship-960.webp",
+      "small": "/travel/north-macedonia/skopje/ship-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "スコピエの川沿い。川に浮かぶ木の帆船（2026年10月12日）",
+      "kind": "card",
+      "date": "2026-10-12"
      },
      "story": [
-      "あやとが10月17日に入った、壁一面に絵が続く正教会。色合いがきれいにまとまっていて、今まで見た中でいちばんだと言った。"
-     ],
-     "say": "絵画が無限。無限絵画です"
-    }
-   },
-   {
-    "id": "terrace",
-    "name": "テラスのカフェが並ぶ通り（場所は確かめていない）",
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/terrace-960.webp",
-     "small": "/travel/north-macedonia/skopje/terrace-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "スコピエの、テラス席のあるカフェが並ぶ通り（2026年10月27日）",
-     "kind": "card",
-     "date": "2026-10-27"
-    },
-    "body": "",
-    "facts": [],
-    "src": [],
-    "went": {
-     "date": "2026-10-27",
-     "scene": {
-      "v": "_XzkJJIvpOE",
-      "t": 2490,
-      "date": "2026-10-27"
-     },
-     "story": [
-      "あやとが「おしゃれ地区」と呼んだ通り。テラス席のカフェと中東風のパン屋がぽつぽつ並び、飲食店が多かった。"
+      "着いた日に川沿いを歩いて、まず思ったのは、川が臭くないこと。船も何隻も泊まっていました。川の匂いで、その国のインフラが分かると思っています。水も飲めそうなくらいでした。"
      ]
     }
    },
@@ -1830,15 +1861,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Matka"
     },
     "rank": 1,
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/matka-960.webp",
-     "small": "/travel/north-macedonia/skopje/matka-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "マトカ渓谷。岩山のあいだの湖と、紅葉の木（2026年10月24日）",
-     "kind": "card",
-     "date": "2026-10-24"
-    },
     "body": "スコピエの中心から西にある、約5,000haの渓谷。国でいちばん古い人造湖があり、洞窟が10（いちばん長いもので176m）と、中世の修道院がいくつも残る。トレスカ川のカヤックも人気で、山歩きの季節は復活祭のころから11月まで。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9A%D0%B0%D1%9A%D0%BE%D0%BD+%D0%9C%D0%B0%D1%82%D0%BA%D0%B0&hl=ja",
@@ -1859,8 +1881,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "t": 4860,
       "date": "2026-10-24"
      },
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/matka-960.webp",
+      "small": "/travel/north-macedonia/skopje/matka-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "マトカ渓谷。岩山のあいだの湖と、紅葉の木（2026年10月24日）",
+      "kind": "card",
+      "date": "2026-10-24"
+     },
      "story": [
-      "岩山と紅葉と川が一度に見えて、水が澄んでいた。川の水に手を入れると、冷たかった。"
+      "岩山と紅葉と川が一度に見えて、水が澄んでいます。川の水に手を入れてみると、冷たかったです。"
      ]
     },
     "geo": {
@@ -1941,13 +1972,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "roman": "Tavče gravče"
     },
     "pic": {
-     "src": "/travel/north-macedonia/skopje/kosmos-beans-960.webp",
-     "small": "/travel/north-macedonia/skopje/kosmos-beans-480.webp",
-     "w": 720,
-     "h": 720,
-     "alt": "食堂コスモスの豆の煮込み（2026年10月14日）",
-     "kind": "card",
-     "date": "2026-10-14"
+     "src": "/guide/north-macedonia/skopje/photos/3-ee18b240-960.webp",
+     "small": "/guide/north-macedonia/skopje/photos/3-ee18b240-500.webp",
+     "w": 960,
+     "h": 641,
+     "alt": "素焼きの土鍋で焼いた、赤い豆の料理タヴチェ・グラフチェ",
+     "kind": "photo",
+     "credit": {
+      "by": "Oliver Manev",
+      "lic": "CC BY-SA 4.0",
+      "page": "https://commons.wikimedia.org/wiki/File:%D0%93%D1%80%D0%B0%D0%B2_%D0%B2%D0%BE_%D1%82%D0%B0%D0%B2%D0%B0(%D1%82%D0%B0%D1%84%D1%87%D0%B5_%D0%B3%D1%80%D0%B0%D0%B2%D1%87%D0%B5)_(3).jpg"
+     }
     },
     "body": "北マケドニアの国民食とされる豆の料理。素焼きの土鍋（タヴァ）に入れて焼き、そのまま出てくる。名前は「タヴァに入った豆」。テトヴォ風が人気。",
     "facts": [
@@ -1988,8 +2023,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "t": 4470,
       "date": "2026-10-14"
      },
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/kosmos-beans-960.webp",
+      "small": "/travel/north-macedonia/skopje/kosmos-beans-480.webp",
+      "w": 720,
+      "h": 720,
+      "alt": "食堂コスモスの豆の煮込み（2026年10月14日）",
+      "kind": "card",
+      "date": "2026-10-14"
+     },
      "story": [
-      "あやとは10月14日にコスモスで、トマトとチーズでクリーミーな、大きい豆の甘い煮込みを食べた。11月9日に宿のキッチンでタヴチェ・グラフチェを作ったとき、コスモスのはもっとクリーミーだったと比べた。"
+      "10月14日に食堂コスモスで食べた豆の煮込みは、トマトとチーズでクリーミーで、大きい豆が甘かったです。11月9日には宿のキッチンで自分でも作ってみました。白インゲン豆を前の日に8時間ぐらい水でもどして、1時間ぐらい煮込み。それでも、コスモスのほうがもっとクリーミーだった気がします。"
      ],
      "say": "これ当たり。すごい当たり"
     }
@@ -2001,15 +2045,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "text": "Ќебапи",
      "lang": "mk",
      "roman": "Ḱebapi"
-    },
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/kosmos-cevapi-960.webp",
-     "small": "/travel/north-macedonia/skopje/kosmos-cevapi-480.webp",
-     "w": 672,
-     "h": 672,
-     "alt": "食堂コスモスのチェバピ5本（2026年10月14日）",
-     "kind": "card",
-     "date": "2026-10-14"
     },
     "body": "ひき肉を指ほどの棒にして、炭火で焼いたもの。5〜10本を皿かパンにのせ、刻んだ玉ねぎを添えて出す。旧ユーゴスラビアの国々で広く食べられ、牛だけで作る国もあれば、豚や羊を混ぜる国もある。ブルガリアや北マケドニアのケバプチェは、豚と牛を混ぜることが多い。",
     "facts": [
@@ -2053,8 +2088,17 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "t": 4290,
       "date": "2026-10-14"
      },
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/kosmos-cevapi-960.webp",
+      "small": "/travel/north-macedonia/skopje/kosmos-cevapi-480.webp",
+      "w": 672,
+      "h": 672,
+      "alt": "食堂コスモスのチェバピ5本（2026年10月14日）",
+      "kind": "card",
+      "date": "2026-10-14"
+     },
      "story": [
-      "食堂コスモスで頼んだチェバピは、炭の匂いをまとっていて、肉汁が広がった。あやとのたとえは、バーベキューで焼いたソーセージ。"
+      "食堂コスモスで頼んだチェバピは、炭の匂いをまとっていて、肉汁が広がります。たとえるなら、バーベキューで焼いたソーセージです。"
      ],
      "short": "IZpZGM5Xbyg"
     }
@@ -2113,6 +2157,53 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ]
+   },
+   {
+    "id": "bakery",
+    "name": "ベーカリー",
+    "body": "街のあちこちに小さなベーカリー・カフェがあり、ブレクなどのパイが買える。",
+    "facts": [
+     {
+      "label": "豚肉",
+      "text": "並ぶのはブレクなどのパイで、中身は店と種類で違う。"
+     }
+    ],
+    "kinds": [
+     "breakfast",
+     "quick"
+    ],
+    "src": [
+     {
+      "name": "Wikivoyage「Skopje」",
+      "url": "https://en.wikivoyage.org/wiki/Skopje",
+      "seen": "2026-11-19"
+     },
+     {
+      "name": "Wikipedia「Börek」",
+      "url": "https://en.wikipedia.org/wiki/B%C3%B6rek",
+      "seen": "2026-11-19"
+     }
+    ],
+    "went": {
+     "date": "2026-10-19",
+     "scene": {
+      "v": "vZ2O8pabk1g",
+      "t": 9840,
+      "date": "2026-10-23"
+     },
+     "pic": {
+      "src": "/travel/north-macedonia/skopje/panpan-960.webp",
+      "small": "/travel/north-macedonia/skopje/panpan-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "パン屋パンパンの紙袋とコーヒー（2026年10月23日）",
+      "kind": "card",
+      "date": "2026-10-23"
+     },
+     "story": [
+      "祝日で閉まっている店が多い日も、パン屋のパンパンは開いていました。17時に閉まるらしく、行ったときにはパンが2種類しか残っていなかったので、行くなら早めの時間に。"
+     ]
+    }
    },
    {
     "id": "shopska",
@@ -2333,8 +2424,8 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "date": "2026-10-18"
      },
      "story": [
-      "旧市街で先に入ったケバブ屋は1個1,500円、チェーン店も単品で約800円で、あやとはどちらも見送ってハムザへ行った。辛さを聞かれて「はい」と答えると激辛になる。",
-      "ハムザのケバブは、唐辛子が口の中でシャリシャリ言うほどの激辛。それでも、とてもおいしかった。"
+      "旧市街で先に入ったケバブ屋は1個1,500円もして、見送りました。チェーンの店も単品で800円ぐらいで、高い。結局ハムザに入ると、スパイシーかと聞かれてなんとなくイエスと答えたら、ギトギトの赤いソースで激辛のケバブに。早歩きで運んだので、べちゃべちゃにもなりました。",
+      "ハムザのケバブは、唐辛子が口の中でシャリシャリ言うほどの激辛。それでも、とてもおいしかったです。"
      ],
      "short": "ieMGyM2QjCA"
     }
@@ -2612,66 +2703,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ]
-   },
-   {
-    "id": "joy",
-    "name": "JOY（カフェ）",
-    "body": "",
-    "facts": [],
-    "kinds": [
-     "sweets"
-    ],
-    "src": [],
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/carrot-cake-960.webp",
-     "small": "/travel/north-macedonia/skopje/carrot-cake-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "JOY のキャロットケーキとアメリカーノ（2026年10月19日）",
-     "kind": "card",
-     "date": "2026-10-19"
-    },
-    "went": {
-     "date": "2026-10-19",
-     "scene": {
-      "v": "misSMBhPlkc",
-      "t": 2970,
-      "date": "2026-10-19"
-     },
-     "story": [
-      "あやとはキャロットケーキとアメリカーノで約750円。キャロットケーキは粘りが強く、上の砂糖が甘い。"
-     ]
-    }
-   },
-   {
-    "id": "panpan",
-    "name": "パン屋パンパン",
-    "body": "",
-    "facts": [],
-    "kinds": [
-     "breakfast"
-    ],
-    "src": [],
-    "pic": {
-     "src": "/travel/north-macedonia/skopje/panpan-960.webp",
-     "small": "/travel/north-macedonia/skopje/panpan-480.webp",
-     "w": 960,
-     "h": 1280,
-     "alt": "パン屋パンパンの紙袋とコーヒー（2026年10月23日）",
-     "kind": "card",
-     "date": "2026-10-23"
-    },
-    "went": {
-     "date": "2026-10-19",
-     "scene": {
-      "v": "vZ2O8pabk1g",
-      "t": 9840,
-      "date": "2026-10-23"
-     },
-     "story": [
-      "祝日で閉まる店が多い日にも開いていた。17時に閉まるらしく、遅く行くとパンが2種類しか残っていなかった。"
-     ]
-    }
    }
   ],
   "places": [
@@ -2915,35 +2946,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  "buy": {
   "items": [
    {
-    "id": "cookie",
-    "name": "マケドニアの箱入りクッキー",
-    "body": "",
-    "facts": [
-     {
-      "label": "どこで",
-      "text": "カム・マーケット（中心部の店）・ラムストア（カピシュテツ）・スーパー・ヴェロ"
-     }
-    ],
-    "places": [
-     "kam",
-     "ramstore",
-     "vero"
-    ],
-    "src": [],
-    "went": {
-     "date": "2026-10-17",
-     "scene": {
-      "v": "0upPnKMc5po",
-      "t": 3870,
-      "date": "2026-10-21"
-     },
-     "story": [
-      "スーパーの箱入りクッキー。あやとが買ったのは300g入りで150円、バターの味が効いていた。バニラ・アーモンド・ココナッツと味を変えて、毎日1箱食べていた。サクッとして、パン屋やケーキ屋のクッキーのよう。",
-      "旧市街から歩いた先のクッキー屋の量り売りは約500円で、あやとは買わなかった。"
-     ]
-    }
-   },
-   {
     "id": "ajvar",
     "name": "アイヴァルの瓶",
     "local": {
@@ -3007,7 +3009,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "lang": "mk",
      "roman": "Tursko kafe"
     },
-    "body": "北マケドニアでいちばん飲まれているコーヒー。スーパーには袋がたくさん並び、200g入りの大きな袋もあった。",
+    "body": "北マケドニアでいちばん飲まれているコーヒー。",
     "facts": [
      {
       "label": "どこで",
@@ -3035,7 +3037,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "date": "2026-10-13"
      },
      "story": [
-      "スーパーの棚にトルココーヒーがずらりと並んでいた。違いが分からないまま、あやとは1つ選んで買った。"
+      "スーパーの棚には、トルココーヒーがずらり。200g入りの大きな袋もありました。違いが分からないまま、1つ選んで買いました。"
      ]
     }
    },
@@ -3155,91 +3157,9 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     ]
    },
    {
-    "id": "market",
-    "name": "市場の食材（チーズ・香辛料・お茶）",
-    "body": "市場では果物・野菜・サラダ・チーズ・お茶・香辛料・花が買える。緑の市場のほうが値段は手ごろ。",
-    "facts": [
-     {
-      "label": "どこで",
-      "text": "ビト・パザル（市場）・緑の市場（ゼレン・パザル）"
-     }
-    ],
-    "places": [
-     "bit-pazar",
-     "zelen-pazar"
-    ],
-    "src": [
-     {
-      "name": "Wikivoyage「Skopje/Stara Čaršija」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "Wikivoyage「Skopje/Centar」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje/Centar",
-      "seen": "2026-11-15"
-     }
-    ]
-   },
-   {
-    "id": "winter",
-    "name": "防寒具（マフラー・手袋・ニット帽）",
-    "body": "",
-    "facts": [
-     {
-      "label": "どこで",
-      "text": "LC ワイキキ（ダイヤモンド・モール）"
-     }
-    ],
-    "places": [
-     "lcw"
-    ],
-    "src": [],
-    "went": {
-     "date": "2026-10-28",
-     "scene": {
-      "v": "la_OkustLkA",
-      "t": 2555,
-      "date": "2026-10-28"
-     },
-     "story": [
-      "10月の終わりに急に寒くなり、1週間前まで半袖だったあやとは手が震えるほどだった。マフラーと手袋を合わせて約1,500円で買い、寒さはだいぶましになった。"
-     ]
-    }
-   },
-   {
-    "id": "grocery",
-    "name": "自炊の買い出し（スーパー）",
-    "body": "",
-    "facts": [
-     {
-      "label": "どこで",
-      "text": "カム・マーケット（中心部の店）・ラムストア（カピシュテツ）・スーパー・ヴェロ"
-     }
-    ],
-    "places": [
-     "kam",
-     "ramstore",
-     "vero"
-    ],
-    "src": [],
-    "went": {
-     "date": "2026-10-12",
-     "scene": {
-      "v": "NY9pzYrA-5o",
-      "t": 1020,
-      "date": "2026-10-12"
-     },
-     "story": [
-      "あやとはほぼ毎日スーパーで買い出して、宿の台所で自炊した。パスタは75円、ニンジンもバナナも1kg約100円。1回の買い出しは約1,000〜1,300円。",
-      "着いた日に行った「街でいちばん安いと噂のディスカウントスーパー」は、廃墟のようなビルの中にあり、入口が狭い。店の名前と場所は配信から決められない。"
-     ]
-    }
-   },
-   {
     "id": "crafts",
     "name": "旧市街の金銀の細工とアクセサリー",
-    "body": "旧市街は通りごとに品が分かれ、金の通りもあった。あやとが歩いたときは、並ぶ店の9割ほどがジュエリー屋で、ドレス屋も多かった。",
+    "body": "旧市街は通りごとに品が分かれ、金の通りもある。",
     "facts": [
      {
       "label": "どこで",
@@ -3262,7 +3182,10 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "v": "donehL4hO68",
       "t": 1440,
       "date": "2026-10-13"
-     }
+     },
+     "story": [
+      "旧市街を歩くと、並ぶ店の9割ほどがジュエリー屋で、ドレス屋も多かったです。"
+     ]
     }
    }
   ],
@@ -3386,42 +3309,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-15"
      }
     ],
-    "roman": "Зелен пазар",
-    "went": false
-   },
-   {
-    "id": "bit-pazar",
-    "name": "ビト・パザル（市場）",
-    "what": "街でいちばん大きな食べ物の市場。果物・野菜・チーズ・お茶・香辛料・花。",
-    "maps": "https://www.google.com/maps/search/?api=1&query=%D0%91%D0%B8%D1%82-%D0%BF%D0%B0%D0%B7%D0%B0%D1%80+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
-    "src": [
-     {
-      "name": "Wikivoyage「Skopje/Stara Čaršija」",
-      "url": "https://en.wikivoyage.org/wiki/Skopje/Stara_%C4%8Car%C5%A1ija",
-      "seen": "2026-11-15"
-     }
-    ],
-    "roman": "Бит-пазар"
-   },
-   {
-    "id": "lcw",
-    "name": "LC ワイキキ（ダイヤモンド・モール）",
-    "what": "あやとがダイヤモンド・モールで入った服のチェーン店。売れ残りの黒の長いマフラーが300円、手袋は約1,200円だった。OSM のこの店はダイヤモンド・モールの位置にある。",
-    "maps": "https://www.google.com/maps/search/?api=1&query=LC+Waikiki+Diamond+Mall+Skopje&hl=ja",
-    "src": [
-     {
-      "name": "OpenStreetMap（LC Waikiki）",
-      "url": "https://www.openstreetmap.org/node/13418045401",
-      "seen": "2026-11-15"
-     },
-     {
-      "name": "OpenStreetMap（Diamond Mall）",
-      "url": "https://www.openstreetmap.org/way/1231158369",
-      "seen": "2026-11-15"
-     }
-    ],
-    "roman": "LC Waikiki",
-    "went": true
+    "roman": "Зелен пазар"
    },
    {
     "id": "old-bazaar",
@@ -3441,8 +3329,8 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
   "map": {
    "mid": "1EuvkDx5PX_lviFQsR7I_z-ViOlA2k-4",
    "title": "スコピエ｜買いたいもの",
-   "ll": "41.9963,21.4292",
-   "z": 13,
+   "ll": "41.9953,21.4292",
+   "z": 14,
    "pins": 10
   }
  },
@@ -3539,7 +3427,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "date": "2026-10-12"
      },
      "story": [
-      "あやとはアルバニアから国境越えのバスで来た。4時間と聞いていたのに7時間かかり、着いたのは16時。"
+      "アルバニアからは国境越えのバスで来ました。8時に出て4時間で着くと聞いていたのに、実際は7時間ぐらい。着いたのは16時で、だまされたかと思いました。"
      ]
     }
    },
@@ -3586,7 +3474,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "date": "2026-10-24"
      },
      "story": [
-      "あやとは、乗るときに払った切符が読み取り機になかなか反応せず苦労した。バス停の電光掲示板は、昼は光が弱くて読めなかった。"
+      "市バスは乗るときに払います。払ったあと切符を読み取り機にかざすのですが、なかなか反応しなくて大変でした。バス停の電光掲示板は光が弱く、昼間はまったく読めませんでした。"
      ]
     }
    },
@@ -3638,7 +3526,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "date": "2026-10-12"
      },
      "story": [
-      "あやとはスーパーでカードが使えた。それでも ATM で約3万円を下ろして、現金を持ち歩いた。"
+      "スーパーではクレジットカードが使えました。ATM は苦手で、間違えて3万円ぐらい下ろしてしまったので、それからは現金を持ち歩いています。"
      ]
     }
    },
@@ -3672,7 +3560,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "date": "2026-10-12"
      },
      "story": [
-      "あやとは着いたその日に SIM を買って開通した。最初は1週間用で、次に1か月用に替えた。"
+      "着いたその日に SIM を買って、開通できました。最初に買ったのは1週間用だったので、次は1か月用に替えました。"
      ]
     }
    },
@@ -3719,8 +3607,8 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
       "date": "2026-10-15"
      },
      "story": [
-      "あやとの印象は、きれいでゴミが少なく、治安は悪くない。泊まったホステルも旅行者ばかりで平和だった。",
-      "旧市街でケバブを食べていたら、野良犬に持っていかれそうになった（地元の人が助けてくれた）。"
+      "街はきれいでゴミが少なく、治安は悪くない印象です。泊まったホステルも旅行者ばかりで、平和でした。",
+      "旧市街でケバブを食べていたら、野良犬に持っていかれそうに。地元の人が石をなげて助けてくれました。"
      ]
     }
    },
@@ -3885,8 +3773,8 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
      "date": "2026-10-13"
     },
     "story": [
-     "あやとが着いた次の日に聞くと前の日は大きな祝日で、どこの店も閉まっていた。10月23日も祝日で、郵便局もスーパーも閉まっていた。",
-     "10月後半は並木が色づく。あやとは10月17日に紅葉を見て、もう冬という感じで寒いと言った。"
+     "着いた次の日に聞くと、前の日は大きな祝日で、どこの店も閉まっていたそうです。10月23日も祝日で、郵便局もスーパーも閉まっていました。",
+     "10月17日には紅葉が色づいていて、もう冬という感じの寒さでした。3日後には、3割ほどだった並木がほぼ真っ赤に。"
     ]
    }
   },
@@ -4326,6 +4214,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-14",
  "updated": "2026-11-19",
- "hash": "1673ddc97c5e2fb4"
+ "hash": "7dd787666f67c4b9"
 }
 /* END GUIDE */;

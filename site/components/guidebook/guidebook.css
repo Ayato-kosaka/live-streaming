@@ -706,7 +706,13 @@
 }
 
 .gb-went-box time { margin-left: 6px; font-size: var(--fs-note); }
-.gb-went-head { display: flex; align-items: center; margin: 0 0 var(--sp-2); }
+.gb-went-head { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; margin: 0 0 var(--sp-2); }
+/* 箱の名前。骨組みは案内鳥が書き、この箱だけがあやとの一人称（`Videos.tsx` の `WentBox`） */
+.gb-went-by { margin-left: 6px; font-size: var(--fs-note); color: #2c6a3c; }
+.gb-went-head > .gb-went-by:first-child { margin-left: 0; }
+/* その日のあやと島カード。札の絵は替えずに、ここに出す（あやと 2026-11-19） */
+.gb-went-pic { margin: 0 0 var(--sp-2); }
+.gb-went-pic .gb-pic { border-radius: var(--r-1); }
 .gb-went-t { margin: 0 0 var(--sp-2); font-size: 14px; line-height: 1.75; }
 .gb-went-box .gb-table { margin-bottom: var(--sp-2); }
 

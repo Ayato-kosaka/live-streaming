@@ -7,7 +7,7 @@ import { LINKS } from "@/content/site";
 import { JsonLd, videoLd } from "@/lib/jsonld";
 
 import ShortPlayer from "./ShortPlayer";
-import { Sec, jpDate } from "./parts";
+import { Credit, Picture, Sec, jpDate } from "./parts";
 
 /**
  * **動画の欄。** 導線は「検索 → ブログ → ショート → アーカイブ → ライブ」（あやと #1228・2026-11-15）。
@@ -109,16 +109,27 @@ export function WentVideo({ w, of }: { w: Went; of: string }) {
 }
 
 /**
- * 行った箱（肉付け）。「行った」と日付 → 短い話 → ① ショート → ② 場面（一言つき）。
+ * 行った箱（肉付け）。「あやとの旅の記録」と日付 → その日のあやと島カード → 短い話 → ① ショート → ② 場面（一言つき）。
+ *
+ * **話はあやとの一人称**（「〜しました」「〜と感じました」。書きかたは `docs/guide-blog.md`）。骨組み（ガイド）は案内鳥が書き、
+ * この箱だけがあやとの旅の記録（あやと 2026-11-19「『行った』の感想が、ブログっぽくない。AI 感がすごすぎてお話にならない」）。
+ * **カードの写真は札ではなくここに**（あやと 2026-11-19。札の絵はガイドの絵のまま。`content/guidebook/manifest.ts` の `dress`）。
  * **場面のリンクは箱に1つ**（`docs/island-misses.md` #323）。`data-went` は見張りの目印で、この中の額は facts の行と突き合わせる
  */
-export function WentBox({ w, of, label = "行った" }: { w: Went; of: string; label?: string }) {
+export function WentBox({ w, of, label = "行った" }: { w: Went; of: string; label?: string | null }) {
   return (
     <div className="gb-went-box" data-went="">
       <p className="gb-went-head">
-        <span className="gb-went">{label}</span>
+        {label && <span className="gb-went">{label}</span>}
+        <span className="gb-went-by">あやとの旅の記録</span>
         <time dateTime={w.date}>{jpDate(w.date)}</time>
       </p>
+      {w.pic && (
+        <div className="gb-went-pic">
+          <Picture pic={w.pic} sizes="(min-width: 720px) 440px, 100vw" />
+          <Credit pic={w.pic} of={of} />
+        </div>
+      )}
       {w.story?.map((t, i) => (
         <p key={i} className="gb-went-t">
           {t}
