@@ -9,8 +9,8 @@ import type { Went } from "./types";
 
 export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, { went: Went }> } = /* BEGIN GUIDE */
 {
- "updated": "2026-11-19",
- "hash": "be1b390dbe046ace",
+ "updated": "2026-11-20",
+ "hash": "034570ef28a11ad8",
  "items": {
   "todo/yogurt": {
    "went": {
@@ -21,9 +21,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-13"
     },
     "story": [
-     "まずは女性市場で探しましたが、ヨーグルトが全然出てこない。やっと見つけたのはふつうのプレーンヨーグルトで、買うほどではないかなと思いました。",
-     "そこで乳製品の専門店まで行ってみると、プレーンやイチゴ味など、ヨーグルトの種類がとても多いです。選んだのはイチゴのアイリャンです。"
+     "女性市場ではふつうのプレーンしか見つからず、乳製品の専門店まで行って、イチゴのアイリャンを選びました。"
     ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/yogurt",
+     "title": "ソフィアで本場のヨーグルトを探してきた【2026年11月】"
+    },
     "pic": {
      "src": "/travel/bulgaria/sofia/yogurt-shop-960.webp",
      "small": "/travel/bulgaria/sofia/yogurt-shop-480.webp",
@@ -94,8 +97,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-13"
     },
     "story": [
-     "目当ての女性市場に着いて、お土産屋の並びを見たときは、想像以上だと思いました。紅茶やスパイスが瓶に入って量り売りされていて、種類は数えきれないほど。陶器屋も多く、コップなどかわいい器が並んでいます。窓ごしの屋台で清潔感があり、北マケドニアやアルバニアの市場より清潔だと感じました。"
+     "紅茶やスパイスが瓶で量り売りされていて、お土産屋の並びは想像以上でした。北マケドニアやアルバニアの市場より清潔だと感じました。"
     ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/yogurt",
+     "title": "ソフィアで本場のヨーグルトを探してきた【2026年11月】"
+    },
     "pic": {
      "src": "/travel/bulgaria/sofia/zhenski-pazar-960.webp",
      "small": "/travel/bulgaria/sofia/zhenski-pazar-480.webp",
@@ -192,9 +199,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-13"
     },
     "story": [
-     "乳製品の専門店で選んだのは、イチゴのアイリャン。真っピンクでトロトロ、ホイップやイチゴケーキのような匂いがします。飲んでみると全然おいしい。塩気はまったく無く、日本の飲むヨーグルトによく似ていますが、ジュースっぽさより、ヨーグルトの酸味や風味がしっかりしています。",
-     "アルメニアで飲んだヨーグルトのジュースがとてもまずかったので、警戒していました。でも、想像よりずっとおいしかったです。"
+     "イチゴのアイリャンは真っピンクでトロトロ。日本の飲むヨーグルトによく似ていて、想像よりずっとおいしかったです。"
     ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/yogurt",
+     "title": "ソフィアで本場のヨーグルトを探してきた【2026年11月】"
+    },
     "say": "正味みんなまずいを期待してたやろ",
     "pic": {
      "src": "/travel/bulgaria/sofia/yogurt-shop-960.webp",

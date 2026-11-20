@@ -48,14 +48,11 @@
       "scene": "jnKVIXn4qQs@5370#fact",
       "story": [
         {
-          "text": "まずは女性市場で探しましたが、ヨーグルトが全然出てこない。やっと見つけたのはふつうのプレーンヨーグルトで、買うほどではないかなと思いました。",
-          "facts": ["jnKVIXn4qQs@2100#fact"]
-        },
-        {
-          "text": "そこで乳製品の専門店まで行ってみると、プレーンやイチゴ味など、ヨーグルトの種類がとても多いです。選んだのはイチゴのアイリャンです。",
-          "facts": ["jnKVIXn4qQs@5285#place", "jnKVIXn4qQs@5370#fact", "jnKVIXn4qQs@5470#food"]
+          "text": "女性市場ではふつうのプレーンしか見つからず、乳製品の専門店まで行って、イチゴのアイリャンを選びました。",
+          "facts": ["jnKVIXn4qQs@2100#fact", "jnKVIXn4qQs@5285#place", "jnKVIXn4qQs@5470#food"]
         }
-      ]
+      ],
+      "article": "yogurt"
     },
     "todo/hotspring": {
       "facts": ["2EKBYEnv850@1620#food", "2EKBYEnv850@1780#quote"],
@@ -98,10 +95,11 @@
       "scene": "jnKVIXn4qQs@1800#quote",
       "story": [
         {
-          "text": "目当ての女性市場に着いて、お土産屋の並びを見たときは、想像以上だと思いました。紅茶やスパイスが瓶に入って量り売りされていて、種類は数えきれないほど。陶器屋も多く、コップなどかわいい器が並んでいます。窓ごしの屋台で清潔感があり、北マケドニアやアルバニアの市場より清潔だと感じました。",
-          "facts": ["jnKVIXn4qQs@1175#place", "jnKVIXn4qQs@1800#quote", "jnKVIXn4qQs@1350#fact", "jnKVIXn4qQs@1920#fact", "jnKVIXn4qQs@1500#fact", "2EKBYEnv850@480#place", "aGOz5otlEs8@6005#place"]
+          "text": "紅茶やスパイスが瓶で量り売りされていて、お土産屋の並びは想像以上でした。北マケドニアやアルバニアの市場より清潔だと感じました。",
+          "facts": ["jnKVIXn4qQs@1350#fact", "jnKVIXn4qQs@1800#quote", "jnKVIXn4qQs@1500#fact"]
         }
-      ]
+      ],
+      "article": "yogurt"
     },
     "see/serdica": {
       "card": "serdica",
@@ -164,14 +162,11 @@
       "scene": "jnKVIXn4qQs@6090#quote",
       "story": [
         {
-          "text": "乳製品の専門店で選んだのは、イチゴのアイリャン。真っピンクでトロトロ、ホイップやイチゴケーキのような匂いがします。飲んでみると全然おいしい。塩気はまったく無く、日本の飲むヨーグルトによく似ていますが、ジュースっぽさより、ヨーグルトの酸味や風味がしっかりしています。",
-          "facts": ["jnKVIXn4qQs@5470#food", "jnKVIXn4qQs@5760#food", "jnKVIXn4qQs@6060#food", "jnKVIXn4qQs@5850#food"]
-        },
-        {
-          "text": "アルメニアで飲んだヨーグルトのジュースがとてもまずかったので、警戒していました。でも、想像よりずっとおいしかったです。",
-          "facts": ["jnKVIXn4qQs@6000#caution", "jnKVIXn4qQs@6090#quote"]
+          "text": "イチゴのアイリャンは真っピンクでトロトロ。日本の飲むヨーグルトによく似ていて、想像よりずっとおいしかったです。",
+          "facts": ["jnKVIXn4qQs@5760#food", "jnKVIXn4qQs@5850#food", "jnKVIXn4qQs@6090#quote"]
         }
-      ]
+      ],
+      "article": "yogurt"
     },
     "eat/banitsa": {
       "facts": ["hJ6vFAGX3rI@2290#food", "hJ6vFAGX3rI@2370#price", "hJ6vFAGX3rI@2490#food"],
