@@ -4,17 +4,17 @@
  "id": "jnKVIXn4qQs-p1",
  "style": "style_isl.json",
  "sources": {
-  "c2_01": {
+  "c3_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_s/01_card_uk_chester.mp4",
    "watermark": "prism_live",
    "t0": 0.0
   },
-  "c2_02": {
+  "c3_02": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_s/02_card_egypt_tomb.mp4",
    "watermark": "prism_live",
    "t0": 60.0
   },
-  "c2_03": {
+  "c3_03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_s/03_card_mosque_blue.mp4",
    "watermark": "prism_live",
    "t0": 120.0
@@ -24,7 +24,7 @@
    "watermark": "prism_live",
    "t0": 0.0
   },
-  "c4_01": {
+  "c5_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/-oDWI23uBgc/01_0-15-55_0-16-05.mp4",
    "watermark": "prism_live",
    "t0": 955.0,
@@ -46,7 +46,7 @@
     "margin": 5
    }
   },
-  "c3_01": {
+  "c4_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/01_0-35-56_0-36-12.mp4",
    "watermark": "prism_live",
    "t0": 2156.0,
@@ -68,10 +68,10 @@
     "margin": 5
    }
   },
-  "c3_04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/04_1-36-44_1-37-04.mp4",
+  "c6_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/mat/-oDWI23uBgc/05_1-10-52_1-11-02.mp4",
    "watermark": "prism_live",
-   "t0": 5804.0,
+   "t0": 4252.0,
    "bands": {
     "size": [
      720,
@@ -79,43 +79,21 @@
     ],
     "rows": [
      [
-      135,
-      235
+      115,
+      205
      ],
      [
-      1115,
+      975,
       1280
      ]
     ],
     "margin": 5
    }
   },
-  "c09": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/streams2.mp4",
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/rec/yt_live.mp4",
    "watermark": "prism_live",
-   "t0": 480.0
-  },
-  "c3_05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/05_1-37-18_1-37-30.mp4",
-   "watermark": "prism_live",
-   "t0": 5838.0,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      135,
-      235
-     ],
-     [
-      1115,
-      1280
-     ]
-    ],
-    "margin": 5
-   }
+   "t0": 0.0
   },
   "c03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/island_top.mp4",
@@ -127,7 +105,7 @@
    "watermark": "prism_live",
    "t0": 60.0
   },
-  "c3_02": {
+  "c4_02": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/02_0-36-28_0-36-48.mp4",
    "watermark": "prism_live",
    "t0": 2188.0,
@@ -193,11 +171,21 @@
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/cards_dialog.mp4",
    "watermark": "prism_live",
    "t0": 720.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/rec/yt_prof_s.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/rec/top_open.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
   }
  },
  "cuts": [
   {
-   "src": "c2_01",
+   "src": "c3_01",
    "in": 15,
    "out": 30,
    "row": 0,
@@ -214,7 +202,7 @@
    }
   },
   {
-   "src": "c2_02",
+   "src": "c3_02",
    "in": 15,
    "out": 30,
    "row": 0,
@@ -231,7 +219,7 @@
    }
   },
   {
-   "src": "c2_03",
+   "src": "c3_03",
    "in": 15,
    "out": 30,
    "row": 0,
@@ -256,52 +244,58 @@
    "grade": false
   },
   {
-   "src": "c4_01",
+   "src": "c5_01",
    "in": 15,
    "out": 56,
    "row": 1,
    "note": "-oDWI23uBgc 到着の配信。横断歩道と路面電車"
   },
   {
-   "src": "c3_01",
+   "src": "c4_01",
    "in": 60,
    "out": 99,
    "row": 1,
    "note": "jnKVIXn4qQs ソフィアの女性市場の通り"
   },
   {
-   "src": "c3_04",
-   "in": 405,
-   "out": 445,
+   "src": "c6_05",
+   "in": 0,
+   "out": 40,
    "row": 1,
    "zoom": {
-    "from": 1.0,
-    "to": 1.06,
+    "from": 1.2,
+    "to": 1.2,
     "x": 0.5,
-    "y": 0.35
+    "y": 1.0
    },
-   "note": "本人の顔（公園のベンチ）"
+   "note": "本人の顔（到着の配信の部屋。下を留めて寄せ、顔を字幕より上へ。#1272 と被らないように、公園の 1:36〜1:42 は使わない）"
   },
   {
-   "src": "c09",
-   "in": 45,
-   "out": 128,
+   "src": "c2_01",
+   "in": 0,
+   "out": 83,
    "row": 2,
-   "note": "/streams を送る: 849回・693日の札 → 畳みを開いた配信の回の一覧（2.8秒の1カット）",
+   "zoom": {
+    "from": 1.1,
+    "to": 1.1,
+    "x": 0.85,
+    "y": 0.0
+   },
+   "note": "サムネの本人の顔が大きい字の下を通らないよう、上を留めて少し寄せ、左へずらす（「ライブ」の札は残す）。m.youtube.com のチャンネルの「ライブ」（ログアウトの見た目・スマホの大きさ）。ライブの札が見える所から送り始める",
    "grade": false
   },
   {
-   "src": "c3_05",
-   "in": 195,
-   "out": 246,
+   "src": "c6_05",
+   "in": 75,
+   "out": 126,
    "row": 3,
    "zoom": {
-    "from": 1.0,
-    "to": 1.06,
+    "from": 1.2,
+    "to": 1.2,
     "x": 0.5,
-    "y": 0.35
+    "y": 1.0
    },
-   "note": "配信の本人の顔（飲んだあと。1:37:20 前後は瓶が画面を塞ぐので使わない）"
+   "note": "下を留めて寄せ、顔を字幕より上へ。配信の本人の得意げな笑顔（到着の配信の部屋。#1272 と被らないように公園の 1:37 を外した。2:18 は元の配信がカクつく）"
   },
   {
    "src": "c03",
@@ -334,7 +328,7 @@
    "grade": false
   },
   {
-   "src": "c3_02",
+   "src": "c4_02",
    "in": 60,
    "out": 124,
    "row": 5,
@@ -413,24 +407,46 @@
    "grade": false
   },
   {
-   "src": "c3_04",
-   "in": 240,
-   "out": 307,
+   "src": "c6_05",
+   "in": 180,
+   "out": 204,
    "row": 12,
    "zoom": {
-    "from": 1.0,
-    "to": 1.06,
+    "from": 1.2,
+    "to": 1.2,
     "x": 0.5,
-    "y": 0.35
+    "y": 1.0
    },
-   "note": "本人の顔"
+   "note": "本人の笑顔（到着の配信の部屋。下を留めて寄せる）"
   },
   {
-   "src": "c01",
-   "in": 78,
-   "out": 161,
+   "src": "c2_02",
+   "in": 12,
+   "out": 55,
+   "row": 12,
+   "note": "チャンネルのプロフィール → 「他 4 件のリンク」を押す（指の丸）→ 説明のシートが開く",
+   "grade": false
+  },
+  {
+   "src": "c2_02",
+   "in": 72,
+   "out": 112,
    "row": 13,
-   "note": "島ぜんぶ（題の行の画）→ 寄る動き",
+   "zoom": {
+    "from": 1.4,
+    "to": 1.4,
+    "x": 0.15,
+    "y": 1.0
+   },
+   "note": "リンク欄 → あやと島のリンクを押す（指の丸）。下を留めて寄せ、あやと島のリンクを字幕より上へ運ぶ",
+   "grade": false
+  },
+  {
+   "src": "c2_03",
+   "in": 0,
+   "out": 73,
+   "row": 13,
+   "note": "開いたあやと島のトップ（看板・あやと・住人が歩く）",
    "grade": false
   }
  ],
@@ -472,7 +488,11 @@
       "text": "YouTubeの配信が追いきれへん！",
       "big": "shake_red"
      }
-    ]
+    ],
+    "face_overlap_ok": {
+     "frames": 10,
+     "why": "YouTube のアーカイブの一覧のサムネに写る本人の小さい顔（高さ 80px ほど）が、送るあいだ字の下を通る。一覧そのものが言った物（F-088）なので、寄せて右へずらしたうえで残る数コマだけ通す"
+    }
    },
    {
     "text": "だから天才エンジニアのおいらが、配信丸わかりサイト「あやと島」を作ってみた！",
@@ -575,8 +595,8 @@
  "meta": {
   "spec": "/home/user/live-streaming/shorts/videos/island-site/p1/spec.json",
   "fps": 30,
-  "frames": 1285,
-  "seconds": 42.833,
+  "frames": 1315,
+  "seconds": 43.833,
   "rows": [
    {
     "row": 0,
@@ -600,7 +620,7 @@
     "cuts": [
      "-oDWI23uBgc 0:15:55.5+1.37s",
      "0:35:58.0+1.30s",
-     "1:36:57.5+1.33s"
+     "-oDWI23uBgc 1:10:52.0+1.33s"
     ],
     "line": "日本に帰らず2年間、海外を旅しながら毎日配信してるおいらやねんけど、",
     "telop": null
@@ -611,7 +631,7 @@
     "frames": 83,
     "voice_frames": 75,
     "cuts": [
-     "islRecSite1 0:08:01.5+2.77s"
+     "islRecSite2 0:00:00.0+2.77s"
     ],
     "line": "アーカイブが多すぎて、YouTubeの配信が追いきれへん！",
     "telop": null,
@@ -631,7 +651,7 @@
     "frames": 127,
     "voice_frames": 119,
     "cuts": [
-     "1:37:24.5+1.70s",
+     "-oDWI23uBgc 1:10:54.5+1.70s",
      "islRecSite1 0:02:00.3+2.53s"
     ],
     "line": "だから天才エンジニアのおいらが、配信丸わかりサイト「あやと島」を作ってみた！",
@@ -753,7 +773,8 @@
     "frames": 67,
     "voice_frames": 59,
     "cuts": [
-     "1:36:52.0+2.23s"
+     "-oDWI23uBgc 1:10:58.0+0.80s",
+     "islRecSite2 0:01:00.4+1.43s"
     ],
     "line": "ぜひみんなも、配信に遊びに来てな！",
     "telop": null
@@ -761,10 +782,11 @@
    {
     "row": 13,
     "from": 1202,
-    "frames": 83,
+    "frames": 113,
     "voice_frames": 60,
     "cuts": [
-     "islRecSite1 0:00:02.6+2.77s"
+     "islRecSite2 0:01:02.4+1.33s",
+     "islRecSite2 0:02:00.0+2.43s"
     ],
     "line": "みんなやったら、最初にどんなことを知りたい？",
     "telop": null
@@ -777,8 +799,8 @@
    "target_cps": 9.0,
    "voiced_s": 38.6,
    "cps_voiced": 8.73,
-   "video_s": 42.83,
-   "cps_video": 7.87
+   "video_s": 43.83,
+   "cps_video": 7.69
   }
  },
  "bgm": {
@@ -800,6 +822,11 @@
   {
    "at": 47,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 232,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
    "db": 0
   },
   {
@@ -853,8 +880,18 @@
    "db": 0
   },
   {
-   "at": 1137,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/hyokkori.mp3",
+   "at": 1185,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1223,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1242,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kira_s.wav",
    "db": 0
   }
  ],

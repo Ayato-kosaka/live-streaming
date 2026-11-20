@@ -113,12 +113,6 @@
    "name": "pito"
   },
   {
-   "row": 12,
-   "cut": 0,
-   "off_s": 0.05,
-   "name": "pop"
-  },
-  {
    "row": 11,
    "cut": 1,
    "off_s": 0.0,
@@ -129,6 +123,30 @@
    "cut": 1,
    "src_s": 1.93,
    "name": "pito"
+  },
+  {
+   "row": 2,
+   "cut": 0,
+   "off_s": 0.0,
+   "name": "whoosh"
+  },
+  {
+   "row": 12,
+   "cut": 1,
+   "src_s": 1.27,
+   "name": "pito"
+  },
+  {
+   "row": 13,
+   "cut": 0,
+   "src_s": 3.1,
+   "name": "pito"
+  },
+  {
+   "row": 13,
+   "cut": 1,
+   "off_s": 0.0,
+   "name": "kira"
   }
  ],
  "notes": [

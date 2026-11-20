@@ -4,20 +4,10 @@
  "id": "jnKVIXn4qQs-p1",
  "style": "style_isl.json",
  "sources": {
-  "c3_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/01_card_uk_chester.mp4",
+  "c6_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/mat/-oDWI23uBgc/01_0-57-50_0-58-24.mp4",
    "watermark": "prism_live",
-   "t0": 0.0
-  },
-  "c3_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/02_card_mosque_blue.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
-  },
-  "c5_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/-oDWI23uBgc/02_0-16-14_0-16-25.mp4",
-   "watermark": "prism_live",
-   "t0": 974.0,
+   "t0": 3470.0,
    "bands": {
     "size": [
      720,
@@ -35,16 +25,90 @@
     ],
     "margin": 5
    }
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/art_g/01_card_sweden_sunset.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/art_g/02_card_armenia_live.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
   },
   "c01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_cover.mp4",
    "watermark": "prism_live",
    "t0": 0.0
   },
-  "c5_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/-oDWI23uBgc/01_0-15-55_0-16-05.mp4",
+  "c5_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/mat/jnKVIXn4qQs/03_1-33-30_1-33-40.mp4",
    "watermark": "prism_live",
-   "t0": 955.0,
+   "t0": 5610.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c5_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/mat/jnKVIXn4qQs/04_1-41-20_1-41-30.mp4",
+   "watermark": "prism_live",
+   "t0": 6080.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/art_g/04_card_skopje_statue.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c3_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/art_g/05_card_mosque_hall.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c3_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/art_g/06_card_sofia_xmas.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/wv_text.mp4",
+   "watermark": "prism_live",
+   "t0": 480.0
+  },
+  "c6_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/mat/-oDWI23uBgc/03_2-00-10_2-00-22.mp4",
+   "watermark": "prism_live",
+   "t0": 7210.0,
    "bands": {
     "size": [
      720,
@@ -57,50 +121,6 @@
      ],
      [
       975,
-      1280
-     ]
-    ],
-    "margin": 5
-   }
-  },
-  "c4_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/02_0-36-28_0-36-48.mp4",
-   "watermark": "prism_live",
-   "t0": 2188.0,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      135,
-      235
-     ],
-     [
-      1115,
-      1280
-     ]
-    ],
-    "margin": 5
-   }
-  },
-  "c4_04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/04_1-36-44_1-37-04.mp4",
-   "watermark": "prism_live",
-   "t0": 5804.0,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      135,
-      235
-     ],
-     [
-      1115,
       1280
      ]
     ],
@@ -108,34 +128,9 @@
    }
   },
   "c3_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/03_card_skopje_statue.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/art_g/03_card_skopje_ship.mp4",
    "watermark": "prism_live",
    "t0": 120.0
-  },
-  "c3_04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/04_card_mosque_hall.mp4",
-   "watermark": "prism_live",
-   "t0": 180.0
-  },
-  "c3_05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/05_card_sofia_xmas.mp4",
-   "watermark": "prism_live",
-   "t0": 240.0
-  },
-  "c09": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/wv_text.mp4",
-   "watermark": "prism_live",
-   "t0": 480.0
-  },
-  "c2_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/top_idle.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
-  },
-  "c2_06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/travel_list.mp4",
-   "watermark": "prism_live",
-   "t0": 300.0
   },
   "c08": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/sk_cover.mp4",
@@ -157,20 +152,20 @@
    "watermark": "prism_live",
    "t0": 540.0
   },
-  "c3_06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/06_photo_meiji_bulgaria.mp4",
+  "c3_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/art_g/07_photo_meiji_bulgaria.mp4",
    "watermark": "prism_live",
-   "t0": 300.0
+   "t0": 360.0
   },
   "c04": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_ygt.mp4",
    "watermark": "prism_live",
    "t0": 180.0
   },
-  "c4_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/01_0-35-56_0-36-12.mp4",
+  "c5_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/mat/jnKVIXn4qQs/02_1-30-27_1-30-37.mp4",
    "watermark": "prism_live",
-   "t0": 2156.0,
+   "t0": 5427.0,
    "bands": {
     "size": [
      720,
@@ -247,9 +242,53 @@
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_info.mp4",
    "watermark": "prism_live",
    "t0": 600.0
+  },
+  "c5_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/mat/jnKVIXn4qQs/01_1-28-00_1-28-10.mp4",
+   "watermark": "prism_live",
+   "t0": 5280.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/rec/yt_prof_g.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/rec/gp_top.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/intro2/rec/gp_sofia.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
   }
  },
  "cuts": [
+  {
+   "src": "c6_01",
+   "in": 60,
+   "out": 76,
+   "row": 0,
+   "note": "到着の配信。ソフィアの通りと路面電車（#1271 は 0:15:55 の横断歩道。被らない）"
+  },
   {
    "src": "c3_01",
    "in": 15,
@@ -261,7 +300,7 @@
     "x": 0.5,
     "y": 0.45
    },
-   "note": "カード 2025-02-04 イギリス",
+   "note": "カード 2026-09-27 スウェーデンの夕日と飛行機",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -270,7 +309,7 @@
   {
    "src": "c3_02",
    "in": 15,
-   "out": 30,
+   "out": 33,
    "row": 0,
    "zoom": {
     "from": 1.0,
@@ -278,45 +317,38 @@
     "x": 0.5,
     "y": 0.4
    },
-   "note": "カード 2025-06-18 モスク",
+   "note": "カード 2026-04-28 アルメニアの公園。自撮り棒のスマホで配信",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
    }
   },
   {
-   "src": "c5_02",
-   "in": 30,
-   "out": 51,
-   "row": 0,
-   "note": "到着の配信の広場"
-  },
-  {
    "src": "c01",
-   "in": 29,
+   "in": 27,
    "out": 108,
    "row": 0,
    "note": "ソフィア観光ガイドの表紙から送る",
    "grade": false
   },
   {
-   "src": "c5_01",
+   "src": "c5_03",
    "in": 30,
    "out": 61,
    "row": 1,
-   "note": "到着の配信。横断歩道と路面電車"
+   "note": "ヨーグルトの配信。ソフィアの大通りを歩く"
   },
   {
-   "src": "c4_02",
-   "in": 60,
-   "out": 92,
+   "src": "c6_01",
+   "in": 720,
+   "out": 752,
    "row": 1,
-   "note": "ソフィアの市場の通り"
+   "note": "到着の配信。ソフィアの歩道"
   },
   {
-   "src": "c4_04",
-   "in": 150,
-   "out": 177,
+   "src": "c5_04",
+   "in": 120,
+   "out": 147,
    "row": 1,
    "zoom": {
     "from": 1.0,
@@ -324,10 +356,10 @@
     "x": 0.5,
     "y": 0.35
    },
-   "note": "本人の顔"
+   "note": "本人の顔（公園で話す）"
   },
   {
-   "src": "c3_03",
+   "src": "c3_04",
    "in": 15,
    "out": 51,
    "row": 2,
@@ -344,7 +376,7 @@
    }
   },
   {
-   "src": "c3_04",
+   "src": "c3_05",
    "in": 15,
    "out": 51,
    "row": 2,
@@ -361,7 +393,7 @@
    }
   },
   {
-   "src": "c3_05",
+   "src": "c3_06",
    "in": 15,
    "out": 54,
    "row": 2,
@@ -392,31 +424,39 @@
    "grade": false
   },
   {
-   "src": "c2_02",
-   "in": 9,
-   "out": 65,
+   "src": "c6_03",
+   "in": 165,
+   "out": 221,
    "row": 4,
    "zoom": {
-    "from": 1.12,
-    "to": 1.25,
+    "from": 1.0,
+    "to": 1.06,
     "x": 0.5,
-    "y": 0.52
+    "y": 0.4
    },
-   "note": "あやとのキャラ",
-   "grade": false
+   "note": "到着の配信。カフェの本人"
   },
   {
-   "src": "c2_06",
-   "in": 42,
-   "out": 90,
+   "src": "c3_03",
+   "in": 15,
+   "out": 51,
    "row": 5,
-   "note": "/travel 行った順に",
-   "grade": false
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "カード 2026-10-12 スコピエの船の建物",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
   },
   {
    "src": "c08",
    "in": 30,
-   "out": 102,
+   "out": 114,
    "row": 5,
    "note": "/travel/north-macedonia/skopje の表紙",
    "grade": false
@@ -454,7 +494,7 @@
    "grade": false
   },
   {
-   "src": "c3_06",
+   "src": "c3_07",
    "in": 15,
    "out": 101,
    "row": 9,
@@ -479,11 +519,11 @@
    "grade": false
   },
   {
-   "src": "c4_01",
+   "src": "c5_02",
    "in": 60,
    "out": 103,
    "row": 10,
-   "note": "それを元にした配信（ソフィアの市場の通り）"
+   "note": "それを元にした配信（店のヨーグルトの棚。#1271 が使う市場の通りはやめた）"
   },
   {
    "src": "c4_03",
@@ -496,7 +536,7 @@
     "x": 0.5,
     "y": 0.5
    },
-   "note": "ピンクのいちごの飲むヨーグルト（コップに注いだ所。1:36:22 は瓶の口の寄りでぼやける）"
+   "note": "ピンクのいちごの飲むヨーグルト（コップに注いだ所）"
   },
   {
    "src": "c4_05",
@@ -524,7 +564,7 @@
    "in": 8,
    "out": 29,
    "row": 13,
-   "note": "食べたいもの（料理の写真の並びが顔に誤検出されるので、字幕に掛かる前に切る）",
+   "note": "食べたいもの",
    "grade": false
   },
   {
@@ -552,18 +592,48 @@
    "grade": false
   },
   {
-   "src": "c4_02",
-   "in": 360,
-   "out": 403,
+   "src": "c5_01",
+   "in": 60,
+   "out": 103,
    "row": 14,
-   "note": "その配信のアーカイブ（ソフィアの市場）。ソフィアの動画の一覧は、配信のサムネの顔が字幕に掛かるので使わない"
+   "note": "その配信のアーカイブ（ソフィアの通りを歩いて店へ。#1271 の市場の通りとは別の秒）"
   },
   {
-   "src": "c01",
-   "in": 36,
+   "src": "c2_01",
+   "in": 19,
+   "out": 40,
+   "row": 15,
+   "note": "チャンネルのホームから頭へ戻り、「...さらに表示」を押す（指の丸）",
+   "grade": false
+  },
+  {
+   "src": "c2_01",
+   "in": 51,
    "out": 110,
    "row": 15,
-   "note": "表紙（題の行の画）",
+   "zoom": {
+    "from": 1.4,
+    "to": 1.4,
+    "x": 0.15,
+    "y": 1.0
+   },
+   "note": "下を留めて寄せ、あやと島のリンクを字幕より上へ。開いた説明のシートを送ってリンク欄 →「配信丸わかりサイト《あやと島》」を押す（指の丸）",
+   "grade": false
+  },
+  {
+   "src": "c2_02",
+   "in": 18,
+   "out": 96,
+   "row": 15,
+   "note": "開いたあやと島のトップ → 下の「ブルガリア・ソフィア」の札まで送って押す（#1271 の島の画とは別の撮り）",
+   "grade": false
+  },
+  {
+   "src": "c2_03",
+   "in": 5,
+   "out": 31,
+   "row": 15,
+   "note": "押した先: ソフィア観光ガイドの表紙（パンくず「島 › 歩いた国 › ブルガリア › ソフィア」）",
    "grade": false
   }
  ],
@@ -720,8 +790,8 @@
  "meta": {
   "spec": "/home/user/live-streaming/shorts/videos/island-guide/p1/spec.json",
   "fps": 30,
-  "frames": 1404,
-  "seconds": 46.8,
+  "frames": 1514,
+  "seconds": 50.467,
   "rows": [
    {
     "row": 0,
@@ -729,10 +799,10 @@
     "frames": 130,
     "voice_frames": 122,
     "cuts": [
-     "islCardG01x 0:00:00.5+0.50s",
-     "islCardG01x 0:01:00.5+0.50s",
-     "-oDWI23uBgc 0:16:15.0+0.70s",
-     "islRecGuid1 0:00:01.0+2.63s"
+     "-oDWI23uBgc 0:57:52.0+0.53s",
+     "islCardG02x 0:00:00.5+0.50s",
+     "islCardG02x 0:01:00.5+0.60s",
+     "islRecGuid1 0:00:00.9+2.70s"
     ],
     "line": "無帰国2年の海外ライバーが、世界一わかりやすい観光ガイドサイトを作ってみた！",
     "telop": null
@@ -743,9 +813,9 @@
     "frames": 90,
     "voice_frames": 82,
     "cuts": [
-     "-oDWI23uBgc 0:15:56.0+1.03s",
-     "0:36:30.0+1.07s",
-     "1:36:49.0+0.90s"
+     "1:33:31.0+1.03s",
+     "-oDWI23uBgc 0:58:14.0+1.07s",
+     "1:41:24.0+0.90s"
     ],
     "line": "日本に帰らず2年、海外を旅してるおいらやねんけど、",
     "telop": null
@@ -756,9 +826,9 @@
     "frames": 111,
     "voice_frames": 103,
     "cuts": [
-     "islCardG01x 0:02:00.5+1.20s",
-     "islCardG01x 0:03:00.5+1.20s",
-     "islCardG01x 0:04:00.5+1.30s"
+     "islCardG02x 0:03:00.5+1.20s",
+     "islCardG02x 0:04:00.5+1.20s",
+     "islCardG02x 0:05:00.5+1.30s"
     ],
     "line": "マイナーな東ヨーロッパを回ってると、るるぶみたいなガイドブックがないねん！",
     "telop": null
@@ -789,7 +859,7 @@
     "frames": 56,
     "voice_frames": 48,
     "cuts": [
-     "islRecSite1 0:01:00.3+1.87s"
+     "-oDWI23uBgc 2:00:15.5+1.87s"
     ],
     "line": "だから天才エンジニアのおいらが、",
     "telop": null
@@ -800,8 +870,8 @@
     "frames": 120,
     "voice_frames": 112,
     "cuts": [
-     "islRecSite1 0:05:01.4+1.60s",
-     "islRecGuid1 0:07:01.0+2.40s"
+     "islCardG02x 0:02:00.5+1.20s",
+     "islRecGuid1 0:07:01.0+2.80s"
     ],
     "line": "行った国の、日本のガイドブックくらいわかりやすい無料サイトを作ったった！",
     "telop": null,
@@ -855,7 +925,7 @@
     "frames": 86,
     "voice_frames": 78,
     "cuts": [
-     "islCardG01x 0:05:00.5+2.87s"
+     "islCardG02x 0:06:00.5+2.87s"
     ],
     "line": "ブルガリアといえば、明治ブルガリアヨーグルトやんか？",
     "telop": null
@@ -867,7 +937,7 @@
     "voice_frames": 92,
     "cuts": [
      "islRecGuid1 0:03:00.4+1.90s",
-     "0:35:58.0+1.43s"
+     "1:30:29.0+1.43s"
     ],
     "line": "だから「ヨーグルト食べ比べ」が載ってて、それを元に配信してる！",
     "telop": null
@@ -924,7 +994,7 @@
     "voice_frames": 78,
     "cuts": [
      "islRecGuid1 0:03:02.3+1.43s",
-     "0:36:40.0+1.43s"
+     "1:28:02.0+1.43s"
     ],
     "line": "実際に行った感想も、配信のアーカイブから書いてる！",
     "telop": null
@@ -932,10 +1002,13 @@
    {
     "row": 15,
     "from": 1330,
-    "frames": 74,
+    "frames": 184,
     "voice_frames": 51,
     "cuts": [
-     "islRecGuid1 0:00:01.2+2.47s"
+     "islRecGuid2 0:00:00.6+0.70s",
+     "islRecGuid2 0:00:01.7+1.97s",
+     "islRecGuid2 0:01:00.6+2.60s",
+     "islRecGuid2 0:02:00.2+0.87s"
     ],
     "line": "みんな、このサイト使ってみたい？",
     "telop": null
@@ -948,8 +1021,8 @@
    "target_cps": 9.0,
    "voiced_s": 42.03,
    "cps_voiced": 8.99,
-   "video_s": 46.8,
-   "cps_video": 8.08
+   "video_s": 50.47,
+   "cps_video": 7.49
   }
  },
  "bgm": {
@@ -964,12 +1037,12 @@
  "stickers": [],
  "sfx": [
   {
-   "at": 29,
+   "at": 30,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
    "db": 0
   },
   {
-   "at": 51,
+   "at": 49,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kira_s.wav",
    "db": 0
   },
@@ -984,7 +1057,7 @@
    "db": 0
   },
   {
-   "at": 522,
+   "at": 510,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kira_s.wav",
    "db": 0
   },
@@ -1030,6 +1103,31 @@
   },
   {
    "at": 1329,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 1346,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1400,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1410,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kira_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1470,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1488,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
    "db": 0
   }

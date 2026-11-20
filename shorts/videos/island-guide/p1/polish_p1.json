@@ -135,6 +135,36 @@
    "cut": 1,
    "off_s": -0.02,
    "name": "whoosh"
+  },
+  {
+   "row": 15,
+   "cut": 0,
+   "src_s": 1.17,
+   "name": "pito"
+  },
+  {
+   "row": 15,
+   "cut": 1,
+   "src_s": 3.33,
+   "name": "pito"
+  },
+  {
+   "row": 15,
+   "cut": 2,
+   "off_s": 0.0,
+   "name": "kira"
+  },
+  {
+   "row": 15,
+   "cut": 2,
+   "src_s": 2.6,
+   "name": "pito"
+  },
+  {
+   "row": 15,
+   "cut": 3,
+   "off_s": 0.0,
+   "name": "whoosh"
   }
  ],
  "notes": [
