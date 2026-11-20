@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__ygt-p1-v3b",
+ "mode": "render",
+ "dest": "render/ygt-p1-v3b/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/ygt-p1-v3b.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 2012,
+  "tar_gz": 1179,
+  "encrypted": 1184
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1184,
+   "sha256": "9c124873e814541bd7745c04a302247f9e9617925832580d2136fce8aaf61347"
+  }
+ ],
+ "hmac_sha256": "45563e9abf6c5e19a506d822957f61dbfb73511ebc157fb808551707bc146ad4",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-20T12:34:05+00:00",
+ "nonce": "5373d5a606b8bf08d022e406"
+}
