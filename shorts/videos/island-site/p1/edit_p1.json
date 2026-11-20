@@ -1,0 +1,869 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "jnKVIXn4qQs-p1",
+ "style": "style_isl.json",
+ "sources": {
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_s/01_card_uk_chester.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_s/02_card_egypt_tomb.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_s/03_card_mosque_blue.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/top_view.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/-oDWI23uBgc/01_0-15-55_0-16-05.mp4",
+   "watermark": "prism_live",
+   "t0": 955.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      115,
+      205
+     ],
+     [
+      975,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/01_0-35-56_0-36-12.mp4",
+   "watermark": "prism_live",
+   "t0": 2156.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/04_1-36-44_1-37-04.mp4",
+   "watermark": "prism_live",
+   "t0": 5804.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/streams2.mp4",
+   "watermark": "prism_live",
+   "t0": 480.0
+  },
+  "c3_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/05_1-37-18_1-37-30.mp4",
+   "watermark": "prism_live",
+   "t0": 5838.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/island_top.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/top_idle.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/02_0-36-28_0-36-48.mp4",
+   "watermark": "prism_live",
+   "t0": 2188.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/friends_flip.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/island_pins.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/travel_map.mp4",
+   "watermark": "prism_live",
+   "t0": 600.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/travel_list.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/kitchen_stamp.mp4",
+   "watermark": "prism_live",
+   "t0": 360.0
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/kitchen_detail.mp4",
+   "watermark": "prism_live",
+   "t0": 660.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/legends_scroll.mp4",
+   "watermark": "prism_live",
+   "t0": 420.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/cards_scroll.mp4",
+   "watermark": "prism_live",
+   "t0": 540.0
+  },
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/cards_dialog.mp4",
+   "watermark": "prism_live",
+   "t0": 720.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 30,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "カード 2025-02-04 イギリス",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_02",
+   "in": 15,
+   "out": 30,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "カード 2025-05-03 エジプト",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_03",
+   "in": 15,
+   "out": 30,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "カード 2025-06-18 モスク",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c01",
+   "in": 12,
+   "out": 79,
+   "row": 0,
+   "note": "トップで「島をながめる」を押す → 島ぜんぶへ引く動き（看板・入口の札）",
+   "grade": false
+  },
+  {
+   "src": "c4_01",
+   "in": 15,
+   "out": 56,
+   "row": 1,
+   "note": "-oDWI23uBgc 到着の配信。横断歩道と路面電車"
+  },
+  {
+   "src": "c3_01",
+   "in": 60,
+   "out": 99,
+   "row": 1,
+   "note": "jnKVIXn4qQs ソフィアの女性市場の通り"
+  },
+  {
+   "src": "c3_04",
+   "in": 405,
+   "out": 445,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "本人の顔（公園のベンチ）"
+  },
+  {
+   "src": "c09",
+   "in": 45,
+   "out": 128,
+   "row": 2,
+   "note": "/streams を送る: 849回・693日の札 → 畳みを開いた配信の回の一覧（2.8秒の1カット）",
+   "grade": false
+  },
+  {
+   "src": "c3_05",
+   "in": 195,
+   "out": 246,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "配信の本人の顔（飲んだあと。1:37:20 前後は瓶が画面を塞ぐので使わない）"
+  },
+  {
+   "src": "c03",
+   "in": 9,
+   "out": 85,
+   "row": 3,
+   "note": "/island「島の地図」の頭から島の鉢へ送る（島の画が続かないように、トップの島ではなくこちら）",
+   "grade": false
+  },
+  {
+   "src": "c02",
+   "in": 69,
+   "out": 115,
+   "row": 4,
+   "note": "地面を押す → 歩く",
+   "grade": false
+  },
+  {
+   "src": "c02",
+   "in": 138,
+   "out": 177,
+   "row": 5,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "住人が歩く（名前は出ない）",
+   "grade": false
+  },
+  {
+   "src": "c3_02",
+   "in": 60,
+   "out": 124,
+   "row": 5,
+   "note": "配信の画（ソフィアの市場へ歩く）。配信を見に来てくれている＝この配信"
+  },
+  {
+   "src": "c04",
+   "in": 30,
+   "out": 107,
+   "row": 6,
+   "note": "/friends 住民図鑑",
+   "grade": false
+  },
+  {
+   "src": "c05",
+   "in": 15,
+   "out": 81,
+   "row": 7,
+   "note": "/island 北欧・コーカサス・中東 → ヨーロッパ（「5つあって」「ヨーロッパ編」）",
+   "grade": false
+  },
+  {
+   "src": "c11",
+   "in": 3,
+   "out": 78,
+   "row": 7,
+   "note": "/travel の地図: 地方の札（中東 → バルカン → コーカサス）を押す",
+   "grade": false
+  },
+  {
+   "src": "c06",
+   "in": 36,
+   "out": 97,
+   "row": 8,
+   "note": "/travel 行った順に（開いたヨーロッパを送る）",
+   "grade": false
+  },
+  {
+   "src": "c07",
+   "in": 12,
+   "out": 57,
+   "row": 9,
+   "note": "スタンプを押す",
+   "grade": false
+  },
+  {
+   "src": "c12",
+   "in": 15,
+   "out": 83,
+   "row": 9,
+   "note": "料理の頁を送って、配信の回を押す（チャットの欄はぼかした）",
+   "grade": false
+  },
+  {
+   "src": "c08",
+   "in": 12,
+   "out": 67,
+   "row": 10,
+   "note": "/legends",
+   "grade": false
+  },
+  {
+   "src": "c10",
+   "in": 9,
+   "out": 48,
+   "row": 11,
+   "note": "カードの一覧を送る",
+   "grade": false
+  },
+  {
+   "src": "c13",
+   "in": 55,
+   "out": 113,
+   "row": 11,
+   "note": "あやとが入った写真 → 大きさの棒であやとを大きく（札の中もゆっくり送る。写真の描き直しの白い間は使わない）",
+   "grade": false
+  },
+  {
+   "src": "c3_04",
+   "in": 240,
+   "out": 307,
+   "row": 12,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "本人の顔"
+  },
+  {
+   "src": "c01",
+   "in": 78,
+   "out": 161,
+   "row": 13,
+   "note": "島ぜんぶ（題の行の画）→ 寄る動き",
+   "grade": false
+  }
+ ],
+ "title": {
+  "text": "無帰国2年、海外毎日配信の\n丸わかりサイトを作ってみた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 105
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "無帰国2年、海外毎日配信の丸わかりサイトを作ってみた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/01.wav",
+    "tts_text": "むきこくにねん、海外毎日配信の、丸わかりサイトを作ってみた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "日本に帰らず2年間、海外を旅しながら毎日配信してるおいらやねんけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/02.wav",
+    "tts_text": "日本に帰らずにねんかん、海外を旅しながら毎日配信してるおいらやねんけど、",
+    "at": 112
+   },
+   {
+    "text": "アーカイブが多すぎて、YouTubeの配信が追いきれへん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/03.wav",
+    "tts_text": "アーカイブが多すぎて、ユーチューブの配信が追いきれへん！",
+    "at": 232,
+    "parts": [
+     {
+      "text": "アーカイブが多すぎて、"
+     },
+     {
+      "text": "YouTubeの配信が追いきれへん！",
+      "big": "shake_red"
+     }
+    ]
+   },
+   {
+    "text": "だから天才エンジニアのおいらが、配信丸わかりサイト「あやと島」を作ってみた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/04.wav",
+    "tts_text": "だから天才エンジニアのおいらが、配信丸わかりサイト、あやとじまを作ってみた！",
+    "at": 315,
+    "parts": [
+     {
+      "text": "だから天才エンジニアのおいらが、",
+      "big": "shake_white"
+     },
+     {
+      "text": "配信丸わかりサイト「あやと島」を作ってみた！"
+     }
+    ]
+   },
+   {
+    "text": "この島、歩けんねんけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/05.wav",
+    "tts_text": "このしま、あるけんねんけど、",
+    "at": 442
+   },
+   {
+    "text": "歩いてるキャラクターは、実際に配信を見に来てくれてる人やねん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/06.wav",
+    "tts_text": "あるいてるキャラクターは、実際に配信を見にきてくれてる人やねん！",
+    "at": 488
+   },
+   {
+    "text": "応援してくれた人を、一人ずつキャラクターにしてる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/07.wav",
+    "tts_text": "応援してくれた人を、ひとりずつキャラクターにしてる！",
+    "at": 591
+   },
+   {
+    "text": "島はいま5つあって、ヨーロッパ編・中東編・バルカン半島編みたいに分かれてる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/08.wav",
+    "tts_text": "島はいま、いつつあって、ヨーロッパへん、ちゅうとうへん、バルカンはんとうへんみたいにわかれてる！",
+    "at": 668,
+    "highlight": [
+     "5つ"
+    ]
+   },
+   {
+    "text": "今まで行った国も、ずらっと見れる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/09.wav",
+    "tts_text": "いままでいった国も、ずらっと見れる！",
+    "at": 809,
+    "highlight": [
+     "行った国"
+    ]
+   },
+   {
+    "text": "料理のスタンプを押すと、その料理を作ったクッキングチャンネルの回が見れる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/10.wav",
+    "tts_text": "料理のスタンプを押すと、その料理を作ったクッキングチャンネルのかいが見れる！",
+    "at": 870,
+    "highlight": [
+     "料理のスタンプ"
+    ]
+   },
+   {
+    "text": "今までの伝説の企画も見れる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/11.wav",
+    "tts_text": "いままでの伝説の企画も見れる！",
+    "at": 983,
+    "highlight": [
+     "伝説の企画"
+    ]
+   },
+   {
+    "text": "世界初の配信丸わかりサイト、こんなん見たことないやろ？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/12.wav",
+    "tts_text": "せかいはつの配信まるわかりサイト、こんなん見たことないやろ？",
+    "at": 1038,
+    "parts": [
+     {
+      "text": "世界初の配信丸わかりサイト、",
+      "big": "brush_zoom"
+     },
+     {
+      "text": "こんなん見たことないやろ？"
+     }
+    ]
+   },
+   {
+    "text": "ぜひみんなも、配信に遊びに来てな！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/13.wav",
+    "tts_text": "ぜひみんなも、配信に遊びにきてな！",
+    "at": 1135
+   },
+   {
+    "text": "みんなやったら、最初にどんなことを知りたい？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-site-v1/p1/14.wav",
+    "tts_text": "みんなやったら、最初にどんなことを知りたい？",
+    "at": 1202
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/island-site/p1/spec.json",
+  "fps": 30,
+  "frames": 1285,
+  "seconds": 42.833,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 112,
+    "voice_frames": 104,
+    "cuts": [
+     "islCardS01x 0:00:00.5+0.50s",
+     "islCardS01x 0:01:00.5+0.50s",
+     "islCardS01x 0:02:00.5+0.50s",
+     "islRecSite1 0:00:00.4+2.23s"
+    ],
+    "line": "無帰国2年、海外毎日配信の丸わかりサイトを作ってみた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 112,
+    "frames": 120,
+    "voice_frames": 112,
+    "cuts": [
+     "-oDWI23uBgc 0:15:55.5+1.37s",
+     "0:35:58.0+1.30s",
+     "1:36:57.5+1.33s"
+    ],
+    "line": "日本に帰らず2年間、海外を旅しながら毎日配信してるおいらやねんけど、",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 232,
+    "frames": 83,
+    "voice_frames": 75,
+    "cuts": [
+     "islRecSite1 0:08:01.5+2.77s"
+    ],
+    "line": "アーカイブが多すぎて、YouTubeの配信が追いきれへん！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "アーカイブが多すぎて、"
+     },
+     {
+      "text": "YouTubeの配信が追いきれへん！",
+      "big": "shake_red"
+     }
+    ]
+   },
+   {
+    "row": 3,
+    "from": 315,
+    "frames": 127,
+    "voice_frames": 119,
+    "cuts": [
+     "1:37:24.5+1.70s",
+     "islRecSite1 0:02:00.3+2.53s"
+    ],
+    "line": "だから天才エンジニアのおいらが、配信丸わかりサイト「あやと島」を作ってみた！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "だから天才エンジニアのおいらが、",
+      "big": "shake_white"
+     },
+     {
+      "text": "配信丸わかりサイト「あやと島」を作ってみた！"
+     }
+    ]
+   },
+   {
+    "row": 4,
+    "from": 442,
+    "frames": 46,
+    "voice_frames": 38,
+    "cuts": [
+     "islRecSite1 0:01:02.3+1.53s"
+    ],
+    "line": "この島、歩けんねんけど、",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 488,
+    "frames": 103,
+    "voice_frames": 95,
+    "cuts": [
+     "islRecSite1 0:01:04.6+1.30s",
+     "0:36:30.0+2.13s"
+    ],
+    "line": "歩いてるキャラクターは、実際に配信を見に来てくれてる人やねん！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 591,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "islRecSite1 0:03:01.0+2.57s"
+    ],
+    "line": "応援してくれた人を、一人ずつキャラクターにしてる！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 668,
+    "frames": 141,
+    "voice_frames": 133,
+    "cuts": [
+     "islRecSite1 0:04:00.5+2.20s",
+     "islRecSite1 0:10:00.1+2.50s"
+    ],
+    "line": "島はいま5つあって、ヨーロッパ編・中東編・バルカン半島編みたいに分かれてる！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 809,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "islRecSite1 0:05:01.2+2.03s"
+    ],
+    "line": "今まで行った国も、ずらっと見れる！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 870,
+    "frames": 113,
+    "voice_frames": 105,
+    "cuts": [
+     "islRecSite1 0:06:00.4+1.50s",
+     "islRecSite1 0:11:00.5+2.27s"
+    ],
+    "line": "料理のスタンプを押すと、その料理を作ったクッキングチャンネルの回が見れる！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 983,
+    "frames": 55,
+    "voice_frames": 47,
+    "cuts": [
+     "islRecSite1 0:07:00.4+1.83s"
+    ],
+    "line": "今までの伝説の企画も見れる！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 1038,
+    "frames": 97,
+    "voice_frames": 89,
+    "cuts": [
+     "islRecSite1 0:09:00.3+1.30s",
+     "islRecSite1 0:12:01.8+1.93s"
+    ],
+    "line": "世界初の配信丸わかりサイト、こんなん見たことないやろ？",
+    "telop": null,
+    "parts": [
+     {
+      "text": "世界初の配信丸わかりサイト、",
+      "big": "brush_zoom"
+     },
+     {
+      "text": "こんなん見たことないやろ？"
+     }
+    ]
+   },
+   {
+    "row": 12,
+    "from": 1135,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "1:36:52.0+2.23s"
+    ],
+    "line": "ぜひみんなも、配信に遊びに来てな！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1202,
+    "frames": 83,
+    "voice_frames": 60,
+    "cuts": [
+     "islRecSite1 0:00:02.6+2.77s"
+    ],
+    "line": "みんなやったら、最初にどんなことを知りたい？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 337,
+   "raw_voice_s": 53.9,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 38.6,
+   "cps_voiced": 8.73,
+   "video_s": 42.83,
+   "cps_video": 7.87
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "grade": {
+  "saturation": 1.4,
+  "contrast": 1.06,
+  "warmth": 0.04
+ },
+ "stickers": [],
+ "sfx": [
+  {
+   "at": 29,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 47,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 441,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 449,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 590,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 707,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 735,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 764,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 877,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 955,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1077,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kira_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1080,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1137,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/hyokkori.mp3",
+   "db": 0
+  }
+ ],
+ "notes": [
+  {
+   "from": 112,
+   "to": 153,
+   "text": "◆ブルガリア・ソフィア"
+  }
+ ],
+ "_polish": "#1271 の磨き。効果音は押した所（指の丸が出たコマ）と画の切り替え・山。色は配信の画だけ整え、画面録画はサイトの色のまま。配信の上の題の帯と下の PRISM・お城の絵は帯で切る（ヨーグルトの回・移動の回と同じ値）。効果音はポケットサウンド（mp3 はリポジトリに置かない）"
+}

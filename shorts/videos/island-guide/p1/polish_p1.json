@@ -1,0 +1,163 @@
+{
+ "_note": "#1272 の磨き。効果音は押した所・画の切り替え・山。色は配信の画だけ整え、画面録画はサイトの色のまま。配信の上の題の帯と下の PRISM・お城の絵は帯で切る。効果音はポケットサウンド（mp3 はリポジトリに置かない）",
+ "bands_by": {
+  "jnKVIXn4qQs": {
+   "size": [
+    720,
+    1280
+   ],
+   "rows": [
+    [
+     135,
+     235
+    ],
+    [
+     1115,
+     1280
+    ]
+   ],
+   "margin": 5
+  },
+  "-oDWI23uBgc": {
+   "size": [
+    720,
+    1280
+   ],
+   "rows": [
+    [
+     115,
+     205
+    ],
+    [
+     975,
+     1280
+    ]
+   ],
+   "margin": 5
+  }
+ },
+ "grade": {
+  "saturation": 1.4,
+  "contrast": 1.06,
+  "warmth": 0.04
+ },
+ "grade_art": {
+  "saturation": 1.1,
+  "contrast": 1.03
+ },
+ "sfx_files": {
+  "pito": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+  "kira": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kira_s.wav",
+  "whoosh": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+  "pop": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/hyokkori.mp3"
+ },
+ "sfx": [
+  {
+   "row": 0,
+   "cut": 1,
+   "off_s": -0.02,
+   "name": "whoosh"
+  },
+  {
+   "row": 0,
+   "cut": 3,
+   "off_s": 0.0,
+   "name": "kira"
+  },
+  {
+   "row": 2,
+   "cut": 1,
+   "off_s": -0.02,
+   "name": "whoosh"
+  },
+  {
+   "row": 2,
+   "cut": 2,
+   "off_s": -0.02,
+   "name": "whoosh"
+  },
+  {
+   "row": 5,
+   "cut": 1,
+   "off_s": 0.0,
+   "name": "kira"
+  },
+  {
+   "row": 7,
+   "cut": 0,
+   "src_s": 1.3,
+   "name": "pito"
+  },
+  {
+   "row": 8,
+   "cut": 1,
+   "off_s": 0.0,
+   "name": "pito"
+  },
+  {
+   "row": 9,
+   "cut": 0,
+   "off_s": 0.05,
+   "name": "pop"
+  },
+  {
+   "row": 10,
+   "cut": 0,
+   "src_s": 0.6,
+   "name": "pito"
+  },
+  {
+   "row": 11,
+   "cut": 1,
+   "off_s": 0.0,
+   "name": "pop"
+  },
+  {
+   "row": 12,
+   "cut": 0,
+   "off_s": 0.0,
+   "name": "whoosh"
+  },
+  {
+   "row": 13,
+   "cut": 1,
+   "off_s": -0.02,
+   "name": "whoosh"
+  },
+  {
+   "row": 13,
+   "cut": 2,
+   "off_s": -0.02,
+   "name": "whoosh"
+  },
+  {
+   "row": 14,
+   "cut": 1,
+   "off_s": -0.02,
+   "name": "whoosh"
+  }
+ ],
+ "notes": [
+  {
+   "row": 1,
+   "cut": 0,
+   "to_s": 0,
+   "text": "◆ブルガリア・ソフィア"
+  },
+  {
+   "row": 2,
+   "cut": 0,
+   "text": "◆北マケドニア・スコピエ"
+  },
+  {
+   "row": 2,
+   "cut": 1,
+   "text": "◆アルバニア"
+  },
+  {
+   "row": 2,
+   "cut": 2,
+   "text": "◆ブルガリア・ソフィア"
+  }
+ ]
+}
