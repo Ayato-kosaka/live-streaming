@@ -58,6 +58,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { must, readArray } from "../../tools/sprites/tsread.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SITE = join(HERE, "..");
@@ -89,7 +90,7 @@ function give(code, why) {
 
 /* ------------------------------------------------------------------ 組み立て */
 
-/** 選ぶ関数。**型しか import しない**ので、1枚だけ字を落として読める */
+/** 1枚だけ字を落として読む。**import の無い（型しか import しない）本だけ**に使う */
 function loadGuide(src) {
   const ts = req(join(SITE, "node_modules", "typescript"));
   const code = ts.transpileModule(readFileSync(src, "utf8"), {
@@ -130,18 +131,20 @@ const { PLANS, NEXT_MOVE, planPhase } = req(join(OUT, "plans.js"));
 
 /**
  * 街の名簿（`content/travel.ts` の `CITIES`）を字で読む。**本体は組み立てない**——
- * あちらは面の部品（パンくず・貼られたときの顔）まで連れてくる。道の頭は `travelPath.ts` から
+ * あちらは面の部品（パンくず・貼られたときの顔）まで連れてくる。読み方は
+ * `tools/sprites/tsread.mjs` の1本（読み落としが在れば `must` が 2 で止める）。
+ * 道は本物の組み立てかた（`content/travelPath.ts` の `travelHref` ＋ `/<街>`。`TRAVEL_CITIES` と同じ）
  */
 function readCities() {
-  const src = readFileSync(join(CONTENT, "travel.ts"), "utf8");
-  const head = readFileSync(join(CONTENT, "travelPath.ts"), "utf8").match(/export const TRAVEL = "([^"]+)"/)?.[1];
-  const at = src.indexOf("const CITIES");
-  const end = src.indexOf("];", at);
-  if (!head || at < 0 || end < 0) return [];
-  const body = src.slice(at, end);
-  return [...body.matchAll(/\{\s*country:\s*"([^"]+)",\s*slug:\s*"([^"]+)",\s*name:\s*"([^"]+)"/g)].map(
-    ([, country, slug, name]) => ({ href: `${head}/${country}/${slug}`, name }),
-  );
+  const { travelHref } = loadGuide(join(CONTENT, "travelPath.ts"));
+  const got = readArray(readFileSync(join(CONTENT, "travel.ts"), "utf8"), "CITIES", {
+    keys: ["country", "slug", "name"],
+    idKey: "slug",
+  });
+  return must(got, "content/travel.ts の CITIES").map((c) => ({
+    href: `${travelHref(c.country)}/${c.slug}`,
+    name: c.name,
+  }));
 }
 
 /** `YYYY-MM-DD` を n 日ずらす */
