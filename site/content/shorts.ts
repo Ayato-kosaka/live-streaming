@@ -159,6 +159,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "cJbIZUniHqk", date: "2026-11-16", title: "🇬🇧イギリス第三の街を、1日歩いて回ったらやばかった！" },
     { id: "ZHlmGcnAGq8", date: "2026-11-17", title: "🇲🇰北マケドニアで教会に入ったら、お祈りの最中で場違いすぎた！" },
     { id: "uuuZpzpJiHk", date: "2026-11-18", title: "🇲🇰北マケドニアの渓谷で川下りしようとしたら、のんびりしすぎた！" },
+    { id: "WM4sjCUMbOo", date: "2026-11-19", title: "🇲🇰北マケドニアで山の上の十字架を見に行ったら、まさかの事態に！" },
   ],
 };
 
