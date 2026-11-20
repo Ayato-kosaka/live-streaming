@@ -77,7 +77,8 @@ export type Theme = {
    * 移ったあとも前の国あてに貼れてしまう。日付で持てば、**画面が出てから今日と比べて閉じる**
    * （`isOpenTheme`。焼いた日で止まらない。datebake の考え方）。
    *
-   * 焼いた HTML（JS が動く前）は焼いた日で判定する（`BUILT_AT`。企画あての `groupOf` と同じ）。
+   * 焼いた HTML（JS が動く前）では閉じない。**閉じる日より前の時計と同じに扱う**（焼く日で焼いた HTML を変えない。
+   * datebake。`isOpenTheme` の注）。サーバーは日付で断る（`functions/src/shutThemes.ts`）ので、JS の前に選べても貼れない。
    */
   closesOn?: string;
 };
@@ -532,7 +533,11 @@ export const THEMES: Theme[] = [
 export function isOpenTheme(t: Theme, now: Date | null): boolean {
   if (t.closed) return false;
   /* 閉じる日を持つ宛先は、今日（画面が出る前は焼いた日）がその日に届いたら閉じる */
-  if (t.closesOn && (daysUntil(t.closesOn, now ?? BUILT_AT) ?? 1) <= 0) return false;
+  /* 閉じる日は**画面が出てからの時計だけ**で見る（`now` が null のあいだは、まだ開いている）。
+     焼いた日（`BUILT_AT`）で決めると、焼く日によって焼いた HTML の並びが変わる——20日に焼けば
+     ソフィアあては書く側、先の日に焼けば畳みの側に移り、datebake が「焼いたまま」と読む
+     （2026-11-20 に master の重い見張りが赤くなった）。板の先頭も、画面が出てからの時計で決まる */
+  if (t.closesOn && now && (daysUntil(t.closesOn, now) ?? 1) <= 0) return false;
   return groupOf(t, now) !== PLAN_DONE_GROUP;
 }
 

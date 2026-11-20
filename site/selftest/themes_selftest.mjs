@@ -390,6 +390,20 @@ const jst = (y, m, d, h, mi = 0) => new Date(Date.UTC(y, m - 1, d, h - 9, mi, 0)
   check("閉じたあとも、ソフィアあての棚は読む側に残る", read21.includes("bulgaria"));
   /* 対照: 閉じる日を外した写しなら、21日でも書ける（日付で閉じていることを、この欄が担っている） */
   check("対照: 閉じる日を外すと、21日でもソフィアあては書ける", B20.isOpenTheme({ ...sofia, closesOn: undefined }, jst(2026, 11, 21, 12)) === true);
+
+  /* **焼いた HTML（画面が出る前）は、焼いた日に依らない。** 焼いた日で閉じると、先の日に焼いた HTML では
+     ソフィアあてが書く側から畳みへ移り、datebake が「焼いたまま」と読んだ（2026-11-20 の master の赤）。
+     datebake と同じく 400日先に焼いた表を組み、画面が出る前の書ける宛先が20日に焼いたものと同じかを見る */
+  const savedB = process.env.NEXT_PUBLIC_BUILT_AT;
+  process.env.NEXT_PUBLIC_BUILT_AT = "2027-12-25T00:00:00Z";
+  for (const k of Object.keys(req.cache)) if (k.startsWith(OUT)) delete req.cache[k];
+  const BFAR = req(join(OUT, "themes.js"));
+  if (savedB === undefined) delete process.env.NEXT_PUBLIC_BUILT_AT;
+  else process.env.NEXT_PUBLIC_BUILT_AT = savedB;
+  const ids20 = B20.openThemes(null).map((t) => t.id).join(" ");
+  const idsFar = BFAR.openThemes(null).map((t) => t.id).join(" ");
+  check(`焼いた HTML の書ける宛先は、焼いた日に依らない（20日に焼いても400日先に焼いても「${ids20}」）`, ids20 === idsFar, `先の日=「${idsFar}」`);
+  check("先の日に焼いた表でも、その日の時計の画面ではソフィアあては閉じている", BFAR.isOpenTheme(BFAR.themeById("bulgaria"), jst(2027, 12, 25, 12)) === false);
 }
 
 /* ==================================== 6. 出た国あての付箋が、書けるまま残っていない
