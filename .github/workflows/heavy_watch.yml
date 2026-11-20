@@ -824,7 +824,7 @@ jobs:
             "${R[@]}" --name "記事を焼く（$(echo $arts | wc -w)本）" -- \
               bash -c 'rc=0; for a in $1; do python3 python/guide_article.py "$0/$a" || rc=$?; done; exit $rc' "$GUIDE" "$arts"
           else
-            python3 python/guide_run.py row "記事を焼く" skip --rows "$ROWS"
+            python3 python/guide_run.py row "記事を焼く" skip --why "記事の台本が無い（行く前の街）" --rows "$ROWS"
           fi
           "${R[@]}" --name "マイマップの CSV（guide_book_check --mymaps）" -- python3 python/guide_book_check.py "$GUIDE" --mymaps
 
@@ -850,7 +850,7 @@ jobs:
           # 焼いたものは積まない（master に入ったあと fontbake.yml が焼く）。ここで焼くのは、下の見張りが
           # master で焼かれるものと同じ束を見るため
           if python3 tools/fonts/subset.py --stale; then
-            python3 python/guide_run.py row "書体を焼く（見張りのため。積まない）" skip --rows "$ROWS"
+            python3 python/guide_run.py row "書体を焼く（見張りのため。積まない）" skip --why "焼いたものが表に追いついている" --rows "$ROWS"
             exit 0
           fi
           "${R[@]}" --name "書体を焼く（見張りのため。積まない）" -- python3 tools/fonts/subset.py --export site/.next-ci
@@ -947,7 +947,7 @@ jobs:
           PUSHED: ${{ steps.push.outputs.pushed }}
         run: |
           [ -f "$ROWS" ] || { echo "表の元が無い（入力で止まった）"; exit 0; }
-          python3 python/guide_run.py report --rows "$ROWS" --pr "$PR" --guide "$GUIDE" --sha "$SHA" --pushed "$PUSHED"
+          python3 python/guide_run.py report --early --rows "$ROWS" --pr "$PR" --guide "$GUIDE" --sha "$SHA" --pushed "$PUSHED"
 
       - name: 表の元を置く（guide_report が読む）
         if: ${{ always() }}

@@ -110,13 +110,17 @@ def mark(rc: str) -> str:
     return "🟡"
 
 
-def heavy_rows(jobs: list[dict]) -> list[tuple[str, str, str]]:
-    """同じ run の重い見張り。job ごとに1行、赤い job は落ちた step も1行ずつ。"""
+def heavy_rows(jobs: list[dict], early: bool = False) -> list[tuple[str, str, str]]:
+    """同じ run の重い見張り。job ごとに1行、赤い job は落ちた step も1行ずつ。
+
+    @param early `guide` の中から書くとき。重い見張りは `guide` のあとに起きるので、まだ job が無い（⏳）
+    """
     out = []
     for name in HEAVY_JOBS:
         job = next((j for j in jobs if j.get("name") == name), None)
         if job is None:
-            out.append((f"重い見張り {name}", "skip", "この run に job が無い"))
+            out.append((f"重い見張り {name}", "wait", "まだ始まっていない") if early
+                       else (f"重い見張り {name}", "skip", "この run に job が無い"))
             continue
         if job.get("status") != "completed":
             out.append((f"重い見張り {name}", "wait", job.get("status") or "?"))
@@ -192,6 +196,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("rc")
     r.add_argument("log", nargs="?", type=Path)
     r.add_argument("--rows", type=Path, required=True)
+    r.add_argument("--why", default="", help="落ちた所の欄（skip の理由など）。ログより先に使う")
     p = sub.add_parser("report")
     p.add_argument("--rows", type=Path, required=True)
     p.add_argument("--pr", type=int, required=True)
@@ -199,6 +204,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--sha", default=os.environ.get("GITHUB_SHA", ""))
     p.add_argument("--pushed", default="")
     p.add_argument("--dry", action="store_true", help="書かずに表を出すだけ")
+    p.add_argument("--early", action="store_true", help="重い見張りがまだ始まっていない（guide の中から書く）")
     a = ap.parse_args(argv)
 
     if a.cmd == "run":
@@ -208,6 +214,11 @@ def main(argv: list[str] | None = None) -> int:
         run(a.rows, a.name, cmd)
         return 0
     if a.cmd == "row":
+        if a.why:
+            with a.rows.open("a", encoding="utf-8") as f:
+                f.write(f"{a.name}\t{a.rc}\t{a.why}\n")
+            print(f"{mark(a.rc)} {a.name} {a.rc} {a.why}")
+            return 0
         why = add_row(a.rows, a.name, a.rc, a.log)
         print(f"{mark(a.rc)} {a.name} {a.rc} {why}")
         return 0
@@ -219,7 +230,7 @@ def main(argv: list[str] | None = None) -> int:
     rows = read_rows(a.rows)
     try:
         if run_id:
-            rows += heavy_rows(gh.jobs(run_id))
+            rows += heavy_rows(gh.jobs(run_id), early=a.early)
         body = table(a.guide, a.sha, rows, run_url, a.pushed)
         print(body)
         summary = os.environ.get("GITHUB_STEP_SUMMARY")
