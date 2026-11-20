@@ -80,6 +80,7 @@
 | 2026-11-19 | **国の面（26か国）**: 題を「〈国〉旅行記【〈年〉】〈旅〉で〈長さ〉・〈街〉」（25〜45字）、一文を「いつ・何日・どの街・配信の本数と人数」（80〜160字）に。地図を**焼いた1枚の絵**（`/travel/<国>/<国名>の地図-1200.webp`。alt も「〈国〉の地図。…」）にして、`ImageObject` と画像のサイトマップへ。面のいちばん下に書き手の枠。画面の並びと見出しは変えない | `tools/sprites/countrymap_selftest.mjs`（焼いた絵が古い・無い）・採点の「地図」「書き手」「画像のサイトマップ」 |
 | 2026-11-19 | **採点の「？」を測れるように**: 週の表が YouTube Data API（`FIREBASE_SERVICE_ACCOUNT` に読むだけの scope）で `/travel/` の面ぜんぶの説明欄を読み、面ごとの週の表示と一緒に印に残す。手元の採点はその印から引く（「・週の表 〈日〉」と添えて出す）。説明欄の当たりは**道の続きを数えない**（ソフィアを指す説明欄を、国の面の当たりにしない） | `seo_score_selftest.py` の「API」「道の続き」「週の表」 |
 | 2026-11-19 | **スコピエを検索に出した**（ガイド `/travel/north-macedonia/skopje` と物価 `/travel/north-macedonia/skopje/prices` の公開前の印を外した。あやとが読んで OK）。国の面・`/travel`・足もとからのリンク、索引、IndexNow はひとりでに。北マケドニアの国の面は配信35本が「この国であったこと」へ移り、議事録の一言つき（国境の日の回も拾うように `stream_digest.py` を直した）。一言は「〈旅〉の◯カ国目」 | `--expect prod` の `jsonld:/travel/north-macedonia/skopje`・採点の「検索に出している」 |
+| 2026-11-20 | **ブカレストを検索に出した**（ガイド `/travel/romania/bucharest` の公開前の印を外した。物価の面はまだ無い。あやと 2026-11-20「どんどん公開していいよ。あなたの裁量の範囲内」で、運営が型の数と見張りを見て公開した。`/city-guide` 2-10）。`/travel`・索引・IndexNow はひとりでに。国の面はまだ無い（入国は 11-21） | `--expect prod` の `jsonld:/travel/romania/bucharest`・採点の「検索に出している」 |
 
 **入れていないもの**: Bing Webmaster Tools（入るには、あやとの Google アカウントの情報を bing.com に渡す同意と、
 新しい Bing の利用者の作成が要る。#1262 で止めた）。IndexNow で URL は Bing に届く。順位や語の数を Bing の側で見たくなったら、そのとき入る。

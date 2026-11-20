@@ -30,7 +30,7 @@ import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
 import { chapterCountries, walkingCountries } from "@/content/walked";
-import { ALBANIA_GROUP, BULGARIA_GROUP, MACEDONIA_GROUP, NORDIC_GROUP } from "@/content/themes";
+import { ALBANIA_GROUP, BULGARIA_GROUP, MACEDONIA_GROUP, NORDIC_GROUP, ROMANIA_GROUP } from "@/content/themes";
 import type { IconName } from "@/components/ui/icons";
 import { guideOn, type GuideSpan } from "@/lib/guideDay";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
@@ -426,6 +426,7 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
  * 並びは**新しい国が先**。国を1つ越えたら、その国の組を先頭に足す。
  */
 const BALKAN_BOARDS: { name: string; group: string }[] = [
+  { name: "ルーマニア", group: ROMANIA_GROUP },
   { name: "ブルガリア", group: BULGARIA_GROUP },
   { name: "北マケドニア", group: MACEDONIA_GROUP },
   { name: "アルバニア", group: ALBANIA_GROUP },

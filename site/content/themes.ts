@@ -29,7 +29,7 @@
  * 区間も、実際に付箋が付いているものだけ置く。
  */
 
-import { BUILT_AT, planById, planPhase } from "./plans";
+import { BUILT_AT, daysUntil, planById, planPhase } from "./plans";
 
 /** 付箋の宛先ひとつ。 */
 export type Theme = {
@@ -69,6 +69,17 @@ export type Theme = {
    * 日付を聞けるので、字で持つと2か所が食い違う（`isOpenTheme`）。
    */
   closed?: boolean;
+  /**
+   * **この日（日本時間）になったら、もう書けない。** `YYYY-MM-DD`。
+   *
+   * 旅の宛先を「つぎの国へ移る日」に閉じるための欄（2026-11-20。あやと「明日の移動日にはもう閉じるようにしてほしい」）。
+   * `closed` は字なので、閉じるには**その日に焼き直して配る**しかなかった。焼くのが遅れた日は、
+   * 移ったあとも前の国あてに貼れてしまう。日付で持てば、**画面が出てから今日と比べて閉じる**
+   * （`isOpenTheme`。焼いた日で止まらない。datebake の考え方）。
+   *
+   * 焼いた HTML（JS が動く前）は焼いた日で判定する（`BUILT_AT`。企画あての `groupOf` と同じ）。
+   */
+  closesOn?: string;
 };
 
 /** 旅の宛先を束ねる見出し。島の面（`components/isle/spec.ts`）もこの字で引く。 */
@@ -102,6 +113,8 @@ export const ALBANIA_GROUP = "アルバニアの旅";
  */
 export const MACEDONIA_GROUP = "北マケドニアの旅";
 export const BULGARIA_GROUP = "ブルガリアの旅";
+/** ルーマニアの宛先を束ねる見出し（2026-11-20）。**時制を入れない**（上の北マケドニアと同じ理由） */
+export const ROMANIA_GROUP = "ルーマニアの旅";
 
 /**
  * 企画あての札を束ねる見出し。**日で行き先が変わるのは、この2つだけ。**
@@ -140,8 +153,20 @@ export const OTHER_GROUP = "そのほか";
  */
 export const THEMES: Theme[] = [
   {
-    /* ソフィア（2026-11-12 から一週間ほど）。**いちばん上に置く**——
-       いま注文を受け付けている先が先頭、という決まり（下の注）。 */
+    /* ブカレスト（2026-11-21 から）。**いちばん上に置く**——いま注文を受け付けている先が先頭、という決まり（下の注）。
+       **`id` は変えない**——付箋の宛先として Firestore に `romania` で入る。国の slug と同じ字にした
+       （ソフィアの `bulgaria`・`north-macedonia` と同じ持ち方。街が増えても国あての1枚で受ける） */
+    id: "romania",
+    name: "ブカレストでこれやって",
+    group: ROMANIA_GROUP,
+    /* その話をしている面。企画の札（`content/plans.ts` の `romania`）→ この面 → 面のいちばん下の付箋、とソフィアと同じ道で辿れる */
+    href: "/travel/romania/bucharest",
+    /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。決まっている2つ（街と、紙に載せた見どころ）を置く */
+    lead: "ブカレストでやってほしいこと。紙に載っていないお店や道でも。",
+    placeholder: "例）旧市街のビアホールで、いちばん安いビールを頼んでほしい",
+  },
+  {
+    /* ソフィア（2026-11-12 から一週間ほど）。ルーマニアへ移る 2026-11-21 に閉じる（`closesOn`）。 */
     id: "bulgaria",
     name: "ソフィアでこれやって",
     group: BULGARIA_GROUP,
@@ -154,6 +179,8 @@ export const THEMES: Theme[] = [
        書く人が「そこに無いもの」も書いていいと分かるようにする。 */
     lead: "ソフィアでやってほしいこと。紙に載っていないお店や道でも。",
     placeholder: "例）女性市場で、いちばん安いバニツァを買って公園で食べてほしい",
+    /* あやと 2026-11-20「明日の移動日にはもう閉じるようにしてほしい」。焼き直さなくても、この日の画面から閉じる */
+    closesOn: "2026-11-21",
   },
   /* **いちばん上は、いま注文を受け付けている先。**
      「いま居る国」ではない（2026-10-11 に取り違えていた。あやとはアルバニアに
@@ -494,13 +521,15 @@ export const THEMES: Theme[] = [
  *
  * 判定の出どころは2つある。**どちらも「字で持たない」ほうを選んでいる。**
  *
- *   1. 旅の宛先 … `closed`（こちらが畳んだ印）
+ *   1. 旅の宛先 … `closed`（こちらが畳んだ印）と `closesOn`（移る日。日付で閉じる）
  *   2. 企画の宛先 … **同じ id の企画に日付を聞く**（`groupOf` と同じ）。
  *      字で「終わった」と持つと、`/next` が「もう行ってきた」に置いたものが
  *      掲示板ではまだ書けたままになる
  */
 export function isOpenTheme(t: Theme, now: Date | null): boolean {
   if (t.closed) return false;
+  /* 閉じる日を持つ宛先は、今日（画面が出る前は焼いた日）がその日に届いたら閉じる */
+  if (t.closesOn && (daysUntil(t.closesOn, now ?? BUILT_AT) ?? 1) <= 0) return false;
   return groupOf(t, now) !== PLAN_DONE_GROUP;
 }
 
@@ -570,6 +599,7 @@ export type Shelf = { group: string; themes: Theme[] };
  */
 const ORDER = [
   // **いま注文を受け付けている先が先頭**（`THEMES` の並びと同じ考え）
+  ROMANIA_GROUP,
   BULGARIA_GROUP,
   MACEDONIA_GROUP,
   ALBANIA_GROUP,
