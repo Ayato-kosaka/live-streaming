@@ -246,6 +246,18 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "north-macedonia", city: "skopje", slug: "kale", crumb: "スコピエ城塞" },
   /* ヴォドノ山に登ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
   { country: "north-macedonia", city: "skopje", slug: "vodno", crumb: "ヴォドノ山" },
+  /* スコピエの旧市街を歩いてきた【2026年10月】（#1228。マトカ渓谷と同じ型） */
+  { country: "north-macedonia", city: "skopje", slug: "oldtown", crumb: "旧市街" },
+  /* スコピエの食堂コスモスでタヴチェ・グラフチェを食べてきた【2026年10月】（#1228。マトカ渓谷と同じ型） */
+  { country: "north-macedonia", city: "skopje", slug: "kosmos", crumb: "食堂コスモス" },
+  /* スコピエのマケドニア広場で銅像めぐりをしてきた【2026年10月】（#1228。マトカ渓谷と同じ型） */
+  { country: "north-macedonia", city: "skopje", slug: "square", crumb: "マケドニア広場" },
+  /* スコピエでバゲットを探して、パン屋パンパンへ行ってきた【2026年10月】（#1228。マトカ渓谷と同じ型） */
+  { country: "north-macedonia", city: "skopje", slug: "panpan", crumb: "パンパン" },
+  /* スコピエの聖クリメント・オフリド大聖堂に行ってきた【2026年10月】（#1228。マトカ渓谷と同じ型） */
+  { country: "north-macedonia", city: "skopje", slug: "clement", crumb: "聖クリメント大聖堂" },
+  /* スコピエのおしゃれ地区デバル・マーロを歩いてきた【2026年10月】（#1228。マトカ渓谷と同じ型） */
+  { country: "north-macedonia", city: "skopje", slug: "debar-maalo", crumb: "デバル・マーロ" },
   /* ソフィアで本場のヨーグルトを探してきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
   { country: "bulgaria", city: "sofia", slug: "yogurt", crumb: "ヨーグルト" },
   /* ソフィアのクリスマスマーケットに行ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */

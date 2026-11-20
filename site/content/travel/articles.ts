@@ -5,6 +5,12 @@ import { ARTICLE as SOFIA_BANITSA } from "./bulgaria/sofia-banitsa";
 import { ARTICLE as SOFIA_XMAS } from "./bulgaria/sofia-xmas";
 import { ARTICLE as SOFIA_HOTSPRING } from "./bulgaria/sofia-hotspring";
 import { ARTICLE as SOFIA_NEVSKY } from "./bulgaria/sofia-nevsky";
+import { ARTICLE as SKOPJE_PANPAN } from "./north-macedonia/skopje-panpan";
+import { ARTICLE as SKOPJE_DEBAR_MAALO } from "./north-macedonia/skopje-debar-maalo";
+import { ARTICLE as SKOPJE_CLEMENT } from "./north-macedonia/skopje-clement";
+import { ARTICLE as SKOPJE_KOSMOS } from "./north-macedonia/skopje-kosmos";
+import { ARTICLE as SKOPJE_SQUARE } from "./north-macedonia/skopje-square";
+import { ARTICLE as SKOPJE_OLDTOWN } from "./north-macedonia/skopje-oldtown";
 import { ARTICLE as SKOPJE_KALE } from "./north-macedonia/skopje-kale";
 import { ARTICLE as SKOPJE_VODNO } from "./north-macedonia/skopje-vodno";
 import { ARTICLE as SOFIA_YOGURT } from "./bulgaria/sofia-yogurt";
@@ -24,6 +30,12 @@ const ARTICLES: Record<string, GuideArticle> = {
   "bulgaria/sofia/xmas": SOFIA_XMAS,
   "bulgaria/sofia/hotspring": SOFIA_HOTSPRING,
   "bulgaria/sofia/nevsky": SOFIA_NEVSKY,
+  "north-macedonia/skopje/panpan": SKOPJE_PANPAN,
+  "north-macedonia/skopje/debar-maalo": SKOPJE_DEBAR_MAALO,
+  "north-macedonia/skopje/clement": SKOPJE_CLEMENT,
+  "north-macedonia/skopje/kosmos": SKOPJE_KOSMOS,
+  "north-macedonia/skopje/square": SKOPJE_SQUARE,
+  "north-macedonia/skopje/oldtown": SKOPJE_OLDTOWN,
   "north-macedonia/skopje/kale": SKOPJE_KALE,
   "north-macedonia/skopje/vodno": SKOPJE_VODNO,
   "bulgaria/sofia/yogurt": SOFIA_YOGURT,
