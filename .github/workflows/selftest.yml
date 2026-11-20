@@ -201,6 +201,26 @@ jobs:
       # ここで**別の step として**もう一度回しておくのは、対照が外れた回に
       # 「どこで落ちたか」がログの先頭で分かるようにするため
       # （2回目の値段は2秒ほど。並べかたの対照を足したぶん、0.5秒から増えた）
+      # **書体の入力（表・`subset.py`）が焼いたものより新しければ、ここで焼く。コミットはしない。**
+      #
+      # 焼いたもの（woff2・fonts.css）は PR に入れず、master に入ったあと `fontbake.yml` が焼いて積む
+      # （`tools/fonts/subset.py` の頭。並行する PR がぶつからないように）。PR の見張り（fontstale・
+      # fontbudget・fontstrut・fontfall）は、**master に入ったあと焼かれるものと同じ束**を見ないと弱くなる
+      # ——焼かずに見ると、表に足した字が「焼いていない字」に数えられて赤くなるか、それを逃がす表が要る。
+      # だからここで焼く。追いついていれば（`--stale` が 0）何もしない（入れない PR は1秒で通る）
+      - name: 元の書体を使いまわす（書体を焼くとき）
+        uses: actions/cache@v4
+        with:
+          path: /tmp/zenmaru-src
+          key: zenmaru-src-v1
+      - name: 書体の入力が新しければ、その場で焼く（コミットしない）
+        run: |
+          set -euo pipefail
+          if python3 tools/fonts/subset.py --stale; then exit 0; fi
+          pip install --quiet fonttools brotli
+          python3 tools/fonts/subset.py
+          python3 tools/fonts/subset.py --stale
+
       - name: 回し役が落ちられるかを、先に見る
         run: python3 python/selftest_runner.py --only-drill
 
@@ -310,6 +330,26 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+
+      # **（書き出しの前に。束は CSS に焼き込まれる）書体の入力（表・`subset.py`）が焼いたものより新しければ、ここで焼く。コミットはしない。**
+      #
+      # 焼いたもの（woff2・fonts.css）は PR に入れず、master に入ったあと `fontbake.yml` が焼いて積む
+      # （`tools/fonts/subset.py` の頭。並行する PR がぶつからないように）。PR の見張り（fontstale・
+      # fontbudget・fontstrut・fontfall）は、**master に入ったあと焼かれるものと同じ束**を見ないと弱くなる
+      # ——焼かずに見ると、表に足した字が「焼いていない字」に数えられて赤くなるか、それを逃がす表が要る。
+      # だからここで焼く。追いついていれば（`--stale` が 0）何もしない（入れない PR は1秒で通る）
+      - name: 元の書体を使いまわす（書体を焼くとき）
+        uses: actions/cache@v4
+        with:
+          path: /tmp/zenmaru-src
+          key: zenmaru-src-v1
+      - name: 書体の入力が新しければ、その場で焼く（コミットしない）
+        run: |
+          set -euo pipefail
+          if python3 tools/fonts/subset.py --stale; then exit 0; fi
+          pip install --quiet fonttools brotli
+          python3 tools/fonts/subset.py
+          python3 tools/fonts/subset.py --stale
 
       - name: site の依存を入れる
         working-directory: site

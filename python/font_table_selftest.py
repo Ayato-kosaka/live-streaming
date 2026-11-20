@@ -8,9 +8,10 @@
 
 1. 字が増えた面・新しい面だけ差し込む。字が減っただけの面・同じ面は触らない（並行する PR をぶつけない）
 2. 名指しの面（`--only`）は、増えていなくても差し替える
-3. 表の並びを保つ（足した面は後ろ）
+3. 表は鍵の順に並べて書く（並行する PR が同じ末尾に足してぶつからない）
 4. 鍵の作りかた（`/index.html` → `index`、`/travel/a/b.html` → `travel/a/b`）
 5. 本物の `tools/fonts/weights.json` が読めて、面が100枚以上ある（置き場が動いたら 2）
+6. 本物の表が鍵の順で置いてある（手で書いて崩れたら赤）
 """
 
 from __future__ import annotations
@@ -49,10 +50,11 @@ def main() -> int:
         print(f"[2] ✕ 名指しの now が {new2['now']}")
         ng += 1
 
-    if list(new) == ["index", "travel/x", "now", "travel/y"]:
-        print("[3] ○ 表の並びを保ち、新しい面は後ろに足す")
+    order = list(json.loads(ft.canonical(new)))
+    if order == ["index", "now", "travel/x", "travel/y"] and ft.canonical(new).endswith("}\n"):
+        print("[3] ○ 表は鍵の順に並べて書く（足した面は後ろではなく、その場所に入る）")
     else:
-        print(f"[3] ✕ 並び {list(new)}")
+        print(f"[3] ✕ 並び {order}")
         ng += 1
 
     keys = [ft.page_key(x) for x in ("/index.html", "/travel/a/b.html", "/next.html")]
@@ -85,6 +87,13 @@ def main() -> int:
         print(f"!! 本物の表の面が {len(real)} 枚しかない")
         return 2
     print(f"[6] ○ 本物の表 {len(real)} 面")
+    text = ft.TABLE.read_text(encoding="utf-8")
+    if text == ft.canonical(real):
+        print("[7] ○ 本物の表は鍵の順に並んでいる")
+    else:
+        print("[7] ✕ 本物の表が鍵の順に並んでいない。`python3 python/font_table.py --got <測った答え>` で書き直す"
+              "（並べ直すだけなら、表そのものを --got に渡す）")
+        ng += 1
     return 1 if ng else 0
 
 

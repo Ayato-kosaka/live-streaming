@@ -243,6 +243,16 @@ REPO_CASES: list[dict] = [
      "new": 'src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/'
             'Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg/960px-Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg"',
      "why": "企画の写真を Commons から直に読む道に戻す（2026-11-15 まで、この形で 429 の日に枠が空になった）"},
+    # 焼いた書体を PR に入れなくなった（2026-11-20）ので、「焼くか」は `--stale` の判定1つで決まる。
+    # 判定が「追いついている」と嘘をつくと、PR の見張りは古い束を見て通り、master では誰も焼かない
+    {"watch": "python/fontstamp_selftest.py",
+     "file": "tools/fonts/subset.py",
+     "old": "    if m.group(1) != want:", "new": "    if m.group(1) == want:",
+     "why": "焼いた元と入力の指紋の突き合わせを裏返す（古い束を「追いついている」と言う）"},
+    {"watch": "python/fontstamp_selftest.py",
+     "file": "tools/fonts/subset.py",
+     "old": "    for f in (table, tool):", "new": "    for f in (table,):",
+     "why": "指紋から subset.py を外す（SOLO を足しても焼き直さない）"},
 ]
 
 

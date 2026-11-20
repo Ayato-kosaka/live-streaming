@@ -82,15 +82,33 @@ Chrome は字を並べるたびに「その字はどの1本か」を 367 本ぜ�
     python3 tools/fonts/subset.py --export site/.next-3250
 
 焼いたものは `site/public/fonts/` と `site/app/css/fonts.css`（どちらも自動生成）。
-文章を増やしたら回し直して、出てきた差分をコミットする。回し忘れても壊れない
-（足した字が端末の書体で出るだけ）。**太らせたまま気づかない**ほうは
+回し忘れても壊れない（足した字が端末の書体で出るだけ）。**太らせたまま気づかない**ほうは
 `tools/sprites/fontbudget_selftest.mjs` が見張っている。
+
+## 焼いたものは PR に入れない（2026-11-20 から）
+
+**PR が持つのは入力だけ**——表（`weights.json`。面を測った字）と、この道具（`SOLO` など）。
+焼いたもの（`site/public/fonts/*.woff2`・`site/app/css/fonts.css`・`buckets.txt`・`absent.json`）は
+**master に入ったあと `.github/workflows/fontbake.yml` が1回だけ焼いて積む。**
+
+それまでは PR ごとに焼いてコミットしていたので、並行する PR の片方がマージされるたびに、
+もう片方の woff2 と fonts.css が必ずぶつかった（バイナリと、束を組み直すと全部の行が変わる CSS）。
+#1324 は4回、記事15本の担当は9回焼き直した。
+
+- **見張りは弱めない。** PR の CI（`selftest.yml`）は、入力が焼いたものより新しければ（`--stale`）
+  その場で焼いてから書体の見張り（fontstale・fontbudget・fontstrut・fontfall）を回す。
+  見張りが見るのは、master に入ったあと焼かれるものと同じ束（冷たい束だけは書き出しを読まない
+  ぶん小さい。どの面も先に取りに行かない束なので、見張りの数は変わらない）
+- **本番に古い束を配らない。** `python/ship.py` は、焼く道具の入力に触れた PR をマージしたら
+  `fontbake.yml` が積み終わるのを待ってから配る
+- 焼いたものが入力に追いついているかは、`fonts.css` の頭の「焼いた元」（表とこの道具の指紋）で見る
 """
 
 from __future__ import annotations
 
 import argparse
 import collections
+import hashlib
 import itertools
 import json
 import re
@@ -277,6 +295,33 @@ SOLO = [
     "travel/north-macedonia/skopje/debar-maalo",
     "travel/romania/bucharest",
 ]
+
+
+# `fonts.css` の頭に焼く「焼いた元」の行。`--stale` はこれだけを読む（fonttools も書き出しも要らない）
+STAMP_RE = re.compile(r"焼いた元: ([0-9a-f]{16})")
+
+
+def fingerprint(table: Path = SEEN, tool: Path = Path(__file__)) -> str:
+    """焼いた結果を決める入力の指紋（表とこの道具）。元の書体の版と、冷たい束に回る字（書き出しと元の文章）は
+    入れない——入れると文章を1字足すたびに「古い」になり、PR が毎回焼き直す（束の形は表で決まる）。"""
+    h = hashlib.sha256()
+    for f in (table, tool):
+        h.update(Path(f).read_bytes())
+        h.update(b"\0")
+    return h.hexdigest()[:16]
+
+
+def stale(css: Path = OUT_CSS, table: Path = SEEN, tool: Path = Path(__file__)) -> str | None:
+    """焼いたものが入力に追いついていなければ、その理由。追いついていれば None。"""
+    if not css.exists():
+        return f"{css.name} が無い"
+    m = STAMP_RE.search(css.read_text(encoding="utf8")[:4000])
+    want = fingerprint(table, tool)
+    if not m:
+        return f"{css.name} に「焼いた元」が無い（入力の指紋 {want}）"
+    if m.group(1) != want:
+        return f"焼いた元 {m.group(1)} ≠ いまの入力 {want}（表か subset.py が変わった）"
+    return None
 
 
 def solo_family(page: str) -> str:
@@ -681,9 +726,16 @@ def main() -> None:
     ap.add_argument("--export", default=str(SITE / ".next"), help="書き出した HTML の場所")
     ap.add_argument("--weights", default=str(SEEN), help="太さごとの字（fontweigh.mjs が書く）")
     ap.add_argument("--buckets", type=int, default=BUCKETS, help="太さ1つあたりの束の数")
+    ap.add_argument("--stale", action="store_true",
+                    help="焼かずに、焼いたものが入力（表とこの道具）に追いついているかだけ見る。0=追いついている / 1=古い")
     ap.add_argument("--dry", action="store_true",
                     help="焼かずに見積もりだけ出す（束の数を決めるとき。実寸ではなく guess()）")
     args = ap.parse_args()
+
+    if args.stale:
+        why = stale()
+        print(f"焼き直しが要る: {why}" if why else f"焼いたものは入力に追いついている（{fingerprint()}）")
+        sys.exit(1 if why else 0)
 
     seen_path = Path(args.weights)
     if not seen_path.is_absolute():
@@ -841,6 +893,8 @@ def main() -> None:
     OUT_CSS.write_text(
         "/*\n"
         " * 島で使う字だけを焼いた丸ゴシック。**自動生成。手で直さない。**\n"
+        f" * 焼いた元: {fingerprint(seen_path)}（tools/fonts/weights.json と subset.py の指紋。`subset.py --stale` が読む）\n"
+        " * PR には入れない。master に入ったあと .github/workflows/fontbake.yml が焼いて積む\n"
         " *   DIST=site/.next-3250 SPORT=4250 node tools/sprites/fontweigh.mjs\n"
         " *   python3 tools/fonts/subset.py --export site/.next-3250\n"
         " *\n"

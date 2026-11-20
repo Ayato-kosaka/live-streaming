@@ -647,7 +647,8 @@ jobs:
   # `subset.py` で焼き直す（`docs/country-guide.md` 6-2）。しないと、その面が焼いた束に無い字を描いて
   # 払っていない1本を引き、`fontfall.mjs` の「記録が古い」で赤くなる（#1308 の /next がそれ）。
   # 作業箱で書き出すと 600MB を超え、箱の置き場が尽きる日がある（2026-11-19 に空き 467MB）ので、ここで回す。
-  # **焼いたものは artifact `fonts` に置くだけ**（枝へは書かない）。落として枝に積み、PR の見張りで緑を見る。
+  # **artifact `fonts` に置くのは表（`tools/fonts/weights.json`）だけ。** 落として枝に積む。束は積まない
+  # （master に入ったあと `fontbake.yml` が焼く。PR の見張りはその場で焼いてから見る）。
   fontbake:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.fonts != '' && inputs.guide == '' }}
     runs-on: ubuntu-24.04
@@ -711,14 +712,11 @@ jobs:
           python3 tools/fonts/subset.py --export site/.next-ci
           git status --short tools/fonts site/public/fonts site/app/css
 
-      - name: 焼いた書体を置く（artifact fonts）
+      - name: 測った表を置く（artifact fonts。積むのは表だけ）
         uses: actions/upload-artifact@v4
         with:
           name: fonts
-          path: |
-            tools/fonts/
-            site/public/fonts/
-            site/app/css/fonts.css
+          path: tools/fonts/weights.json
 
       - name: 見張り（fontbudget）
         run: DIST=site/.next-ci node tools/sprites/fontbudget_selftest.mjs
@@ -732,7 +730,8 @@ jobs:
   #
   #   1. 写真を取る（`guide_photos.py --gentle`。名乗りは今のまま。429 なら止めて表に書く。**迂回しない**）
   #   2. 材料から焼く（台本 → 材料・面の中身・記事・マイマップの CSV）
-  #   3. 書体: **全部の面を測って、表に無い字を描いた面だけ差し込み**（`python/font_table.py`）、焼き直して書き出し直す。
+  #   3. 書体: **全部の面を測って、表に無い字を描いた面だけ差し込み**（`python/font_table.py`）、焼き直して書き出し直す
+  #      （焼いた束は見張りのためだけ。積むのは表だけで、束は master に入ったあと `fontbake.yml` が焼く）。
   #      測る面を人が並べない——記事・街の面・国の面・フッターの字が増えた面の、どれも漏れない（#1331 で国の面が漏れた）
   #   4. 面の見張り（guide_watch・guidebook.mjs・seo_audit・fontbudget・fontfall・crawl と preclaim のその面）
   #   5. 390幅の撮影と 240px の縮小を artifact `guide-shots` に
@@ -848,11 +847,13 @@ jobs:
             env FAST=1 CONC=4 OUT=/tmp/guide/w.json DIST=site/.next-ci SPORT=4214 node tools/sprites/fontweigh.mjs
           kill "$sv" 2>/dev/null || true
           "${R[@]}" --name "書体の表に差し込む（font_table）" -- python3 python/font_table.py --got /tmp/guide/w.json
-          if git diff --quiet -- tools/fonts/weights.json; then
-            python3 python/guide_run.py row "書体を焼く" skip --rows "$ROWS"
+          # 焼いたものは積まない（master に入ったあと fontbake.yml が焼く）。ここで焼くのは、下の見張りが
+          # master で焼かれるものと同じ束を見るため
+          if python3 tools/fonts/subset.py --stale; then
+            python3 python/guide_run.py row "書体を焼く（見張りのため。積まない）" skip --rows "$ROWS"
             exit 0
           fi
-          "${R[@]}" --name "書体を焼く（subset.py）" -- python3 tools/fonts/subset.py --export site/.next-ci
+          "${R[@]}" --name "書体を焼く（見張りのため。積まない）" -- python3 tools/fonts/subset.py --export site/.next-ci
           cd site && NEXT_DIST_DIR=.next-ci python3 ../python/guide_run.py run --rows "$ROWS" --name "焼いた書体で書き出し直す" -- npx next build
 
       - name: 5. 面の見張り
@@ -900,10 +901,13 @@ jobs:
           set -euo pipefail
           echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
           git checkout -- site/tsconfig.json site/next-env.d.ts 2>/dev/null || true
+          # 焼いた束は積まない（PR どうしがぶつかる元。`tools/fonts/subset.py` の頭）
+          git checkout -- site/public/fonts site/app/css/fonts.css tools/fonts/buckets.txt tools/fonts/absent.json
+          git clean -fdq -- site/public/fonts
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A "site/public/guide/$GUIDE/" "python/data/guide/$GUIDE/" site/content/guidebook/ \
-            tools/fonts/ site/public/fonts/ site/app/css/fonts.css
+            tools/fonts/weights.json
           extra="$(git status --porcelain | grep -v '^[MADR] ' || true)"
           if [ -n "$extra" ]; then
             echo "::error::許す置き場の外が変わった。積まない:"; echo "$extra"
@@ -915,7 +919,7 @@ jobs:
             exit 0
           fi
           n() { git diff --cached --name-only -- "$@" | wc -l; }
-          pushed="写真 $(n "site/public/guide/$GUIDE/")・書体 $(n tools/fonts/ site/public/fonts/ site/app/css/fonts.css)・焼いたもの $(n "python/data/guide/$GUIDE/" site/content/guidebook/)"
+          pushed="写真 $(n "site/public/guide/$GUIDE/")・書体の表 $(n tools/fonts/weights.json)・焼いたもの $(n "python/data/guide/$GUIDE/" site/content/guidebook/)"
           git --no-pager diff --cached --stat | tail -1
           git commit -q -m "街のガイドを回して積み戻す: $GUIDE" \
             -m "作業箱で回すとトークンを食う重い処理（写真・焼き・書体）を Actions で回し、生まれたファイルだけを持ち帰った（$pushed）。" \

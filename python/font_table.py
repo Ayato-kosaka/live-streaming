@@ -15,6 +15,13 @@
 フッターに街の名前が1つ足されて全部の面に新しい字が出た日も、その面ぜんぶが拾われる。
 字が減っただけの面は差し替えない——表に残った字は束を少し太らせるだけで、見た目は壊さない。
 差し替えると、測った日で字が揺れる面（日付の入る面）が毎回差分になって、並行する PR どうしがぶつかる。
+
+## 表は鍵の順に並べる（2026-11-20）
+
+焼いたもの（woff2・fonts.css）を PR に入れなくなったので（`tools/fonts/subset.py` の頭）、PR がぶつかりうるのは
+この表だけになった。足した面を後ろに足すと、並行する2本が同じ末尾に書いて必ずぶつかる。
+**鍵の順に並べて書く**と、足した面はそれぞれの場所に入り、隣どうしでなければ git がそのまま重ねる。
+並びが崩れていないかは `font_table_selftest.py` が本物の表で見る（`canonical()`）。
 """
 
 from __future__ import annotations
@@ -41,8 +48,13 @@ def gained(old: dict | None, new: dict) -> bool:
     return any(set(new.get(w, "")) - set(old.get(w, "")) for w in WEIGHTS)
 
 
+def canonical(table: dict) -> str:
+    """表を書く形。鍵の順・1字下げ・末尾に改行（`fontweigh.mjs` も同じ形で書く）。"""
+    return json.dumps({k: table[k] for k in sorted(table)}, ensure_ascii=False, indent=1) + "\n"
+
+
 def merge(table: dict, got: dict, only: list[str]) -> tuple[dict, list[str]]:
-    """→ (新しい表, 差し込んだ面)。表の並びは保つ（足した面は後ろ）。"""
+    """→ (新しい表, 差し込んだ面)。書くときは `canonical()` で鍵の順に並べる。"""
     out = dict(table)
     hit = []
     for k, rec in got.items():
@@ -78,8 +90,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{k}: " + "  ".join(f"{w} {len(old.get(w, ''))}→{len(new[k].get(w, ''))}" for w in WEIGHTS)
               + ("（新しい面）" if k not in table else ""))
     print(f"差し込んだ面 {len(hit)} / 測った面 {len(got)}")
-    if hit:
-        a.table.write_text(json.dumps(new, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    if hit or a.table.read_text(encoding="utf-8") != canonical(new):
+        a.table.write_text(canonical(new), encoding="utf-8")
     return 0
 
 
