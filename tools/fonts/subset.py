@@ -298,7 +298,7 @@ SOLO = [
 
 
 # `fonts.css` の頭に焼く「焼いた元」の行。`--stale` はこれだけを読む（fonttools も書き出しも要らない）
-STAMP_RE = re.compile(r"焼いた元: ([0-9a-f]{16})")
+STAMP_RE = re.compile(r"焼いた元[:：] ?([0-9a-f]{16})")
 
 
 def fingerprint(table: Path = SEEN, tool: Path = Path(__file__)) -> str:

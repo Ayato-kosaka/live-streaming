@@ -207,7 +207,9 @@ jobs:
       # （`tools/fonts/subset.py` の頭。並行する PR がぶつからないように）。PR の見張り（fontstale・
       # fontbudget・fontstrut・fontfall）は、**master に入ったあと焼かれるものと同じ束**を見ないと弱くなる
       # ——焼かずに見ると、表に足した字が「焼いていない字」に数えられて赤くなるか、それを逃がす表が要る。
-      # だからここで焼く。追いついていれば（`--stale` が 0）何もしない（入れない PR は1秒で通る）
+      # だからここで焼く。追いついていれば（`--stale` が 0）何もしない（入れない PR は1秒で通る）。
+      # この job は書き出さないので、書き出しを読まずに焼く（冷たい束が小さくなるぶん、fontstale は厳しい側に倒れる）。
+      # 画面で数える fontfall は `reachkeys` が書き出しから焼いて見る
       - name: 元の書体を使いまわす（書体を焼くとき）
         uses: actions/cache@v4
         with:
@@ -331,26 +333,6 @@ jobs:
         with:
           python-version: '3.11'
 
-      # **（書き出しの前に。束は CSS に焼き込まれる）書体の入力（表・`subset.py`）が焼いたものより新しければ、ここで焼く。コミットはしない。**
-      #
-      # 焼いたもの（woff2・fonts.css）は PR に入れず、master に入ったあと `fontbake.yml` が焼いて積む
-      # （`tools/fonts/subset.py` の頭。並行する PR がぶつからないように）。PR の見張り（fontstale・
-      # fontbudget・fontstrut・fontfall）は、**master に入ったあと焼かれるものと同じ束**を見ないと弱くなる
-      # ——焼かずに見ると、表に足した字が「焼いていない字」に数えられて赤くなるか、それを逃がす表が要る。
-      # だからここで焼く。追いついていれば（`--stale` が 0）何もしない（入れない PR は1秒で通る）
-      - name: 元の書体を使いまわす（書体を焼くとき）
-        uses: actions/cache@v4
-        with:
-          path: /tmp/zenmaru-src
-          key: zenmaru-src-v1
-      - name: 書体の入力が新しければ、その場で焼く（コミットしない）
-        run: |
-          set -euo pipefail
-          if python3 tools/fonts/subset.py --stale; then exit 0; fi
-          pip install --quiet fonttools brotli
-          python3 tools/fonts/subset.py
-          python3 tools/fonts/subset.py --stale
-
       - name: site の依存を入れる
         working-directory: site
         run: npm ci --no-audit --no-fund
@@ -361,6 +343,28 @@ jobs:
         env:
           NEXT_DIST_DIR: .next-ci
         run: npx next build
+
+      # **書体の入力（表・`subset.py`）が焼いたものより新しければ、書き出しから焼いて、書き出し直す。コミットはしない。**
+      #
+      # 焼いたもの（woff2・fonts.css）は PR に入れず、master に入ったあと `fontbake.yml` が焼いて積む
+      # （`tools/fonts/subset.py` の頭）。下の fontfall は**画面で**落ちる字を数えるので、master で焼かれるのと
+      # **同じ束**を見ないといけない。master は書き出しから焼く（押してから出る字を冷たい束に拾う）ので、ここも
+      # 書き出しから焼く——書き出さずに焼いた束で見たら、ソフィアのキリル文字 51字が「焼いていない」に出た
+      # （2026-11-20。冷たい束が 400 で 1,020 → 84字になる）。束は CSS に焼き込まれるので、焼いたら書き出し直す。
+      # 追いついていれば（`--stale` が 0）何もしない
+      - name: 元の書体を使いまわす（書体を焼くとき）
+        uses: actions/cache@v4
+        with:
+          path: /tmp/zenmaru-src
+          key: zenmaru-src-v1
+      - name: 書体の入力が新しければ、書き出しから焼いて書き出し直す（コミットしない）
+        run: |
+          set -euo pipefail
+          if python3 tools/fonts/subset.py --stale; then exit 0; fi
+          pip install --quiet fonttools brotli
+          python3 tools/fonts/subset.py --export site/.next-ci
+          python3 tools/fonts/subset.py --stale
+          (cd site && NEXT_DIST_DIR=.next-ci npx next build)
 
       - name: 確認用の道具の依存を入れる（playwright-core）
         working-directory: tools/sprites
