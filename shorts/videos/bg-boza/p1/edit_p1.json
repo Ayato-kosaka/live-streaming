@@ -180,6 +180,11 @@
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/06_06_boza_mug.mp4",
    "watermark": "prism_live",
    "t0": 300.0
+  },
+  "c5_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_amz/01_07_amazake.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
   }
  },
  "cuts": [
@@ -214,34 +219,17 @@
    "note": "「飲んでみた！」: 瓶を傾けて飲む（答えの画。F-073）"
   },
   {
-   "src": "c4_01",
+   "src": "c2_04",
    "in": 15,
-   "out": 41,
+   "out": 67,
    "row": 1,
    "zoom": {
     "from": 1.0,
     "to": 1.1,
     "x": 0.5,
-    "y": 0.4
-   },
-   "note": "ソフィアのヴィトシャ通りと山の本物の写真（Commons・CC BY-SA 4.0。v6 は案内ページの水彩の大聖堂。F-082）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
-  },
-  {
-   "src": "c2_04",
-   "in": 15,
-   "out": 41,
-   "row": 1,
-   "zoom": {
-    "from": 1.0,
-    "to": 1.08,
-    "x": 0.5,
     "y": 0.45
    },
-   "note": "カード 11-14 夕方の大聖堂（ソフィアの街）",
+   "note": "カード 11-14 夕方の大聖堂（ソフィアの街）。v7c のヴィトシャ通りの写真は外した（F-087: 写真の全面は小麦・パン屋・甘酒だけ）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -265,51 +253,24 @@
    }
   },
   {
-   "src": "c4_03",
-   "in": 15,
-   "out": 55,
+   "src": "c01",
+   "in": 1755,
+   "out": 1795,
    "row": 2,
    "zoom": {
     "from": 1.02,
-    "to": 1.12,
+    "to": 1.1,
     "x": 0.5,
     "y": 0.5
    },
-   "note": "「ボザ！」: グラスのブルガリアのボザの本物の写真（Commons・CC BY-SA 3.0。v6 は案内ページの水彩のグラス）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
-  },
-  {
-   "src": "c2_03",
-   "in": 15,
-   "out": 34,
-   "row": 3,
-   "zoom": {
-    "from": 1.0,
-    "to": 1.08,
-    "x": 0.62,
-    "y": 0.42
-   },
-   "note": "カード 11-14 ボザを買ったスーパーの外観",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "「ボザ！」: 棚から取ったボザの瓶（配信 0:48:58.5）。v8 の初版の公園の本人（1:01:21.5）は顔が字幕に掛かった（text_on_face）ので替えた。v7c のグラスのボザの写真は外した"
   },
   {
    "src": "c01",
    "in": 180,
-   "out": 204,
+   "out": 223,
    "row": 3,
-   "zoom": {
-    "from": 1.0,
-    "to": 1.05,
-    "x": 0.5,
-    "y": 0.5
-   },
-   "note": "冷蔵棚の長い通路を探して歩く（人は奥に小さく）"
+   "note": "「スーパーを探し回ったら……」: 冷蔵棚の長い通路を歩く（配信 0:48:06）。v7c のスーパーの外観のカードは外した"
   },
   {
    "src": "c01",
@@ -338,21 +299,17 @@
    "note": "棚から取った、ラベルに絵のある瓶へ寄る"
   },
   {
-   "src": "c4_04",
-   "in": 15,
-   "out": 54,
+   "src": "c02",
+   "in": 330,
+   "out": 369,
    "row": 5,
    "zoom": {
-    "from": 1.0,
+    "from": 1.04,
     "to": 1.12,
-    "x": 0.45,
-    "y": 0.45
+    "x": 0.5,
+    "y": 0.5
    },
-   "note": "「これ絶対ボザや！」: ラベルに БОЗА の瓶の本物の写真（Commons・CC BY-SA 2.5。v6 は描いた絵 B1 の寄り）。店の画は 4行目までで止め、似た見た目の連続を作らない",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "「これ絶対ボザや！」: 瓶のラベルの寄り（配信 0:50:11）。v7c の市場の瓶の写真は外した。棚の画（c01）とは別の素材なので似た見た目の連続にならない。0:50:10.5 からだと奥の買い物客の顔が写った（v8b の顔の検査）ので 0.5秒後ろへ"
   },
   {
    "src": "c2_01",
@@ -461,33 +418,36 @@
    "note": "瓶を鼻に近づけて匂いを確かめる"
   },
   {
-   "src": "c05",
-   "in": 1380,
-   "out": 1442,
+   "src": "c06",
+   "in": 318,
+   "out": 362,
    "row": 11,
    "zoom": {
     "from": 1.0,
-    "to": 1.06,
+    "to": 1.05,
     "x": 0.5,
-    "y": 0.45
+    "y": 0.4
    },
-   "note": "「いただきます……」（AI の声）: 瓶を傾けて飲む。v1 の 1:02:40 は顔が画面のまん中で字幕が顔に掛かった（text_on_face）ので、顔が上にある飲む所に替えた"
+   "note": "「いただきます……」（AI の声）: 瓶を傾けて飲む（配信 1:04:25.6）。v8 の初版の 1:03:21 は、公園の白い空の画が4回目になった（shot_reuse）ので別の素材の飲む所に替えた"
   },
   {
-   "src": "c4_06",
-   "in": 15,
-   "out": 95,
+   "src": "c05",
+   "in": 430,
+   "out": 449,
    "row": 11,
+   "note": "本人の声 V2「うわ」: 声と同じ秒の本人の顔（配信 1:02:49.35）"
+  },
+  {
+   "src": "c05",
+   "in": 587,
+   "out": 666,
+   "row": 11,
+   "note": "本人の声 V2「うまい。めちゃくちゃうまい。」: 声と同じ秒の本人（下がって手を叩く。配信 1:02:54.6）。v7c のジョッキの写真は外した（F-087。あやと「めちゃくちゃうまい！のところは本人の映像で良い」）。顔が上の端に寄るので、上を軸に少し寄せて本人を大きく",
    "zoom": {
-    "from": 1.0,
-    "to": 1.12,
+    "from": 1.08,
+    "to": 1.16,
     "x": 0.5,
-    "y": 0.5
-   },
-   "note": "本人の声 V2「うまい。めちゃくちゃうまい。」: ジョッキのボザの本物の写真（Commons・CC BY-SA 4.0。v6 は案内ページの水彩のグラス）。公園の飲む画と続けると似た見た目が 4.7秒になる（v4 の similar_run）ので配信の画にしない",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
+    "y": 0.15
    }
   },
   {
@@ -532,13 +492,30 @@
    "note": "「これはうまいわ」のあと、また瓶を傾けて飲む（＋カードの瓶の札）"
   },
   {
-   "src": "c2_01",
+   "src": "c5_01",
    "in": 15,
-   "out": 101,
+   "out": 45,
    "row": 15,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「みんなは、甘酒の小麦版を」: 日本の甘酒の商品写真（Commons・CC BY-SA 4.0。v7c は13行目の札）。本人の声の行に札を重ねないので、問いの行で見せる",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 71,
+   "row": 15,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
     "x": 0.42,
     "y": 0.55
    },
@@ -681,8 +658,7 @@
       "text": "甘酒\n甘酒や"
      },
      {
-      "text": "甘酒の小麦版や。",
-      "big": "glow_yellow"
+      "text": "甘酒の小麦版や。"
      }
     ]
    },
@@ -704,9 +680,7 @@
     "text": "これはハマるわ！",
     "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/15.wav",
     "tts_text": "これはハマるわ！",
-    "at": 1101,
-    "big": "shake_red",
-    "split": "これは｜ハマるわ！"
+    "at": 1101
    },
    {
     "text": "みんなは、甘酒の小麦版を飲んでみたい？",
@@ -741,8 +715,7 @@
     "frames": 52,
     "voice_frames": 44,
     "cuts": [
-     "bozPhoP1v07 0:00:00.5+0.87s",
-     "bozArtP1v01 0:03:00.5+0.87s"
+     "bozArtP1v01 0:03:00.5+1.73s"
     ],
     "line": "やってきたのは、首都ソフィア！",
     "telop": null
@@ -754,7 +727,7 @@
     "voice_frames": 97,
     "cuts": [
      "bozPhoP1v07 0:01:00.5+2.17s",
-     "bozPhoP1v07 0:02:00.5+1.33s"
+     "0:48:58.5+1.33s"
     ],
     "line": "個人的に気になってたのが、小麦を発酵させた飲み物、ボザ！",
     "telop": null
@@ -765,8 +738,7 @@
     "frames": 43,
     "voice_frames": 35,
     "cuts": [
-     "bozArtP1v01 0:02:00.5+0.63s",
-     "0:48:06.0+0.80s"
+     "0:48:06.0+1.43s"
     ],
     "line": "スーパーを探し回ったら……",
     "telop": null
@@ -789,7 +761,7 @@
     "frames": 39,
     "voice_frames": 31,
     "cuts": [
-     "bozPhoP1v07 0:03:00.5+1.30s"
+     "0:50:11.0+1.30s"
     ],
     "line": "これ絶対ボザや！",
     "telop": null,
@@ -868,8 +840,9 @@
     "frames": 142,
     "voice_frames": 134,
     "cuts": [
-     "1:03:21.0+2.07s",
-     "bozPhoP1v07 0:05:00.5+2.67s"
+     "1:04:25.6+1.47s",
+     "1:02:49.3+0.63s",
+     "1:02:54.6+2.63s"
     ],
     "line": "いただきます……うわ、うまい！",
     "telop": null,
@@ -903,8 +876,7 @@
       "text": "甘酒\n甘酒や"
      },
      {
-      "text": "甘酒の小麦版や。",
-      "big": "glow_yellow"
+      "text": "甘酒の小麦版や。"
      }
     ],
     "orig_voice": true
@@ -939,8 +911,7 @@
      "1:04:24.5+1.10s"
     ],
     "line": "これはハマるわ！",
-    "telop": null,
-    "big": "shake_red"
+    "telop": null
    },
    {
     "row": 15,
@@ -948,7 +919,8 @@
     "frames": 86,
     "voice_frames": 63,
     "cuts": [
-     "bozArtP1v01 0:00:00.5+2.87s"
+     "bozAmzP1v08 0:00:00.5+1.00s",
+     "bozArtP1v01 0:00:00.5+1.87s"
     ],
     "line": "みんなは、甘酒の小麦版を飲んでみたい？",
     "telop": null,
@@ -975,60 +947,8 @@
   "contrast": 1.08,
   "warmth": 0.05
  },
- "stickers": [
-  {
-   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_boza_glass.jpg",
-   "x": 800,
-   "y": 1330,
-   "w": 250,
-   "rotate": 6,
-   "out": "cut",
-   "from": 6,
-   "to": 34
-  },
-  {
-   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_wheat_ears.jpg",
-   "x": 800,
-   "y": 1340,
-   "w": 300,
-   "rotate": 5,
-   "from": 565,
-   "to": 649
-  },
-  {
-   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_amazake.jpg",
-   "x": 800,
-   "y": 1340,
-   "w": 330,
-   "rotate": 5,
-   "from": 877,
-   "to": 991
-  },
-  {
-   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_boza_bottles.jpg",
-   "x": 280,
-   "y": 1340,
-   "w": 270,
-   "rotate": -5,
-   "from": 995,
-   "to": 1101
-  },
-  {
-   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/artsrc/sticker_bottle.png",
-   "x": 830,
-   "y": 1330,
-   "w": 220,
-   "rotate": 6,
-   "from": 1105,
-   "to": 1134
-  }
- ],
+ "stickers": [],
  "sfx": [
-  {
-   "at": 6,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/hyokkori.mp3",
-   "db": 0
-  },
   {
    "at": 73,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kuu.mp3",
@@ -1040,44 +960,14 @@
    "db": 0
   },
   {
-   "at": 192,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kira_s.wav",
-   "db": -3
-  },
-  {
    "at": 342,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kira_s.wav",
    "db": -3
   },
   {
-   "at": 439,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/pito_s.wav",
-   "db": 0
-  },
-  {
-   "at": 565,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/hyokkori.mp3",
-   "db": 0
-  },
-  {
-   "at": 655,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/fuwa_s.wav",
-   "db": -4
-  },
-  {
    "at": 791,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/enter_s.wav",
    "db": 0
-  },
-  {
-   "at": 877,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/hyokkori.mp3",
-   "db": 0
-  },
-  {
-   "at": 1101,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kira_s.wav",
-   "db": -3
   },
   {
    "at": 1134,
@@ -1103,5 +993,6 @@
   }
  ],
  "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: 写真（グラスのボザ・小麦の穂・甘酒の商品・市場のボザの瓶。Commons）とカード 11-14 の瓶の切り抜き。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。素材は 720x1280（高い画で取り直した）。上下の帯を切って元の y240〜1110 を使う（ヨーグルトの回と同じ）",
- "_v7": "v7（あやと 2026-11-20「ボザ…もつくって」・帳面 F-082・F-083・F-086）: v6 の指示書から画だけを差し替えた。全面の描いた絵 B1・B2 と案内ページの水彩（大聖堂・グラスのボザ）を本物の写真6枚に（2・3・6・11・12行目。Commons）。札の描いた絵 B1・B3 と案内ページのグラスを写真に（甘酒は本物の商品写真）。フックのカードの瓶 1.13秒は寄せを 1.14 に。字・声・テロップ・題の札・overrides・polish は v6 のまま"
+ "_v7": "v7（あやと 2026-11-20「ボザ…もつくって」・帳面 F-082・F-083・F-086）: v6 の指示書から画だけを差し替えた。全面の描いた絵 B1・B2 と案内ページの水彩（大聖堂・グラスのボザ）を本物の写真6枚に（2・3・6・11・12行目。Commons）。札の描いた絵 B1・B3 と案内ページのグラスを写真に（甘酒は本物の商品写真）。フックのカードの瓶 1.13秒は寄せを 1.14 に。字・声・テロップ・題の札・overrides・polish は v6 のまま",
+ "_v8": "v8（あやと 2026-11-20 #1267「編集ごちゃごちゃしすぎてる」「本人の声のところは本人の映像をめいんに」・帳面 F-087）: v7c の指示書から、本人の声の4か所を全部その声を出している本人の映像にし（12行目の「うわ／うまい／めちゃくちゃうまい」を声と同じ秒の配信に）、本人の声の行の札を外した。札 5→0・写真の全面 6→3（小麦・パン屋・甘酒）・大きい字 5→3・効果音 12→5。字・声・テロップ・題の札は v7c のまま"
 }
