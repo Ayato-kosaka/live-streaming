@@ -37,8 +37,11 @@ def main() -> int:
            "now": {"400": "月", "700": "", "900": ""},                # 減っただけ
            "travel/y": {"400": "新", "700": "", "900": ""}}           # 新しい面
     new, hit = ft.merge(table, got, [])
-    if hit == ["travel/x", "travel/y"] and new["now"] == table["now"] and new["travel/x"]["900"] == "記":
-        print("[1] ○ 字が増えた面と新しい面だけ差し込む（減っただけ・同じ面は触らない）")
+    got["travel/x"] = {"400": "", "700": "旅", "900": "記"}               # 400 の「街」は測り落とした
+    new, hit = ft.merge(table, got, [])
+    if (hit == ["travel/x", "travel/y"] and new["now"] == table["now"] and new["travel/x"]["900"] == "記"
+            and new["travel/x"]["400"] == "街"):
+        print("[1] ○ 字が増えた面と新しい面だけ、字を足す（和。測り落とした字を表から消さない）。減っただけ・同じ面は触らない")
     else:
         print(f"[1] ✕ 差し込んだ面 {hit} / now {new['now']}")
         ng += 1
@@ -65,6 +68,17 @@ def main() -> int:
         ng += 1
 
     # 道具として回す（書く・書かない・名指しが答えに無ければ 2）
+    # 下敷きの字（かな）が増えただけの面は差し込まない。1字も描いていなかった太さに出たら差し込む
+    base = ft.core()
+    kana_only = ft.gained({"400": "街", "700": "旅", "900": ""}, {"400": "街", "700": "旅ブカレスト", "900": ""})
+    new_weight = ft.gained({"400": "街", "700": "", "900": ""}, {"400": "街", "700": "ブ", "900": ""})
+    kanji = ft.gained({"400": "街", "700": "旅", "900": ""}, {"400": "街", "700": "旅首", "900": ""})
+    if "ブ" in base and "首" not in base and not kana_only and new_weight and kanji:
+        print("[4b] ○ かなが増えただけの面は差し込まない。漢字が増えた面・描く太さが増えた面は差し込む")
+    else:
+        print(f"[4b] ✕ かなだけ {kana_only} / 太さが増えた {new_weight} / 漢字 {kanji}")
+        ng += 1
+
     with tempfile.TemporaryDirectory() as d:
         t, g = Path(d) / "w.json", Path(d) / "got.json"
         t.write_text(json.dumps(table, ensure_ascii=False), encoding="utf-8")
