@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__isl-site-v5",
+ "mode": "render",
+ "dest": "render/isl-site-v5/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/isl-site-v5.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 2012,
+  "tar_gz": 1185,
+  "encrypted": 1200
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1200,
+   "sha256": "d92c8490c4ad3006fe202b9d1a32af9b65e1d8deea54cae0aff43f4cd4f742dc"
+  }
+ ],
+ "hmac_sha256": "5fa82fcde477a8e2e086aa67040704c6322c0aca1c9cb0c4897094083eebff3e",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-20T15:50:44+00:00",
+ "nonce": "98912912af1c10b335c45458"
+}
