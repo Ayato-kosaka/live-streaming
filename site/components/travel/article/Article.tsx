@@ -84,9 +84,15 @@ export function Figure({ p, sizes, eager, className = "ta-fig" }: { p: Photo; si
         style={p.pos ? { objectPosition: p.pos } : undefined}
       />
       <figcaption>
-        <a href={videoUrl(p.v)} target="_blank" rel="noopener noreferrer" aria-label={`この写真の日の配信（${jpDate(p.day)}）`}>
-          あやと撮影・<time dateTime={p.day}>{jpDate(p.day)}</time>
-        </a>
+        {"page" in p ? (
+          <a href={p.page} target="_blank" rel="noopener noreferrer">
+            写真: {p.by}（{p.lic}）
+          </a>
+        ) : (
+          <a href={videoUrl(p.v)} target="_blank" rel="noopener noreferrer" aria-label={`この写真の日の配信（${jpDate(p.day)}）`}>
+            あやと撮影・<time dateTime={p.day}>{jpDate(p.day)}</time>
+          </a>
+        )}
       </figcaption>
     </figure>
   );
