@@ -408,6 +408,8 @@
    "gjomleze": {
     "desc": "Gjomleze, a layered pie from western North Macedonia: a round, shallow, dark metal baking pan holding a golden-brown pie made of many very thin layers of crepe-like batter baked one on top of another, the top glossy with butter and lightly blistered; it is cut into diamond-shaped pieces, and one diamond-shaped piece lies on a plain plate in front, its cut side clearly showing many thin, pale-golden layers stacked like pages.",
     "alt": "薄い生地を何層も重ねて焼いた丸いパイ、ジョムレゼ。ひし形に切った一切れの切り口に層が見える",
+    "fix": "IMPORTANT: it must NOT look like burek or flaky phyllo pastry: no puffy, flaky or shattered pastry, and no wedge cut out of a round pie. The whole pie in the pan is cut into neat diamond-shaped pieces in a lattice pattern, all the cut lines visible on top; the top is smooth, flat and deep golden-brown with darker toasted spots. The piece on the plate is a thick, neat diamond whose cut sides show dozens of thin, dense, flat stripes of pale cream and golden brown stacked tightly like a mille-crepe cake. ",
+    "v": 2,
     "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
    },
    "turkish-coffee": {
