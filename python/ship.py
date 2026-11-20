@@ -114,6 +114,21 @@ HAND: tuple[tuple[str, str], ...] = (
     ("storage.rules", "Storage のルールを触っている（配る前に手で dry-run する面）"),
 )
 
+# **手で PR の枝に押す（`gh workflow run X --ref <枝>`）ワークフロー。** → {ファイル: なぜ}
+#
+# `pull_request` も枝への `push` も持たないので `runs_on_branches()` からは見えないが、
+# 枝で押すと head の check と枝の run に**走っているもの**として出る。ここは走っているあいだ
+# 待つ（正しい——赤ければ出さない、枝に積み戻すものなら返し先を消さない）。ところが
+# ship.yml の `workflow_run` に並んでいないと、**終わっても誰も起こさない。**
+# 2026-11-19 に #1327 がそれで67分止まった（#1329）。赤くならない。走らないだけ。
+#
+# ここに並べたものは「PR の枝で走るもの」に数える（起こしの一覧に並べないと
+# `ship_selftest.py` の [1] が漏れで赤くなる）。並べ忘れて枝で押した日は、
+# `look` が「終わっても起こされない run を待っている」と赤い注記を残す（`unwakeable()`）
+BRANCH_DISPATCH: dict[str, str] = {
+    "heavy_watch.yml": "重い見張り（書き出し＋ブラウザ・書体の焼き直し・街のガイドの面）を枝で押す",
+}
+
 # **マージを GITHUB_TOKEN でするので、`push: master` で起きるものが起きない**
 # （GitHub の再帰よけ）。人がマージしていたときに走っていた見張りを、名指しで起こし直す。
 # 起こす先は YAML から毎回読む（ここに一覧を書かない。足した日に書き足し忘れても漏れない）。
@@ -201,9 +216,24 @@ def runs_on_branches(doc: dict, quirk: bool = False) -> bool:
 
 
 def wake_names(docs: dict[str, dict], quirk: bool = False) -> set[str]:
-    """起こしてもらうべき相手（ship.yml 自身を除く）の `name:`。"""
+    """起こしてもらうべき相手（ship.yml 自身を除く）の `name:`。手で枝に押すもの（`BRANCH_DISPATCH`）も入れる。"""
     return {name_of(p, d) for p, d in docs.items()
-            if p != OWN and runs_on_branches(d, quirk)}
+            if p != OWN and (runs_on_branches(d, quirk) or branch_dispatched(p, d, quirk))}
+
+
+def branch_dispatched(path: str, doc: dict, quirk: bool = False) -> bool:
+    """`BRANCH_DISPATCH` に並べてあり、本当に `workflow_dispatch` を持つか。"""
+    return path.rsplit("/", 1)[-1] in BRANCH_DISPATCH and "workflow_dispatch" in triggers(doc, quirk)
+
+
+def unwakeable(branch_runs: list[dict], wakes: set[str]) -> list[str]:
+    """枝で走っている run のうち、**終わっても ship.yml を起こさないもの**の名前（#1329）。
+
+    ここが空でないまま「待つ」と、その run が最後に終わった日は誰も起こさない。
+    """
+    return sorted({r.get("name", "?") for r in branch_runs
+                   if r.get("status") != "completed" and r.get("path") != OWN
+                   and r.get("name") not in wakes})
 
 
 def listed_wakes(doc: dict) -> list[str]:
@@ -365,6 +395,7 @@ class Decision:
     pr: dict = field(default_factory=dict)
     files: list = field(default_factory=list)
     rows: list = field(default_factory=list)
+    branch_runs: list = field(default_factory=list)
 
 
 def decide(pr: dict, files: list[str], checks: list[dict], status: dict, own_suites: set,
@@ -674,7 +705,7 @@ def evaluate(gh: Gh, n: int, as_if: bool = False) -> Decision:
     paths = suite_paths(gh, sha)
     own = {sid for sid, path in paths.items() if path == OWN}
     k, line = decide(pr, files, latest_checks(checks, paths), status, own, branch)
-    return Decision(n, k, line, pr, files, rows)
+    return Decision(n, k, line, pr, files, rows, branch)
 
 
 def sweep(gh: Gh) -> list[int]:
@@ -730,6 +761,7 @@ def look(gh: Gh, pr_arg: str, dry: bool, event: str) -> int:
         # 判断は止めない（走っているものは走らせる）。ただし赤い字で残す
         print(f"::error::起こしの一覧がずれている: 漏れ {drift['missing']} / 無い名前 {drift['ghost']}"
               "（python/ship_selftest.py）")
+    wakes = set(listed_wakes(docs.get(OWN) or {}))
     numbers = [int(pr_arg)] if pr_arg else sweep(gh)
     if not numbers:
         print(f"札 `{LABEL}` の付いた開いている PR は無い（{event}）")
@@ -741,6 +773,11 @@ def look(gh: Gh, pr_arg: str, dry: bool, event: str) -> int:
         d = evaluate(gh, n)
         row = f"#{n} → {d.kind}: {d.line}"
         print(row)
+        stuck = unwakeable(d.branch_runs, wakes) if d.kind == "wait" else []
+        if stuck:
+            # 待つのは正しい。ただし終わっても起こされないので、ここで赤く残す（#1329）
+            print(f"::error::#{n} は終わっても ship.yml を起こさない run を待っている: {'・'.join(stuck)}"
+                  f"（python/ship.py の BRANCH_DISPATCH と ship.yml の workflow_run に足す）")
         summary.append(f"- {row}")
         if d.kind in ("go", "fail"):
             act.append(str(n))
