@@ -741,8 +741,8 @@ jobs:
   # datebake・preclaim（全面）・nextempty・firstload・reachwatch は、同じ run の `browserwatch` と `reachwatch` が
   # **積み戻したあとの head** で回す（2本は `needs: [guide]`）。終わったら `guide_report` が同じコメントを書き換える。
   #
-  # **GITHUB_TOKEN の push は次のワークフローを起こさない**（PR の検査が新しい head で走らない）。
-  # `workflow_dispatch` だけは例外なので、積んだあと Selftests を名指しで起こす。
+  # **GITHUB_TOKEN の push は次のワークフローを起こさない**と GitHub の文書にある（PR の検査が新しい head で走らない）。
+  # `workflow_dispatch` だけは例外なので、積んだ head で Selftests が走っていなければ名指しで起こす。
   guide:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.guide != '' }}
     runs-on: ubuntu-24.04
@@ -930,8 +930,14 @@ jobs:
               echo "sha=$sha" >> "$GITHUB_OUTPUT"
               echo "pushed=${sha:0:7}（$pushed）" >> "$GITHUB_OUTPUT"
               printf '枝に積み戻す\t0\t\n' >> "$ROWS"
-              # 積んだ head で PR の検査を起こす（GITHUB_TOKEN の push は pull_request を起こさない）
-              gh workflow run selftest.yml --ref "$GITHUB_REF_NAME" || echo "::warning::Selftests を起こせなかった。手で起こす"
+              # 積んだ head で PR の検査が走っているかを見て、走っていなければ起こす。GitHub の文書では
+              # GITHUB_TOKEN の push は pull_request を起こさないが、2026-11-20 のブカレストの回では起きた
+              # （Selftests が2本並んだ）。どちらでも1本になるように、見てから押す
+              sleep 30
+              n="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$sha&event=pull_request" -q '[.workflow_runs[] | select(.name == "Selftests")] | length' || echo 0)"
+              if [ "${n:-0}" = 0 ]; then
+                gh workflow run selftest.yml --ref "$GITHUB_REF_NAME" || echo "::warning::Selftests を起こせなかった。手で起こす"
+              fi
               exit 0
             fi
             sleep $((i * 10))
