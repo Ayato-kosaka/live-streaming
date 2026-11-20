@@ -416,7 +416,7 @@ export default function AboutPage() {
           来月には嘘になる。 */}
       <Panel>
         <h2>いつまで、やるんだろう</h2>
-        <p className="muted">2026年9月11日、海外に出て丸二年の日に、本人が書いたもの。</p>
+        <p className="muted">2026年9月11日、海外に出て丸二年の日に、本人が書いたもの（試し: 鴎）。</p>
         <div className="awords">
           <p>{WORDS[0]}</p>
         </div>
