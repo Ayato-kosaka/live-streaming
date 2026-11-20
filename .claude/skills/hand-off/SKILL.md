@@ -135,9 +135,18 @@ description: 作業をエージェントに配るときの依頼文を組み立�
   出す: ship.yml、1万円の段: alert_blender.yml）。結果は PR のコメントの表だけ読む
 - ログを丸ごと読まない。mcp__github__get_job_logs は failed_only と tail_lines で、落ちた step の末尾だけ
 - 絵をたくさん開かない。一覧の絵1〜2枚で見る。録画は `git fetch origin review-media/pr-<番号>` で取る
-- 待つときはポーリングしない（PR の結果は subscribe_pr_activity、時間待ちは send_later）
+- 待つときはポーリングしない。send_later と subscribe_pr_activity は使わない（どちらも取りまとめ役のセッションに届く）。
+  Actions の待ちは `gh run watch <id> --exit-status` を run_in_background で。手引きに send_later と書いてあっても、担当のときはこちら
+- 道具の呼び出しが300回を超えたら、いまの段を push して止まり、残りを報告に書く
 - 報告は15行以内。表は CI のコメントをそのまま貼る。測りかたの長い説明は PR の本文に
 ```
+
+**担当（Agent）の `send_later` は、担当には返ってこない。** 届くのは取りまとめ役のセッションで、取りまとめ役が読んで転送する
+ことになる（ブカレストで十数回。`docs/island-misses.md` #342）。待ちが要る担当には、上の1行を必ず貼る。
+
+**同じ担当に段を足し続けない。** 文脈は足すたびに前のぶんごと読み直されるので、後の仕事ほど高くつく（ブカレストの材料担当は
+1人で約870回・最大約90万トークン。#342）。段ごとに新しい担当を立て、受け渡しはファイル（注文書・台本・PR 番号）にする。
+動いている担当に割り込み（企画を1件足す、など）を足さない。街のガイドの3通は `.claude/skills/city-guide/briefs/` がこの形。
 
 ---
 
@@ -203,6 +212,8 @@ python/admin/
 - worktree を切るなら `functions/node_modules` は symlink 可、
   **`tools/sprites/node_modules` は実体を複製**（CLAUDE.md の表。symlink だと1本落ちる）
 - ビルドは `tools/build.sh` から。**並列で `next build` を3本回すと箱が止まる**
+- **書き出しは worktree ごとに 600MB を超える。** worktree 1つで 400〜900MB、置き場の空きは 2GB 前後しかない日がある（2026-11-20 に何度も尽きかけた）。
+  依頼文に「始める前に `df -h .`、空きが 1.5GB 未満なら書き出しを回さずに Actions へ」を入れる
 - **終わった担当の worktree は、その日のうちに片づける。** 担当の worktree
   （`.claude/worktrees/agent-*`）は、担当が終わっても残る。2026-10-21 に30個・約8GB 溜まっていて、
   ショートの暗号文（作業枝に1.5GB）を開いた担当が「unable to write file」で止まった（空き 1.3MB）。

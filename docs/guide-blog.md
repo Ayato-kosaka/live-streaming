@@ -89,17 +89,15 @@
 
 | 街 | 置き場 | 道具 |
 | --- | --- | --- |
-| 材料から焼く街（スコピエ・次の街） | `python/data/guide/<国>/<街>/guidebook.json` の、facts だけを持つ字（行った箱に入る）と `compose.json` の `items[].story` | `python3 python/guidebook_bake.py <国>/<街>` |
+| 材料から焼く街（スコピエ・ブカレスト・次の街） | `python/data/guide/<国>/<街>/guidebook.json` の、facts だけを持つ字（行った箱に入る）と `compose.json` の `items[].story`。台本（`book.py`）のある街は台本を直して `python3 python/guide_book_build.py build <国>/<街>`（JSON を手で直さない） | `python3 python/guidebook_bake.py <国>/<街>` |
 | 手で組んだ街（ソフィア） | `python/data/guide/<国>/<街>/went.json` の `items[].story` | `python3 python/guidebook_went.py <国>/<街>` |
 
 **行った日の話が厚い場所（目安800字以上）は、1枚の記事にする**（あやと 2026-11-19「マトカ渓谷の行ったがかなり寂しい。
-がっつり書いた行ったは、モーダルではなくページ遷移でもいい」）。手本は `/travel/north-macedonia/skopje/matka`（2026-11-20。1,575字・配信2本）:
-台本 `python/data/guide/<国>/<街>/<場所>.json` を `python/guide_article.py` で焼き、面は `site/app/travel/<国>/<街>/<場所>/page.tsx`
-（マトカ渓谷のを写す）、名簿は `content/travel.ts` の `ARTICLES` と `content/travel/articles.ts`。窓の行った箱には要約2〜3行だけを残し、
-組み立ての `items[].article` で「続きを読む」を出す（`guidebook_bake.py`）。材料は、その場所の前後の配信の facts を全部。足りない場面は
+がっつり書いた行ったは、モーダルではなくページ遷移でもいい」）。手本は `/travel/north-macedonia/skopje/matka`（2026-11-20。1,575字・配信2本。あやと「めっちゃいい」）。
+窓の行った箱には要約2〜3行だけを残し、「続きを読む」で記事へ繋ぐ。材料は、その場所の前後の配信の facts を全部。足りない場面は
 `/guide-facts` の決まりで字幕から抜き足す（議事録に在っても字幕で確かめられない話・確かめが要る額は使わない）。
-新しい面は字の表（`tools/fonts/weights.json`）に載せる——書き出しを測れない箱では、物価の記事2本に共通の字に記事の字を足して載せ、
-`fontbudget_selftest.mjs` で上限の中かを見る
+**記事の置き場と配線（台本・焼く・面・名簿・窓・書体・見張りの表の7か所）と、記事の合格の条件は
+`.claude/skills/city-guide/briefs/articles.md` に1本で置く**（ここには書き写さない）。書体は作業箱で焼かない（`SOLO` に1行。焼くのは Actions）
 
 **骨組み（出どころつきの外の事実）は案内鳥が書く**（`guide-design.md` 5-1）。この箱の字だけが、あやとの一人称。
 骨組みの字にあやとの体験を混ぜない（混ざっていたら、事実は骨組みに、体験は facts だけの字に分ける）。
