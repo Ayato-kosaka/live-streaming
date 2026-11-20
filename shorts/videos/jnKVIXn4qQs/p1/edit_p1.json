@@ -10,7 +10,7 @@
    "t0": 0.0
   },
   "c05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/05_1-35-58_1-39-00.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt3/mat/jnKVIXn4qQs/clips/05_1-35-58_1-39-00.mp4",
    "watermark": "prism_live",
    "t0": 5758.0,
    "bands": {
@@ -31,23 +31,8 @@
     "margin": 5
    }
   },
-  "c3_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/02_guide_cover.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
-  },
-  "c3_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/03_card_tram.mp4",
-   "watermark": "prism_live",
-   "t0": 120.0
-  },
-  "c4_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_gen/01_gen_D1.mp4",
-   "watermark": "prism_live",
-   "t0": 0.0
-  },
   "c01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/01_0-35-50_0-36-50.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt3/mat/jnKVIXn4qQs/clips/01_0-35-50_0-36-50.mp4",
    "watermark": "prism_live",
    "t0": 2150.0,
    "bands": {
@@ -68,18 +53,8 @@
     "margin": 5
    }
   },
-  "c3_04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/04_card_stalls.mp4",
-   "watermark": "prism_live",
-   "t0": 180.0
-  },
-  "c3_05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/05_card_spice.mp4",
-   "watermark": "prism_live",
-   "t0": 240.0
-  },
   "c2_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest2/jnKVIXn4qQs/clips/01_0-33-25_0-34-45.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt3/mat2/jnKVIXn4qQs/clips/01_0-33-25_0-34-45.mp4",
    "watermark": "prism_live",
    "t0": 2005.0,
    "bands": {
@@ -101,7 +76,7 @@
    }
   },
   "c06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/06_1-41-20_1-42-10.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt3/mat/jnKVIXn4qQs/clips/06_1-41-20_1-42-10.mp4",
    "watermark": "prism_live",
    "t0": 6080.0,
    "bands": {
@@ -123,7 +98,7 @@
    }
   },
   "c04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/04_1-33-30_1-34-10.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt3/mat/jnKVIXn4qQs/clips/04_1-33-30_1-34-10.mp4",
    "watermark": "prism_live",
    "t0": 5610.0,
    "bands": {
@@ -145,7 +120,7 @@
    }
   },
   "c02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/02_1-28-00_1-28-40.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt3/mat/jnKVIXn4qQs/clips/02_1-28-00_1-28-40.mp4",
    "watermark": "prism_live",
    "t0": 5280.0,
    "bands": {
@@ -167,7 +142,7 @@
    }
   },
   "c03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest/jnKVIXn4qQs/clips/03_1-30-25_1-31-30.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt3/mat/jnKVIXn4qQs/clips/03_1-30-25_1-31-30.mp4",
    "watermark": "prism_live",
    "t0": 5425.0,
    "bands": {
@@ -189,7 +164,7 @@
    }
   },
   "c2_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/ingest2/jnKVIXn4qQs/clips/02_1-31-25_1-32-40.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt3/mat2/jnKVIXn4qQs/clips/02_1-31-25_1-32-40.mp4",
    "watermark": "prism_live",
    "t0": 5485.0,
    "bands": {
@@ -210,15 +185,10 @@
     "margin": 5
    }
   },
-  "c4_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_gen/02_gen_D2.mp4",
+  "c3_m": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt3/art3/01_meiji_bulgaria.mp4",
    "watermark": "prism_live",
-   "t0": 60.0
-  },
-  "c3_06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/art_free/06_card_park.mp4",
-   "watermark": "prism_live",
-   "t0": 300.0
+   "t0": 0.0
   }
  },
  "cuts": [
@@ -229,11 +199,11 @@
    "row": 0,
    "zoom": {
     "from": 1.0,
-    "to": 1.09,
+    "to": 1.14,
     "x": 0.45,
     "y": 0.55
    },
-   "note": "「ブルガリアのヨーグルト、」: あやと島カード 11-13（МЛЕКАРНИЦА の前のいちごの瓶）。0秒目を配信の粗い1コマにしない（F-079）",
+   "note": "「ブルガリアのヨーグルト、」: あやと島カード 11-13（МЛЕКАРНИЦА の前のいちごの瓶）。フック A。1.27秒の止め絵なので寄せを 1.09 → 1.14 に強めて動かし続ける（F-086）。水彩の札は外した（F-082）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -253,51 +223,43 @@
    "note": "「本当に美味しいか検証して見た！」: 瓶を傾けて飲む（答えの画。F-073）"
   },
   {
-   "src": "c3_02",
-   "in": 15,
-   "out": 49,
-   "row": 1,
-   "zoom": {
-    "from": 1.0,
-    "to": 1.1,
-    "x": 0.5,
-    "y": 0.4
-   },
-   "note": "ガイドの表紙の絵（ネフスキー大聖堂）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
-  },
-  {
-   "src": "c3_03",
-   "in": 15,
-   "out": 48,
+   "src": "c04",
+   "in": 1140,
+   "out": 1174,
    "row": 1,
    "zoom": {
     "from": 1.0,
     "to": 1.08,
-    "x": 0.62,
-    "y": 0.55
+    "x": 0.5,
+    "y": 0.45
    },
-   "note": "カード 11-12 黄色い路面電車の通り（ソフィアの街）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "配信 1:34:08 広場と記念碑・青空（v2 はガイドの水彩の大聖堂。F-082）"
   },
   {
-   "src": "c4_01",
+   "src": "c04",
+   "in": 180,
+   "out": 213,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "配信 1:33:36 石畳の通りと横断歩道（v2 はカードの路面電車）"
+  },
+  {
+   "src": "c3_m",
    "in": 15,
    "out": 98,
    "row": 2,
    "zoom": {
     "from": 1.0,
-    "to": 1.12,
+    "to": 1.08,
     "x": 0.5,
-    "y": 0.5
+    "y": 0.3
    },
-   "note": "描いた絵 D1（日本のスーパーのプレーンヨーグルト。字・ロゴなし）",
+   "note": "明治ブルガリアヨーグルトの本物の写真（Commons・CC0。v2 は描いた絵 D1。F-083）。縦に収めるため左右を少し切って上に寄せ、下は同じ写真のぼかし。字幕が日付の欄に載り、箱の「ブルガリア」の字に重ならない",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -330,26 +292,9 @@
    "note": "ЖЕНСКИ ПАЗАР の門（場所の札）"
   },
   {
-   "src": "c3_04",
-   "in": 15,
-   "out": 39,
-   "row": 4,
-   "zoom": {
-    "from": 1.0,
-    "to": 1.08,
-    "x": 0.4,
-    "y": 0.5
-   },
-   "note": "カード 11-13 屋台の並び（ヨーグルトが無い）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
-  },
-  {
-   "src": "c3_05",
-   "in": 15,
-   "out": 40,
+   "src": "c01",
+   "in": 840,
+   "out": 864,
    "row": 4,
    "zoom": {
     "from": 1.0,
@@ -357,11 +302,20 @@
     "x": 0.5,
     "y": 0.5
    },
-   "note": "カード 11-13 スパイスと土産の屋台（ヨーグルトが無い）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "配信 0:36:18 屋根の下の空いた屋台（v2 はカードの屋台）"
+  },
+  {
+   "src": "c01",
+   "in": 1620,
+   "out": 1645,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "配信 0:36:44 門の前の赤い傘（v2 はカードのスパイスの屋台）"
   },
   {
    "src": "c2_01",
@@ -468,45 +422,22 @@
    "note": "店で受け取った「Айран」の瓶（ラベルにアイランと書いてある）。1行 3.2秒を1カットにしない（cut_length）"
   },
   {
-   "src": "c3_01",
-   "in": 15,
-   "out": 76,
+   "src": "c05",
+   "in": 63,
+   "out": 124,
    "row": 12,
    "zoom": {
     "from": 1.0,
     "to": 1.1,
     "x": 0.45,
-    "y": 0.68
-   },
-   "note": "カードの瓶（高画質の瓶で画質を覆う。F-080）。前の行の店の瓶と続けて、いちごの飲むヨーグルトを見せる",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
-  },
-  {
-   "src": "c4_02",
-   "in": 15,
-   "out": 67,
-   "row": 13,
-   "zoom": {
-    "from": 1.0,
-    "to": 1.06,
-    "x": 0.5,
     "y": 0.5
    },
-   "gamma": 1.12,
-   "note": "描いた絵 D2（回想の白い飲み物。少し暗く・色を抜く）",
-   "grade": {
-    "saturation": 0.55,
-    "contrast": 0.95,
-    "warmth": -0.05
-   }
+   "note": "配信 1:36:00.1 いちごの瓶を掲げる（v2 はカードの瓶）"
   },
   {
    "src": "c06",
    "in": 288,
-   "out": 331,
+   "out": 336,
    "row": 13,
    "zoom": {
     "from": 1.0,
@@ -514,24 +445,33 @@
     "x": 0.5,
     "y": 0.3
    },
-   "note": "構えた真顔（不安）。D2 だけで 3.2秒続けない。1:36:18 は空と木しか写らなかった"
+   "note": "配信 1:41:29.6 構えた真顔（＋回想のアイランの写真の札。v2 は描いた絵 D2）"
   },
   {
-   "src": "c3_06",
-   "in": 15,
-   "out": 36,
+   "src": "c06",
+   "in": 375,
+   "out": 422,
+   "row": 13,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 0.32
+   },
+   "note": "配信 1:41:32.5 口をとがらせた顔（1行 3.17秒を1カットにしない。前のカットと 1.3秒離して同じ瞬間にしない）"
+  },
+  {
+   "src": "c05",
+   "in": 480,
+   "out": 501,
    "row": 14,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
+    "to": 1.08,
     "x": 0.5,
     "y": 0.5
    },
-   "note": "カード 11-13 夕方の公園",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "配信 1:36:14 公園の木と空・見上げ（v2 はカードの夕方の公園）"
   },
   {
    "src": "c05",
@@ -658,7 +598,7 @@
     "x": 0.45,
     "y": 0.6
    },
-   "note": "0秒目と同じカードの瓶（輪にする）",
+   "note": "0秒目と同じカードの瓶（フック A の画で輪にする）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -885,8 +825,8 @@
     "frames": 67,
     "voice_frames": 59,
     "cuts": [
-     "ygtArtP1v01 0:01:00.5+1.13s",
-     "ygtArtP1v01 0:02:00.5+1.10s"
+     "1:34:08.0+1.13s",
+     "1:33:36.0+1.10s"
     ],
     "line": "やってきたのは、ブルガリアの首都ソフィア！",
     "telop": null
@@ -897,7 +837,7 @@
     "frames": 83,
     "voice_frames": 75,
     "cuts": [
-     "ygtGenP1v01 0:00:00.5+2.77s"
+     "ygtArtP1v03 0:00:00.5+2.77s"
     ],
     "line": "ヨーグルトって言うたら、明治ブルガリアヨーグルトやん？",
     "telop": null
@@ -920,8 +860,8 @@
     "voice_frames": 67,
     "cuts": [
      "0:36:41.6+0.87s",
-     "ygtArtP1v01 0:03:00.5+0.80s",
-     "ygtArtP1v01 0:04:00.5+0.83s"
+     "0:36:18.0+0.80s",
+     "0:36:44.0+0.83s"
     ],
     "line": "けど、市場を歩いても、全然出てこんし……",
     "telop": null
@@ -1012,7 +952,7 @@
     "frames": 61,
     "voice_frames": 53,
     "cuts": [
-     "ygtArtP1v01 0:00:00.5+2.03s"
+     "1:36:00.1+2.03s"
     ],
     "line": "僕は、いちごの飲むヨーグルトにした！",
     "telop": null
@@ -1023,8 +963,8 @@
     "frames": 95,
     "voice_frames": 87,
     "cuts": [
-     "ygtGenP1v01 0:01:00.5+1.73s",
-     "1:41:29.6+1.43s"
+     "1:41:29.6+1.60s",
+     "1:41:32.5+1.57s"
     ],
     "line": "前に海外で飲んだヨーグルトの飲み物、苦手やってん……",
     "telop": null
@@ -1035,7 +975,7 @@
     "frames": 71,
     "voice_frames": 55,
     "cuts": [
-     "ygtArtP1v01 0:05:00.5+0.70s",
+     "1:36:14.0+0.70s",
      "1:36:26.2+1.67s"
     ],
     "line": "公園で開けたら、すっごいピンク！",
@@ -1171,17 +1111,7 @@
  },
  "stickers": [
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-kiselo-mlyako-800.webp",
-   "x": 800,
-   "y": 1330,
-   "w": 300,
-   "rotate": 6,
-   "out": "cut",
-   "from": 6,
-   "to": 38
-  },
-  {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-yogurt-1200.webp",
+   "image": "/home/user/live-streaming/shorts/videos/jnKVIXn4qQs/p1/art/photo_bulgarian_yogurt_pot.jpg",
    "x": 540,
    "y": 1340,
    "w": 440,
@@ -1199,21 +1129,23 @@
    "to": 617
   },
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-ayryan-800.webp",
-   "crop": [
-    44,
-    0,
-    712,
-    800
+   "image": "/home/user/live-streaming/shorts/videos/jnKVIXn4qQs/p1/art/photo_ayran_glass.jpg",
+   "x": 800,
+   "y": 1340,
+   "w": 320,
+   "rotate": 5,
+   "pop": [
+    0.85,
+    0.9,
+    0.95,
+    0.98,
+    1.0
    ],
-   "x": 802,
-   "y": 1332,
-   "w": 322,
-   "from": 735,
-   "to": 826
+   "from": 889,
+   "to": 982
   },
   {
-   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/draw/D3.jpg",
+   "image": "/home/user/live-streaming/shorts/videos/jnKVIXn4qQs/p1/art/photo_strawberry_shortcake.jpg",
    "x": 800,
    "y": 1340,
    "w": 320,
@@ -1229,7 +1161,7 @@
    "to": 1251
   },
   {
-   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/draw/D4.jpg",
+   "image": "/home/user/live-streaming/shorts/videos/jnKVIXn4qQs/p1/art/photo_seven_nomu_yogurt.jpg",
    "x": 280,
    "y": 1340,
    "w": 300,
@@ -1239,11 +1171,6 @@
   }
  ],
  "sfx": [
-  {
-   "at": 6,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/hyokkori.mp3",
-   "db": 0
-  },
   {
    "at": 88,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/kuu.mp3",
@@ -1275,7 +1202,7 @@
    "db": -3
   },
   {
-   "at": 735,
+   "at": 889,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ygt/sfx/hyokkori.mp3",
    "db": 0
   },
@@ -1322,5 +1249,6 @@
    "text": "アイラン＝ヨーグルト＋塩＋水"
   }
  ],
- "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（壺のヨーグルト・アイラン・壺と刺繍）・カード 11-13 の看板の切り抜き・ChatGPT で描いた D3 D4。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）"
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（壺のヨーグルト・アイラン・壺と刺繍）・カード 11-13 の看板の切り抜き・ChatGPT で描いた D3 D4。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）",
+ "_v3": "v3（#1266 7039082833「テロップA／フックA／完成どうが」）: v2 の指示書から画だけを差し替えた（edit_plan.md 10章）。全面の画は配信の画を先に（2・5・13・14・15行目）、明治は本物の写真（3行目）。札の水彩・描いた絵は写真3枚に替えるか外した（1・4・12・14・17・19行目）。テロップは v2 の様式のまま（A）、フックはカードの瓶から（A）で 0〜1.27秒の寄せを 1.14 に。overrides・polish は v2 のまま（組み直していない）"
 }
