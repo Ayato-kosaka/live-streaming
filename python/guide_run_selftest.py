@@ -75,7 +75,8 @@ def main() -> int:
     want = [("重い見張り browserwatch", "1", "failure"),
             ("　└ 焼き込まれた日付の字が、画面が出てから数え直されているか", "1", "ログのこの step"),
             ("重い見張り reachwatch", "skip", "この run に job が無い")]
-    if hr == want:
+    early = gr.heavy_rows([{"name": "guide", "status": "in_progress"}], early=True)
+    if hr == want and [r[1] for r in early] == ["wait", "wait"]:
         print("[3] ○ 赤い job は落ちた step を1行ずつ（土台の step は出さない）。job が無ければ ─")
     else:
         print(f"[3] ✕ {hr}")

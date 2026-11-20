@@ -825,7 +825,7 @@ jobs:
             "${R[@]}" --name "記事を焼く（$(echo $arts | wc -w)本）" -- \
               bash -c 'rc=0; for a in $1; do python3 python/guide_article.py "$0/$a" || rc=$?; done; exit $rc' "$GUIDE" "$arts"
           else
-            python3 python/guide_run.py row "記事を焼く" skip --rows "$ROWS"
+            python3 python/guide_run.py row "記事を焼く" skip --why "記事の台本が無い（行く前の街）" --rows "$ROWS"
           fi
           "${R[@]}" --name "マイマップの CSV（guide_book_check --mymaps）" -- python3 python/guide_book_check.py "$GUIDE" --mymaps
 
@@ -849,7 +849,7 @@ jobs:
           kill "$sv" 2>/dev/null || true
           "${R[@]}" --name "書体の表に差し込む（font_table）" -- python3 python/font_table.py --got /tmp/guide/w.json
           if git diff --quiet -- tools/fonts/weights.json; then
-            python3 python/guide_run.py row "書体を焼く" skip --rows "$ROWS"
+            python3 python/guide_run.py row "書体を焼く" skip --why "表に差し込む面が無かった" --rows "$ROWS"
             exit 0
           fi
           "${R[@]}" --name "書体を焼く（subset.py）" -- python3 tools/fonts/subset.py --export site/.next-ci
@@ -943,7 +943,7 @@ jobs:
           PUSHED: ${{ steps.push.outputs.pushed }}
         run: |
           [ -f "$ROWS" ] || { echo "表の元が無い（入力で止まった）"; exit 0; }
-          python3 python/guide_run.py report --rows "$ROWS" --pr "$PR" --guide "$GUIDE" --sha "$SHA" --pushed "$PUSHED"
+          python3 python/guide_run.py report --early --rows "$ROWS" --pr "$PR" --guide "$GUIDE" --sha "$SHA" --pushed "$PUSHED"
 
       - name: 表の元を置く（guide_report が読む）
         if: ${{ always() }}
