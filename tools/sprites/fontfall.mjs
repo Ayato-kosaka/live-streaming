@@ -31,6 +31,9 @@ import { spawnSync } from "node:child_process";
 import { chromium } from "playwright-core";
 import { fromRoot } from "./repo.mjs";
 import { loadRedirects, redirectOf } from "./routemoves.mjs";
+/* 書体そのものに字形が無い字母（`tools/fonts/absent.json`。`subset.py` が cmap から書く）は数えない。
+   記号は外さない（書きかたで避けられる）。理由と境目は `fontabsent.mjs` の頭 */
+import { loadAbsent, sortMiss } from "./fontabsent.mjs";
 
 const EXE = process.env.PW_CHROME || "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const SPORT = process.env.SPORT || "4130";
@@ -54,6 +57,9 @@ const FAM = process.env.FONT_FAMILY || "Maru Island";
  * 伸びる（`site/app/css/fonts.css` の頭に、367本足して 203ms → 1,543ms に
  * なった実測が書いてある）。**この数の字のために払う値段ではない。**
  */
+const ABSENT_CHARS = loadAbsent();
+if (!ABSENT_CHARS) console.log("（tools/fonts/absent.json が読めない。字形の無い字母も落ちた字に数える）");
+
 const ALLOW = new Map([
   ["Ј", "キリルの Је。写真家の名前（Јакша）の中だけ"],
   ["ј", "キリルの је。北マケドニア語の表記"],
@@ -137,10 +143,10 @@ async function main() {
       s.remove();
       return { total: chars.length, miss };
     }, FAM);
-    const miss = out.miss.filter((c) => !ALLOW.has(c));
-    const allowed = out.miss.filter((c) => ALLOW.has(c));
+    const { miss, allowed, absent } = sortMiss(out.miss, ALLOW, ABSENT_CHARS);
     console.log(`${path}  面に出る字 ${out.total} ／ 落ちている字 ${miss.length}`
-      + (allowed.length ? `（見送り ${allowed.join("")}）` : ""));
+      + (allowed.length ? `（見送り ${allowed.join("")}）` : "")
+      + (absent.length ? `（書体に字形が無い字母 ${absent.join("")}。absent.json）` : ""));
     if (miss.length) {
       bad += miss.length;
       console.log(`::error::${path} で焼いた書体に無い字 ${miss.length}:`
