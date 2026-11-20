@@ -422,7 +422,7 @@ JSON は**引いた結果の写し**として置き直すだけで、もう入�
 | `legends.ts` | どれを伝説と呼ぶか。**ただし「いつ1つ増えるべきか」は数えられる**（下の「終わった旅には、伝説が1つ要る」） |
 | `plans.ts` `apps.ts` | 企画・アプリの選定 |
 | `voice.ts` `chatter.ts` `themes.ts` `directory.ts` | 画面に出る言葉 |
-| `goods.ts` | グッズの品ぞろえ。**LINEスタンプの絵が届いたら `art` に1行**（絵は `tools/goods/line-src/` に置いて `python3 tools/goods/stampbake.py`。透かしを焼くのはそこ1か所で、焼いていない絵を `art` に書くと`python/goods_stamp_selftest.py` が赤くなる） |
+| `goods.ts` | グッズの品ぞろえ。ステッカーの名簿（`STICKERS`）と、LINE・SUZURI のお店への札。LINEスタンプの欄は店への札1枚だけ（2026-11-20。候補のセリフの枠と、透かしを焼く道具は消した） |
 | `site.ts` の `SITE` `PROFILE` `NOW_FALLBACK` `LINKS` | 名前・説明・本人から聞いた事実（誕生日・日本を出た日・勤めていた期間）・画面に出る言葉。**同じファイルの `STATS_FALLBACK` だけは①**（2章） |
 | `aboutWords.ts`、`nordic.ts` の `WHY` `THEMES` `THEME_WORD` `UNPLANNED` `THANKS` | **本人が書いた文そのもの。** 本人が書かないかぎり増えない |
 
@@ -798,7 +798,7 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 | `trip.ts` `tripPlaces.ts` `place.ts` `planDays.ts` `directory.ts` | 導出 | — | 見ない | ほかの焼き込みから組む |
 | `walked.ts` | 導出 | — | 見ない | 歩いた国の数。`countries.ts` から**画面が出てから**数える。自分では日付を持たない |
 | `northMacedonia.ts` | 人（読みもの） | — | 見ない | いまいる国の案内。今日がいつかを知らないと決められない字を置いていない |
-| `goods.ts` | 人（品ぞろえ） | — | 見ない | 日付を1つも持たない。LINEスタンプの絵が届いたら `art` に1行足すだけ |
+| `goods.ts` | 人（品ぞろえ） | — | 見ない | 日付を1つも持たない。ステッカーが増えたら名簿に1枚足すだけ |
 
 ### `site.ts` を②から①へ移した（2026-10-07）
 

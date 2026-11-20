@@ -129,6 +129,7 @@ const ARRAYS = [
   ["site/content/countries.ts", "AHEAD_COUNTRIES", "slug", "walkedcount"],
   ["site/content/nordic.ts", "ROUTE", "id", "walkedcount"],
   ["site/content/plans.ts", "PLANS", "id", "nextempty"],
+  ["site/content/travel.ts", "CITIES", "slug", "guidestop"],
   ["site/content/recipes.ts", "RECIPES", "slug", "manifest / heroicon"],
   ["site/content/legends.ts", "LEGENDS", "slug", "manifest / heroicon"],
   ["site/content/streamTypes.ts", "STREAM_TYPES", "slug", "manifest / heroicon"],
