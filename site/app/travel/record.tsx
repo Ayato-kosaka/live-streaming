@@ -371,8 +371,16 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
   /* 行った街の記事（`/travel/<国>/<街>/<話>`）。題の頭（「ソフィアの物価【…】」）を札の字に、残りを添え書きに */
   const articles = publicArticles(r.slug).map((a) => {
     const x = articleOf(a.country, a.city, a.slug);
-    return { href: a.href, title: x.h1[0], note: x.h1.slice(1).join(""), icon: x.answer.icon };
+    return { city: a.city, href: a.href, title: x.h1[0], note: x.h1.slice(1).join(""), icon: x.answer.icon };
   });
+  /* 記事は、その街の札の下にまとめる。**「行った街」に街と同じ並びで出さない**——
+     あやと（2026-11-20）「これは行った街ではない。流れがおかしい」（docs/island-misses.md #340）。
+     街の札に付かない記事（街のガイドを持たない街の記事）だけ、並びの下に残す */
+  const guided = new Set(r.towns.flatMap((t) => (t.guide ? [t.guide.slug] : [])));
+  const loose = articles.filter((a) => !guided.has(a.city));
+  /* 「この国であったこと」は、初めは数本だけ。歩いている国は配信がそのまま並ぶので、北マケドニアで35本になった。
+     残りは畳みの中に置く（字は面に残すので、ページ内検索と読み上げには届く。畳んだ中の絵は、開くまで取りに行かれない） */
+  const HAPPENED_FIRST = 5;
   /**
    * その国での数（`content/countryStats.ts`）。
    *
@@ -562,7 +570,35 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
             {r.towns.map((t) => {
               /* 街のガイドを持つ街は、ガイドへ送る（あやと 2026-11-18「ソフィアはガイドへ飛ぶ」）。
                  公開前の印が付いた街は、印が外れた日にここがカードへ替わる */
-              if (t.guide) return <CityCard key={t.name} city={t.guide} />;
+              if (t.guide) {
+                const mine = articles.filter((a) => a.city === t.guide?.slug);
+                return (
+                  <div key={t.name} className="city-set">
+                    <CityCard city={t.guide} />
+                    {/* この街の記事（行ったところ・物価）。街の札の下に畳んでぶら下げる。開くまで1行 */}
+                    {mine.length > 0 && (
+                      <details className="city city-arts">
+                        <summary className="city-head">
+                          <b>{t.name}の記事</b>
+                          <i>{mine.length}本</i>
+                        </summary>
+                        <div className="city-arts-list">
+                          {mine.map((a) => (
+                            <Link key={a.href} prefetch={false} className="tile" href={a.href}>
+                              <Icon name={a.icon} size={32} className="tile-icon" />
+                              <span className="tile-text">
+                                <b>{a.title}</b>
+                                <i>{a.note}</i>
+                              </span>
+                              <Icon name="right" size={16} className="tile-go" />
+                            </Link>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                );
+              }
               if (!t.streams.length) {
                 return (
                   <div key={t.name} className="city is-quiet">
@@ -595,8 +631,8 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
               );
             })}
           </div>
-          {/* 街の記事（物価など）。公開前の印が付いた記事は出さない——印を外した日に、ここにもひとりでに出る */}
-          {articles.map((a) => (
+          {/* 街の札に付かない記事だけ。公開前の印が付いた記事は出さない——印を外した日に、ここにもひとりでに出る */}
+          {loose.map((a) => (
             <Link key={a.href} prefetch={false} className="tile" href={a.href} style={{ marginTop: 12 }}>
               <Icon name={a.icon} size={32} className="tile-icon" />
               <span className="tile-text">
@@ -612,50 +648,72 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
       {(r.highlights.length > 0 || r.stayStreams.length > 0) && (
         <Panel>
           <h2>この国であったこと</h2>
-          <div className="hlist">
-            {/* いま歩いている旅の国は、配信そのもの。畳みの形は人が書いた見どころと同じにして、
-                歩き終わって見どころが書かれた日に、見た目を変えずに中身だけが替わるようにする。
-                題名は YouTube に実在するもの（絵文字も含めて引用。`data-quote`） */}
-            {r.stayStreams.map((v, i) => (
-              <Fold
-                key={v.videoId}
-                title={<span data-quote="title">{v.title}</span>}
-                note={fmt(v.date)}
-                open={i === 0}
-              >
-                {/* その回に何があったかの1〜2行。人が書く見どころの代わりに、議事録の「ひとことで」から焼いたもの
-                    （`content/streamDigest.ts`。#1262 で本文が166字しか無かった）。議事録の無い回はカードだけ */}
-                {STREAM_DIGEST[v.videoId] && <p>{STREAM_DIGEST[v.videoId]}</p>}
-                <div className="scards">
-                  {/* 絵の説明は街の畳み・見どころと同じ（`thumbAlt`。#1296）。ここだけ空だったので、街の畳みから
-                      この節へ配信が移る国（街のガイドを公開した北マケドニア）で、名乗らない絵が35枚増えるところだった */}
-                  <StreamCard
-                    videoId={v.videoId}
-                    title={v.title}
-                    date={v.date}
-                    nth={nthOf(v.date, v.videoId, v.title)}
-                    alt={thumbAlt(r.name, v.date, v.title)}
-                  />
-                </div>
-              </Fold>
-            ))}
-            {r.highlights.map((h, i) => (
-              <Fold key={h.title} title={h.title} note={h.date ? fmt(h.date) : undefined} open={i === 0}>
-                <p>{h.note}</p>
-                {h.videoId && (
+          {(() => {
+            /* いま歩いている旅の国は、配信そのもの。畳みの形は人が書いた見どころと同じにして、
+               歩き終わって見どころが書かれた日に、見た目を変えずに中身だけが替わるようにする。
+               題名は YouTube に実在するもの（絵文字も含めて引用。`data-quote`） */
+            const nodes = [
+              ...r.stayStreams.map((v, i) => (
+                <Fold
+                  key={v.videoId}
+                  title={<span data-quote="title">{v.title}</span>}
+                  note={fmt(v.date)}
+                  open={i === 0}
+                >
+                  {/* その回に何があったかの1〜2行。人が書く見どころの代わりに、議事録の「ひとことで」から焼いたもの
+                      （`content/streamDigest.ts`。#1262 で本文が166字しか無かった）。議事録の無い回はカードだけ */}
+                  {STREAM_DIGEST[v.videoId] && <p>{STREAM_DIGEST[v.videoId]}</p>}
                   <div className="scards">
+                    {/* 絵の説明は街の畳み・見どころと同じ（`thumbAlt`。#1296）。ここだけ空だったので、街の畳みから
+                        この節へ配信が移る国（街のガイドを公開した北マケドニア）で、名乗らない絵が35枚増えるところだった */}
                     <StreamCard
-                      videoId={h.videoId}
-                      title={h.title}
-                      date={h.date}
-                      nth={nthOf(h.date, h.videoId, h.title)}
-                      alt={thumbAlt(r.name, h.date, h.title)}
+                      videoId={v.videoId}
+                      title={v.title}
+                      date={v.date}
+                      nth={nthOf(v.date, v.videoId, v.title)}
+                      alt={thumbAlt(r.name, v.date, v.title)}
                     />
                   </div>
+                </Fold>
+              )),
+              ...r.highlights.map((h, i) => (
+                <Fold key={h.title} title={h.title} note={h.date ? fmt(h.date) : undefined} open={i === 0}>
+                  <p>{h.note}</p>
+                  {h.videoId && (
+                    <div className="scards">
+                      <StreamCard
+                        videoId={h.videoId}
+                        title={h.title}
+                        date={h.date}
+                        nth={nthOf(h.date, h.videoId, h.title)}
+                        alt={thumbAlt(r.name, h.date, h.title)}
+                      />
+                    </div>
+                  )}
+                </Fold>
+              )),
+            ];
+            /* 残りが1つだけなら畳まない（畳みの押しどころのほうが場所を取る） */
+            const cut = nodes.length > HAPPENED_FIRST + 1 ? HAPPENED_FIRST : nodes.length;
+            return (
+              <>
+                <div className="hlist">{nodes.slice(0, cut)}</div>
+                {cut < nodes.length && (
+                  <details className="hmore">
+                    <summary className="longer">
+                      <span className="hmore-open">
+                        あと{nodes.length - cut}
+                        {r.stayStreams.length ? "本" : "件"}だす
+                      </span>
+                      <span className="hmore-close">たたむ</span>
+                      <Icon name="chevron" size={14} />
+                    </summary>
+                    <div className="hlist">{nodes.slice(cut)}</div>
+                  </details>
                 )}
-              </Fold>
-            ))}
-          </div>
+              </>
+            );
+          })()}
         </Panel>
       )}
 
