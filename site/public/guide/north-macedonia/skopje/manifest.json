@@ -344,6 +344,78 @@
    "alt": "泡の立った金色のビールのグラスと、ラベルの無い茶色の瓶、ピーナッツ",
    "kind": "ai",
    "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・赤い刺繍の布巾・左上からの光をソフィアとそろえた。見た目は Wikipedia の説明と写真（guidebook.json の photo ほか）に合わせた。字なし"
+  },
+  "leca-chorba": {
+   "src": "/guide/north-macedonia/skopje/food-leca-chorba-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-leca-chorba-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "深い器に入った、とろりとしたレンズ豆のスープ。刻んだ香草と赤いパプリカをのせて、パンとレモンを添えて",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "turli-tava": {
+   "src": "/guide/north-macedonia/skopje/food-turli-tava-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-turli-tava-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "素焼きの浅い土鍋で焼いた、じゃがいも・なす・オクラ・ピーマン・トマトの重ね焼き、トゥルリ・タヴァ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "pindjur": {
+   "src": "/guide/north-macedonia/skopje/food-pindjur-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-pindjur-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "焼いた赤ピーマンとトマトとなすを練った赤いピンジュル。白いチーズとパンを添えて",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "mekici": {
+   "src": "/guide/north-macedonia/skopje/food-mekici-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-mekici-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ふくらんだ揚げパンのメキツィに粉砂糖をふって。小鉢のジャムと白いチーズを添えて",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "gjomleze": {
+   "src": "/guide/north-macedonia/skopje/food-gjomleze-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-gjomleze-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "薄い生地を何層も重ねて焼いた丸いパイ、ジョムレゼ。ひし形に切った一切れの切り口に層が見える",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "turkish-coffee": {
+   "src": "/guide/north-macedonia/skopje/food-turkish-coffee-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-turkish-coffee-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "取っ手の長い銅の小鍋と、泡ののった小さなカップのトルココーヒー。角砂糖とロクムを添えて",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "gazoza": {
+   "src": "/guide/north-macedonia/skopje/food-gazoza-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-gazoza-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "冷えた梨のソーダを注いだグラスと、字の無いガラス瓶、梨がひとつ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "mountain-tea": {
+   "src": "/guide/north-macedonia/skopje/food-mountain-tea-800.webp",
+   "src_small": "/guide/north-macedonia/skopje/food-mountain-tea-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "黄色い花穂のついた乾いた山のハーブの束と、湯気の立つ金色のお茶。はちみつの小皿を添えて",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
   }
  },
  "buy": {
@@ -403,6 +475,40 @@
   }
  },
  "do": {
+  "square-statues": {
+   "src": "/guide/north-macedonia/skopje/do-square-statues-1200.webp",
+   "src_small": "/guide/north-macedonia/skopje/do-square-statues-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "夕方の金色の光の中、噴水から立ち上がる高い柱の上の騎馬像を見上げる小さな旅人。マケドニア広場の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。行った所も描く（札は描いた絵でそろえ、あやと島カードは窓の中の行った箱に出す。#335）。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/north-macedonia/skopje/do-square-statues-1200.webp",
+     "src_small": "/guide/north-macedonia/skopje/do-square-statues-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "carsija-walk": {
+   "src": "/guide/north-macedonia/skopje/do-carsija-walk-1200.webp",
+   "src_small": "/guide/north-macedonia/skopje/do-carsija-walk-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "赤い瓦の低い店が並ぶ旧市街の石畳の路地。銅の鍋や銀細工の店先をのぞく小さな人と、奥に白いミナレットの絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。行った所も描く（札は描いた絵でそろえ、あやと島カードは窓の中の行った箱に出す。#335）。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/north-macedonia/skopje/do-carsija-walk-1200.webp",
+     "src_small": "/guide/north-macedonia/skopje/do-carsija-walk-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
   "teresa": {
    "src": "/guide/north-macedonia/skopje/do-teresa-1200.webp",
    "src_small": "/guide/north-macedonia/skopje/do-teresa-600.webp",
@@ -410,11 +516,96 @@
    "h": 900,
    "alt": "晩秋の朝の日を受ける、石のアーチと白い壁、屋上にガラスの箱が乗ったマザー・テレサ記念館。前の角に白いマザー・テレサの像",
    "kind": "ai",
-   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。行った所はあやとの写真を出すので、描くのは行っていない所だけ。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。行った所も描く（札は描いた絵でそろえ、あやと島カードは窓の中の行った箱に出す。#335）。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
    "variants": {
     "4:3": {
      "src": "/guide/north-macedonia/skopje/do-teresa-1200.webp",
      "src_small": "/guide/north-macedonia/skopje/do-teresa-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "quake-clock": {
+   "src": "/guide/north-macedonia/skopje/do-quake-clock-1200.webp",
+   "src_small": "/guide/north-macedonia/skopje/do-quake-clock-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "1963年の地震で半分が崩れたままの旧駅舎。5時17分で止まった時計を、朝の光の中で見上げる小さな人の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。行った所も描く（札は描いた絵でそろえ、あやと島カードは窓の中の行った箱に出す。#335）。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/north-macedonia/skopje/do-quake-clock-1200.webp",
+     "src_small": "/guide/north-macedonia/skopje/do-quake-clock-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "matka": {
+   "src": "/guide/north-macedonia/skopje/do-matka-1200.webp",
+   "src_small": "/guide/north-macedonia/skopje/do-matka-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "紅葉の岩山にはさまれたエメラルド色のマトカ湖と、岸の小さな聖アンドレイ修道院。湖畔の道を行く旅人の後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。行った所も描く（札は描いた絵でそろえ、あやと島カードは窓の中の行った箱に出す。#335）。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/north-macedonia/skopje/do-matka-1200.webp",
+     "src_small": "/guide/north-macedonia/skopje/do-matka-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "tavche": {
+   "src": "/guide/north-macedonia/skopje/do-tavche-1200.webp",
+   "src_small": "/guide/north-macedonia/skopje/do-tavche-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "夜の食堂。素焼きの浅い鍋で湯気を立てる赤い豆の煮込みに、スプーンを入れる手元とパンの絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。行った所も描く（札は描いた絵でそろえ、あやと島カードは窓の中の行った箱に出す。#335）。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/north-macedonia/skopje/do-tavche-1200.webp",
+     "src_small": "/guide/north-macedonia/skopje/do-tavche-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "kale": {
+   "src": "/guide/north-macedonia/skopje/do-kale-1200.webp",
+   "src_small": "/guide/north-macedonia/skopje/do-kale-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "夕暮れの城塞の城壁に座り、ヴァルダル川と石橋、灯りのともりはじめた街を見下ろす小さな人。空は薄い茜色の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。行った所も描く（札は描いた絵でそろえ、あやと島カードは窓の中の行った箱に出す。#335）。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/north-macedonia/skopje/do-kale-1200.webp",
+     "src_small": "/guide/north-macedonia/skopje/do-kale-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "vodno": {
+   "src": "/guide/north-macedonia/skopje/do-vodno-1200.webp",
+   "src_small": "/guide/north-macedonia/skopje/do-vodno-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "ヴォドノ山の頂にそびえる白いミレニアム・クロスと、眼下に広がるスコピエの街。山道を登ってきた小さな人の後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。行った所も描く（札は描いた絵でそろえ、あやと島カードは窓の中の行った箱に出す。#335）。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/north-macedonia/skopje/do-vodno-1200.webp",
+     "src_small": "/guide/north-macedonia/skopje/do-vodno-600.webp",
      "w": 1200,
      "h": 900
     }

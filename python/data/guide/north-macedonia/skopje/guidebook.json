@@ -5538,6 +5538,329 @@
     ]
    },
    {
+    "key": "leca-chorba",
+    "name": "レンズ豆のスープ（チョルバ）",
+    "local": null,
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "レンズ豆を主役に煮たスープ。皮をむいた黄色や赤のレンズ豆は、煮ると崩れてとろみが出る。",
+     "src": [
+      {
+       "name": "Wikipedia「Lentil soup」",
+       "url": "https://en.wikipedia.org/wiki/Lentil_soup",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "stores": [],
+    "went": {
+     "facts": [
+      {
+       "id": "rrGvgfbFNIc@3330#food",
+       "ref": "11-05 0:55:30",
+       "video": "rrGvgfbFNIc",
+       "t": 3330,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=rrGvgfbFNIc&t=3330s"
+      },
+      {
+       "id": "rrGvgfbFNIc@5010#price",
+       "ref": "11-05 1:23:30",
+       "video": "rrGvgfbFNIc",
+       "t": 5010,
+       "kind": "price",
+       "url": "https://www.youtube.com/watch?v=rrGvgfbFNIc&t=5010s"
+      },
+      {
+       "id": "O2rMcC78ADg@3510#food",
+       "ref": "11-06 0:58:30",
+       "video": "O2rMcC78ADg",
+       "t": 3510,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=O2rMcC78ADg&t=3510s"
+      }
+     ]
+    },
+    "pork_note": {
+     "text": "肉を入れるかは出どころに書かれていない。店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Lentil soup」",
+       "url": "https://en.wikipedia.org/wiki/Lentil_soup",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "scene": {
+     "id": "rrGvgfbFNIc@3330#food",
+     "video": "rrGvgfbFNIc",
+     "t": 3330,
+     "url": "https://www.youtube.com/watch?v=rrGvgfbFNIc&t=3330s"
+    }
+   },
+   {
+    "key": "turli-tava",
+    "name": "トゥルリ・タヴァ（野菜の土鍋焼き）",
+    "local": null,
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "トルコの煮込み「テュルリュ」の北マケドニア版で、素焼きの土鍋（タヴァ）で作る。じゃがいも・なす・オクラなどを合わせて、オーブンで焼く。",
+     "src": [
+      {
+       "name": "Wikipedia「Türlü」",
+       "url": "https://en.wikipedia.org/wiki/Turli_tava",
+       "seen": "2026-11-20"
+      },
+      {
+       "name": "Wikipedia「Macedonian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "野菜だけの作りと、肉を入れる作りがある。バルカンでは豚肉を使うこともある。",
+     "src": [
+      {
+       "name": "Wikipedia「Türlü」",
+       "url": "https://en.wikipedia.org/wiki/Turli_tava",
+       "seen": "2026-11-20"
+      }
+     ]
+    }
+   },
+   {
+    "key": "pindjur",
+    "name": "ピンジュル（焼き野菜のペースト）",
+    "local": null,
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "赤ピーマン・トマト・にんにくに、なすを合わせることが多い野菜のペースト。ピーマンを焼いて皮をむき、何時間もかけて作る。夏と秋によく食べる。",
+     "src": [
+      {
+       "name": "Wikipedia「Pindjur」",
+       "url": "https://en.wikipedia.org/wiki/Pindjur",
+       "seen": "2026-11-20"
+      },
+      {
+       "name": "Wikipedia「Macedonian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "mekici",
+    "name": "メキツィ（揚げパン）",
+    "local": null,
+    "kinds": [
+     "breakfast",
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "ヨーグルトを練り込んだ生地を揚げたパン。粉砂糖をふり、ジャム・はちみつ・白いチーズを添える。",
+     "src": [
+      {
+       "name": "Wikipedia「Mekitsa」",
+       "url": "https://en.wikipedia.org/wiki/Mekitsa",
+       "seen": "2026-11-20"
+      },
+      {
+       "name": "Wikipedia「Macedonian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "gjomleze",
+    "name": "ジョムレゼ（重ね焼きのパイ）",
+    "local": null,
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "天板で焼いて、ひし形に切り分ける北マケドニアのパイ。",
+     "src": [
+      {
+       "name": "Wikipedia「Macedonian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "中身の出どころは見つからなかった。店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Macedonian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+       "seen": "2026-11-20"
+      }
+     ]
+    }
+   },
+   {
+    "key": "turkish-coffee",
+    "name": "トルココーヒー",
+    "local": {
+     "text": "Турско кафе",
+     "roman": "Tursko kafe",
+     "src": [
+      {
+       "name": "Wikipedia「Macedonian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "北マケドニアでいちばん飲まれているコーヒー。",
+     "src": [
+      {
+       "name": "Wikipedia「Macedonian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "stores": [],
+    "went": {
+     "facts": [
+      {
+       "id": "9S3zuyByWgo@3840#food",
+       "ref": "11-11 1:04:00",
+       "video": "9S3zuyByWgo",
+       "t": 3840,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=9S3zuyByWgo&t=3840s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "9S3zuyByWgo@3840#food",
+     "video": "9S3zuyByWgo",
+     "t": 3840,
+     "url": "https://www.youtube.com/watch?v=9S3zuyByWgo&t=3840s"
+    }
+   },
+   {
+    "key": "gazoza",
+    "name": "ガゾザ（梨のソーダ）",
+    "local": {
+     "text": "Прилепска Газоза",
+     "roman": "Prilepska Gazoza",
+     "src": [
+      {
+       "name": "Wikipedia「Gazoza (Prilep)」",
+       "url": "https://en.wikipedia.org/wiki/Gazoza_(Prilep)",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "梨の香りと味の炭酸飲料。北マケドニアで生まれ、そこで好まれている。作るのはプリレプの醸造所。",
+     "src": [
+      {
+       "name": "Wikipedia「Gazoza (Prilep)」",
+       "url": "https://en.wikipedia.org/wiki/Gazoza_(Prilep)",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "stores": [],
+    "went": {
+     "facts": [
+      {
+       "id": "qAXRe3qQyvo@4900#food",
+       "ref": "11-08 1:21:40",
+       "video": "qAXRe3qQyvo",
+       "t": 4900,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=qAXRe3qQyvo&t=4900s"
+      },
+      {
+       "id": "qAXRe3qQyvo@6930#food",
+       "ref": "11-08 1:55:30",
+       "video": "qAXRe3qQyvo",
+       "t": 6930,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=qAXRe3qQyvo&t=6930s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "qAXRe3qQyvo@6930#food",
+     "video": "qAXRe3qQyvo",
+     "t": 6930,
+     "url": "https://www.youtube.com/watch?v=qAXRe3qQyvo&t=6930s"
+    }
+   },
+   {
+    "key": "mountain-tea",
+    "name": "山のお茶（シデリティス）",
+    "local": null,
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "山の岩場に育つハーブ、シデリティスの茎と葉と花を煮出したお茶。はちみつとレモンを添えることが多い。北マケドニアのシャル山地にも自生し、お茶に使われる。",
+     "src": [
+      {
+       "name": "Wikipedia「Sideritis」",
+       "url": "https://en.wikipedia.org/wiki/Sideritis",
+       "seen": "2026-11-20"
+      },
+      {
+       "name": "Wikipedia「Macedonian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+       "seen": "2026-11-20"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
     "key": "boza",
     "name": "ボザ",
     "local": {

@@ -2529,6 +2529,216 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
     ]
    },
    {
+    "id": "leca-chorba",
+    "name": "レンズ豆のスープ（チョルバ）",
+    "body": "レンズ豆を主役に煮たスープ。皮をむいた黄色や赤のレンズ豆は、煮ると崩れてとろみが出る。",
+    "facts": [
+     {
+      "label": "豚肉",
+      "text": "肉を入れるかは出どころに書かれていない。店で確かめる。"
+     }
+    ],
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "src": [
+     {
+      "name": "Wikipedia「Lentil soup」",
+      "url": "https://en.wikipedia.org/wiki/Lentil_soup",
+      "seen": "2026-11-20"
+     }
+    ],
+    "went": {
+     "date": "2026-11-05",
+     "scene": {
+      "v": "rrGvgfbFNIc",
+      "t": 3330,
+      "date": "2026-11-05"
+     },
+     "story": [
+      "大衆食堂で、トルコの伝統のレンズ豆のスープを飲みました。ハーブの香りが強く、豆の甘みが深い、本場の味。パンも込みで300円で、パンがただに思えるほど安かったです。おいしくて、帰ってから自分でも作りました。"
+     ]
+    }
+   },
+   {
+    "id": "turli-tava",
+    "name": "トゥルリ・タヴァ（野菜の土鍋焼き）",
+    "body": "トルコの煮込み「テュルリュ」の北マケドニア版で、素焼きの土鍋（タヴァ）で作る。じゃがいも・なす・オクラなどを合わせて、オーブンで焼く。",
+    "facts": [
+     {
+      "label": "豚肉",
+      "text": "野菜だけの作りと、肉を入れる作りがある。バルカンでは豚肉を使うこともある。"
+     }
+    ],
+    "kinds": [
+     "local"
+    ],
+    "src": [
+     {
+      "name": "Wikipedia「Türlü」",
+      "url": "https://en.wikipedia.org/wiki/Turli_tava",
+      "seen": "2026-11-20"
+     },
+     {
+      "name": "Wikipedia「Macedonian cuisine」",
+      "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+      "seen": "2026-11-20"
+     }
+    ]
+   },
+   {
+    "id": "pindjur",
+    "name": "ピンジュル（焼き野菜のペースト）",
+    "body": "赤ピーマン・トマト・にんにくに、なすを合わせることが多い野菜のペースト。ピーマンを焼いて皮をむき、何時間もかけて作る。夏と秋によく食べる。",
+    "facts": [],
+    "kinds": [
+     "local"
+    ],
+    "src": [
+     {
+      "name": "Wikipedia「Pindjur」",
+      "url": "https://en.wikipedia.org/wiki/Pindjur",
+      "seen": "2026-11-20"
+     },
+     {
+      "name": "Wikipedia「Macedonian cuisine」",
+      "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+      "seen": "2026-11-20"
+     }
+    ]
+   },
+   {
+    "id": "mekici",
+    "name": "メキツィ（揚げパン）",
+    "body": "ヨーグルトを練り込んだ生地を揚げたパン。粉砂糖をふり、ジャム・はちみつ・白いチーズを添える。",
+    "facts": [],
+    "kinds": [
+     "breakfast",
+     "sweets"
+    ],
+    "src": [
+     {
+      "name": "Wikipedia「Mekitsa」",
+      "url": "https://en.wikipedia.org/wiki/Mekitsa",
+      "seen": "2026-11-20"
+     },
+     {
+      "name": "Wikipedia「Macedonian cuisine」",
+      "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+      "seen": "2026-11-20"
+     }
+    ]
+   },
+   {
+    "id": "gjomleze",
+    "name": "ジョムレゼ（重ね焼きのパイ）",
+    "body": "天板で焼いて、ひし形に切り分ける北マケドニアのパイ。",
+    "facts": [
+     {
+      "label": "豚肉",
+      "text": "中身の出どころは見つからなかった。店で確かめる。"
+     }
+    ],
+    "kinds": [
+     "local"
+    ],
+    "src": [
+     {
+      "name": "Wikipedia「Macedonian cuisine」",
+      "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+      "seen": "2026-11-20"
+     }
+    ]
+   },
+   {
+    "id": "turkish-coffee",
+    "name": "トルココーヒー",
+    "local": {
+     "text": "Турско кафе",
+     "lang": "mk",
+     "roman": "Tursko kafe"
+    },
+    "body": "北マケドニアでいちばん飲まれているコーヒー。",
+    "facts": [],
+    "maps": "https://www.google.com/maps/search/?api=1&query=%D0%A2%D1%83%D1%80%D1%81%D0%BA%D0%BE+%D0%BA%D0%B0%D1%84%D0%B5+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
+    "kinds": [
+     "drinks"
+    ],
+    "src": [
+     {
+      "name": "Wikipedia「Macedonian cuisine」",
+      "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+      "seen": "2026-11-20"
+     }
+    ],
+    "went": {
+     "date": "2026-11-11",
+     "scene": {
+      "v": "9S3zuyByWgo",
+      "t": 3840,
+      "date": "2026-11-11"
+     },
+     "story": [
+      "最後の日、食堂コスモスは現金だけかもしれないと聞いて、カードが使えそうな旧市街の店でトルココーヒーを頼みました。"
+     ]
+    }
+   },
+   {
+    "id": "gazoza",
+    "name": "ガゾザ（梨のソーダ）",
+    "local": {
+     "text": "Прилепска Газоза",
+     "lang": "mk",
+     "roman": "Prilepska Gazoza"
+    },
+    "body": "梨の香りと味の炭酸飲料。北マケドニアで生まれ、そこで好まれている。作るのはプリレプの醸造所。",
+    "facts": [],
+    "maps": "https://www.google.com/maps/search/?api=1&query=%D0%9F%D1%80%D0%B8%D0%BB%D0%B5%D0%BF%D1%81%D0%BA%D0%B0+%D0%93%D0%B0%D0%B7%D0%BE%D0%B7%D0%B0+%D0%A1%D0%BA%D0%BE%D0%BF%D1%98%D0%B5&hl=ja",
+    "kinds": [
+     "drinks"
+    ],
+    "src": [
+     {
+      "name": "Wikipedia「Gazoza (Prilep)」",
+      "url": "https://en.wikipedia.org/wiki/Gazoza_(Prilep)",
+      "seen": "2026-11-20"
+     }
+    ],
+    "went": {
+     "date": "2026-11-08",
+     "scene": {
+      "v": "qAXRe3qQyvo",
+      "t": 6930,
+      "date": "2026-11-08"
+     },
+     "story": [
+      "ヴォドノ山の出店で、北マケドニアで有名な梨のジュースを買いました。冷たい炭酸で、梨の風味がよく効いていました。"
+     ]
+    }
+   },
+   {
+    "id": "mountain-tea",
+    "name": "山のお茶（シデリティス）",
+    "body": "山の岩場に育つハーブ、シデリティスの茎と葉と花を煮出したお茶。はちみつとレモンを添えることが多い。北マケドニアのシャル山地にも自生し、お茶に使われる。",
+    "facts": [],
+    "kinds": [
+     "drinks"
+    ],
+    "src": [
+     {
+      "name": "Wikipedia「Sideritis」",
+      "url": "https://en.wikipedia.org/wiki/Sideritis",
+      "seen": "2026-11-20"
+     },
+     {
+      "name": "Wikipedia「Macedonian cuisine」",
+      "url": "https://en.wikipedia.org/wiki/Macedonian_cuisine",
+      "seen": "2026-11-20"
+     }
+    ]
+   },
+   {
     "id": "boza",
     "name": "ボザ",
     "local": {
@@ -4264,6 +4474,6 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-14",
  "updated": "2026-11-20",
- "hash": "a455b4f122e2bd45"
+ "hash": "d665aa13cac20beb"
 }
 /* END GUIDE */;

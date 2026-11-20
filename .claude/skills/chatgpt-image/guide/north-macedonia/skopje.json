@@ -384,6 +384,48 @@
     "desc": "Local lager beer: a tall stemmed glass of clear golden pale lager with a thick white foam head and condensation drops, beside a brown glass beer bottle with NO label at all (plain bottle), and a small bowl of roasted salted peanuts.",
     "alt": "泡の立った金色のビールのグラスと、ラベルの無い茶色の瓶、ピーナッツ",
     "wiki": "Skopsko beer"
+   },
+   "leca-chorba": {
+    "desc": "Macedonian lentil soup (leća čorba): a deep, round, plain off-white stoneware bowl filled to near the rim with thick, smooth, earthy ochre-brown lentil soup with small pieces of carrot, a little chopped fresh parsley and a pinch of red paprika powder on top and a few drops of red paprika oil on the surface; beside the bowl, two slices of rustic white bread and a lemon wedge.",
+    "alt": "深い器に入った、とろりとしたレンズ豆のスープ。刻んだ香草と赤いパプリカをのせて、パンとレモンを添えて",
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+   },
+   "turli-tava": {
+    "desc": "Turli tava, a Macedonian oven-baked vegetable casserole: a round, shallow, unglazed terracotta earthenware pan (tava) with sloping sides, filled with layered baked vegetables: chunks of potato, slices of eggplant, small whole okra pods, pieces of green and red pepper, slices of tomato and onion, in a little reddish juice; the top is roasted and caramelized with darker charred edges, and gentle steam rises. Nothing else beside it except a small sprig of parsley.",
+    "alt": "素焼きの浅い土鍋で焼いた、じゃがいも・なす・オクラ・ピーマン・トマトの重ね焼き、トゥルリ・タヴァ",
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+   },
+   "pindjur": {
+    "desc": "Pindjur, a Macedonian spread of roasted vegetables: a small, round, plain off-white bowl filled with a coarse, glossy, orange-red spread of roasted red peppers, tomatoes, eggplant and garlic, with a swirl of olive oil and a little chopped parsley on top; beside it, a few crumbled chunks of white brined cheese on a small plain plate and two slices of rustic bread.",
+    "alt": "焼いた赤ピーマンとトマトとなすを練った赤いピンジュル。白いチーズとパンを添えて",
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+   },
+   "mekici": {
+    "desc": "Mekici, Macedonian fried dough: four or five puffy, golden-brown, irregular round pieces of fried yeast dough with blistered crisp surfaces, piled on a plain plate and lightly dusted with powdered sugar; beside them, one small bowl of dark red fruit jam and one small bowl of crumbled white brined cheese.",
+    "alt": "ふくらんだ揚げパンのメキツィに粉砂糖をふって。小鉢のジャムと白いチーズを添えて",
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+   },
+   "gjomleze": {
+    "desc": "Gjomleze, a layered pie from western North Macedonia: a round, shallow, dark metal baking pan holding a golden-brown pie made of many very thin layers of crepe-like batter baked one on top of another, the top glossy with butter and lightly blistered; it is cut into diamond-shaped pieces, and one diamond-shaped piece lies on a plain plate in front, its cut side clearly showing many thin, pale-golden layers stacked like pages.",
+    "alt": "薄い生地を何層も重ねて焼いた丸いパイ、ジョムレゼ。ひし形に切った一切れの切り口に層が見える",
+    "fix": "IMPORTANT: it must NOT look like burek or flaky phyllo pastry: no puffy, flaky or shattered pastry, and no wedge cut out of a round pie. The whole pie in the pan is cut into neat diamond-shaped pieces in a lattice pattern, all the cut lines visible on top; the top is smooth, flat and deep golden-brown with darker toasted spots. The piece on the plate is a thick, neat diamond whose cut sides show dozens of thin, dense, flat stripes of pale cream and golden brown stacked tightly like a mille-crepe cake. ",
+    "v": 2,
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+   },
+   "turkish-coffee": {
+    "desc": "Turkish coffee as served in Skopje's Old Bazaar: a small hammered-copper coffee pot (džezva) with a long straight handle, and beside it a small white porcelain cup on a saucer filled with dark coffee under a thick, velvety light-brown foam; on the saucer two white sugar cubes and one cube of rose lokum (Turkish delight) dusted with powdered sugar; a small glass of water. All of it stands on a small round engraved copper tray on the bare table.",
+    "alt": "取っ手の長い銅の小鍋と、泡ののった小さなカップのトルココーヒー。角砂糖とロクムを添えて",
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+   },
+   "gazoza": {
+    "desc": "Gazoza, a fizzy pear soda: a tall clear glass filled with pale golden, sparkling pear soda with streams of tiny rising bubbles, a thin layer of foam on top and cold condensation drops on the glass; beside it, a plain clear glass bottle with a swing-top stopper and NO label at all, and one ripe yellow-green pear with a leaf on its stem.",
+    "alt": "冷えた梨のソーダを注いだグラスと、字の無いガラス瓶、梨がひとつ",
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
+   },
+   "mountain-tea": {
+    "desc": "Macedonian mountain tea (Sideritis): a loose bunch of dried Sideritis stems with fuzzy, silvery-green leaves and pale yellow flower spikes lying on the table, beside a clear glass cup of hot, golden-amber herbal tea with soft steam rising and a few dried flower spikes floating in it; a small plain dish of golden honey with a wooden honey dipper.",
+    "alt": "黄色い花穂のついた乾いた山のハーブの束と、湯気の立つ金色のお茶。はちみつの小皿を添えて",
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。字なし"
    }
   }
  },
@@ -422,9 +464,33 @@
   }
  },
  "do": {
-  "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。行った所はあやとの写真を出すので、描くのは行っていない所だけ。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+  "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。行った所も描く（札は描いた絵でそろえ、あやと島カードは窓の中の行った箱に出す。#335）。実在の建物は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
   "shape": "card43",
   "items": {
+   "square-statues": {
+    "ja": "マケドニア広場の銅像",
+    "desc": "Macedonia Square in central Skopje, the big open stone plaza famous for its many monumental statues; the monument is the hero. Composition: a wide view from the plaza at a slightly low angle, looking up: in the center rises the huge 'Warrior on a Horse' monument, as in the warrior photo: a colossal bronze rider in armor on a rearing horse, one arm raising a sword, standing on top of a tall, round, multi-tiered column of pale stone with bronze bands of relief figures; the column rises from a wide circular fountain whose water jets arc into the basin, and bronze lions sit around its rim. Around the square, as in the square photo, stand pale cream neoclassical and modern buildings and, off to one side, another bronze rider on a high pedestal of reddish marble; far behind, the soft ridge of Mount Vodno. In the lower foreground, on the wide pale stone paving, one small traveler with a tote bag, seen from behind, stops and looks up at the rider; a few pigeons on the paving. Light: late-afternoon golden hour; low warm sunlight from the right gilds the bronze and the fountain spray, long soft shadows stretch across the paving. Palette: burnished bronze and gold, warm honey stone and cream, with a soft pale-blue and apricot sky.",
+    "alt": "夕方の金色の光の中、噴水から立ち上がる高い柱の上の騎馬像を見上げる小さな旅人。マケドニア広場の絵",
+    "photos": [
+     "site/public/guide/north-macedonia/skopje/photos/guerrero-a-caballo-skopie-macedo-8c243773-500.webp",
+     "site/public/guide/north-macedonia/skopje/photos/plaza-de-macedonia-skopie-macedo-a122463b-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/north-macedonia/skopje/photos/guerrero-a-caballo-skopie-macedo-8c243773-500.webp",
+     "site/public/guide/north-macedonia/skopje/photos/plaza-de-macedonia-skopie-macedo-a122463b-500.webp"
+    ]
+   },
+   "carsija-walk": {
+    "ja": "旧市街のバザール",
+    "desc": "a narrow lane in the Old Bazaar (Čaršija) of Skopje, the old Ottoman market quarter; the lane and its little shops are the hero. Composition: eye level, a one-point perspective down a gently curving, narrow cobblestone street lined on both sides by low one- and two-storey Ottoman-era shops with overhanging red clay-tiled roofs, as in the bazaar photo, wooden shutters folded open and small shop fronts: a coppersmith with hammered copper pots and long-handled coffee pots hanging at the door, a jeweler's window glittering with silver filigree, a tiny café with two small tables and little coffee cups. At the far end of the lane, a slender white stone minaret with a pointed lead-grey cap and the small lead-grey dome of an old mosque rise against the sky. In the middle of the lane, one small figure seen from behind, a bag on the shoulder, leans to peek into a shop. Light: bright midday sun high above: the upper walls, the roof tiles and the minaret glow in hot light, while the lane below lies in cool, luminous shade dotted with patches of sunlight. Palette: terracotta red and warm ochre, gleaming copper, chalk white, deep cool blue-violet shade.",
+    "alt": "赤い瓦の低い店が並ぶ旧市街の石畳の路地。銅の鍋や銀細工の店先をのぞく小さな人と、奥に白いミナレットの絵",
+    "photos": [
+     "site/public/guide/north-macedonia/skopje/photos/0524ba57-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/north-macedonia/skopje/photos/0524ba57-500.webp"
+    ]
+   },
    "teresa": {
     "ja": "マザー・テレサ記念館",
     "desc": "the Memorial House of Mother Teresa on the pedestrian Macedonia Street in central Skopje, as in the memorial house photo: a compact building whose lower part is rough grey fieldstone walls pierced by two big round arches, white plastered upper floors with small balconies, and on the very top a small cube of teal-green glass; in a shallow arched niche at the front corner stands a small white statue of Mother Teresa with her hands together. Composition: a three-quarter view from the street, the house filling the right two thirds, a wide pale stone pavement in front with a low bench and a few fallen yellow leaves; two or three small visitors seen from behind, one holding a little bunch of flowers. Light: a clear, quiet late-autumn morning; soft low sunlight from the left warms the stone and makes the white floors glow, the glass cube catches a bright reflection of the sky, long soft shadows on the pavement. Palette: warm stone grey, chalk white, teal-green glass and pale morning gold, with a calm clear blue sky.",
@@ -433,6 +499,62 @@
      "site/public/guide/north-macedonia/skopje/photos/memorial-house-of-mother-teresa-e2a1c14c-500.webp"
     ],
     "v": 1
+   },
+   "quake-clock": {
+    "ja": "地震で止まった駅の時計",
+    "desc": "the Old Railway Station of Skopje, half destroyed by the 1963 earthquake and kept exactly as it was, now the Museum of the City of Skopje; the building is the hero. Composition: a three-quarter view from the street at a slightly low angle, faithful to the station photo: a massive, plain facade of beige-grey stone blocks; the tall, tower-like block on the left breaks off abruptly at its left edge in a ragged, jagged ruin of broken stone and an empty window frame, its missing half simply gone; high on the face of this tower, a large round clock with simple bar marks (no numerals) and its two hands stopped forever at 5:17 (the short hour hand just past five, the long minute hand a little past the three); to the right, a long, lower wing with rows of tall grid windows. In the lower foreground, on the empty pavement beside a few bare trees with the last yellow leaves, one small person in a long coat, seen from behind, stands still and looks up at the clock. Light: a quiet early morning just after dawn, soft cool light and a faint mist, the sky pale and pearly. Palette: muted beige stone and cool grey, soft sage, pale pearl-blue and a faint peach glow low in the sky.",
+    "alt": "1963年の地震で半分が崩れたままの旧駅舎。5時17分で止まった時計を、朝の光の中で見上げる小さな人の絵",
+    "photos": [
+     "site/public/guide/north-macedonia/skopje/photos/antigua-estacion-de-ferrocarril-d588a667-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/north-macedonia/skopje/photos/antigua-estacion-de-ferrocarril-d588a667-500.webp"
+    ]
+   },
+   "matka": {
+    "ja": "マトカ渓谷へ日帰り",
+    "desc": "Matka Canyon just outside Skopje, a day trip; a landscape with the lake as the hero. Composition: a wide view along the lake from a slightly raised viewpoint, as in the lake photo: steep pale-grey limestone cliffs rise on both sides, their ledges and slopes covered with autumn trees in gold, amber and rust; between them lies a calm, deep emerald-green lake that narrows and winds away into the canyon, with soft reflections. On the right shore at the foot of the cliff stands the small medieval Monastery of St. Andrew, as in the photo: a little church of layered stone with thin red brick bands, a small round drum dome and red-tiled roofs, beside a stone quay where a few small wooden rowing boats are moored; far off, a small boat with a few people glides on the water. In the lower left foreground, a narrow path along the water's edge and one small traveler with a backpack, seen from behind, walking toward the monastery. Light: soft mid-afternoon autumn sun from the left lights the right-hand cliffs and the church, while the left cliff stays in cool shade; a light haze deep in the canyon. Palette: jade and emerald-green water, gold and rust foliage, pale limestone grey, a little terracotta.",
+    "alt": "紅葉の岩山にはさまれたエメラルド色のマトカ湖と、岸の小さな聖アンドレイ修道院。湖畔の道を行く旅人の後ろ姿の絵",
+    "photos": [
+     "site/public/guide/north-macedonia/skopje/photos/lake-matka-st-andrew-church-8320f105-500.webp",
+     "site/public/guide/north-macedonia/skopje/photos/matka-canyon-skopje-3-802a6d2f-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/north-macedonia/skopje/photos/lake-matka-st-andrew-church-8320f105-500.webp",
+     "site/public/guide/north-macedonia/skopje/photos/matka-canyon-skopje-3-802a6d2f-500.webp"
+    ]
+   },
+   "tavche": {
+    "ja": "タヴチェ・グラフチェを食べる",
+    "desc": "a hearty supper of tavče gravče, North Macedonia's national dish, in a small traditional restaurant (kafana) in Skopje; the food is the hero. Composition: a close, intimate view at a low angle across a bare, dark, worn wooden table: in the center, a round, shallow, unglazed terracotta pan (tava) straight from the oven, filled with baked white beans in a thick, bubbling brick-red paprika sauce, the top crusted darker at the edges, one whole dried red pepper on top, fragrant steam rising; one hand (only the hand) dips a spoon in and lifts a spoonful of beans; beside the pan, a chunk of rustic bread torn open, a small plate of pickled green peppers and a glass of red wine. Behind, softly out of focus: a whitewashed wall hung with strings of dried red peppers, a small window showing deep evening blue outside, and a few warm lamps. Light: warm golden lamplight in the evening from the left, the steam glowing; deep, cozy shadows. Palette: brick and paprika red, terracotta, warm cream, dark walnut brown, with a touch of cool evening blue in the window.",
+    "alt": "夜の食堂。素焼きの浅い鍋で湯気を立てる赤い豆の煮込みに、スプーンを入れる手元とパンの絵",
+    "ref": [
+     "site/public/guide/north-macedonia/skopje/food-tavche-400.webp"
+    ]
+   },
+   "kale": {
+    "ja": "城塞から街を見下ろす",
+    "desc": "the view from Skopje Fortress (Kale) at dusk; the city below and the sky are the hero. Composition: from a high viewpoint on top of the old fortress wall: in the left foreground, the crenellated walkway of the massive pale stone wall and a square stone tower with battlements, as in the fortress photo; one small person, seen from behind, sits on the edge of the wall with knees drawn up, looking out. Below, the city spreads out: the Vardar river winding through it, crossed by the long, low Stone Bridge with its many round arches; the rooftops, small domes and slender minarets of the old town on the near bank, and the squares and larger buildings of the center beyond; on the far horizon, the long ridge of Mount Vodno with a tiny white cross on its summit. Light: dusk just after sunset; the sky a soft gradient from pale madder-rose and peach at the horizon to lavender and dusky blue above; the first warm city lights and street lamps begin to glow and reflect in the river. Palette: rose and lavender sky, warm sandstone, deep blue-violet shadows, small specks of gold light.",
+    "alt": "夕暮れの城塞の城壁に座り、ヴァルダル川と石橋、灯りのともりはじめた街を見下ろす小さな人。空は薄い茜色の絵",
+    "photos": [
+     "site/public/guide/north-macedonia/skopje/photos/kalefortress-skopje1-cb4644aa-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/north-macedonia/skopje/photos/kalefortress-skopje1-cb4644aa-500.webp"
+    ]
+   },
+   "vodno": {
+    "ja": "ヴォドノ山から街を見わたす",
+    "desc": "the summit of Mount Vodno above Skopje with the Millennium Cross; a grand, open landscape and the widest view of the series. Composition: the giant white Millennium Cross, as in the cross photo (a very tall, slim cross built of white steel lattice girders, standing on a low platform), rises in the left third, seen from slightly below so that it towers against the sky; to the right, the land falls away and the view opens over the wide basin far below, where the whole city of Skopje spreads out in pale miniature with the thin silver line of the Vardar river, and layer after layer of blue mountain ridges fade into the distance; one small cable car gondola hangs on its line, as in the cable car photo. In the lower right foreground, a wooden boardwalk path with a few steps climbs out of autumn beech trees in gold and copper, and one small hiker with a backpack, seen from behind, has just reached the top and stops to take in the view. Light: a crisp, bright late morning with very clear air, high thin clouds, a soft haze over the distant city. Palette: brilliant white, clear cerulean and cobalt sky, gold and copper autumn leaves, cool blue-grey distant ridges.",
+    "alt": "ヴォドノ山の頂にそびえる白いミレニアム・クロスと、眼下に広がるスコピエの街。山道を登ってきた小さな人の後ろ姿の絵",
+    "photos": [
+     "site/public/guide/north-macedonia/skopje/photos/millennium-cross-vodno-2025-3-09288484-500.webp",
+     "site/public/guide/north-macedonia/skopje/photos/millennium-cross-cableway-skopje-49a6036f-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/north-macedonia/skopje/photos/millennium-cross-vodno-2025-3-09288484-500.webp",
+     "site/public/guide/north-macedonia/skopje/photos/millennium-cross-cableway-skopje-49a6036f-500.webp"
+    ]
    }
   }
  }

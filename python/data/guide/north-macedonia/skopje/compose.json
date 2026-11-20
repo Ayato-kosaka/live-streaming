@@ -306,6 +306,33 @@
           "_XzkJJIvpOE@2970#fact"
         ]
       }
+    },
+    "eat/leca-chorba": {
+      "story": {
+        "text": "大衆食堂で、トルコの伝統のレンズ豆のスープを飲みました。ハーブの香りが強く、豆の甘みが深い、本場の味。パンも込みで300円で、パンがただに思えるほど安かったです。おいしくて、帰ってから自分でも作りました。",
+        "facts": [
+          "rrGvgfbFNIc@3330#food",
+          "rrGvgfbFNIc@5010#price",
+          "O2rMcC78ADg@3510#food"
+        ]
+      }
+    },
+    "eat/turkish-coffee": {
+      "story": {
+        "text": "最後の日、食堂コスモスは現金だけかもしれないと聞いて、カードが使えそうな旧市街の店でトルココーヒーを頼みました。",
+        "facts": [
+          "9S3zuyByWgo@3840#food"
+        ]
+      }
+    },
+    "eat/gazoza": {
+      "story": {
+        "text": "ヴォドノ山の出店で、北マケドニアで有名な梨のジュースを買いました。冷たい炭酸で、梨の風味がよく効いていました。",
+        "facts": [
+          "qAXRe3qQyvo@4900#food",
+          "qAXRe3qQyvo@6930#food"
+        ]
+      }
     }
   },
   "about": {

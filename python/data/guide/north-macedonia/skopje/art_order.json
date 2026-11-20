@@ -1,18 +1,95 @@
 {
  "_meta": {
-  "何か": "スコピエのやりたいことの札の絵の注文（2026-11-20）。やりたいことを8つにし、札を8枚とも描いた絵にそろえる（ブカレストと同じ。#1228 あやと「描いた絵と写真が混ざっている」）。絵の担当はここから頼み書き .claude/skills/chatgpt-image/guide/north-macedonia/skopje.json の do を書き足し、/chatgpt-image 6 の guide_art.py で回す",
-  "決まり": "案2「大人の画集」。ソフィアの do-*.webp・スコピエの do-teresa と同じ型（shape card43・人は小さく後ろ姿か手元・字なし）。実在の建物は、面に出している借りた写真（site/public/guide/north-macedonia/skopje/photos/）を形の手本として渡してよい（写真のふりはさせない）。手本の写真をよそから取らない・リポジトリに入れない（docs/island-misses.md #338）",
-  "品の鍵": "id は材料（guidebook.json）の todo の key と同じ",
-  "いま在る絵": "do は teresa の1枚だけ。ほかの7枚は札に借りた写真が出ている（描いた絵が届けば manifest の do が先に出る。材料はそのまま）",
+  "何か": "スコピエのガイドの絵の注文（2026-11-20）。やりたいことの札を8枚とも描いた絵にそろえ、食べたいものを15品から23品にする（ブカレストと同じ。#1228 あやと「描いた絵と写真が混ざっている」）。絵の担当はここから頼み書き .claude/skills/chatgpt-image/guide/north-macedonia/skopje.json の do と food を書き足し、/chatgpt-image 6 の guide_art.py で回す",
+  "決まり": "案2「大人の画集」。ソフィアの do-*.webp・スコピエの do-teresa と同じ型（shape card43・人は小さく後ろ姿か手元・字なし）。実在の建物は、面に出している借りた写真（site/public/guide/north-macedonia/skopje/photos/）を形の手本として渡してよい（写真のふりはさせない）。手本の写真をよそから取らない・リポジトリに入れない（docs/island-misses.md #338）。料理はいまの料理の絵と同じ卓・光（手本 north-macedonia/skopje:food-tavche か bulgaria/sofia:food-shopska-salata）。料理に布（ナプキン・ハンカチ・テーブルクロス）を描かせない（NOCLOTH）",
+  "品の鍵": "id は材料（guidebook.json）の todo・eat の key と同じ。料理の8品は材料にこのあと同じ鍵で足す",
+  "いま在る絵": "do は teresa の1枚。food は14品（tavche kebapi burek doner shopska pastrmajlija selsko-meso polneti-piperki sweets boza mastika rakija vranec-glass beer）。bakery は絵も写真も無い（今回は頼まない）",
   "頼み書きの古い注": "skopje.json の do.note の「行った所はあやとの写真を出すので、描くのは行っていない所だけ」は 2026-11-19 に改めた（#335。あやと島カードは窓の中の行った箱に出し、札の絵はガイドの絵のまま）。行った所も描く"
  },
  "do": [
-  {"id": "square-statues", "title": "銅像だらけのマケドニア広場を歩きたい！", "what": "マケドニア広場の噴水の上に立つ大きな騎馬像と、まわりに並ぶ白い彫像や新古典の建物。像を見上げる小さな旅人の後ろ姿", "model": "bulgaria/sofia の do-faiths（実在の建物を描いた型）"},
-  {"id": "carsija-walk", "title": "旧市街のバザールに迷い込みたい！", "what": "旧市街（チャルシヤ）の石畳の細い道。低い瓦屋根の店と、奥にモスクの尖塔。店先をのぞきながら歩く小さな人", "model": "bulgaria/sofia の do-faiths"},
-  {"id": "quake-clock", "title": "地震で止まった駅の時計を見たい！", "what": "半分が壊れたまま残る旧駅舎（いまはスコピエ市博物館）の正面と、5時17分を指したまま止まった壁の時計を見上げる小さな人。静かな朝の光", "model": "bulgaria/sofia の do-faiths。形の手本は見たいもの museum の写真"},
-  {"id": "matka", "title": "マトカ渓谷へ日帰りで行きたい！", "what": "紅葉した岩山にはさまれた緑の湖と、岸の小さな石の修道院。湖のほとりの道を行く旅人の後ろ姿", "model": "bulgaria/sofia の do-rila（郊外へ日帰りの型）"},
-  {"id": "tavche", "title": "国民食タヴチェ・グラフチェを食べたい！", "what": "素焼きの浅い鍋で湯気を立てる、赤い豆の煮込み。スプーンを入れる手元とパン", "model": "bulgaria/sofia の do-banitsa（料理を食べる型）。料理の絵 food-tavche と同じ品"},
-  {"id": "kale", "title": "城塞から街を見下ろしたい！", "what": "夕方の城塞の石の城壁の上から、ヴァルダル川と街を見下ろす小さな人。空は薄い茜色", "model": "bulgaria/sofia の do-faiths"},
-  {"id": "vodno", "title": "ヴォドノ山から街を見わたしたい！", "what": "ヴォドノ山の頂の大きな白いミレニアム・クロスと、その下に広がる盆地の街。木の道を登ってきた小さな人の後ろ姿", "model": "bulgaria/sofia の do-rila"}
+  {
+   "id": "square-statues",
+   "title": "銅像だらけのマケドニア広場を歩きたい！",
+   "what": "マケドニア広場の噴水の上に立つ大きな騎馬像と、まわりに並ぶ白い彫像や新古典の建物。像を見上げる小さな旅人の後ろ姿",
+   "model": "bulgaria/sofia の do-faiths（実在の建物を描いた型）"
+  },
+  {
+   "id": "carsija-walk",
+   "title": "旧市街のバザールに迷い込みたい！",
+   "what": "旧市街（チャルシヤ）の石畳の細い道。低い瓦屋根の店と、奥にモスクの尖塔。店先をのぞきながら歩く小さな人",
+   "model": "bulgaria/sofia の do-faiths"
+  },
+  {
+   "id": "quake-clock",
+   "title": "地震で止まった駅の時計を見たい！",
+   "what": "半分が壊れたまま残る旧駅舎（いまはスコピエ市博物館）の正面と、5時17分を指したまま止まった壁の時計を見上げる小さな人。静かな朝の光",
+   "model": "bulgaria/sofia の do-faiths。形の手本は見たいもの museum の写真"
+  },
+  {
+   "id": "matka",
+   "title": "マトカ渓谷へ日帰りで行きたい！",
+   "what": "紅葉した岩山にはさまれた緑の湖と、岸の小さな石の修道院。湖のほとりの道を行く旅人の後ろ姿",
+   "model": "bulgaria/sofia の do-rila（郊外へ日帰りの型）"
+  },
+  {
+   "id": "tavche",
+   "title": "国民食タヴチェ・グラフチェを食べたい！",
+   "what": "素焼きの浅い鍋で湯気を立てる、赤い豆の煮込み。スプーンを入れる手元とパン",
+   "model": "bulgaria/sofia の do-banitsa（料理を食べる型）。料理の絵 food-tavche と同じ品"
+  },
+  {
+   "id": "kale",
+   "title": "城塞から街を見下ろしたい！",
+   "what": "夕方の城塞の石の城壁の上から、ヴァルダル川と街を見下ろす小さな人。空は薄い茜色",
+   "model": "bulgaria/sofia の do-faiths"
+  },
+  {
+   "id": "vodno",
+   "title": "ヴォドノ山から街を見わたしたい！",
+   "what": "ヴォドノ山の頂の大きな白いミレニアム・クロスと、その下に広がる盆地の街。木の道を登ってきた小さな人の後ろ姿",
+   "model": "bulgaria/sofia の do-rila"
+  }
+ ],
+ "food_new": [
+  {
+   "id": "leca-chorba",
+   "title": "レンズ豆のスープ（チョルバ）",
+   "what": "深い器に入った、とろりとした黄土色のレンズ豆のスープ。上に刻んだ香草と赤いパプリカの粉、横に切ったパンとレモン"
+  },
+  {
+   "id": "turli-tava",
+   "title": "トゥルリ・タヴァ（野菜の土鍋焼き）",
+   "what": "浅い素焼きの土鍋（タヴァ）で焼いた、じゃがいも・なす・オクラ・ピーマン・トマトの重ね焼き。縁が焦げて湯気"
+  },
+  {
+   "id": "pindjur",
+   "title": "ピンジュル（焼き野菜のペースト）",
+   "what": "焼いた赤ピーマンとトマトとなすを練った赤いペーストを丸い器に。白いチーズのかけらとパン"
+  },
+  {
+   "id": "mekici",
+   "title": "メキツィ（揚げパン）",
+   "what": "ふくらんだ揚げパンを数個、粉砂糖をふって。小さな器にジャムと白いチーズ"
+  },
+  {
+   "id": "gjomleze",
+   "title": "ジョムレゼ（重ね焼きのパイ）",
+   "what": "薄い生地を何層も重ねて焼いた丸いパイを、ひし形に切り分けて皿に。切り口に層が見える"
+  },
+  {
+   "id": "turkish-coffee",
+   "title": "トルココーヒー",
+   "what": "取っ手の長い銅の小鍋（ジェズヴェ）と、泡ののった小さなカップのトルココーヒー。角砂糖とロクムを1つ"
+  },
+  {
+   "id": "gazoza",
+   "title": "ガゾザ（梨のソーダ）",
+   "what": "冷えた梨のソーダを注いだグラスと、字の無いガラス瓶。横に梨を1つ。泡が立つ"
+  },
+  {
+   "id": "mountain-tea",
+   "title": "山のお茶（シデリティス）",
+   "what": "乾いた山のハーブ（黄色い花穂のシデリティス）の束と、湯気の立つ金色のお茶のカップ。はちみつの小皿"
+  }
  ]
 }
