@@ -243,6 +243,12 @@ REPO_CASES: list[dict] = [
      "new": 'src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/'
             'Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg/960px-Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg"',
      "why": "企画の写真を Commons から直に読む道に戻す（2026-11-15 まで、この形で 429 の日に枠が空になった）"},
+    # 書体に字形の無い字を fontfall が数えない（absent.json）のは字母だけ。記号まで外すと、
+    # 言い換えで避けられる ⚠ € が黙って端末の書体に落ちる
+    {"watch": "tools/sprites/fontabsent_selftest.mjs",
+     "file": "tools/sprites/fontabsent.mjs",
+     "old": "absent.has(c) && isLetter(c))", "new": "absent.has(c))",
+     "why": "字母だけ外す境目を消す（記号も「字形が無い」で黙って通る）"},
 ]
 
 
