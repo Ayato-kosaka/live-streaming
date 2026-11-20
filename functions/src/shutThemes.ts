@@ -20,6 +20,8 @@
 export const SHUT_THEMES: Readonly<Record<string, number>> = {
   /* ソフィアでこれやって — 2026-11-21 00:00 JST から */
   "bulgaria": 1795186800000,
+  /* 北マケドニアでこれやって — 2026-11-12 00:00 JST から */
+  "north-macedonia": 1794409200000,
   /* アルバニアでこれやって — 畳んである（closed） */
   "albania": 0,
   /* 北欧の旅 — 畳んである（closed） */

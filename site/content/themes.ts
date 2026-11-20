@@ -77,7 +77,8 @@ export type Theme = {
    * 移ったあとも前の国あてに貼れてしまう。日付で持てば、**画面が出てから今日と比べて閉じる**
    * （`isOpenTheme`。焼いた日で止まらない。datebake の考え方）。
    *
-   * 焼いた HTML（JS が動く前）は焼いた日で判定する（`BUILT_AT`。企画あての `groupOf` と同じ）。
+   * 焼いた HTML（JS が動く前）では閉じない。**閉じる日より前の時計と同じに扱う**（焼く日で焼いた HTML を変えない。
+   * datebake。`isOpenTheme` の注）。サーバーは日付で断る（`functions/src/shutThemes.ts`）ので、JS の前に選べても貼れない。
    */
   closesOn?: string;
 };
@@ -206,6 +207,9 @@ export const THEMES: Theme[] = [
        書く人がどちらの話でもいいと分かるようにする。 */
     lead: "北マケドニアでやってほしいこと。首都スコピエでも、オフリド湖のほうでも。",
     placeholder: "例）オフリド湖のそばの古い教会を、朝いちばんに見てほしい",
+    /* 北マケドニアを出てブルガリアへ入った日（`content/countries.ts` の `AHEAD_COUNTRIES`）。出たあとも書けるままだった
+       （2026-11-20 に気づいた）。出た国あては、出た日に閉じる */
+    closesOn: "2026-11-12",
   },
   {
     id: "albania",
@@ -443,7 +447,8 @@ export const THEMES: Theme[] = [
     /* 畳む（あやと 2026-10-14「付箋を締め切って」）。40種類を LINE に
        申請して審査に入ったので（2026-11-19 に売り出された）、もう1枚も足せない。ここを開けたままにすると、
        入らないセリフの注文を集め続けることになる。
-       行は消さない——貼られた付箋も、付いたいいねも `/goods` から今までどおり読める。 */
+       行は消さない——宛先の id（`goods-linestamp`）で貼られた付箋が Firestore に残っていて、行を消すと
+       掲示板の畳みの棚から読めなくなる（消えてはいないが、届かない。`isOpenTheme` の上の注と同じ理由）。 */
     closed: true,
   },
   {
@@ -529,7 +534,11 @@ export const THEMES: Theme[] = [
 export function isOpenTheme(t: Theme, now: Date | null): boolean {
   if (t.closed) return false;
   /* 閉じる日を持つ宛先は、今日（画面が出る前は焼いた日）がその日に届いたら閉じる */
-  if (t.closesOn && (daysUntil(t.closesOn, now ?? BUILT_AT) ?? 1) <= 0) return false;
+  /* 閉じる日は**画面が出てからの時計だけ**で見る（`now` が null のあいだは、まだ開いている）。
+     焼いた日（`BUILT_AT`）で決めると、焼く日によって焼いた HTML の並びが変わる——20日に焼けば
+     ソフィアあては書く側、先の日に焼けば畳みの側に移り、datebake が「焼いたまま」と読む
+     （2026-11-20 に master の重い見張りが赤くなった）。板の先頭も、画面が出てからの時計で決まる */
+  if (t.closesOn && now && (daysUntil(t.closesOn, now) ?? 1) <= 0) return false;
   return groupOf(t, now) !== PLAN_DONE_GROUP;
 }
 

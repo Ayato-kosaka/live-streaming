@@ -9,9 +9,28 @@ import HashJump from "./HashJump";
 import { SayRoom } from "./Say";
 import { JsonLd, SITE_ROOT_LABEL, breadcrumbLd } from "@/lib/jsonld";
 import { LINKS } from "@/content/site";
-import { publicCities } from "@/content/travel";
+import { NEXT_MOVE, PLANS } from "@/content/plans";
+import { TRAVEL_CITIES } from "@/content/travel";
+import { guideStops } from "@/lib/guideStop";
+import FootGuide from "./FootGuide";
 
 const YOUTUBE = LINKS.find((l) => l.id === "youtube")?.href;
+
+/**
+ * 足もとに出せる街のガイド。**滞在の表（企画のうち、つぎの国へ移ったら終わるもの）から引く**
+ * （`lib/guideStop.ts` の `guideStops`）。街を手で書かない。
+ *
+ * どれを出すかは画面が出てから選ぶ（`components/ui/FootGuide.tsx`）——ここで1本に絞って焼くと、
+ * つぎの国へ移った日に前の街が残る。
+ *
+ * **公開前の印（`draft`）の付いた街も入れる。** 次に行く街のガイドは、印を外す前から
+ * 表紙の企画の札が指している（`content/plans.ts` の `romania`）。検索・索引・`/all` に
+ * 出さないのは面の側の印が受け持つ（`content/travel.ts` の `TravelCity`）。
+ */
+const GUIDE_STOPS = guideStops(
+  PLANS.filter((p) => p.endsWhen === NEXT_MOVE),
+  TRAVEL_CITIES,
+);
 
 export { ALL_HREF, ALL_LABEL };
 
@@ -209,15 +228,11 @@ export function IslandFooter() {
           行き先は文ではないので、行から出して1つの押しどころにする。 */}
       {/* どの面からも配信へ1本（#1199 の第2便）。検索と AI から来た人のゴールは、島の中ではなく配信（#1200）。
           島の中で YouTube へのリンクを1本も持たない面が 18/143 あった（`/about` も 0本） */}
-      {/* **行った街のガイドへ、どの面からも1本ずつ**（#332）。ソフィアへ島の中から来るリンクは 6面だけで、
-          検索の側から見ると「島の中で大事にされていない面」だった（`python/seo_score.py` の被リンク）。
-          字は面の中身そのもの（観光ガイドと見どころマップ）。**名簿は `content/travel.ts` の1つ**——公開前の印が
-          付いた街は出ない（印を外した日に、ここにもひとりでに並ぶ） */}
-      {publicCities().map((c) => (
-        <Link key={c.href} href={c.href} prefetch={false} className="ifoot-privacy">
-          {c.name}観光ガイド・見どころマップ
-        </Link>
-      ))}
+      {/* **いまいる街か、次に行く街のガイドへ1本だけ**（あやと 2026-11-20「行ったのにスコピエ観光ガイドとか
+          ソフィア観光ガイドが出てきてる。これ全部出す気ですか」）。前は公開した街を全部並べていた（#332。
+          島の中からのリンクを増やすため）が、街は行くたびに増えて、足もとが行った街の一覧になる。
+          行った街のガイドは、国の面と `/travel` から辿れる。字は面の中身そのもの（観光ガイドと見どころマップ） */}
+      <FootGuide stops={GUIDE_STOPS} />
       {YOUTUBE && (
         <a href={YOUTUBE} className="ifoot-privacy" rel="noopener">
           {UI.youtube}
