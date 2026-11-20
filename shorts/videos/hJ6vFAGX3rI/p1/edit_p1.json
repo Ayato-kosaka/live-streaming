@@ -4,10 +4,27 @@
  "id": "hJ6vFAGX3rI-p1",
  "style": "style_ban.json",
  "sources": {
-  "c2_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_free/01_guide_banitsa.mp4",
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/05_0-30-50_0-34-50.mp4",
    "watermark": "prism_live",
-   "t0": 0.0
+   "t0": 1850.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      145,
+      270
+     ],
+     [
+      1070,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
   },
   "c03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/02b_0-08-40_0-10-50.mp4",
@@ -53,15 +70,15 @@
     "margin": 5
    }
   },
-  "c2_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_free/03_guide_cover.mp4",
-   "watermark": "prism_live",
-   "t0": 120.0
-  },
   "c2_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_free/02_guide_bakery.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_photo/02_02_nevsky.mp4",
    "watermark": "prism_live",
    "t0": 60.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_photo/01_01_round_banitsa.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
   },
   "c04": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/03_0-19-00_0-20-40.mp4",
@@ -107,47 +124,15 @@
     "margin": 5
    }
   },
-  "c3_04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_gen/04_gen_B5.mp4",
-   "watermark": "prism_live",
-   "t0": 180.0
-  },
-  "c3_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_gen/01_gen_B1.mp4",
-   "watermark": "prism_live",
-   "t0": 0.0
-  },
-  "c3_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_gen/02_gen_B2.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
-  },
-  "c06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/05_0-30-50_0-34-50.mp4",
-   "watermark": "prism_live",
-   "t0": 1850.0,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      145,
-      270
-     ],
-     [
-      1070,
-      1280
-     ]
-    ],
-    "margin": 5
-   }
-  },
-  "c3_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_gen/03_gen_B3.mp4",
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_photo/03_03_mosque1887.mp4",
    "watermark": "prism_live",
    "t0": 120.0
+  },
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/art_photo/04_04_apple_banitsa.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
   },
   "c07": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/ingest/hJ6vFAGX3rI/clips/06_0-39-20_0-43-00.mp4",
@@ -196,21 +181,17 @@
  },
  "cuts": [
   {
-   "src": "c2_01",
-   "in": 15,
-   "out": 57,
+   "src": "c06",
+   "in": 4890,
+   "out": 4932,
    "row": 0,
    "zoom": {
     "from": 1.0,
-    "to": 1.08,
+    "to": 1.12,
     "x": 0.5,
-    "y": 0.55
+    "y": 0.58
    },
-   "note": "「ブルガリアで名物のバニツァを探したら、」: 案内ページのバニツァの絵（丸い焼き型と1切れ）。0秒目を配信の粗い1コマにしない（F-079）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "「ブルガリアで名物のバニツァを探したら、」: パン屋の台に並ぶバニツァ（配信の動く画。F-086: 0秒目を止め絵にしない）"
   },
   {
    "src": "c03",
@@ -239,17 +220,17 @@
    "note": "「見どころが多すぎた！」の2つ目: 元モスクの教会の中（金のイコノスタシスと壁画）"
   },
   {
-   "src": "c2_03",
+   "src": "c2_02",
    "in": 15,
    "out": 41,
    "row": 1,
    "zoom": {
     "from": 1.0,
-    "to": 1.08,
+    "to": 1.1,
     "x": 0.5,
-    "y": 0.45
+    "y": 0.4
    },
-   "note": "案内ページの表紙の絵（ネフスキー大聖堂）",
+   "note": "写真: ソフィアのアレクサンドル・ネフスキー大聖堂（Commons・Dudva・CC BY-SA 3.0）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -279,20 +260,20 @@
     "x": 0.5,
     "y": 0.5
    },
-   "note": "バニツァを探して通りを歩く（＋バニツァの絵の札）。v1 の自撮り（0:03:38）は顔が画面の真ん中を占めて字が被った"
+   "note": "バニツァを探して通りを歩く（＋渦巻きのバニツァの写真の札）。v1 の自撮り（0:03:38）は顔が画面の真ん中を占めて字が被った"
   },
   {
-   "src": "c2_02",
+   "src": "c2_01",
    "in": 15,
    "out": 66,
    "row": 3,
    "zoom": {
     "from": 1.0,
     "to": 1.14,
-    "x": 0.45,
-    "y": 0.6
+    "x": 0.5,
+    "y": 0.47
    },
-   "note": "案内ページの絵（パン屋の窓辺の丸いバニツァ）。あやとの「→イメージわかる画像を挿入する」",
+   "note": "写真: 焼き型の丸いバニツァ（Commons・Sheku80・CC BY-SA 3.0）。あやとの「→イメージわかる画像を挿入する」",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -332,21 +313,17 @@
    "note": "キノコの傘のテーブルとキャンディの柱"
   },
   {
-   "src": "c3_04",
-   "in": 15,
-   "out": 62,
+   "src": "c02",
+   "in": 1050,
+   "out": 1097,
    "row": 6,
    "zoom": {
     "from": 1.0,
-    "to": 1.08,
-    "x": 0.5,
+    "to": 1.1,
+    "x": 0.6,
     "y": 0.5
    },
-   "note": "描いた絵 B5（夢の国のようなお菓子の家の店）。v2 は同じ店の外・窓・中の3カットが似た見た目で 4.7秒続いた",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "お菓子の家みたいな店の赤い壁とキャンディの柱（窓 02a）。v5 の描いた絵 B5 から替えた（F-082）。v6 の初めの 0:09:25 は前後と同じ窓で似た見た目が 4.7秒続いた"
   },
   {
    "src": "c03",
@@ -388,34 +365,30 @@
    "note": "木の向こうに丸屋根の教会が出てくる"
   },
   {
-   "src": "c3_01",
-   "in": 15,
-   "out": 56,
+   "src": "c04",
+   "in": 1650,
+   "out": 1675,
    "row": 9,
    "zoom": {
     "from": 1.0,
-    "to": 1.08,
-    "x": 0.55,
-    "y": 0.45
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.6
    },
-   "note": "「元はモスクで、」: 描いた絵 B1（16世紀の黒い石のモスク）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "「調べたら、」: 教会の前でスマホの地図の教会のページを開く（配信）"
   },
   {
-   "src": "c3_02",
+   "src": "c2_03",
    "in": 15,
-   "out": 54,
+   "out": 76,
    "row": 9,
    "zoom": {
-    "from": 1.08,
-    "to": 1.0,
+    "from": 1.0,
+    "to": 1.2,
     "x": 0.5,
-    "y": 0.5
+    "y": 0.36
    },
-   "note": "「倉庫と刑務所になって、」: 描いた絵 B2（鉄格子と木箱）",
+   "note": "「元はモスクで、倉庫と刑務所になって、」: 1887年の写真（Commons・パブリックドメイン）。黒いモスク（今の聖七人の教会）へ寄る",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -424,7 +397,7 @@
   {
    "src": "c04",
    "in": 900,
-   "out": 934,
+   "out": 928,
    "row": 9,
    "zoom": {
     "from": 1.15,
@@ -445,7 +418,7 @@
     "x": 0.5,
     "y": 0.35
    },
-   "note": "モスクの形の丸天井と壁画（＋案内ページの、モスクと教会の並ぶ絵の札）"
+   "note": "モスクの形の丸天井と壁画（＋1887年の黒いモスクの写真の札）"
   },
   {
    "src": "c04",
@@ -462,16 +435,16 @@
   },
   {
    "src": "c06",
-   "in": 840,
-   "out": 897,
+   "in": 828,
+   "out": 885,
    "row": 11,
    "zoom": {
-    "from": 1.25,
-    "to": 1.35,
+    "from": 1.3,
+    "to": 1.42,
     "x": 0.5,
-    "y": 0.3
+    "y": 0.28
    },
-   "note": "お目当てのパン屋の扉の丸い看板に寄る（v1 は扉の下のガラスが顔に読まれ、字が被った）"
+   "note": "お目当てのパン屋の扉の丸い看板に寄る（v1 は扉の下のガラスが顔に読まれ、字が被った。v6b も終わりの1コマで同じことが起きたので、もう少し寄せて半秒前から）"
   },
   {
    "src": "c2_01",
@@ -479,12 +452,12 @@
    "out": 93,
    "row": 12,
    "zoom": {
-    "from": 1.08,
-    "to": 1.0,
+    "from": 1.0,
+    "to": 1.3,
     "x": 0.5,
-    "y": 0.45
+    "y": 0.47
    },
-   "note": "「入ったら、イメージと違ったけど、」（AI の声）: 思っていた丸いバニツァ（案内ページの絵。4行目で見せた絵と同じ）。v1 の店の中の棚は次の台と似た見た目が続いた",
+   "note": "「入ったら、イメージと違ったけど、」（AI の声）: 思っていた丸いバニツァ（4行目と同じ写真）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -504,34 +477,34 @@
    "note": "本人の声「これがバニッツや。これ全部バニッツや。」: 棚に並ぶバニツァ"
   },
   {
-   "src": "c3_03",
+   "src": "c2_04",
    "in": 15,
    "out": 58,
    "row": 13,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
+    "to": 1.12,
     "x": 0.5,
-    "y": 0.5
+    "y": 0.45
    },
-   "note": "「アップルシナモンと迷ったけど、」: 描いた絵 B3（アップルシナモンとチーズの2種類）。v1 の指さしの台は前後の台と似た見た目が続いた",
+   "note": "「アップルシナモンと迷ったけど、」: りんごを巻いたバニツァの写真（Commons・Apostoloff・CC BY-SA 3.0）。v5 の描いた絵 B3 から替えた。前後の台の画と似た見た目を続けない",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
    }
   },
   {
-   "src": "c06",
-   "in": 5490,
-   "out": 5534,
+   "src": "c07",
+   "in": 210,
+   "out": 254,
    "row": 13,
    "zoom": {
-    "from": 1.05,
-    "to": 1.12,
-    "x": 0.5,
-    "y": 0.45
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.45,
+    "y": 0.5
    },
-   "note": "定番のチーズと卵の並ぶ台"
+   "note": "「定番のチーズと卵にした！」: 買ったバニツァを持ち上げて笑う本人（＋チーズのバニツァの写真の札）。台の画は0秒目・12行目・終わりと同じ見た目なので、ここは買った物を見せる"
   },
   {
    "src": "c07",
@@ -570,7 +543,7 @@
     "x": 0.35,
     "y": 0.7
    },
-   "note": "かじった断面（＋描いた絵 B4 の札）"
+   "note": "かじった断面（＋チーズの断面の写真の札）"
   },
   {
    "src": "c07",
@@ -586,21 +559,17 @@
    "note": "値段を確かめて目を丸くする本人"
   },
   {
-   "src": "c2_01",
-   "in": 15,
-   "out": 104,
+   "src": "c06",
+   "in": 4890,
+   "out": 4979,
    "row": 17,
    "zoom": {
     "from": 1.0,
-    "to": 1.07,
+    "to": 1.1,
     "x": 0.5,
-    "y": 0.55
+    "y": 0.58
    },
-   "note": "0秒目と同じバニツァの絵（輪にする）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "0秒目と同じ、台に並ぶバニツァ（輪にする）"
   }
  ],
  "title": {
@@ -783,7 +752,7 @@
     "frames": 101,
     "voice_frames": 93,
     "cuts": [
-     "banArtP1v01 0:00:00.5+1.40s",
+     "0:33:33.0+1.40s",
      "0:08:56.0+1.00s",
      "0:23:26.0+0.97s"
     ],
@@ -796,7 +765,7 @@
     "frames": 52,
     "voice_frames": 44,
     "cuts": [
-     "banArtP1v01 0:02:00.5+0.87s",
+     "banPhoP1v06 0:01:00.5+0.87s",
      "0:09:50.0+0.87s"
     ],
     "line": "やってきたのは、首都のソフィア！",
@@ -819,7 +788,7 @@
     "frames": 51,
     "voice_frames": 43,
     "cuts": [
-     "banArtP1v01 0:01:00.5+1.70s"
+     "banPhoP1v06 0:00:00.5+1.70s"
     ],
     "line": "チーズパイみたいなパンやねん！",
     "telop": null
@@ -861,7 +830,7 @@
     "frames": 94,
     "voice_frames": 86,
     "cuts": [
-     "banGenP1v01 0:03:00.5+1.57s",
+     "0:08:15.0+1.57s",
      "0:09:41.0+1.57s"
     ],
     "line": "急に夢の国が現れたやん！",
@@ -901,9 +870,9 @@
     "frames": 114,
     "voice_frames": 106,
     "cuts": [
-     "banGenP1v01 0:00:00.5+1.37s",
-     "banGenP1v01 0:01:00.5+1.30s",
-     "0:19:30.0+1.13s"
+     "0:19:55.0+0.83s",
+     "banPhoP1v06 0:02:00.5+2.03s",
+     "0:19:30.0+0.93s"
     ],
     "line": "調べたら、元はモスクで、倉庫と刑務所になって、今は教会！",
     "telop": null
@@ -935,7 +904,7 @@
     "frames": 57,
     "voice_frames": 49,
     "cuts": [
-     "0:31:18.0+1.90s"
+     "0:31:17.6+1.90s"
     ],
     "line": "やっと、お目当てのお店に着いた！",
     "telop": null
@@ -946,7 +915,7 @@
     "frames": 162,
     "voice_frames": 154,
     "cuts": [
-     "banArtP1v01 0:00:00.5+2.60s",
+     "banPhoP1v06 0:00:00.5+2.60s",
      "0:31:59.5+2.80s"
     ],
     "line": "入ったら、イメージと違ったけど、これ全部バニツァやん！",
@@ -967,8 +936,8 @@
     "frames": 87,
     "voice_frames": 79,
     "cuts": [
-     "banGenP1v01 0:02:00.5+1.43s",
-     "0:33:53.0+1.47s"
+     "banPhoP1v06 0:03:00.5+1.43s",
+     "0:39:27.0+1.47s"
     ],
     "line": "アップルシナモンと迷ったけど、定番のチーズと卵にした！",
     "telop": null
@@ -1015,7 +984,7 @@
     "frames": 89,
     "voice_frames": 66,
     "cuts": [
-     "banArtP1v01 0:00:00.5+2.97s"
+     "0:33:33.0+2.97s"
     ],
     "line": "みんなは、名物を探してても寄り道しちゃう？",
     "telop": null
@@ -1043,44 +1012,62 @@
  },
  "stickers": [
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-banitsa-800.webp",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/v6/photo_dl/spiral.jpg",
    "x": 790,
    "y": 1345,
    "w": 330,
    "rotate": 5,
+   "crop": [
+    180,
+    40,
+    1440,
+    1360
+   ],
    "from": 161,
    "to": 223
   },
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-faiths-1200.webp",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/v6/photo_dl/m960.png",
    "x": 540,
    "y": 1360,
-   "w": 560,
+   "w": 500,
    "rotate": -3,
+   "crop": [
+    330,
+    70,
+    380,
+    280
+   ],
    "from": 737,
    "to": 845
   },
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-banitsa-800.webp",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/v6/photo_dl/slice.jpg",
    "crop": [
     60,
-    400,
-    560,
-    400
+    200,
+    1740,
+    750
    ],
-   "x": 300,
-   "y": 1350,
-   "w": 360,
-   "rotate": -4,
+   "x": 800,
+   "y": 1390,
+   "w": 380,
+   "rotate": 4,
    "from": 1111,
    "to": 1151
   },
   {
-   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/draw/B4.jpg",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/v6/photo_dl/cross.jpg",
    "x": 300,
    "y": 1360,
-   "w": 330,
+   "w": 380,
    "rotate": -5,
+   "crop": [
+    0,
+    0,
+    1920,
+    1100
+   ],
    "from": 1269,
    "to": 1313
   }
@@ -1159,5 +1146,5 @@
    "text": "◆聖七人の教会"
   }
  ],
- "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（丸いバニツァ・モスクと教会の並ぶ絵）・チーズと卵の1切れ（同じ絵の切り抜き）と ChatGPT で描いた B4（断面）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。帯は区間ごと（0:03 台の自撮りの区間には上の固定コメントの札が無い）"
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の画（v6）: Commons の写真4枚（渦巻きのバニツァ・1887年の黒いモスク・チーズのバニツァ・チーズの断面）。案内ページの水彩画と描いた絵は使わない（F-082）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。帯は区間ごと（0:03 台の自撮りの区間には上の固定コメントの札が無い）"
 }
