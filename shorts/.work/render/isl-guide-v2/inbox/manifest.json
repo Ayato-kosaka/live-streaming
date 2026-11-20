@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__isl-guide-v2",
+ "mode": "render",
+ "dest": "render/isl-guide-v2/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/isl-guide-v2.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 14084,
+  "tar_gz": 5460,
+  "encrypted": 5472
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 5472,
+   "sha256": "6c4fefa82e13fe2784a6ce638ab0efd432dc4f8cc53af1783180ff388907aa32"
+  }
+ ],
+ "hmac_sha256": "59d66b83942ad12bb856fb541915d2b047504fa1f235cce2e962612a0e2dd9f0",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-20T15:34:38+00:00",
+ "nonce": "1bbef9d19ba5dc7b88fae171"
+}
