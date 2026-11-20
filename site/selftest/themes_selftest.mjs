@@ -116,11 +116,14 @@ bring(join(CONTENT, "chapters.ts"), "chapters.ts");
 bring(join(LIB, "nightly.ts"), "nightly.ts");
 bring(join(CONTENT, "plans.ts"), "plans.ts");
 bring(THEMES_SRC, "themes.ts");
+/* 国の表（出た日を導く。6章）。**字で読まない**——組み立てた表を読む（`tools/sprites/tsread_selftest.mjs`） */
+bring(join(CONTENT, "countries.ts"), "countries.ts");
 
 execFileSync(
   join(SITE, "node_modules", ".bin", "tsc"),
   [
     join(WORK, "themes.ts"),
+    join(WORK, "countries.ts"),
     "--outDir",
     OUT,
     "--module",
@@ -411,10 +414,8 @@ const jst = (y, m, d, h, mi = 0) => new Date(Date.UTC(y, m - 1, d, h - 9, mi, 0)
    2026-11-20 に、北マケドニアあて（`north-macedonia`）が出た日（11-12）のあとも書けるままだったのを見つけた。
    **出た日は国の表から導く**——つぎの国に入った日（`content/countries.ts` の `AHEAD_COUNTRIES` の `entered`）。
    ここに日付を書き写さない（国を1つ越えた日に、ここだけ古い表で緑になる）。 */
-const countriesSrc = readFileSync(join(CONTENT, "countries.ts"), "utf8");
-const aheadBlock = countriesSrc.slice(countriesSrc.indexOf("export const AHEAD_COUNTRIES"));
-const ahead = [...aheadBlock.slice(0, aheadBlock.indexOf("];")).matchAll(/slug:\s*"([a-z-]+)"[^}]*?entered:\s*"(\d{4}-\d{2}-\d{2})"/g)]
-  .map((m) => ({ slug: m[1], entered: m[2] }))
+const ahead = [...(req(join(OUT, "countries.js")).AHEAD_COUNTRIES ?? [])]
+  .map((c) => ({ slug: c.slug, entered: c.entered }))
   .sort((a, b) => a.entered.localeCompare(b.entered));
 if (ahead.length < 2) nothing("国の表（`AHEAD_COUNTRIES`）から、入った日を2つ以上読めない");
 const left = ahead.slice(0, -1).map((c, i) => ({ ...c, leftOn: ahead[i + 1].entered })).filter((c) => T.themeById(c.slug));
