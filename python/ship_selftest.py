@@ -360,6 +360,39 @@ def main() -> int:
         ng += 1
 
     print()
+    # [15] 手で枝に押すもの（#1329）。並べないと、終わっても起きない
+    hw = ".github/workflows/heavy_watch.yml"
+    hw_name = name_of(hw, docs[hw]) if hw in docs else None
+    bad15 = []
+    if hw_name is None or hw_name not in d1["want"]:
+        bad15.append(f"重い見張りが「PR の枝で走るもの」に入っていない（{hw_name}）")
+    d15 = copy.deepcopy(docs)
+    wr = ship.triggers(d15[OWN])["workflow_run"]
+    wr["workflows"] = [w for w in wr["workflows"] if w != hw_name]
+    if wake_drift(d15)["missing"] != [hw_name]:
+        bad15.append(f"ship.yml から外しても漏れに出ない（{wake_drift(d15)['missing']}）")
+    keep = dict(ship.BRANCH_DISPATCH)
+    ship.BRANCH_DISPATCH.clear()
+    try:
+        if wake_drift(docs)["extra"] != [hw_name]:
+            bad15.append(f"BRANCH_DISPATCH を空にしても余りに出ない（{wake_drift(docs)['extra']}）")
+    finally:
+        ship.BRANCH_DISPATCH.update(keep)
+    runs = [{"name": hw_name, "status": "in_progress", "path": hw},
+            {"name": "Selftests", "status": "in_progress", "path": ".github/workflows/selftest.yml"},
+            {"name": "島の絵を焼く", "status": "completed", "path": ".github/workflows/bake_sprites.yml"},
+            {"name": "出す", "status": "in_progress", "path": OWN}]
+    if ship.unwakeable(runs, {"Selftests"}) != [hw_name]:
+        bad15.append(f"起こされない run を拾えない: {ship.unwakeable(runs, {'Selftests'})}")
+    if ship.unwakeable(runs, set(listed_wakes(docs[OWN]))):
+        bad15.append(f"並べてあるのに起こされないと言う: {ship.unwakeable(runs, set(listed_wakes(docs[OWN])))}")
+    if bad15:
+        print("[15] ✕ " + " / ".join(bad15))
+        ng += 1
+    else:
+        print(f"[15] ○ 手で枝に押す「{hw_name}」は起こしの一覧に並ぶ（外すと漏れ・BRANCH_DISPATCH を空にすると余り）。"
+              "並べ忘れた run を待つと名指しで出る")
+
     if ng:
         print(f"!! 落ちた項目が {ng} あります")
         return 1
