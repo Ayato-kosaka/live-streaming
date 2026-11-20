@@ -244,6 +244,12 @@ PAGES: dict[str, str] = {
     "skopje-prices.ts": "スコピエの物価の記事（/travel/north-macedonia/skopje/prices）の、値段の表と一言の場面のリンク",
     "sofia-prices.ts": "ソフィアの物価の記事（/travel/bulgaria/sofia/prices）の、値段の表と一言の場面のリンク",
     "skopje-matka.ts": "マトカ渓谷に行ってきた記事（/travel/north-macedonia/skopje/matka）の、一言と場面のリンク",
+    "skopje-panpan.ts": "スコピエでバゲットを探して、パン屋パンパンへ行ってきたの記事（/travel/north-macedonia/skopje/panpan）の、一言と場面のリンク",
+    "skopje-debar-maalo.ts": "スコピエのおしゃれ地区デバル・マーロを歩いてきたの記事（/travel/north-macedonia/skopje/debar-maalo）の、一言と場面のリンク",
+    "skopje-clement.ts": "スコピエの聖クリメント・オフリド大聖堂に行ってきたの記事（/travel/north-macedonia/skopje/clement）の、一言と場面のリンク",
+    "skopje-kosmos.ts": "スコピエの食堂コスモスでタヴチェ・グラフチェを食べてきたの記事（/travel/north-macedonia/skopje/kosmos）の、一言と場面のリンク",
+    "skopje-square.ts": "スコピエのマケドニア広場で銅像めぐりをしてきたの記事（/travel/north-macedonia/skopje/square）の、一言と場面のリンク",
+    "skopje-oldtown.ts": "スコピエの旧市街を歩いてきたの記事（/travel/north-macedonia/skopje/oldtown）の、一言と場面のリンク",
     "skopje-kale.ts": "スコピエ城塞に行ってきたの記事（/travel/north-macedonia/skopje/kale）の、一言と場面のリンク",
     "skopje-vodno.ts": "ヴォドノ山に登ってきたの記事（/travel/north-macedonia/skopje/vodno）の、一言と場面のリンク",
     "sofia-yogurt.ts": "ソフィアで本場のヨーグルトを探してきたの記事（/travel/bulgaria/sofia/yogurt）の、一言と場面のリンク",
@@ -263,7 +269,8 @@ PAGES: dict[str, str] = {
 # 行き先はその1本しかない
 FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
          "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "bulgaria-sofia-went.ts",
-         "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts")
+         "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts",
+         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、

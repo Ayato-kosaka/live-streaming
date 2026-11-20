@@ -265,6 +265,12 @@ SOLO = [
     "travel/bulgaria/sofia",
     "travel/bulgaria/sofia/yogurt",
     "travel/north-macedonia/skopje",
+    "travel/north-macedonia/skopje/oldtown",
+    "travel/north-macedonia/skopje/kosmos",
+    "travel/north-macedonia/skopje/square",
+    "travel/north-macedonia/skopje/panpan",
+    "travel/north-macedonia/skopje/clement",
+    "travel/north-macedonia/skopje/debar-maalo",
     "travel/romania/bucharest",
 ]
 

@@ -123,22 +123,25 @@
     "see/old-bazaar": {
       "card": "umbrellas",
       "story": {
-        "text": "着いた日は月曜で、閉まっている店ばかり。次の日は雨で、見られたのは土産物のアクセサリーくらいでした。晴れた日にもう一度歩くと、同じ通りがまるで違って見えて、やっぱり晴れの日がいいなと思いました。",
+        "text": "店は9割ほどがジュエリー屋で、傘が吊られた通りもあります。歩くなら晴れた日がいちばんです。",
         "facts": [
-          "NY9pzYrA-5o@3480#place",
+          "donehL4hO68@1440#place",
+          "donehL4hO68@2470#place",
           "UQdkUSro9Ck@1200#place"
         ]
-      }
+      },
+      "article": "oldtown"
     },
     "see/square": {
       "card": "warrior",
       "story": {
-        "text": "広場の噴水は、今まで見た噴水の中でいちばん大きいかもしれません。銅像の並ぶ橋は、橋だけで20体はいて、30体ほどいそうでした。",
+        "text": "噴水は今まで見た中でいちばん大きいかもしれません。銅像の並ぶ橋は、橋だけで20体はいました。",
         "facts": [
           "CKJvprUMOgA@690#place",
           "CKJvprUMOgA@1830#fact"
         ]
-      }
+      },
+      "article": "square"
     },
     "see/fortress": {
       "card": "fortress",
@@ -153,20 +156,24 @@
     "see/clement": {
       "card": "clement",
       "story": {
-        "text": "聖クリメント・オフリド大聖堂は大きくて、現代建築のような見た目です。中に入ると礼拝の最中で、観光客は誰もおらず、みんな真剣。じっとしてまわりの様子を見てから、いったん外へ出ました。",
+        "text": "大きくて現代建築のような大聖堂。中は礼拝の最中で、観光客は誰もおらず、みんな真剣でした。",
         "facts": [
           "DNLVmUpew48@5670#place",
           "DNLVmUpew48@6360#caution"
         ]
-      }
+      },
+      "article": "clement"
     },
     "see/porta": {
       "story": {
-        "text": "凱旋門とナポレオン風の騎馬像のある広場に出て、このあたりが新市街なんだと気づきました。",
+        "text": "凱旋門とナポレオン風の騎馬像のある広場。パリの凱旋門にも、ブランデンブルク門にも似ていました。",
         "facts": [
-          "hk39U7ZEKCQ@4860#place"
+          "hk39U7ZEKCQ@4860#place",
+          "dv6hDuR0teU@21180#place",
+          "dv6hDuR0teU@21540#quote"
         ]
-      }
+      },
+      "article": "square"
     },
     "see/vardar": {
       "card": "ship",
@@ -175,7 +182,8 @@
         "facts": [
           "NY9pzYrA-5o@2940#place"
         ]
-      }
+      },
+      "article": "oldtown"
     },
     "see/matka": {
       "card": "matka",
@@ -189,7 +197,15 @@
       "article": "matka"
     },
     "eat/tavche": {
-      "card": "kosmos-beans"
+      "card": "kosmos-beans",
+      "article": "kosmos",
+      "story": {
+        "text": "トマトパスタとクリームパスタを合わせたような味。自分で作ったものより、コスモスのほうがクリーミーでした。",
+        "facts": [
+          "UQdkUSro9Ck@4650#quote",
+          "WiSPWzjqZZA@6240#food"
+        ]
+      }
     },
     "eat/kebapi": {
       "card": "kosmos-cevapi",
@@ -198,7 +214,8 @@
         "facts": [
           "UQdkUSro9Ck@4290#food"
         ]
-      }
+      },
+      "article": "kosmos"
     },
     "eat/doner": {
       "story": {
@@ -206,7 +223,8 @@
         "facts": [
           "TDArug_te90@10230#food"
         ]
-      }
+      },
+      "article": "kale"
     },
     "buy/coffee": {
       "story": {
@@ -214,48 +232,43 @@
         "facts": [
           "donehL4hO68@6210#food"
         ]
-      }
+      },
+      "article": "oldtown"
     },
     "todo/tavche": {
       "card": "kosmos-beans",
       "story": {
-        "text": "食堂コスモスで豆の煮込みをひと口食べて、これは大当たりだと思いました。トマトとチーズでクリーミーで、大きい豆が甘い。トマトパスタとクリームパスタを合わせたような味です。後日、店の前を通ったときも、もう1回来たいと思ったほど。",
+        "text": "食堂コスモスの豆の煮込みは、トマトとチーズでクリーミー、大きい豆が甘い大当たり。あとで自分でも作ってみました。",
         "facts": [
           "UQdkUSro9Ck@4470#food",
-          "UQdkUSro9Ck@4650#quote",
-          "EKTCLeoiQMA@5825#place"
-        ],
-        "first": true
-      }
+          "WiSPWzjqZZA@1200#food"
+        ]
+      },
+      "article": "kosmos"
     },
     "todo/square-statues": {
       "card": "warrior-top",
       "story": {
-        "text": "マケドニア広場に着いて、まず驚いたのは銅像の多さです。これまで見たどの広場よりも多かった！ 最後の日に思い返すと、ロンドンバスに凱旋門と、ヨーロッパの名所をまねたものだらけ。それがこの国のいちばんの印象です。",
+        "text": "今まで見たどの広場よりも銅像が多く、噴水も大きい。銅像の並ぶ橋は、橋だけで20体はいました。ヨーロッパの名所をまねたものだらけです。",
         "facts": [
           "CKJvprUMOgA@1320#quote",
+          "CKJvprUMOgA@690#place",
+          "CKJvprUMOgA@1830#fact",
           "9S3zuyByWgo@2280#fact"
-        ],
-        "first": true
-      }
+        ]
+      },
+      "article": "square"
     },
     "todo/carsija-walk": {
       "story": {
-        "text": "旧市街はホステルの都合上、初めての日に行きました。まず初めて思った感想としては、モスクや古めかしい建物が並び、トルコの要素を感じた。ただ、店は9割ほどがジュエリー屋で、ドレス屋も多め。食堂がもっと並んでいてほしかったです。傘が吊られた通りもありました。",
+        "text": "着いた日は祝日で、店はほとんど閉まっていました。晴れた日にもう一度歩くと、モスクと古めかしい建物の並ぶ通りがまるで違って見えました。",
         "facts": [
           "NY9pzYrA-5o@3480#place",
-          "donehL4hO68@1440#place",
-          "donehL4hO68@2470#place"
-        ],
-        "first": true,
-        "said": [
-          {
-            "by": "あやと",
-            "date": "2026-11-19",
-            "text": "旧市街はホステルの都合上、初めての日に行きました。まず初めて思った感想としては、モスクや古めかしい建物が並びトルコの要素を感じた"
-          }
+          "donehL4hO68@370#caution",
+          "UQdkUSro9Ck@1200#place"
         ]
-      }
+      },
+      "article": "oldtown"
     },
     "todo/matka": {
       "story": {
@@ -294,16 +307,55 @@
       "article": "vodno"
     },
     "eat/bakery": {
-      "card": "panpan"
+      "card": "panpan",
+      "article": "panpan",
+      "story": {
+        "text": "バゲット文化があまり無く、ごまパンばかり。パン屋パンパンは17時に閉まるらしく、早めに行くのが安心です。",
+        "facts": [
+          "hk39U7ZEKCQ@6690#quote",
+          "misSMBhPlkc@2370#caution"
+        ]
+      }
     },
     "area/debar-maalo": {
       "card": "terrace",
       "story": {
-        "text": "自分で「おしゃれ地区」と呼んでいた一角です。歩いて着くと、テラス席のあるカフェが並び、中東風のパン屋がぽつぽつ。飲食店ばかりで、服屋は見当たりませんでした。",
+        "text": "テラス席のカフェが並び、中東風のパン屋がぽつぽつ。クッキーの量り売りは、ケーキ屋さんの値段でした。",
         "facts": [
           "_XzkJJIvpOE@2490#place",
           "_XzkJJIvpOE@3120#place",
-          "_XzkJJIvpOE@2970#fact"
+          "_XzkJJIvpOE@2760#quote"
+        ]
+      },
+      "article": "debar-maalo"
+    },
+    "buy/crafts": {
+      "article": "oldtown",
+      "story": {
+        "text": "旧市街の店は、9割ほどがジュエリー屋。ドレス屋も多めでした。",
+        "facts": [
+          "donehL4hO68@1440#place"
+        ]
+      }
+    },
+    "area/carsija": {
+      "article": "oldtown",
+      "story": {
+        "text": "モスクが多く、古めかしい建物が並ぶ旧市街。着いた日は祝日、次の日は雨で、歩くなら晴れた日がいちばんでした。",
+        "facts": [
+          "NY9pzYrA-5o@3480#place",
+          "donehL4hO68@370#caution",
+          "UQdkUSro9Ck@1200#place"
+        ]
+      }
+    },
+    "area/newtown": {
+      "article": "square",
+      "story": {
+        "text": "凱旋門のある広場のまわりが新市街。気づいたら、もう新市街を通り過ぎていました。",
+        "facts": [
+          "hk39U7ZEKCQ@4860#place",
+          "hk39U7ZEKCQ@2640#place"
         ]
       }
     }
