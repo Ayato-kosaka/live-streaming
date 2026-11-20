@@ -1327,3 +1327,5 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1268#issuecomment-6978983475（クリスマスマーケットの回: あやとが A と C をつないで書き直した原稿＝この原稿で本編集へ）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1270#issuecomment-6978805149（温泉の回: あやとの書き直し＝この原稿で本編集へ）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1266#issuecomment-7039082833（ヨーグルトの回: テロップ A・フック A を選び、完成動画へ（「完成どうが作って」））
+- https://github.com/Ayato-kosaka/live-streaming/issues/1265#issuecomment-7040316916（移動の回: v5c を 2026/11/21 に出す（「投稿して」））
+- https://github.com/Ayato-kosaka/live-streaming/issues/1266#issuecomment-7040288514（ヨーグルトの回: v3b を 2026/11/22 に出す（「投稿して」））
