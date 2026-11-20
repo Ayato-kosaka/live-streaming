@@ -81,7 +81,9 @@ GitHub Actions の秘密情報まわり）は、やる前に一言添えてか�
 （前は1人 37万〜56万）。あやとの返事は「時間もこんな感じで行きたい」（#1117）。
 
 - **書き出し・録画・検査・描画・デプロイの待ちを、作業箱で回さない。** 確かめは `alert_check.yml`、
-  段の動画は `alert_fx_render.yml`、出すのは PR に札 `出す`（`ship.yml`）。結果は PR の1コメントの表で読む
+  段の動画は `alert_fx_render.yml`、出すのは PR に札 `出す`（`ship.yml`）。結果は PR の1コメントの表で読む。
+  街のガイドは写真・焼き・書体・見張り・撮影を `heavy_watch.yml` の `guide` が1本で回して枝に積み戻す
+  （`gh workflow run heavy_watch.yml --ref <枝> -f guide=<国>/<街> -f pr=<番号>`。読みかたは `.claude/skills/city-guide/actions.md`）
 - **待つときはポーリングしない。** PR は `subscribe_pr_activity`、時間待ちは `send_later`
 - **長いログ・たくさんの絵を読まない。** 落ちた step の末尾と、一覧の絵1〜2枚
 - **担当への依頼文と報告を短く。** 型と「トークンを食わない進めかた」は `/hand-off` に置いてある。報告は15行以内

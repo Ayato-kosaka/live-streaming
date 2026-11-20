@@ -98,7 +98,12 @@ on:
         default: ""
         type: string
       guide:
-        description: "街のガイドの面（<国>/<街>。例 romania/bucharest）。入れると、その面も測って焼き、面の見張りも回す（fontbake）"
+        description: "街のガイドを1本で回す（<国>/<街>。例 romania/bucharest）。pr と一緒に、PR の枝（--ref）で押す（guide）"
+        required: false
+        default: ""
+        type: string
+      pr:
+        description: "guide の結果を書く PR の番号（押した枝がその PR の枝でなければ止まる）"
         required: false
         default: ""
         type: string
@@ -143,6 +148,9 @@ jobs:
   #   置いてある絵に当たる回（run 35421444959）… **247秒**
   #     絵を落とすところが 1秒未満になる
   browserwatch:
+    # 街のガイドを回した回は、積み戻したあとの head を見る（`guide` が無い回は飛ばされて、すぐ走る）
+    needs: [guide]
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない
     # 141面を JS 切り／入りで2回ずつ開くぶん（`preclaim`）を足したので 25 → 35。
     # 日を進めた2枚めの書き出し（`datebake`）で 35 → 40（手元で書き出し 1分17秒
@@ -151,6 +159,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.guide.outputs.sha || github.sha }}
 
       - uses: actions/setup-node@v5
         with:
@@ -559,11 +569,15 @@ jobs:
   # `route.mjs` の `offline` が返す差し替えで足りる（`browserwatch` は図鑑の絵の
   # はみ出しを見るので要る）。そのぶんここは 345秒ぶん安い。
   reachwatch:
+    needs: [guide]
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない
     timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.guide.outputs.sha || github.sha }}
 
       - uses: actions/setup-node@v5
         with:
@@ -627,23 +641,19 @@ jobs:
           exit "$rc"
 
 
-  # **書体の測り直しと焼き直し・街のガイドの面1枚ぶんの見張り**（手で押したときだけ。`fonts` か `guide` を入れる）。
+  # **書体の測り直しと焼き直し**（手で押したときだけ。`fonts` を入れる。街のガイドは下の `guide` が全部の面を測る）。
   #
   # 面の字を足したら、その面を `fontweigh.mjs` で測り直して表（`tools/fonts/weights.json`）へ差し込み、
   # `subset.py` で焼き直す（`docs/country-guide.md` 6-2）。しないと、その面が焼いた束に無い字を描いて
   # 払っていない1本を引き、`fontfall.mjs` の「記録が古い」で赤くなる（#1308 の /next がそれ）。
   # 作業箱で書き出すと 600MB を超え、箱の置き場が尽きる日がある（2026-11-19 に空き 467MB）ので、ここで回す。
   # **焼いたものは artifact `fonts` に置くだけ**（枝へは書かない）。落として枝に積み、PR の見張りで緑を見る。
-  #
-  # `guide`（<国>/<街>）を入れると、その面も測って、面の見張り4本（guide_watch・guidebook.mjs・seo_audit・
-  # fontbudget）を同じ書き出しに当てる。`guidebook.mjs` は Actions に乗っていなかった（#1292 の穴）
   fontbake:
-    if: ${{ github.event_name == 'workflow_dispatch' && (inputs.fonts != '' || inputs.guide != '') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.fonts != '' && inputs.guide == '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
       FONT_PAGES: ${{ inputs.fonts }}
-      GUIDE: ${{ inputs.guide }}
     steps:
       - uses: actions/checkout@v5
 
@@ -658,13 +668,7 @@ jobs:
       - name: 入力を確かめる
         run: |
           set -euo pipefail
-          if [ -n "$GUIDE" ]; then
-            printf '%s' "$GUIDE" | grep -Eq '^[a-z-]+/[a-z-]+$' || { echo "::error::guide は <国>/<街>（小文字と - だけ）: $GUIDE"; exit 2; }
-            test -f "python/data/guide/$GUIDE/guidebook.json" || { echo "::error::材料が無い: $GUIDE"; exit 2; }
-          fi
-          if [ -n "$FONT_PAGES" ]; then
-            printf '%s' "$FONT_PAGES" | grep -Eq '^(/[a-z0-9/_-]+\.html)(,/[a-z0-9/_-]+\.html)*$' || { echo "::error::fonts は /面.html を , でつなぐ: $FONT_PAGES"; exit 2; }
-          fi
+          printf '%s' "$FONT_PAGES" | grep -Eq '^(/[a-z0-9/_-]+\.html)(,/[a-z0-9/_-]+\.html)*$' || { echo "::error::fonts は /面.html を , でつなぐ: $FONT_PAGES"; exit 2; }
 
       - name: site の依存を入れる
         working-directory: site
@@ -693,7 +697,7 @@ jobs:
       - name: Python の依存を入れる
         run: pip install -r python/requirements.txt fonttools brotli
 
-      # 測った面だけを表へ差し込む（ほかの面の行は触らない）→ 焼き直す
+      # 名指しの面だけを表へ差し込む（ほかの面の行は触らない。`python/font_table.py --only`）→ 焼き直す
       - name: 面の書体を測り直して焼く
         run: |
           set -euo pipefail
@@ -701,26 +705,9 @@ jobs:
           sv=$!
           trap 'kill "$sv" 2>/dev/null || true' EXIT
           for _ in $(seq 30); do curl -sf -o /dev/null "http://127.0.0.1:4214/index.html" && break; sleep 1; done
-          only="$FONT_PAGES"
-          if [ -n "$GUIDE" ]; then only="${only:+$only,}/travel/$GUIDE.html"; fi
-          echo "測る面: $only"
-          ONLY="$only" OUT=/tmp/w.json DIST=site/.next-ci SPORT=4214 node tools/sprites/fontweigh.mjs
-          ONLY_PAGES="$only" python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          p = Path("tools/fonts/weights.json")
-          table = json.loads(p.read_text(encoding="utf-8"))
-          got = json.loads(Path("/tmp/w.json").read_text(encoding="utf-8"))
-          want = [x[1:-5] if x != "/index.html" else "index" for x in os.environ["ONLY_PAGES"].split(",")]
-          miss = [w for w in want if w not in got]
-          if miss:
-              raise SystemExit(f"fontweigh の答えに {miss} が無い（答えの頭: {sorted(got)[:5]}）")
-          for w in want:
-              old = table.get(w) or {}
-              table[w] = got[w]
-              print(w, {k: f"{len(old.get(k, ''))} → {len(v)}" for k, v in got[w].items()})
-          p.write_text(json.dumps(table, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-          PY
+          echo "測る面: $FONT_PAGES"
+          ONLY="$FONT_PAGES" OUT=/tmp/w.json DIST=site/.next-ci SPORT=4214 node tools/sprites/fontweigh.mjs
+          python3 python/font_table.py --got /tmp/w.json --only "$FONT_PAGES"
           python3 tools/fonts/subset.py --export site/.next-ci
           git status --short tools/fonts site/public/fonts site/app/css
 
@@ -733,37 +720,270 @@ jobs:
             site/public/fonts/
             site/app/css/fonts.css
 
-      # 落ちた1本で止めない。**全部回してから、まとめて落ちる**
-      - name: 見張り（fontbudget・街のガイドなら guide_watch・guidebook.mjs・seo_audit）
+      - name: 見張り（fontbudget）
+        run: DIST=site/.next-ci node tools/sprites/fontbudget_selftest.mjs
+
+  # **街のガイドを1本で回す**（手で押したときだけ。`guide=<国>/<街>` と `pr=<番号>` を入れ、`--ref <PR の枝>` で押す）。
+  #
+  # あやとの依頼（2026-11-20）「新しい街に行くとなって調べ始めてから公開するまでのトークンを、いまの半分に」。
+  # ブカレスト・スコピエ・記事15本でトークンを食ったのは、作業箱で回した重い処理（写真・焼き・書体・見張り・撮影）と、
+  # その長いログを読む往復だった。ここで全部回して、担当は **PR の1コメント（表1枚）だけ読む**（`python/guide_run.py`）。
+  # 使いかた・表の読みかた・止まったときは `.claude/skills/city-guide/actions.md`。
+  #
+  #   1. 写真を取る（`guide_photos.py --gentle`。名乗りは今のまま。429 なら止めて表に書く。**迂回しない**）
+  #   2. 材料から焼く（台本 → 材料・面の中身・記事・マイマップの CSV）
+  #   3. 書体: **全部の面を測って、表に無い字を描いた面だけ差し込み**（`python/font_table.py`）、焼き直して書き出し直す。
+  #      測る面を人が並べない——記事・街の面・国の面・フッターの字が増えた面の、どれも漏れない（#1331 で国の面が漏れた）
+  #   4. 面の見張り（guide_watch・guidebook.mjs・seo_audit・fontbudget・fontfall・crawl と preclaim のその面）
+  #   5. 390幅の撮影と 240px の縮小を artifact `guide-shots` に
+  #   6. 生まれたファイルだけを枝に積み戻す（許す置き場の外が変わっていたら積まない）→ その head で Selftests を起こす
+  #   7. PR に1コメント。同じ PR に何度押しても1つを書き換える
+  #
+  # datebake・preclaim（全面）・nextempty・firstload・reachwatch は、同じ run の `browserwatch` と `reachwatch` が
+  # **積み戻したあとの head** で回す（2本は `needs: [guide]`）。終わったら `guide_report` が同じコメントを書き換える。
+  #
+  # **GITHUB_TOKEN の push は次のワークフローを起こさない**（PR の検査が新しい head で走らない）。
+  # `workflow_dispatch` だけは例外なので、積んだあと Selftests を名指しで起こす。
+  guide:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.guide != '' }}
+    runs-on: ubuntu-24.04
+    # 写真は1枚ごとに60秒あける（`--gentle`）。40枚で40分
+    timeout-minutes: 100
+    permissions:
+      contents: write
+      actions: write
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: guide-${{ github.ref }}
+      cancel-in-progress: false
+    outputs:
+      sha: ${{ steps.push.outputs.sha }}
+      pushed: ${{ steps.push.outputs.pushed }}
+    env:
+      GUIDE: ${{ inputs.guide }}
+      PR: ${{ inputs.pr }}
+      ROWS: /tmp/guide/rows.tsv
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      # **枝と PR が合っていなければ、1つも回さない。** 積み戻す先を取り違えると、別の PR に写真と書体が積まれる
+      - name: 入力を確かめる（街・PR・押した枝）
+        run: |
+          set -euo pipefail
+          printf '%s' "$GUIDE" | grep -Eq '^[a-z-]+/[a-z-]+$' || { echo "::error::guide は <国>/<街>（小文字と - だけ）: $GUIDE"; exit 2; }
+          test -f "python/data/guide/$GUIDE/guidebook.json" || { echo "::error::材料が無い: $GUIDE"; exit 2; }
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "::error::pr は PR の番号だけ: $PR"; exit 2; }
+          case "$GITHUB_REF_NAME" in master|main) echo "::error::master には積み戻さない。PR の枝で押す（--ref <枝>）"; exit 2;; esac
+          head="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" -q 'select(.state=="open") | .head.ref')"
+          [ "$head" = "$GITHUB_REF_NAME" ] || { echo "::error::#$PR の枝（${head:-閉じている}）と押した枝（$GITHUB_REF_NAME）が違う"; exit 2; }
+          mkdir -p /tmp/guide /tmp/guide-shots
+
+      - name: 依存を入れる
+        run: |
+          set -euo pipefail
+          (cd site && npm ci --no-audit --no-fund)
+          (cd tools/sprites && npm ci --no-audit --no-fund)
+          pip install -r python/requirements.txt fonttools brotli Pillow
+
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          test -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome
+
+      # 置いてある写真は取り直さない（道具がそうしている）。2回目からは、足した写真のぶんだけ待つ
+      - name: 1. 写真を取る（--gentle）
+        run: python3 python/guide_run.py run --rows "$ROWS" --name "写真（guide_photos --gentle）" -- python3 python/guide_photos.py --gentle "$GUIDE"
+
+      - name: 2. 材料から焼く
+        run: |
+          set -uo pipefail
+          d="python/data/guide/$GUIDE"
+          R=(python3 python/guide_run.py run --rows "$ROWS")
+          if [ -f "$d/book.py" ]; then
+            "${R[@]}" --name "材料（guide_book_build build）" -- python3 python/guide_book_build.py build "$GUIDE"
+          fi
+          "${R[@]}" --name "面の中身（guidebook_bake）" -- python3 python/guidebook_bake.py "$GUIDE"
+          # 記事の台本は、街の台本の1段下の JSON のうち `streams` と `h1` を持つもの（`guide_article.script_path`）
+          arts="$(python3 -c 'import json,pathlib,sys; print(" ".join(sorted(p.stem for p in pathlib.Path(sys.argv[1]).glob("*.json") if isinstance(d:=json.loads(p.read_text()), dict) and "streams" in d and "h1" in d)))' "$d")"
+          echo "$arts" > /tmp/guide/arts.txt
+          if [ -n "$arts" ]; then
+            "${R[@]}" --name "記事を焼く（$(echo $arts | wc -w)本）" -- \
+              bash -c 'rc=0; for a in $1; do python3 python/guide_article.py "$0/$a" || rc=$?; done; exit $rc' "$GUIDE" "$arts"
+          else
+            python3 python/guide_run.py row "記事を焼く" skip --rows "$ROWS"
+          fi
+          "${R[@]}" --name "マイマップの CSV（guide_book_check --mymaps）" -- python3 python/guide_book_check.py "$GUIDE" --mymaps
+
+      - name: 3. 書き出す
+        working-directory: site
+        env:
+          NEXT_DIST_DIR: .next-ci
+        run: python3 ../python/guide_run.py run --rows "$ROWS" --name "書き出す（next build）" -- npx next build
+
+      # **全部の面を測る**（FAST・4枚ずつ。字だけ数える）。表に無い字を描いた面だけ差し込み、焼き直したら書き出し直す
+      # ——束は CSS に焼き込まれるので、書き出し直さないと下の見張りが古い束を見る
+      - name: 4. 書体を測って焼く
+        run: |
+          set -uo pipefail
+          R=(python3 python/guide_run.py run --rows "$ROWS")
+          python3 -m http.server 4214 --directory site/.next-ci >/tmp/serve.log 2>&1 &
+          sv=$!
+          for _ in $(seq 30); do curl -sf -o /dev/null "http://127.0.0.1:4214/index.html" && break; sleep 1; done
+          "${R[@]}" --name "書体を測る（全部の面）" -- \
+            env FAST=1 CONC=4 OUT=/tmp/guide/w.json DIST=site/.next-ci SPORT=4214 node tools/sprites/fontweigh.mjs
+          kill "$sv" 2>/dev/null || true
+          "${R[@]}" --name "書体の表に差し込む（font_table）" -- python3 python/font_table.py --got /tmp/guide/w.json
+          if git diff --quiet -- tools/fonts/weights.json; then
+            python3 python/guide_run.py row "書体を焼く" skip --rows "$ROWS"
+            exit 0
+          fi
+          "${R[@]}" --name "書体を焼く（subset.py）" -- python3 tools/fonts/subset.py --export site/.next-ci
+          cd site && NEXT_DIST_DIR=.next-ci python3 ../python/guide_run.py run --rows "$ROWS" --name "焼いた書体で書き出し直す" -- npx next build
+
+      - name: 5. 面の見張り
         run: |
           set -uo pipefail
           python3 -m http.server 4214 --directory site/.next-ci >/tmp/serve.log 2>&1 &
           sv=$!
           trap 'kill "$sv" 2>/dev/null || true' EXIT
           for _ in $(seq 30); do curl -sf -o /dev/null "http://127.0.0.1:4214/index.html" && break; sleep 1; done
-          rows=()
-          DIST=site/.next-ci node tools/sprites/fontbudget_selftest.mjs; rows+=("fontbudget_selftest $?")
-          if [ -n "$GUIDE" ]; then
-            python3 python/guide_watch.py --dist site/.next-ci "$GUIDE"; rows+=("guide_watch $?")
-            DIST=site/.next-ci SPORT=4214 PAGE="/travel/$GUIDE" OUT=/tmp/guidebook node tools/sprites/guidebook.mjs; rows+=("guidebook.mjs $?")
-            python3 python/seo_audit.py --dist site/.next-ci --no-site --detail "/travel/$GUIDE"; rows+=("seo_audit $?")
+          country="${GUIDE%%/*}"
+          pages="/travel/$GUIDE.html"
+          [ -f "site/.next-ci/travel/$country.html" ] && pages="$pages,/travel/$country.html"
+          for a in $(cat /tmp/guide/arts.txt); do [ -f "site/.next-ci/travel/$GUIDE/$a.html" ] && pages="$pages,/travel/$GUIDE/$a.html"; done
+          echo "見る面: $pages"
+          R=(python3 python/guide_run.py run --rows "$ROWS")
+          "${R[@]}" --name "面の見張り（guide_watch）" -- python3 python/guide_watch.py --dist site/.next-ci "$GUIDE"
+          "${R[@]}" --name "形の見張り（guidebook.mjs・390幅を撮る）" -- env DIST=site/.next-ci SPORT=4214 PAGE="/travel/$GUIDE" OUT=/tmp/guide-shots/guidebook node tools/sprites/guidebook.mjs
+          "${R[@]}" --name "検索の作り（seo_audit）" -- python3 python/seo_audit.py --dist site/.next-ci --no-site --detail "/travel/$GUIDE"
+          "${R[@]}" --name "書体の重さと表の古さ（fontbudget）" -- env DIST=site/.next-ci node tools/sprites/fontbudget_selftest.mjs
+          "${R[@]}" --name "端末の書体に落ちる字（fontfall）" -- env SPORT=4214 node tools/sprites/fontfall.mjs $(echo "$pages" | tr ',' '\n' | sed 's/\.html$//')
+          "${R[@]}" --name "h1・JSエラー・横あふれ・リンク切れ（crawl）" -- env DIST=site/.next-ci SPORT=4214 ONLY="$pages" node tools/sprites/crawl.mjs
+          "${R[@]}" --name "JS が動く前の言い切り（preclaim）" -- env DIST=site/.next-ci SPORT=4214 ONLY="$pages" node tools/sprites/preclaim.mjs
+          arts="$(cat /tmp/guide/arts.txt)"
+          if [ -n "$arts" ]; then
+            "${R[@]}" --name "記事の面（guide_article --dist）" -- \
+              bash -c 'rc=0; for a in $1; do python3 python/guide_article.py "$0/$a" --check --dist site/.next-ci || rc=$?; done; exit $rc' "$GUIDE" "$arts"
           fi
-          echo "| 見張り | 終了コード |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| --- | --- |" >> "$GITHUB_STEP_SUMMARY"
-          bad=0
-          for x in "${rows[@]}"; do
-            set -- $x; echo "| $1 | $2 |" >> "$GITHUB_STEP_SUMMARY"; echo "── $1 終了コード $2"
-            [ "$2" = 0 ] || bad=1
-          done
-          exit "$bad"
+          "${R[@]}" --name "地図と表紙の 240px（guide_thumb）" -- python3 python/guide_thumb.py "$GUIDE" --out /tmp/guide-shots/thumb240.png
 
-      - name: 撮った絵を置く（artifact guidebook）
+      - name: 撮った絵を置く（artifact guide-shots）
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: guidebook
-          path: /tmp/guidebook/
+          name: guide-shots
+          path: /tmp/guide-shots/
           if-no-files-found: ignore
+
+      # **生まれたファイルだけを積む。** 許す置き場の外が変わっていたら、1つも積まずに赤くする（`bake_sprites.yml` と同じ作法）。
+      # 書き出しが書き足す `site/tsconfig.json`・`site/next-env.d.ts` は戻してから見る
+      - name: 6. 枝に積み戻す
+        id: push
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          git checkout -- site/tsconfig.json site/next-env.d.ts 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A "site/public/guide/$GUIDE/" "python/data/guide/$GUIDE/" site/content/guidebook/ \
+            tools/fonts/ site/public/fonts/ site/app/css/fonts.css
+          extra="$(git status --porcelain | grep -v '^[MADR] ' || true)"
+          if [ -n "$extra" ]; then
+            echo "::error::許す置き場の外が変わった。積まない:"; echo "$extra"
+            printf '枝に積み戻す\t1\t許す置き場の外が変わった: %s\n' "$(echo "$extra" | head -3 | tr '\n' ' ')" >> "$ROWS"
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            printf '枝に積み戻す\tskip\t積むものが無い（いまの枝と同じ）\n' >> "$ROWS"
+            exit 0
+          fi
+          n() { git diff --cached --name-only -- "$@" | wc -l; }
+          pushed="写真 $(n "site/public/guide/$GUIDE/")・書体 $(n tools/fonts/ site/public/fonts/ site/app/css/fonts.css)・焼いたもの $(n "python/data/guide/$GUIDE/" site/content/guidebook/)"
+          git --no-pager diff --cached --stat | tail -1
+          git commit -q -m "街のガイドを回して積み戻す: $GUIDE" \
+            -m "作業箱で回すとトークンを食う重い処理（写真・焼き・書体）を Actions で回し、生まれたファイルだけを持ち帰った（$pushed）。" \
+            -m "$RUN_URL"
+          for i in 1 2 3; do
+            if git pull -q --rebase origin "$GITHUB_REF_NAME" && git push -q origin "HEAD:$GITHUB_REF_NAME"; then
+              sha="$(git rev-parse HEAD)"
+              echo "sha=$sha" >> "$GITHUB_OUTPUT"
+              echo "pushed=${sha:0:7}（$pushed）" >> "$GITHUB_OUTPUT"
+              printf '枝に積み戻す\t0\t\n' >> "$ROWS"
+              # 積んだ head で PR の検査を起こす（GITHUB_TOKEN の push は pull_request を起こさない）
+              gh workflow run selftest.yml --ref "$GITHUB_REF_NAME" || echo "::warning::Selftests を起こせなかった。手で起こす"
+              exit 0
+            fi
+            sleep $((i * 10))
+          done
+          printf '枝に積み戻す\t1\tpush できなかった（枝が先に進んでぶつかった）\n' >> "$ROWS"
+          exit 1
+
+      # 重い見張りを待たずに、まず表を出す（⏳ の行は、終わったら `guide_report` が書き換える）
+      - name: 7. PR に表を書く（重い見張りは ⏳）
+        if: ${{ always() }}
+        env:
+          SHA: ${{ steps.push.outputs.sha || github.sha }}
+          PUSHED: ${{ steps.push.outputs.pushed }}
+        run: |
+          [ -f "$ROWS" ] || { echo "表の元が無い（入力で止まった）"; exit 0; }
+          python3 python/guide_run.py report --rows "$ROWS" --pr "$PR" --guide "$GUIDE" --sha "$SHA" --pushed "$PUSHED"
+
+      - name: 表の元を置く（guide_report が読む）
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: guide-rows
+          path: /tmp/guide/rows.tsv
+          if-no-files-found: ignore
+
+  # **重い見張りが終わったら、同じコメントを書き換える**（⏳ を緑か赤に）
+  guide_report:
+    needs: [guide, browserwatch, reachwatch]
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.guide != '' && needs.guide.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: python
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: guide-rows
+          path: /tmp/guide
+      - name: PR の表を書き換える
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GUIDE: ${{ inputs.guide }}
+          PR: ${{ inputs.pr }}
+          SHA: ${{ needs.guide.outputs.sha || github.sha }}
+          PUSHED: ${{ needs.guide.outputs.pushed }}
+        run: |
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "::error::pr は PR の番号だけ"; exit 2; }
+          [ -f /tmp/guide/rows.tsv ] || { echo "表の元が無い（guide が入力で止まった）"; exit 0; }
+          python3 python/guide_run.py report --rows /tmp/guide/rows.tsv --pr "$PR" --guide "$GUIDE" --sha "$SHA" --pushed "$PUSHED"
 
   # **上の2本が赤いあいだ、issue を1本だけ開いておく**（`python/heavy_down.py`）。
   # また通れば自分で閉じる。
