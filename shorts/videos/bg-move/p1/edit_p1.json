@@ -1,0 +1,1199 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p1",
+ "style": "style_mov.json",
+ "sources": {
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/-oDWI23uBgc/clips/01_0-15-55_0-16-25.mp4",
+   "watermark": "prism_live",
+   "t0": 955.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      115,
+      205
+     ],
+     [
+      975,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/-oDWI23uBgc/clips/06_1-34-55_1-35-20.mp4",
+   "watermark": "prism_live",
+   "t0": 5695.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      115,
+      205
+     ],
+     [
+      975,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/-oDWI23uBgc/clips/05_1-09-55_1-13-30.mp4",
+   "watermark": "prism_live",
+   "t0": 4195.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      115,
+      205
+     ],
+     [
+      975,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/art_free/06_card_mk.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/4izd3enURM8/clips/02_0-07-40_0-09-40.mp4",
+   "watermark": "prism_live",
+   "t0": 460.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      240
+     ],
+     [
+      1015,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/art_photo/01_coach_bus.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/4izd3enURM8/clips/03_0-13-40_0-16-10.mp4",
+   "watermark": "prism_live",
+   "t0": 820.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      240
+     ],
+     [
+      1015,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/4izd3enURM8/clips/04_0-18-25_0-20-10.mp4",
+   "watermark": "prism_live",
+   "t0": 1105.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      240
+     ],
+     [
+      1015,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/4izd3enURM8/clips/06_1-16-55_1-17-55.mp4",
+   "watermark": "prism_live",
+   "t0": 4615.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      240
+     ],
+     [
+      1015,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/art_free/04_card_cake.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/-oDWI23uBgc/clips/02_0-57-50_0-58-30.mp4",
+   "watermark": "prism_live",
+   "t0": 3470.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      115,
+      205
+     ],
+     [
+      975,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/-oDWI23uBgc/clips/03_1-06-38_1-07-00.mp4",
+   "watermark": "prism_live",
+   "t0": 3998.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      115,
+      205
+     ],
+     [
+      975,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/ingest/-oDWI23uBgc/clips/04_1-08-15_1-09-00.mp4",
+   "watermark": "prism_live",
+   "t0": 4095.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      115,
+      205
+     ],
+     [
+      975,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  }
+ },
+ "cuts": [
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 60,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "「ブルガリアに着いたら、」: 到着の配信のソフィアの広場へ渡る横断歩道（青空と青い路面電車・歩いて動く画。F-086: 0秒目を止め絵にしない）"
+  },
+  {
+   "src": "c2_06",
+   "in": 300,
+   "out": 341,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「1,500円の宿が屋根裏の25人部屋」: 到着の配信の屋根裏の大部屋を歩く（ベッドが両側に並ぶ・歩いて動く画。F-073）"
+  },
+  {
+   "src": "c2_05",
+   "in": 3990,
+   "out": 4030,
+   "row": 0,
+   "focus_x": 0.85,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.15,
+    "x": 0.85,
+    "y": 0.55
+   },
+   "note": "「やばかった！」: 到着の配信の屋根裏の部屋の、柱に干した洗濯物と椅子に掛けた服へ寄る"
+  },
+  {
+   "src": "c3_06",
+   "in": 15,
+   "out": 54,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.4,
+    "y": 0.5
+   },
+   "note": "「北マケドニアから、」: あやと島カード 11-11（北マケドニアの国旗の立つ帆船の通り）。朝の自撮りは顔の上に場所の札が重なった",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c02",
+   "in": 180,
+   "out": 227,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「ブルガリアの首都ソフィアへバス移動！」: バス停の待合（＋聖ソフィア像の札）"
+  },
+  {
+   "src": "c4_01",
+   "in": 15,
+   "out": 73,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.15,
+    "x": 0.5,
+    "y": 0.7
+   },
+   "note": "想像の大きな高速バス: フリーの写真（Commons・ブルガリアの大型観光バス。運転席とナンバーはぼかした）。描いた絵 M1 から替えた（F-082）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c02",
+   "in": 2526,
+   "out": 2596,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.4,
+    "y": 0.5
+   },
+   "note": "本人の声「なにこれ」「乗り心地の悪い」: 来たミニバス"
+  },
+  {
+   "src": "c03",
+   "in": 750,
+   "out": 815,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "本人の声「ミニバスやんかぁ」: ミニバスのドア（＋想像のバスの札）。同じ停まったミニバスを続けると似た見た目が3秒を越えた"
+  },
+  {
+   "src": "c03",
+   "in": 3615,
+   "out": 3660,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "gamma": 1.1,
+   "note": "乗り込んだ車内（空いた座席）。乗り込む段 0:14:20 はぶれて床だけ・停まったミニバス 0:13:44 は前の行のドアと似た見た目が3秒を越えた"
+  },
+  {
+   "src": "c03",
+   "in": 3300,
+   "out": 3380,
+   "row": 5,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "本人の声「狭い」「やばすぎるよ、これ」: 前の席に当たる膝。0:15:15 の本人の顔は暗すぎて黒いコマになった"
+  },
+  {
+   "src": "c04",
+   "in": 90,
+   "out": 152,
+   "row": 6,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "窓の外（まだ出発前のバス停）"
+  },
+  {
+   "src": "c04",
+   "in": 1410,
+   "out": 1444,
+   "row": 6,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "空いた座席のあいだを後ろへ（0:14:46 は暗すぎて黒いコマになった）。次の行の一番後ろの席と似た見た目なので短く"
+  },
+  {
+   "src": "c04",
+   "in": 2700,
+   "out": 2752,
+   "row": 7,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.6
+   },
+   "note": "一番後ろの席で足を伸ばす（本人の声は4か所までにするので、この行は AI の声）"
+  },
+  {
+   "src": "c06",
+   "in": 150,
+   "out": 204,
+   "row": 8,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "車窓（ブルガリアの丘と道）。「到着！」で黄色い路面電車のカードを札で（場所の札）"
+  },
+  {
+   "src": "c2_01",
+   "in": 399,
+   "out": 457,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "本人の声「うわっ、待って。めっちゃ綺麗やんか、街並み」: そのとき見ていたソフィアの広場（声と同じ秒。＋クリスマスツリーの広場のカードの札）"
+  },
+  {
+   "src": "c3_04",
+   "in": 15,
+   "out": 50,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "本人の声「いけてるやん」: カード 11-12 ケーキ屋の飾り棚。広場を続けると似た見た目が3秒を越えた",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_02",
+   "in": 165,
+   "out": 233,
+   "row": 10,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "宿へ向かう道の古い建物と黄色い路面電車（8ユーロの注）"
+  },
+  {
+   "src": "c2_03",
+   "in": 90,
+   "out": 120,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "宿の中庭へ入る"
+  },
+  {
+   "src": "c2_04",
+   "in": 480,
+   "out": 509,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "gamma": 1.1,
+   "note": "宿の人について階段を上がる（足だけ。顔は写らない）"
+  },
+  {
+   "src": "c2_05",
+   "in": 72,
+   "out": 130,
+   "row": 12,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "gamma": 1.1,
+   "note": "「着いてみたら」: 宿の人について屋根裏の大部屋へ入る（後ろ姿だけ。歩いて動く画）"
+  },
+  {
+   "src": "c2_06",
+   "in": 270,
+   "out": 336,
+   "row": 13,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「ここに、25人ぐらいで泊まるんよ！」: 屋根裏の大部屋をベッドの並びに沿って歩く（両側にベッドが続く）。描いた絵 M5 から替えた（F-082）"
+  },
+  {
+   "src": "c2_05",
+   "in": 3819,
+   "out": 3901,
+   "row": 14,
+   "focus_x": 0.85,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.85,
+    "y": 0.5
+   },
+   "note": "本人の声「やば、臭い」「めっちゃ臭い」: 屋根裏の部屋の、柱に干した洗濯物と椅子に掛けた服（宿の人が右へ出ていく）"
+  },
+  {
+   "src": "c2_06",
+   "in": 540,
+   "out": 587,
+   "row": 15,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「あ、なんか嫌や！」: 自分のベッド（灰色の布団と投げた上着）。描いた絵 M3 から替えた（F-082）"
+  },
+  {
+   "src": "c2_05",
+   "in": 5214,
+   "out": 5280,
+   "row": 16,
+   "focus_x": 0.9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.9,
+    "y": 0.5
+   },
+   "note": "「25人分の洗濯物」: 本人が「みんな洗濯物ほらそことかに干してる」と柱に干した洗濯物を指さす（同じ秒。指と洗濯物が両方入るよう右へ寄せた）。描いた絵 M4 の札から替えた（F-082）"
+  },
+  {
+   "src": "c2_05",
+   "in": 75,
+   "out": 128,
+   "row": 17,
+   "zoom": {
+    "from": 1.06,
+    "to": 1.0,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "gamma": 1.1,
+   "note": "「屋根裏の25人部屋」: 屋根裏の大部屋へ入る所（描いた絵 M2 から替えた。F-082）"
+  },
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 59,
+   "row": 17,
+   "zoom": {
+    "from": 1.08,
+    "to": 1.0,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "0秒目の広場の横断歩道に戻して輪にする"
+  }
+ ],
+ "title": {
+  "text": "🇧🇬ブルガリアに着いたら、1,500円の宿が\n屋根裏の25人部屋でやばかった！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ブルガリアに着いたら、1,500円の宿が屋根裏の25人部屋でやばかった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/01.wav",
+    "tts_text": "ブルガリアに着いたら、千五百円の宿が屋根裏の二十五人部屋でやばかった！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "北マケドニアから、ブルガリアの首都ソフィアへバス移動！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/02.wav",
+    "tts_text": "北マケドニアから、ブルガリアの首都ソフィアへバス移動！",
+    "at": 126
+   },
+   {
+    "text": "でっかい高速バスを想像してたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/03.wav",
+    "tts_text": "でっかい高速バスを想像してたら、",
+    "at": 212
+   },
+   {
+    "text": "何これ？乗り心地の悪いミニバスやんか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/04_real.wav",
+    "tts_text": "何これ？乗り心地の悪いミニバスやんか！",
+    "at": 270,
+    "parts": [
+     {
+      "text": "何これ？"
+     },
+     {
+      "text": "乗り心地の悪い"
+     },
+     {
+      "text": "ミニバスやんかぁ！",
+      "big": "shake_white"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "1番乗りで乗り込んだら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/05.wav",
+    "tts_text": "いちばん乗りで乗り込んだら、",
+    "at": 405
+   },
+   {
+    "text": "狭っ！やばすぎるよ、これ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/06_real.wav",
+    "tts_text": "せまっ！やばすぎるよ、これ！",
+    "at": 450,
+    "parts": [
+     {
+      "text": "狭っ！",
+      "big": "shake_red"
+     },
+     {
+      "text": "やばすぎるよ、これ",
+      "mood": "anxious"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "運転手さんの話やと、乗客は僕ともう1人だけらしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/07.wav",
+    "tts_text": "運転手さんの話やと、乗客は僕ともうひとりだけらしい！",
+    "at": 530
+   },
+   {
+    "text": "ほな、一番後ろ行っちゃお！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/08.wav",
+    "tts_text": "ほな、一番後ろ行っちゃお！",
+    "at": 626,
+    "mood": "excited"
+   },
+   {
+    "text": "5時間かけてようやく到着！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/09.wav",
+    "tts_text": "五時間かけてようやく到着！",
+    "at": 678
+   },
+   {
+    "text": "なかなかおしゃれやん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/10_real.wav",
+    "tts_text": "なかなかおしゃれやん！",
+    "at": 732,
+    "parts": [
+     {
+      "text": "うわっ、待って。めっちゃ綺麗やんか、街並み"
+     },
+     {
+      "text": "いけてるやん！",
+      "big": "brush_zoom"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "今夜の宿、1泊1,500円らしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/11.wav",
+    "tts_text": "今夜の宿、一泊千五百円らしい！",
+    "at": 825
+   },
+   {
+    "text": "ただ、どんな宿かは全然知らん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/12.wav",
+    "tts_text": "ただ、どんな宿かは全然知らん！",
+    "at": 893
+   },
+   {
+    "text": "着いてみたら、屋根裏の大部屋！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/13.wav",
+    "tts_text": "着いてみたら、屋根裏の大部屋！",
+    "at": 952,
+    "mood": "excited"
+   },
+   {
+    "text": "ここに、25人ぐらいで泊まるんよ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/14.wav",
+    "tts_text": "ここに、二十五人ぐらいで泊まるんよ！",
+    "at": 1010
+   },
+   {
+    "text": "臭い！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/15_real.wav",
+    "tts_text": "くさい！",
+    "at": 1076,
+    "parts": [
+     {
+      "text": "やば、臭い"
+     },
+     {
+      "text": "めっちゃ臭い！",
+      "big": "glow_pink"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "あ、なんか嫌や！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/16.wav",
+    "tts_text": "あ、なんか、いやや！",
+    "at": 1158,
+    "mood": "anxious"
+   },
+   {
+    "text": "25人分の洗濯物のせいかな……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/17.wav",
+    "tts_text": "二十五人分の洗濯物のせいかな……",
+    "at": 1205,
+    "mood": "anxious"
+   },
+   {
+    "text": "みんなは、屋根裏の25人部屋、泊まれる？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/voice/mov-p1-v1/p1/18.wav",
+    "tts_text": "みんなは、屋根裏の二十五人部屋、泊まれる？",
+    "at": 1271,
+    "big": "brush_zoom"
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/bg-move/p1/spec.json",
+  "fps": 30,
+  "frames": 1368,
+  "seconds": 45.6,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 126,
+    "voice_frames": 118,
+    "cuts": [
+     "-oDWI23uBgc 0:15:55.5+1.50s",
+     "-oDWI23uBgc 1:35:05.0+1.37s",
+     "-oDWI23uBgc 1:12:08.0+1.33s"
+    ],
+    "line": "ブルガリアに着いたら、1,500円の宿が屋根裏の25人部屋でやばかった！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 126,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "movArtP1v01 0:05:00.5+1.30s",
+     "0:07:46.0+1.57s"
+    ],
+    "line": "北マケドニアから、ブルガリアの首都ソフィアへバス移動！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 212,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "movPhoP1v05 0:00:00.5+1.93s"
+    ],
+    "line": "でっかい高速バスを想像してたら、",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 270,
+    "frames": 135,
+    "voice_frames": 127,
+    "cuts": [
+     "0:09:04.2+2.33s",
+     "0:14:05.0+2.17s"
+    ],
+    "line": "何これ？乗り心地の悪いミニバスやんか！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "何これ？"
+     },
+     {
+      "text": "乗り心地の悪い"
+     },
+     {
+      "text": "ミニバスやんかぁ！",
+      "big": "shake_white"
+     }
+    ]
+   },
+   {
+    "row": 4,
+    "from": 405,
+    "frames": 45,
+    "voice_frames": 37,
+    "cuts": [
+     "0:15:40.5+1.50s"
+    ],
+    "line": "1番乗りで乗り込んだら、",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 450,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "0:15:30.0+2.67s"
+    ],
+    "line": "狭っ！やばすぎるよ、これ！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "狭っ！",
+      "big": "shake_red"
+     },
+     {
+      "text": "やばすぎるよ、これ",
+      "mood": "anxious"
+     }
+    ]
+   },
+   {
+    "row": 6,
+    "from": 530,
+    "frames": 96,
+    "voice_frames": 88,
+    "cuts": [
+     "0:18:28.0+2.07s",
+     "0:19:12.0+1.13s"
+    ],
+    "line": "運転手さんの話やと、乗客は僕ともう1人だけらしい！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 626,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "0:19:55.0+1.73s"
+    ],
+    "line": "ほな、一番後ろ行っちゃお！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 678,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "1:17:00.0+1.80s"
+    ],
+    "line": "5時間かけてようやく到着！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 732,
+    "frames": 93,
+    "voice_frames": 85,
+    "cuts": [
+     "-oDWI23uBgc 0:16:08.3+1.93s",
+     "movArtP1v01 0:03:00.5+1.17s"
+    ],
+    "line": "なかなかおしゃれやん！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "うわっ、待って。めっちゃ綺麗やんか、街並み"
+     },
+     {
+      "text": "いけてるやん！",
+      "big": "brush_zoom"
+     }
+    ]
+   },
+   {
+    "row": 10,
+    "from": 825,
+    "frames": 68,
+    "voice_frames": 60,
+    "cuts": [
+     "-oDWI23uBgc 0:57:55.5+2.27s"
+    ],
+    "line": "今夜の宿、1泊1,500円らしい！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 893,
+    "frames": 59,
+    "voice_frames": 51,
+    "cuts": [
+     "-oDWI23uBgc 1:06:41.0+1.00s",
+     "-oDWI23uBgc 1:08:31.0+0.97s"
+    ],
+    "line": "ただ、どんな宿かは全然知らん！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 952,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "-oDWI23uBgc 1:09:57.4+1.93s"
+    ],
+    "line": "着いてみたら、屋根裏の大部屋！",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1010,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "-oDWI23uBgc 1:35:04.0+2.20s"
+    ],
+    "line": "ここに、25人ぐらいで泊まるんよ！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1076,
+    "frames": 82,
+    "voice_frames": 74,
+    "cuts": [
+     "-oDWI23uBgc 1:12:02.3+2.73s"
+    ],
+    "line": "臭い！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "やば、臭い"
+     },
+     {
+      "text": "めっちゃ臭い！",
+      "big": "glow_pink"
+     }
+    ]
+   },
+   {
+    "row": 15,
+    "from": 1158,
+    "frames": 47,
+    "voice_frames": 39,
+    "cuts": [
+     "-oDWI23uBgc 1:35:13.0+1.57s"
+    ],
+    "line": "あ、なんか嫌や！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1205,
+    "frames": 66,
+    "voice_frames": 58,
+    "cuts": [
+     "-oDWI23uBgc 1:12:48.8+2.20s"
+    ],
+    "line": "25人分の洗濯物のせいかな……",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1271,
+    "frames": 97,
+    "voice_frames": 74,
+    "cuts": [
+     "-oDWI23uBgc 1:09:57.5+1.77s",
+     "-oDWI23uBgc 0:15:55.5+1.47s"
+    ],
+    "line": "みんなは、屋根裏の25人部屋、泊まれる？",
+    "telop": null,
+    "big": "brush_zoom"
+   }
+  ],
+  "speech": {
+   "chars": 221,
+   "raw_voice_s": 39.73,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 28.37,
+   "cps_voiced": 7.79,
+   "video_s": 45.6,
+   "cps_video": 4.85
+  }
+ },
+ "notes": [
+  {
+   "from": 126,
+   "to": 165,
+   "text": "◆北マケドニア"
+  },
+  {
+   "from": 705,
+   "to": 732,
+   "text": "◆ソフィア（ブルガリアの首都）"
+  },
+  {
+   "from": 825,
+   "to": 893,
+   "text": "8ユーロ"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "grade": {
+  "saturation": 1.5,
+  "contrast": 1.08,
+  "warmth": 0.05
+ },
+ "stickers": [
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/artsrc/card_statue.png",
+   "crop": [
+    150,
+    0,
+    900,
+    1600
+   ],
+   "x": 800,
+   "y": 1330,
+   "w": 290,
+   "rotate": 6,
+   "from": 175,
+   "to": 212
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/v5/photo/coach_full.jpg",
+   "crop": [
+    500,
+    740,
+    1320,
+    1330
+   ],
+   "x": 300,
+   "y": 1320,
+   "w": 380,
+   "rotate": -6,
+   "from": 342,
+   "to": 405
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/artsrc/card_tram.png",
+   "crop": [
+    0,
+    200,
+    1050,
+    1300
+   ],
+   "x": 540,
+   "y": 1300,
+   "w": 520,
+   "rotate": -4,
+   "from": 705,
+   "to": 732
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/artsrc/card_xmas.png",
+   "crop": [
+    0,
+    0,
+    1200,
+    1300
+   ],
+   "x": 790,
+   "y": 1320,
+   "w": 320,
+   "rotate": 5,
+   "from": 744,
+   "to": 790
+  }
+ ],
+ "sfx": [
+  {
+   "at": 6,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 84,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 124,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 175,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 212,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 270,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 450,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/enter_s.wav",
+   "db": 0
+  },
+  {
+   "at": 705,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 744,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 1008,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 1103,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/enter_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1205,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1275,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/hyokkori.mp3",
+   "db": 0
+  }
+ ],
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: あやと島カード 11-12 の公開済みの写真（聖ソフィア像・黄色い路面電車・クリスマスツリーの広場）と 11-11 の帆船の通り（全面）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。帯は配信ごとに測った（移動 4izd3enURM8: 上 y136〜238 の題の帯・下 y1020〜 のお城と投げ銭の額と PRISM／到着 -oDWI23uBgc: 上 y118〜197・下はお城の絵が投げ銭で大きくなり区間ごとに y985〜1135 から始まるので、いちばん高い所に合わせて y975〜。720x1280）。v5: 札の描いた絵（M1・M2・M4）を外し、3行目の札をフリーの写真（Commons の大型観光バス）に替えた。フックは3カットになったので切り替えの風切り音を2つに"
+}

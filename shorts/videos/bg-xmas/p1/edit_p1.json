@@ -1,0 +1,1446 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "zDHHuafmP1A-p1",
+ "style": "style_xms.json",
+ "sources": {
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/01_card_lights.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/03_card_evening.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/04_card_tree.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c2_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/05_card_entrance.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c2_09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/09_card_crowd.mp4",
+   "watermark": "prism_live",
+   "t0": 480.0
+  },
+  "c2_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/06_card_stall.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  },
+  "c2_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/07_card_waffle.mp4",
+   "watermark": "prism_live",
+   "t0": 360.0
+  },
+  "c2_08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/08_card_arch.mp4",
+   "watermark": "prism_live",
+   "t0": 420.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/04_f3500-11000.mp4",
+   "watermark": "prism_live",
+   "t0": 9466.666666666666,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c01p": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/flip/01_f1825-1915_hflip.mp4",
+   "watermark": "prism_live",
+   "t0": 170.83333333333334,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c01f": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/01_f2770-2900.mp4",
+   "watermark": "prism_live",
+   "t0": 202.33333333333331,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c02a": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/02_f500-750.mp4",
+   "watermark": "prism_live",
+   "t0": 8316.666666666666,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c02b": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/02_f1250-1500.mp4",
+   "watermark": "prism_live",
+   "t0": 8341.666666666666,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/03_f0-250.mp4",
+   "watermark": "prism_live",
+   "t0": 8750.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c07a": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/07_f3000-3500.mp4",
+   "watermark": "prism_live",
+   "t0": 11630.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c07b": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/07_f4000-4250.mp4",
+   "watermark": "prism_live",
+   "t0": 11663.333333333334,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "bz03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/ingest/zDHHuafmP1A/clips/03_0-54-10_0-54-26.mp4",
+   "watermark": "prism_live",
+   "t0": 3250.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c5_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/01_01_sofia_vitosha.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c5_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/02_02_xmas_market_night.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c5_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/03_03_sofia_market_closed.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c5_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/04_04_gluhwein.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c5_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/05_05_snow_globe.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c5_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/06_06_carousel.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 51,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.16,
+    "x": 0.5,
+    "y": 0.3
+   },
+   "note": "「ブルガリアのクリスマスマーケット、」: カード 11-14 光の天井とツリー（人の顔はぼかした）。1.2秒の止め絵なので 1.16 まで寄せて動かし、配信の動く画へ切り替える（F-086。v8 は 2.6秒この1枚だった）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c04",
+   "in": 2167,
+   "out": 2203,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「初日に行ったら」: 配信 2:38:58.9 灯りの屋台と人の波（後ろ姿。顔の出ない秒）"
+  },
+  {
+   "src": "c04",
+   "in": 1575,
+   "out": 1608,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.03,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "「想像を超えてきた！」: 配信 2:38:39.2 人の波の向こうの大きなツリー（顔の出ない秒）"
+  },
+  {
+   "src": "c5_01",
+   "in": 15,
+   "out": 41,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "ソフィアのヴィトシャ通りと山の写真（Commons・CC BY-SA 4.0。v8 は案内ページの水彩の大聖堂。F-082）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_03",
+   "in": 15,
+   "out": 42,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "カード 11-14 夕方の大聖堂",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c01f",
+   "in": 50,
+   "out": 111,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.04,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "「昨日15°やったのに、」: 配信 0:03:24 寒がる顔（v8 は描いた絵 X1 の温度計）"
+  },
+  {
+   "src": "c01p",
+   "in": 0,
+   "out": 23,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「今日5°で極寒すぎる！」: 配信 0:02:50.8 スマホの天気（ソフィア 5°）。前のカメラの鏡写しを左右に戻して字を読める向きに。スマホを下ろして流れる前の 0.77秒だけ"
+  },
+  {
+   "src": "c5_02",
+   "in": 15,
+   "out": 67,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「でも冬のヨーロッパいうたら、」: 夜のクリスマスマーケットとツリーの写真（フランクフルト。Commons・CC BY 2.0。v8 は描いた絵 X2）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_04",
+   "in": 15,
+   "out": 49,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "カード 11-14 建物の前のクリスマスツリー",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c5_03",
+   "in": 15,
+   "out": 87,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "「ただ、街でいちばん大きいのは来週から。」: 柵で閉じたソフィアのクリスマスマーケットの門の写真（Commons・CC BY-SA 4.0。v8 は描いた絵 X3）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c02a",
+   "in": 40,
+   "out": 80,
+   "row": 5,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "夕方の通りを歩く"
+  },
+  {
+   "src": "c02b",
+   "in": 70,
+   "out": 109,
+   "row": 5,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "暗くなってきた通り"
+  },
+  {
+   "src": "c5_04",
+   "in": 15,
+   "out": 79,
+   "row": 6,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「まあ、ホットワインが飲めるぐらいかな？」: マーケットのホットワインのカップの写真（Commons・CC BY-SA 3.0。v8 は描いた絵 X4）。この時はまだ飲んでいない",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c03",
+   "in": 180,
+   "out": 223,
+   "row": 7,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "落ち葉の通りをひたすら歩く"
+  },
+  {
+   "src": "c2_05",
+   "in": 15,
+   "out": 51,
+   "row": 7,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "カード 11-14 会場の入り口の光のアーチ（「あ、ここやな！」）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c04",
+   "in": 160,
+   "out": 219,
+   "row": 8,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "gamma": 0.55,
+   "note": "裏側の、灯りのまばらな小屋（暗いので持ち上げる。v2 は gamma を 1 より大きくして逆に暗くし、黒いコマで落ちた）"
+  },
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 76,
+   "row": 9,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.14,
+    "x": 0.5,
+    "y": 0.3
+   },
+   "note": "カード 11-14 光の天井とツリー（表の画）。v1 で会場の配信の画が8カット続き、似た見た目が 15秒になった（similar_run）ので、間にカードと絵を挟んだ",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_09",
+   "in": 15,
+   "out": 95,
+   "row": 10,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.4,
+    "y": 0.45
+   },
+   "note": "カード 11-14 大きなツリーとステージ。声は本人の「これ一面全部クリスマスマーケットよ」",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c04",
+   "in": 1480,
+   "out": 1518,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.04,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "gamma": 0.8,
+   "note": "本人の声「わお。人がいっぱいいるよ」: 人の波の中へ（後ろ姿）"
+  },
+  {
+   "src": "c04",
+   "in": 2205,
+   "out": 2239,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.04,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "gamma": 0.85,
+   "note": "灯りの屋台の前の人の波（後ろ姿）。v1 の 2:38:36〜 は横顔が写ったので、顔の写らない所だけをつないだ"
+  },
+  {
+   "src": "c04",
+   "in": 4408,
+   "out": 4435,
+   "row": 12,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「屋台を1軒ずつ」: 配信 2:40:13.6 しょうがパンの屋台（顔の出ない秒。v8 は案内ページの水彩）。前の行の人の波と色の分布が離れている画を先に（v9 の1回目は飾りの屋台を先にして、人の波2カットと似た見た目が 3.3秒続いた）"
+  },
+  {
+   "src": "c04",
+   "in": 4752,
+   "out": 4779,
+   "row": 12,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「見て回ったら、」: 配信 2:40:25 飾りの屋台"
+  },
+  {
+   "src": "c04",
+   "in": 3286,
+   "out": 3317,
+   "row": 13,
+   "zoom": {
+    "from": 1.08,
+    "to": 1.12,
+    "x": 0.8,
+    "y": 0.8
+   },
+   "note": "「ホットワインの小屋に、」: 配信 2:39:36.2 ホットワインの小屋（赤いカップと瓶。右下へ寄せて、左上の店の人の顔を画の外に。v8 は描いた絵 X4）"
+  },
+  {
+   "src": "c5_05",
+   "in": 15,
+   "out": 46,
+   "row": 13,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「スノードーム屋さん！」: スノードームの写真（Commons・CC BY-SA 3.0。配信のスノードーム屋さんは店の人の顔が写る。v8 は描いた絵 X5）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c04",
+   "in": 6379,
+   "out": 6442,
+   "row": 14,
+   "zoom": {
+    "from": 1.7,
+    "to": 1.76,
+    "x": 0.42,
+    "y": 0.0
+   },
+   "note": "鉄板で焼けるソーセージへ上を軸に寄る（店の人の頭は帯の外、顔は画の外）。v5 は下を軸に寄せてソーセージが写っていなかった"
+  },
+  {
+   "src": "c5_06",
+   "in": 15,
+   "out": 41,
+   "row": 15,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "「メリーゴーランドも、」: メリーゴーランドの木馬の写真（人なし。Commons・CC BY-SA 3.0。v8 は描いた絵 X6）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c04",
+   "in": 7241,
+   "out": 7269,
+   "row": 15,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.14,
+    "x": 0.5,
+    "y": 0.3
+   },
+   "note": "「回っとる！」: 配信 2:41:58 回るメリーゴーランド（乗っている人の顔が出ない 0.93秒だけ）"
+  },
+  {
+   "src": "c2_06",
+   "in": 15,
+   "out": 53,
+   "row": 16,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "カード 11-14 ワッフルの屋台の中",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_07",
+   "in": 15,
+   "out": 62,
+   "row": 17,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.45,
+    "y": 0.4
+   },
+   "note": "カード 11-14 全部盛りのワッフル",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c07a",
+   "in": 240,
+   "out": 279,
+   "row": 17,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.6
+   },
+   "note": "手に持った全部盛り（顔は上に小さく）"
+  },
+  {
+   "src": "c07a",
+   "in": 360,
+   "out": 399,
+   "row": 18,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.04,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「食べたら、」（AI の声）: かぶりつく"
+  },
+  {
+   "src": "c07b",
+   "in": 80,
+   "out": 166,
+   "row": 18,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.04,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "本人の声「これはワッフルじゃない。クレープ。」（＋カードの全部盛りの札）"
+  },
+  {
+   "src": "bz03",
+   "in": 300,
+   "out": 368,
+   "row": 19,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "本人の声「寒いとかひたすら文句言ってたけど、」: 配信 0:54:20 雨上がりの寒い交差点・灰色の空（v8 は描いた絵 X1 の呼び戻し。声と違う秒の本人の顔は口が合わないので使わない）"
+  },
+  {
+   "src": "c2_08",
+   "in": 15,
+   "out": 75,
+   "row": 20,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "カード 11-14 くるみ割り人形の光の飾り。声は本人の「やっぱヨーロッパは冬に来るべきや」",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_04",
+   "in": 15,
+   "out": 76,
+   "row": 20,
+   "zoom": {
+    "from": 1.08,
+    "to": 1.0,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "カード 11-14 建物の前のクリスマスツリー（4行目の呼び戻し。今度は引いていく）。1カット 3秒未満に収める",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 102,
+   "row": 21,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.16,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "0秒目と同じ光の天井とツリー（輪にする）。v1 は寄せ 1.08 で止まった画（frozen）と読まれたので大きく寄せる",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  }
+ ],
+ "title": {
+  "text": "🇧🇬ブルガリアのクリスマスマーケット、\n初日に行ったら想像を超えてきた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 105
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ブルガリアのクリスマスマーケット、初日に行ったら想像を超えてきた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/01.wav",
+    "tts_text": "ブルガリアのクリスマスマーケット、初日に行ったら想像を超えてきた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "やってきたのは、首都ソフィア！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/02.wav",
+    "tts_text": "やってきたのは、首都ソフィア！",
+    "at": 105
+   },
+   {
+    "text": "昨日15°やったのに、今日5°で極寒すぎる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/03.wav",
+    "tts_text": "昨日じゅうごどやったのに、今日ごどで極寒すぎる！",
+    "at": 158,
+    "mood": "tense_shake",
+    "highlight": [
+     "極寒すぎる！"
+    ]
+   },
+   {
+    "text": "でも冬のヨーロッパいうたら、クリスマスマーケットやろ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/04.wav",
+    "tts_text": "でも冬のヨーロッパいうたら、クリスマスマーケットやろ！",
+    "at": 242,
+    "mood": "up_pop"
+   },
+   {
+    "text": "ただ、街でいちばん大きいのは来週から。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/05.wav",
+    "tts_text": "ただ、街でいちばん大きいのは来週から。",
+    "at": 328
+   },
+   {
+    "text": "今日のは、こじんまりしてるかもってこの時は思ってた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/06.wav",
+    "tts_text": "今日のは、こじんまりしてるかもってこの時は思ってた！",
+    "at": 400
+   },
+   {
+    "text": "まあ、ホットワインが飲めるぐらいかな？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/07.wav",
+    "tts_text": "まあ、ホットワインが飲めるぐらいかな？",
+    "at": 479,
+    "highlight": [
+     "ホットワイン"
+    ]
+   },
+   {
+    "text": "寒い中ひたすら歩いて……あ、ここやな！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/08.wav",
+    "tts_text": "寒い中ひたすら歩いて……あ、ここやな！",
+    "at": 543
+   },
+   {
+    "text": "あれ、ちょっとこじんまりしてる？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/09.wav",
+    "tts_text": "あれ、ちょっとこじんまりしてる？",
+    "at": 622,
+    "mood": "tense_tilt"
+   },
+   {
+    "text": "と思ったら、裏から入ってただけ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/10.wav",
+    "tts_text": "と思ったら、裏から入ってただけ！",
+    "at": 681
+   },
+   {
+    "text": "一面、全部クリスマスマーケットや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/11_mix.wav",
+    "tts_text": "一面、全部クリスマスマーケットや！",
+    "at": 742,
+    "parts": [
+     {
+      "text": "これ一面全部クリスマスマーケットよ。",
+      "big": "static_white",
+      "split": "これ一面全部｜クリスマスマーケットよ。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "わお、人がいっぱい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/12_mix.wav",
+    "tts_text": "わお、人がいっぱい！",
+    "at": 822,
+    "parts": [
+     {
+      "text": "わお\n人がいっぱいいるよ。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "屋台を1軒ずつ見て回ったら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/13.wav",
+    "tts_text": "屋台をいっけんずつ見て回ったら、",
+    "at": 894
+   },
+   {
+    "text": "ホットワインの小屋に、スノードーム屋さん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/14.wav",
+    "tts_text": "ホットワインの小屋に、スノードーム屋さん！",
+    "at": 948
+   },
+   {
+    "text": "ソーセージが、ドカーンって焼けてる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/15.wav",
+    "tts_text": "ソーセージが、ドカーンって焼けてる！",
+    "at": 1010,
+    "big": "shake_red",
+    "split": "ソーセージが、｜ドカーンって焼けてる！"
+   },
+   {
+    "text": "メリーゴーランドも、回っとる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/16.wav",
+    "tts_text": "メリーゴーランドも、回っとる！",
+    "at": 1073
+   },
+   {
+    "text": "ワッフルを頼んだら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/17.wav",
+    "tts_text": "ワッフルを頼んだら、",
+    "at": 1127
+   },
+   {
+    "text": "店の人が、嫌な顔1つせず全盛りにしてくれた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/18.wav",
+    "tts_text": "店の人が、嫌な顔ひとつせずぜんもりにしてくれた！",
+    "at": 1165,
+    "highlight": [
+     "全盛り"
+    ]
+   },
+   {
+    "text": "食べたら、これワッフルちゃう、クレープや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/19_mix.wav",
+    "tts_text": "食べたら、",
+    "at": 1251,
+    "parts": [
+     {
+      "text": "食べたら、"
+     },
+     {
+      "text": "これはワッフルじゃない。"
+     },
+     {
+      "text": "クレープ",
+      "big": "shake_white"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "寒いって、ひたすら文句言ってたけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/20_mix.wav",
+    "tts_text": "寒いって、ひたすら文句言ってたけど、",
+    "at": 1376,
+    "parts": [
+     {
+      "text": "寒いとかひたすら文句言ってたけど、"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "やっぱヨーロッパは、冬に来るべきや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/21_mix.wav",
+    "tts_text": "やっぱヨーロッパは、冬に来るべきや！",
+    "at": 1444,
+    "parts": [
+     {
+      "text": "やっぱヨーロッパは冬に来るべきや。",
+      "big": "shake_white",
+      "split": "やっぱヨーロッパは｜冬に来るべきや。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "みんなは、5°でもクリスマスマーケットに行く？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/voice/xms-p1-v1/p1/22.wav",
+    "tts_text": "みんなは、ごどでもクリスマスマーケットに行く？",
+    "at": 1565,
+    "big": "brush_zoom"
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/bg-xmas/p1/spec.json",
+  "fps": 30,
+  "frames": 1652,
+  "seconds": 55.067,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 105,
+    "voice_frames": 97,
+    "cuts": [
+     "xmsArtP1v01 0:00:00.5+1.20s",
+     "2:38:58.9+1.20s",
+     "2:38:39.2+1.10s"
+    ],
+    "line": "ブルガリアのクリスマスマーケット、初日に行ったら想像を超えてきた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 105,
+    "frames": 53,
+    "voice_frames": 45,
+    "cuts": [
+     "xmsPhoP1v09 0:00:00.5+0.87s",
+     "xmsArtP1v01 0:02:00.5+0.90s"
+    ],
+    "line": "やってきたのは、首都ソフィア！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 158,
+    "frames": 84,
+    "voice_frames": 76,
+    "cuts": [
+     "0:03:24.0+2.03s",
+     "0:02:50.8+0.77s"
+    ],
+    "line": "昨日15°やったのに、今日5°で極寒すぎる！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 242,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "xmsPhoP1v09 0:01:00.5+1.73s",
+     "xmsArtP1v01 0:03:00.5+1.13s"
+    ],
+    "line": "でも冬のヨーロッパいうたら、クリスマスマーケットやろ！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 328,
+    "frames": 72,
+    "voice_frames": 64,
+    "cuts": [
+     "xmsPhoP1v09 0:02:00.5+2.40s"
+    ],
+    "line": "ただ、街でいちばん大きいのは来週から。",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 400,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "2:18:38.0+1.33s",
+     "2:19:04.0+1.30s"
+    ],
+    "line": "今日のは、こじんまりしてるかもってこの時は思ってた！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 479,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "xmsPhoP1v09 0:03:00.5+2.13s"
+    ],
+    "line": "まあ、ホットワインが飲めるぐらいかな？",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 543,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "2:25:56.0+1.43s",
+     "xmsArtP1v01 0:04:00.5+1.20s"
+    ],
+    "line": "寒い中ひたすら歩いて……あ、ここやな！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 622,
+    "frames": 59,
+    "voice_frames": 51,
+    "cuts": [
+     "2:37:52.0+1.97s"
+    ],
+    "line": "あれ、ちょっとこじんまりしてる？",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 681,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "xmsArtP1v01 0:00:00.5+2.03s"
+    ],
+    "line": "と思ったら、裏から入ってただけ！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 742,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "xmsArtP1v01 0:08:00.5+2.67s"
+    ],
+    "line": "一面、全部クリスマスマーケットや！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "これ一面全部クリスマスマーケットよ。",
+      "big": "static_white",
+      "split": "これ一面全部｜クリスマスマーケットよ。"
+     }
+    ]
+   },
+   {
+    "row": 11,
+    "from": 822,
+    "frames": 72,
+    "voice_frames": 64,
+    "cuts": [
+     "2:38:36.0+1.27s",
+     "2:39:00.2+1.13s"
+    ],
+    "line": "わお、人がいっぱい！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "わお\n人がいっぱいいるよ。"
+     }
+    ]
+   },
+   {
+    "row": 12,
+    "from": 894,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "2:40:13.6+0.90s",
+     "2:40:25.1+0.90s"
+    ],
+    "line": "屋台を1軒ずつ見て回ったら、",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 948,
+    "frames": 62,
+    "voice_frames": 54,
+    "cuts": [
+     "2:39:36.2+1.03s",
+     "xmsPhoP1v09 0:04:00.5+1.03s"
+    ],
+    "line": "ホットワインの小屋に、スノードーム屋さん！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1010,
+    "frames": 63,
+    "voice_frames": 55,
+    "cuts": [
+     "2:41:19.3+2.10s"
+    ],
+    "line": "ソーセージが、ドカーンって焼けてる！",
+    "telop": null,
+    "big": "shake_red"
+   },
+   {
+    "row": 15,
+    "from": 1073,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "xmsPhoP1v09 0:05:00.5+0.87s",
+     "2:41:48.0+0.93s"
+    ],
+    "line": "メリーゴーランドも、回っとる！",
+    "telop": null
+   },
+   {
+    "row": 16,
+    "from": 1127,
+    "frames": 38,
+    "voice_frames": 30,
+    "cuts": [
+     "xmsArtP1v01 0:05:00.5+1.27s"
+    ],
+    "line": "ワッフルを頼んだら、",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1165,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "xmsArtP1v01 0:06:00.5+1.57s",
+     "3:13:58.0+1.30s"
+    ],
+    "line": "店の人が、嫌な顔1つせず全盛りにしてくれた！",
+    "telop": null
+   },
+   {
+    "row": 18,
+    "from": 1251,
+    "frames": 125,
+    "voice_frames": 117,
+    "cuts": [
+     "3:14:02.0+1.30s",
+     "3:14:26.0+2.87s"
+    ],
+    "line": "食べたら、これワッフルちゃう、クレープや！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "食べたら、"
+     },
+     {
+      "text": "これはワッフルじゃない。"
+     },
+     {
+      "text": "クレープ",
+      "big": "shake_white"
+     }
+    ]
+   },
+   {
+    "row": 19,
+    "from": 1376,
+    "frames": 68,
+    "voice_frames": 60,
+    "cuts": [
+     "0:54:20.0+2.27s"
+    ],
+    "line": "寒いって、ひたすら文句言ってたけど、",
+    "telop": null,
+    "parts": [
+     {
+      "text": "寒いとかひたすら文句言ってたけど、"
+     }
+    ]
+   },
+   {
+    "row": 20,
+    "from": 1444,
+    "frames": 121,
+    "voice_frames": 113,
+    "cuts": [
+     "xmsArtP1v01 0:07:00.5+2.00s",
+     "xmsArtP1v01 0:03:00.5+2.03s"
+    ],
+    "line": "やっぱヨーロッパは、冬に来るべきや！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "やっぱヨーロッパは冬に来るべきや。",
+      "big": "shake_white",
+      "split": "やっぱヨーロッパは｜冬に来るべきや。"
+     }
+    ]
+   },
+   {
+    "row": 21,
+    "from": 1565,
+    "frames": 87,
+    "voice_frames": 64,
+    "cuts": [
+     "xmsArtP1v01 0:00:00.5+2.90s"
+    ],
+    "line": "みんなは、5°でもクリスマスマーケットに行く？",
+    "telop": null,
+    "big": "brush_zoom"
+   }
+  ],
+  "speech": {
+   "chars": 298,
+   "raw_voice_s": 48.23,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 34.5,
+   "cps_voiced": 8.64,
+   "video_s": 55.07,
+   "cps_video": 5.41
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "grade": {
+  "saturation": 1.6,
+  "contrast": 1.08,
+  "warmth": 0.05
+ },
+ "stickers": [
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/artsrc/sticker_lights.png",
+   "x": 790,
+   "y": 1330,
+   "w": 330,
+   "rotate": 5,
+   "from": 826,
+   "to": 894
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/artsrc/sticker_stall.png",
+   "x": 790,
+   "y": 1330,
+   "w": 320,
+   "rotate": 5,
+   "from": 1215,
+   "to": 1251
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/artsrc/sticker_waffle.png",
+   "x": 800,
+   "y": 1330,
+   "w": 300,
+   "rotate": 6,
+   "from": 1293,
+   "to": 1376
+  }
+ ],
+ "sfx": [
+  {
+   "at": 103,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 242,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 482,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/fuwa_s.wav",
+   "db": -4
+  },
+  {
+   "at": 681,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 826,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 948,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/kira_s.wav",
+   "db": -4
+  },
+  {
+   "at": 1010,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1215,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 1308,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/enter_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1444,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 1565,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/kira_s.wav",
+   "db": -4
+  }
+ ],
+ "notes": [
+  {
+   "from": 131,
+   "to": 158,
+   "text": "◆ソフィア"
+  },
+  {
+   "from": 586,
+   "to": 622,
+   "text": "◆国立劇場前のクリスマスマーケット"
+  }
+ ],
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: カード 11-14 の光の天井・屋台・全部盛りのワッフルの切り抜き（人の顔はぼかした）。効果音はポケットサウンド（mp3 はリポジトリに置かない）",
+ "_v9": "v9（あやと 2026-11-20「…クリスマスマーケットもつくって」・帳面 F-082・F-083・F-086）: v8 の指示書から画だけを差し替えた。フックは 2.6秒のカードの止め絵 → カード 1.2秒（寄せ 1.16）＋配信の動く画2カット（灯りの屋台・大きなツリー）。描いた絵 X1〜X6 と案内ページの水彩（大聖堂・屋台の並び・札）は、配信の画（スマホの天気 5°・屋台2軒・ホットワインの小屋・回るメリーゴーランド・寒い交差点）と Commons の写真6枚に。素材は使う区間だけをキーフレームの境で切り出した（映像は再符号化していない）。字・声・テロップ・題の札・overrides・polish は v8 のまま"
+}

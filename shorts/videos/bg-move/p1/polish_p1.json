@@ -1,0 +1,212 @@
+{
+ "_note": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: あやと島カード 11-12 の公開済みの写真（聖ソフィア像・黄色い路面電車・クリスマスツリーの広場）と 11-11 の帆船の通り（全面）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。帯は配信ごとに測った（移動 4izd3enURM8: 上 y136〜238 の題の帯・下 y1020〜 のお城と投げ銭の額と PRISM／到着 -oDWI23uBgc: 上 y118〜197・下はお城の絵が投げ銭で大きくなり区間ごとに y985〜1135 から始まるので、いちばん高い所に合わせて y975〜。720x1280）。v5: 札の描いた絵（M1・M2・M4）を外し、3行目の札をフリーの写真（Commons の大型観光バス）に替えた。フックは3カットになったので切り替えの風切り音を2つに",
+ "bands_by": {
+  "4izd3enURM8": {
+   "size": [
+    720,
+    1280
+   ],
+   "rows": [
+    [
+     135,
+     240
+    ],
+    [
+     1015,
+     1280
+    ]
+   ],
+   "margin": 5
+  },
+  "-oDWI23uBgc": {
+   "size": [
+    720,
+    1280
+   ],
+   "rows": [
+    [
+     115,
+     205
+    ],
+    [
+     975,
+     1280
+    ]
+   ],
+   "margin": 5
+  }
+ },
+ "grade": {
+  "saturation": 1.5,
+  "contrast": 1.08,
+  "warmth": 0.05
+ },
+ "grade_art": {
+  "saturation": 1.1,
+  "contrast": 1.03
+ },
+ "cut_grade": [],
+ "stickers": [
+  {
+   "row": 1,
+   "cut": 1,
+   "from_s": 0.35,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/artsrc/card_statue.png",
+   "crop": [
+    150,
+    0,
+    900,
+    1600
+   ],
+   "x": 800,
+   "y": 1330,
+   "w": 290,
+   "rotate": 6,
+   "why": "「ソフィア」で聖ソフィア像のカード"
+  },
+  {
+   "row": 3,
+   "cut": 1,
+   "from_s": 0.05,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/v5/photo/coach_full.jpg",
+   "crop": [
+    500,
+    740,
+    1320,
+    1330
+   ],
+   "x": 300,
+   "y": 1320,
+   "w": 380,
+   "rotate": -6,
+   "why": "想像してた大きなバス（フリーの写真・Commons）と、来たミニバスを並べる。v5 で描いた絵 M1 から替えた（F-082）"
+  },
+  {
+   "row": 8,
+   "from_s": 0.9,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/artsrc/card_tram.png",
+   "crop": [
+    0,
+    200,
+    1050,
+    1300
+   ],
+   "x": 540,
+   "y": 1300,
+   "w": 520,
+   "rotate": -4,
+   "why": "「到着！」でソフィアの黄色い路面電車のカード"
+  },
+  {
+   "row": 9,
+   "cut": 0,
+   "from_s": 0.4,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/artsrc/card_xmas.png",
+   "crop": [
+    0,
+    0,
+    1200,
+    1300
+   ],
+   "x": 790,
+   "y": 1320,
+   "w": 320,
+   "rotate": 5,
+   "why": "「めっちゃ綺麗やんか、街並み」でクリスマスツリーの広場のカード（ツリーの下の人と通行人はぼかした）"
+  }
+ ],
+ "sfx_files": {
+  "pop": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/hyokkori.mp3",
+  "whoosh": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/kuu.mp3",
+  "kira": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/kira_s.wav",
+  "fuwa": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/fuwa_s.wav",
+  "pito": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/pito_s.wav",
+  "jan": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/mov/sfx/enter_s.wav"
+ },
+ "sfx": [
+  {
+   "row": 0,
+   "cut": 0,
+   "off_s": 0.2,
+   "name": "pop"
+  },
+  {
+   "row": 0,
+   "cut": 1,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 0,
+   "cut": 2,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 1,
+   "cut": 1,
+   "off_s": 0.35,
+   "name": "pop"
+  },
+  {
+   "row": 2,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 3,
+   "off_s": 0.0,
+   "name": "pito"
+  },
+  {
+   "row": 5,
+   "off_s": 0.0,
+   "name": "jan"
+  },
+  {
+   "row": 8,
+   "off_s": 0.9,
+   "name": "pop"
+  },
+  {
+   "row": 9,
+   "cut": 0,
+   "off_s": 0.4,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 12,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 14,
+   "off_s": 0.9,
+   "name": "jan"
+  },
+  {
+   "row": 16,
+   "off_s": 0.0,
+   "name": "pito"
+  },
+  {
+   "row": 17,
+   "off_s": 0.15,
+   "name": "pop"
+  }
+ ],
+ "notes": [
+  {
+   "row": 1,
+   "cut": 0,
+   "text": "◆北マケドニア"
+  },
+  {
+   "row": 8,
+   "from_s": 0.9,
+   "text": "◆ソフィア（ブルガリアの首都）"
+  }
+ ]
+}

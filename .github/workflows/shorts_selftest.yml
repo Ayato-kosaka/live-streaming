@@ -111,6 +111,14 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/render/flag_selftest.py
 
+      # 続けて書いた「……」「——」「ーー」を1つの塊として組む（ヨーグルトの回 ygt-p1-v2 の「苦手やってん……」が
+      # 「… …」に見えた、2026-11-18）。様式3つの見た目ぜんぶで1コマずつ描き、継ぎ目の空きを測り、守りを1つずつ外して
+      # 落ちるかを見る。隙間は書体の字形で出るので、本物の書体を見張りが一時の置き場に落として使う（fetch_fonts.sh の写し）。
+      # numpy と OpenCV が要るので、国旗と同じく回し役の SKIP に載せ、ここで名指しで回す
+      - name: 続けて書く字（……・——・ーー）の見張り
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/render/join_selftest.py
+
       # BGM の頭の無音を飛ばす・最後の画に注の札（CTA）を出す（あやと F-041・F-042、2026-10-21）。
       # 合成の素材で書き出しの音の束と時間割を見て、本物の書き出し（下書き）を1回通す。守り8つを1つずつ外して1分ほど
       - name: BGM の頭と最後の札の見張り
@@ -143,6 +151,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/render/talk_selftest.py
 
+      # 編集の磨き（#1284、2026-11-18）。札で重ねる画像・効果音・色の整え・上下の札の切り落としを、書かない回は何も変えず、
+      # 書いた回は思ったとおりに効くか（札の形・効果音の大きさと混ぜ・彩度の幅・帯で切る行・品質チェックの束の当てはめ）。
+      # 守り20個を1つずつ外して1分ほど。ffmpeg と numpy が要るので回し役の SKIP に載せ、ここで名指しで回す
+      - name: 編集の磨きの見張り（札・効果音・色・上下の帯）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/render/polish_selftest.py
+
       # あやとの指摘の帳面（2026-10-21）。原稿の機械の検査（`tools/shorts/script/lint.py`）・帳面の形と名指し・
       # 取りこぼしの見張り（`tools/shorts/feedback/watch.py`）の3本。Python だけで数秒。Selftests でも回し役が拾う
       # （帳面を書き崩した PR は、ショートを触っていなくても止まる）が、ショートの道具が全部緑かをここで1つに読めるように名指しする
@@ -169,9 +184,10 @@ jobs:
             ! -path 'tools/shorts/qa/qa_selftest.py' ! -path 'tools/shorts/qa/qa_video_selftest.py' \
             ! -path 'tools/shorts/qa/cuts_selftest.py' ! -path 'tools/shorts/style/bgm_gap_selftest.py' \
             ! -path 'tools/shorts/render/flag_selftest.py' ! -path 'tools/shorts/render/bgm_cta_selftest.py' \
+            ! -path 'tools/shorts/render/join_selftest.py' \
             ! -path 'tools/shorts/render/orig_voice_selftest.py' \
             ! -path 'tools/shorts/render/live_badge_selftest.py' ! -path 'tools/shorts/qa/badge_selftest.py' \
-            ! -path 'tools/shorts/render/talk_selftest.py' \
+            ! -path 'tools/shorts/render/talk_selftest.py' ! -path 'tools/shorts/render/polish_selftest.py' \
             ! -path 'tools/shorts/script/lint_selftest.py' ! -path 'tools/shorts/feedback/ledger_selftest.py' \
             ! -path 'tools/shorts/feedback/watch_selftest.py' \
             -print0 | sort -z)

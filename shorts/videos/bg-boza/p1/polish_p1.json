@@ -1,0 +1,194 @@
+{
+ "_note": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページのグラスのボザ・カード 11-14 の瓶の切り抜き・ChatGPT で描いた B3（甘酒）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。素材は 720x1280（高い画で取り直した）。上下の帯を切って元の y240〜1110 を使う（ヨーグルトの回と同じ）",
+ "stream_path_mark": "/ingest/",
+ "bands": {
+  "size": [
+   720,
+   1280
+  ],
+  "rows": [
+   [
+    135,
+    235
+   ],
+   [
+    1115,
+    1280
+   ]
+  ],
+  "margin": 5
+ },
+ "grade": {
+  "saturation": 1.7,
+  "contrast": 1.08,
+  "warmth": 0.05
+ },
+ "grade_art": {
+  "saturation": 1.1,
+  "contrast": 1.03
+ },
+ "cut_grade": [],
+ "stickers": [
+  {
+   "row": 0,
+   "cut": 0,
+   "from_s": 0.2,
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-boza-800.webp",
+   "crop": [
+    130,
+    0,
+    560,
+    800
+   ],
+   "x": 800,
+   "y": 1330,
+   "w": 300,
+   "rotate": 6,
+   "out": "cut",
+   "why": "題の前半「名物ドリンク、ボザ」をグラスの絵でも見せる"
+  },
+  {
+   "row": 9,
+   "from_s": 0.1,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/draw/B1.jpg",
+   "x": 800,
+   "y": 1340,
+   "w": 300,
+   "rotate": 5,
+   "why": "「すっごい強い匂い」（めちゃくちゃ麦の匂い）: 描いた絵 B1 の小麦"
+  },
+  {
+   "row": 12,
+   "from_s": 0.2,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/draw/B3.jpg",
+   "x": 800,
+   "y": 1340,
+   "w": 320,
+   "rotate": 5,
+   "why": "「甘酒」: 配信に無い日本の甘酒を描いた絵で"
+  },
+  {
+   "row": 13,
+   "from_s": 0.15,
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-boza-800.webp",
+   "crop": [
+    130,
+    0,
+    560,
+    800
+   ],
+   "x": 280,
+   "y": 1340,
+   "w": 300,
+   "rotate": -5,
+   "why": "「甘くてドロドロ」: とろっとしたボザのグラスの絵"
+  },
+  {
+   "row": 14,
+   "from_s": 0.15,
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/artsrc/sticker_bottle.png",
+   "x": 830,
+   "y": 1330,
+   "w": 220,
+   "rotate": 6,
+   "why": "「これはハマるわ」: 買った瓶"
+  }
+ ],
+ "sfx_files": {
+  "pop": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/hyokkori.mp3",
+  "whoosh": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kuu.mp3",
+  "kira": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kira_s.wav",
+  "fuwa": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/fuwa_s.wav",
+  "pito": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/pito_s.wav",
+  "jan": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/enter_s.wav"
+ },
+ "sfx": [
+  {
+   "row": 0,
+   "cut": 0,
+   "off_s": 0.2,
+   "name": "pop"
+  },
+  {
+   "row": 0,
+   "cut": 1,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 1,
+   "cut": 1,
+   "off_s": -0.05,
+   "name": "whoosh"
+  },
+  {
+   "row": 2,
+   "cut": 1,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 5,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 7,
+   "off_s": 0.0,
+   "name": "pito"
+  },
+  {
+   "row": 9,
+   "off_s": 0.1,
+   "name": "pop"
+  },
+  {
+   "row": 10,
+   "off_s": 0.2,
+   "name": "fuwa",
+   "db": -4
+  },
+  {
+   "row": 11,
+   "cut": 1,
+   "off_s": 0.0,
+   "name": "jan"
+  },
+  {
+   "row": 12,
+   "off_s": 0.2,
+   "name": "pop"
+  },
+  {
+   "row": 14,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -3
+  },
+  {
+   "row": 15,
+   "off_s": 0.0,
+   "name": "kira",
+   "db": -4
+  }
+ ],
+ "notes": [
+  {
+   "row": 1,
+   "cut": 1,
+   "text": "◆ソフィア"
+  },
+  {
+   "row": 3,
+   "cut": 0,
+   "text": "◆スーパー"
+  },
+  {
+   "row": 8,
+   "cut": 1,
+   "text": "◆公園"
+  }
+ ]
+}

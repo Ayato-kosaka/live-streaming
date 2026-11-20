@@ -1,0 +1,1107 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "zDHHuafmP1A-p1",
+ "style": "style_boz.json",
+ "sources": {
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_free/01_card_boza.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/ingest/zDHHuafmP1A/clips/05_1-02-35_1-04-00.mp4",
+   "watermark": "prism_live",
+   "t0": 3755.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_free/04_card_evening.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_free/03_card_lidl.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/ingest/zDHHuafmP1A/clips/01_0-48-00_0-49-13.mp4",
+   "watermark": "prism_live",
+   "t0": 2880.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/ingest/zDHHuafmP1A/clips/02_0-50-00_0-50-14.mp4",
+   "watermark": "prism_live",
+   "t0": 3000.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/ingest/zDHHuafmP1A/clips/03_0-54-10_0-54-26.mp4",
+   "watermark": "prism_live",
+   "t0": 3250.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/ingest/zDHHuafmP1A/clips/04_1-01-12_1-02-00.mp4",
+   "watermark": "prism_live",
+   "t0": 3672.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/ingest/zDHHuafmP1A/clips/06_1-04-15_1-04-28.mp4",
+   "watermark": "prism_live",
+   "t0": 3855.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/01_01_sofia_vitosha.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c4_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/02_02_wheat_ears.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c4_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/03_03_boza_glass.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c4_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/04_04_boza_bottle.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c4_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/05_05_bakery.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c4_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/06_06_boza_mug.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 49,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.14,
+    "x": 0.42,
+    "y": 0.5
+   },
+   "note": "「ブルガリアの名物ドリンク、ボザを」: あやと島カード 11-14（公園のベンチのボザの瓶）。1.13秒の止め絵なので寄せを 1.08 → 1.14 に強めて動かし続け、札（グラスのボザの写真）を重ねる（F-086）。案内ページの水彩の札は外した（F-082）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c05",
+   "in": 246,
+   "out": 287,
+   "row": 0,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.12,
+    "x": 0.55,
+    "y": 0.4
+   },
+   "note": "「飲んでみた！」: 瓶を傾けて飲む（答えの画。F-073）"
+  },
+  {
+   "src": "c4_01",
+   "in": 15,
+   "out": 41,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "ソフィアのヴィトシャ通りと山の本物の写真（Commons・CC BY-SA 4.0。v6 は案内ページの水彩の大聖堂。F-082）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_04",
+   "in": 15,
+   "out": 41,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "カード 11-14 夕方の大聖堂（ソフィアの街）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c4_02",
+   "in": 15,
+   "out": 80,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "「小麦を発酵させた飲み物、」: 小麦の穂の本物の写真（Commons・CC BY-SA 4.0。v6 は描いた絵 B1）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c4_03",
+   "in": 15,
+   "out": 55,
+   "row": 2,
+   "zoom": {
+    "from": 1.02,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「ボザ！」: グラスのブルガリアのボザの本物の写真（Commons・CC BY-SA 3.0。v6 は案内ページの水彩のグラス）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_03",
+   "in": 15,
+   "out": 34,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.62,
+    "y": 0.42
+   },
+   "note": "カード 11-14 ボザを買ったスーパーの外観",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c01",
+   "in": 180,
+   "out": 204,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "冷蔵棚の長い通路を探して歩く（人は奥に小さく）"
+  },
+  {
+   "src": "c01",
+   "in": 840,
+   "out": 874,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "ヨーグルトの棚"
+  },
+  {
+   "src": "c01",
+   "in": 1470,
+   "out": 1503,
+   "row": 4,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.14,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "棚から取った、ラベルに絵のある瓶へ寄る"
+  },
+  {
+   "src": "c4_04",
+   "in": 15,
+   "out": 54,
+   "row": 5,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.12,
+    "x": 0.45,
+    "y": 0.45
+   },
+   "note": "「これ絶対ボザや！」: ラベルに БОЗА の瓶の本物の写真（Commons・CC BY-SA 2.5。v6 は描いた絵 B1 の寄り）。店の画は 4行目までで止め、似た見た目の連続を作らない",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 73,
+   "row": 6,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.16,
+    "x": 0.36,
+    "y": 0.55
+   },
+   "note": "カードの 1L の瓶へ寄る（高画質の瓶で画質を覆う）。店の画が4カット続くと似た見た目が3秒を越えた（v1 の similar_run）ので替えた",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c02",
+   "in": 180,
+   "out": 252,
+   "row": 7,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "買う 1L の瓶を持って通路を歩く。v2 の 0:50:42（瓶の寄り）はラベルを顔と読み、字幕が「顔に掛かる」で落ちた（誤検出）ので外した"
+  },
+  {
+   "src": "c03",
+   "in": 120,
+   "out": 146,
+   "row": 8,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "雨上がりの寒い交差点・灰色の空（激寒）"
+  },
+  {
+   "src": "c04",
+   "in": 120,
+   "out": 145,
+   "row": 8,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.7,
+    "y": 0.6
+   },
+   "note": "公園で瓶のふたを開ける"
+  },
+  {
+   "src": "c04",
+   "in": 497,
+   "out": 519,
+   "row": 9,
+   "note": "本人の声 V1「おお。」（瓶を鼻に近づけたあと）"
+  },
+  {
+   "src": "c04",
+   "in": 702,
+   "out": 767,
+   "row": 9,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.04,
+    "x": 0.5,
+    "y": 0.9
+   },
+   "note": "本人の声 V1「すっごい強い匂いすんで。」。v2 で顔の下の端が字幕に1コマ掛かったので、下を軸に少し寄せて顔を上へ"
+  },
+  {
+   "src": "c4_05",
+   "in": 15,
+   "out": 63,
+   "row": 10,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「パン屋の小麦の匂いを、」: パン屋の棚の本物の写真（Commons・CC0。人の写らない所。v6 は描いた絵 B2）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c04",
+   "in": 780,
+   "out": 812,
+   "row": 10,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "瓶を鼻に近づけて匂いを確かめる"
+  },
+  {
+   "src": "c05",
+   "in": 1380,
+   "out": 1442,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「いただきます……」（AI の声）: 瓶を傾けて飲む。v1 の 1:02:40 は顔が画面のまん中で字幕が顔に掛かった（text_on_face）ので、顔が上にある飲む所に替えた"
+  },
+  {
+   "src": "c4_06",
+   "in": 15,
+   "out": 95,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "本人の声 V2「うまい。めちゃくちゃうまい。」: ジョッキのボザの本物の写真（Commons・CC BY-SA 4.0。v6 は案内ページの水彩のグラス）。公園の飲む画と続けると似た見た目が 4.7秒になる（v4 の similar_run）ので配信の画にしない",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c05",
+   "in": 735,
+   "out": 795,
+   "row": 12,
+   "note": "本人の声 V3「甘酒。甘酒や。」（カメラを指さす）"
+  },
+  {
+   "src": "c05",
+   "in": 955,
+   "out": 1015,
+   "row": 12,
+   "note": "本人の声 V3「甘酒の小麦版や。」"
+  },
+  {
+   "src": "c05",
+   "in": 1753,
+   "out": 1801,
+   "row": 13,
+   "note": "本人の声 V4「甘くてドロドロしてて。」"
+  },
+  {
+   "src": "c05",
+   "in": 2315,
+   "out": 2377,
+   "row": 13,
+   "note": "本人の声 V4「これ1本飲んだら多分死ぬ。」"
+  },
+  {
+   "src": "c06",
+   "in": 285,
+   "out": 318,
+   "row": 14,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "「これはうまいわ」のあと、また瓶を傾けて飲む（＋カードの瓶の札）"
+  },
+  {
+   "src": "c2_01",
+   "in": 15,
+   "out": 101,
+   "row": 15,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.42,
+    "y": 0.55
+   },
+   "note": "0秒目と同じカードの瓶（輪にする）",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  }
+ ],
+ "title": {
+  "text": "🇧🇬ブルガリアの名物ドリンク、\nボザを飲んでみた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 75
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ブルガリアの名物ドリンク、ボザを飲んでみた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/01.wav",
+    "tts_text": "ブルガリアの名物ドリンク、ボザを飲んでみた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "やってきたのは、首都ソフィア！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/02.wav",
+    "tts_text": "やってきたのは、首都ソフィア！",
+    "at": 75
+   },
+   {
+    "text": "個人的に気になってたのが、小麦を発酵させた飲み物、ボザ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/03.wav",
+    "tts_text": "個人的に気になってたのが、小麦を発酵させた飲み物、ボザ！",
+    "at": 127,
+    "mood": "up_pop",
+    "highlight": [
+     "小麦を発酵させた飲み物"
+    ]
+   },
+   {
+    "text": "スーパーを探し回ったら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/04.wav",
+    "tts_text": "スーパーを探し回ったら……",
+    "at": 232
+   },
+   {
+    "text": "ヨーグルトの棚に、麦の絵の瓶！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/05.wav",
+    "tts_text": "ヨーグルトの棚に、麦の絵の瓶！",
+    "at": 275
+   },
+   {
+    "text": "これ絶対ボザや！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/06.wav",
+    "tts_text": "これ絶対ボザや！",
+    "at": 342,
+    "big": "brush_zoom",
+    "split": "これ絶対｜ボザや！"
+   },
+   {
+    "text": "けど、超でかい1Lしか無い！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/07.wav",
+    "tts_text": "けど、超でかい1リットルしか無い！",
+    "at": 381,
+    "mood": "tense_tilt",
+    "highlight": [
+     "1L"
+    ]
+   },
+   {
+    "text": "鬼のようにまずかったら、捨てる覚悟で買った！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/08.wav",
+    "tts_text": "鬼のようにまずかったら、捨てる覚悟で買った！",
+    "at": 439,
+    "mood": "tense_shake"
+   },
+   {
+    "text": "激寒の公園で開けてみたら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/09.wav",
+    "tts_text": "げきさむの公園で開けてみたら、",
+    "at": 511
+   },
+   {
+    "text": "おお、すっごい強い匂いすんで！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/narr/orig_p1_09.wav",
+    "at": 562,
+    "parts": [
+     {
+      "text": "おお。"
+     },
+     {
+      "text": "すっごい強い匂いすんで。"
+     }
+    ]
+   },
+   {
+    "text": "パン屋の小麦の匂いを、ぎゅっと濃くした感じ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/11.wav",
+    "tts_text": "パン屋の小麦の匂いを、ぎゅっと濃くした感じ！",
+    "at": 649,
+    "highlight": [
+     "パン屋の小麦の匂い"
+    ]
+   },
+   {
+    "text": "いただきます……うわ、うまい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/12_mix.wav",
+    "tts_text": "いただきます……",
+    "at": 729,
+    "parts": [
+     {
+      "text": "いただきます……"
+     },
+     {
+      "text": "うわ\nうまい"
+     },
+     {
+      "text": "めちゃくちゃうまい。",
+      "big": "shake_white",
+      "split": "めちゃくちゃ｜うまい。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "甘酒や！甘酒の小麦版や！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/narr/orig_p1_12.wav",
+    "at": 871,
+    "parts": [
+     {
+      "text": "甘酒\n甘酒や"
+     },
+     {
+      "text": "甘酒の小麦版や。",
+      "big": "glow_yellow"
+     }
+    ]
+   },
+   {
+    "text": "甘くてドロドロやから、1本飲んだらたぶん死ぬ！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/narr/orig_p1_13.wav",
+    "at": 991,
+    "parts": [
+     {
+      "text": "甘くてドロドロしてて。"
+     },
+     {
+      "text": "これ1本飲んだら多分死ぬ。"
+     }
+    ]
+   },
+   {
+    "text": "これはハマるわ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/15.wav",
+    "tts_text": "これはハマるわ！",
+    "at": 1101,
+    "big": "shake_red",
+    "split": "これは｜ハマるわ！"
+   },
+   {
+    "text": "みんなは、甘酒の小麦版を飲んでみたい？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/voice/boz-p1-v1/p1/16.wav",
+    "tts_text": "みんなは、甘酒の小麦ばんを飲んでみたい？",
+    "at": 1134,
+    "big": "brush_zoom"
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/bg-boza/p1/spec.json",
+  "fps": 30,
+  "frames": 1220,
+  "seconds": 40.667,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "bozArtP1v01 0:00:00.5+1.13s",
+     "1:02:43.2+1.37s"
+    ],
+    "line": "ブルガリアの名物ドリンク、ボザを飲んでみた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 75,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "bozPhoP1v07 0:00:00.5+0.87s",
+     "bozArtP1v01 0:03:00.5+0.87s"
+    ],
+    "line": "やってきたのは、首都ソフィア！",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 127,
+    "frames": 105,
+    "voice_frames": 97,
+    "cuts": [
+     "bozPhoP1v07 0:01:00.5+2.17s",
+     "bozPhoP1v07 0:02:00.5+1.33s"
+    ],
+    "line": "個人的に気になってたのが、小麦を発酵させた飲み物、ボザ！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 232,
+    "frames": 43,
+    "voice_frames": 35,
+    "cuts": [
+     "bozArtP1v01 0:02:00.5+0.63s",
+     "0:48:06.0+0.80s"
+    ],
+    "line": "スーパーを探し回ったら……",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 275,
+    "frames": 67,
+    "voice_frames": 59,
+    "cuts": [
+     "0:48:28.0+1.13s",
+     "0:48:49.0+1.10s"
+    ],
+    "line": "ヨーグルトの棚に、麦の絵の瓶！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 342,
+    "frames": 39,
+    "voice_frames": 31,
+    "cuts": [
+     "bozPhoP1v07 0:03:00.5+1.30s"
+    ],
+    "line": "これ絶対ボザや！",
+    "telop": null,
+    "big": "brush_zoom"
+   },
+   {
+    "row": 6,
+    "from": 381,
+    "frames": 58,
+    "voice_frames": 50,
+    "cuts": [
+     "bozArtP1v01 0:00:00.5+1.93s"
+    ],
+    "line": "けど、超でかい1Lしか無い！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 439,
+    "frames": 72,
+    "voice_frames": 64,
+    "cuts": [
+     "0:50:06.0+2.40s"
+    ],
+    "line": "鬼のようにまずかったら、捨てる覚悟で買った！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 511,
+    "frames": 51,
+    "voice_frames": 43,
+    "cuts": [
+     "0:54:14.0+0.87s",
+     "1:01:16.0+0.83s"
+    ],
+    "line": "激寒の公園で開けてみたら、",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 562,
+    "frames": 87,
+    "voice_frames": 79,
+    "cuts": [
+     "1:01:28.6+0.73s",
+     "1:01:35.4+2.17s"
+    ],
+    "line": "おお、すっごい強い匂いすんで！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "おお。"
+     },
+     {
+      "text": "すっごい強い匂いすんで。"
+     }
+    ],
+    "orig_voice": true
+   },
+   {
+    "row": 10,
+    "from": 649,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "bozPhoP1v07 0:04:00.5+1.60s",
+     "1:01:38.0+1.07s"
+    ],
+    "line": "パン屋の小麦の匂いを、ぎゅっと濃くした感じ！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 729,
+    "frames": 142,
+    "voice_frames": 134,
+    "cuts": [
+     "1:03:21.0+2.07s",
+     "bozPhoP1v07 0:05:00.5+2.67s"
+    ],
+    "line": "いただきます……うわ、うまい！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "いただきます……"
+     },
+     {
+      "text": "うわ\nうまい"
+     },
+     {
+      "text": "めちゃくちゃうまい。",
+      "big": "shake_white",
+      "split": "めちゃくちゃ｜うまい。"
+     }
+    ]
+   },
+   {
+    "row": 12,
+    "from": 871,
+    "frames": 120,
+    "voice_frames": 112,
+    "cuts": [
+     "1:02:59.5+2.00s",
+     "1:03:06.8+2.00s"
+    ],
+    "line": "甘酒や！甘酒の小麦版や！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "甘酒\n甘酒や"
+     },
+     {
+      "text": "甘酒の小麦版や。",
+      "big": "glow_yellow"
+     }
+    ],
+    "orig_voice": true
+   },
+   {
+    "row": 13,
+    "from": 991,
+    "frames": 110,
+    "voice_frames": 102,
+    "cuts": [
+     "1:03:33.4+1.60s",
+     "1:03:52.2+2.07s"
+    ],
+    "line": "甘くてドロドロやから、1本飲んだらたぶん死ぬ！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "甘くてドロドロしてて。"
+     },
+     {
+      "text": "これ1本飲んだら多分死ぬ。"
+     }
+    ],
+    "orig_voice": true
+   },
+   {
+    "row": 14,
+    "from": 1101,
+    "frames": 33,
+    "voice_frames": 25,
+    "cuts": [
+     "1:04:24.5+1.10s"
+    ],
+    "line": "これはハマるわ！",
+    "telop": null,
+    "big": "shake_red"
+   },
+   {
+    "row": 15,
+    "from": 1134,
+    "frames": 86,
+    "voice_frames": 63,
+    "cuts": [
+     "bozArtP1v01 0:00:00.5+2.87s"
+    ],
+    "line": "みんなは、甘酒の小麦版を飲んでみたい？",
+    "telop": null,
+    "big": "brush_zoom"
+   }
+  ],
+  "speech": {
+   "chars": 177,
+   "raw_voice_s": 30.23,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 21.67,
+   "cps_voiced": 8.17,
+   "video_s": 40.67,
+   "cps_video": 4.35
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "grade": {
+  "saturation": 1.7,
+  "contrast": 1.08,
+  "warmth": 0.05
+ },
+ "stickers": [
+  {
+   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_boza_glass.jpg",
+   "x": 800,
+   "y": 1330,
+   "w": 250,
+   "rotate": 6,
+   "out": "cut",
+   "from": 6,
+   "to": 34
+  },
+  {
+   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_wheat_ears.jpg",
+   "x": 800,
+   "y": 1340,
+   "w": 300,
+   "rotate": 5,
+   "from": 565,
+   "to": 649
+  },
+  {
+   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_amazake.jpg",
+   "x": 800,
+   "y": 1340,
+   "w": 330,
+   "rotate": 5,
+   "from": 877,
+   "to": 991
+  },
+  {
+   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_boza_bottles.jpg",
+   "x": 280,
+   "y": 1340,
+   "w": 270,
+   "rotate": -5,
+   "from": 995,
+   "to": 1101
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/artsrc/sticker_bottle.png",
+   "x": 830,
+   "y": 1330,
+   "w": 220,
+   "rotate": 6,
+   "from": 1105,
+   "to": 1134
+  }
+ ],
+ "sfx": [
+  {
+   "at": 6,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 73,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 125,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 192,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 342,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 439,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 565,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 655,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/fuwa_s.wav",
+   "db": -4
+  },
+  {
+   "at": 791,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/enter_s.wav",
+   "db": 0
+  },
+  {
+   "at": 877,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 1101,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kira_s.wav",
+   "db": -3
+  },
+  {
+   "at": 1134,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/sfx/kira_s.wav",
+   "db": -4
+  }
+ ],
+ "notes": [
+  {
+   "from": 101,
+   "to": 127,
+   "text": "◆ソフィア"
+  },
+  {
+   "from": 232,
+   "to": 251,
+   "text": "◆スーパー"
+  },
+  {
+   "from": 537,
+   "to": 562,
+   "text": "◆公園"
+  }
+ ],
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: 写真（グラスのボザ・小麦の穂・甘酒の商品・市場のボザの瓶。Commons）とカード 11-14 の瓶の切り抜き。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。素材は 720x1280（高い画で取り直した）。上下の帯を切って元の y240〜1110 を使う（ヨーグルトの回と同じ）",
+ "_v7": "v7（あやと 2026-11-20「ボザ…もつくって」・帳面 F-082・F-083・F-086）: v6 の指示書から画だけを差し替えた。全面の描いた絵 B1・B2 と案内ページの水彩（大聖堂・グラスのボザ）を本物の写真6枚に（2・3・6・11・12行目。Commons）。札の描いた絵 B1・B3 と案内ページのグラスを写真に（甘酒は本物の商品写真）。フックのカードの瓶 1.13秒は寄せを 1.14 に。字・声・テロップ・題の札・overrides・polish は v6 のまま"
+}

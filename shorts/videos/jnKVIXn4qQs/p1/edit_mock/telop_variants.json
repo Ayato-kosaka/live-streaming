@@ -1,0 +1,111 @@
+{
+ "_note": "テロップの比較（telop_compare.jpg）の4案。variants.<案>.style を、この回の置き場（shorts/videos/jnKVIXn4qQs/p1/）に variants.<案>.file の名前で置き、edit_p1.json の style をその名前にすれば、書き出しの道具（tools/shorts/render/render.py）がそのまま書き出す。どの案も style_ygt.json（v2）への差分だけで、題の札（title_card）には触らない（あやと「題の札はこっちの方が良いね」F-084）。大きい字は、この回の指示書が使う3つの見た目（shake_white・brush_zoom・glow_pink）を同じ名前のまま描き替える（指示書の big を書き換えずに済む）。動き（anim）は v2 のまま。キラキラ・集中線・発光・かすれた地を外すときは null を置く（様式の重ねは入れ子の dict を中まで重ねるので、消すには null で上書きする）。glow_pink の発光は stops の形なので、D の発光も stops で書く（color の形で重ねると stops が残ってピンクのまま光る）",
+ "base": "style_ygt.json",
+ "mock": {
+  "rows": [
+   {"row": 6, "line": "7行目 やっと見つけたら、ただのプレーンヨーグルト！（ふつう・強調「ただの」）", "cut": "c01 0:36:22.0〜（農家の市の看板）", "frame": "行の頭から 40コマ目"},
+   {"row": 14, "line": "15行目 公園で開けたら、すっごいピンク！（大きい字 glow_pink）", "cut": "c05 1:36:26.2〜（開けた瓶の中のピンク）", "frame": "字の出はじめから 24コマ目"}
+  ],
+  "how": "/tmp の作業場で、本物の render.py の plan → layout → layer_at と frame_of（寄せ・帯の切り落とし・色の整え）を通して1コマずつ描いた。顔よけ（avoid_faces）だけは回していない（2コマとも顔が写らない）"
+ },
+ "variants": {
+  "A": {
+   "name": "v2 のまま",
+   "file": "style_ygt.json",
+   "style": {"extends": "style_ygt.json"}
+  },
+  "B": {
+   "name": "太ゴシック＋黒縁",
+   "file": "style_ygt_B.json",
+   "why": "書体を Dela Gothic One の1本に絞る。字幕は白に太い黒縁、強調の語と大きい字だけ黄",
+   "style": {
+    "extends": "style_ygt.json",
+    "caption": {
+     "font": "DelaGothicOne-Regular.ttf",
+     "size": 58,
+     "face_min_size": 44,
+     "look": {
+      "fill": "#FFFFFF",
+      "outline": [{"color": "#FFFFFF", "width": 0.75}, {"color": "#000000", "width_em": 0.13}],
+      "tracking": -0.02,
+      "line_pitch_em": 1.2,
+      "highlight": {"fill": "#FFE14D", "scale": 1.0}
+     }
+    },
+    "big": {
+     "looks": {
+      "shake_white": {"font": "DelaGothicOne-Regular.ttf", "size": 112, "min_size": 64, "wrap_below": 96, "fold_floor": 80, "speedlines": null,
+       "look": {"fill": "#FFE14D", "outline": [{"color": "#FFE14D", "width": 0.75}, {"color": "#000000", "width_em": 0.11}], "glow": null, "backing": null, "shadow": {"dx": 0, "dy": 8, "blur": 0, "color": "#000000", "alpha": 0.45}, "tracking": -0.02, "line_pitch_em": 1.15}},
+      "brush_zoom": {"font": "DelaGothicOne-Regular.ttf", "size": 112, "min_size": 64, "wrap_below": 96,
+       "look": {"fill": "#FFE14D", "outline": [{"color": "#FFE14D", "width": 0.75}, {"color": "#000000", "width_em": 0.11}], "glow": null, "backing": null, "shadow": {"dx": 0, "dy": 8, "blur": 0, "color": "#000000", "alpha": 0.45}, "tracking": -0.02, "line_pitch_em": 1.15}},
+      "glow_pink": {"font": "DelaGothicOne-Regular.ttf", "size": 112, "min_size": 64, "wrap_below": 96, "sparkles": null,
+       "look": {"fill": "#FFE14D", "outline": [{"color": "#FFE14D", "width": 0.75}, {"color": "#000000", "width_em": 0.11}], "glow": null, "backing": null, "shadow": {"dx": 0, "dy": 8, "blur": 0, "color": "#000000", "alpha": 0.45}, "tracking": -0.02, "line_pitch_em": 1.15}}
+     }
+    }
+   }
+  },
+  "C": {
+   "name": "半透明の帯",
+   "file": "style_ygt_C.json",
+   "why": "字の後ろに半透明の黒い帯（角丸）を敷き、白い字は縁なし。強調の語と大きい字だけ黄。字は題の札の上の行と同じ M PLUS Rounded 1c ExtraBold。帯の左右の余白（pad_x 24）を幅の計算に入れ、右のボタン列（x 888）を越えない",
+   "style": {
+    "extends": "style_ygt.json",
+    "caption": {
+     "font": "MPLUSRounded1c-ExtraBold.ttf",
+     "size": 50,
+     "face_min_size": 40,
+     "pad_x": 24,
+     "pad_y": 12,
+     "look": {
+      "fill": "#FFFFFF",
+      "outline": [{"color": "#FFFFFF", "width": 0.5}],
+      "box": {"color": "#000000", "alpha": 0.55, "radius": 18},
+      "pad": [24, 12],
+      "tracking": -0.02,
+      "line_pitch_em": 1.3,
+      "highlight": {"fill": "#FFE14D", "scale": 1.0}
+     }
+    },
+    "big": {
+     "looks": {
+      "shake_white": {"font": "MPLUSRounded1c-ExtraBold.ttf", "size": 92, "min_size": 60, "wrap_below": 80, "fold_floor": 70, "speedlines": null,
+       "look": {"fill": "#FFE14D", "outline": [{"color": "#FFE14D", "width": 0.75}], "glow": null, "backing": null, "box": {"color": "#000000", "alpha": 0.6, "radius": 22}, "pad": [28, 14], "tracking": -0.03, "line_pitch_em": 1.2}},
+      "brush_zoom": {"font": "MPLUSRounded1c-ExtraBold.ttf", "size": 92, "min_size": 60, "wrap_below": 80,
+       "look": {"fill": "#FFE14D", "outline": [{"color": "#FFE14D", "width": 0.75}], "glow": null, "backing": null, "box": {"color": "#000000", "alpha": 0.6, "radius": 22}, "pad": [28, 14], "tracking": -0.03, "line_pitch_em": 1.2}},
+      "glow_pink": {"font": "MPLUSRounded1c-ExtraBold.ttf", "size": 92, "min_size": 60, "wrap_below": 80, "sparkles": null,
+       "look": {"fill": "#FFE14D", "outline": [{"color": "#FFE14D", "width": 0.75}], "glow": null, "backing": null, "box": {"color": "#000000", "alpha": 0.6, "radius": 22}, "pad": [28, 14], "tracking": -0.03, "line_pitch_em": 1.2}}
+     }
+    }
+   }
+  },
+  "D": {
+   "name": "題の札とそろえる",
+   "file": "style_ygt_D.json",
+   "why": "あやとが良いと言った題の札の2つの行の見た目を、字幕と大きい字に下ろす（参考 HPJrXDpkfuo の題の札の測り。references/style_reference.md 3.2）。字幕は題の上の行（白・黒縁）を 54px に（56px 以上では7行目が2頁に割れる）、大きい字は題の下の行（黄のグラデ・赤と黒の2層の縁・黄の発光）を 104px に",
+   "style": {
+    "extends": "style_ygt.json",
+    "caption": {
+     "size": 54,
+     "face_min_size": 44,
+     "look": {
+      "fill": "#FDFDFD",
+      "outline": [{"color": "#FDFDFD", "width": 0.75}, {"color": "#000000", "width_em": 0.08}],
+      "tracking": -0.04,
+      "line_pitch_em": 1.12,
+      "highlight": {"fill": "#FCEE06", "scale": 1.0}
+     }
+    },
+    "big": {
+     "looks": {
+      "shake_white": {"font": "caption", "size": 104, "min_size": 64, "wrap_below": 88, "fold_floor": 72, "speedlines": null,
+       "look": {"fill": {"stops": [[0.0, "#FBEE1E"], [0.2, "#FEF21D"], [0.3, "#FDF674"], [0.35, "#FDFCA1"], [0.45, "#FDF758"], [0.55, "#FCEE06"], [0.75, "#FDE103"], [1.0, "#FAE707"]]}, "outline": [{"color": "#EF0101", "width_em": 0.057}, {"color": "#000000", "width_em": 0.079}], "glow": {"stops": [[0.5, "#EBD050"], [35, "transparent"]]}, "backing": null, "tracking": -0.07, "line_pitch_em": 1.105}},
+      "brush_zoom": {"font": "caption", "size": 104, "min_size": 64, "wrap_below": 88,
+       "look": {"fill": {"stops": [[0.0, "#FBEE1E"], [0.2, "#FEF21D"], [0.3, "#FDF674"], [0.35, "#FDFCA1"], [0.45, "#FDF758"], [0.55, "#FCEE06"], [0.75, "#FDE103"], [1.0, "#FAE707"]]}, "outline": [{"color": "#EF0101", "width_em": 0.057}, {"color": "#000000", "width_em": 0.079}], "glow": {"stops": [[0.5, "#EBD050"], [35, "transparent"]]}, "backing": null, "tracking": -0.07, "line_pitch_em": 1.105}},
+      "glow_pink": {"font": "caption", "size": 104, "min_size": 64, "wrap_below": 88, "sparkles": null,
+       "look": {"fill": {"stops": [[0.0, "#FBEE1E"], [0.2, "#FEF21D"], [0.3, "#FDF674"], [0.35, "#FDFCA1"], [0.45, "#FDF758"], [0.55, "#FCEE06"], [0.75, "#FDE103"], [1.0, "#FAE707"]]}, "outline": [{"color": "#EF0101", "width_em": 0.057}, {"color": "#000000", "width_em": 0.079}], "glow": {"stops": [[0.5, "#EBD050"], [35, "transparent"]]}, "backing": null, "tracking": -0.07, "line_pitch_em": 1.105}}
+     }
+    }
+   }
+  }
+ }
+}

@@ -155,6 +155,86 @@ def split_flags(text: str) -> list[str]:
     return out
 
 
+# ---------------------------------------------------------------- 続けて書いて1つに見せる字（「……」「——」「ーー」）
+#
+# 書体の字形は1字ずつ閉じていて、同じ字を2つ並べると、継ぎ目に両脇の余白が2つぶん空く。
+# Yusei Magic・Hachi Maru Pop の「…」は3つの点を em の真ん中に寄せてあり、「……」が「… …」に見えた
+# （ヨーグルトの回 ygt-p1-v2 の 32秒「苦手やってん……」。Yusei Magic で点と点の空き 0.13em・継ぎ目 0.34em）。
+# 字間（tracking）を負にした見た目では、逆に継ぎ目だけ詰まる。線の字も、書体によっては継ぎ目で切れる
+# （「ーー」はどの書体でも 0.1〜0.36em、Hachi Maru Pop の「——」は 0.25em）。
+# そこで**同じ字が続いた継ぎ目だけ**、送りを字形から測って直す（字間は継ぎ目には掛けない）:
+#   点の字（… ‥）: 継ぎ目の空きを、字の中の点と点の空きにそろえる（もともと広くない書体は広げない）
+#   線の字（— ― ─ ━ ー）: 継ぎ目が切れている書体だけ、端の丸みのぶん重ねて1本にする（丸い端どうしでもくびれない）
+# 1字だけの「…」「ー」と、続けて書かない字は、これまでと1画素も変わらない（続く字が無ければ元の道を通る）。
+# 「〜〜」（波を2つ）と「・・・」（字ごとに点）は、1字ずつの形のまま読む書き方なので入れない。
+JOIN_DOTS = "…‥"
+JOIN_LINES = "—―─━ー"
+JOIN_CHARS = JOIN_DOTS + JOIN_LINES
+_JOIN_RUN = re.compile("|".join(f"{re.escape(c)}{{2,}}" for c in JOIN_CHARS))
+
+
+def has_join(text: str) -> bool:
+    """続けて書く字が、同じ字どうしで続いているか。"""
+    return bool(_JOIN_RUN.search(text or ""))
+
+
+def split_joins(text: str) -> list[str]:
+    """続けて書いた字の並び（「……」）だけを1字ずつに割る。ほかの字は続くかぎり1つに。"""
+    out, pos = [], 0
+    for m in _JOIN_RUN.finditer(text):
+        if m.start() > pos:
+            out.append(text[pos:m.start()])
+        out.extend(m.group(0))
+        pos = m.end()
+    if pos < len(text):
+        out.append(text[pos:])
+    return out
+
+
+@functools.lru_cache(maxsize=None)
+def _joint_em(path, ch: str) -> float:
+    """同じ字 ch が続いたときに、継ぎ目の送りへ足す量（em。負で詰める）。字形を 256px で描いて測る。"""
+    S = 256
+    f = ImageFont.truetype(path, S)
+
+    def ink(c):
+        adv = f.getlength(c)
+        pad = S // 2
+        im = Image.new("L", (math.ceil(adv) + 2 * pad, 2 * S), 0)
+        ImageDraw.Draw(im).text((pad, round(1.5 * S)), c, font=f, anchor="ls", fill=255)
+        return np.asarray(im) >= 128, adv, pad
+
+    a, adv, pad = ink(ch)
+    nd = ink("\U0010FFFD")[0]   # 書体に無い字（豆腐）。同じ絵なら、その書体にこの字は無い
+    xs = np.nonzero(a.any(axis=0))[0]
+    if not len(xs) or (a.shape == nd.shape and (a == nd).all()):
+        return 0.0
+    edge = np.diff(np.concatenate([[0], a.any(axis=0).astype(np.int8), [0]]))
+    starts, ends = np.nonzero(edge == 1)[0], np.nonzero(edge == -1)[0]   # 字の形の切れ目（[始め, 終わり)）
+    # 2つ並べたときの継ぎ目の空き（前の字の右の余白＋後ろの字の左の余白）
+    natural = float(xs[0] - pad) + (adv - float(xs[-1] + 1 - pad))
+    if ch in JOIN_DOTS:
+        if len(starts) < 2:
+            return 0.0
+        want = min(natural, float(np.median(starts[1:] - ends[:-1])))
+    else:
+        hs = a.sum(axis=0)[xs[0]:xs[-1] + 1]   # 列ごとの線の太さ
+        body = np.nonzero(hs >= 0.9 * np.median(hs))[0]
+        ys = np.nonzero(a.any(axis=1))[0]
+        if len(starts) != 1 or ys[-1] + 1 - ys[0] > 0.4 * len(hs):
+            return 0.0   # 横に長い1本の線でない（途中で切れた字形・豆腐など）
+        # 切れている書体だけ、両端の丸み（太さが 9割に届かない所）のぶん重ねる。つながっている書体はそのまま
+        want = natural if natural <= 0 else -float(body[0] + (len(hs) - 1 - body[-1]))
+    return (want - natural) / S
+
+
+def join_step(a: str, b: str, font: ImageFont.FreeTypeFont, tracking: float) -> float:
+    """a の次に b を置くとき、ふつうの送り（字の幅＋字間）に足す量（px）。同じ続けて書く字のときだけ 0 でない。"""
+    if a != b or len(a) != 1 or a not in JOIN_CHARS:
+        return 0.0
+    return _joint_em(font.path, a) * font.size - tracking * font.size
+
+
 def hex_rgba(h: str, alpha: float = 1.0) -> tuple:
     h = h.lstrip("#")
     a = int(h[6:8], 16) / 255 if len(h) == 8 else 1.0
@@ -218,7 +298,14 @@ def stroke_width(lk: dict, size: float = 0) -> int:
 
 
 def advance(text: str, font: ImageFont.FreeTypeFont, tracking: float, fl: dict | None = None) -> float:
-    """字の送りの合計。国旗は1字として、絵の幅と両側の余白（side_em）で数える。"""
+    """字の送りの合計。国旗は1字として、絵の幅と両側の余白（side_em）で数える。
+
+    続けて書いた字（「……」）は、描くときと同じく1字ずつに割り、継ぎ目の送り（join_step）を足す。
+    """
+    if has_join(text):
+        ps = split_joins(text)
+        return sum(advance(p, font, tracking, fl) for p in ps) + \
+            sum(join_step(a, b, font, tracking) for a, b in zip(ps, ps[1:]))
     if not has_flag(text):
         return font.getlength(text) + tracking * font.size * len(text)
     c = flag_cfg(fl)
@@ -334,7 +421,10 @@ def text_img(lines: list[str], lk: dict, font: ImageFont.FreeTypeFont, marks: li
                 # 国旗は地域指示子2つで1つ。1字ずつに割ると旗にならないので、先に字と国旗に分ける
                 pieces = [q for seg in split_flags(t)
                           for q in ([seg] if FLAG_RE.fullmatch(seg) or not tracking else list(seg))]
-            for pc in pieces:
+            if has_join(t):
+                # 続けて書いた字は1字ずつ置き、継ぎ目の送りを字形から直す（上の「続けて書いて1つに見せる字」）
+                pieces = [q for pc in pieces for q in split_joins(pc)]
+            for k, pc in enumerate(pieces):
                 if fl and FLAG_RE.fullmatch(pc):
                     code = flag_code(pc)
                     fw, fh = flag_box(code, f.size, fl)
@@ -345,6 +435,8 @@ def text_img(lines: list[str], lk: dict, font: ImageFont.FreeTypeFont, marks: li
                 else:
                     (dh if on else df).text((x, y + asc), pc, font=f, anchor="ls", fill=255)
                 x += advance(pc, f, tracking, fl)
+                if k + 1 < len(pieces):
+                    x += join_step(pc, pieces[k + 1], f, tracking)
         y += pitch
     fa = np.asarray(fill_m, dtype=np.float32) / 255
     ha = np.asarray(hl_m, dtype=np.float32) / 255

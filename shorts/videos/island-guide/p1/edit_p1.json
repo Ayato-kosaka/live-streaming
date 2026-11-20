@@ -1,0 +1,1060 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "jnKVIXn4qQs-p1",
+ "style": "style_isl.json",
+ "sources": {
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/01_card_uk_chester.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/02_card_mosque_blue.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c5_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/-oDWI23uBgc/02_0-16-14_0-16-25.mp4",
+   "watermark": "prism_live",
+   "t0": 974.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      115,
+      205
+     ],
+     [
+      975,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_cover.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c5_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/-oDWI23uBgc/01_0-15-55_0-16-05.mp4",
+   "watermark": "prism_live",
+   "t0": 955.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      115,
+      205
+     ],
+     [
+      975,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c4_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/02_0-36-28_0-36-48.mp4",
+   "watermark": "prism_live",
+   "t0": 2188.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c4_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/04_1-36-44_1-37-04.mp4",
+   "watermark": "prism_live",
+   "t0": 5804.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/03_card_skopje_statue.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/04_card_mosque_hall.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c3_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/05_card_sofia_xmas.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/wv_text.mp4",
+   "watermark": "prism_live",
+   "t0": 480.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/top_idle.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c2_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/travel_list.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/sk_cover.mp4",
+   "watermark": "prism_live",
+   "t0": 420.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_map.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_8.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_8b.mp4",
+   "watermark": "prism_live",
+   "t0": 540.0
+  },
+  "c3_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/art_g/06_photo_meiji_bulgaria.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_ygt.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/01_0-35-56_0-36-12.mp4",
+   "watermark": "prism_live",
+   "t0": 2156.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c4_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/03_1-36-20_1-36-34.mp4",
+   "watermark": "prism_live",
+   "t0": 5780.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c4_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/mat/jnKVIXn4qQs/05_1-37-18_1-37-30.mp4",
+   "watermark": "prism_live",
+   "t0": 5838.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_gmap.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_eat_buy_info.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  },
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/rec/so_info.mp4",
+   "watermark": "prism_live",
+   "t0": 600.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c3_01",
+   "in": 15,
+   "out": 30,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "カード 2025-02-04 イギリス",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c3_02",
+   "in": 15,
+   "out": 30,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "カード 2025-06-18 モスク",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c5_02",
+   "in": 30,
+   "out": 51,
+   "row": 0,
+   "note": "到着の配信の広場"
+  },
+  {
+   "src": "c01",
+   "in": 29,
+   "out": 108,
+   "row": 0,
+   "note": "ソフィア観光ガイドの表紙から送る",
+   "grade": false
+  },
+  {
+   "src": "c5_01",
+   "in": 30,
+   "out": 61,
+   "row": 1,
+   "note": "到着の配信。横断歩道と路面電車"
+  },
+  {
+   "src": "c4_02",
+   "in": 60,
+   "out": 92,
+   "row": 1,
+   "note": "ソフィアの市場の通り"
+  },
+  {
+   "src": "c4_04",
+   "in": 150,
+   "out": 177,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "本人の顔"
+  },
+  {
+   "src": "c3_03",
+   "in": 15,
+   "out": 51,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "カード 2026-10-15 スコピエ",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c3_04",
+   "in": 15,
+   "out": 51,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "カード 2026-09-29 アルバニア",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c3_05",
+   "in": 15,
+   "out": 54,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "カード 2026-11-12 ソフィア",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c09",
+   "in": 12,
+   "out": 99,
+   "row": 3,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.2,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "Wikivoyage Sofia（CC BY-SA）",
+   "grade": false
+  },
+  {
+   "src": "c2_02",
+   "in": 9,
+   "out": 65,
+   "row": 4,
+   "zoom": {
+    "from": 1.12,
+    "to": 1.25,
+    "x": 0.5,
+    "y": 0.52
+   },
+   "note": "あやとのキャラ",
+   "grade": false
+  },
+  {
+   "src": "c2_06",
+   "in": 42,
+   "out": 90,
+   "row": 5,
+   "note": "/travel 行った順に",
+   "grade": false
+  },
+  {
+   "src": "c08",
+   "in": 30,
+   "out": 102,
+   "row": 5,
+   "note": "/travel/north-macedonia/skopje の表紙",
+   "grade": false
+  },
+  {
+   "src": "c01",
+   "in": 108,
+   "out": 158,
+   "row": 6,
+   "note": "ソフィア観光ガイドの題・目次",
+   "grade": false
+  },
+  {
+   "src": "c02",
+   "in": 9,
+   "out": 89,
+   "row": 7,
+   "note": "地区分けの地図（送りながら、ネフスキー大聖堂周辺を押す）",
+   "grade": false
+  },
+  {
+   "src": "c03",
+   "in": 18,
+   "out": 66,
+   "row": 8,
+   "note": "やりたいこと8選を送る",
+   "grade": false
+  },
+  {
+   "src": "c10",
+   "in": 9,
+   "out": 59,
+   "row": 8,
+   "note": "8選の2つ目（バラのお土産）を押して開く",
+   "grade": false
+  },
+  {
+   "src": "c3_06",
+   "in": 15,
+   "out": 101,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.12,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "明治ブルガリアヨーグルト",
+   "grade": {
+    "saturation": 1.1,
+    "contrast": 1.03
+   }
+  },
+  {
+   "src": "c04",
+   "in": 12,
+   "out": 69,
+   "row": 10,
+   "note": "押して開き、あやとの旅の記録へ送る",
+   "grade": false
+  },
+  {
+   "src": "c4_01",
+   "in": 60,
+   "out": 103,
+   "row": 10,
+   "note": "それを元にした配信（ソフィアの市場の通り）"
+  },
+  {
+   "src": "c4_03",
+   "in": 150,
+   "out": 191,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "ピンクのいちごの飲むヨーグルト（コップに注いだ所。1:36:22 は瓶の口の寄りでぼやける）"
+  },
+  {
+   "src": "c4_05",
+   "in": 120,
+   "out": 161,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.35
+   },
+   "note": "飲む本人（1:37:20 前後は瓶が画面を塞ぐので使わない）"
+  },
+  {
+   "src": "c05",
+   "in": 9,
+   "out": 72,
+   "row": 12,
+   "note": "My Maps の埋め込み（ピンの地図を送る）",
+   "grade": false
+  },
+  {
+   "src": "c06",
+   "in": 8,
+   "out": 29,
+   "row": 13,
+   "note": "食べたいもの（料理の写真の並びが顔に誤検出されるので、字幕に掛かる前に切る）",
+   "grade": false
+  },
+  {
+   "src": "c06",
+   "in": 52,
+   "out": 79,
+   "row": 13,
+   "note": "買いたいもの",
+   "grade": false
+  },
+  {
+   "src": "c11",
+   "in": 6,
+   "out": 49,
+   "row": 13,
+   "note": "行く前に知っておくこと（基本情報）",
+   "grade": false
+  },
+  {
+   "src": "c04",
+   "in": 70,
+   "out": 113,
+   "row": 14,
+   "note": "ヨーグルト食べ比べの札の「あやとの旅の記録 2026年11月13日」と「配信のこの場面」",
+   "grade": false
+  },
+  {
+   "src": "c4_02",
+   "in": 360,
+   "out": 403,
+   "row": 14,
+   "note": "その配信のアーカイブ（ソフィアの市場）。ソフィアの動画の一覧は、配信のサムネの顔が字幕に掛かるので使わない"
+  },
+  {
+   "src": "c01",
+   "in": 36,
+   "out": 110,
+   "row": 15,
+   "note": "表紙（題の行の画）",
+   "grade": false
+  }
+ ],
+ "title": {
+  "text": "無帰国2年の海外ライバーが、\n世界一わかりやすい観光ガイドサイトを作ってみた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 129
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.374,
+  "lines": [
+   {
+    "text": "無帰国2年の海外ライバーが、世界一わかりやすい観光ガイドサイトを作ってみた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/01.wav",
+    "tts_text": "むきこくにねんの海外ライバーが、せかいいちわかりやすい観光ガイドサイトを作ってみた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "日本に帰らず2年、海外を旅してるおいらやねんけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/02.wav",
+    "tts_text": "日本に帰らずにねん、海外を旅してるおいらやねんけど、",
+    "at": 130
+   },
+   {
+    "text": "マイナーな東ヨーロッパを回ってると、るるぶみたいなガイドブックがないねん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/03.wav",
+    "tts_text": "マイナーなひがしヨーロッパをまわってると、るるぶみたいなガイドブックがないねん！",
+    "at": 220
+   },
+   {
+    "text": "英語のガイドブックは、文字だらけでめっちゃわかりにくい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/04.wav",
+    "tts_text": "英語のガイドブックは、もじだらけでめっちゃわかりにくい！",
+    "at": 331,
+    "parts": [
+     {
+      "text": "英語のガイドブックは、"
+     },
+     {
+      "text": "文字だらけでめっちゃわかりにくい！",
+      "big": "shake_red"
+     }
+    ]
+   },
+   {
+    "text": "だから天才エンジニアのおいらが、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/05.wav",
+    "tts_text": "だから天才エンジニアのおいらが、",
+    "at": 418
+   },
+   {
+    "text": "行った国の、日本のガイドブックくらいわかりやすい無料サイトを作ったった！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/06.wav",
+    "tts_text": "いった国の、日本のガイドブックくらいわかりやすい無料サイトを作ったった！",
+    "at": 474,
+    "parts": [
+     {
+      "text": "行った国の、日本のガイドブックくらいわかりやすい"
+     },
+     {
+      "text": "無料サイトを作ったった！",
+      "big": "brush_zoom"
+     }
+    ]
+   },
+   {
+    "text": "例えば首都ソフィアやったら、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/07.wav",
+    "tts_text": "たとえば首都ソフィアやったら、",
+    "at": 594
+   },
+   {
+    "text": "地図で、どの地域に何があるかが一気にわかる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/08.wav",
+    "tts_text": "地図で、どの地域になにがあるかがいっきにわかる！",
+    "at": 644,
+    "highlight": [
+     "地図"
+    ]
+   },
+   {
+    "text": "やりたいこと8選で、ブルガリアの魅力が一瞬でわかる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/09.wav",
+    "tts_text": "やりたいこと、はっせんで、ブルガリアの魅力がいっしゅんでわかる！",
+    "at": 724,
+    "highlight": [
+     "8選"
+    ]
+   },
+   {
+    "text": "ブルガリアといえば、明治ブルガリアヨーグルトやんか？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/10.wav",
+    "tts_text": "ブルガリアといえば、めいじブルガリアヨーグルトやんか？",
+    "at": 822
+   },
+   {
+    "text": "だから「ヨーグルト食べ比べ」が載ってて、それを元に配信してる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/11.wav",
+    "tts_text": "だから、ヨーグルトたべくらべがのってて、それをもとに配信してる！",
+    "at": 908
+   },
+   {
+    "text": "実際に買ったピンクのいちご味、美味しかったわ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/12.wav",
+    "tts_text": "実際に買ったピンクのいちごあじ、おいしかったわ！",
+    "at": 1008,
+    "parts": [
+     {
+      "text": "実際に買ったピンクのいちご味、"
+     },
+     {
+      "text": "美味しかったわ！",
+      "big": "glow_pink"
+     }
+    ]
+   },
+   {
+    "text": "見るべきものはGoogleマップでわかるし、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/13.wav",
+    "tts_text": "見るべきものはグーグルマップでわかるし、",
+    "at": 1090,
+    "highlight": [
+     "Googleマップ"
+    ]
+   },
+   {
+    "text": "食べるべきもの・買うべきもの・基本情報も載ってる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/14.wav",
+    "tts_text": "食べるべきもの、買うべきもの、基本情報ものってる！",
+    "at": 1153
+   },
+   {
+    "text": "実際に行った感想も、配信のアーカイブから書いてる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/15.wav",
+    "tts_text": "実際にいった感想も、配信のアーカイブから書いてる！",
+    "at": 1244,
+    "highlight": [
+     "配信のアーカイブ"
+    ]
+   },
+   {
+    "text": "みんな、このサイト使ってみたい？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/voice/isl-guide-v1/p1/16.wav",
+    "tts_text": "みんな、このサイト使ってみたい？",
+    "at": 1330
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/island-guide/p1/spec.json",
+  "fps": 30,
+  "frames": 1404,
+  "seconds": 46.8,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 130,
+    "voice_frames": 122,
+    "cuts": [
+     "islCardG01x 0:00:00.5+0.50s",
+     "islCardG01x 0:01:00.5+0.50s",
+     "-oDWI23uBgc 0:16:15.0+0.70s",
+     "islRecGuid1 0:00:01.0+2.63s"
+    ],
+    "line": "無帰国2年の海外ライバーが、世界一わかりやすい観光ガイドサイトを作ってみた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 130,
+    "frames": 90,
+    "voice_frames": 82,
+    "cuts": [
+     "-oDWI23uBgc 0:15:56.0+1.03s",
+     "0:36:30.0+1.07s",
+     "1:36:49.0+0.90s"
+    ],
+    "line": "日本に帰らず2年、海外を旅してるおいらやねんけど、",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 220,
+    "frames": 111,
+    "voice_frames": 103,
+    "cuts": [
+     "islCardG01x 0:02:00.5+1.20s",
+     "islCardG01x 0:03:00.5+1.20s",
+     "islCardG01x 0:04:00.5+1.30s"
+    ],
+    "line": "マイナーな東ヨーロッパを回ってると、るるぶみたいなガイドブックがないねん！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 331,
+    "frames": 87,
+    "voice_frames": 79,
+    "cuts": [
+     "islRecGuid1 0:08:00.4+2.90s"
+    ],
+    "line": "英語のガイドブックは、文字だらけでめっちゃわかりにくい！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "英語のガイドブックは、"
+     },
+     {
+      "text": "文字だらけでめっちゃわかりにくい！",
+      "big": "shake_red"
+     }
+    ]
+   },
+   {
+    "row": 4,
+    "from": 418,
+    "frames": 56,
+    "voice_frames": 48,
+    "cuts": [
+     "islRecSite1 0:01:00.3+1.87s"
+    ],
+    "line": "だから天才エンジニアのおいらが、",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 474,
+    "frames": 120,
+    "voice_frames": 112,
+    "cuts": [
+     "islRecSite1 0:05:01.4+1.60s",
+     "islRecGuid1 0:07:01.0+2.40s"
+    ],
+    "line": "行った国の、日本のガイドブックくらいわかりやすい無料サイトを作ったった！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "行った国の、日本のガイドブックくらいわかりやすい"
+     },
+     {
+      "text": "無料サイトを作ったった！",
+      "big": "brush_zoom"
+     }
+    ]
+   },
+   {
+    "row": 6,
+    "from": 594,
+    "frames": 50,
+    "voice_frames": 42,
+    "cuts": [
+     "islRecGuid1 0:00:03.6+1.67s"
+    ],
+    "line": "例えば首都ソフィアやったら、",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 644,
+    "frames": 80,
+    "voice_frames": 72,
+    "cuts": [
+     "islRecGuid1 0:01:00.3+2.67s"
+    ],
+    "line": "地図で、どの地域に何があるかが一気にわかる！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 724,
+    "frames": 98,
+    "voice_frames": 90,
+    "cuts": [
+     "islRecGuid1 0:02:00.6+1.60s",
+     "islRecGuid1 0:09:00.3+1.67s"
+    ],
+    "line": "やりたいこと8選で、ブルガリアの魅力が一瞬でわかる！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 822,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "islCardG01x 0:05:00.5+2.87s"
+    ],
+    "line": "ブルガリアといえば、明治ブルガリアヨーグルトやんか？",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 908,
+    "frames": 100,
+    "voice_frames": 92,
+    "cuts": [
+     "islRecGuid1 0:03:00.4+1.90s",
+     "0:35:58.0+1.43s"
+    ],
+    "line": "だから「ヨーグルト食べ比べ」が載ってて、それを元に配信してる！",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 1008,
+    "frames": 82,
+    "voice_frames": 74,
+    "cuts": [
+     "1:36:25.0+1.37s",
+     "1:37:22.0+1.37s"
+    ],
+    "line": "実際に買ったピンクのいちご味、美味しかったわ！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "実際に買ったピンクのいちご味、"
+     },
+     {
+      "text": "美味しかったわ！",
+      "big": "glow_pink"
+     }
+    ]
+   },
+   {
+    "row": 12,
+    "from": 1090,
+    "frames": 63,
+    "voice_frames": 55,
+    "cuts": [
+     "islRecGuid1 0:04:00.3+2.10s"
+    ],
+    "line": "見るべきものはGoogleマップでわかるし、",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1153,
+    "frames": 91,
+    "voice_frames": 83,
+    "cuts": [
+     "islRecGuid1 0:05:00.2+0.70s",
+     "islRecGuid1 0:05:01.8+0.90s",
+     "islRecGuid1 0:10:00.2+1.43s"
+    ],
+    "line": "食べるべきもの・買うべきもの・基本情報も載ってる！",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1244,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "islRecGuid1 0:03:02.3+1.43s",
+     "0:36:40.0+1.43s"
+    ],
+    "line": "実際に行った感想も、配信のアーカイブから書いてる！",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1330,
+    "frames": 74,
+    "voice_frames": 51,
+    "cuts": [
+     "islRecGuid1 0:00:01.2+2.47s"
+    ],
+    "line": "みんな、このサイト使ってみたい？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 378,
+   "raw_voice_s": 57.7,
+   "tempo": 1.374,
+   "target_cps": 9.0,
+   "voiced_s": 42.03,
+   "cps_voiced": 8.99,
+   "video_s": 46.8,
+   "cps_video": 8.08
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "grade": {
+  "saturation": 1.4,
+  "contrast": 1.06,
+  "warmth": 0.04
+ },
+ "stickers": [],
+ "sfx": [
+  {
+   "at": 29,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 51,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kira_s.wav",
+   "db": 0
+  },
+  {
+   "at": 291,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 330,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 522,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kira_s.wav",
+   "db": 0
+  },
+  {
+   "at": 674,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 772,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 824,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 914,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/pito_s.wav",
+   "db": 0
+  },
+  {
+   "at": 1049,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/hyokkori.mp3",
+   "db": 0
+  },
+  {
+   "at": 1090,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 1200,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 1243,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  },
+  {
+   "at": 1329,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/isl/sfx/kuu.mp3",
+   "db": 0
+  }
+ ],
+ "notes": [
+  {
+   "from": 130,
+   "to": 161,
+   "text": "◆ブルガリア・ソフィア"
+  },
+  {
+   "from": 220,
+   "to": 256,
+   "text": "◆北マケドニア・スコピエ"
+  },
+  {
+   "from": 256,
+   "to": 292,
+   "text": "◆アルバニア"
+  },
+  {
+   "from": 292,
+   "to": 331,
+   "text": "◆ブルガリア・ソフィア"
+  }
+ ],
+ "_polish": "#1272 の磨き。効果音は押した所・画の切り替え・山。色は配信の画だけ整え、画面録画はサイトの色のまま。配信の上の題の帯と下の PRISM・お城の絵は帯で切る。効果音はポケットサウンド（mp3 はリポジトリに置かない）"
+}

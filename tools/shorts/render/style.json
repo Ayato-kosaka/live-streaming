@@ -191,8 +191,22 @@
     "hold_frames": 6,
     "bridge_frames": 12
   },
+  "sticker": {
+    "_note": "札で重ねる画像（指示書の stickers[]。#1284 の T1・帳面 F-080）の見た目の既定。札ごとに上書きできる（shadow と drift は中の欄ごと、false で無し）。形は shorts/videos/jnKVIXn4qQs/p1/edit_mock/insert_line12.jpg（白い縁・角の丸み・反時計回りに 4°・下へ落ちるやわらかい影）。w は写真の幅（縁を含まない）・rotate は時計回りが正。pop は出だしのコマごとの倍率（小さい所から一度大きくなって落ち着く）。drift はいるあいだの漂い（px 動く幅・deg 傾きの揺れ・period_s 周期）。out は消えかた（fade 薄くなる・pop 縮みながら薄くなる・cut その場で消える）を out_frames コマで",
+    "w": 320,
+    "rotate": -4,
+    "border": 14,
+    "border_color": "#FFFFFF",
+    "radius": 12,
+    "shadow": { "dx": 4, "dy": 12, "blur": 14, "alpha": 0.45 },
+    "pop": [0.5, 0.82, 1.08, 1.12, 1.05, 1.0],
+    "drift": { "px": 6, "deg": 1.0, "period_s": 3.2 },
+    "out": "fade",
+    "out_frames": 5
+  },
   "watermarks": {
     "_note": "配信アーカイブに焼き込まれた透かし。rect は size の元素材での画素 [x, y, w, h]（yk-by7R7iPA の18窓・273コマの、どの場面でも明るい画素の外枠）。crop はその帯より上だけを使う（跡が残らない）、inpaint は周りから描き埋める",
+    "_bands": "配信ごとに上下へ焼き込まれた札（題の帯・絵）は bands に [上, 下) の行で書く（size の画素。#1284 の T5）。帯と透かしの箱を除いた行のうち、いちばん高い一続きを使う。配信ごとに変えるときは、回の様式（extends で style_v3.json などに重ねる）でこの透かしに bands を足すか、指示書の素材に bands（{size, rows, margin}）を書く。書かない回は今までどおり箱の上まで",
     "prism_live": { "size": [720, 1280], "rect": [405, 1204, 270, 39], "margin": 12, "mode": "crop" }
   },
   "narration": {
@@ -213,7 +227,9 @@
     "duck_hi_db": -6,
     "duck_hi_hz": [1500, 2500],
     "master_lufs": -14.0,
-    "master_tp_dbtp": -1.5
+    "master_tp_dbtp": -1.5,
+    "_sfx": "効果音（指示書の sfx[]。#1284 の T2）は1つずつ「鳴っている間の RMS」をこの値に揃え、指示書の db で上げ下げする。BGM の束とは別の4つ目の束で、ナレーションの間も下げない（大きい字・札・切り替えに合わせて鳴らす音）。素材はポケットサウンドの効果音（docs/shorts.md 4 の効果音の決め）",
+    "sfx_rms_dbfs": -22
   },
   "encode": {
     "crf": 20,
