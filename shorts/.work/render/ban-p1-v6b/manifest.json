@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__ban-p1-v6b",
  "mode": "render",
- "dest": "render/ban-p1-v6b/inbox",
+ "dest": "render/ban-p1-v6b",
  "video": null,
  "channel": null,
  "request": "shorts/render/ban-p1-v6b.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1182,
-  "encrypted": 1184
+  "plain": 36908,
+  "tar_gz": 9602,
+  "encrypted": 9616
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1184,
-   "sha256": "793d17940fe19eb4e620202e91f6bedebb2852e62f64f7792f5908762759bc44"
+   "bytes": 9616,
+   "sha256": "c92d6367a67b51256667f9b2f2559596069daf5df4ca9b2fb55bc9117581d504"
   }
  ],
- "hmac_sha256": "2e6021023b9b440fad609376aa5ef481bba99495ab555da1d4f002e64f063219",
+ "hmac_sha256": "1f7f71d9cb83f6108e3b0a0b66b36b0fe284fce6a3e4ce56dc8d81a6b122b00d",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-20T13:48:37+00:00",
+ "created_at": "2026-11-20T13:58:06+00:00",
  "nonce": "491d1ed0004843958508fb70"
 }
