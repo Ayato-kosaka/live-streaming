@@ -9,84 +9,45 @@
    "watermark": "prism_live",
    "t0": 0.0
   },
-  "c04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/ingest/zDHHuafmP1A/clips/04_2-35-50_2-42-30.mp4",
-   "watermark": "prism_live",
-   "t0": 9350.0,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      135,
-      235
-     ],
-     [
-      1115,
-      1280
-     ]
-    ],
-    "margin": 5
-   }
-  },
-  "c2_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/02_guide_cover.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
-  },
   "c2_03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/03_card_evening.mp4",
    "watermark": "prism_live",
    "t0": 120.0
-  },
-  "c3_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_gen/01_gen_X1.mp4",
-   "watermark": "prism_live",
-   "t0": 0.0
-  },
-  "c01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/ingest/zDHHuafmP1A/clips/01_0-01-50_0-03-40.mp4",
-   "watermark": "prism_live",
-   "t0": 110.0,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      135,
-      235
-     ],
-     [
-      1115,
-      1280
-     ]
-    ],
-    "margin": 5
-   }
-  },
-  "c3_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_gen/02_gen_X2.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
   },
   "c2_04": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/04_card_tree.mp4",
    "watermark": "prism_live",
    "t0": 180.0
   },
-  "c3_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_gen/03_gen_X3.mp4",
+  "c2_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/05_card_entrance.mp4",
    "watermark": "prism_live",
-   "t0": 120.0
+   "t0": 240.0
   },
-  "c02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/ingest/zDHHuafmP1A/clips/02_2-18-20_2-21-20.mp4",
+  "c2_09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/09_card_crowd.mp4",
    "watermark": "prism_live",
-   "t0": 8300.0,
+   "t0": 480.0
+  },
+  "c2_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/06_card_stall.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
+  },
+  "c2_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/07_card_waffle.mp4",
+   "watermark": "prism_live",
+   "t0": 360.0
+  },
+  "c2_08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/08_card_arch.mp4",
+   "watermark": "prism_live",
+   "t0": 420.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/04_f3500-11000.mp4",
+   "watermark": "prism_live",
+   "t0": 9466.666666666666,
    "bands": {
     "size": [
      720,
@@ -105,13 +66,96 @@
     "margin": 5
    }
   },
-  "c3_04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_gen/04_gen_X4.mp4",
+  "c01p": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/flip/01_f1825-1915_hflip.mp4",
    "watermark": "prism_live",
-   "t0": 180.0
+   "t0": 170.83333333333334,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c01f": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/01_f2770-2900.mp4",
+   "watermark": "prism_live",
+   "t0": 202.33333333333331,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c02a": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/02_f500-750.mp4",
+   "watermark": "prism_live",
+   "t0": 8316.666666666666,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c02b": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/02_f1250-1500.mp4",
+   "watermark": "prism_live",
+   "t0": 8341.666666666666,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
   },
   "c03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/ingest/zDHHuafmP1A/clips/03_2-25-50_2-27-10.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/03_f0-250.mp4",
    "watermark": "prism_live",
    "t0": 8750.0,
    "bands": {
@@ -132,45 +176,10 @@
     "margin": 5
    }
   },
-  "c2_05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/05_card_entrance.mp4",
+  "c07a": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/07_f3000-3500.mp4",
    "watermark": "prism_live",
-   "t0": 240.0
-  },
-  "c2_09": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/09_card_crowd.mp4",
-   "watermark": "prism_live",
-   "t0": 480.0
-  },
-  "c2_10": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/10_guide_xmas.mp4",
-   "watermark": "prism_live",
-   "t0": 540.0
-  },
-  "c3_05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_gen/05_gen_X5.mp4",
-   "watermark": "prism_live",
-   "t0": 240.0
-  },
-  "c3_06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_gen/06_gen_X6.mp4",
-   "watermark": "prism_live",
-   "t0": 300.0
-  },
-  "c2_06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/06_card_stall.mp4",
-   "watermark": "prism_live",
-   "t0": 300.0
-  },
-  "c2_07": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/07_card_waffle.mp4",
-   "watermark": "prism_live",
-   "t0": 360.0
-  },
-  "c07": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/ingest/zDHHuafmP1A/clips/07_3-12-10_3-14-50.mp4",
-   "watermark": "prism_live",
-   "t0": 11530.0,
+   "t0": 11630.0,
    "bands": {
     "size": [
      720,
@@ -189,25 +198,94 @@
     "margin": 5
    }
   },
-  "c2_08": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_free/08_card_arch.mp4",
+  "c07b": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/slim/07_f4000-4250.mp4",
    "watermark": "prism_live",
-   "t0": 420.0
+   "t0": 11663.333333333334,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "bz03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/ingest/zDHHuafmP1A/clips/03_0-54-10_0-54-26.mp4",
+   "watermark": "prism_live",
+   "t0": 3250.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      135,
+      235
+     ],
+     [
+      1115,
+      1280
+     ]
+    ],
+    "margin": 5
+   }
+  },
+  "c5_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/01_01_sofia_vitosha.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c5_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/02_02_xmas_market_night.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c5_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/03_03_sofia_market_closed.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c5_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/04_04_gluhwein.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c5_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/05_05_snow_globe.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c5_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/art_photo/06_06_carousel.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
   }
  },
  "cuts": [
   {
    "src": "c2_01",
    "in": 15,
-   "out": 93,
+   "out": 51,
    "row": 0,
    "zoom": {
     "from": 1.0,
-    "to": 1.26,
+    "to": 1.16,
     "x": 0.5,
     "y": 0.3
    },
-   "note": "「ブルガリアのクリスマスマーケット、初日に行ったら」: カード 11-14 光の天井とツリー（人の顔はぼかした）。0秒目を配信の粗い1コマにしない（F-079）。v3 は寄せ 1.10 で 2.6秒が止まった画（frozen）と読まれたので、大きく寄せる",
+   "note": "「ブルガリアのクリスマスマーケット、」: カード 11-14 光の天井とツリー（人の顔はぼかした）。1.2秒の止め絵なので 1.16 まで寄せて動かし、配信の動く画へ切り替える（F-086。v8 は 2.6秒この1枚だった）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -215,20 +293,32 @@
   },
   {
    "src": "c04",
-   "in": 5678,
-   "out": 5705,
+   "in": 2167,
+   "out": 2203,
    "row": 0,
    "zoom": {
     "from": 1.0,
-    "to": 1.05,
+    "to": 1.06,
     "x": 0.5,
     "y": 0.45
    },
-   "gamma": 0.85,
-   "note": "「想像を超えてきた！」: 灯りの屋台と人の波（後ろ姿）。v1 の 2:38:44 は人の顔が写った（faces）ので、顔の写らない所に"
+   "note": "「初日に行ったら」: 配信 2:38:58.9 灯りの屋台と人の波（後ろ姿。顔の出ない秒）"
   },
   {
-   "src": "c2_02",
+   "src": "c04",
+   "in": 1575,
+   "out": 1608,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.03,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "「想像を超えてきた！」: 配信 2:38:39.2 人の波の向こうの大きなツリー（顔の出ない秒）"
+  },
+  {
+   "src": "c5_01",
    "in": 15,
    "out": 41,
    "row": 1,
@@ -238,7 +328,7 @@
     "x": 0.5,
     "y": 0.4
    },
-   "note": "ガイドの表紙の絵（ネフスキー大聖堂）",
+   "note": "ソフィアのヴィトシャ通りと山の写真（Commons・CC BY-SA 4.0。v8 は案内ページの水彩の大聖堂。F-082）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -262,26 +352,9 @@
    }
   },
   {
-   "src": "c3_01",
-   "in": 15,
-   "out": 61,
-   "row": 2,
-   "zoom": {
-    "from": 1.0,
-    "to": 1.1,
-    "x": 0.6,
-    "y": 0.5
-   },
-   "note": "描いた絵 X1（数字の無い温度計と冷たい雨の街）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
-  },
-  {
-   "src": "c01",
-   "in": 2820,
-   "out": 2858,
+   "src": "c01f",
+   "in": 50,
+   "out": 111,
    "row": 2,
    "zoom": {
     "from": 1.0,
@@ -289,10 +362,23 @@
     "x": 0.5,
     "y": 0.4
    },
-   "note": "「5°はえぐくね?」のあとの顔（v1 の 0:03:22 は髪とマフラーしか写っていなかった）"
+   "note": "「昨日15°やったのに、」: 配信 0:03:24 寒がる顔（v8 は描いた絵 X1 の温度計）"
   },
   {
-   "src": "c3_02",
+   "src": "c01p",
+   "in": 0,
+   "out": 23,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "「今日5°で極寒すぎる！」: 配信 0:02:50.8 スマホの天気（ソフィア 5°）。前のカメラの鏡写しを左右に戻して字を読める向きに。スマホを下ろして流れる前の 0.77秒だけ"
+  },
+  {
+   "src": "c5_02",
    "in": 15,
    "out": 67,
    "row": 3,
@@ -302,7 +388,7 @@
     "x": 0.5,
     "y": 0.45
    },
-   "note": "描いた絵 X2（冬の夜のクリスマスマーケット）",
+   "note": "「でも冬のヨーロッパいうたら、」: 夜のクリスマスマーケットとツリーの写真（フランクフルト。Commons・CC BY 2.0。v8 は描いた絵 X2）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -326,7 +412,7 @@
    }
   },
   {
-   "src": "c3_03",
+   "src": "c5_03",
    "in": 15,
    "out": 87,
    "row": 4,
@@ -334,18 +420,18 @@
     "from": 1.0,
     "to": 1.1,
     "x": 0.5,
-    "y": 0.5
+    "y": 0.35
    },
-   "note": "描いた絵 X3（準備中で灯りの無い大きなマーケット）",
+   "note": "「ただ、街でいちばん大きいのは来週から。」: 柵で閉じたソフィアのクリスマスマーケットの門の写真（Commons・CC BY-SA 4.0。v8 は描いた絵 X3）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
    }
   },
   {
-   "src": "c02",
-   "in": 540,
-   "out": 580,
+   "src": "c02a",
+   "in": 40,
+   "out": 80,
    "row": 5,
    "zoom": {
     "from": 1.0,
@@ -356,9 +442,9 @@
    "note": "夕方の通りを歩く"
   },
   {
-   "src": "c02",
-   "in": 1320,
-   "out": 1359,
+   "src": "c02b",
+   "in": 70,
+   "out": 109,
    "row": 5,
    "zoom": {
     "from": 1.0,
@@ -369,17 +455,17 @@
    "note": "暗くなってきた通り"
   },
   {
-   "src": "c3_04",
+   "src": "c5_04",
    "in": 15,
    "out": 79,
    "row": 6,
    "zoom": {
     "from": 1.0,
     "to": 1.12,
-    "x": 0.55,
-    "y": 0.5
+    "x": 0.5,
+    "y": 0.45
    },
-   "note": "描いた絵 X4（ホットワイン）",
+   "note": "「まあ、ホットワインが飲めるぐらいかな？」: マーケットのホットワインのカップの写真（Commons・CC BY-SA 3.0。v8 は描いた絵 X4）。この時はまだ飲んでいない",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -417,8 +503,8 @@
   },
   {
    "src": "c04",
-   "in": 3660,
-   "out": 3719,
+   "in": 160,
+   "out": 219,
    "row": 8,
    "zoom": {
     "from": 1.0,
@@ -465,8 +551,8 @@
   },
   {
    "src": "c04",
-   "in": 4980,
-   "out": 5018,
+   "in": 1480,
+   "out": 1518,
    "row": 11,
    "zoom": {
     "from": 1.0,
@@ -479,8 +565,8 @@
   },
   {
    "src": "c04",
-   "in": 5705,
-   "out": 5739,
+   "in": 2205,
+   "out": 2239,
    "row": 11,
    "zoom": {
     "from": 1.0,
@@ -492,51 +578,56 @@
    "note": "灯りの屋台の前の人の波（後ろ姿）。v1 の 2:38:36〜 は横顔が写ったので、顔の写らない所だけをつないだ"
   },
   {
-   "src": "c2_10",
-   "in": 15,
-   "out": 69,
+   "src": "c04",
+   "in": 4408,
+   "out": 4435,
    "row": 12,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
+    "to": 1.05,
     "x": 0.5,
     "y": 0.5
    },
-   "note": "ガイドのクリスマスマーケットの絵（屋台の並び）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "「屋台を1軒ずつ」: 配信 2:40:13.6 しょうがパンの屋台（顔の出ない秒。v8 は案内ページの水彩）。前の行の人の波と色の分布が離れている画を先に（v9 の1回目は飾りの屋台を先にして、人の波2カットと似た見た目が 3.3秒続いた）"
   },
   {
-   "src": "c3_04",
-   "in": 15,
-   "out": 46,
+   "src": "c04",
+   "in": 4752,
+   "out": 4779,
+   "row": 12,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.05,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「見て回ったら、」: 配信 2:40:25 飾りの屋台"
+  },
+  {
+   "src": "c04",
+   "in": 3286,
+   "out": 3317,
    "row": 13,
    "zoom": {
-    "from": 1.12,
-    "to": 1.02,
-    "x": 0.45,
-    "y": 0.45
+    "from": 1.08,
+    "to": 1.12,
+    "x": 0.8,
+    "y": 0.8
    },
-   "note": "描いた絵 X4（ホットワイン。7行目の呼び戻し、今度は引いていく）。v2 で会場の配信の画が4回出て使い回しの線を越えた（shot_reuse）ので、ワインの屋台を絵に替えた",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "「ホットワインの小屋に、」: 配信 2:39:36.2 ホットワインの小屋（赤いカップと瓶。右下へ寄せて、左上の店の人の顔を画の外に。v8 は描いた絵 X4）"
   },
   {
-   "src": "c3_05",
+   "src": "c5_05",
    "in": 15,
    "out": 46,
    "row": 13,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
+    "to": 1.12,
     "x": 0.5,
-    "y": 0.5
+    "y": 0.45
    },
-   "note": "描いた絵 X5（スノードーム屋さん）",
+   "note": "「スノードーム屋さん！」: スノードームの写真（Commons・CC BY-SA 3.0。配信のスノードーム屋さんは店の人の顔が写る。v8 は描いた絵 X5）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -544,8 +635,8 @@
   },
   {
    "src": "c04",
-   "in": 9879,
-   "out": 9942,
+   "in": 6379,
+   "out": 6442,
    "row": 14,
    "zoom": {
     "from": 1.7,
@@ -556,21 +647,34 @@
    "note": "鉄板で焼けるソーセージへ上を軸に寄る（店の人の頭は帯の外、顔は画の外）。v5 は下を軸に寄せてソーセージが写っていなかった"
   },
   {
-   "src": "c3_06",
+   "src": "c5_06",
    "in": 15,
-   "out": 69,
+   "out": 41,
    "row": 15,
    "zoom": {
     "from": 1.0,
     "to": 1.1,
     "x": 0.5,
-    "y": 0.45
+    "y": 0.4
    },
-   "note": "描いた絵 X6（回るメリーゴーランド。人なし）。配信のメリーゴーランドは乗っている子どもの顔が写る（v1 の faces）ので使わない",
+   "note": "「メリーゴーランドも、」: メリーゴーランドの木馬の写真（人なし。Commons・CC BY-SA 3.0。v8 は描いた絵 X6）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
    }
+  },
+  {
+   "src": "c04",
+   "in": 7241,
+   "out": 7269,
+   "row": 15,
+   "zoom": {
+    "from": 1.1,
+    "to": 1.14,
+    "x": 0.5,
+    "y": 0.3
+   },
+   "note": "「回っとる！」: 配信 2:41:58 回るメリーゴーランド（乗っている人の顔が出ない 0.93秒だけ）"
   },
   {
    "src": "c2_06",
@@ -607,9 +711,9 @@
    }
   },
   {
-   "src": "c07",
-   "in": 3240,
-   "out": 3279,
+   "src": "c07a",
+   "in": 240,
+   "out": 279,
    "row": 17,
    "zoom": {
     "from": 1.0,
@@ -620,9 +724,9 @@
    "note": "手に持った全部盛り（顔は上に小さく）"
   },
   {
-   "src": "c07",
-   "in": 3360,
-   "out": 3399,
+   "src": "c07a",
+   "in": 360,
+   "out": 399,
    "row": 18,
    "zoom": {
     "from": 1.0,
@@ -633,9 +737,9 @@
    "note": "「食べたら、」（AI の声）: かぶりつく"
   },
   {
-   "src": "c07",
-   "in": 4080,
-   "out": 4166,
+   "src": "c07b",
+   "in": 80,
+   "out": 166,
    "row": 18,
    "zoom": {
     "from": 1.0,
@@ -646,21 +750,17 @@
    "note": "本人の声「これはワッフルじゃない。クレープ。」（＋カードの全部盛りの札）"
   },
   {
-   "src": "c3_01",
-   "in": 15,
-   "out": 83,
+   "src": "bz03",
+   "in": 300,
+   "out": 368,
    "row": 19,
    "zoom": {
-    "from": 1.12,
-    "to": 1.0,
-    "x": 0.6,
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
     "y": 0.45
    },
-   "note": "描いた絵 X1（3行目の呼び戻し。今度は引いていく）。声は本人の「寒いとかひたすら文句言ってたけど」",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "本人の声「寒いとかひたすら文句言ってたけど、」: 配信 0:54:20 雨上がりの寒い交差点・灰色の空（v8 は描いた絵 X1 の呼び戻し。声と違う秒の本人の顔は口が合わないので使わない）"
   },
   {
    "src": "c2_08",
@@ -934,8 +1034,9 @@
     "frames": 105,
     "voice_frames": 97,
     "cuts": [
-     "xmsArtP1v01 0:00:00.5+2.60s",
-     "2:38:59.2+0.90s"
+     "xmsArtP1v01 0:00:00.5+1.20s",
+     "2:38:58.9+1.20s",
+     "2:38:39.2+1.10s"
     ],
     "line": "ブルガリアのクリスマスマーケット、初日に行ったら想像を超えてきた！",
     "telop": null
@@ -946,7 +1047,7 @@
     "frames": 53,
     "voice_frames": 45,
     "cuts": [
-     "xmsArtP1v01 0:01:00.5+0.87s",
+     "xmsPhoP1v09 0:00:00.5+0.87s",
      "xmsArtP1v01 0:02:00.5+0.90s"
     ],
     "line": "やってきたのは、首都ソフィア！",
@@ -958,8 +1059,8 @@
     "frames": 84,
     "voice_frames": 76,
     "cuts": [
-     "xmsGenP1v01 0:00:00.5+1.53s",
-     "0:03:24.0+1.27s"
+     "0:03:24.0+2.03s",
+     "0:02:50.8+0.77s"
     ],
     "line": "昨日15°やったのに、今日5°で極寒すぎる！",
     "telop": null
@@ -970,7 +1071,7 @@
     "frames": 86,
     "voice_frames": 78,
     "cuts": [
-     "xmsGenP1v01 0:01:00.5+1.73s",
+     "xmsPhoP1v09 0:01:00.5+1.73s",
      "xmsArtP1v01 0:03:00.5+1.13s"
     ],
     "line": "でも冬のヨーロッパいうたら、クリスマスマーケットやろ！",
@@ -982,7 +1083,7 @@
     "frames": 72,
     "voice_frames": 64,
     "cuts": [
-     "xmsGenP1v01 0:02:00.5+2.40s"
+     "xmsPhoP1v09 0:02:00.5+2.40s"
     ],
     "line": "ただ、街でいちばん大きいのは来週から。",
     "telop": null
@@ -1005,7 +1106,7 @@
     "frames": 64,
     "voice_frames": 56,
     "cuts": [
-     "xmsGenP1v01 0:03:00.5+2.13s"
+     "xmsPhoP1v09 0:03:00.5+2.13s"
     ],
     "line": "まあ、ホットワインが飲めるぐらいかな？",
     "telop": null
@@ -1085,7 +1186,8 @@
     "frames": 54,
     "voice_frames": 46,
     "cuts": [
-     "xmsArtP1v01 0:09:00.5+1.80s"
+     "2:40:13.6+0.90s",
+     "2:40:25.1+0.90s"
     ],
     "line": "屋台を1軒ずつ見て回ったら、",
     "telop": null
@@ -1096,8 +1198,8 @@
     "frames": 62,
     "voice_frames": 54,
     "cuts": [
-     "xmsGenP1v01 0:03:00.5+1.03s",
-     "xmsGenP1v01 0:04:00.5+1.03s"
+     "2:39:36.2+1.03s",
+     "xmsPhoP1v09 0:04:00.5+1.03s"
     ],
     "line": "ホットワインの小屋に、スノードーム屋さん！",
     "telop": null
@@ -1120,7 +1222,8 @@
     "frames": 54,
     "voice_frames": 46,
     "cuts": [
-     "xmsGenP1v01 0:05:00.5+1.80s"
+     "xmsPhoP1v09 0:05:00.5+0.87s",
+     "2:41:48.0+0.93s"
     ],
     "line": "メリーゴーランドも、回っとる！",
     "telop": null
@@ -1178,7 +1281,7 @@
     "frames": 68,
     "voice_frames": 60,
     "cuts": [
-     "xmsGenP1v01 0:00:00.5+2.27s"
+     "0:54:20.0+2.27s"
     ],
     "line": "寒いって、ひたすら文句言ってたけど、",
     "telop": null,
@@ -1242,15 +1345,6 @@
  },
  "stickers": [
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-xmas-1200.webp",
-   "x": 540,
-   "y": 1360,
-   "w": 460,
-   "rotate": -4,
-   "from": 443,
-   "to": 479
-  },
-  {
    "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/artsrc/sticker_lights.png",
    "x": 790,
    "y": 1330,
@@ -1288,11 +1382,6 @@
    "at": 242,
    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/kira_s.wav",
    "db": -3
-  },
-  {
-   "at": 443,
-   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/xms/sfx/hyokkori.mp3",
-   "db": 0
   },
   {
    "at": 482,
@@ -1352,5 +1441,6 @@
    "text": "◆国立劇場前のクリスマスマーケット"
   }
  ],
- "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページのクリスマスマーケットの絵・カード 11-14 の光の天井と全部盛りのワッフルの切り抜き（人の顔はぼかした）・ChatGPT で描いた X4（ホットワイン）。効果音はポケットサウンド（mp3 はリポジトリに置かない）"
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: カード 11-14 の光の天井・屋台・全部盛りのワッフルの切り抜き（人の顔はぼかした）。効果音はポケットサウンド（mp3 はリポジトリに置かない）",
+ "_v9": "v9（あやと 2026-11-20「…クリスマスマーケットもつくって」・帳面 F-082・F-083・F-086）: v8 の指示書から画だけを差し替えた。フックは 2.6秒のカードの止め絵 → カード 1.2秒（寄せ 1.16）＋配信の動く画2カット（灯りの屋台・大きなツリー）。描いた絵 X1〜X6 と案内ページの水彩（大聖堂・屋台の並び・札）は、配信の画（スマホの天気 5°・屋台2軒・ホットワインの小屋・回るメリーゴーランド・寒い交差点）と Commons の写真6枚に。素材は使う区間だけをキーフレームの境で切り出した（映像は再符号化していない）。字・声・テロップ・題の札・overrides・polish は v8 のまま"
 }

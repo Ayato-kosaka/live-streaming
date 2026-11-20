@@ -2,19 +2,19 @@
  "schema": 1,
  "video": "zDHHuafmP1A",
  "option": "p1",
- "version": "xms-p1-v7",
- "_source": "題と1〜22行目はあやとの書き直し（#1268 6978983475）。題に国の名前があるので頭に🇧🇬（F-030）。11・12・19（後ろ）・20・21行目は配信の本人の声（F-078）。配信は 2026-11-14 の zDHHuafmP1A（5°の日にソフィアの国立劇場前のクリスマスマーケットの初日へ）。関連動画はこの回。差し込みの絵のうち X1〜X4 は ChatGPT で描いたもの（字・ロゴ・実在の人の顔なし）、ほかはソフィアの案内ページの絵とあやと島カードの写真（公開済み。人の顔はぼかした）。出すのは、完成を見たあやとが「出して」と言ってから。出す時刻（publish_at）は、そのときのあやとの指示で足す",
+ "version": "xms-p1-v9",
+ "_source": "題と1〜22行目はあやとの書き直し（#1268 6978983475）。題に国の名前があるので頭に🇧🇬（F-030）。11・12・19（後ろ）・20・21行目は配信の本人の声（F-078）。配信は 2026-11-14 の zDHHuafmP1A（5°の日にソフィアの国立劇場前のクリスマスマーケットの初日へ）。関連動画はこの回。差し込みの画は配信の画とあやと島カードの写真（公開済み。人の顔はぼかした）を先に使い、配信に無いものは Commons の写真: ヴィトシャ通り・夜のクリスマスマーケット（フランクフルト）・閉じたソフィアのクリスマスマーケットの門・ホットワイン・スノードーム・メリーゴーランドの木馬。作者と出どころを説明欄とキャプションに書いた。描いた絵・水彩の絵は使っていない（F-082）。出すのは、完成を見たあやとが「出して」と言ってから。出す時刻（publish_at）は、そのときのあやとの指示で足す",
  "youtube": {
   "file": "p1.mp4",
   "title": "🇧🇬ブルガリアのクリスマスマーケット、初日に行ったら想像を超えてきた！",
-  "description": "ブルガリアの首都ソフィアで、昨日15°やったのに今日は5°の極寒！でも冬のヨーロッパいうたら、クリスマスマーケットやろ。街でいちばん大きいのは来週からやし、今日のはこじんまりしてるかもと思って初日に行ったら……裏から入ってただけで、一面ぜんぶクリスマスマーケット！ホットワインの小屋、スノードーム屋さん、ドカーンと焼けるソーセージにメリーゴーランド。ワッフルを頼んだら、店の人が全盛りにしてくれた！みんなは、5°でもクリスマスマーケットに行く？\n\n配信のアーカイブ:\nhttps://www.youtube.com/watch?v=zDHHuafmP1A\n\nナレーションは AI 音声を使用しています（感想の一部は本人の声）。\nイラストは AI（画像生成）で描いたものを含みます。\nBGM・効果音：ポケットサウンド – https://pocket-se.info/\n#ブルガリア #ソフィア #クリスマスマーケット #ヨーロッパの冬 #海外旅行 #一人旅 #旅行vlog",
+  "description": "ブルガリアの首都ソフィアで、昨日15°やったのに今日は5°の極寒！でも冬のヨーロッパいうたら、クリスマスマーケットやろ。街でいちばん大きいのは来週からやし、今日のはこじんまりしてるかもと思って初日に行ったら……裏から入ってただけで、一面ぜんぶクリスマスマーケット！ホットワインの小屋、スノードーム屋さん、ドカーンと焼けるソーセージにメリーゴーランド。ワッフルを頼んだら、店の人が全盛りにしてくれた！みんなは、5°でもクリスマスマーケットに行く？\n\n配信のアーカイブ:\nhttps://www.youtube.com/watch?v=zDHHuafmP1A\n\nナレーションは AI 音声を使用しています（感想の一部は本人の声）。\n写真（Wikimedia Commons。一部を切り抜き）:\n・Vitosha boulevard, Sofia — Stolichanin / CC BY-SA 4.0 https://commons.wikimedia.org/wiki/File:Vitosha_boulevard,_Sofia.jpg\n・Christmas market at night — Miguel Mendez / CC BY 2.0 https://commons.wikimedia.org/wiki/File:Christmas_market_at_night_(32053912785).jpg\n・Christmas market Sofia — Oleg Morgan / CC BY-SA 4.0 https://commons.wikimedia.org/wiki/File:Christmas_market_Sofia_IMG_20211212_142903.jpg\n・Glühwein Charlottenburg — BKP / CC BY-SA 3.0 https://commons.wikimedia.org/wiki/File:131211_Gl%C3%BChwein_Charlottenburg_02.JPG\n・Snow Globe — Alzinous / CC BY-SA 3.0 https://commons.wikimedia.org/wiki/File:Snow_Globe.jpeg\n・Historisches Kinderkarusell — 4028mdk09 / CC BY-SA 3.0 https://commons.wikimedia.org/wiki/File:Historisches_Kinderkarusell.JPG\nBGM・効果音：ポケットサウンド – https://pocket-se.info/\n#ブルガリア #ソフィア #クリスマスマーケット #ヨーロッパの冬 #海外旅行 #一人旅 #旅行vlog",
   "visibility": "public",
   "music": "動画に入れた「クシコス・ポスト」（ポケットサウンド、https://pocket-se.info/archives/1223/）と効果音（ポケットサウンド）。媒体の音源は付けない",
   "related_video": "https://www.youtube.com/watch?v=zDHHuafmP1A"
  },
  "tiktok": {
   "file": "p1.mp4",
-  "caption": "🇧🇬ブルガリアのクリスマスマーケット、初日に行ったら想像を超えてきた！\nYouTube「@あやとグルメアプリ」の生配信から\nブルガリアの首都ソフィアで、昨日15°やったのに今日は5°の極寒！でも冬のヨーロッパいうたら、クリスマスマーケットやろ。街でいちばん大きいのは来週からやし、今日のはこじんまりしてるかもと思って初日に行ったら……裏から入ってただけで、一面ぜんぶクリスマスマーケット！ホットワインの小屋、スノードーム屋さん、ドカーンと焼けるソーセージにメリーゴーランド。ワッフルを頼んだら、店の人が全盛りにしてくれた！みんなは、5°でもクリスマスマーケットに行く？\nナレーションは AI 音声を使用しています（感想の一部は本人の声）。\nイラストは AI（画像生成）で描いたものを含みます。\nBGM・効果音：ポケットサウンド – https://pocket-se.info/\n#ブルガリア #ソフィア #クリスマスマーケット #ヨーロッパの冬 #海外旅行 #一人旅 #旅行vlog #ポケットサウンド",
+  "caption": "🇧🇬ブルガリアのクリスマスマーケット、初日に行ったら想像を超えてきた！\nYouTube「@あやとグルメアプリ」の生配信から\nブルガリアの首都ソフィアで、昨日15°やったのに今日は5°の極寒！でも冬のヨーロッパいうたら、クリスマスマーケットやろ。街でいちばん大きいのは来週からやし、今日のはこじんまりしてるかもと思って初日に行ったら……裏から入ってただけで、一面ぜんぶクリスマスマーケット！ホットワインの小屋、スノードーム屋さん、ドカーンと焼けるソーセージにメリーゴーランド。ワッフルを頼んだら、店の人が全盛りにしてくれた！みんなは、5°でもクリスマスマーケットに行く？\nナレーションは AI 音声を使用しています（感想の一部は本人の声）。\n写真（Wikimedia Commons。一部を切り抜き）:\n・Vitosha boulevard, Sofia — Stolichanin / CC BY-SA 4.0 https://commons.wikimedia.org/wiki/File:Vitosha_boulevard,_Sofia.jpg\n・Christmas market at night — Miguel Mendez / CC BY 2.0 https://commons.wikimedia.org/wiki/File:Christmas_market_at_night_(32053912785).jpg\n・Christmas market Sofia — Oleg Morgan / CC BY-SA 4.0 https://commons.wikimedia.org/wiki/File:Christmas_market_Sofia_IMG_20211212_142903.jpg\n・Glühwein Charlottenburg — BKP / CC BY-SA 3.0 https://commons.wikimedia.org/wiki/File:131211_Gl%C3%BChwein_Charlottenburg_02.JPG\n・Snow Globe — Alzinous / CC BY-SA 3.0 https://commons.wikimedia.org/wiki/File:Snow_Globe.jpeg\n・Historisches Kinderkarusell — 4028mdk09 / CC BY-SA 3.0 https://commons.wikimedia.org/wiki/File:Historisches_Kinderkarusell.JPG\nBGM・効果音：ポケットサウンド – https://pocket-se.info/\n#ブルガリア #ソフィア #クリスマスマーケット #ヨーロッパの冬 #海外旅行 #一人旅 #旅行vlog #ポケットサウンド",
   "music": "動画に入れた「クシコス・ポスト」と効果音（ポケットサウンド）。媒体の音源は付けない"
  },
  "cover_at_s": 0.5,
