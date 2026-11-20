@@ -1,6 +1,6 @@
 """**測った字（`fontweigh.mjs` の答え）を、書体の表（`tools/fonts/weights.json`）へ差し込む。**
 
-    python3 python/font_table.py --got /tmp/w.json                   # 字が増えた面・表に無い面だけ差し込む
+    python3 python/font_table.py --got /tmp/w.json                   # 字が増えた面・表に無い面だけ、字を足す（和）
     python3 python/font_table.py --got /tmp/w.json --only /next.html # 名指しの面は、増えていなくても差し替える
 
 終了コード 0=差し込んだ（差し込む面が無かった回も含む）/ 2=答えが読めない・名指しの面が答えに無い。
@@ -15,18 +15,36 @@
 フッターに街の名前が1つ足されて全部の面に新しい字が出た日も、その面ぜんぶが拾われる。
 字が減っただけの面は差し替えない——表に残った字は束を少し太らせるだけで、見た目は壊さない。
 差し替えると、測った日で字が揺れる面（日付の入る面）が毎回差分になって、並行する PR どうしがぶつかる。
+
+**下敷きの字（かな・英数・記号。`subset.py` の `CORE_RANGES`）が増えただけの面も差し替えない。** 下敷きは
+どの面にも、どの束にも焼いてあるので、表に載っていなくても焼き上がりは1バイトも変わらない。
+2026-11-20 にブカレストで回したら、フッターの「ブカレスト」「スコピエ」（700）のせいで141面が「増えた」に
+数えられ、表が300行の差分になった。それを並行する2本が持つと、またぶつかる。
+ただし、その太さで1字も描いていなかった面が描くようになったときは差し込む（その太さの束を取りに行くようになる）。
 """
 
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 TABLE = ROOT / "tools" / "fonts" / "weights.json"
 WEIGHTS = ("400", "700", "900")
+SUBSET = ROOT / "tools" / "fonts" / "subset.py"
+
+
+@lru_cache(maxsize=1)
+def core() -> frozenset[str]:
+    """下敷きの字（どの面・どの束にも焼く字）。`subset.py` の定義をそのまま読む（書き写すと、足した日にずれる）。"""
+    spec = importlib.util.spec_from_file_location("subset_for_table", SUBSET)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return frozenset(mod.ranges(mod.CORE_RANGES) | set(mod.CORE_EXTRA))
 
 
 def page_key(path: str) -> str:
@@ -34,11 +52,17 @@ def page_key(path: str) -> str:
     return "index" if path == "/index.html" else path.strip("/").removesuffix(".html")
 
 
-def gained(old: dict | None, new: dict) -> bool:
-    """表に無い字を描いたか（どれかの太さで1字でも）。"""
+def gained(old: dict | None, new: dict, base: frozenset[str] | None = None) -> bool:
+    """焼き上がりが変わるほど、表に無い字を描いたか。下敷きの字は数えない（上の見出し）。
+    その太さで1字も描いていなかった面が描くようになったら、下敷きの字でも数える。"""
     if old is None:
         return True
-    return any(set(new.get(w, "")) - set(old.get(w, "")) for w in WEIGHTS)
+    base = core() if base is None else base
+    for w in WEIGHTS:
+        was, now = set(old.get(w, "")), set(new.get(w, ""))
+        if (now - was) - base or (now and not was):
+            return True
+    return False
 
 
 def merge(table: dict, got: dict, only: list[str]) -> tuple[dict, list[str]]:
@@ -46,8 +70,15 @@ def merge(table: dict, got: dict, only: list[str]) -> tuple[dict, list[str]]:
     out = dict(table)
     hit = []
     for k, rec in got.items():
-        if k in only or gained(table.get(k), rec):
+        if k in only:
             out[k] = rec
+            hit.append(k)
+        elif gained(table.get(k), rec):
+            # **足すだけ（和）。** 全部の面を測るのは FAST（窓を開かず、送りも粗い）なので、手で測った表より
+            # 字が少なく出る面がある（ブカレストの回でマトカの記事が 400 で 363 → 275）。差し替えると、
+            # 閉じた窓の字が表から落ちる。表に残った字は束を少し太らせるだけ
+            old = table.get(k) or {}
+            out[k] = {w: "".join(sorted(set(old.get(w, "")) | set(rec.get(w, "")))) for w in WEIGHTS}
             hit.append(k)
     return out, hit
 
