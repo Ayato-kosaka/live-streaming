@@ -138,6 +138,16 @@ AFTER_MERGE_INPUTS: dict[str, dict[str, str]] = {
     "heavy_watch.yml": {"apply": "true"},
 }
 
+# **起こすだけでなく、終わるまで待ってから配るもの。** → {ファイル: なぜ}
+#
+# 書体の束は PR に入れず、master に入ったあと `fontbake.yml` が焼いて積む（`tools/fonts/subset.py` の頭）。
+# 待たずに配ると、表に足した字が焼かれる前の束で本番に出て、その字だけ端末の書体に落ちる
+# （あやと 2026-11-06「文字化けが混じってる」と同じ見え方）。配りは master の先頭で走るので、
+# 積み終わってから押せば、焼いた束が乗る。落ちても配りは止めない（古い束で出るだけで、壊れはしない）——1行に残す
+WAIT_BEFORE_DEPLOY: dict[str, str] = {
+    "fontbake.yml": "書体の束を焼いて master に積む（入力に触れた PR のときだけ起きる）",
+}
+
 # check の結論で「緑」とみなすもの。**neutral は緑にしない**（依頼の条件どおり）
 GREEN = ("success", "skipped")
 
@@ -1039,9 +1049,17 @@ def ship_one(gh: Gh, d: Decision, docs: dict) -> bool:
     sha = b["sha"]
     sha7 = sha[:7]
 
-    woke = []
+    woke, waited = [], []
     for a in after_merge(docs, d.files):
-        if a["ok"] and dispatch(gh, a["file"], a["inputs"]) == 204:
+        if not a["ok"]:
+            continue
+        if a["file"] in WAIT_BEFORE_DEPLOY:
+            run = dispatch_and_wait(gh, a["file"], sha)
+            c = run.get("conclusion")
+            woke.append(a["name"])
+            if c != "success":
+                waited.append(f"{a['name']} が {c}（[run]({run.get('html_url')})。古い束のまま配った）")
+        elif dispatch(gh, a["file"], a["inputs"]) == 204:
             woke.append(a["name"])
 
     plan = route(d.files)
@@ -1078,6 +1096,8 @@ def ship_one(gh: Gh, d: Decision, docs: dict) -> bool:
                f"（この run {minutes(time.time() - t0)}分）"
     if woke:
         took += "・master の見張り（" + "・".join(woke) + "）を起こした"
+    if waited:
+        took += "・" + "・".join(waited)
     body = [f"出しました: #{n} をマージ（`{sha7}`）→ {dest}"]
     if lines_dep:
         body.append("デプロイ: " + "・".join(lines_dep))

@@ -230,7 +230,10 @@ await Promise.all(
   })
 );
 await b.close();
-writeFileSync(OUT, JSON.stringify(out, null, 1), "utf8");
+/* 鍵の順に並べて書く（`python/font_table.py` の `canonical()` と同じ形）。並べて開くと答えの順が回ごとに
+   変わり、表がまるごと差分になって、並行する PR どうしがぶつかる */
+const sorted = Object.fromEntries(Object.keys(out).sort().map((k) => [k, out[k]]));
+writeFileSync(OUT, JSON.stringify(sorted, null, 1) + "\n", "utf8");
 if (BYTES) writeFileSync(BYTES, JSON.stringify(paid, null, 1), "utf8");
 console.log(`\n${pages.length}面  合計 ${(total / 1024 / 1024).toFixed(2)}MB  中央 ${
   (() => { const v = Object.values(paid).map((x) => x.bytes).sort((a, c) => a - c); return (v[v.length >> 1] / 1024).toFixed(1); })()

@@ -1,0 +1,104 @@
+# **書体の束を master で1回だけ焼いて積む**（`tools/fonts/subset.py` の頭「焼いたものは PR に入れない」）。
+#
+# PR が持つのは入力だけ——表（`tools/fonts/weights.json`）と `subset.py`。焼いたもの
+# （`site/public/fonts/*.woff2`・`site/app/css/fonts.css`・`tools/fonts/buckets.txt`・`tools/fonts/absent.json`）を
+# PR ごとに焼いてコミットしていた頃は、並行する PR の片方がマージされるたびに、もう片方が必ずぶつかった
+# （#1324 は4回、記事15本の担当は9回焼き直した）。
+#
+# ## いつ走るか
+#
+# - **`push: master`**（人がマージしたとき）。入力が変わったときだけ（`paths`）
+# - **ship.yml がマージしたとき**は `push` が起きない（GITHUB_TOKEN の再帰よけ）ので、`python/ship.py` が
+#   `push: master` を持つワークフローとして名指しで起こし、**積み終わるのを待ってから配る**（`WAIT_BEFORE_DEPLOY`）
+#
+# 焼いたものが入力に追いついていれば（`subset.py --stale` が 0）、書き出しもせずに帰る。
+#
+# ## 書き出しから焼く
+#
+# PR の CI は書き出しの前に焼くので、冷たい束（どの面も先に取りに行かない束）に書き出しの字が入らない。
+# ここは**書き出してから焼く**——押してから出る字（閉じた窓の中など）を冷たい束に拾う（2026-11-20 に数えて
+# 400 で 84 → 1,020字）。どの面も先には取りに行かない束なので、見張りの数はどちらでも同じ。
+name: 書体を焼いて積む
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - tools/fonts/weights.json
+      - tools/fonts/subset.py
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 続けてマージされたら、順に焼く（あとの回は前の回が積んだものを見て、追いついていれば帰る）
+concurrency:
+  group: fontbake-master
+  cancel-in-progress: false
+
+jobs:
+  bake:
+    # master にだけ積む。ほかの枝で押しても焼かない
+    if: ${{ github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: master
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: 焼いたものが入力に追いついているか
+        id: stale
+        run: |
+          if python3 tools/fonts/subset.py --stale; then echo "bake=0" >> "$GITHUB_OUTPUT"; else echo "bake=1" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-node@v5
+        if: ${{ steps.stale.outputs.bake == '1' }}
+        with:
+          node-version: '24'
+
+      - name: 書き出す
+        if: ${{ steps.stale.outputs.bake == '1' }}
+        working-directory: site
+        env:
+          NEXT_DIST_DIR: .next-ci
+        run: |
+          npm ci --no-audit --no-fund
+          npx next build
+
+      - name: 焼く
+        if: ${{ steps.stale.outputs.bake == '1' }}
+        run: |
+          set -euo pipefail
+          pip install fonttools brotli
+          python3 tools/fonts/subset.py --export site/.next-ci
+          python3 tools/fonts/subset.py --stale
+
+      # 焼いたものだけを積む。書き出しが書き足す site/tsconfig.json などは戻す
+      - name: master に積む
+        if: ${{ steps.stale.outputs.bake == '1' }}
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          git checkout -- site/tsconfig.json site/next-env.d.ts 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A site/public/fonts site/app/css/fonts.css tools/fonts/buckets.txt tools/fonts/absent.json
+          extra="$(git status --porcelain | grep -v '^[MADR] ' || true)"
+          if [ -n "$extra" ]; then echo "::error::焼いたもの以外が変わった:"; echo "$extra"; exit 1; fi
+          if git diff --cached --quiet; then echo "焼いたものは同じバイト列。積むものが無い"; exit 0; fi
+          git --no-pager diff --cached --stat | tail -1 | tee -a "$GITHUB_STEP_SUMMARY"
+          git commit -q -m "書体の束を焼き直す（表か subset.py が変わった）" \
+            -m "PR は入力（表と subset.py）だけを持ち、焼いたものは master に入ったあと1回だけ焼いて積む。並行する PR が woff2 と fonts.css でぶつからないように。" \
+            -m "$RUN_URL"
+          for i in 1 2 3; do
+            git pull -q --rebase origin master && git push -q origin HEAD:master && exit 0
+            sleep $((i * 10))
+          done
+          echo "::error::master に push できなかった"
+          exit 1

@@ -21,7 +21,7 @@ gh workflow run heavy_watch.yml --ref <PR の枝> -f guide=<国>/<街> -f pr=<PR
 | 1 写真 | `guide_photos.py --gentle`。1枚ごとに60秒。**429 が返ったら止めて表に書く。迂回しない** | `site/public/guide/<国>/<街>/photos/` |
 | 2 焼く | 台本があれば `guide_book_build.py build` → `guidebook_bake.py` → 記事（`streams` と `h1` を持つ台本）ぜんぶ `guide_article.py` → `guide_book_check.py --mymaps` | 材料の JSON・`site/content/guidebook/`・マイマップの CSV |
 | 3 書き出す | `next build` | — |
-| 4 書体 | **全部の面**を測り（`fontweigh.mjs` FAST）、表に無い字を描いた面だけ差し込む（`python/font_table.py`）。差し込んだら焼き直して書き出し直す | `tools/fonts/`・`site/public/fonts/`・`site/app/css/fonts.css` |
+| 4 書体 | **全部の面**を測り（`fontweigh.mjs` FAST）、表に無い字を描いた面だけ差し込む（`python/font_table.py`）。差し込んだら焼き直して書き出し直す（焼いた束は見張りのためだけ。**積まない**——master に入ったあと `fontbake.yml` が焼く） | `tools/fonts/weights.json` |
 | 5 見張り | 街の面・国の面・記事の面に、guide_watch・guidebook.mjs（390幅を撮る）・seo_audit・fontbudget・fontfall・crawl・preclaim・記事の `--check --dist`・guide_thumb（240px） | artifact `guide-shots` |
 | 6 積み戻す | 上の置き場の外が変わっていたら**1つも積まない**。積んだら、その head で Selftests を起こす | 枝に1コミット |
 | 7 表 | PR に1コメント。何度押しても同じ1つを書き換える | — |
@@ -52,4 +52,5 @@ gh workflow run heavy_watch.yml --ref <PR の枝> -f guide=<国>/<街> -f pr=<PR
 | 積み戻すが 🔴「push できなかった」 | 押しているあいだに枝が進んでぶつかった。枝を最新にして押し直す |
 | 入力で止まった（表が出ない） | run の「入力を確かめる」の `::error::` の1行。枝と PR の番号が合っているか |
 
-書体だけを測り直したいほかの面（街のガイド以外）は、今までどおり `-f fonts=/next.html,…`（`fontbake`。artifact `fonts`）。
+書体だけを測り直したいほかの面（街のガイド以外）は `-f fonts=/next.html,…`（`fontbake`）。artifact `fonts` は表（`weights.json`）だけで、それを枝に積む。
+焼いた束（woff2・fonts.css）は積まない。

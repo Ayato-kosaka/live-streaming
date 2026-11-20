@@ -521,6 +521,10 @@ await offline(ctx);
   「あと何日」「いちばん近い企画」「配信本数」は画面が出てから計算し直している。同じ轍を踏まない。
 - **自動生成ファイルを手で直さない** — `site/content/cityStreams.ts`、
   `site/content/nordic/*.json`、`site/content/sprites.json`。元のスクリプトを直して作り直す。
+- **焼いた書体を PR に入れない** — `site/public/fonts/*.woff2`・`site/app/css/fonts.css`・`tools/fonts/buckets.txt`・
+  `absent.json` は、master に入ったあと `fontbake.yml` が焼いて積む。PR が持つのは表（`tools/fonts/weights.json`）と
+  `subset.py` だけ。焼いたものを入れると、並行する PR がマージのたびにぶつかる（#1324 は4回やり直した）。
+  PR の見張りはその場で焼いてから見るので弱まらない（`tools/fonts/subset.py` の頭）
 - **`site/tsconfig.json` の include を畳まない** — Next はビルドのたびに、自分の dist の
   型パスが include に無ければ**書き足す**。並列でビルドを回していると、そこで
   書き換えが衝突してビルドが落ちる（1日に3回踏んだ）。使うポートぶんを先に

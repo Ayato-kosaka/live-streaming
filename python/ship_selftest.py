@@ -178,6 +178,17 @@ def main() -> int:
               f" 要る入力の抜け {req_missing} / docs {sorted(names_docs)} / shorts {sorted(names_shorts)}")
         ng += 1
 
+    # [6b] 書体の束は、積み終わるのを待ってから配る（`WAIT_BEFORE_DEPLOY`）
+    fb = {a["file"]: a for a in after_merge(docs, ["tools/fonts/weights.json"])}
+    fb_docs = {a["file"] for a in after_merge(docs, ["docs/a.md", "site/app/page.tsx"])}
+    rot6 = [f for f in ship.WAIT_BEFORE_DEPLOY if f".github/workflows/{f}" not in docs]
+    if (not rot6 and all(f in fb and fb[f]["ok"] for f in ship.WAIT_BEFORE_DEPLOY)
+            and not set(ship.WAIT_BEFORE_DEPLOY) & fb_docs):
+        print(f"[6b] ○ 表に触れたら {sorted(ship.WAIT_BEFORE_DEPLOY)} を起こして待つ。面や docs だけなら起こさない")
+    else:
+        print(f"[6b] ✕ 待つもの {sorted(ship.WAIT_BEFORE_DEPLOY)} / 無い {rot6} / 表で起きる {sorted(fb)} / 面で起きる {sorted(fb_docs)}")
+        ng += 1
+
     # [7] 配り先と手の面
     cases7 = [
         (["docs/a.md", ".claude/skills/x/SKILL.md"], set(), []),
