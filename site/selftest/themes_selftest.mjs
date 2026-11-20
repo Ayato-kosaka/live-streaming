@@ -392,6 +392,32 @@ const jst = (y, m, d, h, mi = 0) => new Date(Date.UTC(y, m - 1, d, h - 9, mi, 0)
   check("対照: 閉じる日を外すと、21日でもソフィアあては書ける", B20.isOpenTheme({ ...sofia, closesOn: undefined }, jst(2026, 11, 21, 12)) === true);
 }
 
+/* ==================================== 6. 出た国あての付箋が、書けるまま残っていない
+
+   2026-11-20 に、北マケドニアあて（`north-macedonia`）が出た日（11-12）のあとも書けるままだったのを見つけた。
+   **出た日は国の表から導く**——つぎの国に入った日（`content/countries.ts` の `AHEAD_COUNTRIES` の `entered`）。
+   ここに日付を書き写さない（国を1つ越えた日に、ここだけ古い表で緑になる）。 */
+const countriesSrc = readFileSync(join(CONTENT, "countries.ts"), "utf8");
+const aheadBlock = countriesSrc.slice(countriesSrc.indexOf("export const AHEAD_COUNTRIES"));
+const ahead = [...aheadBlock.slice(0, aheadBlock.indexOf("];")).matchAll(/slug:\s*"([a-z-]+)"[^}]*?entered:\s*"(\d{4}-\d{2}-\d{2})"/g)]
+  .map((m) => ({ slug: m[1], entered: m[2] }))
+  .sort((a, b) => a.entered.localeCompare(b.entered));
+if (ahead.length < 2) nothing("国の表（`AHEAD_COUNTRIES`）から、入った日を2つ以上読めない");
+const left = ahead.slice(0, -1).map((c, i) => ({ ...c, leftOn: ahead[i + 1].entered })).filter((c) => T.themeById(c.slug));
+if (left.length === 0) nothing("出た国のうち、付箋の宛先を持つ国が1つも無い");
+for (const c of left) {
+  const [y, m, d] = c.leftOn.split("-").map(Number);
+  const t = T.themeById(c.slug);
+  check(`出た国あて（${c.slug}）は、出た日（${c.leftOn}）の 0:00（日本時間）から書けない`, isOpenTheme(t, jst(y, m, d, 0, 0)) === false);
+  check(`出た国あて（${c.slug}）は、きょうも書けない`, isOpenTheme(t, TODAY) === false);
+}
+/* 対照: 閉じる日を外した写しなら、出た日のあとも書ける（上の確かめが、閉じる日を本当に見ている） */
+{
+  const nm = T.themeById("north-macedonia");
+  check("対照: 北マケドニアあてから閉じる日を外すと、出た日のあとも書けてしまう",
+    !!nm && isOpenTheme({ ...nm, closesOn: undefined }, jst(2026, 11, 20, 12)) === true);
+}
+
 console.log(`\n${OK + BAD}件中 ${OK}件通った`);
 if (BAD) {
   console.log(`\n${BREAK_HINT}`);
