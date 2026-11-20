@@ -1,5 +1,5 @@
 {
- "_note": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（丸いバニツァ・モスクと教会の並ぶ絵）・チーズと卵の1切れ（同じ絵の切り抜き）と ChatGPT で描いた B4（断面）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。帯は区間ごと（0:03 台の自撮りの区間には上の固定コメントの札が無い）",
+ "_note": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の画（v6）: Commons の写真4枚（渦巻きのバニツァ・1887年の黒いモスク・チーズのバニツァ・チーズの断面）。案内ページの水彩画と描いた絵は使わない（F-082）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。帯は区間ごと（0:03 台の自撮りの区間には上の固定コメントの札が無い）",
  "stream_path_mark": "/ingest",
  "bands": {
   "size": [
@@ -47,50 +47,68 @@
   {
    "row": 2,
    "from_s": 0.25,
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-banitsa-800.webp",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/v6/photo_dl/spiral.jpg",
    "x": 790,
    "y": 1345,
    "w": 330,
    "rotate": 5,
-   "why": "いちばん楽しみにしてたバニツァ（丸い焼き型）"
+   "why": "いちばん楽しみにしてたバニツァ（渦巻きのバニツァの写真。Commons・borzo・CC BY-SA 3.0）",
+   "crop": [
+    180,
+    40,
+    1440,
+    1360
+   ]
   },
   {
    "row": 10,
    "from_s": 0.2,
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-faiths-1200.webp",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/v6/photo_dl/m960.png",
    "x": 540,
    "y": 1360,
-   "w": 560,
+   "w": 500,
    "rotate": -3,
-   "why": "全然違う宗教（モスクと教会が並ぶ絵）"
+   "why": "全然違う宗教（1887年の黒いモスクの写真。Commons・パブリックドメイン）",
+   "crop": [
+    330,
+    70,
+    380,
+    280
+   ]
   },
   {
    "row": 13,
    "cut": 1,
    "from_s": 0.15,
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-banitsa-800.webp",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/v6/photo_dl/slice.jpg",
    "crop": [
     60,
-    400,
-    560,
-    400
+    200,
+    1740,
+    750
    ],
    "x": 300,
    "y": 1350,
-   "w": 360,
+   "w": 380,
    "rotate": -4,
-   "why": "定番のチーズと卵（1切れ）"
+   "why": "定番のチーズのバニツァ（Commons・Biso・CC BY 3.0）"
   },
   {
    "row": 15,
    "cut": 1,
    "from_s": 0.15,
-   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/draw/B4.jpg",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ban/v6/photo_dl/cross.jpg",
    "x": 300,
    "y": 1360,
-   "w": 330,
+   "w": 380,
    "rotate": -5,
-   "why": "外パリパリ・中ねっとり・チーズゴロゴロ"
+   "why": "外パリパリ・中ねっとり・チーズゴロゴロ（チーズの断面の写真。Commons・Eugene Zelenko・CC BY-SA 4.0）",
+   "crop": [
+    0,
+    0,
+    1920,
+    1100
+   ]
   }
  ],
  "sfx_files": {

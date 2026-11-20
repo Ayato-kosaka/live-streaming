@@ -31,25 +31,10 @@
     "margin": 5
    }
   },
-  "c2_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_free/02_guide_cover.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
-  },
   "c2_04": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_free/04_card_evening.mp4",
    "watermark": "prism_live",
    "t0": 180.0
-  },
-  "c3_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_gen/01_gen_B1.mp4",
-   "watermark": "prism_live",
-   "t0": 0.0
-  },
-  "c2_05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_free/05_guide_boza.mp4",
-   "watermark": "prism_live",
-   "t0": 240.0
   },
   "c2_03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_free/03_card_lidl.mp4",
@@ -144,11 +129,6 @@
     "margin": 5
    }
   },
-  "c3_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_gen/02_gen_B2.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
-  },
   "c06": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/ingest/zDHHuafmP1A/clips/06_1-04-15_1-04-28.mp4",
    "watermark": "prism_live",
@@ -170,6 +150,36 @@
     ],
     "margin": 5
    }
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/01_sofia_vitosha.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c4_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/02_wheat_ears.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c4_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/03_boza_glass.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c4_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/04_boza_bottle.mp4",
+   "watermark": "prism_live",
+   "t0": 180.0
+  },
+  "c4_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/05_bakery.mp4",
+   "watermark": "prism_live",
+   "t0": 240.0
+  },
+  "c4_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/art_photo/06_boza_mug.mp4",
+   "watermark": "prism_live",
+   "t0": 300.0
   }
  },
  "cuts": [
@@ -180,11 +190,11 @@
    "row": 0,
    "zoom": {
     "from": 1.0,
-    "to": 1.08,
+    "to": 1.14,
     "x": 0.42,
     "y": 0.5
    },
-   "note": "「ブルガリアの名物ドリンク、ボザを」: あやと島カード 11-14（公園のベンチのボザの瓶）。0秒目を配信の粗い1コマにしない（F-079）",
+   "note": "「ブルガリアの名物ドリンク、ボザを」: あやと島カード 11-14（公園のベンチのボザの瓶）。1.13秒の止め絵なので寄せを 1.08 → 1.14 に強めて動かし続け、札（グラスのボザの写真）を重ねる（F-086）。案内ページの水彩の札は外した（F-082）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -204,7 +214,7 @@
    "note": "「飲んでみた！」: 瓶を傾けて飲む（答えの画。F-073）"
   },
   {
-   "src": "c2_02",
+   "src": "c4_01",
    "in": 15,
    "out": 41,
    "row": 1,
@@ -214,7 +224,7 @@
     "x": 0.5,
     "y": 0.4
    },
-   "note": "ガイドの表紙の絵（ネフスキー大聖堂）",
+   "note": "ソフィアのヴィトシャ通りと山の本物の写真（Commons・CC BY-SA 4.0。v6 は案内ページの水彩の大聖堂。F-082）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -238,7 +248,7 @@
    }
   },
   {
-   "src": "c3_01",
+   "src": "c4_02",
    "in": 15,
    "out": 80,
    "row": 2,
@@ -246,26 +256,26 @@
     "from": 1.0,
     "to": 1.1,
     "x": 0.5,
-    "y": 0.5
+    "y": 0.35
    },
-   "note": "描いた絵 B1（小麦の穂と、小麦を発酵させた飲み物）",
+   "note": "「小麦を発酵させた飲み物、」: 小麦の穂の本物の写真（Commons・CC BY-SA 4.0。v6 は描いた絵 B1）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
    }
   },
   {
-   "src": "c2_05",
+   "src": "c4_03",
    "in": 15,
    "out": 55,
    "row": 2,
    "zoom": {
     "from": 1.02,
     "to": 1.12,
-    "x": 0.45,
-    "y": 0.45
+    "x": 0.5,
+    "y": 0.5
    },
-   "note": "ガイドのグラスのボザの絵（「ボザ！」）",
+   "note": "「ボザ！」: グラスのブルガリアのボザの本物の写真（Commons・CC BY-SA 3.0。v6 は案内ページの水彩のグラス）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -328,17 +338,17 @@
    "note": "棚から取った、ラベルに絵のある瓶へ寄る"
   },
   {
-   "src": "c3_01",
+   "src": "c4_04",
    "in": 15,
    "out": 54,
    "row": 5,
    "zoom": {
-    "from": 1.1,
-    "to": 1.2,
-    "x": 0.32,
-    "y": 0.6
+    "from": 1.0,
+    "to": 1.12,
+    "x": 0.45,
+    "y": 0.45
    },
-   "note": "描いた絵 B1（小麦の発酵の飲み物）の寄り。v4 で、棚 → 瓶 → 瓶の寄りの店の画が3カット続いて似た見た目が 3.5秒になった（similar_run）ので、ここだけ絵に替えた",
+   "note": "「これ絶対ボザや！」: ラベルに БОЗА の瓶の本物の写真（Commons・CC BY-SA 2.5。v6 は描いた絵 B1 の寄り）。店の画は 4行目までで止め、似た見た目の連続を作らない",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -421,7 +431,7 @@
    "note": "本人の声 V1「すっごい強い匂いすんで。」。v2 で顔の下の端が字幕に1コマ掛かったので、下を軸に少し寄せて顔を上へ"
   },
   {
-   "src": "c3_02",
+   "src": "c4_05",
    "in": 15,
    "out": 63,
    "row": 10,
@@ -429,9 +439,9 @@
     "from": 1.0,
     "to": 1.1,
     "x": 0.5,
-    "y": 0.5
+    "y": 0.45
    },
-   "note": "描いた絵 B2（パン屋の棚と小麦）",
+   "note": "「パン屋の小麦の匂いを、」: パン屋の棚の本物の写真（Commons・CC0。人の写らない所。v6 は描いた絵 B2）",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -464,17 +474,17 @@
    "note": "「いただきます……」（AI の声）: 瓶を傾けて飲む。v1 の 1:02:40 は顔が画面のまん中で字幕が顔に掛かった（text_on_face）ので、顔が上にある飲む所に替えた"
   },
   {
-   "src": "c2_05",
+   "src": "c4_06",
    "in": 15,
    "out": 95,
    "row": 11,
    "zoom": {
     "from": 1.0,
     "to": 1.12,
-    "x": 0.45,
-    "y": 0.45
+    "x": 0.5,
+    "y": 0.5
    },
-   "note": "本人の声 V2「うまい。めちゃくちゃうまい。」: ガイドのグラスのボザ。v4 で飲む画と下がって手を叩く画が同じ公園の白い空で、似た見た目が 4.7秒になった（similar_run）ので絵に替えた",
+   "note": "本人の声 V2「うまい。めちゃくちゃうまい。」: ジョッキのボザの本物の写真（Commons・CC BY-SA 4.0。v6 は案内ページの水彩のグラス）。公園の飲む画と続けると似た見た目が 4.7秒になる（v4 の similar_run）ので配信の画にしない",
    "grade": {
     "saturation": 1.1,
     "contrast": 1.03
@@ -528,7 +538,7 @@
    "row": 15,
    "zoom": {
     "from": 1.0,
-    "to": 1.08,
+    "to": 1.1,
     "x": 0.42,
     "y": 0.55
    },
@@ -731,7 +741,7 @@
     "frames": 52,
     "voice_frames": 44,
     "cuts": [
-     "bozArtP1v01 0:01:00.5+0.87s",
+     "bozPhoP1v07 0:00:00.5+0.87s",
      "bozArtP1v01 0:03:00.5+0.87s"
     ],
     "line": "やってきたのは、首都ソフィア！",
@@ -743,8 +753,8 @@
     "frames": 105,
     "voice_frames": 97,
     "cuts": [
-     "bozGenP1v01 0:00:00.5+2.17s",
-     "bozArtP1v01 0:04:00.5+1.33s"
+     "bozPhoP1v07 0:01:00.5+2.17s",
+     "bozPhoP1v07 0:02:00.5+1.33s"
     ],
     "line": "個人的に気になってたのが、小麦を発酵させた飲み物、ボザ！",
     "telop": null
@@ -779,7 +789,7 @@
     "frames": 39,
     "voice_frames": 31,
     "cuts": [
-     "bozGenP1v01 0:00:00.5+1.30s"
+     "bozPhoP1v07 0:03:00.5+1.30s"
     ],
     "line": "これ絶対ボザや！",
     "telop": null,
@@ -846,7 +856,7 @@
     "frames": 80,
     "voice_frames": 72,
     "cuts": [
-     "bozGenP1v01 0:01:00.5+1.60s",
+     "bozPhoP1v07 0:04:00.5+1.60s",
      "1:01:38.0+1.07s"
     ],
     "line": "パン屋の小麦の匂いを、ぎゅっと濃くした感じ！",
@@ -859,7 +869,7 @@
     "voice_frames": 134,
     "cuts": [
      "1:03:21.0+2.07s",
-     "bozArtP1v01 0:04:00.5+2.67s"
+     "bozPhoP1v07 0:05:00.5+2.67s"
     ],
     "line": "いただきます……うわ、うまい！",
     "telop": null,
@@ -967,23 +977,17 @@
  },
  "stickers": [
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-boza-800.webp",
-   "crop": [
-    130,
-    0,
-    560,
-    800
-   ],
+   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_boza_glass.jpg",
    "x": 800,
    "y": 1330,
-   "w": 300,
+   "w": 250,
    "rotate": 6,
    "out": "cut",
    "from": 6,
    "to": 34
   },
   {
-   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/draw/B1.jpg",
+   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_wheat_ears.jpg",
    "x": 800,
    "y": 1340,
    "w": 300,
@@ -992,25 +996,19 @@
    "to": 649
   },
   {
-   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/boz/draw/B3.jpg",
+   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_amazake.jpg",
    "x": 800,
    "y": 1340,
-   "w": 320,
+   "w": 330,
    "rotate": 5,
    "from": 877,
    "to": 991
   },
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-boza-800.webp",
-   "crop": [
-    130,
-    0,
-    560,
-    800
-   ],
+   "image": "/home/user/live-streaming/shorts/videos/bg-boza/p1/art/photo_boza_bottles.jpg",
    "x": 280,
    "y": 1340,
-   "w": 300,
+   "w": 270,
    "rotate": -5,
    "from": 995,
    "to": 1101
@@ -1104,5 +1102,6 @@
    "text": "◆公園"
   }
  ],
- "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページのグラスのボザ・カード 11-14 の瓶の切り抜き・ChatGPT で描いた B3（甘酒）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。素材は 720x1280（高い画で取り直した）。上下の帯を切って元の y240〜1110 を使う（ヨーグルトの回と同じ）"
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: 写真（グラスのボザ・小麦の穂・甘酒の商品・市場のボザの瓶。Commons）とカード 11-14 の瓶の切り抜き。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。素材は 720x1280（高い画で取り直した）。上下の帯を切って元の y240〜1110 を使う（ヨーグルトの回と同じ）",
+ "_v7": "v7（あやと 2026-11-20「ボザ…もつくって」・帳面 F-082・F-083・F-086）: v6 の指示書から画だけを差し替えた。全面の描いた絵 B1・B2 と案内ページの水彩（大聖堂・グラスのボザ）を本物の写真6枚に（2・3・6・11・12行目。Commons）。札の描いた絵 B1・B3 と案内ページのグラスを写真に（甘酒は本物の商品写真）。フックのカードの瓶 1.13秒は寄せを 1.14 に。字・声・テロップ・題の札・overrides・polish は v6 のまま"
 }

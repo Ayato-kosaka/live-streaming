@@ -1329,3 +1329,5 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1266#issuecomment-7039082833（ヨーグルトの回: テロップ A・フック A を選び、完成動画へ（「完成どうが作って」））
 - https://github.com/Ayato-kosaka/live-streaming/issues/1265#issuecomment-7040316916（移動の回: v5c を 2026/11/21 に出す（「投稿して」））
 - https://github.com/Ayato-kosaka/live-streaming/issues/1266#issuecomment-7040288514（ヨーグルトの回: v3b を 2026/11/22 に出す（「投稿して」））
+- https://github.com/Ayato-kosaka/live-streaming/issues/1271#issuecomment-7040624246（配信丸わかりサイトの回: あやとの原稿（音声入力）＝これで作る。画はあやと島カードで世界を回る・配信の切り抜き・サイトのスマホ版の画面録画）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1272#issuecomment-7040801636（観光ガイドの回: あやとの原稿（音声入力）＝これで作る）
