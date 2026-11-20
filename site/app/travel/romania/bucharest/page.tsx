@@ -12,6 +12,7 @@ import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import Writer from "@/components/travel/article/Writer";
+import StickyNotes from "@/components/live/Notes";
 import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { GUIDE_BY, firstWent } from "@/content/guidebook/heading";
@@ -42,9 +43,9 @@ import "@/components/guidebook/guidebook.css";
  * 描いた絵（表紙・見どころマップ・料理・土産）は `public/guide/romania/bucharest/manifest.json` から読み、
  * 無ければ借りた写真か色の札に落ちる。やりたいことは実在の場所なので、借りた写真（#1228 の Q1 は A）。
  *
- * ## 公開前
+ * ## 公開
  *
- * あやとが読んで OK を出すまで検索に出さない（`content/travel.ts` の `draft`）。
+ * 2026-11-20 に公開前の印を外した（あやと「どんどん公開していいよ。あなたの裁量の範囲内」。`content/travel.ts`）。
  */
 
 const G = BUCHAREST;
@@ -98,6 +99,9 @@ export default function BucharestPage() {
         <Writer by={went ? GUIDE_BY.after : GUIDE_BY.before} went={went ? { city: G.name, from: went } : undefined} />
         <Sources g={g} drawn={usedDrawn} />
       </article>
+
+      {/* 付箋。ソフィアと同じ置き場所（面のいちばん下）。**宛先の id（`romania`）は Firestore に入るので変えない**（`content/themes.ts`） */}
+      <StickyNotes theme="romania" title="ブカレストでこれやって" />
 
       <p className="gb-back">
         <Link prefetch={false} href="/">

@@ -226,6 +226,25 @@ export const SHELVES: Shelf[] = [
     ],
   },
   {
+    /* ルーマニア（2026-11-20 にブカレストのガイドを公開した。国の面は入った日から）。
+       ブルガリアと同じく、国ごとに棚を立てる。国の面がまだ無いので、いまは街の面だけ */
+    id: "romania",
+    title: "ルーマニア",
+    /* **時点を言わない**（`docs/island-standards.md` 16章） */
+    note: "「東欧のパリ」と称えられた街。首都はブカレスト",
+    items: [
+      {
+        href: travelCity("romania", "bucharest").href,
+        name: "ルーマニア・ブカレスト",
+        note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・ことば",
+        q: q(
+          "ルーマニア romania ブカレスト bucharest 国民の館 palace parliament ドラキュラ dracula ブラン城 bran " +
+            "ペレシュ城 peles アテネ音楽堂 athenaeum サルマーレ sarmale パパナシ papanasi レイ lei バルカン",
+        ),
+      },
+    ],
+  },
+  {
     /* ブルガリア。**北マケドニアと同じ棚にしない。** 同じ周遊の中の国だが、
        棚は「どの国の話か」で分ける——混ぜると、ソフィアの紙がスコピエの
        中の1行に見える（北マケドニアの棚を立てたときと同じ理由）。 */

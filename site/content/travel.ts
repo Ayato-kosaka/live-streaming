@@ -109,7 +109,8 @@ export const travelCrumbs = (name: string) => [crumbOf("map"), { label: name }];
  * ## 公開前の印（`draft`）
  *
  * 最初の街（スコピエ）は、あやとが全部読んでから検索に出した（#1197 Q3。2026-11-19 に OK で印を外した）。
- * 次の街も、あやとが仕上がりを見て OK を出すまでは印を付けて出す（`.claude/skills/city-guide/SKILL.md` 2-9〜2-11）。
+ * 2026-11-20 からは、印を付けて出したあと、運営が型の数と見張りを確かめて印を外す（あやと「どんどん公開していいよ。
+ * あなたの裁量の範囲内」。`.claude/skills/city-guide/SKILL.md` 2-9〜2-11）。
  * **印が付いているあいだ、その面は**——
  *
  * - 検索に載せない（面の `robots` が `index: false`）
@@ -135,8 +136,9 @@ const CITIES: Omit<TravelCity, "href">[] = [
   /* あやとが読んで OK（2026-11-19「いい感じ。結構綺麗」）。公開前の印を外した */
   { country: "north-macedonia", slug: "skopje", name: "スコピエ" },
   { country: "bulgaria", slug: "sofia", name: "ソフィア" },
-  /* 行く前の街（あやとは 2026-11-21 に移る。`content/plans.ts` の `romania`）。国の面はまだ無い（`CITY_ONLY`） */
-  { country: "romania", slug: "bucharest", name: "ブカレスト", draft: true },
+  /* 行く前の街（あやとは 2026-11-21 に移る。`content/plans.ts` の `romania`）。国の面はまだ無い（`CITY_ONLY`）。
+     あやと 2026-11-20「割といい感じ」「どんどん公開していいよ。あなたの裁量の範囲内」で公開前の印を外した */
+  { country: "romania", slug: "bucharest", name: "ブカレスト" },
 ];
 
 /**
