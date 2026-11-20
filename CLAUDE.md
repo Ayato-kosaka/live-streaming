@@ -190,7 +190,9 @@ issue を立てたら、**終わったら自分で閉じるところまでやる
   基準ではない。出す前のチェックもここ
 - [`docs/island-misses.md`](docs/island-misses.md) — **言われたことと、外した理由。
   作る前に必ず読む。** 同じ外し方を繰り返さないための決めごとが4つ書いてある。
-  **新しく指摘されたら、直すだけでなくここに足す**（原因と対策を書く。直しても消さない）
+  **新しく指摘されたら、直すだけでなくここに足す**（原因と対策を書く。直しても消さない）。
+  **節の番号は `python3 python/misses_next.py` で採る**（master だけでなく開いている PR が採った番号も見て、次を出す。
+  master の最大の次を手で採ると、並行する PR とぶつかる——#337〜#339 が実際にそれ）
 - [`docs/island-design.md`](docs/island-design.md) — **デザイン仕様。拘束力あり。作る前に必ず読む**
 - [`docs/island-concept.md`](docs/island-concept.md) — 何のための島か。作り方の背景
 - [`docs/island-money.md`](docs/island-money.md) — **お金の出しかた。視聴者さんに見せる額は全部ここの式1本。**
