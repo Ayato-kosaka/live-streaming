@@ -370,6 +370,11 @@
 }
 
 .ta-scene:active { translate: 0 4px; box-shadow: 0 var(--pop-d0) 0 var(--ta-c-deep); }
+
+/* 段の終わりが写真だと、撮った日のリンクの当たり（下へ 25px 伸ばしてある）がボタンの上 12px に
+   かぶさって、ボタンの上のほうを押すと写真の配信が開いていた（reachwatch。城塞・ヨーグルトの記事 2026-11-19）。
+   当たりの下端より下からボタンを始める */
+.ta-fig + .ta-scene { margin-top: 16px; }
 .ta-scene span { font-size: 12.5px; font-variant-numeric: tabular-nums; opacity: 0.95; }
 
 /* ---- 値段の表（押せない地。押せるのは場面の札だけ） ------------------------- */
