@@ -55,24 +55,26 @@
       "article": "yogurt"
     },
     "todo/hotspring": {
-      "facts": ["2EKBYEnv850@1620#food", "2EKBYEnv850@1780#quote"],
+      "facts": ["2EKBYEnv850@1620#food", "2EKBYEnv850@1780#quote", "2EKBYEnv850@1270#place"],
       "scene": "2EKBYEnv850@1780#quote",
       "story": [
         {
-          "text": "蛇口の温泉水を飲んでみましたが、正直まずかったです。温泉卵の汁のような味で、ぬめぬめしていました。",
-          "facts": ["2EKBYEnv850@1620#food"]
+          "text": "中央鉱泉浴場のそばの温泉の蛇口で、温泉水を飲んでみました。温泉卵の汁のような味で、引くほどまずかったです。",
+          "facts": ["2EKBYEnv850@1270#place", "2EKBYEnv850@1620#food", "2EKBYEnv850@1780#quote"]
         }
-      ]
+      ],
+      "article": "hotspring"
     },
     "todo/banitsa": {
       "facts": ["hJ6vFAGX3rI@1860#place", "hJ6vFAGX3rI@1925#fact"],
       "scene": "hJ6vFAGX3rI@1925#fact",
       "story": [
         {
-          "text": "バニツァを買いに入ったパン屋は、パンの種類が多く、ヨーグルトも売っていました。バニツァは丸いものを想像していたら、形も中身もいろいろ。アップルシナモンとくるみ、ポテト入りのビーガン、ほうれん草とチーズと卵などが並んでいました。",
+          "text": "パン屋のバニツァは、形も中身もさまざま。アップルシナモンとくるみ、ポテト入りのビーガンなどが並んでいました。",
           "facts": ["hJ6vFAGX3rI@1860#place", "hJ6vFAGX3rI@1925#fact"]
         }
-      ]
+      ],
+      "article": "banitsa"
     },
     "todo/xmas": {
       "card": "xmas-market",
@@ -80,14 +82,11 @@
       "scene": "zDHHuafmP1A@11050#food",
       "story": [
         {
-          "text": "行ったのは開いた初日の夜で、準備が間に合っておらず、ホットチョコの店はまだ開いていませんでした。ワッフル屋でバナナとストロベリーの両方を頼んだら、ミックスにしてくれました。",
-          "facts": ["zDHHuafmP1A@10320#caution", "zDHHuafmP1A@11050#food"]
-        },
-        {
-          "text": "昼にもう一度通ると、ソーセージがたくさん売られていて、フランクフルトの匂いでおなかが減ってきます。ツリーの飾りも凝っていて、夜には分からなかったデコレーションまで見えました。",
-          "facts": ["aGOz5otlEs8@1170#food", "aGOz5otlEs8@1230#place"]
+          "text": "開いた初日の夜は準備が間に合っておらず、ホットチョコの店は閉まっていました。昼に通ると、ソーセージの屋台とツリーの飾りがよく見えました。",
+          "facts": ["zDHHuafmP1A@10320#caution", "aGOz5otlEs8@1170#food", "aGOz5otlEs8@1230#place"]
         }
-      ]
+      ],
+      "article": "xmas"
     },
     "see/zhenski-pazar": {
       "card": "zhenski-pazar",
@@ -107,54 +106,55 @@
       "scene": "2EKBYEnv850@5050#fact",
       "story": [
         {
-          "text": "初めは、石の遺構を温泉の跡だと思っていました。調べてみると、古代ローマの都市セルディカの遺跡で、セルディカはソフィアの元の名前らしいです。",
-          "facts": ["jnKVIXn4qQs@3810#place"]
-        },
-        {
-          "text": "別の日に地下道へ入ると、急にローマ時代の遺跡が現れて、異世界に来たのかと思いました。",
-          "facts": ["2EKBYEnv850@5050#fact", "2EKBYEnv850@5070#quote"]
+          "text": "地下道に入ると、急にローマ時代の遺跡が現れます。セルディカは、ソフィアの元の名前です。",
+          "facts": ["2EKBYEnv850@5050#fact", "jnKVIXn4qQs@3810#place"]
         }
-      ]
+      ],
+      "article": "hotspring"
     },
     "see/mineral-bath": {
       "facts": ["2EKBYEnv850@1270#place", "2EKBYEnv850@1410#caution", "2EKBYEnv850@1805#fact"],
       "scene": "2EKBYEnv850@1270#place",
       "story": [
         {
-          "text": "湯気が出ている温泉の蛇口を見つけました。地元の人たちが並んで温泉水を汲んでいます。触ってみると熱くて、ぬめぬめ。50度ぐらいあるかもしれません。",
+          "text": "湯気の出る温泉の蛇口に、地元の人が並んで温泉水を汲んでいました。触ると熱くて、ぬめぬめです。",
           "facts": ["2EKBYEnv850@1270#place", "2EKBYEnv850@1805#fact", "2EKBYEnv850@1410#caution"]
         }
-      ]
+      ],
+      "article": "hotspring"
     },
     "see/nevsky": {
       "facts": ["aGOz5otlEs8@2225#place", "aGOz5otlEs8@2290#quote", "aGOz5otlEs8@2370#fact", "aGOz5otlEs8@2470#fact", "aGOz5otlEs8@2650#caution"],
       "scene": "aGOz5otlEs8@2290#quote",
       "story": [
         {
-          "text": "大聖堂の第一印象は、大きくてかっこいい。中にはステンドグラスがあって、正教会では珍しいと思いました。壁画は古く、歴史を感じる色合いです。少し前に行った北マケドニアの教会は絵の色が新しかったので、違いがよく分かりました。2階は入口が閉じていて、上がれませんでした。",
-          "facts": ["aGOz5otlEs8@2225#place", "aGOz5otlEs8@2370#fact", "aGOz5otlEs8@2470#fact", "aGOz5otlEs8@2650#caution"]
+          "text": "大きくてかっこいい大聖堂。中は画面いっぱいのシャンデリアで、正教会では珍しいステンドグラスもありました。",
+          "facts": ["aGOz5otlEs8@2225#place", "aGOz5otlEs8@2290#quote", "aGOz5otlEs8@2370#fact"]
         }
-      ]
+      ],
+      "article": "nevsky"
     },
     "see/vitosha-blvd": {
       "facts": ["2EKBYEnv850@5310#place", "2EKBYEnv850@5470#fact", "2EKBYEnv850@6465#quote"],
       "scene": "2EKBYEnv850@6465#quote",
       "story": [
         {
-          "text": "歩行者通りの始まりにある聖ネデリャ教会の前から歩き出しました。ブルガリアは高い建物が少なく、路面の店が多い。何でも揃う商店街のような通りです。",
+          "text": "聖ネデリャ教会の前から始まる歩行者の通り。路面の店が並び、何でもそろう商店街のようでした。",
           "facts": ["2EKBYEnv850@5310#place", "2EKBYEnv850@5470#fact", "2EKBYEnv850@6465#quote"]
         }
-      ]
+      ],
+      "article": "hotspring"
     },
     "see/national-theatre": {
       "facts": ["aGOz5otlEs8@845#place"],
       "scene": "aGOz5otlEs8@845#place",
       "story": [
         {
-          "text": "かっこいい劇場だなと思って、写真を撮りました。",
+          "text": "大聖堂へ向かう途中に通りました。かっこいい劇場だなと思って、写真を撮りました。",
           "facts": ["aGOz5otlEs8@845#place"]
         }
-      ]
+      ],
+      "article": "nevsky"
     },
     "eat/ayryan": {
       "card": "yogurt-shop",
@@ -173,20 +173,22 @@
       "scene": "hJ6vFAGX3rI@2370#price",
       "story": [
         {
-          "text": "迷った末に選んだのは、定番らしいチーズと卵のバニツァ。3.6ユーロ、日本円で638円でした。2階のイートインで食べてみると、チーズは濃厚でしょっぱく、北マケドニアやアルバニアのチーズに近い味。外はパリパリ、中はねっとりしたパイ生地に、チーズがゴロゴロ入っていました。",
+          "text": "定番らしいチーズと卵のバニツァは3.6ユーロ。外はパリパリ、中はねっとりで、チーズは濃厚でしょっぱかったです。",
           "facts": ["hJ6vFAGX3rI@2290#food", "hJ6vFAGX3rI@2370#price", "hJ6vFAGX3rI@2490#food"]
         }
-      ]
+      ],
+      "article": "banitsa"
     },
     "eat/musaka": {
       "facts": ["aGOz5otlEs8@6005#place", "aGOz5otlEs8@6155#price", "aGOz5otlEs8@6245#price", "aGOz5otlEs8@6370#food", "aGOz5otlEs8@6525#quote"],
       "scene": "aGOz5otlEs8@6370#food",
       "story": [
         {
-          "text": "女性市場の中にあるブルガリア料理のファストフード店「ピストル36」で、4ユーロぐらいでお任せにしてもらいました。出てきたのは3ユーロのムサカ。念願の一皿です。挽き肉・じゃがいも・にんじんの上に、ヨーグルトと卵のソースをかけて焼いた家庭料理で、食べてみると肉じゃがの分厚いオムレツみたいな味でした。",
-          "facts": ["aGOz5otlEs8@6005#place", "aGOz5otlEs8@6155#price", "aGOz5otlEs8@6245#price", "aGOz5otlEs8@6370#food", "aGOz5otlEs8@6525#quote"]
+          "text": "女性市場の中の「ピストル36」で、3ユーロのムサカ。肉じゃがの分厚いオムレツのような味でした。",
+          "facts": ["aGOz5otlEs8@6005#place", "aGOz5otlEs8@6245#price", "aGOz5otlEs8@6370#food"]
         }
-      ]
+      ],
+      "article": "nevsky"
     },
     "eat/boza": {
       "card": "boza",
@@ -197,7 +199,8 @@
           "text": "買ったボザは、1L入りで150円ぐらいでした。",
           "facts": ["zDHHuafmP1A@2945#price"]
         }
-      ]
+      ],
+      "article": "xmas"
     }
   }
 }

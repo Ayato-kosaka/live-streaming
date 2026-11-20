@@ -244,6 +244,10 @@ PAGES: dict[str, str] = {
     "skopje-prices.ts": "スコピエの物価の記事（/travel/north-macedonia/skopje/prices）の、値段の表と一言の場面のリンク",
     "sofia-prices.ts": "ソフィアの物価の記事（/travel/bulgaria/sofia/prices）の、値段の表と一言の場面のリンク",
     "skopje-matka.ts": "マトカ渓谷に行ってきた記事（/travel/north-macedonia/skopje/matka）の、一言と場面のリンク",
+    "sofia-banitsa.ts": "ソフィアのパン屋でバニツァを食べてきたの記事（/travel/bulgaria/sofia/banitsa）の、一言と場面のリンク",
+    "sofia-xmas.ts": "ソフィアのクリスマスマーケットに行ってきたの記事（/travel/bulgaria/sofia/xmas）の、一言と場面のリンク",
+    "sofia-hotspring.ts": "ソフィアの温泉の蛇口で温泉水を飲んできたの記事（/travel/bulgaria/sofia/hotspring）の、一言と場面のリンク",
+    "sofia-nevsky.ts": "ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきたの記事（/travel/bulgaria/sofia/nevsky）の、一言と場面のリンク",
     "skopje-kale.ts": "スコピエ城塞に行ってきたの記事（/travel/north-macedonia/skopje/kale）の、一言と場面のリンク",
     "skopje-vodno.ts": "ヴォドノ山に登ってきたの記事（/travel/north-macedonia/skopje/vodno）の、一言と場面のリンク",
     "sofia-yogurt.ts": "ソフィアで本場のヨーグルトを探してきたの記事（/travel/bulgaria/sofia/yogurt）の、一言と場面のリンク",
@@ -263,7 +267,8 @@ PAGES: dict[str, str] = {
 # 行き先はその1本しかない
 FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
          "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "bulgaria-sofia-went.ts",
-         "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts")
+         "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts",
+         "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、
