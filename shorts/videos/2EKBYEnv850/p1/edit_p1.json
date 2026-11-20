@@ -4,11 +4,6 @@
  "id": "2EKBYEnv850-p1",
  "style": "style_ons.json",
  "sources": {
-  "c2_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_free/01_guide_hotspring.mp4",
-   "watermark": "prism_live",
-   "t0": 0.0
-  },
   "c05": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/ingest/2EKBYEnv850/clips/05_0-29-00_0-30-20.mp4",
    "watermark": "prism_live",
@@ -31,10 +26,10 @@
     "margin": 5
    }
   },
-  "c2_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_free/03_guide_cover.mp4",
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_photo/01_01_nevsky.mp4",
    "watermark": "prism_live",
-   "t0": 120.0
+   "t0": 0.0
   },
   "c02": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/ingest/2EKBYEnv850/clips/02_0-15-00_0-17-40.mp4",
@@ -58,15 +53,15 @@
     "margin": 5
    }
   },
-  "c3_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/03_gen_O3.mp4",
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_photo/02_02_taps_city.mp4",
+   "watermark": "prism_live",
+   "t0": 60.0
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_photo/03_03_yubatake.mp4",
    "watermark": "prism_live",
    "t0": 120.0
-  },
-  "c3_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/01_gen_O1.mp4",
-   "watermark": "prism_live",
-   "t0": 0.0
   },
   "c01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/ingest/2EKBYEnv850/clips/01_0-02-20_0-02-50.mp4",
@@ -112,28 +107,13 @@
     "margin": 5
    }
   },
-  "c2_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_free/02_guide_baths.mp4",
-   "watermark": "prism_live",
-   "t0": 60.0
-  },
-  "c3_07": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/07_gen_O7.mp4",
-   "watermark": "prism_live",
-   "t0": 360.0
-  },
-  "c3_08": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/08_gen_O9.mp4",
-   "watermark": "prism_live",
-   "t0": 420.0
-  },
-  "c3_04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/04_gen_O4.mp4",
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_photo/04_04_bath_dome.mp4",
    "watermark": "prism_live",
    "t0": 180.0
   },
-  "c3_05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/05_gen_O5.mp4",
+  "c2_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_photo/05_05_moss.mp4",
    "watermark": "prism_live",
    "t0": 240.0
   },
@@ -159,29 +139,30 @@
     "margin": 5
    }
   },
-  "c3_06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_gen/06_gen_O6.mp4",
+  "c2_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_photo/06_06_man_walk.mp4",
    "watermark": "prism_live",
    "t0": 300.0
+  },
+  "c2_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/art_photo/07_07_taps_queue.mp4",
+   "watermark": "prism_live",
+   "t0": 360.0
   }
  },
  "cuts": [
   {
-   "src": "c2_01",
-   "in": 15,
-   "out": 53,
+   "src": "c05",
+   "in": 210,
+   "out": 248,
    "row": 0,
    "zoom": {
     "from": 1.0,
-    "to": 1.08,
-    "x": 0.45,
-    "y": 0.6
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.45
    },
-   "note": "「ブルガリアで温泉を飲んでみたら、」: 案内ページの絵（温泉の蛇口で湯を汲む人。後ろ姿）。0秒目を配信の粗い1コマにしない（F-079）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "「ブルガリアで温泉を飲んでみたら、」: 蛇口から直に湯を飲む本人（配信の動く画。F-086: 0秒目を止め絵にしない）"
   },
   {
    "src": "c05",
@@ -197,20 +178,21 @@
    "note": "「激まずすぎた！」: 飲んだあとの本人のしかめ顔（答えの画。F-073。18行目と同じ瞬間を先に見せる）"
   },
   {
-   "src": "c2_03",
+   "src": "c2_01",
    "in": 15,
    "out": 49,
    "row": 1,
    "zoom": {
     "from": 1.0,
-    "to": 1.08,
+    "to": 1.1,
     "x": 0.5,
-    "y": 0.45
+    "y": 0.4
    },
-   "note": "案内ページの表紙の絵（ネフスキー大聖堂）",
+   "note": "写真: ソフィアのネフスキー大聖堂（Commons・Dudva・CC BY-SA 3.0）",
    "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
+    "saturation": 1.35,
+    "contrast": 1.05,
+    "warmth": 0.03
    }
   },
   {
@@ -227,37 +209,39 @@
    "note": "雨のソフィアの広場とハト（場所の札）"
   },
   {
-   "src": "c3_03",
+   "src": "c2_02",
    "in": 15,
    "out": 82,
    "row": 2,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
+    "to": 1.28,
     "x": 0.5,
-    "y": 0.6
+    "y": 0.45
    },
-   "note": "描いた絵 O3（温泉の上に建つ街の断面）",
+   "note": "写真: 中央鉱泉浴場の横の、温泉の出る蛇口が並ぶ広場（Commons・Apostoloff・CC BY-SA 3.0）",
    "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
+    "saturation": 1.35,
+    "contrast": 1.05,
+    "warmth": 0.03
    }
   },
   {
-   "src": "c3_01",
+   "src": "c2_03",
    "in": 15,
    "out": 72,
    "row": 3,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
-    "x": 0.5,
-    "y": 0.55
+    "to": 1.24,
+    "x": 0.6,
+    "y": 0.48
    },
-   "note": "描いた絵 O1（日本の露天風呂）",
+   "note": "写真: 草津温泉の湯畑（Commons・Aspere・CC0）",
    "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
+    "saturation": 1.35,
+    "contrast": 1.05,
+    "warmth": 0.03
    }
   },
   {
@@ -300,20 +284,21 @@
    "note": "「え、これが温泉の建物？」（AI の声）: 中央鉱泉浴場の建物"
   },
   {
-   "src": "c2_02",
+   "src": "c2_04",
    "in": 15,
    "out": 53,
    "row": 6,
    "zoom": {
     "from": 1.0,
-    "to": 1.08,
+    "to": 1.1,
     "x": 0.5,
-    "y": 0.45
+    "y": 0.4
    },
-   "note": "本人の声「めっちゃ素敵。」: 案内ページの同じ建物の絵（1カットだと 3秒を越える）",
+   "note": "本人の声「めっちゃ素敵。」: 同じ建物の丸屋根の写真（Commons・MrPanyGoff・CC BY-SA 3.0。1カットだと 3秒を越える）",
    "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
+    "saturation": 1.35,
+    "contrast": 1.05,
+    "warmth": 0.03
    }
   },
   {
@@ -327,7 +312,7 @@
     "x": 0.5,
     "y": 0.5
    },
-   "note": "建物の横を歩いて探す（＋案内ページの蛇口の絵の札）"
+   "note": "建物の横を歩いて探す（＋湯の出る蛇口の写真の札）"
   },
   {
    "src": "c03",
@@ -356,20 +341,21 @@
    "note": "「嗅いでみたら、」（AI の声）: 顔を近づける（髪が入る）"
   },
   {
-   "src": "c3_07",
+   "src": "c2_05",
    "in": 15,
    "out": 67,
    "row": 9,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
+    "to": 1.12,
     "x": 0.5,
     "y": 0.5
    },
-   "note": "本人の声「なんか、コケの匂い」: 描いた絵 O7（コケと湯気）",
+   "note": "本人の声「なんか、コケの匂い」: コケの寄りの写真（Commons・User:Newt・CC BY-SA 3.0）",
    "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
+    "saturation": 1.35,
+    "contrast": 1.05,
+    "warmth": 0.03
    }
   },
   {
@@ -412,55 +398,48 @@
    "note": "本人の声「あちあちちあちちちちち！」: 湯に手を当てる（声と同じ秒）"
   },
   {
-   "src": "c3_08",
-   "in": 15,
-   "out": 62,
+   "src": "c04",
+   "in": 705,
+   "out": 752,
    "row": 13,
    "zoom": {
-    "from": 1.0,
-    "to": 1.1,
-    "x": 0.5,
+    "from": 1.05,
+    "to": 1.15,
+    "x": 0.6,
     "y": 0.5
    },
-   "note": "描いた絵 O9（湯にぬれた手のひら）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "湯にぬれた手のひら（窓 04。13行目の窓 03 の湯船と似た見た目を続けない）"
   },
   {
-   "src": "c3_04",
+   "src": "c2_06",
    "in": 15,
    "out": 63,
    "row": 14,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
+    "to": 1.12,
     "x": 0.4,
-    "y": 0.6
+    "y": 0.5
    },
-   "note": "描いた絵 O4（蛇口へ歩いてくるおっちゃんの後ろ姿）",
+   "note": "写真: ボトルを持って蛇口へ歩く年配の男性の後ろ姿（Commons・Apostoloff・CC BY-SA 3.0）",
    "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
+    "saturation": 1.35,
+    "contrast": 1.05,
+    "warmth": 0.03
    }
   },
   {
-   "src": "c3_05",
-   "in": 15,
-   "out": 67,
+   "src": "c04",
+   "in": 450,
+   "out": 502,
    "row": 15,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
-    "x": 0.55,
-    "y": 0.45
+    "to": 1.08,
+    "x": 0.45,
+    "y": 0.55
    },
-   "note": "本人の声「おっちゃんめっちゃ飲んでたよ。」: 描いた絵 O5（湯を飲むおっちゃん）",
-   "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
-   }
+   "note": "本人の声「おっちゃんめっちゃ飲んでたよ。」: 地元の人が蛇口の湯に手を伸ばす（配信。顔は画面の外）"
   },
   {
    "src": "c05",
@@ -473,7 +452,7 @@
     "x": 0.5,
     "y": 0.45
    },
-   "note": "蛇口から直に湯を飲む本人（＋おっちゃんの絵の札）"
+   "note": "蛇口から直に湯を飲む本人（＋蛇口でかがむ地元の人の写真の札）"
   },
   {
    "src": "c05",
@@ -512,40 +491,42 @@
     "x": 0.5,
     "y": 0.4
    },
-   "note": "笑ってしまう本人（＋温泉卵の絵の札）"
+   "note": "笑ってしまう本人（＋温泉卵の写真の札）"
   },
   {
-   "src": "c3_06",
+   "src": "c2_07",
    "in": 15,
    "out": 95,
    "row": 19,
    "zoom": {
     "from": 1.0,
-    "to": 1.1,
-    "x": 0.55,
-    "y": 0.6
+    "to": 1.3,
+    "x": 0.62,
+    "y": 0.47
    },
-   "note": "描いた絵 O6（ボトルを持って蛇口に並ぶ地元の人の後ろ姿）",
+   "note": "写真: 蛇口に並んでボトルに湯を汲む人たちの後ろ姿（Commons・Apostoloff・CC BY-SA 3.0）",
    "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
+    "saturation": 1.35,
+    "contrast": 1.05,
+    "warmth": 0.03
    }
   },
   {
-   "src": "c2_01",
+   "src": "c2_02",
    "in": 15,
    "out": 91,
    "row": 20,
    "zoom": {
     "from": 1.0,
-    "to": 1.07,
+    "to": 1.35,
     "x": 0.45,
-    "y": 0.6
+    "y": 0.5
    },
-   "note": "0秒目と同じ温泉の蛇口の絵（輪にする）",
+   "note": "「この温泉」: 3行目と同じ、温泉の蛇口が並ぶ広場の写真。v3 の初めは0秒目の飲む画に戻したが、終わりの札が本人の顔に重なった",
    "grade": {
-    "saturation": 1.1,
-    "contrast": 1.03
+    "saturation": 1.35,
+    "contrast": 1.05,
+    "warmth": 0.03
    }
   }
  ],
@@ -747,7 +728,7 @@
     "frames": 84,
     "voice_frames": 76,
     "cuts": [
-     "onsArtP1v01 0:00:00.5+1.27s",
+     "0:29:07.0+1.27s",
      "0:29:16.0+1.53s"
     ],
     "line": "ブルガリアで温泉を飲んでみたら、激まずすぎた！",
@@ -759,7 +740,7 @@
     "frames": 67,
     "voice_frames": 59,
     "cuts": [
-     "onsArtP1v01 0:02:00.5+1.13s",
+     "onsPhoP1v03 0:00:00.5+1.13s",
      "0:15:00.0+1.10s"
     ],
     "line": "やってきたのは、ブルガリアの首都ソフィア！",
@@ -771,7 +752,7 @@
     "frames": 67,
     "voice_frames": 59,
     "cuts": [
-     "onsGenP1v01 0:02:00.5+2.23s"
+     "onsPhoP1v03 0:01:00.5+2.23s"
     ],
     "line": "この街、温泉の上に建ってるらしい！",
     "telop": null
@@ -782,7 +763,7 @@
     "frames": 57,
     "voice_frames": 49,
     "cuts": [
-     "onsGenP1v01 0:00:00.5+1.90s"
+     "onsPhoP1v03 0:02:00.5+1.90s"
     ],
     "line": "温泉大国の日本出身やけど、",
     "telop": null
@@ -816,7 +797,7 @@
     "voice_frames": 102,
     "cuts": [
      "0:17:33.0+2.40s",
-     "onsArtP1v01 0:01:00.5+1.27s"
+     "onsPhoP1v03 0:03:00.5+1.27s"
     ],
     "line": "え、これが温泉の建物？めっちゃ素敵！",
     "telop": null,
@@ -859,7 +840,7 @@
     "voice_frames": 74,
     "cuts": [
      "0:22:34.0+1.00s",
-     "onsGenP1v01 0:06:00.5+1.73s"
+     "onsPhoP1v03 0:04:00.5+1.73s"
     ],
     "line": "嗅いでみたら、コケの匂い！",
     "telop": null,
@@ -918,7 +899,7 @@
     "frames": 47,
     "voice_frames": 39,
     "cuts": [
-     "onsGenP1v01 0:07:00.5+1.57s"
+     "0:25:43.5+1.57s"
     ],
     "line": "しかも、手がぬめぬめや！",
     "telop": null
@@ -929,7 +910,7 @@
     "frames": 48,
     "voice_frames": 40,
     "cuts": [
-     "onsGenP1v01 0:03:00.5+1.60s"
+     "onsPhoP1v03 0:05:00.5+1.60s"
     ],
     "line": "そこへ地元のおっちゃんが来たら、",
     "telop": null
@@ -940,7 +921,7 @@
     "frames": 52,
     "voice_frames": 44,
     "cuts": [
-     "onsGenP1v01 0:04:00.5+1.73s"
+     "0:25:35.0+1.73s"
     ],
     "line": "え、この湯をめっちゃ飲んでる！",
     "telop": null,
@@ -1000,7 +981,7 @@
     "frames": 80,
     "voice_frames": 72,
     "cuts": [
-     "onsGenP1v01 0:05:00.5+2.67s"
+     "onsPhoP1v03 0:06:00.5+2.67s"
     ],
     "line": "なのに地元の人は、並んでこの湯を取り合いしてる！",
     "telop": null
@@ -1011,7 +992,7 @@
     "frames": 76,
     "voice_frames": 53,
     "cuts": [
-     "onsArtP1v01 0:00:00.5+2.53s"
+     "onsPhoP1v03 0:01:00.5+2.53s"
     ],
     "line": "みんなやったら、この温泉、飲んでみる？",
     "telop": null
@@ -1039,50 +1020,62 @@
  },
  "stickers": [
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-hotspring-1200.webp",
-   "crop": [
-    380,
-    20,
-    820,
-    560
-   ],
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/v3/photo_dl/taps_queue_back.jpg",
    "x": 790,
    "y": 1360,
-   "w": 420,
+   "w": 330,
    "rotate": 4,
+   "crop": [
+    820,
+    570,
+    300,
+    320
+   ],
    "from": 281,
    "to": 329
   },
   {
-   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/do-hotspring-1200.webp",
-   "crop": [
-    0,
-    380,
-    560,
-    520
-   ],
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/v3/photo_dl/taps_wide.jpg",
    "x": 300,
    "y": 1360,
-   "w": 380,
+   "w": 440,
    "rotate": -4,
+   "crop": [
+    300,
+    770,
+    1200,
+    500
+   ],
    "from": 480,
    "to": 548
   },
   {
-   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/draw/O5.jpg",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/v3/photo_dl/man_bend.jpg",
    "x": 790,
    "y": 1360,
    "w": 300,
    "rotate": 5,
+   "crop": [
+    1000,
+    1150,
+    920,
+    1200
+   ],
    "from": 997,
    "to": 1032
   },
   {
-   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/draw/O2.jpg",
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/ons/v3/photo_dl/egg.jpg",
    "x": 300,
    "y": 1370,
-   "w": 330,
+   "w": 360,
    "rotate": -5,
+   "crop": [
+    150,
+    0,
+    1620,
+    1300
+   ],
    "from": 1164,
    "to": 1215
   }
@@ -1161,5 +1154,5 @@
    "text": "◆中央鉱泉浴場"
   }
  ],
- "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（中央鉱泉浴場の建物・温泉の蛇口。同じ絵の切り抜き）と ChatGPT で描いた O5（湯を飲むおっちゃん）・O2（温泉卵）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。雨の日の配信なので、配信の素材の彩度は 1.75・コントラスト 1.1（v1 の 1.5 では彩度 0.38）"
+ "_polish": "編集の磨き（#1284）の欄を、build_edit.py で組んだ指示書に足す（行・カットは 0 始まり。秒は行かカットの頭から、負なら終わりから）。札の絵: ソフィアの案内ページの絵（中央鉱泉浴場の建物・温泉の蛇口。同じ絵の切り抜き）と ChatGPT で描いた O5（湯を飲むおっちゃん）・O2（温泉卵）。効果音はポケットサウンド（mp3 はリポジトリに置かない。作業箱で切って使う）。雨の日の配信なので、配信の素材の彩度は 1.75・コントラスト 1.1（v1 の 1.5 では彩度 0.38） v3: 札の画は Commons の写真4枚（湯の出る蛇口・蛇口の並ぶ広場・蛇口でかがむ地元の人の後ろ姿・温泉卵）。案内ページの水彩画と描いた絵は使わない（F-082）。写真は曇りの日の Commons の写真が多く彩度が 0.35 まで下がったので、写真の色の整えを 1.35／1.05 にした"
 }
