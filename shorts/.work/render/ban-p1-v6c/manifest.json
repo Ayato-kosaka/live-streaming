@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__ban-p1-v6c",
  "mode": "render",
- "dest": "render/ban-p1-v6c/inbox",
+ "dest": "render/ban-p1-v6c",
  "video": null,
  "channel": null,
  "request": "shorts/render/ban-p1-v6c.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1177,
-  "encrypted": 1184
+  "plain": 36523,
+  "tar_gz": 9416,
+  "encrypted": 9424
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1184,
-   "sha256": "abab375aeb7ffaa0256944493f953beb061e6a980b848af3fe5ad296531fcc13"
+   "bytes": 9424,
+   "sha256": "5697ba1ad195f693e586525014538cc15c7d020437b1809a01a284ac6d9106f9"
   }
  ],
- "hmac_sha256": "64598f1972c0e061744c843ed844678e12b865baab642db9c942867673e603e8",
+ "hmac_sha256": "6e24a09ad42c8dfc2c45251d70f5eb87fc9f1cd30a03650796237bb769030dae",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-20T13:59:41+00:00",
+ "created_at": "2026-11-20T14:11:00+00:00",
  "nonce": "ecb9ef0067d34284c8688b58"
 }
