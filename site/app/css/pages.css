@@ -1196,6 +1196,15 @@ a.chip:active, button.chip:active, .chip.link:active {
 
 /* ハイライト。中身は折りたたみ（Fold）になったので、ここは並べ方だけ持つ */
 .hlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-2); }
+/* 「この国であったこと」の残り（`record.tsx`）。初めは数本だけ出し、残りはここに畳む。
+   押しどころは並びの畳み（`.longer`）と同じ形。字は面に置いたまま、開くまで見せないだけ */
+.hmore > summary { list-style: none; }
+.hmore > summary::-webkit-details-marker { display: none; }
+.hmore > .hlist { margin-top: var(--sp-2); }
+.hmore .hmore-close { display: none; }
+.hmore[open] .hmore-open { display: none; }
+.hmore[open] .hmore-close { display: inline; }
+.hmore[open] > summary svg { transform: rotate(180deg); }
 
 .pager { display: flex; justify-content: space-between; gap: var(--sp-2); margin-top: var(--sp-2); }
 .pager a {
@@ -1455,6 +1464,10 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .city.is-quiet .city-head { cursor: default; }
 .city.is-quiet .city-head::after { display: none; }
+/* ガイドを持つ街の札と、その下にぶら下げた「この街の記事」の畳み（`record.tsx`）。
+   記事を街と同じ並びに出すと、記事まで「行った街」に見える（docs/island-misses.md #340） */
+.city-set { display: grid; gap: var(--sp-1); }
+.city-arts-list { display: grid; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3) var(--sp-3); }
 
 /* --- ログイン --- */
 .signin {
