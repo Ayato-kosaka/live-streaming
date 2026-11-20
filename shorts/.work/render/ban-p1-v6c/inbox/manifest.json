@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__ban-p1-v6c",
+ "mode": "render",
+ "dest": "render/ban-p1-v6c/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/ban-p1-v6c.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 2012,
+  "tar_gz": 1177,
+  "encrypted": 1184
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1184,
+   "sha256": "abab375aeb7ffaa0256944493f953beb061e6a980b848af3fe5ad296531fcc13"
+  }
+ ],
+ "hmac_sha256": "64598f1972c0e061744c843ed844678e12b865baab642db9c942867673e603e8",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-20T13:59:41+00:00",
+ "nonce": "ecb9ef0067d34284c8688b58"
+}
