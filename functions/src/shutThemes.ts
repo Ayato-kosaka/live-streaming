@@ -18,6 +18,8 @@
 
 /** 宛先の id → その時刻から書けない（epoch ms。`0` はずっと） */
 export const SHUT_THEMES: Readonly<Record<string, number>> = {
+  /* ソフィアでこれやって — 2026-11-21 00:00 JST から */
+  "bulgaria": 1795186800000,
   /* アルバニアでこれやって — 畳んである（closed） */
   "albania": 0,
   /* 北欧の旅 — 畳んである（closed） */

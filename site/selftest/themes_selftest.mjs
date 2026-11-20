@@ -352,6 +352,46 @@ check(
   flipped.join("|") === front.join("|"),
 );
 
+/* ======================================== 5. 日付で閉じる宛先（`closesOn`）
+
+   あやと 2026-11-20「明日の移動日にはもう閉じるようにしてほしい」。ソフィアあて（`bulgaria`）は
+   ルーマニアへ移る 2026-11-21（日本時間）に閉じる。**21日に焼き直さなくても閉じていること**を見る:
+   20日に焼いた表（`BUILT_AT` = 20日）を、21日の時計で開く。 */
+const withClose = THEMES.filter((t) => t.closesOn);
+if (withClose.length === 0) nothing("日付で閉じる宛先（`closesOn`）が1つも無い");
+const badDay = withClose.filter((t) => !/^\d{4}-\d{2}-\d{2}$/.test(t.closesOn));
+check(`閉じる日は YYYY-MM-DD の形（${withClose.length}件）`, badDay.length === 0, badDay.map((t) => t.id).join(" "));
+check("ソフィアあて（bulgaria）は 2026-11-21 に閉じる", T.themeById("bulgaria")?.closesOn === "2026-11-21");
+
+/** 日本時間の時刻（`noon` と同じく UTC で組む。日本時間 = UTC+9） */
+const jst = (y, m, d, h, mi = 0) => new Date(Date.UTC(y, m - 1, d, h - 9, mi, 0));
+{
+  /* 20日に焼いた表を組み直す（`lib/builtAt.ts` は読み込んだときに環境変数を読む） */
+  const saved = process.env.NEXT_PUBLIC_BUILT_AT;
+  process.env.NEXT_PUBLIC_BUILT_AT = "2026-11-20T03:00:00Z";
+  for (const k of Object.keys(req.cache)) if (k.startsWith(OUT)) delete req.cache[k];
+  const B20 = req(join(OUT, "themes.js"));
+  if (saved === undefined) delete process.env.NEXT_PUBLIC_BUILT_AT;
+  else process.env.NEXT_PUBLIC_BUILT_AT = saved;
+  const sofia = B20.themeById("bulgaria");
+  const romania = B20.themeById("romania");
+  if (!sofia || !romania) nothing("ソフィアあて・ブカレストあての宛先が読めない");
+  check("20日に焼いた表: 焼いた HTML（画面が出る前）では、ソフィアあてはまだ書ける", B20.isOpenTheme(sofia, null) === true);
+  check("20日に焼いた表: 20日 23:59（日本時間）の画面では、ソフィアあてはまだ書ける", B20.isOpenTheme(sofia, jst(2026, 11, 20, 23, 59)) === true);
+  check("20日に焼いた表のまま: 21日 0:00（日本時間）の画面では、ソフィアあては閉じる（焼き直さなくても）",
+    B20.isOpenTheme(sofia, jst(2026, 11, 21, 0, 0)) === false);
+  check("20日に焼いた表のまま: 21日の画面では、ソフィアの面に決め打ちの付箋の窓も閉じる（`shutDest`）",
+    B20.shutDest(sofia, jst(2026, 11, 21, 12)) === true);
+  const open21 = B20.openThemes(jst(2026, 11, 21, 12)).map((t) => t.id);
+  check(`21日の書ける宛先に、ソフィアあては無く、ブカレストあては在る（${open21.join(" ")}）`,
+    !open21.includes("bulgaria") && open21.includes("romania"));
+  /* 読む側の棚からは消えない（貼られた付箋は読める） */
+  const read21 = B20.shelves(B20.THEMES, jst(2026, 11, 21, 12)).flatMap((s) => s.themes.map((t) => t.id));
+  check("閉じたあとも、ソフィアあての棚は読む側に残る", read21.includes("bulgaria"));
+  /* 対照: 閉じる日を外した写しなら、21日でも書ける（日付で閉じていることを、この欄が担っている） */
+  check("対照: 閉じる日を外すと、21日でもソフィアあては書ける", B20.isOpenTheme({ ...sofia, closesOn: undefined }, jst(2026, 11, 21, 12)) === true);
+}
+
 console.log(`\n${OK + BAD}件中 ${OK}件通った`);
 if (BAD) {
   console.log(`\n${BREAK_HINT}`);
