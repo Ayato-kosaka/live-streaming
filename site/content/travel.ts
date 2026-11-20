@@ -260,6 +260,14 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "north-macedonia", city: "skopje", slug: "debar-maalo", crumb: "デバル・マーロ" },
   /* ソフィアで本場のヨーグルトを探してきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
   { country: "bulgaria", city: "sofia", slug: "yogurt", crumb: "ヨーグルト" },
+  /* ソフィアのクリスマスマーケットに行ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
+  { country: "bulgaria", city: "sofia", slug: "xmas", crumb: "クリスマスマーケット" },
+  /* ソフィアのパン屋でバニツァを食べてきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
+  { country: "bulgaria", city: "sofia", slug: "banitsa", crumb: "バニツァ" },
+  /* ソフィアの温泉の蛇口で温泉水を飲んできた【2026年11月】（#1228。マトカ渓谷と同じ型） */
+  { country: "bulgaria", city: "sofia", slug: "hotspring", crumb: "温泉の蛇口" },
+  /* ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
+  { country: "bulgaria", city: "sofia", slug: "nevsky", crumb: "ネフスキー大聖堂" },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */

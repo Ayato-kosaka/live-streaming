@@ -1,6 +1,10 @@
 import type { GuideArticle } from "@/components/travel/article/types";
 import { ARTICLE as SOFIA_PRICES } from "./bulgaria/sofia-prices";
 import { ARTICLE as SKOPJE_MATKA } from "./north-macedonia/skopje-matka";
+import { ARTICLE as SOFIA_BANITSA } from "./bulgaria/sofia-banitsa";
+import { ARTICLE as SOFIA_XMAS } from "./bulgaria/sofia-xmas";
+import { ARTICLE as SOFIA_HOTSPRING } from "./bulgaria/sofia-hotspring";
+import { ARTICLE as SOFIA_NEVSKY } from "./bulgaria/sofia-nevsky";
 import { ARTICLE as SKOPJE_PANPAN } from "./north-macedonia/skopje-panpan";
 import { ARTICLE as SKOPJE_DEBAR_MAALO } from "./north-macedonia/skopje-debar-maalo";
 import { ARTICLE as SKOPJE_CLEMENT } from "./north-macedonia/skopje-clement";
@@ -22,6 +26,10 @@ import { ARTICLE as SKOPJE_PRICES } from "./north-macedonia/skopje-prices";
 const ARTICLES: Record<string, GuideArticle> = {
   "north-macedonia/skopje/prices": SKOPJE_PRICES,
   "north-macedonia/skopje/matka": SKOPJE_MATKA,
+  "bulgaria/sofia/banitsa": SOFIA_BANITSA,
+  "bulgaria/sofia/xmas": SOFIA_XMAS,
+  "bulgaria/sofia/hotspring": SOFIA_HOTSPRING,
+  "bulgaria/sofia/nevsky": SOFIA_NEVSKY,
   "north-macedonia/skopje/panpan": SKOPJE_PANPAN,
   "north-macedonia/skopje/debar-maalo": SKOPJE_DEBAR_MAALO,
   "north-macedonia/skopje/clement": SKOPJE_CLEMENT,

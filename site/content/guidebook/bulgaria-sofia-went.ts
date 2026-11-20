@@ -10,7 +10,7 @@ import type { Went } from "./types";
 export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, { went: Went }> } = /* BEGIN GUIDE */
 {
  "updated": "2026-11-20",
- "hash": "034570ef28a11ad8",
+ "hash": "6dd70336cc8e5a45",
  "items": {
   "todo/yogurt": {
    "went": {
@@ -47,8 +47,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-16"
     },
     "story": [
-     "蛇口の温泉水を飲んでみましたが、正直まずかったです。温泉卵の汁のような味で、ぬめぬめしていました。"
+     "中央鉱泉浴場のそばの温泉の蛇口で、温泉水を飲んでみました。温泉卵の汁のような味で、引くほどまずかったです。"
     ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/hotspring",
+     "title": "ソフィアの温泉の蛇口で温泉水を飲んできた【2026年11月】"
+    },
     "say": "引くほどまずいです"
    }
   },
@@ -61,8 +65,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-15"
     },
     "story": [
-     "バニツァを買いに入ったパン屋は、パンの種類が多く、ヨーグルトも売っていました。バニツァは丸いものを想像していたら、形も中身もいろいろ。アップルシナモンとくるみ、ポテト入りのビーガン、ほうれん草とチーズと卵などが並んでいました。"
-    ]
+     "パン屋のバニツァは、形も中身もさまざま。アップルシナモンとくるみ、ポテト入りのビーガンなどが並んでいました。"
+    ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/banitsa",
+     "title": "ソフィアのパン屋でバニツァを食べてきた【2026年11月】"
+    }
    }
   },
   "todo/xmas": {
@@ -74,9 +82,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-14"
     },
     "story": [
-     "行ったのは開いた初日の夜で、準備が間に合っておらず、ホットチョコの店はまだ開いていませんでした。ワッフル屋でバナナとストロベリーの両方を頼んだら、ミックスにしてくれました。",
-     "昼にもう一度通ると、ソーセージがたくさん売られていて、フランクフルトの匂いでおなかが減ってきます。ツリーの飾りも凝っていて、夜には分からなかったデコレーションまで見えました。"
+     "開いた初日の夜は準備が間に合っておらず、ホットチョコの店は閉まっていました。昼に通ると、ソーセージの屋台とツリーの飾りがよく見えました。"
     ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/xmas",
+     "title": "ソフィアのクリスマスマーケットに行ってきた【2026年11月】"
+    },
     "pic": {
      "src": "/travel/bulgaria/sofia/xmas-market-960.webp",
      "small": "/travel/bulgaria/sofia/xmas-market-480.webp",
@@ -123,9 +134,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-16"
     },
     "story": [
-     "初めは、石の遺構を温泉の跡だと思っていました。調べてみると、古代ローマの都市セルディカの遺跡で、セルディカはソフィアの元の名前らしいです。",
-     "別の日に地下道へ入ると、急にローマ時代の遺跡が現れて、異世界に来たのかと思いました。"
+     "地下道に入ると、急にローマ時代の遺跡が現れます。セルディカは、ソフィアの元の名前です。"
     ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/hotspring",
+     "title": "ソフィアの温泉の蛇口で温泉水を飲んできた【2026年11月】"
+    },
     "pic": {
      "src": "/travel/bulgaria/sofia/serdica-960.webp",
      "small": "/travel/bulgaria/sofia/serdica-480.webp",
@@ -146,8 +160,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-16"
     },
     "story": [
-     "湯気が出ている温泉の蛇口を見つけました。地元の人たちが並んで温泉水を汲んでいます。触ってみると熱くて、ぬめぬめ。50度ぐらいあるかもしれません。"
-    ]
+     "湯気の出る温泉の蛇口に、地元の人が並んで温泉水を汲んでいました。触ると熱くて、ぬめぬめです。"
+    ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/hotspring",
+     "title": "ソフィアの温泉の蛇口で温泉水を飲んできた【2026年11月】"
+    }
    }
   },
   "see/nevsky": {
@@ -159,8 +177,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-17"
     },
     "story": [
-     "大聖堂の第一印象は、大きくてかっこいい。中にはステンドグラスがあって、正教会では珍しいと思いました。壁画は古く、歴史を感じる色合いです。少し前に行った北マケドニアの教会は絵の色が新しかったので、違いがよく分かりました。2階は入口が閉じていて、上がれませんでした。"
+     "大きくてかっこいい大聖堂。中は画面いっぱいのシャンデリアで、正教会では珍しいステンドグラスもありました。"
     ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/nevsky",
+     "title": "ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきた【2026年11月】"
+    },
     "say": "画面いっぱいにシャンデリアよ"
    }
   },
@@ -173,8 +195,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-16"
     },
     "story": [
-     "歩行者通りの始まりにある聖ネデリャ教会の前から歩き出しました。ブルガリアは高い建物が少なく、路面の店が多い。何でも揃う商店街のような通りです。"
-    ]
+     "聖ネデリャ教会の前から始まる歩行者の通り。路面の店が並び、何でもそろう商店街のようでした。"
+    ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/hotspring",
+     "title": "ソフィアの温泉の蛇口で温泉水を飲んできた【2026年11月】"
+    }
    }
   },
   "see/national-theatre": {
@@ -186,8 +212,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-17"
     },
     "story": [
-     "かっこいい劇場だなと思って、写真を撮りました。"
-    ]
+     "大聖堂へ向かう途中に通りました。かっこいい劇場だなと思って、写真を撮りました。"
+    ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/nevsky",
+     "title": "ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきた【2026年11月】"
+    }
    }
   },
   "eat/ayryan": {
@@ -226,8 +256,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-15"
     },
     "story": [
-     "迷った末に選んだのは、定番らしいチーズと卵のバニツァ。3.6ユーロ、日本円で638円でした。2階のイートインで食べてみると、チーズは濃厚でしょっぱく、北マケドニアやアルバニアのチーズに近い味。外はパリパリ、中はねっとりしたパイ生地に、チーズがゴロゴロ入っていました。"
-    ]
+     "定番らしいチーズと卵のバニツァは3.6ユーロ。外はパリパリ、中はねっとりで、チーズは濃厚でしょっぱかったです。"
+    ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/banitsa",
+     "title": "ソフィアのパン屋でバニツァを食べてきた【2026年11月】"
+    }
    }
   },
   "eat/musaka": {
@@ -239,8 +273,12 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "date": "2026-11-17"
     },
     "story": [
-     "女性市場の中にあるブルガリア料理のファストフード店「ピストル36」で、4ユーロぐらいでお任せにしてもらいました。出てきたのは3ユーロのムサカ。念願の一皿です。挽き肉・じゃがいも・にんじんの上に、ヨーグルトと卵のソースをかけて焼いた家庭料理で、食べてみると肉じゃがの分厚いオムレツみたいな味でした。"
-    ]
+     "女性市場の中の「ピストル36」で、3ユーロのムサカ。肉じゃがの分厚いオムレツのような味でした。"
+    ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/nevsky",
+     "title": "ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきた【2026年11月】"
+    }
    }
   },
   "eat/boza": {
@@ -254,6 +292,10 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
     "story": [
      "買ったボザは、1L入りで150円ぐらいでした。"
     ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/xmas",
+     "title": "ソフィアのクリスマスマーケットに行ってきた【2026年11月】"
+    },
     "pic": {
      "src": "/travel/bulgaria/sofia/boza-960.webp",
      "small": "/travel/bulgaria/sofia/boza-480.webp",

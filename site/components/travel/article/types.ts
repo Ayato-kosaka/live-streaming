@@ -19,19 +19,32 @@ export type Quote = { q: string; at: Scene };
 /** 外の出どころの行（中央銀行など）。`seen` は見た日 */
 export type Ext = { text: string; src: string; name: string; seen: string };
 
-/** あやと島カードの素の写真（その日に貼られたもの。住人は立てない） */
+/**
+ * 記事の写真。ふだんはあやと島カードの素の写真（その日に貼られたもの。住人は立てない）。
+ * その日に1枚も撮っていない記事だけ、Wikimedia Commons から借りた写真を置く（作者とライセンスを必ず出す。
+ * ソフィアの 11月15〜17日はカードが無かった）
+ */
 export type Photo = {
   src: string;
   srcSet: string;
   w: number;
   h: number;
   alt: string;
-  /** 撮った日（現地） */
-  day: string;
-  /** その日の配信（出どころの行のリンク先） */
-  v: string;
   pos?: string;
-};
+} & (
+  | {
+      /** 撮った日（現地） */
+      day: string;
+      /** その日の配信（出どころの行のリンク先） */
+      v: string;
+    }
+  | {
+      /** 借りた写真の作者・ライセンス・元のページ */
+      by: string;
+      lic: string;
+      page: string;
+    }
+);
 
 /** 値段の表の1行。`total` は会計（品の数に入れない行） */
 export type PriceRow = { what: string; amount: string; at: Scene; total?: true };

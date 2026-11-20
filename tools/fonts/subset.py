@@ -264,6 +264,10 @@ STRUT_FILL = {"0"}
 SOLO = [
     "travel/bulgaria/sofia",
     "travel/bulgaria/sofia/yogurt",
+    "travel/bulgaria/sofia/xmas",
+    "travel/bulgaria/sofia/banitsa",
+    "travel/bulgaria/sofia/hotspring",
+    "travel/bulgaria/sofia/nevsky",
     "travel/north-macedonia/skopje",
     "travel/north-macedonia/skopje/oldtown",
     "travel/north-macedonia/skopje/kosmos",
