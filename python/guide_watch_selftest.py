@@ -309,6 +309,23 @@ e = floor_of(floor_html("other/city"), key="xx/test")
 ok("drawn", "ほかの街の描いた絵を入れた札 → 落ちる", any("描いた絵ではない" in x for x in e), True)
 
 
+def floor_skip(html_: str, skip: dict) -> list[str]:
+    art, _ = gw.parse(f'<html><body><article class="gb"><p>道が広い。</p>{html_}</article></body></html>')
+    r = gw.Report("xx/test")
+    gw.check_floor(art, "xx/test", r, skip)
+    return r.errors
+
+
+# まだ届いていない足だけを外す（FLOOR_BEFORE）。外した足は落とさず、外していない足は落とす
+e = floor_skip(floor_html("xx/test", eat=15, do=7), {"eat": "理由"})
+ok("floor", "食べたいものだけ外した面: 食べたいもの15は落とさず、やりたいこと7は落とす",
+   (any("食べたいもの" in x for x in e), any("やりたいこと" in x and "下限" in x for x in e)), (False, True))
+e = floor_skip(floor_html("xx/test", photo=frozenset({1, 2})), {"drawn": "理由"})
+ok("drawn", "描いた絵だけ外した面: 借りた写真の札は落とさない", [x for x in e if "描いた絵ではない" in x], [])
+e = floor_skip(floor_html("xx/test", photo=frozenset({1}), cards=0), {"drawn": "理由"})
+ok("drawn", "描いた絵を外しても、札の数え漏れ（札の形の変化）は落とす", any("合わない" in x for x in e), True)
+
+
 # ---------------------------------------------------------------- 6. 本物の facts を読む
 
 if not BREAK:
@@ -330,7 +347,8 @@ if not BREAK:
             (dist / "travel/north-macedonia").mkdir(parents=True)
             p = dist / "travel/north-macedonia/skopje.html"
             p.write_text(f'<html><head><title>x</title></head><body><article class="tg"><p>行った。</p>'
-                         f'{say(q["it"]["quote"], q["v"], q["t"])}</article></body></html>', encoding="utf-8")
+                         f'{say(q["it"]["quote"], q["v"], q["t"])}{floor_html("north-macedonia/skopje")}</article></body></html>',
+                         encoding="utf-8")
             code = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "north-macedonia/skopje",
                                    "--dist", d], capture_output=True, text=True, timeout=120).returncode
             ok("-", "本物の一言を本物の秒で置いた面は 0", code, 0)
@@ -365,7 +383,10 @@ if not BREAK:
         r = subprocess.run([sys.executable, str(ROOT / "python/guide_watch.py"), "romania/bucharest", "--dist", str(dist),
                             "--streams", str(empty)], capture_output=True, text=True, timeout=120)
         ok("-", "対照: 札の無いブカレストは、数の下限で 1", (r.returncode, "下限" in r.stdout), (1, True))
-        ok("-", "下限より前に作った面には、外した理由が書いてある", all(len(v) > 10 for v in gw.FLOOR_BEFORE.values()), True)
+        ok("-", "下限より前に作った面には、外した足ごとに理由が書いてある",
+           all(legs and all(len(why) > 10 for why in legs.values()) for legs in gw.FLOOR_BEFORE.values()), True)
+        ok("-", "外した足は、下限の足（やりたいこと・見たいもの・食べたいもの）か描いた絵だけ",
+           all(set(legs) <= set(gw.FLOOR) | {"drawn"} for legs in gw.FLOOR_BEFORE.values()), True)
         ok("-", "下限を外した面は、材料のある街だけ（消えた街の除外を残さない）", set(gw.FLOOR_BEFORE) <= set(gw.keys()), True)
         (dist / "travel/romania/bucharest.html").write_text(full, encoding="utf-8")
         (dist / "travel/romania/bucharest.html").write_text(
