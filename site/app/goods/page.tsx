@@ -8,14 +8,11 @@ import Icon, { type IconName } from "@/components/ui/Icon";
 import Notes from "@/components/live/Notes";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Phrase from "@/components/ui/Phrase";
-import StampVotes from "@/components/goods/StampVotes";
-import { shutDest, themeById } from "@/content/themes";
 import {
+  LINE_AYATO,
   LINE_PRICE,
   LINE_RESIDENTS,
-  LINE_STAMPS,
   LINE_STORE,
-  LINE_WORDS,
   SHOP_GOODS,
   shopHref,
   STICKERS,
@@ -40,6 +37,8 @@ import "./goods.css";
  * LINEスタンプは 2026-10-14 から**審査中**の札だった（まだ手に入らない）。
  * 2026-11-19 に審査を通って LINE のお店に出たので、札を SUZURI と同じ
  * 「お店」にして、欄の頭に店への札を立てた（#856）。
+ * **2026-11-20 に、欄を店への札1枚だけにした**（候補のセリフの枠・いいね・
+ * 締め切った付箋の畳みを外した。あやとの言葉は `content/goods.ts` の頭）。
  *
  * **カレンダーの欄は 2026-10-14 に消した**（あやと「カレンダー検討中の項目は
  * 削除して、付箋も閉じて」）。SUZURI に出品したので、カレンダーは
@@ -71,7 +70,7 @@ export const metadata: Metadata = share({
   key: "goods",
   title: "あやとグッズ — ステッカーとLINEスタンプ",
   /* 数は手で書かない。載っているものから作る（`/north-macedonia` と同じ） */
-  description: `島から持って帰れるもの（ステッカー${STICKERS.length}枚）と、お店で買えるもの（LINEスタンプ${LINE_STAMPS.length + LINE_RESIDENTS}種類ほか）を、1枚に並べました。`,
+  description: `島から持って帰れるもの（ステッカー${STICKERS.length}枚）と、お店で買えるもの（LINEスタンプ${LINE_AYATO + LINE_RESIDENTS}種類ほか）を、1枚に並べました。`,
   path: "/goods",
 });
 
@@ -109,17 +108,16 @@ function Sec({
 }
 
 /** 付箋の欄。**畳んで置く**（開く欄が3つ縦に並ぶと、グッズが画面から出る） */
-function Say({ theme, title, lead, omit }: {
+function Say({ theme, title, lead }: {
   theme: string;
   title: string;
-  /** 畳んだままで見える一行。締め切った宛先では書く話をしないので、無くてよい */
-  lead?: string;
-  omit?: string[];
+  /** 畳んだままで見える一行 */
+  lead: string;
 }) {
   return (
     <div className="gd-say">
       <Fold title={title} lead={lead}>
-        <Notes theme={theme} bare title={null} omitTexts={omit} />
+        <Notes theme={theme} bare title={null} />
       </Fold>
     </div>
   );
@@ -163,21 +161,6 @@ function ShopName({ name, parts }: { name: string; parts?: string[] }) {
  * 選び直すと、並びの表がこの面と `content/goods.ts` の2つになる。
  */
 const PEEK = 4;
-
-/**
- * LINEスタンプの付箋が締め切られているか（2026-10-14 に畳んだ）。
- *
- * **判定は島の表の1本**（`content/themes.ts` の `shutDest`）。畳んだ日に
- * 畳みの題（「ほかのセリフを出す」→ 読むだけの題）もここで切り替わる。
- * 付箋の窓の中身（書く段を出さない・締め切りの1行）は `Notes` が同じ判定で決める。
- */
-/* **ここは机から足したぶんを重ねない**（2026-10-15）。貼り先は机から締め切れる
-   ようになったが、この定数が決めるのは**畳みの題と一行だけ**で、書く窓そのものは
-   `Notes` が重ねた側（`lib/dests.ts`）で判断する——机で締め切れば窓は閉じる。
-   題のほうは読み込み時に1回決まる定数で、`output: "export"` なので焼いた字が
-   そのまま配られる。**焼き込みの貼り先1つを名指しした字**なので、変えるなら
-   `content/themes.ts` の1行を変えて焼き直すほうが筋が通る。 */
-const LINE_SHUT = shutDest(themeById("goods-linestamp"), null);
 
 export default function GoodsPage() {
   return (
@@ -311,19 +294,21 @@ export default function GoodsPage() {
              （「島の外の、◯◯のお店です。」）にそろえる。
 
              **住人の名前も顔ぶれも、選びかたも書かない**（#716。名簿は投げ銭の
-             順位そのもの）。出してよいのは数まで。数は手で書かず、
-             `LINE_STAMPS`（あやとのぶん）と `LINE_RESIDENTS` から出す。
+             順位そのもの）。出してよいのは数まで。数は
+             `LINE_AYATO`（あやとのぶん）と `LINE_RESIDENTS` から出す。
              値段の決めかたも書かない。値段そのものは書いてよい（あやと 2026-10-14） */
-          lead={`島の外の、LINE のお店です。あやとと島の住人${LINE_RESIDENTS}人の${LINE_STAMPS.length + LINE_RESIDENTS}種類が、1セット${LINE_PRICE}円。`}
+          lead={`島の外の、LINE のお店です。あやとと島の住人${LINE_RESIDENTS}人の${LINE_AYATO + LINE_RESIDENTS}種類が、1セット${LINE_PRICE}円。`}
         >
           {/* **店への札は、SUZURI の升目と同じ形の1マス**（`gd-shopgrid`）。
               同じ面に「外の店へ行く札」が2通りあると、別の仕掛けに見える。
               新しいタブで開き、こちらの窓への参照もどこから来たかも渡さない
               （SUZURI の升目と同じ `noopener noreferrer`）。
 
-              **17枚の枠より上に置く。** いちばん多い用事は「買いに行く」で、
-              枠は「どの一言にいいねが付いたか」の記録。下に置くと、
-              店への道が畳みの「あと◯枚」の向こうに沈む */}
+              **欄に置くのは、この1マスと上の一行だけ**（あやと 2026-11-20
+              「『ちゃす！集まれ、あやと島の仲間たち』の1個だけで大丈夫」）。
+              前は下に候補のセリフ17枚の枠（いいねの数）と、締め切った付箋の畳みが
+              続いていた。売り出したあとは、どちらも押しても何も起きない記録で、
+              店への1マスより背を取っていた */}
           <ul className="gd-shopgrid">
             <li>
               <a
@@ -344,17 +329,6 @@ export default function GoodsPage() {
               </a>
             </li>
           </ul>
-          <StampVotes />
-          {/* **締め切ったら、書く話をしない。** 題が「ほかのセリフを出す」のままだと、
-              開いた先に窓が無い（`Notes` の `shut`）。開く前の字と開いた中身を
-              同じことにそろえる。貼られた付箋は今までどおり読める */}
-          <Say
-            theme="goods-linestamp"
-            title={LINE_SHUT ? "みんなが出したセリフ" : "ほかのセリフを出す"}
-            lead={LINE_SHUT ? undefined : "候補の絵も貼れる"}
-            /* 17枚の枠がすでに同じ字を出している。一覧にも出すと2回ならぶ */
-            omit={LINE_WORDS}
-          />
         </Sec>
 
         {/* ---- 5. SUZURI ------------------------------------------------ */}
@@ -446,8 +420,8 @@ export default function GoodsPage() {
 
               > こんなスズリグッズが欲しい！ を書けるように付箋作って
 
-              **LINEスタンプの欄と同じ `Say`（畳んだ付箋）にそろえる。** この面の中で
-              「ほしい形を書く」の置き方が2通りあると、別の仕掛けに見える。
+              **畳んだ付箋（`Say`）で置く。** 書く欄を開いたまま置くと、1つで
+              300px 近く取って、升目が画面の外へ出る（この面の頭の注）。
 
               **ここに品ぞろえ・値段・個数を1文字も足さない**（`content/goods.ts`
               の `SUZURI` の頭。向こうが持っているものを焼くと、変わった日から

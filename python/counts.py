@@ -236,11 +236,6 @@ def n_legends() -> int:
     return len(_rows("site/content/legends.ts", "LEGENDS", "name", id_key="slug"))
 
 
-def n_line_stamps() -> int:
-    """LINEスタンプの絵（`goods.ts` の `LINE_STAMPS`）。"""
-    return len(_rows("site/content/goods.ts", "LINE_STAMPS", "art", id_key="art"))
-
-
 def n_sprite_tools() -> int:
     return len(
         [p for p in (ROOT / "tools/sprites").rglob("*") if p.is_file() and "node_modules" not in p.parts]
@@ -509,7 +504,6 @@ COUNTS: dict[str, tuple[str, object, str]] = {
     "residents": ("図鑑の名簿", n_residents, "docs/island-fresh.md 2章"),
     "recipes": ("料理（スタンプ帳）", n_recipes, "docs/island-fresh.md 4章"),
     "legends": ("伝説", n_legends, "docs/island-fresh.md 6章"),
-    "line_stamps": ("LINEスタンプの絵", n_line_stamps, "site/content/goods.ts"),
     "sprite_tools": ("tools/sprites のファイル", n_sprite_tools, "CLAUDE.md"),
     "sprite_tools_git": ("うち git に在るもの", n_sprite_tools_git, "CLAUDE.md"),
     "avatars": ("avatars.py が落とす絵", n_avatars, "CLAUDE.md"),
