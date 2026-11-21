@@ -38,6 +38,7 @@ python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/youtube-studio/yt_st
 | `claims(t, id)` / `claim_summary(c)` | その動画の申し立て（曲名・方針・一致した最長区間・取れる対応） |
 | `claim_segments(t, id, claim)` | 申し立てが一致した区間（ミリ秒） |
 | `resolve_claim_ui(t, id, 曲名, how)` | 申し立て1件に**画面を押して**対応する。`how` は `erase`（曲だけ消し、声は残す）か `mute`（区間を全部無音）。**元に戻せない**。1本90秒ほど |
+| `prepend_description(t, id, 行)` | 説明欄の頭に1行足して保存し、読み直して「行＋改行＋前の説明」と同じかを返す（街のガイドの行。#664 の「つぎの国へ移ったら」）。**本人確認の窓が出たら `次へ` を押さずに `{"error": "reauth"}`**（2026-11-21 に保存で出た。押すとあやとのスマホが鳴る） |
 
 EC2 で回すときの形:
 

@@ -479,6 +479,15 @@ type Guide = {
 const GUIDES: Record<string, Guide[]> = {
   balkans: [
     {
+      slug: "romania",
+      name: "ルーマニア・ブカレスト",
+      href: "/travel/romania/bucharest",
+      /* 頭はブカレストの面の表紙と同じキャッチ（`content/guidebook/romania-bucharest.ts` の `lead`）。後ろは面の題と同じ
+         （ソフィアの行と同じ形）。絵は表紙の写真のアテネ音楽堂 */
+      lead: "「東欧のパリ」と称えられた街。観光ガイドと見どころマップ",
+      icon: "theater",
+    },
+    {
       slug: "bulgaria",
       name: "ブルガリア・ソフィア",
       /* 街の面（前の `/bulgaria`。#1228）。国の案内はソフィアの面が兼ねる（国の面 `/travel/bulgaria` はほかの国と同じ旅の記録で、「行った街」からここへ来る） */
