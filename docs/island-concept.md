@@ -47,7 +47,7 @@
 
 ### スプライトの作りかた
 
-Kenney の CC0 の 3D キット（nature-kit / building-kit / holiday-kit / food-kit / mini-characters）を
+Kenney の CC0 の 3D キット（nature-kit / fantasy-town-kit / holiday-kit / food-kit / mini-characters）を
 three.js で読み込み、どうぶつの森の色に塗り替えてから、Playwright のヘッドレス WebGL で
 PNG に焼いて WebP にする。
 
@@ -60,10 +60,14 @@ tools/sprites/meta.py        切り抜き・縮小・WebP化・sprites.json 出�
 色の塗り替えは2通り。
 - **nature-kit** … マテリアル名で塗る（`MATERIALS`）
 - **テクスチャのあるキット** … colormap.png の色相の帯ごとに塗る（`BANDS`）
-  building-kit では `green`=壁、`blue`=柱と縁、`neutral`=屋根 に対応している。
+  fantasy-town-kit（町の建物）では `green`=壁、`blue`=柱と縁、`neutral`=屋根 に対応している。
 
 food-kit は専用の `Textures/colormap.png` を持っているので、
 **必ず `models/food/` に自分のテクスチャごと置く**。他のキットで上書きすると色が壊れる。
+mini-characters も同じ名前の colormap を持つので `models/characters/` に分けてある
+（どのキットをどこに置くかは `tools/sprites/kits.json` の1か所）。
+町の建物は、キット自身の colormap ではなく Kenney 共通の色見本（mini-characters と同じもの）で
+焼いている。上の `green`/`blue`/`neutral` の帯は、その色見本の色に合わせてある（`kits.json` の `borrow`）。
 
 ### 島の座標
 
