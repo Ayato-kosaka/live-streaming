@@ -108,6 +108,43 @@ def case_reject(tmp: Path) -> None:
     ok(rc == 1, f"どちらの写しにも無いファイルが在る → 1（実際 {rc}）")
 
 
+def case_borrow(tmp: Path) -> None:
+    print("\n[8] 借りるファイル（borrow）は、貸すキットの写しから取って置く")
+    town_own = {"wall.glb": GLB, "Textures/colormap.png": TEX2}   # キット自身の色見本
+    chars = {"character-a.glb": GLB, "Textures/colormap.png": TEX}  # 共通の色見本
+    t_m = mirror(tmp / "bt", town_own)
+    c_m = mirror(tmp / "bc", chars)
+    town = kit([t_m], {"wall.glb": GLB, "Textures/colormap.png": TEX}, "models")
+    town["borrow"] = {"Textures/colormap.png": "chars"}
+    kits = {"town": town, "chars": kit([c_m], chars, "models/characters")}
+    out = tmp / "ob1"
+    rc = quiet(kitmirror.fetch, "town", out, kits)
+    got = out / "GLB format" / "Textures" / "colormap.png"
+    ok(rc == 0 and got.is_file() and got.read_bytes() == TEX,
+       f"fetch: 町の colormap は自身のものではなく、貸す側の共通の色見本（実際 {rc}）")
+    zipdir = tmp / "ob2"
+    mirror(zipdir, town_own)  # zip を開いたところ。キット自身の色見本が入っている
+    rc = quiet(kitmirror.borrow, "town", zipdir, kits)
+    ok(rc == 0 and (zipdir / "Textures" / "colormap.png").read_bytes() == TEX,
+       f"borrow: zip の色見本を、共通の色見本で上書きする（実際 {rc}）")
+    rc = quiet(kitmirror.borrow, "chars", tmp / "ob3", kits)
+    ok(rc == 0 and not (tmp / "ob3").exists(), f"借りるものが無いキットは何もしない（実際 {rc}）")
+    no_lender = {**kits, "town": {**town, "borrow": {"Textures/colormap.png": "nope"}}}
+    ok(quiet(kitmirror.fetch, "town", tmp / "ob4", no_lender) == 1, "貸す側が控えに無い → 1")
+    unlisted = {**kits, "town": {**town, "borrow": {"Textures/other.png": "chars"}}}
+    ok(quiet(kitmirror.fetch, "town", tmp / "ob5", unlisted) == 1, "sha256 を控えていない名前を借りる → 1")
+    rc, box, _ = run_fetchkits(tmp, kits, ["town", "chars"])
+    placed = box / "models" / "Textures" / "colormap.png"
+    ok(rc == 0 and placed.is_file() and placed.read_bytes() == TEX,
+       f"fetchkits.sh: 町と住人を同じ回に落としても、町の置き場は共通の色見本（実際 {rc}）")
+    # kenney.nl が届く日の道。zip にはキット自身の色見本が入っているが、置くのは共通の色見本
+    zip_town = {"Town Kit/Models/GLB format/wall.glb": GLB, "Town Kit/Models/GLB format/Textures/colormap.png": TEX2}
+    rc, box, log = run_fetchkits(tmp, kits, ["town"], {"town": zip_town})
+    placed = box / "models" / "Textures" / "colormap.png"
+    ok(rc == 0 and "kenney.nl/media/town.zip" in log and placed.is_file() and placed.read_bytes() == TEX,
+       f"fetchkits.sh: kenney.nl の zip から取った回も、町の置き場は共通の色見本（実際 {rc}）")
+
+
 def case_lock_shape(tmp: Path) -> None:
     print("\n[3] 控えがおかしいときは取りに行かない")
     a = mirror(tmp / "e", {"apple.glb": GLB})
@@ -138,6 +175,15 @@ def case_real_lock() -> None:
         if k["format"] == "GLB format":
             # GLB 形式の4つは、どの glb も Textures/colormap.png を外から読む（無いとまっ白）
             ok("Textures/colormap.png" in k["files"], f"{name}: Textures/colormap.png が控えに在る")
+        for rel, lender in k.get("borrow", {}).items():
+            ok(k["files"].get(rel) == kits.get(lender, {}).get("files", {}).get(rel),
+               f"{name}: 借りる {rel} の sha256 が、貸す {lender} の控えと同じ")
+    # 町の絵19枚は共通の色見本で焼いてあり、色相帯もそれに合わせてある。自身の色見本に
+    # 「直す」と屋根が塗り替わらなくなる（hut-home で物の差 28.1。kitmirror.py「借りるファイル」）
+    town, chars = kits.get("fantasy-town-kit", {}), kits.get("mini-characters", {})
+    ok(town.get("borrow", {}).get("Textures/colormap.png") == "mini-characters"
+       and town["files"]["Textures/colormap.png"] == chars.get("files", {}).get("Textures/colormap.png"),
+       "fantasy-town-kit の colormap は mini-characters から借りる（いまの町の絵の色）")
 
     r = subprocess.run(["node", str(HERE / "bakeplan.mjs"), "--parts"], capture_output=True, text=True, cwd=HERE)
     ok(r.returncode == 0, f"manifest の部品が全部どれかのキットの置き場に在る（bakeplan --parts {r.returncode}）"
@@ -165,7 +211,16 @@ while [ $# -gt 0 ]; do
   esac
 done
 case "$url" in
-  https://kenney.nl/*) : > "$out"; [ -n "$fmt" ] && printf 403; exit 0 ;;
+  # KENNEY_ZIPS に <キット>.zip が在るキットだけ、ページが 200 で zip の在りかを返す（届く日の道）
+  https://kenney.nl/media/*.zip) cp "$KENNEY_ZIPS/${url##*/}" "$out"; [ -n "$fmt" ] && printf 200; exit 0 ;;
+  https://kenney.nl/assets/*)
+    k="${url##*/}"
+    if [ -f "$KENNEY_ZIPS/$k.zip" ]; then
+      printf '<a href="https://kenney.nl/media/%s.zip">' "$k" > "$out"; [ -n "$fmt" ] && printf 200
+    else
+      : > "$out"; [ -n "$fmt" ] && printf 403
+    fi
+    exit 0 ;;
   https://unpkg.com/*) printf 'export {};\n' > "$out"; [ -n "$fmt" ] && printf 200; exit 0 ;;
 esac
 echo "偽の curl: 知らない宛先 $url" >&2
@@ -173,10 +228,20 @@ exit 7
 """
 
 
-def run_fetchkits(tmp: Path, kits: dict, names: list[str]) -> tuple[int, Path, str]:
-    """fetchkits.sh と kitmirror.py を一時の置き場へ写し、偽の curl で回す。"""
+def run_fetchkits(tmp: Path, kits: dict, names: list[str],
+                  zips: dict[str, dict[str, bytes]] | None = None) -> tuple[int, Path, str]:
+    """fetchkits.sh と kitmirror.py を一時の置き場へ写し、偽の curl で回す。
+
+    `zips` に入れたキットだけ、kenney.nl が 200 で zip を返す（中身は {zip の中の名前: バイト}）。
+    """
+    import zipfile
     box = tmp / f"box-{len(list(tmp.glob('box-*')))}"
     box.mkdir()
+    (box / "zips").mkdir()
+    for name, members in (zips or {}).items():
+        with zipfile.ZipFile(box / "zips" / f"{name}.zip", "w") as z:
+            for arc, body in members.items():
+                z.writestr(arc, body)
     for f in ("fetchkits.sh", "kitmirror.py"):
         shutil.copy(HERE / f, box / f)
     (box / "kits.json").write_text(json.dumps({"why": "見張りの偽物", "kits": kits}), encoding="utf-8")
@@ -186,7 +251,7 @@ def run_fetchkits(tmp: Path, kits: dict, names: list[str]) -> tuple[int, Path, s
     (bin_ / "curl").chmod(0o755)
     log = box / "curl.log"
     env = {**os.environ, "PATH": f"{bin_}{os.pathsep}{os.environ['PATH']}", "CURL_LOG": str(log),
-           "GITHUB_STEP_SUMMARY": str(box / "summary.md")}
+           "GITHUB_STEP_SUMMARY": str(box / "summary.md"), "KENNEY_ZIPS": str(box / "zips")}
     r = subprocess.run(["bash", str(box / "fetchkits.sh"), *names], capture_output=True, text=True, env=env, timeout=120)
     return r.returncode, box, (log.read_text(encoding="utf-8") if log.exists() else "")
 
@@ -231,6 +296,7 @@ def main() -> int:
         case_lock_shape(tmp)
         case_real_lock()
         case_fetchkits(tmp)
+        case_borrow(tmp)
     if CHECKED == 0:
         print("数えるものが無い")
         return 2

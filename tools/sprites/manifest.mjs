@@ -20,8 +20,10 @@ const HK = "./models/holiday";    // holiday-kit
 const BK = "./models";            // fantasy-town-kit（町の建物・屋台）
 const CK = "./models/characters"; // mini-characters
 const FK = "./models/food";       // food-kit
-// テクスチャを持つキットは置き場を分ける。Fantasy Town Kit と Mini Characters は
-// どちらも `Textures/colormap.png` を読むので、同じ置き場だと後に置いたほうの色で両方が焼ける
+// テクスチャを持つキットは置き場を分ける。Fantasy Town Kit と Mini Characters はどちらも
+// `Textures/colormap.png` を読むので、同じ置き場だと後に置いたほうの色で両方が焼ける。
+// 町の絵は Mini Characters と同じ Kenney 共通の色見本で焼いてきた（下の house() の色相帯も
+// それに合わせてある）ので、町の置き場にもその色見本を置く（kits.json の borrow）
 
 /* ---------------- 建物の配色 ---------------- */
 const WALL = { h: 0.098, s: 0.62, l: [0.80, 0.94] }; // クリーム色の壁

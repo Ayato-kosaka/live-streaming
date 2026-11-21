@@ -342,6 +342,7 @@
    "page": "https://kenney.nl/assets/fantasy-town-kit",
    "format": "GLB format",
    "dest": "models",
+   "note": "Textures/colormap.png はキット自身のもの（sha256 4aac939dc33195e3…）ではなく、Mini Characters と同じ Kenney 共通の色見本を置く（borrow）。島の町の絵19枚はこの色見本で焼かれていて、render.html の色相帯（green=壁・blue=柱・neutral=屋根）もそれに合わせてある。キット自身の色見本で焼くと屋根が塗り替わらない（hut-home で物の差 28.1。共通の色見本なら19枚とも同じ。#1351）",
    "mirrors": [
     "https://raw.githubusercontent.com/eturner58/game-assets/fc2cd355a8e7c1d8e625fd650abf64f50a1fddaa/kenney/3D%20assets/Fantasy%20Town%20Kit/Models/GLB%20format/",
     "https://media.githubusercontent.com/media/series-ai/jam-ready-assets/427c1a2c5bee8d21edf013c61bdd5ea19eb35be3/kenney-fantasy-town-kit/3D/fantasy/Models/GLB%20format/"
@@ -350,8 +351,11 @@
     "https://raw.githubusercontent.com/eturner58/game-assets/fc2cd355a8e7c1d8e625fd650abf64f50a1fddaa/kenney/3D%20assets/Fantasy%20Town%20Kit/License.txt",
     "https://raw.githubusercontent.com/series-ai/jam-ready-assets/427c1a2c5bee8d21edf013c61bdd5ea19eb35be3/kenney-fantasy-town-kit/3D/fantasy/License.txt"
    ],
+   "borrow": {
+    "Textures/colormap.png": "mini-characters"
+   },
    "files": {
-    "Textures/colormap.png": "4aac939dc33195e35caf8c382ee3cb170054da763577f22d3c22692ec6afccdf",
+    "Textures/colormap.png": "0d4947d34ff32acf4a359c7f22ca784e057e7e72f622170a9a77b6fc88fdb70e",
     "balcony-wall-fence.glb": "16c43dfd257121fb93767e973b0fde09672502ca85383028c916e48126c049bc",
     "balcony-wall.glb": "3d504c3facb858d3110dcb2bba88af2c5be57d82bb07d52334a49195d022b84c",
     "banner-green.glb": "5c9a1bb7d564270306fe438fd4a141fc6de0d102b355bbd1d2710249c489868a",

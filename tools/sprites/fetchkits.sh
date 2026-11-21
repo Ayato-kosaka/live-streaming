@@ -75,6 +75,9 @@ for kit in "$@"; do
     find "$tmp/$kit" -maxdepth 3 -type d | sed "s|$tmp/$kit/||" >&2
     exit 1
   fi
+  # 町の建物は、キット自身のではなく Kenney 共通の色見本で焼いてきた（kits.json の borrow。
+  # 自身の色見本だと屋根が塗り替わらない）。zip から取った回も写しから取った回も、同じものを置く
+  python3 kitmirror.py borrow "$kit" "$src"
   mkdir -p "$dest"
   # 別のキットが同じ置き場に colormap を置いていたら、上書きすると片方の絵が別の色で焼ける
   # （CLAUDE.md「スプライトの色」。kits.json の dest はキットごとに分けてある）

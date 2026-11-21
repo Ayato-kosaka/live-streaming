@@ -138,6 +138,11 @@ Mini Characters 1.0 / Nature Kit 2.1 の形式のフォルダぜんぶ（使っ�
 - **テクスチャを持つキットは置き場を分ける。** Fantasy Town Kit と Mini Characters はどちらも
   `Textures/colormap.png` を読むので、同じ `models/` に置くと後に置いたほうの色で両方が焼ける。
   住人は `models/characters/` に分けた。`fetchkits.sh` は、別のキットの colormap を上書きしそうなら止まる
+- **町の建物は、キット自身のではなく Kenney 共通の色見本（Mini Characters と同じ）で焼く。**
+  いまの町の絵19枚は、同じ置き場で取り合っていた頃にこの色見本で焼かれ、`render.html` の色相帯
+  （green=壁・blue=柱・neutral=屋根）もそれに合わせてある。キット自身の色見本で焼くと屋根が
+  塗り替わらない（`hut-home` で物の差 28.1。共通の色見本なら19枚とも「同じ」。2026-11-21 に測った）。
+  `kits.json` の `borrow` に書いてあり、zip から取った回も写しから取った回も `kitmirror.py borrow` が置く
 
 ### 作業箱から届かないときは、Actions で焼く
 

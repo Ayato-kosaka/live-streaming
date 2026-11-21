@@ -66,6 +66,8 @@ food-kit は専用の `Textures/colormap.png` を持っているので、
 **必ず `models/food/` に自分のテクスチャごと置く**。他のキットで上書きすると色が壊れる。
 mini-characters も同じ名前の colormap を持つので `models/characters/` に分けてある
 （どのキットをどこに置くかは `tools/sprites/kits.json` の1か所）。
+町の建物は、キット自身の colormap ではなく Kenney 共通の色見本（mini-characters と同じもの）で
+焼いている。上の `green`/`blue`/`neutral` の帯は、その色見本の色に合わせてある（`kits.json` の `borrow`）。
 
 ### 島の座標
 
