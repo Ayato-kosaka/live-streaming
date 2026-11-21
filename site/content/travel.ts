@@ -53,6 +53,9 @@ const GUIDE_ONLY: { slug: string; card: ShareKey }[] = [
   /* 2026-11-18 まで `CITY_ONLY`（国の面を持たず、ソフィアの面だけ）だった。`/travel/bulgaria` が 404 で、
      ソフィアのパンくずにも国の段が無かった（#1262） */
   { slug: "bulgaria", card: "bulgaria" },
+  /* 2026-11-21（入った日）まで `CITY_ONLY` の行く前の国だった。国の絵はまだ焼いていないので、
+     歩いた記録の面と同じ地図の1枚 */
+  { slug: "romania", card: "map" },
 ];
 
 /** 歩いた記録の面の絵。国ごとに焼かない（区画ごとに1枚。`lib/share.ts` の頭） */
@@ -136,7 +139,7 @@ const CITIES: Omit<TravelCity, "href">[] = [
   /* あやとが読んで OK（2026-11-19「いい感じ。結構綺麗」）。公開前の印を外した */
   { country: "north-macedonia", slug: "skopje", name: "スコピエ" },
   { country: "bulgaria", slug: "sofia", name: "ソフィア" },
-  /* 行く前の街（あやとは 2026-11-21 に移る。`content/plans.ts` の `romania`）。国の面はまだ無い（`CITY_ONLY`）。
+  /* あやとは 2026-11-21 に着いた（`content/countries.ts` の `AHEAD_COUNTRIES`）。国の面は着いた日に建てた（`GUIDE_ONLY`）。
      あやと 2026-11-20「割といい感じ」「どんどん公開していいよ。あなたの裁量の範囲内」で公開前の印を外した */
   { country: "romania", slug: "bucharest", name: "ブカレスト" },
 ];
@@ -146,14 +149,10 @@ const CITIES: Omit<TravelCity, "href">[] = [
  * （行き止まりの段を作らない）。貼られたときの絵は国の1枚（`card`）。
  *
  * いまは空。ブルガリアがここに居たが、国の面（街の一覧）を建てて `GUIDE_ONLY` へ移した（#1262）。
+ * ルーマニアも 2026-11-19 から**行く前の国**（`before`）としてここに居て、入った日（11-21）に `GUIDE_ONLY` へ移した。
  * 国の面を建てた日に、ここから消して `GUIDE_ONLY` か `COUNTRIES` へ移す——両方に居ると書き出しを止める（下）。
  */
-const CITY_ONLY: { country: string; card: ShareKey; before?: true }[] = [
-  /* ルーマニア（2026-11-19）。**行く前の国**（`before`）。国に入った日が国の表（`content/countries.ts` の
-     `AHEAD_COUNTRIES`）に入るのは、入った日に入れる決まりなので、それまでは国の表に居ない。
-     入った日に国の面を建てて `GUIDE_ONLY` へ移すまで、パンくずは 島 › 歩いた国 › ブカレスト */
-  { country: "romania", card: "map", before: true },
-];
+const CITY_ONLY: { country: string; card: ShareKey; before?: true }[] = [];
 
 /** 街の上の国。国の面が在ればそれ、無ければ `CITY_ONLY` の行（どちらにも無ければ書き出しを止める） */
 function cityCountry(country: string): { page?: TravelPlace; card: ShareKey } {
