@@ -1,5 +1,5 @@
 {
-  "why": "11/18 のビリヤニ（biryani）の主役を food-onion-half（半分に切った玉ねぎ）に決めた。空いている絵に鶏肉・米・スパイスが写るものが無く、丸ごとの玉ねぎは1色の塊、骨付き肉は food-whole-ham と同じ形に見える。底で飴色に炒めた玉ねぎがあの日の味とべちゃつきの両方を決めたので、断面の層が見える玉ねぎにする。素の絵と hero/ を焼く",
-  "names": ["food-onion-half"],
-  "check": ["food-pepper"]
+  "why": "#1351: kenney.nl が 403 を返すあいだ、控えた写し（kits.json）から取って焼けるかを確かめる。焼いてコミットするのは、前にランナーで焼いて同じバイト列に戻ることが分かっている food-cheese-cut（何も積まれないはず）。見比べは5つのキットから1〜2枚ずつ（町の hut-home と住人の villager-male-a を同じ回に焼き、colormap を取り合わないことも見る）と、手元で焼いたビリヤニの food-onion-half、礼拝堂の wall-window-small を呼ぶ legend-kazbegi",
+  "names": ["food-cheese-cut"],
+  "check": ["food-pepper", "food-onion-half", "campfire", "tent", "snowman", "hut-home", "stall", "villager-male-a", "legend-kazbegi"]
 }

@@ -19066,3 +19066,29 @@ master の重い見張り（`heavy_watch.yml` の browserwatch）が 3d64ebe か
 3. **数の下限は、依頼文の合格の条件の頭に置く**（`/city-guide` 0章が1本の出どころ）
 4. **担当に `send_later` と `subscribe_pr_activity` を使わせない**（運営のセッションに届く）。待ちは `run_in_background`（`/hand-off` ⑤）
 5. **街ごとに、配った担当の数・道具の呼び出しの合計・最大の文脈を控える**（`.claude/skills/city-guide/tokens.md`）。次の街の目標はブカレストの半分
+
+## #343 島の絵を焼く道が、kenney.nl の 403 で9日赤いままだった。しかも町の建物のキットを取り違えていた（2026-11-21。#1351 / `tools/sprites/fetchkits.sh` / `kits.json`）
+
+### 何が起きていたか
+
+- 2026-11-12 から、kenney.nl がキットのページを GitHub のランナーに 403 で返した。`bake_sprites.yml` は素材を落とすところで毎回止まり、
+  11-21 のビリヤニ（#1350）は担当が手元で焼いて出した。素材を取る道が kenney.nl の1本しかなかった
+- 直すために中身を数えたら、`fetchkits.sh` が「町の建物」として落としていた `building-kit` は**別のキット**だった。
+  manifest の建物の部品（`wall-window-shutters.glb` `roof-gable.glb` `windmill.glb` …20点）は Fantasy Town Kit のもので、
+  Building Kit には `wall.glb` 1点しか無い。README の「building-kit が新しくなって `wall-window-small.glb` がもう無い」は、この取り違えの読み違いだった
+- Fantasy Town Kit と Mini Characters は、どちらも `Textures/colormap.png` を読むのに同じ `models/` に置いていた。
+  1回で両方を焼くと、後に置いたほうの色で両方が焼ける（CLAUDE.md「スプライトの色」の food-kit と同じ形が、残っていた）
+
+### なぜ外したか
+
+- **素材の出どころを1つにして、断られたときの道を持っていなかった。** CC0 なので写しは在ったのに、控えていなかった
+- **キットの名前を、置き場（`./models`）と部品の名前から推して書いた。** 部品が無いのを「版が新しい」と説明して、確かめなかった
+- 置き場 → キットの表が `bakeplan.mjs` と `fetchkits.sh` の2か所にあり、どちらも同じ思い込みで書かれていた
+
+### 決めごと
+
+1. **kenney.nl が断ったら、`kits.json` に控えた写しから取る。** 写しは2か所・commit で版を止め、全ファイルの sha256 を2か所で突き合わせてから控える。
+   断られた先へ、出口や名乗りを替えて取り直しには行かない（#338 と同じ）
+2. **置き場 → キットの表は `kits.json` の1か所。** `bakeplan.mjs` も `fetchkits.sh` もそこから引く。テクスチャを持つキットに同じ置き場を持たせない
+3. **「部品が無い」を版のせいにする前に、どのキットの部品かを数える。** 写しの木の一覧で部品の名前を引けば1分で分かった
+4. 見張りは `tools/sprites/kitmirror_selftest.py`（合わない写しを置かない・403 のあと迂回しない・manifest の部品が控えに全部在る・colormap を取り合わない）

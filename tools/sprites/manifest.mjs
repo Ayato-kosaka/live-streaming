@@ -5,7 +5,8 @@ import { readArray } from "./tsread.mjs";
  * あやと島で使うスプライトの一覧。
  * 建物はモジュールパーツを組み立てて1枚に焼く。
  *
- * 素材: Kenney (CC0) — nature-kit / holiday-kit / building-kit / mini-characters
+ * 素材: Kenney (CC0) — nature-kit / holiday-kit / fantasy-town-kit / mini-characters / food-kit
+ * （どのキットをどこに置くかは kits.json。fetchkits.sh がそこへ落とす）
  *
  * 色は render.html の「色相帯」ごとに置き換わる。建物キットでは
  *   green   → 壁の本体
@@ -14,10 +15,13 @@ import { readArray } from "./tsread.mjs";
  * なので、屋根の色は neutral を上書きして決める。
  */
 
-const NK = "./models/gltf";    // nature-kit
-const HK = "./models/holiday"; // holiday-kit
-const BK = "./models";         // building-kit / mini-characters
-const FK = "./models/food";    // food-kit
+const NK = "./models/gltf";       // nature-kit
+const HK = "./models/holiday";    // holiday-kit
+const BK = "./models";            // fantasy-town-kit（町の建物・屋台）
+const CK = "./models/characters"; // mini-characters
+const FK = "./models/food";       // food-kit
+// テクスチャを持つキットは置き場を分ける。Fantasy Town Kit と Mini Characters は
+// どちらも `Textures/colormap.png` を読むので、同じ置き場だと後に置いたほうの色で両方が焼ける
 
 /* ---------------- 建物の配色 ---------------- */
 const WALL = { h: 0.098, s: 0.62, l: [0.80, 0.94] }; // クリーム色の壁
@@ -968,7 +972,7 @@ const SPRITES_BASE = [
     ["-sit", "sit", 0.5],
   ].map(([suffix, clip, t]) => ({
     name: `villager-${id}${suffix}`,
-    parts: [{ url: `${BK}/character-${id}.glb`, pose: { clip, t } }],
+    parts: [{ url: `${CK}/character-${id}.glb`, pose: { clip, t } }],
     opts: VILLAGER,
   }))),
 ];

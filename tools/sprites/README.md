@@ -113,21 +113,36 @@ curl -sS -o vendor/jsm/utils/BufferGeometryUtils.js \
   "https://unpkg.com/three@$V/examples/jsm/utils/BufferGeometryUtils.js"
 
 # Kenney のキット5つ（CC0）。zip の在りかは各ページの中に書いてある
-#   https://kenney.nl/assets/{nature-kit,holiday-kit,building-kit,food-kit,mini-characters}
+#   https://kenney.nl/assets/{nature-kit,holiday-kit,fantasy-town-kit,food-kit,mini-characters}
 #   curl -sS "https://kenney.nl/assets/nature-kit" | grep -oE 'https://[^\x27]*\.zip'
-# 置き場（`manifest.mjs` の NK / HK / BK / FK と同じ）
-#   models/gltf/   ← nature-kit の「GLTF format」
-#   models/holiday/← holiday-kit の「GLB format」
-#   models/        ← building-kit と mini-characters の「GLB format」
-#   models/food/   ← food-kit の「GLB format」
+# 置き場（`manifest.mjs` の NK / HK / BK / CK / FK と同じ。表は kits.json の dest）
+#   models/gltf/       ← nature-kit の「GLTF format」
+#   models/holiday/    ← holiday-kit の「GLB format」
+#   models/            ← fantasy-town-kit の「GLB format」（町の建物・屋台）
+#   models/characters/ ← mini-characters の「GLB format」
+#   models/food/       ← food-kit の「GLB format」
 ```
 
 上の手順は `bash fetchkits.sh food-kit [nature-kit …]` に1本にしてある（three も一緒に落とす）。
 
+**kenney.nl がページを断ったら（2026-11-12 から GitHub のランナーにも 403。#1351）、
+`fetchkits.sh` は控えた写しから取る。** 出口や名乗りを替えて取り直しには行かない。
+写しは CC0 のまま再配布されている2か所（`kits.json` の `mirrors`。commit で版を止めてある）で、
+`kits.json` の `files` に、2か所で全部一致した sha256 を控えてある（`kitmirror.py` が1点ずつ確かめ、
+合わなければ置かずに止まる）。控えたのは Food Kit 2.0 / Holiday Kit 2.0 / Fantasy Town Kit 2.0 /
+Mini Characters 1.0 / Nature Kit 2.1 の形式のフォルダぜんぶ（使っていない部品も入れてある。
+新しい料理は、まだ使っていない部品から選ぶので）。見張りは `kitmirror_selftest.py`。
+
+- **町の建物は Fantasy Town Kit。** 以前ここに `building-kit` と書いていたが、あちらは別のキットで
+  部品の名前が違う（`wall-window-small.glb` などが無いのはそのため。版が新しくなったのではなかった）
+- **テクスチャを持つキットは置き場を分ける。** Fantasy Town Kit と Mini Characters はどちらも
+  `Textures/colormap.png` を読むので、同じ `models/` に置くと後に置いたほうの色で両方が焼ける。
+  住人は `models/characters/` に分けた。`fetchkits.sh` は、別のキットの colormap を上書きしそうなら止まる
+
 ### 作業箱から届かないときは、Actions で焼く
 
 **この作業箱からは kenney.nl に届かない**（プロキシで 000/403。迂回しない）。
-そのときは `.github/workflows/bake_sprites.yml` が、ランナーで素材を落として焼き、
+写しには届くので手元でも `fetchkits.sh` は通るが、焼くのは重いので、ふつうは `.github/workflows/bake_sprites.yml` が、ランナーで素材を落として焼き、
 **焼けた絵と寸法表（`sprites.json`・`heroWide.json`）だけ**を起こした枝にコミットして戻す。
 起こしかたはどちらも1手:
 
@@ -156,7 +171,7 @@ gh workflow run bake_sprites.yml --ref <claude/…> -f names=food-cheese-cut
 - **並べた絵はログに base64 で出る。** この箱からは artifact もログの zip も落とせない
   （blob の宛先で 403）。`mcp__github__get_job_logs`（`return_content: true`）で読んで
   ファイルに置き、`python3 bakecheck.py unsheet <ログ> /tmp/sheet.png` で絵に戻す
-- 焼くのに使ったキットの zip の在りか（＝版）は、run の要約に残る
+- 焼くのに使ったキットの zip の在りか（＝版）は、run の要約に残る。写しから取った回は「HTTP 403。写しから Food Kit (2.0)」と残る
 
 **zip の `Textures/` も一緒に置く。無いと、焼いた絵が色を失う。**
 food-kit の glb は色を持っておらず、`Textures/colormap.png` の1枚を全員で
@@ -166,10 +181,10 @@ food-kit の glb は色を持っておらず、`Textures/colormap.png` の1枚�
 `node bake.mjs /tmp/bake-test food-pepper` で**色の付いているはずの絵を1枚**
 焼いて、オレンジに出るかを先に見る。
 
-**いま配られているキットは、この manifest を書いたときのものより新しい。**
-building-kit は部品の名前が変わっていて、`wall-window-small.glb` がもう無い
-（`legend-kazbegi` の礼拝堂がそれを呼ぶ）。**いま在る絵をそのまま焼き直すと
-落ちるものがある。** 1枚足すぶんには、落としたキットに在る部品だけで組めばよい。
+**manifest の部品は、ぜんぶ `kits.json` の控えに在る**（`kitmirror_selftest.py` の [4] が
+`bakeplan.mjs --parts` で数えて見ている）。以前「building-kit が新しくなって
+`wall-window-small.glb` がもう無い」と書いていたのは、別のキット（Building Kit）を
+落としていたから。Fantasy Town Kit 2.0 には在り、`legend-kazbegi` の礼拝堂も焼ける。
 
 焼けることの確かめは、**すでに在る絵を1枚、別の場所へ焼いて見比べる**のが早い
 （`legend-newyear-24h` は箱と円盤だけなのでキットが要らない）。
