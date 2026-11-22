@@ -12,7 +12,7 @@ import IsleStage from "@/components/isle/IsleStage";
 import { isleLead } from "@/components/isle/span";
 import { chapterIsle, type Neighbour } from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
-import { ISLAND_PATH, chapterCrumbs, chapterNeighbours, type Chapter } from "@/content/chapters";
+import { ISLAND_PATH, chapterCountrySlugs, chapterCrumbs, chapterNeighbours, type Chapter } from "@/content/chapters";
 import NordicTrip from "./nordic";
 
 /**
@@ -69,7 +69,7 @@ export async function generateMetadata({
     title: c.from ? fitTitle(`${c.name}の旅と配信（${span(c.from, c.to || undefined)}）`, `${c.name}の旅と配信`) : c.name,
     description: c.from
       ? lead(
-          `${span(c.from, c.to || undefined)}、${c.countries.map((s) => countryNameBySlug(s)?.name ?? s).join("・")}をまわった${c.name}の記録。`,
+          `${span(c.from, c.to || undefined)}、${chapterCountrySlugs(c).map((s) => countryNameBySlug(s)?.name ?? s).join("・")}をまわった${c.name}の記録。`,
           c.note,
         )
       : c.note,

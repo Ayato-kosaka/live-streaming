@@ -24,14 +24,13 @@
 import { APPS, PAST_APPS, type AppEntry, type AppMilestone } from "@/content/apps";
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
-import { chapterDays, chapterSpan, type Chapter } from "@/content/chapters";
-import { COUNTRIES } from "@/content/countries";
+import { CHAPTERS, chapterDays, chapterSpan, staysOfChapter, type Chapter } from "@/content/chapters";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
-import { chapterCountries, walkingCountries } from "@/content/walked";
+import { STAYS, type StayGuide } from "@/content/stays";
+import { chapterCountries } from "@/content/walked";
 import { ALBANIA_GROUP, BULGARIA_GROUP, MACEDONIA_GROUP, NORDIC_GROUP, ROMANIA_GROUP } from "@/content/themes";
-import type { IconName } from "@/components/ui/icons";
 import { guideOn, type GuideSpan } from "@/lib/guideDay";
 import { artOf, type IslandArt } from "@/components/chain/shapes";
 import { boardPlate, type IsleBoardSpec } from "./board";
@@ -433,16 +432,18 @@ const BALKAN_BOARDS: { name: string; group: string }[] = [
 ];
 
 /**
- * その国の案内（行く前に調べた面）。**章 → その章で行く国のうち、面の在るもの。**
+ * その国の案内（行く前に調べた面）。**章 → その章の滞在のうち、案内の面を持つもの。**
  *
- * 章を国ごとに割らないので（`content/chapters.ts` の `balkans`）、
- * 「この国の歩きかた」の行き先は章の slug からは決まらない。だから表で持つ。
+ * 案内の面は滞在の表（`content/stays.ts`）の行の `guide` が持つ。章を国ごとに割らないので
+ * （`content/chapters.ts` の `balkans`）、「この国の歩きかた」の行き先は章の slug からは決まらない。
+ * 章の滞在（`staysOfChapter`）のうち `guide` を持つ行を、新しい国から並べる
+ * （読む人のため。選ぶのは日付なので、順では決まらない）。
  *
  * ## いつ出すかは、ここに書かない
  *
  * **出すのは、その国に居るあいだだけ。** 居るあいだとは、その国に入った日から、
  * つぎの国に入った前の日まで。つぎの国がまだ無ければ、開いたまま。
- * 入った日は国の表（`content/countries.ts`）が持っているので、**そこから導く**（`ENTERED`）。
+ * 入った日は滞在の表が持っているので、**そこから導く**（`ENTERED`）。
  *
  * 前は行ごとに `from`〜`to` を手で書いて、期間の無い行を「いつでも当たる」
  * 受け皿にしていた。あやとが「一週間ほど」と言った日に `to: "2026-11-19"` と書いたが、
@@ -451,91 +452,53 @@ const BALKAN_BOARDS: { name: string; group: string }[] = [
  * 同じ事実（いつどの国に入ったか）を2か所に書くと、片方は見立てのまま残る
  * （`docs/island-standards.md` 8章）。
  *
- * - **面の無い国を書かない。** 書くと、押した先で島の玄関が 200 を返して、
- *   押した人には何が起きたのか分からない（`content/themes.ts` の同じ決まり）。
- *   アルバニアがここに無いのは、`/albania` という面が無いから
- * - **いま居る国に行が無ければ、案内は出ない。** 前の国へは戻さない——
+ * - **面の無い国に `guide` を書かない。** 書くと、押した先で島の玄関が 200 を返して、
+ *   押した人には何が起きたのか分からない（`content/themes.ts` の同じ決まり）
+ * - **いま居る国に `guide` が無ければ、案内は出ない。** 前の国へは戻さない——
  *   もう居ない国の歩きかたを「いま」に出すより、出さないほうが本当
- * - **章の外へ持ち越さない。** 章が変われば、この表に無い章になって札は建たない。
+ * - **章の外へ持ち越さない。** 章が変われば、その章の滞在に無い国になって札は建たない。
  *   持ち越すと、次の島に前の国の案内が建つ
- * - **行を足すのは、その国を国の表に足すのと同じ変更で。** 国の表に居ない国の行は
- *   いつまでも当たらないので、`python/upkeep_watch.py` の引き金「案内している国」が
- *   名指しする（2026-11-12 に、面と行だけ出して国を足し忘れた）。
- *   逆——国は足したのに行が無い——は `site/selftest/islechapter_selftest.mjs` が見る
- * - 並びは新しい国が先（読む人のため。選ぶのは日付なので、順では決まらない）
+ * - 国は足したのに `guide` が無い（面だけ在る）は `site/selftest/islechapter_selftest.mjs` が見る
  *
  * 行き先が本当に在るかも `site/selftest/islechapter_selftest.mjs` が数える。
  */
-type Guide = {
-  /** 国（`content/countries.ts` の slug）。**いつ出すかは、この国に入った日で決まる** */
+type Guide = StayGuide & {
+  /** 国（滞在の行の `country`）。**いつ出すかは、この国に入った日で決まる** */
   slug: string;
-  name: string;
-  href: string;
-  lead: string;
-  /** 行き先の面が頭に出している印と同じ絵（その国の `page.tsx` の `PageHead`） */
-  icon: IconName;
 };
 
-const GUIDES: Record<string, Guide[]> = {
-  balkans: [
-    {
-      slug: "romania",
-      name: "ルーマニア・ブカレスト",
-      href: "/travel/romania/bucharest",
-      /* 頭はブカレストの面の表紙と同じキャッチ（`content/guidebook/romania-bucharest.ts` の `lead`）。後ろは面の題と同じ
-         （ソフィアの行と同じ形）。絵は表紙の写真のアテネ音楽堂 */
-      lead: "「東欧のパリ」と称えられた街。観光ガイドと見どころマップ",
-      icon: "theater",
-    },
-    {
-      slug: "bulgaria",
-      name: "ブルガリア・ソフィア",
-      /* 街の面（前の `/bulgaria`。#1228）。国の案内はソフィアの面が兼ねる（国の面 `/travel/bulgaria` はほかの国と同じ旅の記録で、「行った街」からここへ来る） */
-      href: "/travel/bulgaria/sofia",
-      /* 頭はソフィアの面の表紙と同じキャッチ（`content/guidebook/bulgaria-sofia.ts` の `lead`）。後ろは面の題と同じ「観光ガイド」
-         （前は「やりたいこと8選と、1日の予算」で、面の題を直した日にここだけ古い字が残った。#1228） */
-      lead: "二千年の歴史が足もとに眠る街。観光ガイドと見どころマップ",
-      icon: "church",
-    },
-    {
-      slug: "north-macedonia",
-      name: "北マケドニア",
-      href: "/travel/north-macedonia",
-      /* 島の下の紙に出る1行。**時制も数も書かない**（`docs/island-standards.md` 16章）。
-         国を越えた日にも、何ヶ月たっても本当のことだけ。 */
-      lead: "海に出ない、山と湖の国。首都の歩きかたと、見どころと、食べもの",
-      icon: "mountain",
-    },
-  ],
+/** その章の案内。新しい国が先 */
+const guidesIn = (chapter: string): Guide[] => {
+  const c = CHAPTERS.find((x) => x.slug === chapter);
+  return c
+    ? staysOfChapter(c)
+        .flatMap((s) => (s.guide ? [{ slug: s.country, ...s.guide }] : []))
+        .reverse()
+    : [];
 };
 
 /**
- * 国に入った1回ぶん。**国の表（`content/countries.ts`）の写しではなく、読みかた。**
+ * 国に入った1回ぶん。**滞在の表（`content/stays.ts`）の写しではなく、読みかた。**
  */
 export type Entered = {
   slug: string;
   /** 入った日（`YYYY-MM-DD`） */
   on: string;
-  /** 出た日。**歩き終わった国の、閉じた滞在だけが持つ** */
+  /** 出た日。**閉じた滞在だけが持つ** */
   left?: string;
 };
 
 /**
- * いつ、どの国に入ったか。**出どころは国の表だけ。**
- *
- * - 歩き終わった国（`COUNTRIES`）… 滞在1つが1回。頭の日が入った日
- * - 歩いている最中の国（`AHEAD_COUNTRIES`）… `entered`。記録のある国と
- *   重ねないのは `walkingCountries()` が持っている決まり
+ * いつ、どの国に入ったか。**出どころは滞在の表だけ**（行1つが1回）。
  *
  * **並べ替えはここでしない**（使う側の `staysOf` がする）。仕込みの並びを
  * 渡して確かめられるように、素の並びのまま出す。
  */
-export const ENTERED: Entered[] = [
-  ...COUNTRIES.flatMap((c) =>
-    c.stays.map((s) => ({ slug: c.slug, on: s.from, ...(s.to ? { left: s.to } : {}) })),
-  ),
-  ...walkingCountries().map((c) => ({ slug: c.slug, on: c.entered })),
-];
+export const ENTERED: Entered[] = STAYS.map((s) => ({
+  slug: s.country,
+  on: s.from,
+  ...(s.to ? { left: s.to } : {}),
+}));
 
 /** 日付として読める字か。読めない字を `toISOString()` に渡すと、面ごと落ちる */
 const isDay = (s?: string): s is string =>
@@ -581,7 +544,7 @@ export const guidesOf = (
   slug?: string,
   entered: readonly Entered[] = ENTERED,
 ): (Guide & GuideSpan)[] =>
-  ((slug && GUIDES[slug]) || []).flatMap((g) =>
+  (slug ? guidesIn(slug) : []).flatMap((g) =>
     staysOf(g.slug, entered).map((span) => ({ ...g, ...span })),
   );
 

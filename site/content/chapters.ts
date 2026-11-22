@@ -4,13 +4,16 @@
  * **島の連なりは、ここが唯一の出どころ。** 大きさも、住人も、船の道も、これを見て決める
  * （`docs/island-atlas.md`）。
  *
- * 章の切りかたは、`content/countries.ts` の滞在と、BigQuery の配信タイトルから決めた。
+ * 章の切りかたは、滞在（`content/stays.ts`）と、BigQuery の配信タイトルから決めた。
  * **手で「この島は大きめ」と決めない。** 大きさは滞在日数から計算する。
+ *
+ * **章で回った国は、ここに書かない。** 期間が重なる滞在から引く（`chapterCountrySlugs`）。
  */
 
 /* 焼いた日は `lib/builtAt.ts` から直に取る。**`lib/nightly.ts` 経由にしない**
    ——あちらはこのファイルの `looseStartNow` を読むので、輪になって落ちる。 */
 import { BUILT_AT } from "@/lib/builtAt";
+import { STAYS, type Stay } from "./stays";
 
 export type Chapter = {
   slug: string;
@@ -20,8 +23,6 @@ export type Chapter = {
   from: string;
   /** 終わった日。いまも続いている章は空 */
   to: string;
-  /** この章で回った国（`content/countries.ts` の slug） */
-  countries: string[];
   /**
    * 本線から逸れた枝か。
    *
@@ -70,7 +71,6 @@ export const CHAPTERS: Chapter[] = [
     name: "ヨーロッパ周遊",
     from: "2024-10-28",
     to: "2025-03-29",
-    countries: ["france", "netherlands", "belgium", "hungary", "austria", "slovakia", "czech", "germany", "uk"],
     note: "配信が始まった島。週3から毎日になった",
   },
   {
@@ -78,7 +78,6 @@ export const CHAPTERS: Chapter[] = [
     name: "中東周遊",
     from: "2025-03-30",
     to: "2025-06-28",
-    countries: ["turkey", "cyprus", "egypt", "jordan", "uae"],
     note: "祭りが生まれた島",
   },
   {
@@ -86,7 +85,6 @@ export const CHAPTERS: Chapter[] = [
     name: "コーカサス周遊",
     from: "2025-06-29",
     to: "2026-09-11",
-    countries: ["azerbaijan", "georgia", "armenia"],
     // 旅に出た日から、ここは「いまいる島」ではなくなる（いまいる島は日付で決まる）。
     // 焼いた字は日付で書き換わらないので、**いつ読んでも本当のこと**だけを書く。
     note: "腰を据えた島。なに食べよを作った",
@@ -96,7 +94,6 @@ export const CHAPTERS: Chapter[] = [
     name: "イランまで歩く",
     from: "2026-04-29",
     to: "2026-05-08",
-    countries: ["iran-border"],
     branchOf: "caucasus",
     note: "先へ進んだのではなく、歩いて国境まで行って戻ってきた",
   },
@@ -114,7 +111,6 @@ export const CHAPTERS: Chapter[] = [
     name: "北欧周遊",
     from: "2026-09-12",
     to: "2026-09-27",
-    countries: ["poland", "lithuania", "latvia", "estonia", "finland", "sweden"],
     // 出発したあとも焼かれたまま出る字なので、「次の島」「まだ建っていない」と
     // 書かない。旅の中身そのものなら、出る前・最中・終わったあとのどれで読んでも合う。
     //
@@ -162,8 +158,8 @@ export const CHAPTERS: Chapter[] = [
        1国1島の飛び石になって、旅が旅に見えない。
 
        **これから入る国も、この島の中。** 章を分けないので、国を1つ越えても
-       ここに行を足さない——足すのは `countries` の中身と、その国の案内への
-       入口（`components/isle/spec.ts` の `GUIDES`）。 */
+       ここに行を足さない——足すのは滞在の表（`content/stays.ts`）の1行だけ。
+       章の国も、その国の案内も、そこから引く。 */
     slug: "balkans",
     name: "バルカン諸国周遊",
     from: "2026-09-28",
@@ -183,15 +179,6 @@ export const CHAPTERS: Chapter[] = [
        かといって北欧の `to` を 09-28 へ伸ばさない——あちらの終わりは
        「ストックホルム出るまでが北欧旅です」（あやと 2026-09-06）が根拠で、
        日付を1日ずらすと**根拠のほうが嘘になる。** ずれるのは1本ぶん。 */
-    /* **歩き終わった国だけ**（`content/countries.ts` の `COUNTRIES` の slug）。2026-11-22 に
-       アルバニア・北マケドニア・ブルガリアを `COUNTRIES` へ移したときに入れた（#664）。
-       `order` は北欧の続き（25〜27）なので、ほかの国の「◯カ国目」は1つも動かない。
-
-       **いま歩いている国（ルーマニア）はここに書かない。** 書いても、読む側が `COUNTRIES` から
-       引き直すので黙って落ちる。島が歩いた国を数えるときは、`content/walked.ts` の
-       `chapterCountries()` が `AHEAD_COUNTRIES` の `entered` から足している。
-       歩き終わって `COUNTRIES` へ移す日に、ここにも足す。 */
-    countries: ["albania", "north-macedonia", "bulgaria"],
     /* 出る前・最中・終わったあとの**どれで読んでも合う字**にする（北欧と同じ決まり）。
        「いま◯◯にいる」「つぎは◯◯」と書くと、国を1つ越えた日から嘘になる。
        **数も書かない**——国の数も日数も、数を持っている面が言う。
@@ -210,6 +197,55 @@ export const CHAPTERS: Chapter[] = [
     opensAt: "2026-09-28T00:00:00+09:00",
   },
 ];
+
+/** その日の前日。滞在の切れ目を引くためだけなので、暦は UTC で足りる */
+const dayBefore = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) - 86400_000).toISOString().slice(0, 10);
+
+/** 終わりの空いた期間の、終わりの代わり */
+const OPEN = "9999-12-31";
+
+/**
+ * 滞在の、事実上の期間（着いた順）。**終わりは、`to` と「つぎに着いた日の前日」の早いほう。**
+ *
+ * 国を移る日は前の行の `to` とつぎの行の `from` が同じ日になる（境目の日は入った国が取る。
+ * `content/stays.ts` の頭）。`to` のまま重ねると、ケルンの 2025-03-30 が中東周遊にも入る。
+ */
+const STAY_SPANS = [...STAYS]
+  .sort((a, b) => a.from.localeCompare(b.from))
+  .map((s, i, all) => {
+    const next = all.slice(i + 1).find((x) => x.from > s.from);
+    const to = [s.to || OPEN, next ? dayBefore(next.from) : OPEN].sort()[0];
+    return { stay: s, from: s.from, to };
+  });
+
+/**
+ * その章の滞在（着いた順）。**章と期間が重なる行**（`docs/spec/model.md` 6章「旅が回った国」）。
+ * 国の記録の無い国の行（いま歩いている国・これから着く国）も入る。
+ *
+ * **枝の旅（`branchOf`）にすっぽり入る滞在は、枝のもの。** 本線には数えない。いまはイラン国境の行が
+ * アルメニアの行と重なっているので（M-12）、こう読まないと本線のコーカサスに国境が入る。
+ * W8（#1355）でイラン国境をアルメニアの地点にしたら、この決まりは要らなくなる。
+ */
+export function staysOfChapter(c: Chapter): Stay[] {
+  if (!c.from) return [];
+  const inside = (x: { from: string; to: string }, ch: Chapter) =>
+    !!ch.from && ch.from <= x.from && x.to <= (ch.to || OPEN);
+  const overlaps = (x: { from: string; to: string }, ch: Chapter) =>
+    x.from <= (ch.to || OPEN) && ch.from <= x.to;
+  const branches = CHAPTERS.filter((x) => x.branchOf);
+  return STAY_SPANS.filter((x) =>
+    c.branchOf ? inside(x, c) : overlaps(x, c) && !branches.some((b) => inside(x, b)),
+  ).map((x) => x.stay);
+}
+
+/**
+ * その章で回った国（slug。着いた順、重ねない）。**国の記録（`content/countries.ts`）のある国だけ。**
+ * まだ記録の無い国（滞在の行が `name` を持つ国）は入らない——いま歩いている国まで数えるときは
+ * `content/walked.ts` の `chapterCountries()`。
+ */
+export function chapterCountrySlugs(c: Chapter): string[] {
+  return [...new Set(staysOfChapter(c).filter((s) => !s.name).map((s) => s.country))];
+}
 
 /**
  * いまいる島。**日付から決まる。**

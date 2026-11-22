@@ -12,6 +12,7 @@ import { useFund } from "@/components/nordic/fund";
 import {
   CHAIN,
   CHAPTERS,
+  chapterCountrySlugs,
   chapterDays,
   chapterNext,
   chapterNow,
@@ -323,7 +324,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
                   <b>{st.people.toLocaleString()}</b>人
                 </span>
                 <span>
-                  <b>{cur.countries.length}</b>カ国
+                  <b>{chapterCountrySlugs(cur).length}</b>カ国
                 </span>
               </>
             )}

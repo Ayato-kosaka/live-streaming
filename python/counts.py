@@ -73,6 +73,7 @@ from ts_read import (  # noqa: E402
     code_only,
     fields,
     objects,
+    read_ahead_countries,
     read_array,
     read_chapters,
     read_countries,
@@ -214,13 +215,13 @@ def _today() -> str:
 
 def n_walked() -> int:
     """歩いた国。決めは `content/walked.ts` と同じ（`-border` は数えない ＋ 旅程の入国ずみ）。"""
-    src = _read("site/content/countries.ts")
-    got = read_countries(src)
-    if got.missed:
-        raise ValueError("countries.ts を読み落とした")
+    stays = _read("site/content/stays.ts")
+    got = read_countries(_read("site/content/countries.ts"), stays)
+    if got.missed or got.stays_missed:
+        raise ValueError("countries.ts / stays.ts を読み落とした")
     done = [c for c in got.rows if not c["slug"].endswith("-border")]
     today = _today()
-    ahead = read_array(src, "AHEAD_COUNTRIES", keys=("entered",), id_key="slug").rows
+    ahead = read_ahead_countries(stays).rows
     return len(done) + len([1 for a in ahead if a["entered"] and a["entered"] <= today])
 
 

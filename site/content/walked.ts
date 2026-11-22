@@ -1,5 +1,5 @@
 import { AHEAD_COUNTRIES, COUNTRIES, isWalkedCountry, type Country } from "./countries";
-import { chapterNow, tripDate, type Chapter } from "./chapters";
+import { chapterCountrySlugs, chapterNow, tripDate, type Chapter } from "./chapters";
 
 /**
  * 「これまで歩いた国」の数。**画面が出てから数え直す。**
@@ -96,22 +96,14 @@ export function walkingCountries(): WalkingCountry[] {
 /**
  * その島（章）で歩いた国。**歩き終わった国と、歩いている最中の国の両方。**
  *
- * ## なぜ章の `countries` だけでは足りないか
+ * ## なぜ `chapterCountrySlugs` だけでは足りないか
  *
- * `content/chapters.ts` の `countries` は `COUNTRIES` の slug を並べる欄で、
- * **歩き終わるまで埋められない**（街と滞在と見どころが要る）。だからバルカン
- * 諸国周遊は、アルバニアを歩いて北マケドニアに居る日に `countries: []` のままで、
- * 島が「**0カ国 歩いた**」と言っていた。歩いているのに0は嘘
- * （`docs/island-standards.md` 16章）。
- *
- * ## なぜ章の `countries` に書き足して済ませないか
- *
- * あそこに書いても、読む側が `COUNTRIES` から引き直すので**黙って落ちる**
- * （`components/isle/spec.ts` / `IsleReview.tsx` / `cover.ts` の3か所とも）。
- * 落ちないように直すなら結局ここと同じ式が要るうえ、**国を1つ越えるたびに
- * 人が章の表を書き足しに来る名簿**が1本増える（`docs/island-misses.md` の
- * 決めごと3）。章と国の結びつきは `entered` から導ける——`python/stays.py` の
- * `chapter_stays()` も `/map` の年表も、もうそうしている。**同じ決めかたに揃える。**
+ * あちら（`content/chapters.ts`）が返すのは**国の記録のある国**だけで、記録は
+ * **歩き終わるまで書けない**（見どころと紹介が要る）。それだけを数えると、バルカン
+ * 諸国周遊はアルバニアを歩いて北マケドニアに居る日に島が「**0カ国 歩いた**」と言う。
+ * 歩いているのに0は嘘（`docs/island-standards.md` 16章）。だから記録の無い国
+ * （`AHEAD_COUNTRIES`）を、その国に入った日に動いていた章へ足す——`python/stays.py` の
+ * `chapter_stays()` も `/map` の年表も同じ決めかた。
  *
  * ## 島の地形はここで変えない
  *
@@ -130,7 +122,7 @@ export type ChapterCountry = {
 };
 
 export function chapterCountries(c: Chapter, now: Date = new Date()): ChapterCountry[] {
-  const done: ChapterCountry[] = c.countries.flatMap((slug) => {
+  const done: ChapterCountry[] = chapterCountrySlugs(c).flatMap((slug) => {
     const k = COUNTRIES.find((x) => x.slug === slug);
     return k ? [{ slug: k.slug, name: k.name, stays: k.stays, href: `/travel/${k.slug}`, region: k.region }] : [];
   });

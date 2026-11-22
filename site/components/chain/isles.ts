@@ -20,7 +20,7 @@
 import { artOf } from "./shapes";
 import { chapterIsle } from "@/components/isle/spec";
 import { buildWorld, SQUASH } from "@/components/isle/world";
-import { CHAPTERS } from "@/content/chapters";
+import { CHAPTERS, chapterCountrySlugs } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
 import type { AtlasIsle } from "./diorama";
 
@@ -28,7 +28,7 @@ export type { AtlasBuilding, AtlasIsle } from "./diorama";
 
 export function atlasIsles(): AtlasIsle[] {
   return CHAPTERS.map((c) => {
-    const regions = c.countries.flatMap((s) => {
+    const regions = chapterCountrySlugs(c).flatMap((s) => {
       const k = COUNTRIES.find((x) => x.slug === s);
       return k ? [k.region as string] : [];
     });

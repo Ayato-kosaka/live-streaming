@@ -26,6 +26,7 @@
 
 import {
   CHAPTERS,
+  chapterCountrySlugs,
   chapterDayNo,
   chapterHref,
   chapterNow,
@@ -125,7 +126,7 @@ export function stayWord(days: number, open = false): string {
  * 同じ国に何度も入っている場合、滞在を閉じるのはいちばん新しい章。
  */
 function chapterOfCountry(slug: string): Chapter | undefined {
-  return [...CHAPTERS].reverse().find((c) => !c.branchOf && c.countries.includes(slug));
+  return [...CHAPTERS].reverse().find((c) => !c.branchOf && chapterCountrySlugs(c).includes(slug));
 }
 
 /**
