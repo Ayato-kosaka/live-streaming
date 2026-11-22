@@ -48,8 +48,8 @@ BigQuery の `youtube_chat.videos`（配信のタイトルと日付）から決�
 
 だから、次の国へ移っても `chapters.ts` に行は足さない。足すのは
 
-- `countries`（歩いた国。`content/countries.ts` に載ってから）
-- その国の案内への入口（`components/isle/spec.ts` の `GUIDES`）
+- 滞在の表（`content/stays.ts`）の1行。章で回った国も、その国の案内への入口（行の `guide`）も
+  ここから引く（#1275）
 - 付箋の宛先（`content/themes.ts`。島の板の棚は `BALKAN_BOARDS` が束ねる）
 
 **章の名前を変えると、焼き込み（`chapterStats` / `chapterStreams`）の鍵が
