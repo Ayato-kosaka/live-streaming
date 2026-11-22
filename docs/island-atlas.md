@@ -121,7 +121,7 @@ BigQuery の `youtube_chat.videos`（配信のタイトルと日付）から決�
 北欧は `content/nordic.ts` の `DEPART` と同じ値。**片方を動かしたら両方動かす。**
 
 **静的書き出しに焼かない。** `output: "export"` なので、ビルドしたときの答えが
-HTML に入る（`CLAUDE.md`）。焼くのはいまの島1つだけにして、画面では必ず
+HTML に入る（`docs/island-verify.md` 2章「静的書き出し」）。焼くのはいまの島1つだけにして、画面では必ず
 `chapterNow(new Date())` を呼び直す。連なりの「いまここ」も、トップの表紙も、
 これを見ている。
 

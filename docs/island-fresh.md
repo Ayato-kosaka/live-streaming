@@ -609,7 +609,7 @@ python3 python/dead_stream_watch_selftest.py   # ネットに出ない。「本�
 
 いまは `.github/workflows/failed_reentry_nightly.yml` が
 `Fetch Doneru Donations` の完了に `workflow_run` で繋いで**毎晩**回す
-（cron は保険。繋ぎかたの決まりは `CLAUDE.md` と `docs/island-misses.md` #125）。
+（cron は保険。繋ぎかたの決まりは `docs/island-verify.md` 2章「定時実行は、何時間も遅れて走る」と `docs/island-misses.md` #125）。
 
 | | |
 | --- | --- |

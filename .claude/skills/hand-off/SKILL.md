@@ -5,7 +5,7 @@ description: 作業をエージェントに配るときの依頼文を組み立�
 
 # エージェントに配る
 
-**自分の手を動かすのは、配る前の判断と、出したあとの確認まで**（CLAUDE.md）。
+**自分の手を動かすのは、配る前の判断と、出したあとの確認まで**（`docs/island-standards.md` §9）。
 1ファイルで閉じる作業は、指摘が来た時点で配る。
 
 **ここは依頼文の雛形。** 毎回手で書くと抜ける。実際に抜けて痛い目を見た4つを、
@@ -66,7 +66,7 @@ description: 作業をエージェントに配るときの依頼文を組み立�
 **どの道具をどう回すか。無ければ作るところまでが仕事。**
 
 ```
-- `tools/sprites/node_modules` が無ければ `npm ci`（CLAUDE.md の表を読むこと）
+- `tools/sprites/node_modules` が無ければ `npm ci`（`docs/island-verify.md` 1章の表を読むこと）
 - 書き出して全ページを回す:
     cd site && NEXT_DIST_DIR=.next-verify npx next build
     python3 -m http.server 4321 --directory .next-verify &
@@ -210,7 +210,7 @@ python/admin/
   同じところに居ると、**担当が枝を切り替えた拍子に、自分のコミットが
   担当の枝に乗る**（実際に乗せた）
 - worktree を切るなら `functions/node_modules` は symlink 可、
-  **`tools/sprites/node_modules` は実体を複製**（CLAUDE.md の表。symlink だと1本落ちる）
+  **`tools/sprites/node_modules` は実体を複製**（`docs/island-verify.md` 1章の表。symlink だと1本落ちる）
 - ビルドは `tools/build.sh` から。**並列で `next build` を3本回すと箱が止まる**
 - **書き出しは worktree ごとに 600MB を超える。** worktree 1つで 400〜900MB、置き場の空きは 2GB 前後しかない日がある（2026-11-20 に何度も尽きかけた）。
   依頼文に「始める前に `df -h .`、空きが 1.5GB 未満なら書き出しを回さずに Actions へ」を入れる
