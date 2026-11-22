@@ -13,8 +13,8 @@
 | どこ | 書いてあった | その日の実物 |
 | --- | --- | --- |
 | `docs/island-fresh.md` | 焼き込み 35本 | **38本** |
-| `CLAUDE.md` | `tools/sprites` 461本 / git 242本 | **349本 / 340本** |
-| `CLAUDE.md` | `avatars.py` は 22人ぶん落とす | **129人ぶん** |
+| `CLAUDE.md`（いまは `docs/island-verify.md`） | `tools/sprites` 461本 / git 242本 | **349本 / 340本** |
+| `CLAUDE.md`（いまは `docs/island-verify.md`） | `avatars.py` は 22人ぶん落とす | **129人ぶん** |
 | `docs/island-standards.md` | 島は 138面（料理33・伝説9） | **141面（料理39・伝説8）** |
 | `docs/island-audit.md` | `islandApi.ts` 4,215行 | **4,958行**（24日で +18%） |
 
@@ -504,9 +504,9 @@ COUNTS: dict[str, tuple[str, object, str]] = {
     "residents": ("図鑑の名簿", n_residents, "docs/island-fresh.md 2章"),
     "recipes": ("料理（スタンプ帳）", n_recipes, "docs/island-fresh.md 4章"),
     "legends": ("伝説", n_legends, "docs/island-fresh.md 6章"),
-    "sprite_tools": ("tools/sprites のファイル", n_sprite_tools, "CLAUDE.md"),
-    "sprite_tools_git": ("うち git に在るもの", n_sprite_tools_git, "CLAUDE.md"),
-    "avatars": ("avatars.py が落とす絵", n_avatars, "CLAUDE.md"),
+    "sprite_tools": ("tools/sprites のファイル", n_sprite_tools, "docs/island-verify.md 1章"),
+    "sprite_tools_git": ("うち git に在るもの", n_sprite_tools_git, "docs/island-verify.md 1章"),
+    "avatars": ("avatars.py が落とす絵", n_avatars, "docs/island-verify.md 1-1"),
     "functions_lines": ("functions/src ぜんぶ（行）", n_functions_lines, "docs/island-audit.md 2-1"),
     "island_api_lines": ("islandApi.ts（行）", n_island_api_lines, "docs/island-audit.md 2-1"),
     "outside_text_watch": (
