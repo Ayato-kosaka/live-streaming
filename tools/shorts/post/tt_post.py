@@ -473,7 +473,11 @@ def post(t, mp4, caption, dry=False, at=None, cover=None, probe=False, sound=Non
     time.sleep(2)
     key(t, "Escape", "Escape", 27)
     time.sleep(1)
-    got = t.js(f"{ED}.innerText")
+    # 欄は Draft.js で、1行が1つの段（data-block）。空の行の段は <br> を持つので、innerText だと
+    # 空の行1つが改行3つに読める（2026-11-22 紹介の回。段を並べると投稿文と1字も違わなかった）。
+    # 段があれば段の字を改行で繋いで比べ、無ければ前のとおり innerText
+    got = t.js(f"""(() => {{ const e = {ED}; const b = [...e.querySelectorAll('[data-block=true]')];
+        return b.length ? b.map(x => x.textContent).join('\\n') : e.innerText; }})()""")
     norm = re.sub(r"\n+$", "", got or "")
     mention = t.js(f"""[...{ED}.querySelectorAll('*')].filter(e => /mention|hashtag|at-user|user-card/i.test(e.className || '')).map(e => [e.className.slice(0, 40), (e.innerText || '').slice(0, 30)])""")
     log("pasted handled:", pasted, "| caption match:", norm == caption, "| entities:", mention)
