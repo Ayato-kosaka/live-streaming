@@ -1371,3 +1371,6 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1268#issuecomment-7048291695（クリスマスマーケットの回: v9c を 2026/11/24 に出す）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1269#issuecomment-7048259671（バニツァの回: v6c を 2026/11/23 に出す）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1270#issuecomment-7048322583（温泉の回: v4g を「次の日付に」＝ 2026/11/25 に出す）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1267#issuecomment-7076329918（ボザの回: v8c を 2026/11/26 に出す）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1271#issuecomment-7076355203（配信丸わかりサイトの回: v7d を 2026/11/25 朝 09:30 に出す）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1272#issuecomment-7076392693（観光ガイドの回: v5e を 2026/11/26 朝 09:30 に出す）
