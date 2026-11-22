@@ -40,6 +40,7 @@ import Module, { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { arraySpan, codeOnly, fields, objectSpans } from "../../tools/sprites/tsread.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SITE = join(HERE, "..");
@@ -66,11 +67,20 @@ function stop(why) {
 // ------------------------------------------------------------------ 写しの表
 
 const STAYS_SRC = readFileSync(join(SITE, "content", "stays.ts"), "utf8");
-const closeAt = STAYS_SRC.lastIndexOf("\n];");
-if (closeAt < 0) stop("content/stays.ts の STAYS の終わり（`\\n];`）が見つからない");
+/* 字は `tools/sprites/tsread.mjs` で読む（自前の正規表現を生やさない。`tsread_selftest.mjs` の 4）。
+   `codeOnly` は長さを変えないので、そこで測った位置は元の字にそのまま当たる */
+const CODE = codeOnly(STAYS_SRC);
+const [OPEN_AT, CLOSE_AT] = arraySpan(CODE, "STAYS");
+if (OPEN_AT < 0) stop("content/stays.ts に STAYS の並びが見つからない");
+/** 行ごとの在りか（元の字の位置）と欄 */
+const ROWS = objectSpans(CODE.slice(OPEN_AT + 1, CLOSE_AT)).map(([a, b]) => ({
+  at: OPEN_AT + 1 + a,
+  end: OPEN_AT + 1 + b + 1,
+  f: fields(CODE.slice(OPEN_AT + 2 + a, OPEN_AT + 1 + b)),
+}));
 
-/** いまの最後の行の着いた日。**字で拾うのは日付だけ**（行の形は組み立てたものから読む） */
-const lastFrom = [...STAYS_SRC.matchAll(/\bfrom: "(\d{4}-\d{2}-\d{2})"/g)].map((m) => m[1]).sort().at(-1);
+/** いまの最後の行の着いた日 */
+const lastFrom = ROWS.map((r) => r.f.from).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d ?? "")).sort().at(-1);
 if (!lastFrom) stop("content/stays.ts から着いた日が1つも読めない");
 const nextDay = (d, n = 1) => new Date(Date.parse(`${d}T00:00:00Z`) + n * 86400_000).toISOString().slice(0, 10);
 const jstToday = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
@@ -82,12 +92,12 @@ const FAKE_HREF = "/travel/zz-island";
 const ROW =
   `  { country: "${FAKE}", name: "架空の国", cities: [], from: "${ON}", to: "",\n` +
   `    guide: { name: "架空の国・みやこ", href: "${FAKE_HREF}", lead: "確かめのための国", icon: "mountain" } },`;
-const WITH_ROW = STAYS_SRC.slice(0, closeAt) + "\n" + ROW + STAYS_SRC.slice(closeAt);
+const WITH_ROW = STAYS_SRC.slice(0, CLOSE_AT) + ROW + "\n" + STAYS_SRC.slice(CLOSE_AT);
 
 /** 記録のある国（ブルガリア）の行を抜いた表。国の表が読み込んだときに止まるはず */
-const bg = /\n  \{\n    country: "bulgaria",[\s\S]*?\n  \},/.exec(STAYS_SRC);
+const bg = ROWS.find((r) => r.f.country === "bulgaria");
 if (!bg) stop("content/stays.ts に bulgaria の行が見つからない（対照の仕込みを直す）");
-const WITHOUT_BG = STAYS_SRC.replace(bg[0], "");
+const WITHOUT_BG = STAYS_SRC.slice(0, bg.at) + STAYS_SRC.slice(bg.end).replace(/^,/, "");
 
 // ------------------------------------------------------------------ 組み立て
 
