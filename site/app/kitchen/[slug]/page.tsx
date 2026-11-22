@@ -53,7 +53,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const r = recipeBySlug(slug);
   if (!r) notFound();
   /* 名前しか要らないので、いま歩いている国も引けるほうを使う
-     （アルバニアは `COUNTRIES` にまだ居ない。歩き終わってから入る） */
+     （いま歩いている国は `COUNTRIES` にまだ居ない。歩き終わってから入る） */
   const c = countryNameBySlug(r.country);
   const sorted = [...RECIPES].sort((a, b) => (a.date < b.date ? 1 : -1));
   const i = sorted.findIndex((x) => x.slug === r.slug);
