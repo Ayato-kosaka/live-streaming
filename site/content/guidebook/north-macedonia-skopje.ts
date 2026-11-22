@@ -3677,7 +3677,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
  "videos": {
   "streams": {
    "country": "north-macedonia",
-   "city": "北マケドニア"
+   "city": "スコピエ"
   },
   "shorts": [
    "ieMGyM2QjCA",
@@ -4553,7 +4553,7 @@ export const SKOPJE: Guidebook = /* BEGIN GUIDE */
   }
  },
  "published": "2026-11-14",
- "updated": "2026-11-20",
- "hash": "f3b8ad18fb1646e6"
+ "updated": "2026-11-22",
+ "hash": "fbbc2226f18b731c"
 }
 /* END GUIDE */;

@@ -105,6 +105,12 @@ ROUTE = {
     "Estonia": "estonia",
     "Finland": "finland",
     "Sweden": "sweden",
+    # バルカン諸国周遊（2026-09-28 〜）のうち、歩き終わった3カ国。`ORDER` の 25〜27 と1対1。
+    # 2026-11-22 に `WALKING`（寄りの地図だけの国）からここへ移した（#664）。
+    # 北マケドニアは TopoJSON では "Macedonia"
+    "Albania": "albania",
+    "Macedonia": "north-macedonia",
+    "Bulgaria": "bulgaria",
 }
 
 # 配信を始める前に歩いた国。**`ROUTE` とは別に持つ。**
@@ -143,19 +149,17 @@ BEFORE_AT = {
 # こちらは**寄りの地図だけ**に使う——国の面（`/travel/<国>`）の頭に、その国がヨーロッパのどのあたりかを出すため
 # （あやと 2026-11-18「その国がヨーロッパのどのあたりかが分かれば良い。ルートは出さなくていい」）。
 # 歩き終わって `COUNTRIES` へ移したら、ここから `ROUTE` へ移す。
-WALKING = {
-    "Albania": "albania",
-    "Macedonia": "north-macedonia",
-    "Bulgaria": "bulgaria",
-}
+#
+# **いまは空。** アルバニア・北マケドニア・ブルガリアがここに居たが、歩き終わって `ROUTE` へ移した
+# （2026-11-22）。いま歩いているルーマニアは、寄りの地図をまだ焼いていない（国の面に地図が出ないだけ）。
+WALKING: dict[str, str] = {}
 
 # 歩いている最中の国の寄りの地図に立てる街（首都）。**世界1枚の `CITIES` には足さない**——あちらに足すと、
 # 世界の地図に点と線の起点が増える。ここは「国のどこに首都があるか」の目印だけで、線は引かない。
 # (id, 表示名, 経度, 緯度, 国, 種類)。座標は街の中心（OpenStreetMap の街の点）
-WALK_CITIES = [
-    ("skopje", "スコピエ", 21.4314, 41.9965, "north-macedonia", "hub"),
-    ("sofia", "ソフィア", 23.3219, 42.6977, "bulgaria", "hub"),
-]
+#
+# スコピエとソフィアは、歩き終わって世界1枚の `CITIES` へ移した（2026-11-22）
+WALK_CITIES: list[tuple[str, str, float, float, str, str]] = []
 
 LAKES = {
     "Lake Nasser", "Dead Sea", "Lake Sevan", "Lake Van", "Lake Urmia", "Lake Tuz",
@@ -723,6 +727,11 @@ CITIES = [
     ("tallinn", "タリン", 24.7536, 59.4370, "estonia", "hub"),
     ("helsinki", "ヘルシンキ", 24.9384, 60.1699, "finland", "hub"),
     ("stockholm", "ストックホルム", 18.0686, 59.3293, "sweden", "hub"),
+    # バルカン諸国周遊。**泊まった街だけ**（`content/countries.ts` の `stays` と同じ）。
+    # どの国も首都に腰を据えたので1国1つ。座標は街の中心（OpenStreetMap の街の点）
+    ("tirana", "ティラナ", 19.8187, 41.3275, "albania", "hub"),
+    ("skopje", "スコピエ", 21.4314, 41.9965, "north-macedonia", "hub"),
+    ("sofia", "ソフィア", 23.3219, 42.6977, "bulgaria", "hub"),
 ]
 
 # ルート。(出発, 到着, 移動のしかた, ふくらみ)
@@ -793,6 +802,12 @@ LEGS = [
     ("riga", "tallinn", "hitch", 0.10),
     ("tallinn", "helsinki", "sea", 0.16),
     ("helsinki", "stockholm", "sea", -0.12),
+    # バルカン諸国周遊。ストックホルムから飛んで、あとはバス
+    # （ティラナ→スコピエ 7時間、スコピエ→ソフィアはミニバス）。
+    # ソフィアから先（ルーマニア）は、歩き終わって `ROUTE` へ移す日に足す
+    ("stockholm", "tirana", "air", 0.10),
+    ("tirana", "skopje", "land", 0.12),
+    ("skopje", "sofia", "land", -0.10),
 ]
 
 # 国のピンに出す通し番号と、その国に着いた日。
@@ -803,6 +818,7 @@ ORDER = [
     "czech", "germany", "uk", "turkey", "cyprus", "egypt", "jordan",
     "uae", "azerbaijan", "georgia", "armenia", "iran-border",
     "poland", "lithuania", "latvia", "estonia", "finland", "sweden",
+    "albania", "north-macedonia", "bulgaria",
 ]
 
 # 章。地図を寄せるときの範囲（経度緯度）。
@@ -865,8 +881,10 @@ ZOOM = {
     # 拡大ではなくその国の範囲で投影し直したものなので、焼くのはここでしかできない。
     "spain": (-9.6, 3.6, 35.9, 43.9),
     "italy": (6.4, 18.8, 35.3, 47.2),
-    # いま歩いている旅の国（`WALKING`）。**国の輪ぎりぎりにしない。** 面で言いたいのは
-    # 「ヨーロッパのどのあたりか」なので、まわりの海（アドリア海・エーゲ海・黒海）が入るところまで引く
+    # バルカンの3カ国。歩いているあいだ（`WALKING`）に焼いた範囲のまま。**国の輪ぎりぎりにしない。**
+    # 面で言いたいのは「ヨーロッパのどのあたりか」なので（あやと 2026-11-18）、まわりの海
+    # （アドリア海・エーゲ海・黒海）が入るところまで引く。アルバニアも同じ引きかたで足した
+    "albania": (14.2, 26.0, 36.8, 45.4),
     "north-macedonia": (15.6, 27.4, 37.6, 46.2),
     "bulgaria": (17.6, 31.4, 38.4, 47.0),
 }

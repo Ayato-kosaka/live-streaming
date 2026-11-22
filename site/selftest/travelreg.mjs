@@ -19,13 +19,17 @@ export function travelRoot(site) {
 }
 
 /**
- * 名簿が索引に出す、**道が固定の**面（行く前の案内だけの国。`app/travel/<国>/page.tsx`）と、根。
- * 歩いた国（`[slug]` の面）は道が固定ではないので、ここには入らない。
+ * 名簿が索引に出す、**道が固定の**面（`app/travel/<国>/page.tsx`）と、根。
+ * いま歩いている旅の国（`GUIDE_ONLY`）と、街のガイドを持ったまま歩き終わった国（`WALKED_FIXED`）。
+ * ほかの歩いた国（`[slug]` の面）は道が固定ではないので、ここには入らない。
  */
 export function travelFixedRoutes(site) {
   const root = travelRoot(site);
   const src = readFileSync(join(site, "content", "travel.ts"), "utf8");
-  const rows = must(readArray(src, "GUIDE_ONLY", { keys: ["slug"] }), "content/travel.ts の GUIDE_ONLY");
+  const rows = [
+    ...must(readArray(src, "GUIDE_ONLY", { keys: ["slug"] }), "content/travel.ts の GUIDE_ONLY"),
+    ...must(readArray(src, "WALKED_FIXED", { keys: ["slug"] }), "content/travel.ts の WALKED_FIXED"),
+  ];
   return [root, ...rows.map((r) => `${root}/${r.slug}`)];
 }
 
