@@ -912,8 +912,9 @@ export const SOFIA: Guidebook = {
   buy: { items: BUY, places: PLACES.filter((p) => BG_BUY.some((x) => placeIds(x.pins).includes(p.id))), map: mymap("buy") },
   /* ソフィアのショートはまだ無い（`content/shorts.ts` に「ブルガリア」「ソフィア」の題の回が無い。2026-11-19 に見直した）。
      行った項目の動画は ② 配信の場面だけ（ショートができたら `went.json` の項目に `short` を足す）。
-     アーカイブは国の鍵（`ブルガリア`）に積まれていく */
-  videos: { streams: { country: "bulgaria", city: "ブルガリア" }, shorts: [] },
+     アーカイブは街の鍵（`ソフィア`）。歩いているあいだは国の鍵（`ブルガリア`）だったが、2026-11-22 に
+     歩き終わって `content/countries.ts` の `COUNTRIES` へ移したので、`cityStreams.ts` の欄が街の名前になった */
+  videos: { streams: { country: "bulgaria", city: "ソフィア" }, shorts: [] },
   basics: {
     summary: [
       { id: "season", icon: "sun", label: "歩きやすい季節", value: "5〜6月・9月", lead: "平均最高 21〜25℃", to: "#guide-season" },

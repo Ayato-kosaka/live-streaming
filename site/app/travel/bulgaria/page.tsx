@@ -12,8 +12,9 @@ import { CountryRecordPage, mustRecord, recordMetadata } from "../record";
  * 国の案内（ことば・通貨・ビザ）はソフィアの面が持っている（#1228）。ここに書き写さない
  * （同じ字の面が2枚になると、検索の評価が割れる。#1262）。
  *
- * 道が固定の面なのは、`./sofia/` が同じ段に在るから。歩き終わって `COUNTRIES` へ移ったら、
- * ここを消して `[slug]` の面に任せる（中身は同じ型なので、見た目は変わらない）。
+ * 道が固定の面なのは、`./sofia/` が同じ段に在るから。2026-11-22 に歩き終わって `COUNTRIES` へ移したが、
+ * 面はここに残した（`content/travel.ts` の `WALKED_FIXED`。`[slug]` の面はこの国を書き出さない）。
+ * 中身は同じ型なので、歩いた記録（一言・見どころ）は `content/countries.ts` から出る。
  */
 const R = mustRecord("bulgaria");
 

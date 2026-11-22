@@ -1774,12 +1774,7 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
     ]
   },
   "albania": {
-    "アルバニア": [
-      {
-        "videoId": "IQvqpxcbf0c",
-        "title": "バイバイスウェーデン！バイバイ北欧旅😭",
-        "date": "2026-09-28"
-      },
+    "ティラナ": [
       {
         "videoId": "HjSLfg57t7E",
         "title": "アルバニアつきましたー",
@@ -1863,7 +1858,7 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
     ]
   },
   "north-macedonia": {
-    "北マケドニア": [
+    "スコピエ": [
       {
         "videoId": "yk-by7R7iPA",
         "title": "北マケドニア共和国いこかー！？",
@@ -2042,7 +2037,7 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
     ]
   },
   "bulgaria": {
-    "ブルガリア": [
+    "ソフィア": [
       {
         "videoId": "4izd3enURM8",
         "title": "🇧🇬ブルガリアいきます",

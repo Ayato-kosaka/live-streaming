@@ -1,4 +1,10 @@
 {
+ "albania": {
+  "name": "アルバニア",
+  "hash": "f34e90abd83febf6e66539061aa5e8c5488afef2",
+  "w": 1200,
+  "h": 800
+ },
  "armenia": {
   "name": "アルメニア",
   "hash": "b649e8c5412ec4c6ffbd5a1afd8e6fefd0a81c8a",
@@ -25,7 +31,7 @@
  },
  "bulgaria": {
   "name": "ブルガリア",
-  "hash": "c540d7f7bc4b675303362b8e75d8af3adfafbf0c",
+  "hash": "52db992856adedda42660e390cbbdf6076d9aef1",
   "w": 1200,
   "h": 800
  },
@@ -115,7 +121,7 @@
  },
  "north-macedonia": {
   "name": "北マケドニア",
-  "hash": "e4a30b8ce58e8a1d2307b6a6104d02bc3657af4d",
+  "hash": "d0c9e7f408d40a7bd443c8c843d74b576e42a7e0",
   "w": 1200,
   "h": 800
  },
@@ -133,13 +139,13 @@
  },
  "sweden": {
   "name": "スウェーデン",
-  "hash": "4b07dad04a923d54fde65d09c0d62e953bf44c8f",
+  "hash": "54b5ea90a6c503d1f967282230a9990765798668",
   "w": 1200,
   "h": 800
  },
  "turkey": {
   "name": "トルコ",
-  "hash": "fdd3d4d9714e33e59a96637235115fc64fab1748",
+  "hash": "3c1a35ecbe64926c9d23023412bf31c0c0dc4b89",
   "w": 1200,
   "h": 800
  },

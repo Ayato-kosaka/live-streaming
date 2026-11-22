@@ -66,6 +66,7 @@ import guide_bake as gb  # noqa: E402  facts の読みかた・数の確かめ�
 import guide_facts as gf  # noqa: E402
 import guide_photos as gp  # noqa: E402  借りた写真の置き場の道は1か所で引く
 from maps_link import search as maps_search  # noqa: E402  Google マップの道は1か所で組む
+import ts_read  # noqa: E402  `site/content/*.ts` を字で読むのは1本だけ
 
 ROOT = gb.ROOT
 CONTENT = ROOT / "site/content/guidebook"
@@ -799,10 +800,36 @@ class Book:
             "eat": {"kinds": [{"id": k["key"], "label": k["name"]} for k in g["eat"]["kinds"]], "items": eat, "places": self.places("eat", sq),
                     **({"map": maps["eat"]} if "eat" in maps else {})},
             "buy": {"items": buy, "places": self.places("buy", sq), **({"map": maps["buy"]} if "buy" in maps else {})},
-            "videos": {"streams": {"country": self.country, "city": self.table["countries"][self.country]["name"]},
+            "videos": {"streams": {"country": self.country, "city": self.streams_city(g["city"]["name"])},
                        "shorts": [s["id"] for s in shorts]},
             "basics": self.basics(),
         }
+
+    def streams_city(self, name: str) -> str:
+        """`cityStreams.ts` のどの欄がこの街の配信か。
+
+        **いま歩いている国は、国の名前の欄**——滞在が `AHEAD_COUNTRIES` の `entered` から組まれていて、
+        街が分からないので国の名前を1つだけ置く決まり（`python/stays.py` の `chapter_stays()`）。
+        **歩き終わって `COUNTRIES` へ移した国は、街の名前の欄**（滞在の `cities`）。
+
+        前はいつも国の名前を書いていた。2026-11-22 に北マケドニアを `COUNTRIES` へ移すと、
+        次の焼き直しで「北マケドニア」の欄が消えて「スコピエ」の欄になり、このガイドの配信の一覧が空になる
+        ところだった（記事の面は、引いた回が一覧に無いと書き出しを止める）。
+        """
+        # 見張りが組んだ小さな置き場（`root`）に国の表が無ければ、リポジトリの表を読む
+        ts = self.root / "site/content/countries.ts"
+        src = (ts if ts.exists() else ROOT / "site/content/countries.ts").read_text(encoding="utf-8")
+        got = ts_read.read_countries(src)
+        if got.declared == 0 or got.missed:
+            raise Stop(f"countries.ts の国を読めていない（名乗り {got.declared} / 読み落とし {got.missed}）")
+        done = next((c for c in got.rows if c["slug"] == self.country), None)
+        if done is not None:
+            cities = [x for st in done["stays"] for x in st["cities"]]
+            if name not in cities:
+                raise Stop(f"{self.country} の滞在の街（{'・'.join(cities)}）に {name} が無い"
+                           "（`site/content/countries.ts` の `stays` の `cities` と、ガイドの街の名前を揃える）")
+            return name
+        return self.table["countries"][self.country]["name"]
 
     def report(self, g: dict) -> str:
         """行った項目の数と、ショートが付いた項目・場面だけの項目の数（あやとに報告する数）"""

@@ -38,6 +38,11 @@ export type TravelPlace = {
   country?: Country;
   /** 貼られたときの絵（`lib/ogCards.json` の鍵） */
   card: ShareKey;
+  /**
+   * 面の道が固定（`app/travel/<slug>/page.tsx`）か。**歩き終わった国でも立つことがある**（下の `WALKED_FIXED`）。
+   * 立っている国は `[slug]` の面が書き出さない——同じ道の面が2枚になる
+   */
+  fixed?: true;
 };
 
 /**
@@ -49,10 +54,7 @@ export type TravelPlace = {
  * 同じ道の面が2枚になる（下で止める）。
  */
 const GUIDE_ONLY: { slug: string; card: ShareKey }[] = [
-  { slug: "north-macedonia", card: "northMacedonia" },
-  /* 2026-11-18 まで `CITY_ONLY`（国の面を持たず、ソフィアの面だけ）だった。`/travel/bulgaria` が 404 で、
-     ソフィアのパンくずにも国の段が無かった（#1262） */
-  { slug: "bulgaria", card: "bulgaria" },
+  /* 北マケドニアとブルガリアは、歩き終わって `COUNTRIES` へ移した（2026-11-22、#664）。道と絵は下の `WALKED_FIXED` */
   /* 2026-11-21（入った日）まで `CITY_ONLY` の行く前の国だった。国の絵はまだ焼いていないので、
      歩いた記録の面と同じ地図の1枚 */
   { slug: "romania", card: "map" },
@@ -61,20 +63,51 @@ const GUIDE_ONLY: { slug: string; card: ShareKey }[] = [
 /** 歩いた記録の面の絵。国ごとに焼かない（区画ごとに1枚。`lib/share.ts` の頭） */
 const RECORD_CARD: ShareKey = "map";
 
+/**
+ * **歩き終わった国のうち、面の道が固定のまま（`app/travel/<slug>/page.tsx`）の国。** 歩いているあいだ
+ * `GUIDE_ONLY` に居て、歩き終わって `COUNTRIES` へ移した（2026-11-22、#664）。名前は見張りがこれで読む
+ * （`site/selftest/travelreg.mjs` の `travelFixedRoutes`）。
+ *
+ * **`[slug]` の面に任せない理由は2つ。** 同じ段に街のガイド（`./skopje/` `./sofia/`）が在ること、
+ * 北マケドニアの面は型の外に付箋の板を持っていること（掲示板の宛先がこの面。`content/themes.ts`）。
+ * 中身の型はどちらも `app/travel/record.tsx` の1つなので、見た目は `[slug]` の面と変わらない。
+ *
+ * **絵も替えない。** 歩いているあいだに国の絵を焼いてあり、その国の街のガイドと記事も、貼られたときは
+ * この絵を出している（下の `cityCountry`）。移した日に地図の1枚へ落とすと、もう貼られている
+ * スコピエやソフィアの面の絵が、黙って別の絵に替わる
+ */
+const WALKED_FIXED: { slug: string; card: ShareKey }[] = [
+  { slug: "north-macedonia", card: "northMacedonia" },
+  { slug: "bulgaria", card: "bulgaria" },
+];
+
 function build(): TravelPlace[] {
   /* 島の札（`components/island/layout.ts` の `map`）は道を字で持っている（あちらは画面の部品からも
      読まれるので、軽く置いてある）。**食い違ったまま書き出さない** */
   if (crumbOf("map").href !== TRAVEL) {
     throw new Error(`content/travel.ts: 島の札「歩いた国」の道（${crumbOf("map").href}）が ${TRAVEL} と違う`);
   }
-  const walked = [...COUNTRIES]
+  /* 道が固定の国は、歩いた記録を持っていること（持っていなければ `GUIDE_ONLY` の側） */
+  const lost = WALKED_FIXED.filter((f) => !COUNTRIES.some((c) => c.slug === f.slug)).map((f) => f.slug);
+  if (lost.length) throw new Error(`content/travel.ts: WALKED_FIXED の ${lost.join(", ")} が COUNTRIES に無い`);
+  const walked: TravelPlace[] = [...COUNTRIES]
     .sort((a, b) => a.order - b.order)
-    .map((c) => ({ slug: c.slug, name: c.name, href: travelHref(c.slug), country: c, card: RECORD_CARD }));
+    .map((c) => {
+      const f = WALKED_FIXED.find((x) => x.slug === c.slug);
+      return {
+        slug: c.slug,
+        name: c.name,
+        href: travelHref(c.slug),
+        country: c,
+        card: f?.card ?? RECORD_CARD,
+        ...(f ? { fixed: true as const } : {}),
+      };
+    });
   const ahead = GUIDE_ONLY.map((g) => {
     /* 名前は国の表から引く。ここに書き写すと、表の名前を直した日に面だけ古い名前で残る */
     const a = AHEAD_COUNTRIES.find((x) => x.slug === g.slug);
     if (!a) throw new Error(`content/travel.ts: ${g.slug} が AHEAD_COUNTRIES に無い（行く前の案内は、入った国にだけ置く）`);
-    return { slug: g.slug, name: a.name, href: travelHref(g.slug), card: g.card };
+    return { slug: g.slug, name: a.name, href: travelHref(g.slug), card: g.card, fixed: true as const };
   });
   const all = [...walked, ...ahead];
   /* **黙って1つに畳まない。** 同じ国が2回並ぶのは、歩き終わって `COUNTRIES` へ移したのに

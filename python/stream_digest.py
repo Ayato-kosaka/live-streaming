@@ -18,7 +18,7 @@
 ## どの回を焼くか
 
 議事録の `- 場所:` の頭が、寄せる表（`python/data/guide/cities.json`）の国に寄る回と、
-**その国の滞在の日に始まった回**（`python/stays.py` の `read_ahead_chapters()`）。
+**その国の滞在の日に始まった回**（`python/stays.py` の `read_all()`）。
 表に在る国＝街のガイドを作っている国で、「この国であったこと」に配信を並べるのもその国（歩いている最中の国）。
 全部の回を焼くと、使わない字を何百本も抱える。
 
@@ -71,11 +71,17 @@ Stay = tuple[str, str, str]  # （国, 入った日, 出た日。まだ居れば
 
 
 def table_stays(table: dict) -> list[Stay]:
-    """表の国の滞在。国の面が配信を並べる期間と同じもの（`stays.read_ahead_chapters()`）"""
+    """表の国の滞在。国の面が配信を並べる期間と同じもの（`stays.read_all()`）。
+
+    **歩き終わった国の滞在も見る。** 前は `read_ahead_chapters()`（歩いている最中の国）だけを見ていた。
+    2026-11-22 に北マケドニアとブルガリアを `COUNTRIES` へ移すと、2カ国の滞在がそこから消えて、
+    国境を越える日の回（10-12 の「北マケドニア共和国いこかー！？」）の一言が焼かれなくなった。
+    歩き終わった国の面も、ガイドのカードになった街の配信を「この国であったこと」に並べている（`app/travel/record.tsx`）
+    """
     import stays as st  # 焼くときだけ countries.ts を読む（対照は滞在を自分で渡す）
 
     want = set(table.get("countries", {}))
-    return [(c["slug"], s["from"], s["to"]) for c in st.read_ahead_chapters() if c["slug"] in want for s in c["stays"]]
+    return [(c["slug"], s["from"], s["to"]) for c in st.read_all() if c["slug"] in want for s in c["stays"]]
 
 
 def in_stay(day: str, stays: list[Stay]) -> bool:

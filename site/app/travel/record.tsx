@@ -65,6 +65,8 @@ import { ArtStamp } from "@/components/streams/Art";
  * 「この国であったこと」の見出しと一言（人が選んで書く見どころ）は、歩き終わって `COUNTRIES` へ移すときに書く。
  * それまでは**焼き込みの配信そのもの**を並べる（あやと 2026-11-18「配信へ飛ばすやつも残して。ブルガリアにも欲しい」）。
  * 前はここを空にしていたので、ソフィアの行がガイドのカードになったブルガリアでは、6回の配信がどこにも出ていなかった。
+ * **歩き終わったあとも、ガイドのカードになった街の配信は見どころのあとに残す**（`walkedRecord`。2026-11-22 に
+ * 北マケドニアとブルガリアを移したとき、見どころ6件だけにすると30本の配信がこの面から消えるところだった）。
  */
 
 type Town = {
@@ -91,8 +93,8 @@ type CountryRecord = {
   towns: Town[];
   highlights: Highlight[];
   /**
-   * 「この国であったこと」に並べる配信（いま歩いている旅の国だけ）。**同じ配信を1つの面に2回出さない**——
-   * 街の畳みに出ている配信はここに入れない（ガイドのカードになった街の配信だけが来る）
+   * 「この国であったこと」に並べる配信。**同じ配信を1つの面に2回出さない**——
+   * 街の畳みに出ている配信と、見どころに出ている配信はここに入れない（ガイドのカードになった街の配信だけが来る）
    */
   stayStreams: CityStream[];
   /**
@@ -135,6 +137,13 @@ function walkedRecord(c: Country): CountryRecord {
    * 同じ面のことを、年表と札が別の数で言うのがいちばん悪い。
    */
   const walkedNo = ordered.filter((x) => isWalkedCountry(x.slug)).findIndex((x) => x.slug === c.slug) + 1;
+  const towns = [...new Set(c.stays.flatMap((s) => s.cities))].map((name) => town(c.slug, name, streamsOfCity(c.slug, name)));
+  /* **ガイドのカードになった街の配信は、見どころのあとに並べる。** 街の行がカードになると、その街の配信は
+     街の畳みに出ない（`Town` の注）。歩いているあいだは「この国であったこと」に全部並んでいたので
+     （あやと 2026-11-18「配信へ飛ばすやつも残して」）、歩き終わって見どころを書いた日に消すと、
+     スコピエとソフィアの配信がこの面から辿れなくなる。人が選んだ回は見どころのほうに出ているので、2度出さない */
+  const picked = new Set(c.highlights.flatMap((h) => (h.videoId ? [h.videoId] : [])));
+  const stayStreams = towns.filter((t) => t.guide).flatMap((t) => t.streams).filter((v) => !picked.has(v.videoId));
   return {
     slug: c.slug,
     name: c.name,
@@ -143,9 +152,9 @@ function walkedRecord(c: Country): CountryRecord {
     summary: c.summary,
     headLead: c.summary,
     stays: c.stays,
-    towns: [...new Set(c.stays.flatMap((s) => s.cities))].map((name) => town(c.slug, name, streamsOfCity(c.slug, name))),
+    towns,
     highlights: c.highlights,
-    stayStreams: [],
+    stayStreams,
     streamFloor: 0,
     walkedNo: isWalkedCountry(c.slug) ? walkedNo : undefined,
     modified: LASTMOD.country(c),
@@ -651,14 +660,31 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
           {(() => {
             /* いま歩いている旅の国は、配信そのもの。畳みの形は人が書いた見どころと同じにして、
                歩き終わって見どころが書かれた日に、見た目を変えずに中身だけが替わるようにする。
-               題名は YouTube に実在するもの（絵文字も含めて引用。`data-quote`） */
+               題名は YouTube に実在するもの（絵文字も含めて引用。`data-quote`）。
+               **両方あるときは見どころが先**（人が選んだ回が、畳まずに見える5本に入る）。開いておくのは頭の1つだけ */
             const nodes = [
+              ...r.highlights.map((h, i) => (
+                <Fold key={h.title} title={h.title} note={h.date ? fmt(h.date) : undefined} open={i === 0}>
+                  <p>{h.note}</p>
+                  {h.videoId && (
+                    <div className="scards">
+                      <StreamCard
+                        videoId={h.videoId}
+                        title={h.title}
+                        date={h.date}
+                        nth={nthOf(h.date, h.videoId, h.title)}
+                        alt={thumbAlt(r.name, h.date, h.title)}
+                      />
+                    </div>
+                  )}
+                </Fold>
+              )),
               ...r.stayStreams.map((v, i) => (
                 <Fold
                   key={v.videoId}
                   title={<span data-quote="title">{v.title}</span>}
                   note={fmt(v.date)}
-                  open={i === 0}
+                  open={i === 0 && r.highlights.length === 0}
                 >
                   {/* その回に何があったかの1〜2行。人が書く見どころの代わりに、議事録の「ひとことで」から焼いたもの
                       （`content/streamDigest.ts`。#1262 で本文が166字しか無かった）。議事録の無い回はカードだけ */}
@@ -674,22 +700,6 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
                       alt={thumbAlt(r.name, v.date, v.title)}
                     />
                   </div>
-                </Fold>
-              )),
-              ...r.highlights.map((h, i) => (
-                <Fold key={h.title} title={h.title} note={h.date ? fmt(h.date) : undefined} open={i === 0}>
-                  <p>{h.note}</p>
-                  {h.videoId && (
-                    <div className="scards">
-                      <StreamCard
-                        videoId={h.videoId}
-                        title={h.title}
-                        date={h.date}
-                        nth={nthOf(h.date, h.videoId, h.title)}
-                        alt={thumbAlt(r.name, h.date, h.title)}
-                      />
-                    </div>
-                  )}
                 </Fold>
               )),
             ];

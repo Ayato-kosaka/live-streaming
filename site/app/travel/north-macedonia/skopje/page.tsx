@@ -14,7 +14,7 @@ import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import Writer from "@/components/travel/article/Writer";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
-import { AHEAD_COUNTRIES } from "@/content/countries";
+import { countryBySlug } from "@/content/countries";
 import { GUIDE_BY, firstWent } from "@/content/guidebook/heading";
 import { coverShare, dress, readDrawn } from "@/content/guidebook/manifest";
 import { SKOPJE } from "@/content/guidebook/north-macedonia-skopje";
@@ -74,10 +74,14 @@ export const metadata: Metadata = coverShare(
  * facts の日付で切ると、抜いていない回の日が抜けて短く見える
  */
 function stayOf(slug: string): { from: string; to: string } {
-  const all = [...AHEAD_COUNTRIES].sort((a, b) => a.entered.localeCompare(b.entered));
-  const i = all.findIndex((c) => c.slug === slug);
-  if (i < 0) throw new Error(`skopje/page.tsx: ${slug} が AHEAD_COUNTRIES に無い`);
-  return { from: all[i].entered, to: all[i + 1]?.entered ?? all[i].entered };
+  /* 歩き終わった国の滞在（`COUNTRIES` の `stays`）。終わりの欄は「最後にいた日」なので、その翌日が
+     次の国に入った日（境目の日は入った国が取る。`python/stays.py` の頭）。2026-11-22 に `AHEAD_COUNTRIES` から移すまでは、
+     そちらの次の国の `entered` を読んでいた——出る数は同じ */
+  const stays = countryBySlug(slug)?.stays ?? [];
+  const from = stays.map((s) => s.from).sort()[0];
+  const last = stays.map((s) => s.to).sort().at(-1);
+  if (!from || !last) throw new Error(`skopje/page.tsx: ${slug} の滞在が content/countries.ts の COUNTRIES に無い（閉じた滞在が要る）`);
+  return { from, to: new Date(Date.parse(`${last}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10) };
 }
 
 /**

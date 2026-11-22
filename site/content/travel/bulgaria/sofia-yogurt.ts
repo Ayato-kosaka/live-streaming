@@ -29,7 +29,7 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
  "items": 0,
  "streams": {
   "country": "bulgaria",
-  "city": "ブルガリア",
+  "city": "ソフィア",
   "videos": [
    "jnKVIXn4qQs"
   ]
@@ -184,7 +184,7 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
   }
  ],
  "published": "2026-11-20",
- "updated": "2026-11-20",
- "hash": "d5fdc0c0cf9d5a82"
+ "updated": "2026-11-22",
+ "hash": "4a9758b3f6bea8b7"
 }
 /* END GUIDE */;

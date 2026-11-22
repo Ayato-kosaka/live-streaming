@@ -412,13 +412,22 @@ const jst = (y, m, d, h, mi = 0) => new Date(Date.UTC(y, m - 1, d, h - 9, mi, 0)
 /* ==================================== 6. 出た国あての付箋が、書けるまま残っていない
 
    2026-11-20 に、北マケドニアあて（`north-macedonia`）が出た日（11-12）のあとも書けるままだったのを見つけた。
-   **出た日は国の表から導く**——つぎの国に入った日（`content/countries.ts` の `AHEAD_COUNTRIES` の `entered`）。
-   ここに日付を書き写さない（国を1つ越えた日に、ここだけ古い表で緑になる）。 */
-const ahead = [...(req(join(OUT, "countries.js")).AHEAD_COUNTRIES ?? [])]
+   **出た日は国の表から導く**——歩いている国はつぎの国に入った日（`content/countries.ts` の `AHEAD_COUNTRIES` の
+   `entered`）、歩き終わった国は滞在の終わりの翌日（`COUNTRIES` の `stays` の `to`。境目の日は入った国が取る）。
+   ここに日付を書き写さない（国を1つ越えた日に、ここだけ古い表で緑になる）。
+   **歩き終わった国も見る。** 2026-11-22 にアルバニア・北マケドニア・ブルガリアを `COUNTRIES` へ移したので、
+   `AHEAD_COUNTRIES` だけを見ていると、出た国あての3つが黙って確かめの外へ出る */
+const C = req(join(OUT, "countries.js"));
+const nextDay = (d) => new Date(Date.parse(`${d}T00:00:00Z`) + 86400_000).toISOString().slice(0, 10);
+const ahead = [...(C.AHEAD_COUNTRIES ?? [])]
   .map((c) => ({ slug: c.slug, entered: c.entered }))
   .sort((a, b) => a.entered.localeCompare(b.entered));
-if (ahead.length < 2) nothing("国の表（`AHEAD_COUNTRIES`）から、入った日を2つ以上読めない");
-const left = ahead.slice(0, -1).map((c, i) => ({ ...c, leftOn: ahead[i + 1].entered })).filter((c) => T.themeById(c.slug));
+const done = (C.COUNTRIES ?? []).flatMap((c) => {
+  const last = c.stays.map((s) => s.to).filter(Boolean).sort().at(-1);
+  return last ? [{ slug: c.slug, leftOn: nextDay(last) }] : [];
+});
+if (!done.length) nothing("国の表（`COUNTRIES`）から、閉じた滞在を1つも読めない");
+const left = [...done, ...ahead.slice(0, -1).map((c, i) => ({ ...c, leftOn: ahead[i + 1].entered }))].filter((c) => T.themeById(c.slug));
 if (left.length === 0) nothing("出た国のうち、付箋の宛先を持つ国が1つも無い");
 for (const c of left) {
   const [y, m, d] = c.leftOn.split("-").map(Number);
