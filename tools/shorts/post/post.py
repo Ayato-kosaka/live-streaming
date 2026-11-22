@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""承認されたショートを、EC2 の Chrome から YouTube と TikTok に出す（手元で回す入口）。
+"""承認されたショートを、EC2 の Chrome から YouTube・TikTok・Instagram に出す（手元で回す入口）。
 
     D=<動画と投稿文の置き場（A.mp4 post_A.json …）>
     python3 tools/shorts/post/post.py send     --dir $D --video yk-by7R7iPA --option A
@@ -10,11 +10,12 @@
     python3 tools/shorts/post/post.py yt-draft   --video yk-by7R7iPA --option A --sha <sha256> --replaces <古いショートのID>
     python3 tools/shorts/post/post.py tt-post    --video yk-by7R7iPA --option A --dry
     python3 tools/shorts/post/post.py tt-post    --video yk-by7R7iPA --option A --sha <sha256> [--at 2026-10-17T05:00:00Z]
+    python3 tools/shorts/post/post.py ig-post    --video yk-by7R7iPA --option A --sha <sha256> --cover --post-json <post_A.json> [--at 2026-10-17T05:00:00Z] [--dry]
     python3 tools/shorts/post/post.py mark       --place tiktok --sha <sha256> --done --id <投稿ID>
     python3 tools/shorts/post/post.py clean    --video yk-by7R7iPA
 
-手順と判断の基準は同じ置き場の README.md。EC2 で動くのは yt_post.py / tt_post.py。
-投稿の段（yt-draft / tt-post）は、EC2 に触る前に台帳（posted.json、posted.py）を引く。
+手順と判断の基準は同じ置き場の README.md。EC2 で動くのは yt_post.py / tt_post.py / ig_post.py。
+投稿の段（yt-draft / tt-post / ig-post）は、EC2 に触る前に台帳（posted.json、posted.py）を引く。
 動画・投稿文・題の札の絵は send.py（GCS の署名付き URL を EC2 が curl で落とす）で送る。
 中身が SSM のログに残るので ec2.put では送らない。ec2.put で送るのはリポジトリの道具だけ。
 """
@@ -52,8 +53,9 @@ def sha(path):
 
 
 # 投稿先ごとの Chrome の束（= 列）。yt_post.py / yt_thumb.py は yt_studio.py の "ytstudio"、
-# tt_post.py は TikTok にログインしてある "fish"（声作りの fish_web.py と同じ束なので、札で順番を待つ）
-LANES = {"youtube": "ytstudio", "tiktok": "fish"}
+# tt_post.py は TikTok にログインしてある "fish"（声作りの fish_web.py と同じ束なので、札で順番を待つ）、
+# ig_post.py は Instagram にログインしてある "instagram"（2026-11-22 に既定のプロファイルから複製。ほかの用事と束を分ける）
+LANES = {"youtube": "ytstudio", "tiktok": "fish", "instagram": "instagram"}
 
 
 def remote_run(body, timeout=420, lane="ytstudio"):
@@ -89,14 +91,20 @@ def cmd_send(a):
     for f in ("cdp.py",):
         ec2.put(os.path.join(ROOT, ".claude", "skills", "ec2-chrome", f), f"{CDP}/{f}")
     ec2.put(os.path.join(ROOT, ".claude", "skills", "youtube-studio", "yt_studio.py"), f"{CDP}/yt_studio.py")
-    for f in ("yt_post.py", "tt_post.py", "yt_thumb.py"):
+    for f in ("yt_post.py", "tt_post.py", "yt_thumb.py", "ig_post.py"):
         ec2.put(os.path.join(HERE, f), f"{CDP}/{f}")
     print(json.dumps({"mp4_sha256": sha(mp4), "tt_caption": cap}, ensure_ascii=False, indent=1))
     return r.returncode
 
 
+def rdir(a):
+    """EC2 の置き場。ふつうは <REMOTE>/<元の動画ID>。--remote は、同じ元の動画から2本出る回（クリスマスとボザ）などで
+    ほかの担当の置き場と分けて送ったとき（clean で消し合わない）"""
+    return f"{REMOTE}/{getattr(a, 'remote', None) or a.video}"
+
+
 def remote_sha_ok(a, want):
-    st, out = ec2.run(f"sha256sum {REMOTE}/{a.video}/{a.option}.mp4 | cut -c1-64", 60, quiet=True)
+    st, out = ec2.run(f"sha256sum {rdir(a)}/{a.option}.mp4 | cut -c1-64", 60, quiet=True)
     got = out.strip()
     print("EC2 sha256", got, "OK" if got == want else "MISMATCH")
     return got == want
@@ -210,6 +218,33 @@ def cmd_tt_post(a):
     return posting(a, "tiktok", body, 560)
 
 
+def cmd_ig_post(a):
+    """Instagram のリール。字は TikTok と同じキャプション（send が置く tt_caption_<案>.txt。ig_caption_<案>.txt が在ればそちら）、
+    カバーは題の札のコマ（--cover と --post-json で cover_at_s の秒）。--at があれば予約"""
+    d = rdir(a)
+    if a.at and not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:00)?Z?", a.at):
+        print(f"止めた: --at は UTC の ISO（2026-11-22T12:30:00Z）: {a.at}")
+        return 1
+    # カバーは題の札のコマ。Instagram は絵を渡しても受け取らないので、投稿文の cover_at_s の秒のコマを枠で選ぶ（ig_post.py の頭）
+    cov = json.load(open(a.post_json)).get("cover_at_s") if getattr(a, "post_json", None) else None
+    if a.cover and cov is None:
+        print("止めた: ig-post の --cover は --post-json <手元の post_<案>.json>（cover_at_s を読む）が要る")
+        return 1
+    extra = (" --dry" if a.dry else "") + (f" --at {a.at}" if a.at else "") + (f" --cover-at {float(cov)}" if a.cover else "")
+    cap = f"{d}/ig_caption_{a.option}.txt"
+    # 道具は毎回置き直す（send を回さずに、ほかの担当の置き場から出す回がある。中身はリポジトリの公開物と同じ）
+    ec2.put(os.path.join(HERE, "ig_post.py"), f"{CDP}/ig_post.py")
+    body = (f"cd {CDP} && c={cap}; [ -f $c ] || c={d}/tt_caption_{a.option}.txt; "
+            f"timeout 500 python3 ig_post.py post {d}/{a.option}.mp4 $c{extra} 2>&1\n")
+    if a.dry:
+        # 押す手前までの確かめ。出さないので台帳は見ない・書かない
+        if a.sha and not remote_sha_ok(a, a.sha):
+            return 1
+        r = remote_run(body, 560, LANES["instagram"])
+        return 0 if r.get("ok") else 1
+    return posting(a, "instagram", body, 560)
+
+
 def cmd_cover(a):
     """題の札が見えるコマを切り出して <案>_cover.jpg にし、EC2 へ送る（YouTube のサムネイルと TikTok のカバーに使う）。
     題の札は1行目の読み上げのあいだ（0秒〜約2〜3秒）出ているので、既定は 1.0 秒のコマ"""
@@ -271,16 +306,17 @@ def main(argv=None):
     p.add_argument("--sha", help="公開の直前に EC2 の mp4 と照らす sha256")
     p.add_argument("--dry", action="store_true")
     p.add_argument("--cover-at", type=float, default=1.0, help="cover: 切り出す秒（題の札が見えている間）")
-    p.add_argument("--cover", action="store_true", help="tt-post: 題の札が見えるコマ（<案>_cover.jpg、送り済み）をカバーにする")
+    p.add_argument("--cover", action="store_true", help="tt-post / ig-post: 題の札が見えるコマ（<案>_cover.jpg、送り済み）をカバーにする")
     p.add_argument("--again", action="store_true", help="yt-draft / tt-post: 台帳に記録があっても出す（投稿先で出ていないのを見たときだけ）")
     p.add_argument("--draft", action="store_true", help="tt-post: 投稿せず TikTok の下書きに保存する")
-    p.add_argument("--post-json", help="tt-post: 投稿文（tiktok.sound を読む）。手元の post_<案>.json")
+    p.add_argument("--post-json", help="tt-post: 投稿文（tiktok.sound を読む）・ig-post: cover_at_s を読む。手元の post_<案>.json")
     p.add_argument("--replaces", help="yt-draft: 予約を差し替える回の、非公開で残した古い動画の ID（同じ題の見張りをその1本だけ通す）")
-    p.add_argument("--place", help="mark: youtube / tiktok")
+    p.add_argument("--place", help="mark: youtube / tiktok / instagram")
+    p.add_argument("--remote", help="EC2 の置き場（<REMOTE>/ の下）。無ければ --video。ほかの担当と置き場を分けて送ったとき")
     p.add_argument("--done", action="store_true", help="mark: 投稿先で出ているのを見た（--id と一緒に）")
     a = p.parse_args(argv)
     fn = {"send": cmd_send, "yt-draft": cmd_yt_draft, "yt-unschedule": cmd_yt_unschedule, "yt-related": cmd_yt_related,
-          "yt-publish": cmd_yt_publish, "tt-post": cmd_tt_post, "yt-thumb": cmd_yt_thumb, "cover": cmd_cover,
+          "yt-publish": cmd_yt_publish, "tt-post": cmd_tt_post, "ig-post": cmd_ig_post, "yt-thumb": cmd_yt_thumb, "cover": cmd_cover,
           "mark": cmd_mark, "clean": cmd_clean}.get(a.cmd)
     if not fn:
         sys.exit(__doc__)

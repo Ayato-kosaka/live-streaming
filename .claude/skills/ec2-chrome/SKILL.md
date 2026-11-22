@@ -183,7 +183,7 @@ python3 .claude/skills/ec2-chrome/ec2.py get /home/ubuntu/shots/a.jpg /tmp/claud
 EC2 をいくつものセッションが同時に使う。10-23 23:45 UTC に片方の「済んだので止める」がもう片方の作業ごと止め、
 10-24 01:01 UTC には2人が fish の Chrome で同時に `tt_post.py` を回し、片方の `fresh_tab` がもう片方のタブを閉じた。
 だから **Chrome の束（`cdp.py` の `up(名前)`）ごとに列があり、1人ずつ持つ。** 列の名前は束の名前:
-`fish`（Fish の声作りと **TikTok の投稿**。同じ Chrome）・`ytstudio`（YouTube の投稿・Studio）・`suzuri`・`chatgpt`・`doneru`・`line`・`web`。
+`fish`（Fish の声作りと **TikTok の投稿**。同じ Chrome）・`ytstudio`（YouTube の投稿・Studio）・`instagram`（Instagram のリールの投稿・予約。2026-11-22 から）・`suzuri`・`chatgpt`・`doneru`・`line`・`web`。
 Chrome を触らない読むだけのコマンド（`ls`・`get`・`sha256sum`）は列を取らなくてよい。
 
 **札を取る（手元から）:**

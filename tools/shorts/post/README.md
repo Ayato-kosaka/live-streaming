@@ -1,4 +1,4 @@
-# ショートを出す（YouTube Studio と TikTok の web、EC2 の Chrome から）
+# ショートを出す（YouTube Studio・TikTok・Instagram の web、EC2 の Chrome から）
 
 投稿の道は #911 で決まっている: **あやとの依頼で、EC2 のログイン済み Chrome をこちらが操作して出す。**
 YouTube の API 鍵は使わない。EC2 と Chrome の触り方は `.claude/skills/ec2-chrome/SKILL.md`、
@@ -11,6 +11,7 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 | `send.py` | 手元 | 動画・投稿文・題の札の絵を EC2 へ送り、EC2 で sha256 を照らす。GCS の `transfer/` に置いて、EC2 には署名付き URL を `curl` で落とさせる（下の「EC2 への送りかた」）。`clean` で送った動画を消す |
 | `yt_post.py` | EC2（`~/cdp/`） | Studio: 上げる → 非公開で保存 → 関連動画 → 公開。結果は最後の `RESULT {...}` の1行 |
 | `tt_post.py` | EC2（`~/cdp/`） | TikTok Studio: 上げる → キャプションを貼る → 設定を読む → 投稿（`--dry` で手前まで）。予約の日を暦で押す手の見張りは `tt_post_selftest.py`（手元で回る。EC2 に触らない） |
+| `ig_post.py` | EC2（`~/cdp/`） | Instagram（web）: リールを上げる → カバーのコマを選ぶ → キャプションを貼る → 予約の日時 → Schedule（`--dry` で手前まで）・予約の一覧で読み直す（`scheduled`）。見張りは `ig_post_selftest.py`（手元で回る。EC2 に触らない） |
 | `posted.py` / `posted.json` | 手元（git に入れる） | 出した記録の台帳（動画の sha256 × 場所 → 状態・投稿 ID）。投稿の段が EC2 に触る前に引く。見張りは `posted_selftest.py` |
 | `desktop_guard_selftest.py` | 手元 | 遠隔デスクトップの見張り（`GUARD` と、EC2 の `desktop-input`・idle-stop）の見張り。EC2 に触らない |
 
@@ -32,6 +33,7 @@ python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A
 # 出すのは、あやとが issue かチャットで「出して」と言った案だけ。EC2 の mp4 の sha256 を照らして出す
 python3 tools/shorts/post/post.py yt-publish --video <元の動画ID> --option A --id <ショートのID> --sha <sha256>   # --video/--option が無いと EC2 の mp4 を引けず MISMATCH で止まる
 python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A --cover --sha <sha256>
+python3 tools/shorts/post/post.py ig-post    --video <元の動画ID> --option A --cover --post-json $D/post_A.json --sha <sha256>   # Instagram（2026-11-22 から。#1353）
 python3 tools/shorts/post/post.py clean      --video <元の動画ID>                     # 送った動画を消す（SSM のログには触らない）
 ```
 
@@ -41,7 +43,7 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
   出ていなければ `--again` を付けてやり直す。始める直前に `pending`、ID が取れたら `done` を書く。**台帳が変わったらコミットする**
 - EC2 で Chrome を開く手は、どれも**遠隔デスクトップの本物の入力が7分止まっているのを見てから**動く（`post.py` の `GUARD`。
   数えるのは EC2 の `desktop-input`。下の「分かっていること」）。あやとが触っている最中なら `desktop_busy` で何もせずに戻る
-- Chrome を触る段（`yt-*` は列 `ytstudio`、`tt-post` は列 `fish`）は、列の札を取ってから動き、終わったら返す（`ec2.lease`。`ec2-chrome` 2.5）。
+- Chrome を触る段（`yt-*` は列 `ytstudio`、`tt-post` は列 `fish`、`ig-post` は列 `instagram`）は、列の札を取ってから動き、終わったら返す（`ec2.lease`。`ec2-chrome` 2.5）。
   **TikTok は声作り（`fish_web.py`）と同じ fish の Chrome**なので、片方が持っていればもう片方は空くまで待つ（何番目で誰かを出す）。
   前は `~/locks/shorts-post` を触っていた（2026-10-24 まで）
 - 媒体の決まり（あやと）:
@@ -165,6 +167,24 @@ python3 tools/shorts/post/post.py tt-post --video <元の動画ID> --option <案
   - 読み直しは投稿の一覧（`tt_post.py scheduled <題の字> <UTC の ISO>`）。予約の行は公開範囲が灰色で、作った日の代わりに
     時計の印と `Oct 21, 10:00 AM`（UTC。時刻と AM のあいだは細い空白 U+202F のことがある）が出る。投稿 ID（`/video/…`）は
     予約の時点で出るので、台帳は `done` になる
+- **Instagram**（`ig_post.py post … --at`。2026-11-22 にヨーグルトの回から入れた。#1353）: あやとのアカウント ayato.arigato は
+  プロアカウント（クリエイター）で、**web の投稿の窓に予約がある**（Meta Business Suite は Facebook のログインが要るので使わない）。
+  入っているのは `~/cdp-instagram` の Chrome（あやとが既定のプロファイルで入っていたものを `up("instagram")` で複製）、列も `instagram`
+  ```bash
+  python3 tools/shorts/post/post.py ig-post --video <元の動画ID> --option <案> --cover --post-json <手元の post_<案>.json> --sha <sha256> --at 2026-11-22T12:30:00Z [--dry]
+  ```
+  - 字は TikTok と同じキャプション（`send` が置く `tt_caption_<案>.txt`。題・説明・クレジット・ハッシュタグ）。2,200字まで（数えは UTF-16 で、🇧🇬 は4）
+  - 窓は「New post → Post → 動画を渡す →（初回だけ「Video posts are now shared as reels」の OK）→ Crop → Next → Edit（Cover photo）→ Next → 最後の段」。
+    最後の段で「Add AI label」「Facebook にもシェア（小坂 彩人）」がオフ、字が1字も違わないのを読んでから押す
+  - **カバーは「Select from computer」に絵を渡しても替わらない**（欄に直に渡しても、ファイル選びの窓を横取りして渡しても、カバーの欄は前のまま）。
+    なので投稿文の `cover_at_s` の秒のコマを、「Cover photo」の枠を引いて選ぶ（枠の video の `currentTime` で読み直す。±0.25秒）。
+    数 px だけ引くと押しただけになって動かないので、いったん越えてから戻す
+  - 予約は「Schedule content」をオン → 日付の箱（「Sun, Nov 22, 2026」。押すと暦。尻に次の月の日が並ぶ）→ 時刻の欄（Hours / Minutes / AM PM の
+    spinbutton。12時間制で、打つと入る）。欄の時刻は Chrome の時計（UTC）。押すボタンの字が **Schedule** であることを見てから押す（Share は今すぐ出る）。
+    少し先からしか予約できないので、15分を切る予約は窓を開く前に止める
+  - 予約の時点で `/reel/<符号>/` の符号は返らない。台帳の ID は、押した応答（`/api/v1/media/configure_to_clips/`）の media の **pk**（数字）
+  - 読み直しは `python3 ig_post.py scheduled <題の行> <UTC の ISO>`（web の「Scheduled content」`https://www.instagram.com/scheduled_content/`。
+    週の暦で、列の頭「Sun 22」と札の時刻「12:30 PM」を読む）
 - 予約は出したのと同じに数える。台帳（`posted.json`）は予約の時点で `done`、`note` に予約の時刻を書く
 - **予約が入って一覧で読み直せたら、その場で制作 issue に媒体ごとの URL と予約の時刻を書いて閉じる。**
   EC2 に送った動画も、読み直したあとの同じ回で `post.py clean --video <元の動画ID>` で消す。

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """同じ動画を同じ場所へ2回出さないための台帳（`posted.json`）を引く・書く。
 
-`post.py` の投稿の段（`yt-draft` / `tt-post`）が、**EC2 に触る前に**ここを引く。
+`post.py` の投稿の段（`yt-draft` / `tt-post` / `ig-post`）が、**EC2 に触る前に**ここを引く。
 
 - 同じ sha256 × 同じ場所の、いちばん新しい記録が `done` → 止める（出ている投稿 ID を出す）
 - `pending` → 止める（前の回が途中で切れた。投稿先で見てから `mark --done --id …` か `--again`）
@@ -9,7 +9,7 @@
 - 投稿を始める直前に `pending` を書き、ID が取れたら `done` に書き換える。
   **落ちたら `pending` のまま残る**——それが狙い
 
-1件 = 案（`<元の動画ID>/<案>`）・場所（youtube / tiktok）・状態・投稿 ID（分かれば）・
+1件 = 案（`<元の動画ID>/<案>`）・場所（youtube / tiktok / instagram）・状態・投稿 ID（分かれば）・
 動画の sha256・時刻（始めた時刻、UTC）。視聴者さんの名前や鍵は入れない。
 
 ## なぜ要るか（#920）
@@ -29,14 +29,16 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 # 見張りは使い捨ての台帳に差し替えて回す（本物の台帳を書き換えない）
 LEDGER = os.path.join(HERE, "posted.json")
-PLACES = ("youtube", "tiktok")
+PLACES = ("youtube", "tiktok", "instagram")
 STATES = ("pending", "done")
 SHA_RE = re.compile(r"[0-9a-f]{64}")
 # 投稿 ID の形。URL ごと貼る・場所を取り違える、を書き込む前に断る
-ID_RE = {"youtube": re.compile(r"[\w-]{11}"), "tiktok": re.compile(r"\d{15,25}")}
+# Instagram は media の pk（数字）。予約のうちは /reel/<符号>/ の符号が返らないので、予約の応答（configure_to_clips）が返す pk で控える
+ID_RE = {"youtube": re.compile(r"[\w-]{11}"), "tiktok": re.compile(r"\d{15,25}"), "instagram": re.compile(r"\d{15,25}")}
 # 止めたときに「何を見ればいいか」として出す先
 SEE = {"youtube": "https://studio.youtube.com/video/{}/edit",
-       "tiktok": "https://www.tiktok.com/@ayato_arigato/video/{}"}
+       "tiktok": "https://www.tiktok.com/@ayato_arigato/video/{}",
+       "instagram": "https://www.instagram.com/ayato.arigato/reels/（予約中は web の「Scheduled content」。media の pk {}）"}
 POST = "python3 tools/shorts/post/post.py"
 
 
@@ -221,6 +223,9 @@ def id_of(place, res):
     if place == "youtube":
         v = res.get("video_id")
         return v if isinstance(v, str) and ID_RE["youtube"].fullmatch(v) else None
+    if place == "instagram":
+        v = res.get("media_id")
+        return v if isinstance(v, str) and ID_RE["instagram"].fullmatch(v) else None
     ids = set()
     for u in res.get("urls") or []:
         m = re.search(r"/video/(\d+)", u or "")
