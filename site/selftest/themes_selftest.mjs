@@ -118,6 +118,16 @@ bring(join(CONTENT, "plans.ts"), "plans.ts");
 bring(THEMES_SRC, "themes.ts");
 /* 国の表（出た日を導く。6章）。**字で読まない**——組み立てた表を読む（`tools/sprites/tsread_selftest.mjs`） */
 bring(join(CONTENT, "countries.ts"), "countries.ts");
+/* 滞在の表（国の表と章が引く。#1275）。案内の面の絵の名前（`IconName`）は部品の側の型なので、
+   ここでは字で受ける——確かめるのは宛先で、絵の名前ではない */
+bring(join(CONTENT, "stays.ts"), "stays.ts");
+writeFileSync(
+  join(WORK, "stays.ts"),
+  readFileSync(join(WORK, "stays.ts"), "utf8").replace(
+    /^import type \{ IconName \} from "@\/components\/ui\/icons";$/m,
+    "type IconName = string;",
+  ),
+);
 
 execFileSync(
   join(SITE, "node_modules", ".bin", "tsc"),

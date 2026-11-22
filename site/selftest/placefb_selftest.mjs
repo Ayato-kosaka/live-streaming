@@ -75,6 +75,8 @@ function load({ outdated, running, stay }) {
       chapterHref: (c, now) => (c.slug === now?.slug ? "/" : `/island/${c.slug}`),
     },
     "@/content/countries": { COUNTRIES: stay ? [stay] : [] },
+    /* 章で回った国（滞在の表から引く。#1275）。仕込みの章が持つ `countries` をそのまま返す */
+    "@/content/stayChapters": { chapterCountrySlugs: (c) => c.countries ?? [] },
     /* 章の国の数。**この見張りは「いまどこ」の受け皿を見るもの**で、
        国を数えるところは見ていない（数えるほうは `walkedcount.mjs` の持ち場）。
        仕込みの章は `countries: []` なので、本物を通すと 0 になって

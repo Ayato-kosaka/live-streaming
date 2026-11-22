@@ -225,6 +225,16 @@ bring(join(CONTENT, "chapters.ts"), "chapters.ts");
 // 歩いた国の数（`${WALKED}` の印を替えるところ）と、その元になる国の表
 bring(join(CONTENT, "walked.ts"), "walked.ts");
 bring(join(CONTENT, "countries.ts"), "countries.ts");
+/* 国の表と章の国が引く滞在の表（#1275）。案内の面の絵の名前（`IconName`）は部品の側の型なので、
+   ここでは字で受ける——数えるのは歩いた国で、絵の名前ではない */
+bring(join(CONTENT, "stayChapters.ts"), "stayChapters.ts");
+writeFileSync(
+  join(WORK, "stays.ts"),
+  readFileSync(join(CONTENT, "stays.ts"), "utf8").replace(
+    /^import type \{ IconName \} from "@\/components\/ui\/icons";$/m,
+    "type IconName = string;",
+  ),
+);
 copyFileSync(join(SITE, "lib", "builtAt.ts"), join(WORK, "builtAt.ts"));
 
 /* **道具そのもの。** 無いときと、あって落ちたときで言うことが変わる（下の catch） */

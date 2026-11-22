@@ -125,8 +125,9 @@ const ARRAYS = [
   ["site/content/residents.ts", "RESIDENTS", "icon", "charfit / asme / asme202 / clutter"],
   ["site/content/themes.ts", "THEMES", "id", "asme / boardseed"],
   ["site/content/chapters.ts", "CHAPTERS", "slug", "orphanpage / chapterkey / isleart"],
-  ["site/content/countries.ts", "COUNTRIES", "slug", "walkedcount"],
-  ["site/content/countries.ts", "AHEAD_COUNTRIES", "slug", "walkedcount"],
+  ["site/content/countries.ts", "COUNTRY_RECORDS", "slug", "walkedcount / countryart"],
+  // 滞在の表（#1275）。`AHEAD_COUNTRIES` はここの `name` を持つ行から引いている
+  ["site/content/stays.ts", "STAYS", "country", "walkedcount / countryart / islechapter_selftest"],
   ["site/content/nordic.ts", "ROUTE", "id", "walkedcount"],
   ["site/content/plans.ts", "PLANS", "id", "nextempty"],
   ["site/content/travel.ts", "CITIES", "slug", "guidestop"],
@@ -193,15 +194,16 @@ const LEGACY = {
     how: "nest",
     nest: '\n    sub: {\n    slug: "ghost",\n    },',
   },
-  "site/content/countries.ts|COUNTRIES": {
+  "site/content/countries.ts|COUNTRY_RECORDS": {
     who: "walkedcount:78",
     re: /^    slug: "([^"]+)",$/gm,
     how: "nest",
     nest: '\n    sub: {\n    slug: "ghost",\n    },',
   },
-  "site/content/countries.ts|AHEAD_COUNTRIES": {
+  // 昔の `AHEAD_COUNTRIES` を1行ずつ当てていた読み方（walkedcount:80）。いまは滞在の表の1行
+  "site/content/stays.ts|STAYS": {
     who: "walkedcount:80",
-    re: /\{ slug: "([^"]+)", name: "[^"]+", entered: "(\d{4}-\d{2}-\d{2})" \}/g,
+    re: /\{ country: "([^"]+)", cities: \[[^\]]*\], from: "(\d{4}-\d{2}-\d{2})"/g,
     how: "gap",
   },
   "site/content/nordic.ts|ROUTE": {

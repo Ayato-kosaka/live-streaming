@@ -12,7 +12,8 @@ import IsleStage from "@/components/isle/IsleStage";
 import { isleLead } from "@/components/isle/span";
 import { chapterIsle, type Neighbour } from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
-import { ISLAND_PATH, chapterCountrySlugs, chapterCrumbs, chapterNeighbours, type Chapter } from "@/content/chapters";
+import { ISLAND_PATH, chapterCrumbs, chapterNeighbours, type Chapter } from "@/content/chapters";
+import { chapterCountrySlugs } from "@/content/stayChapters";
 import NordicTrip from "./nordic";
 
 /**

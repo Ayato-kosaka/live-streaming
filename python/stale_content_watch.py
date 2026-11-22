@@ -742,6 +742,11 @@ BOOKS: dict[str, Book] = {
         "歩いた国の数。`countries.ts` から画面が出てから数える。**自分では日付を持たない**"
         "（数が面ごとにそろっているかは `tools/sprites/walkedcount.mjs` が見る）",
     ),
+    "stayChapters.ts": Book(
+        DERIVED, SKIP, 0,
+        "章と滞在を期間の重なりで結ぶ式だけ（#1275）。`chapters.ts` と `stays.ts` から引く。"
+        "**自分では日付を持たない**",
+    ),
 }
 
 

@@ -1067,6 +1067,10 @@ def count(content_dir: Path, today: date, books: dict | None = None,
     # 「空いていない」と答えて毎晩通る（§15 の「いつでも通る見張り」）。
     # どれも「数えられない」に積んで、区画を書き換えずに止まる
     stay_rows: list[dict] = []
+    # 滞在の表が読めない回も、章の行は「回った国が分からない」形で揃えておく
+    # （読めない回は `blind` が立って数えられないので、区画は書き換わらない）
+    for r in rows:
+        r["countries"] = []
     cs = content_dir / "countries.ts"
     ss = content_dir / "stays.ts"
     if not ss.is_file():
@@ -1106,7 +1110,7 @@ def count(content_dir: Path, today: date, books: dict | None = None,
         else:
             stay_rows = got_s.rows
             # 章で回った国は `chapters.ts` に書いていない。滞在の表から引いて、行に添える
-            # （引き金「歩いた国」が見る。`site/content/chapters.ts` の `chapterCountrySlugs` と同じ決めかた）
+            # （引き金「歩いた国」が見る。`site/content/stayChapters.ts` の `chapterCountrySlugs` と同じ決めかた）
             derived = stays_mod.chapter_countries(rows, stay_rows)
             for r in rows:
                 r["countries"] = derived.get(r["slug"], [])

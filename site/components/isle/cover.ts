@@ -1,5 +1,6 @@
 import { CHAPTER_STATS } from "@/content/chapterStats";
-import { chapterCountrySlugs, chapterDays, type Chapter } from "@/content/chapters";
+import { chapterDays, type Chapter } from "@/content/chapters";
+import { chapterCountrySlugs } from "@/content/stayChapters";
 import { COUNTRIES } from "@/content/countries";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { RESIDENTS } from "@/content/residents";

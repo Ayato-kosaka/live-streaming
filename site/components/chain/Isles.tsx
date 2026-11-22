@@ -12,7 +12,6 @@ import { useFund } from "@/components/nordic/fund";
 import {
   CHAIN,
   CHAPTERS,
-  chapterCountrySlugs,
   chapterDays,
   chapterNext,
   chapterNow,
@@ -20,6 +19,7 @@ import {
   FUND_GOAL_YEN,
   type Chapter,
 } from "@/content/chapters";
+import { chapterCountrySlugs } from "@/content/stayChapters";
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { chapterHref } from "./route";
 import { islandRadius } from "./shapes";

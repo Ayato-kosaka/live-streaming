@@ -20,7 +20,8 @@
 import { artOf } from "./shapes";
 import { chapterIsle } from "@/components/isle/spec";
 import { buildWorld, SQUASH } from "@/components/isle/world";
-import { CHAPTERS, chapterCountrySlugs } from "@/content/chapters";
+import { CHAPTERS } from "@/content/chapters";
+import { chapterCountrySlugs } from "@/content/stayChapters";
 import { COUNTRIES } from "@/content/countries";
 import type { AtlasIsle } from "./diorama";
 

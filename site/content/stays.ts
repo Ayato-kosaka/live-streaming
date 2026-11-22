@@ -11,7 +11,7 @@
  * | --- | --- |
  * | `COUNTRIES[].stays` | 国の記録（`countries.ts`）を持つ国の行 |
  * | `AHEAD_COUNTRIES` | まだ記録を持たない国の行（`name` を持つ行） |
- * | 章の `countries` | 期間が章と重なる行のうち、記録を持つ国（`chapters.ts` の `chapterCountrySlugs`） |
+ * | 章の `countries` | 期間が章と重なる行のうち、記録を持つ国（`content/stayChapters.ts` の `chapterCountrySlugs`） |
  * | 案内の出し分け（`GUIDES`） | `guide` を持つ行（`spec.ts` の `guidesOf`） |
  * | 国に入った日（`ENTERED`） | 行ぜんぶ |
  * | 毎晩の焼き直し | `python/stays.py`（`python/ts_read.py` の `read_stays` で読む） |
@@ -44,7 +44,7 @@
  *
  * アルメニアの行とイラン国境の行が重なっている（M-12。イラン国境は国ではない＝M-17）。
  * 直すのは W8（#1355）で、イラン国境をアルメニアの地点にする。それまで、章の国を引くときは
- * 「枝の旅（`branchOf`）にすっぽり入る行は枝のもの」と読む（`chapters.ts` の `chapterCountrySlugs`）。
+ * 「枝の旅（`branchOf`）にすっぽり入る行は枝のもの」と読む（`content/stayChapters.ts` の `chapterCountrySlugs`）。
  */
 
 import type { IconName } from "@/components/ui/icons";

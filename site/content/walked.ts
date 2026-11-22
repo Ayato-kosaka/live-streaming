@@ -1,5 +1,6 @@
 import { AHEAD_COUNTRIES, COUNTRIES, isWalkedCountry, type Country } from "./countries";
-import { chapterCountrySlugs, chapterNow, tripDate, type Chapter } from "./chapters";
+import { chapterNow, tripDate, type Chapter } from "./chapters";
+import { chapterCountrySlugs } from "./stayChapters";
 
 /**
  * 「これまで歩いた国」の数。**画面が出てから数え直す。**
@@ -98,7 +99,7 @@ export function walkingCountries(): WalkingCountry[] {
  *
  * ## なぜ `chapterCountrySlugs` だけでは足りないか
  *
- * あちら（`content/chapters.ts`）が返すのは**国の記録のある国**だけで、記録は
+ * あちら（`content/stayChapters.ts`）が返すのは**国の記録のある国**だけで、記録は
  * **歩き終わるまで書けない**（見どころと紹介が要る）。それだけを数えると、バルカン
  * 諸国周遊はアルバニアを歩いて北マケドニアに居る日に島が「**0カ国 歩いた**」と言う。
  * 歩いているのに0は嘘（`docs/island-standards.md` 16章）。だから記録の無い国

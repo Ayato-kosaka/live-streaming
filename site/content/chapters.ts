@@ -7,13 +7,12 @@
  * 章の切りかたは、滞在（`content/stays.ts`）と、BigQuery の配信タイトルから決めた。
  * **手で「この島は大きめ」と決めない。** 大きさは滞在日数から計算する。
  *
- * **章で回った国は、ここに書かない。** 期間が重なる滞在から引く（`chapterCountrySlugs`）。
+ * **章で回った国は、ここに書かない。** 期間が重なる滞在から引く（`content/stayChapters.ts` の `chapterCountrySlugs`）。
  */
 
 /* 焼いた日は `lib/builtAt.ts` から直に取る。**`lib/nightly.ts` 経由にしない**
    ——あちらはこのファイルの `looseStartNow` を読むので、輪になって落ちる。 */
 import { BUILT_AT } from "@/lib/builtAt";
-import { STAYS, type Stay } from "./stays";
 
 export type Chapter = {
   slug: string;
@@ -197,55 +196,6 @@ export const CHAPTERS: Chapter[] = [
     opensAt: "2026-09-28T00:00:00+09:00",
   },
 ];
-
-/** その日の前日。滞在の切れ目を引くためだけなので、暦は UTC で足りる */
-const dayBefore = (d: string) => new Date(Date.parse(`${d}T00:00:00Z`) - 86400_000).toISOString().slice(0, 10);
-
-/** 終わりの空いた期間の、終わりの代わり */
-const OPEN = "9999-12-31";
-
-/**
- * 滞在の、事実上の期間（着いた順）。**終わりは、`to` と「つぎに着いた日の前日」の早いほう。**
- *
- * 国を移る日は前の行の `to` とつぎの行の `from` が同じ日になる（境目の日は入った国が取る。
- * `content/stays.ts` の頭）。`to` のまま重ねると、ケルンの 2025-03-30 が中東周遊にも入る。
- */
-const STAY_SPANS = [...STAYS]
-  .sort((a, b) => a.from.localeCompare(b.from))
-  .map((s, i, all) => {
-    const next = all.slice(i + 1).find((x) => x.from > s.from);
-    const to = [s.to || OPEN, next ? dayBefore(next.from) : OPEN].sort()[0];
-    return { stay: s, from: s.from, to };
-  });
-
-/**
- * その章の滞在（着いた順）。**章と期間が重なる行**（`docs/spec/model.md` 6章「旅が回った国」）。
- * 国の記録の無い国の行（いま歩いている国・これから着く国）も入る。
- *
- * **枝の旅（`branchOf`）にすっぽり入る滞在は、枝のもの。** 本線には数えない。いまはイラン国境の行が
- * アルメニアの行と重なっているので（M-12）、こう読まないと本線のコーカサスに国境が入る。
- * W8（#1355）でイラン国境をアルメニアの地点にしたら、この決まりは要らなくなる。
- */
-export function staysOfChapter(c: Chapter): Stay[] {
-  if (!c.from) return [];
-  const inside = (x: { from: string; to: string }, ch: Chapter) =>
-    !!ch.from && ch.from <= x.from && x.to <= (ch.to || OPEN);
-  const overlaps = (x: { from: string; to: string }, ch: Chapter) =>
-    x.from <= (ch.to || OPEN) && ch.from <= x.to;
-  const branches = CHAPTERS.filter((x) => x.branchOf);
-  return STAY_SPANS.filter((x) =>
-    c.branchOf ? inside(x, c) : overlaps(x, c) && !branches.some((b) => inside(x, b)),
-  ).map((x) => x.stay);
-}
-
-/**
- * その章で回った国（slug。着いた順、重ねない）。**国の記録（`content/countries.ts`）のある国だけ。**
- * まだ記録の無い国（滞在の行が `name` を持つ国）は入らない——いま歩いている国まで数えるときは
- * `content/walked.ts` の `chapterCountries()`。
- */
-export function chapterCountrySlugs(c: Chapter): string[] {
-  return [...new Set(staysOfChapter(c).filter((s) => !s.name).map((s) => s.country))];
-}
 
 /**
  * いまいる島。**日付から決まる。**

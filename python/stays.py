@@ -309,7 +309,7 @@ def read_ahead() -> list:
 def _span_rows(stays: list) -> list:
     """滞在の行の、事実上の期間（着いた順）。終わりは `to` と「つぎに着いた日の前日」の早いほう。
 
-    `site/content/chapters.ts` の `STAY_SPANS` と同じ切りかた（境目の日は入った国が取る）。
+    `site/content/stayChapters.ts` の `STAY_SPANS` と同じ切りかた（境目の日は入った国が取る）。
     """
     rows = sorted(stays, key=lambda s: s["from"])
     out = []
@@ -323,9 +323,9 @@ def _span_rows(stays: list) -> list:
 def chapter_countries(chapters: list, stays: list) -> dict:
     """章 → その章で回った国（国の記録のある国の slug。着いた順、重ねない）。
 
-    **`site/content/chapters.ts` の `chapterCountrySlugs()` と同じ決めかた**——章と期間が重なる
+    **`site/content/stayChapters.ts` の `chapterCountrySlugs()` と同じ決めかた**——章と期間が重なる
     滞在の国。枝の旅にすっぽり入る滞在は枝のもの。`name` を持つ行（記録の無い国）は入れない。
-    2つが割れていないかは `python/stays_table_selftest.py` が書き出した TS と突き合わせる。
+    2つが割れていないかは `site/selftest/stays_table_selftest.mjs` が組み立てた TS と突き合わせる。
 
     Args:
         chapters: `read_chapters_ts()` の行

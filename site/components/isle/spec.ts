@@ -24,10 +24,11 @@
 import { APPS, PAST_APPS, type AppEntry, type AppMilestone } from "@/content/apps";
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
-import { CHAPTERS, chapterDays, chapterSpan, staysOfChapter, type Chapter } from "@/content/chapters";
+import { CHAPTERS, chapterDays, chapterSpan, type Chapter } from "@/content/chapters";
 import { LEGENDS } from "@/content/legends";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { shortsOf, type Short } from "@/content/shorts";
+import { staysOfChapter } from "@/content/stayChapters";
 import { STAYS, type StayGuide } from "@/content/stays";
 import { chapterCountries } from "@/content/walked";
 import { ALBANIA_GROUP, BULGARIA_GROUP, MACEDONIA_GROUP, NORDIC_GROUP, ROMANIA_GROUP } from "@/content/themes";
