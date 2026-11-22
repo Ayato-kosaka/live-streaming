@@ -1305,7 +1305,7 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - **あやとの言葉:**
   > 予約分からで良いのですが、Instagram にも投稿したい。Facebook での認証だったはず。困ったらチケット通知して
 - **決まり:** する — 出す先は YouTube・TikTok・Instagram の3つ。「予約して」「出して」で媒体の名指しが無ければ3つとも（F-077 に Instagram を足す）。Instagram も同じ動画・同じ時刻・同じ題と説明。ログインで人の手が要るときは、その手前まで用意して issue で知らせる。しない — Instagram だけ後回しにして忘れる／パスワードを打つ
-- **直す前 → 直した後:** YouTube・TikTok の2つ → （#1353 で Instagram の口を足して埋める）
+- **直す前 → 直した後:** YouTube・TikTok の2つ → 3つ。`tools/shorts/post/ig_post.py`（EC2 の Chrome の列 `instagram`・web の「Schedule content」で予約）を足し、11/22〜11/26 の7本を同じ時刻で予約した（#1353）
 - **当てる場所:** 人の目（`tools/shorts/post/README.md`。予約の担当に渡す頼みに、3つの媒体を書く）
 
 ## 指摘ではないコメント
