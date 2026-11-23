@@ -37,3 +37,13 @@
 | MERGE の値を STRING・INT64 だけで渡し、SQL 側で `SAFE_CAST` / `SAFE.PARSE_JSON` に直す理由 | `python/bq/queries.py` の `QUERY_MERGE_CHAT_MESSAGES` の上 |
 | 表の列と、誰が書いて誰が読むか | [`docs/island-db.md`](./docs/island-db.md) |
 | 毎晩の取り込みの見届けかた | `/nightly-check`（`.claude/skills/nightly-check/SKILL.md`） |
+
+コードの頭に書いていない、作ったときの前提（直下にあった作業の報告から写した）:
+
+- **`search.list` に戻さない。** 1回 100 units で、毎晩回すと割り当てを食い切る。
+  `playlistItems.list` と `videos.list` は1回 1 unit。
+- **uploads playlist には、非公開・削除済みのアーカイブが載らない。** 見つける側からは見えないので、
+  非公開に戻した配信の扱いは [`docs/island-db.md`](./docs/island-db.md) の `videos` の章が持つ。
+- **トークンの口（Doneru）が落ちていると、見つける側も落ちる。** 代わりの道は作っていない。
+  `DONERU_ALERTBOX_KEY` は Doneru のアラートボックスの URL の `key`（`python/config.py`）。
+  YouTube の API キー（`EXPO_PUBLIC_YOUTUBE_API_KEY`）はもう使っていない。
