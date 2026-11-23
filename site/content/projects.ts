@@ -72,6 +72,8 @@ type Base = {
    *
    * **島にどの旅で建つかは、ここでは決めない**（`trip` か、本線の旅の期間で決まる。
    * `components/isle/spec.ts` の `legendsOf`）。
+   *
+   * 始まる日がまだ決まっていない企画は、面の印の付いた行に限って日を空にできる（下の `UndatedProject`。M-30）。
    */
   date: string;
   /**
@@ -167,7 +169,26 @@ export type LegendProject = Base & {
 /** 伝説の印の無い企画（単発の祭り・節目）。話の中身は持たず、声はその企画に結んだお題（`content/themes.ts`）が受ける */
 export type EventProject = Base & { legend?: undefined };
 
-export type Project = LegendProject | EventProject;
+/**
+ * **始まる日がまだ決まっていない企画**（M-30。状態は「これから」）。日を空にできるのは**面の印の付いた行だけ**——
+ * 決まりとガイドの面（M-8）を持って、日が決まる前から話を進める企画。日が決まったら `date` を足して、ふつうの行にする。
+ *
+ * 期間（`range`）も持たない。日の無い企画はどの期間とも重ならないので、札（`lib/tags.ts`）・カードの日（`lib/cardDays.ts`）・
+ * 島の上（伝説の印は持てない）には出ない。表紙の「これから」には、日のある企画のあとに並ぶ（`lib/leadPlan.ts`）。
+ * 結んだお題は締まらない（`content/themes.ts` の `lastDayOf`）。日で並べるときは `byDate`
+ */
+export type UndatedProject = Omit<Base, "date" | "range" | "book"> & {
+  date?: undefined;
+  range?: undefined;
+  book: true;
+  legend?: undefined;
+};
+
+export type Project = LegendProject | EventProject | UndatedProject;
+
+/** 企画を始まる日の順に並べる比べかた。**日の決まっていない企画は、日のある企画のあと**（そのあいだは表の並びのまま） */
+export const byDate = (a: { date?: string }, b: { date?: string }): number =>
+  a.date && b.date ? a.date.localeCompare(b.date) : a.date ? -1 : b.date ? 1 : 0;
 
 /**
  * 「イランまで歩く」の道のりと日数。**島じゅうで、ここ1か所にだけ書く**（M-20）。

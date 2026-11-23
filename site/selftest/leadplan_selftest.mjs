@@ -272,11 +272,12 @@ check(
 /* ------------------------------------------- 5. 対照。直したものが効いているか
 
    **日を焼かない。** 表のいちばん後ろの日の、その翌年に当てる（`docs/island-misses.md` #193 の決めごと4）。 */
-const LAST = AHEAD.map((a) => a.until ?? a.date).sort().at(-1);
+/* 日の決まっていない企画（M-30。`content/projects.ts` の `UndatedProject`）は、いつでも「これから」。日の数には入れず、残ってよい */
+const LAST = AHEAD.map((a) => a.until ?? a.date).filter(Boolean).sort().at(-1);
 const AFTER_ALL = noon(Number(LAST.slice(0, 4)) + 1, 1, 15);
 check(
-  `ぜんぶ行ってきた日（${LAST} の翌年）に、先頭は出ない`,
-  leadPlan(AFTER_ALL) === undefined,
+  `ぜんぶ行ってきた日（${LAST} の翌年）に、日のある回は先頭に出ない（残るのは日の決まっていない企画だけ）`,
+  upNext(AFTER_ALL).plans.every((a) => !a.date),
   `出た=${leadPlan(AFTER_ALL)?.id}`,
 );
 /* 対照: 行ってきたものも混ぜた並び（前の `nextPlan()` の受け）なら、同じ日に何かが出る。

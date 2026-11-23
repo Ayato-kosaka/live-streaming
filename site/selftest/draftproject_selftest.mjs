@@ -25,7 +25,9 @@
  *  3. 面は在る: 面の一覧（`pagesOf("/legends/<企画>")`）に、索引に出さない面として並ぶ。面の `robots` は `index: false`
  *  5. 企画の表（client の束に入る `content/projects.ts`）に、下書きの企画の名前が1字も無い
  *  4. **対照**——同じ表の写しで、出す日の手順（`draft: true` を消して、行を `PROJECTS` へ移す）をして組み直すと、
- *     表紙の「これから」・便り・索引・llms.txt に出て、`robots` が外れる（「何も見ていない緑」でないこと。`docs/island-standards.md` §15）
+ *     表紙の「これから」・便り・索引・llms.txt に出て、`robots` が外れる（「何も見ていない緑」でないこと。`docs/island-standards.md` §15）。
+ *     **下書きの企画ごとに**組み直す。始まる日の決まっていない企画（M-30。`content/projects.ts` の `UndatedProject`）は、
+ *     便り（その日の企画）には出ず、表紙の「これから」で日のある企画のあとに並ぶ
  *
  * 壊しかたは `--hint`。
  */
@@ -168,7 +170,10 @@ async function where(m, slug) {
   if (m.L.AHEAD.some((a) => a.id === slug)) at.push("これからの元（AHEAD）");
   if (m.L.upNext(BEFORE).plans.some((a) => a.id === slug)) at.push("表紙の「これから」（upNext）");
   const row = m.P.PROJECT_ROWS.find((p) => p.slug === slug);
-  if (row && m.L.aheadOn(row.date).some((a) => a.id === slug)) at.push("その日の便り（aheadOn）");
+  if (row?.date && m.L.aheadOn(row.date).some((a) => a.id === slug)) at.push("その日の便り（aheadOn）");
+  /* 日の決まっていない企画（M-30）は、どの日の便りにも来ないはず。来ていれば出ている所に数える */
+  const aheadDays = [...new Set(m.L.AHEAD.map((a) => a.date).filter(Boolean))];
+  if (!row?.date && aheadDays.some((d) => m.L.aheadOn(d).some((a) => a.id === slug))) at.push("どこかの日の便り（aheadOn）");
   if (m.LG.LEGENDS.some((l) => l.slug === slug)) at.push("伝説の丘・島の上・表紙の棚（LEGENDS）");
   if (m.C.CHAPTERS.some((c) => m.I.legendsOf(c, BEFORE).some((l) => l.slug === slug))) at.push("島の上（legendsOf）");
   const days = Object.values(m.D.DAY_BRIEFS.byDay ?? {}).flat();
@@ -201,26 +206,38 @@ for (const p of drafts) {
 }
 
 // ------------------------------------------------------------------ 対照
-console.log("[4] 対照: 出す日の手順（印を消して、行を PROJECTS へ移す）をした写しでは、出る側へ倒れる");
-const slug = drafts[0].slug;
-/* その行（`{ … slug: "<slug>" … }`）を下書きの並びから切り出し、印を消して、企画の表の頭へ移す（ほかの行に触らない） */
-const at = draftSrc.indexOf(`slug: "${slug}"`);
-const begin = draftSrc.lastIndexOf("{", at);
-const end = draftSrc.indexOf("}", at) + 1;
-const row = draftSrc.slice(begin, end);
+console.log("[4] 対照: 出す日の手順（印を消して、行を PROJECTS へ移す）をした写しでは、出る側へ倒れる（下書きの企画ごと）");
 const head = "export const PROJECTS: Project[] = [";
-if (at < 0 || !/\n\s*draft: true,/.test(row) || !realSrc.includes(head)) stop(`写しが作れない（${slug} の行か、PROJECTS の頭が見つからない）`);
-const openDrafts = draftSrc.slice(0, begin) + draftSrc.slice(end).replace(/^,/, "");
-const openSrc = realSrc.replace(head, `${head}\n  ${row.replace(/\n\s*draft: true,/, "")},`);
-const open = load(build(openSrc, openDrafts));
-const shown = await where(open, slug);
-for (const want of ["島じゅうの企画（PROJECTS）", "表紙の「これから」（upNext）", "その日の便り（aheadOn）", "索引と /all（listedPages）", "llms.txt"]) {
-  check(`印を外すと ${want} に出る`, shown.includes(want), `出た所: ${shown.join("・") || "どこにも"}`);
+for (const d of drafts) {
+  const slug = d.slug;
+  /* その行（`{ … slug: "<slug>" … }`）を下書きの並びから切り出し、印を消して、企画の表の頭へ移す（ほかの行に触らない） */
+  const at = draftSrc.indexOf(`slug: "${slug}"`);
+  const begin = draftSrc.lastIndexOf("{", at);
+  const end = draftSrc.indexOf("}", at) + 1;
+  const row = draftSrc.slice(begin, end);
+  if (at < 0 || !/\n\s*draft: true,/.test(row) || !realSrc.includes(head)) stop(`写しが作れない（${slug} の行か、PROJECTS の頭が見つからない）`);
+  const openDrafts = draftSrc.slice(0, begin) + draftSrc.slice(end).replace(/^,/, "");
+  const openSrc = realSrc.replace(head, `${head}\n  ${row.replace(/\n\s*draft: true,/, "")},`);
+  const open = load(build(openSrc, openDrafts));
+  const shown = await where(open, slug);
+  /* 始まる日の決まっていない企画（M-30）は、その日の便りを持たない（どの日にも来ない） */
+  const dated = !!d.date;
+  const wants = ["島じゅうの企画（PROJECTS）", "表紙の「これから」（upNext）", ...(dated ? ["その日の便り（aheadOn）"] : []), "索引と /all（listedPages）", "llms.txt"];
+  for (const want of wants) {
+    check(`${slug}: 印を外すと ${want} に出る`, shown.includes(want), `出た所: ${shown.join("・") || "どこにも"}`);
+  }
+  const plans = open.L.upNext(BEFORE).plans;
+  const lead = plans.find((a) => a.id === slug);
+  check(`${slug}: 印を外すと、表紙の「これから」から面へ送る`, lead?.href === `/legends/${slug}`, lead?.href);
+  if (!dated) {
+    const i = plans.findIndex((a) => a.id === slug);
+    const lastDated = plans.reduce((n, a, k) => (a.date ? k : n), -1);
+    check(`${slug}: 日の決まっていない企画は、表紙の「これから」で日のある企画のあとに並ぶ（M-30）`, i > lastDated, `並び ${i}・日のある最後 ${lastDated}`);
+    check(`${slug}: 日の決まっていない企画は、どの日の便りにも出ない`, !shown.includes("どこかの日の便り（aheadOn）"), `出た所: ${shown.join("・")}`);
+  }
+  check(`${slug}: 印を外すと、面の robots が外れる`, open.B.bookRobots(slug) === undefined, JSON.stringify(open.B.bookRobots(slug)));
+  check(`${slug}: 印を外しても、伝説の丘には並ばない（面の印は伝説の印ではない。M-8）`, !shown.includes("伝説の丘・島の上・表紙の棚（LEGENDS）"));
 }
-const lead = open.L.upNext(BEFORE).plans.find((a) => a.id === slug);
-check("印を外すと、表紙の「これから」から面へ送る", lead?.href === `/legends/${slug}`, lead?.href);
-check("印を外すと、面の robots が外れる", open.B.bookRobots(slug) === undefined, JSON.stringify(open.B.bookRobots(slug)));
-check("印を外しても、伝説の丘には並ばない（面の印は伝説の印ではない。M-8）", !shown.includes("伝説の丘・島の上・表紙の棚（LEGENDS）"));
 
 console.log(`\n${OK}件 ok / ${BAD}件 NG`);
 process.exit(BAD ? 1 : 0);

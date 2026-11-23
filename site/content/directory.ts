@@ -7,7 +7,7 @@ import { tripsOfCountry } from "@/content/stayChapters";
 import { TRAVEL_ARTICLES, TRAVEL_CITIES, TRAVEL_PLACES } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { LEGENDS } from "@/content/legends";
-import { bookOf } from "@/content/legends/index";
+import { headOf } from "@/content/legends/index";
 import { PROJECTS } from "@/content/projects";
 import { MONTHS } from "@/content/months";
 import { DAY_PAGES, NORDIC_GUIDE_HREF, cityName, dayHref } from "@/content/nordic";
@@ -159,7 +159,7 @@ const FROM_TABLES: Record<string, Line> = Object.fromEntries<Line>([
   ...LEGENDS.map((l) => [`/legends/${l.slug}`, { note: l.lead, q: q(l.title, l.lead, l.slug) }] as const),
   /* 面の印の付いた企画（M-8）。1行は見出しの下の一行（book.json の meta）。**下書きの企画は `PROJECTS` に入らない**（M-33） */
   ...PROJECTS.filter((p) => p.book).map((p) => {
-    const { meta } = bookOf(p.slug).book;
+    const { meta } = headOf(p.slug);
     return [`/legends/${p.slug}`, { note: meta.sub, q: q(p.title, meta.description, p.slug) }] as const;
   }),
   ...TRAVEL_PLACES.map((p) => {

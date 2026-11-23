@@ -276,6 +276,8 @@ PAGES: dict[str, str] = {
     "streamDigest.ts": "配信1本の1〜2行（/travel/<国> の「この国であったこと」）",
     # 企画の面（面の印。`content/legends/<企画>.ts`。焼くのは `python/legend_book_bake.py`。#1404）
     "india-street-food.ts": "インド屋台飯100食の面（/legends/india-street-food）の、決まりに添えた本人の一言の場面のリンク",
+    # 焼くのは `python/legend_kitchen_bake.py`（#1418）
+    "nomad-kitchen-car.ts": "ノマドキッチンカープロジェクトの面（/legends/nomad-kitchen-car）の、売るものが決まった場面・景色・車の候補・進み具合の本人の言葉の場面のリンク",
 }
 
 # **島が1件ずつ選んで押し出している面。ここの死にリンクは重い。**
@@ -294,7 +296,7 @@ FRONT = ("projects.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
          "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts",
          "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts", "tirana-walk.ts", "tirana-sufllaqe.ts", "tirana-mosque.ts", "tirana-gjelltore.ts", "tirana-airport.ts", "tirana-hostel.ts", "yerevan-sevan.ts", "yerevan-bus.ts", "yerevan-lake.ts",
          "yerevan-cascade.ts", "yerevan-memorial.ts", "yerevan-bakery.ts", "yerevan-market.ts",
-         "india-street-food.ts")
+         "india-street-food.ts", "nomad-kitchen-car.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、

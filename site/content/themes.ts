@@ -764,7 +764,7 @@ function groupOf(t: Theme, now: Date | null): string {
 
 /**
  * お題がいつまで貼れるか（その日いっぱい）。**結んだ先から引く**（`planById` を読まない）。
- * - 企画に結んだお題 … 企画の期間（`range`）の終わり、期間が無ければ企画の日
+ * - 企画に結んだお題 … 企画の期間（`range`）の終わり、期間が無ければ企画の日。日の決まっていない企画（M-30）は `undefined`＝締まらない
  * - 日に結んだお題 … その日
  */
 function lastDayOf(t: Theme): string | undefined {

@@ -1,0 +1,167 @@
+/*
+ * ノマドキッチンカーの面（`/legends/nomad-kitchen-car`）。部品は `components/legends/kitchen/`。**頭は `kc-`。**
+ *
+ * **地と部品は街のガイドのまま**（`components/guidebook/guidebook.css` の `.gb` の下）、表紙の頭はインドの面と同じ
+ * （`components/legends/legends.css` の `lb-cover`）。ここで足すのは、節の中の素の並びだけ（節の飾り・シミュレーション・3D の舞台は
+ * それぞれの担当が足す）。色は街のガイドの差し色1つ（`--gb-c`）と、その薄い地（`--gb-c-lo`）。押しどころは 48px 以上。
+ */
+
+/* ---- 表紙 -------------------------------------------------------------- */
+
+.kc-quotes { display: grid; gap: var(--sp-2); margin: var(--sp-3) 0 0; }
+.kc-quote { margin: 0; padding: var(--sp-3); border-radius: var(--r-1); background: var(--gb-c-lo); }
+.kc-quote blockquote { margin: 0; font-size: clamp(20px, 5.4vw, 26px); font-weight: 900; line-height: 1.45; }
+.kc-quote figcaption { margin-top: 4px; font-size: 13px; color: var(--ink-2); }
+.kc-note { margin: var(--sp-2) auto 0; max-width: 34em; font-size: var(--fs-note); color: var(--ink-2); }
+
+/* ---- 小さな部品 ------------------------------------------------------- */
+
+/* 近づいてから読む絵（`LateArt.tsx` が `data-gb-late` を外す）。JS の無い読み手には最初から出す */
+.kc-late[data-gb-late] img { display: none; }
+@media (scripting: none) { .kc-late[data-gb-late] img { display: block; } }
+
+.kc-scene { display: inline-flex; align-items: center; gap: 4px; min-height: 48px; font-size: 13px; color: var(--ink); }
+.kc-scene-row { margin: 0; }
+.kc-est {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  font-size: var(--fs-min);
+  font-style: normal;
+  font-weight: 700;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.kc-mark {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--gb-c-lo);
+  font-size: var(--fs-min);
+  font-weight: 700;
+}
+.kc-side { margin: 0 0 var(--sp-2); font-size: var(--fs-note); font-weight: 700; color: var(--ink-2); }
+.kc-plan { margin: var(--sp-3) 0 0; font-size: 16px; font-weight: 700; line-height: 1.6; }
+.kc-when { margin: 2px 0 0; font-size: var(--fs-min); color: var(--ink-2); }
+.kc-h4 { margin: var(--sp-4) 0 var(--sp-2); font-size: 15px; font-weight: 900; }
+.kc-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.kc .gb-table .is-name { text-align: left; }
+.kc .gb-table .is-text { min-width: 12em; text-align: left; white-space: normal; }
+.kc .gb-table thead th { white-space: normal; }
+
+/* ---- 1 ルートと景色 ---------------------------------------------------- */
+
+.kc-map { margin: 0 auto var(--sp-3); max-width: 640px; overflow: hidden; border-radius: var(--r-2); }
+.kc-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: var(--sp-3) 0 0; padding: 0; list-style: none; }
+.kc-chips a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  font-weight: 700;
+  color: var(--ink);
+}
+.kc-views { display: grid; gap: var(--sp-4); margin: var(--sp-4) auto 0; padding: 0; max-width: 600px; list-style: none; }
+.kc-views .gb-pic { display: block; overflow: hidden; border-radius: var(--r-2); }
+.kc-view-t { margin: var(--sp-2) 0 0; font-size: 17px; font-weight: 900; }
+.kc-view-l { margin: 2px 0 0; }
+
+/* ---- 2 売るもの -------------------------------------------------------- */
+
+.kc-picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.kc-pick { display: grid; justify-items: center; gap: 4px; padding: var(--sp-2); border-radius: var(--r-1); background: var(--gb-card); border: 1px solid var(--gb-line); text-align: center; }
+.kc-pick .gb-pic { width: 100%; overflow: hidden; border-radius: var(--r-1); }
+.kc-rank { font-size: 13px; font-weight: 900; color: var(--gb-c); }
+.kc-pick.is-1 .kc-rank { font-size: 15px; }
+.kc-pick-n { font-weight: 800; }
+.kc-why { margin: 0; padding-left: 1.2em; line-height: 1.7; }
+.kc-ideas { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.kc-ideas li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; padding: 8px 10px; border-radius: var(--r-1); background: var(--gb-card); border: 1px solid var(--gb-line); }
+.kc-ideas time { margin-left: auto; font-size: var(--fs-min); color: var(--ink-2); }
+.kc-compare { margin: 0; }
+
+/* ---- 3 外装と内装 ------------------------------------------------------ */
+
+.kc-looks { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.kc-looks > li { padding: var(--sp-3); border-radius: var(--r-1); background: var(--gb-card); border: 1px solid var(--gb-line); }
+.kc-looks p { margin: 4px 0 0; }
+.kc-look-n { margin: 0; font-size: 16px; font-weight: 900; }
+.kc-look-in { display: flex; flex-wrap: wrap; gap: 6px; font-weight: 700; }
+.kc-look-in b { color: var(--gb-c); }
+.kc-cars { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.kc-cars a {
+  display: grid;
+  gap: 4px;
+  min-height: 64px;
+  height: 100%;
+  padding: var(--sp-2);
+  border-radius: var(--r-1);
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  color: var(--ink);
+}
+.kc-cars .gb-pic { overflow: hidden; border-radius: var(--r-1); }
+.kc-cars b { font-weight: 900; }
+.kc-cars i { font-style: normal; font-size: 13px; color: var(--ink-2); }
+.kc-said { margin: 0 0 var(--sp-2); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-1); background: var(--gb-c-lo); }
+.kc-said blockquote { margin: 0; font-weight: 900; }
+.kc-what { margin: 4px 0 0; font-size: var(--fs-note); color: var(--ink-2); }
+.kc-buy { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.kc-buy > li { padding: var(--sp-3); border-radius: var(--r-1); background: var(--gb-card); border: 1px solid var(--gb-line); }
+.kc-buy-n { font-size: 16px; font-weight: 900; }
+.kc-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.kc-photos .gb-pic { display: block; overflow: hidden; border-radius: var(--r-1); }
+
+/* ---- 4 収益構造 -------------------------------------------------------- */
+
+.kc-rows { margin: 0; }
+.kc-place { margin-top: var(--sp-3); }
+.kc-place .kc-h4 { margin: 0 0 4px; }
+.kc-notin { margin: var(--sp-3) 0 0; font-weight: 700; }
+
+/* ---- 5 課題一覧 -------------------------------------------------------- */
+
+.kc-big { margin: 0 0 var(--sp-3); padding: var(--sp-3); border-radius: var(--r-1); background: var(--gb-card); border: 1px solid var(--gb-line); }
+.kc-big .kc-h4 { margin-top: 0; }
+.kc-big > p { margin: 0; }
+.kc-layers { display: grid; gap: var(--sp-2); margin: var(--sp-3) 0; padding: 0; list-style: none; }
+.kc-layers > li { padding: var(--sp-2) var(--sp-3); border-left: 4px solid var(--gb-line); }
+.kc-layers > li.is-heaviest { border-left-color: var(--gb-c); }
+.kc-layers > li.is-heavy { border-left-color: color-mix(in srgb, var(--gb-c) 65%, var(--gb-line)); }
+.kc-layers > li.is-mid { border-left-color: color-mix(in srgb, var(--gb-c) 35%, var(--gb-line)); }
+.kc-layers p { margin: 4px 0 0; }
+.kc-weight { margin-left: 8px; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
+.kc-life { display: grid; gap: var(--sp-2); margin: 0; padding-left: 2.2em; }
+.kc-life p { margin: 2px 0 0; }
+.kc-stars { margin-left: 8px; letter-spacing: 1px; color: var(--gb-c); }
+
+/* ---- 6 30本 ------------------------------------------------------------ */
+
+.kc-shorts { margin: 0; padding-left: 2.4em; line-height: 1.9; }
+.kc-more { margin-top: var(--sp-2); }
+.kc-more > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ---- 下のほうに畳む3つ ------------------------------------------------- */
+
+.kc-folds { display: grid; gap: var(--sp-2); margin: var(--sp-5) 0 var(--sp-4); }
+.kc-progress { display: grid; gap: var(--sp-3); margin: 0; padding: 0; list-style: none; }
+.kc-progress time { display: block; font-size: var(--fs-min); font-weight: 700; color: var(--gb-c); }
+.kc-progress p { margin: 2px 0 0; }
+.kc-facts ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.kc-facts p { margin: 0; }
+.kc-facts .kc-h4 { margin: var(--sp-3) 0 6px; }

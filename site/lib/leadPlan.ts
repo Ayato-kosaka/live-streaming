@@ -16,7 +16,7 @@
 import { daysUntil } from "@/lib/nightly";
 import { STAYS, type Stay } from "@/content/stays";
 import { stayHere, stayNext, type StayCard } from "@/lib/stayHere";
-import { PROJECTS, isLegend, type Project } from "@/content/projects";
+import { PROJECTS, byDate, isLegend, type Project } from "@/content/projects";
 import { THEMES } from "@/content/themes";
 import { streamTypeBySlug } from "@/content/streamTypes";
 
@@ -26,8 +26,8 @@ export type Ahead = {
   id: string;
   kind: "project" | "stream";
   title: string;
-  /** 始まる日（`YYYY-MM-DD`、日本時間の暦日） */
-  date: string;
+  /** 始まる日（`YYYY-MM-DD`、日本時間の暦日）。**日の決まっていない企画は持たない**（M-30。状態は「これから」） */
+  date?: string;
   /** 終わる日。何日かにまたがる企画だけ */
   until?: string;
   /** 押した先。伝説の企画はその面、それ以外の企画は掲示板のそのお題、配信の回はその配信の型の面 */
@@ -39,8 +39,9 @@ export type Ahead = {
 /** 3つの状態（M-30）。これから／いま／おわった */
 export type Phase = "before" | "during" | "after";
 
-/** 日付から状態を決める。手で書かない（M-30） */
+/** 日付から状態を決める。手で書かない（M-30）。**日の決まっていない企画は「これから」** */
 export function phaseOf(a: Pick<Ahead, "date" | "until">, now: Date): Phase {
+  if (!a.date) return "before";
   if ((daysUntil(a.date, now) ?? 0) > 0) return "before";
   return (daysUntil(a.until ?? a.date, now) ?? 0) < 0 ? "after" : "during";
 }
@@ -60,13 +61,13 @@ const ofProject = (p: Project): Ahead => ({
   id: p.slug,
   kind: "project",
   title: p.title,
-  date: p.date,
-  ...(p.range && p.range[1] > p.date ? { until: p.range[1] } : {}),
+  ...(p.date ? { date: p.date } : {}),
+  ...(p.range && p.date && p.range[1] > p.date ? { until: p.range[1] } : {}),
   href: projectHref(p),
   ...(isLegend(p) ? { note: p.lead } : {}),
 });
 
-/** 企画と、日を持つ配信の回の全部（日付の早い順） */
+/** 企画と、日を持つ配信の回の全部（日付の早い順。**日の決まっていない企画は、日のあるもののあと**。M-30） */
 export const AHEAD: Ahead[] = [
   ...PROJECTS.map(ofProject),
   ...THEMES.filter((t) => t.stream && t.date).map(
@@ -79,10 +80,10 @@ export const AHEAD: Ahead[] = [
       note: streamTypeBySlug(t.stream as string)?.short,
     }),
   ),
-].sort((a, b) => a.date.localeCompare(b.date));
+].sort(byDate);
 
-/** その日の企画と配信の回（始まる日がその日のもの）。今日の便りが読む */
-export const aheadOn = (day: string): Ahead[] => AHEAD.filter((a) => a.date === day);
+/** その日の企画と配信の回（始まる日がその日のもの）。今日の便りが読む。日の決まっていない企画は、どの日にも来ない */
+export const aheadOn = (day: string): Ahead[] => AHEAD.filter((a) => !!a.date && a.date === day);
 
 /* 居場所（［いまここ］［つぎ］）と名刺の「いま」は `lib/stayHere.ts` に分けた（#1278）。ここからも取れる */
 export { hereNow, stayCard, stayHere, stayNext, type HereNow, type StayCard } from "@/lib/stayHere";

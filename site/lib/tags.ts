@@ -38,7 +38,7 @@ import { COUNTRIES, countryNameBySlug } from "@/content/countries";
 import { hrefOf } from "@/content/kinds";
 import { MONTHS } from "@/content/months";
 import { pastOn } from "@/content/onThisDay";
-import { PROJECTS, isLegend, type Project } from "@/content/projects";
+import { PROJECTS, byDate, isLegend, type Project } from "@/content/projects";
 import { RECIPES, type Recipe } from "@/content/recipes";
 import { spanOfStay, staySpans } from "@/content/stayChapters";
 import { STAYS, type Stay } from "@/content/stays";
@@ -92,8 +92,14 @@ const monthSpan = (key: string): Span => {
   return { from: `${key}-01`, to: `${key}-${String(last).padStart(2, "0")}` };
 };
 
-/** 企画の期間。**企画の日と、続いていた期間**（1日で終わったものは、その日だけ） */
-const projectSpans = (p: Project): Span[] => [{ from: p.date, to: p.date }, ...(p.range ? [{ from: p.range[0], to: p.range[1] }] : [])];
+/**
+ * 企画の期間。**企画の日と、続いていた期間**（1日で終わったものは、その日だけ）。
+ * 日の決まっていない企画（`UndatedProject`。M-30）は空——どの期間とも重ならない
+ */
+const projectSpans = (p: Project): Span[] => [
+  ...(p.date ? [{ from: p.date, to: p.date }] : []),
+  ...(p.range ? [{ from: p.range[0], to: p.range[1] }] : []),
+];
 
 const chapterBySlug = (slug: string) => CHAPTERS.find((c) => c.slug === slug);
 
@@ -197,7 +203,7 @@ const tripsOf = (spans: Span[]): Chapter[] =>
   }).sort((a, b) => a.from.localeCompare(b.from));
 
 const projectsOf = (spans: Span[]): Project[] =>
-  PROJECTS.filter((p) => staysSpansHit(p, spans)).sort((a, b) => a.date.localeCompare(b.date));
+  PROJECTS.filter((p) => staysSpansHit(p, spans)).sort(byDate);
 
 /** 企画が、滞在の期間（ぜんぶ）のどれかと重なるか。旅と1対1の企画は、その旅の滞在で */
 function staysSpansHit(p: Project, spans: Span[]): boolean {
@@ -252,7 +258,7 @@ export function tagsOfTrip(slug: string): TagRow[] {
      （「イランまで歩く」の島に、コーカサスの1年ぶんの企画を並べない。`components/isle/spec.ts` の `legendsOf` と同じ） */
   const projects = PROJECTS.filter((p) =>
     p.trip ? p.trip === slug : !c.branchOf && projectSpans(p).some((x) => hit(x, ts)),
-  ).sort((a, b) => a.date.localeCompare(b.date));
+  ).sort(byDate);
   return rows(
     { kind: "country", title: "回った国", tags: uniq(stays.map((s) => countryTag(s.country))) },
     { kind: "project", title: "この旅の企画", tags: uniq(projects.map(projectTag)) },
@@ -309,7 +315,7 @@ export function tagsOfMonth(key: string): TagRow[] {
     {
       kind: "project",
       title: "企画",
-      tags: uniq(PROJECTS.filter((p) => projectSpans(p).some((x) => hit(x, span))).sort((a, b) => a.date.localeCompare(b.date)).map(projectTag)),
+      tags: uniq(PROJECTS.filter((p) => projectSpans(p).some((x) => hit(x, span))).sort(byDate).map(projectTag)),
     },
   );
 }

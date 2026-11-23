@@ -2,7 +2,7 @@ import { APPS, PAST_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
 import { guidebookOf } from "@/content/guidebook";
 import { LEGENDS } from "@/content/legends";
-import { bookOf } from "@/content/legends/index";
+import { headOf } from "@/content/legends/index";
 import { PROJECTS } from "@/content/projects";
 import { RECIPES } from "@/content/recipes";
 import { LINKS, SITE } from "@/content/site";
@@ -74,7 +74,7 @@ export function GET() {
     "",
     ...LEGENDS.map((l) => line(l.title, `/legends/${l.slug}`, l.lead)),
     /* 面の印の付いた企画（始まる前から面を持つ。M-8）。**下書きの企画は `PROJECTS` に入らないので載らない**（M-33） */
-    ...PROJECTS.filter((p) => p.book).map((p) => line(p.title, `/legends/${p.slug}`, bookOf(p.slug).book.meta.description)),
+    ...PROJECTS.filter((p) => p.book).map((p) => line(p.title, `/legends/${p.slug}`, headOf(p.slug).meta.description)),
     "",
     "## 配信の型",
     "",

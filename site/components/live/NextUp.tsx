@@ -19,6 +19,9 @@ export type GuideItem = GuideSpan & {
   art: ReactNode;
 };
 
+/** 日にちの決まった回（3段目に並ぶのはこれだけ） */
+type Dated = Ahead & { date: string };
+
 /**
  * 表紙の「これから」。上から ［いまここ］→［つぎ］→ 日にちの決まった回（#1276）。
  *
@@ -63,7 +66,10 @@ export default function NextUp({ guides, guideLabel }: { guides: GuideItem[]; gu
     return () => clearInterval(id);
   }, []);
 
-  const { here, next, plans } = view;
+  const { here, next } = view;
+  /* この段は「日にちの決まった回」。日の決まっていない企画（M-30。`upNext` は日のあるもののあとに返す）は、ここに並べない。
+     どう出すかは、その企画を表紙の「これから」に繋ぐ日（下書きの印を外す日）に決める */
+  const plans = view.plans.filter((p): p is Dated => !!p.date);
   const [lead, ...rest] = plans;
   return (
     <section className="nextup">
@@ -219,7 +225,7 @@ function shortDate(date?: string) {
  * **「進行中」と言わない**（あやと 2026-11-18）。何日かにまたがる回が始まっていれば「開催中」。
  * 終わった回はここに来ない（`lib/leadPlan.ts` の `upNext` は行ってきたものを返さない）。
  */
-function PlanBlock({ plan, today }: { plan: Ahead; today: Date | null }) {
+function PlanBlock({ plan, today }: { plan: Dated; today: Date | null }) {
   const days = today ? daysUntil(plan.date, today) : null;
   const phase = today ? phaseOf(plan, today) : null;
   return (

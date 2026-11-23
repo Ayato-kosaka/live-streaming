@@ -312,6 +312,8 @@ SOLO = [
     "travel/armenia/yerevan/market",
     # 企画の面（面の印。M-8）。100品の窓と用語・地域・食べ比べの字で、街のガイドと同じく字の多い面（#1404）
     "legends/india-street-food",
+    # 企画の面（面の印。M-8）。課題46件・確かめた事実・30本の題・比較の表の字で、字の多い面（#1418）
+    "legends/nomad-kitchen-car",
 ]
 
 

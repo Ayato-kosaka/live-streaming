@@ -36,8 +36,8 @@ const byDay = (() => {
   const put = (date: string, brief: PlanBrief) => {
     (out[date] ??= []).push(brief);
   };
-  /* 並びは企画の表のまま（9月11日は3本立つ。表の並びがその日の札の並び） */
-  for (const p of PROJECTS) put(p.date, { title: p.title, href: projectHref(p) });
+  /* 並びは企画の表のまま（9月11日は3本立つ。表の並びがその日の札の並び）。日の決まっていない企画（M-30）はどの日にも立たない */
+  for (const p of PROJECTS) if (p.date) put(p.date, { title: p.title, href: projectHref(p) });
   /* 名前は「北欧旅 出発」「北欧旅 3日目」。カードは島じゅうの並びに出るので、何の3日目かを付ける */
   for (const d of DAY_PAGES) if (d.date) put(d.date, { title: `北欧旅 ${dayName(d)}`, href: dayHref(d) });
   return out;
