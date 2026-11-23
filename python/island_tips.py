@@ -1,8 +1,9 @@
 """投げ銭の台帳（`islandTips`）を作る。#202
 
 YouTube のスパチャ（`chat_messages` の `event_type='PAID'`）と、Doneru の寄付
-（`doneru_donations`）を**1本にまとめて** Firestore に置く。あやと島カードは
-ここから組み上がる（`python/island_cards.py`）。
+（`doneru_donations`）と、**島で受けた投げ銭**（Firestore `islandSiteTips`。
+#1405・決定の記録 0017）を**1本にまとめて** Firestore に置く。あやと島カードは
+ここから組み上がる（`python/island_cards.py`）。台帳の書き手はここ1本。
 
 ## なぜ名簿ではなく台帳にするのか
 
@@ -61,6 +62,48 @@ Doneru と突き合わせるのに要る。**代わりに2つ守る。**
 赤くするのは `python/doneru_supporters.py` の役目なので、ここでは数えて
 知らせるだけで、終了コードは 0 のまま。**2か所で赤くしない。**
 
+## 島の投げ銭（`source: island`。#1405）
+
+Stripe の知らせを受けた口（`functions/src/islandApi.ts`）が `islandSiteTips` に
+書く。ここはそれを読んで台帳に畳むだけ（台帳の書き手は増やさない）。
+
+- **入れるのは `fund_box.island_counts()` を通るものだけ**——`livemode` が真
+  （本番の支払い）で、`status` が `paid`。テストの支払いは台帳に1行も入れない。
+  貯金箱（`python/fund_daily.py`）も同じ1本を通すので、両者は食い違わない
+- 書類IDは今と同じ作り方（`sourceEventId` = `island:<checkoutSessionId>` の SHA-1）。
+  **同じ支払いを何度読んでも1行**
+- `channelId` は `islandSiteTips.channelId` をそのまま入れる（口が
+  `islandUsers/{uid}.channelId` から引いた値）。名乗りでは当てない
+- `day` / `donatedAt` / `videoId` / `videoStartedAt` は **Doneru と同じ当て方**。
+  払い終わった時刻（`paidAt`）を日本時間で切り、配信の時間帯（`_WIN`）に当てる
+
+### あとで返金・払い戻しの請求になったら、**台帳から消す**
+
+`status` が `refunded` / `disputed` に変わった支払い（と、`islandSiteTips` から
+書類ごと無くなった支払い）は、**台帳の行を消す**（`delete`）。
+
+**印を付けて残さない**のは、台帳を読む所が多いから（カード・図鑑・月末・
+円の見張り……）。印にすると、その全部が印を見ないと黙って数えてしまう
+（`docs/island-standards.md` 30.4）。消せば、読む側は何も知らなくてよい。
+元の記録は `islandSiteTips`（と Stripe）に残るので、消しても戻せる。
+
+**窓で切らない。** 返金はいつ来るか分からない（払い戻しの請求は数か月後にも
+来る）ので、島の投げ銭だけは毎晩 `islandSiteTips` を全部読んで見比べる。
+数が小さい（1件1支払い）ので、読みは軽い。
+
+### 読めなかった晩は、**島の行を1つも消さない・足さない**
+
+`islandSiteTips` が読めなかったら、島のぶんは丸ごと飛ばす（スパチャと Doneru は
+そのまま入れる）。読めなかったのを「0件だった」と読むと、台帳の島の行を
+全部消してしまう（`docs/island-standards.md` 10）。**読めたのに0件で、台帳には
+島の行が在る**ときも消さない（受け取りの書類は消さない決めなので、それは
+読む先を間違えている）。どちらも `::warning::` を出す。
+
+**終了コードは 0 のまま。** ここを赤くすると、後ろのカード作り
+（`tips_after_doneru.yml`）まで止まる（`docs/island-standards.md` 31.3）。
+受け取りの書類が読めない晩は、同じ書類を読む貯金箱（`python/fund_daily.py`）
+のほうが赤くなる。
+
 実行:
   BQ_PROJECT_ID=live-streaming-d3cac python python/island_tips.py
   python python/island_tips.py --days 7
@@ -79,6 +122,7 @@ from google.cloud import bigquery, firestore
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 
+import fund_box as fb  # noqa: E402
 import fx_rate  # noqa: E402
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 from doneru.dedup import dedup_sql  # noqa: E402
@@ -202,8 +246,8 @@ _DONERU_ROWS = dedup_sql(
           "    AND DATE(donated_at, 'Asia/Tokyo') BETWEEN @d0 AND @d1",
 )
 
-SQL_DONERU = f"""
-WITH win AS (
+# 配信の時間帯。**Doneru と島の投げ銭が同じ1本を使う**（当て方を2つにしない）
+_WIN = f"""win AS (
   SELECT
     v.video_id,
     UNIX_MILLIS(v.actual_start_time) AS started_ms,
@@ -219,7 +263,14 @@ WITH win AS (
   LEFT JOIN `{BQ_PROJECT_ID}.{BQ_DATASET}.chat_messages` m USING (video_id)
   WHERE v.actual_start_time IS NOT NULL
   GROUP BY v.video_id, v.actual_start_time
-)
+)"""
+
+# 時間帯に当たった配信。**またがったら、始まりの新しいほうを採る**（Doneru と島で同じ）
+_PICK = """ARRAY_AGG(w.video_id ORDER BY w.started_ms DESC LIMIT 1)[SAFE_OFFSET(0)] AS video_id,
+  MAX(w.started_ms) AS started_ms"""
+
+SQL_DONERU = f"""
+WITH {_WIN}
 SELECT
   d.donation_id,
   FORMAT_DATE('%Y-%m-%d', DATE(d.donated_at, 'Asia/Tokyo')) AS day,
@@ -230,8 +281,7 @@ SELECT
   d.settlement_amount,
   d.currency,
   -- 時間帯に当たった配信。またがったら、始まりの新しいほうを採る
-  ARRAY_AGG(w.video_id ORDER BY w.started_ms DESC LIMIT 1)[SAFE_OFFSET(0)] AS video_id,
-  MAX(w.started_ms) AS started_ms
+  {_PICK}
 FROM (
 {_DONERU_ROWS}
 ) d
@@ -240,6 +290,21 @@ LEFT JOIN win w
 GROUP BY
   d.donation_id, day, donated_ms, d.viewer_pk, d.donor_name,
   d.amount, d.settlement_amount, d.currency
+"""
+
+# --- 島の投げ銭 -----------------------------------------------------------
+# 払い終わった時刻（`islandSiteTips.paidAt`。ミリ秒）を、**Doneru と同じ
+# 時間帯（`_WIN`）・同じ選び方（`_PICK`）**で配信に当てる。時刻は Firestore に
+# しか無いので、配列で渡す
+SQL_ISLAND = f"""
+WITH {_WIN}
+SELECT
+  t AS paid_ms,
+  {_PICK}
+FROM UNNEST(@ms) AS t
+LEFT JOIN win w
+  ON t BETWEEN w.started_ms AND w.ended_ms
+GROUP BY t
 """
 
 
@@ -439,6 +504,178 @@ def fetch_doneru(d0: str, d1: str, donors: Dict[str, dict]) -> List[dict]:
     return out
 
 
+def read_site_tips(db) -> Optional[List[tuple]]:
+    """島で受けた投げ銭（`islandSiteTips`）を**全部**読む。**読むだけ。**
+
+    窓で切らない（返金はいつ来るか分からない。この文書の頭）。
+
+    Args:
+        db: Firestore クライアント
+
+    Returns:
+        `(checkoutSessionId, 中身)` の並び。**読めなければ None**
+        （0件の `[]` と分ける。`docs/island-standards.md` 10）
+    """
+    try:
+        return [(d.id, d.to_dict() or {}) for d in db.collection(fb.C_ISLAND).stream()]
+    except Exception as e:  # noqa: BLE001  何で読めなくても、島の行は消さない
+        logger.warning("島の投げ銭（%s）が読めませんでした: %s", fb.C_ISLAND, type(e).__name__)
+        return None
+
+
+def island_why(v: dict) -> str:
+    """台帳に入れない島の投げ銭の、**入れない理由**（ログに出す符丁）。
+
+    Args:
+        v: `islandSiteTips` の中身
+
+    Returns:
+        `test`（テストの支払い）/ `refunded` / `disputed` / `status:<字>`
+    """
+    if (v or {}).get("livemode") is not True:
+        return "test"
+    st = str((v or {}).get("status") or "")
+    return st if st in ("refunded", "disputed") else f"status:{st or '?'}"
+
+
+def plan_island(site: Optional[List[tuple]], had: set) -> dict:
+    """島の投げ銭を、**入れるもの・消すもの**に分ける。外は読まない。
+
+    Args:
+        site: `read_site_tips()` の返り値。None は「読めなかった」
+        had: 台帳にいま在る島の行（`source: island`）の書類ID
+
+    Returns:
+        `keep`: 入れる `(checkoutSessionId, 中身)`、
+        `drop`: 消す `(台帳の書類ID, 理由)`、
+        `broken`: 数に入れてよいのに時刻が読めず、入れられなかった件数、
+        `held`: 消さずに置いた理由（無ければ空文字）
+    """
+    if site is None:
+        # **読めなかった晩は、何も入れず、何も消さない**
+        return {"keep": [], "drop": [], "broken": 0, "held": "unreadable"}
+    keep, broken = [], 0
+    stay = set()      # 台帳に残してよい書類ID（入れるもの＋読めないが払われたもの）
+    why = {}          # 書類ID -> 入れない理由
+    for sid, v in site:
+        key = doc_id(f"island:{sid}")
+        if not fb.island_counts(v):
+            why[key] = island_why(v)
+            continue
+        paid = v.get("paidAt")
+        if isinstance(paid, bool) or not isinstance(paid, (int, float)) or paid <= 0:
+            # 払われているのに時刻が読めない。**入れないが、在るものは消さない**
+            broken += 1
+            stay.add(key)
+            continue
+        keep.append((sid, v))
+        stay.add(key)
+    gone = sorted(had - stay)
+    if gone and not site:
+        # **読めたのに0件で、台帳には島の行が在る。** 受け取りの書類は消さない
+        # 決めなので、読む先を間違えている。消さない
+        return {"keep": [], "drop": [], "broken": 0, "held": "empty"}
+    drop = [(k, why.get(k, "gone")) for k in gone]
+    return {"keep": keep, "drop": drop, "broken": broken, "held": ""}
+
+
+def island_row(sid: str, v: dict, hit: Optional[dict]) -> dict:
+    """島の投げ銭1件を、台帳の1行にする。**外は読まない。**
+
+    Args:
+        sid: Checkout Session の ID（`islandSiteTips` の書類ID）
+        v: `islandSiteTips` の中身（`plan_island()` の `keep` に入ったもの）
+        hit: 当たった配信 `{"video_id", "started_ms"}`。当たらなければ None
+
+    Returns:
+        台帳に入れる形
+    """
+    src = f"island:{sid}"
+    paid = int(v["paidAt"])
+    day = jst_day(paid)
+    amount = v.get("amount")
+    if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+        amount = None
+    elif amount == int(amount):
+        # 円は小数を持たない。整数で入れておくと、足すときに誤差が出ない
+        amount = int(amount)
+    cur = str(v.get("currency") or "JPY").upper()
+    net = v.get("settlementAmount")
+    hit = hit or {}
+    return {
+        "id": doc_id(src),
+        "sourceEventId": src,
+        "source": fb.SOURCE_ISLAND,
+        # 口が `islandUsers/{uid}.channelId` から引いた値。**そのまま入れる**
+        "channelId": v.get("channelId") or None,
+        "day": day,
+        "donatedAt": paid,
+        # Doneru と同じく、時刻を配信の時間帯に当てて埋める（`SQL_ISLAND`）
+        "videoId": hit.get("video_id") or None,
+        "videoStartedAt": (int(hit["started_ms"])
+                           if hit.get("started_ms") is not None else None),
+        "amount": amount,
+        "currency": cur,
+        # 島の投げ銭は円だけ。円なら口を1回も叩かない（`yen_of` が先に帰る）
+        **yen_of(amount, cur, day),
+        # Stripe の `balance_transaction.net`。引けていなければ None
+        "settlementAmount": (net if isinstance(net, (int, float))
+                             and not isinstance(net, bool) else None),
+        "displayNameSnapshot": v.get("displayNameSnapshot") or None,
+    }
+
+
+def window_hits(ms: List[int]) -> Dict[int, dict]:
+    """払い終わった時刻を、配信の時間帯に当てる（BigQuery。`SQL_ISLAND`）。
+
+    Args:
+        ms: ミリ秒の並び
+
+    Returns:
+        ミリ秒 -> `{"video_id", "started_ms"}`。当たらなかった時刻は値が None
+    """
+    if not ms:
+        return {}
+    client = bigquery.Client(project=BQ_PROJECT_ID)
+    cfg = bigquery.QueryJobConfig(
+        query_parameters=[bigquery.ArrayQueryParameter("ms", "INT64", sorted(set(ms)))]
+    )
+    out = {}
+    for r in client.query(SQL_ISLAND, job_config=cfg).result():
+        out[int(r["paid_ms"])] = {"video_id": r["video_id"], "started_ms": r["started_ms"]}
+    client.close()
+    return out
+
+
+def fetch_island(plan: dict) -> List[dict]:
+    """`plan_island()` の `keep` を、台帳に入れる形にする。
+
+    Args:
+        plan: `plan_island()` の返り値
+
+    Returns:
+        台帳に入れる形の一覧
+    """
+    keep = plan["keep"]
+    hits = window_hits([int(v["paidAt"]) for _, v in keep])
+    return [island_row(sid, v, hits.get(int(v["paidAt"]))) for sid, v in keep]
+
+
+def island_had(db) -> set:
+    """台帳にいま在る島の行（`source: island`）の書類ID。
+
+    **1本の等号なので、自動でできる索引だけで引ける**（複合索引を作らない。#168）。
+
+    Args:
+        db: Firestore クライアント
+
+    Returns:
+        書類IDの集合
+    """
+    col = db.collection("islandTips")
+    return {d.id for d in col.where("source", "==", fb.SOURCE_ISLAND).stream()}
+
+
 def same(had: dict, want: dict) -> bool:
     """すでに入っているものと同じか。**同じなら書かない。**
 
@@ -476,6 +713,52 @@ def same(had: dict, want: dict) -> bool:
     return all(had.get(k) == want.get(k) for k in keys)
 
 
+def log_island(site: Optional[List[tuple]], plan: dict, rows: List[dict]) -> None:
+    """島の投げ銭の数を出す。**件数と理由だけ。人を指す字も額も出さない。**
+
+    Args:
+        site: `read_site_tips()` の返り値
+        plan: `plan_island()` の返り値
+        rows: 台帳に入れる形にした島の投げ銭
+    """
+    if plan["held"]:
+        msg = {
+            "unreadable": "島の投げ銭（islandSiteTips）が読めないので、台帳の島の行は"
+                          "足しも消しもしません",
+            "empty": "島の投げ銭（islandSiteTips）が0件なのに、台帳には島の行が在ります。"
+                     "受け取りの書類は消さない決めなので、読む先がおかしい。消しません",
+        }[plan["held"]]
+        logger.warning("%s", msg)
+        # 注記は行頭でないと拾われないので、ログとは別に素で出す
+        print("::warning::" + msg, flush=True)
+        return
+    out: dict = {}
+    for v in (v for _, v in site or [] if not fb.island_counts(v)):
+        k = island_why(v)
+        out[k] = out.get(k, 0) + 1
+    logger.info("島の投げ銭: 受け取り %d件 → 台帳に入れる %d件 / 入れない %s",
+                len(site or []), len(rows),
+                ", ".join(f"{k} {n}件" for k, n in sorted(out.items())) or "0件")
+    if plan["drop"]:
+        why: dict = {}
+        for _, k in plan["drop"]:
+            why[k] = why.get(k, 0) + 1
+        logger.info("島の投げ銭: 台帳から消す %s",
+                    ", ".join(f"{k} {n}件" for k, n in sorted(why.items())))
+    if plan["broken"]:
+        msg = (f"島の投げ銭 {plan['broken']}件 は払われているのに時刻（paidAt）が読めず、"
+               "台帳に入れていません（在る行は消していません）")
+        logger.warning("%s", msg)
+        print("::warning::" + msg, flush=True)
+    nameless = sum(1 for r in rows if not r["channelId"])
+    if nameless:
+        # 島の投げ銭はチャンネルを結んだ人しか投げられない（決定の記録 0017 の3）。
+        # 空なら口の側がおかしい。**台帳には残す**（額の突き合わせは紐付けと関係ない）
+        msg = f"島の投げ銭 {nameless}件 にチャンネルが入っていません（カードは渡りません）"
+        logger.warning("%s", msg)
+        print("::warning::" + msg, flush=True)
+
+
 def main() -> int:
     """エントリポイント。"""
     ap = argparse.ArgumentParser()
@@ -500,8 +783,15 @@ def main() -> int:
     donors = {d.id: (d.to_dict() or {}) for d in db.collection("islandDonors").stream()}
     logger.info("どねID の対応表: %d件", len(donors))
 
+    # 島の投げ銭（#1405）。**読めなければ None**——島の行は足しも消しもしない
+    site = read_site_tips(db)
+    plan = plan_island(site, island_had(db) if site is not None else set())
+    island = fetch_island(plan)
+
     rows = fetch_youtube(d0, d1) + fetch_doneru(d0, d1, donors)
     logger.info("BigQuery: %d件", len(rows))
+    rows += island
+    log_island(site, plan, island)
 
     # **円以外を、直せたぶんと直せなかったぶんに分けて出す。**
     # 「0件」と「直せなかった」を同じ顔にしない（`island-standards.md` §15）。
@@ -525,7 +815,8 @@ def main() -> int:
             logger.warning("  **%s の %d件は円に直せていない**（%s）。"
                            "額に足されないので、その人の順位はそのぶん下がる",
                            cur, n, fx_rate.WHY.get(why, why))
-    if not rows:
+    drop = plan["drop"]
+    if not rows and not drop:
         logger.info("入れるものはありません")
         return 0
 
@@ -580,7 +871,7 @@ def main() -> int:
 
     if a.dry_run:
         log_changed(changed[:30])
-        logger.info("--dry-run なので書いていません")
+        logger.info("--dry-run なので書いていません（消すはずだった島の行 %d件）", len(drop))
         return 0
 
     wrote = 0
@@ -599,10 +890,18 @@ def main() -> int:
             batch.commit()
             batch = db.batch()
             n = 0
+    # **返金・払い戻しの請求・無くなった島の投げ銭は、行ごと消す**（この文書の頭）
+    for key, _why in drop:
+        batch.delete(col.document(key))
+        n += 1
+        if n >= BATCH:
+            batch.commit()
+            batch = db.batch()
+            n = 0
     if n:
         batch.commit()
 
-    logger.info("islandTips を %d件 更新しました", wrote)
+    logger.info("islandTips を %d件 更新し、島の行を %d件 消しました", wrote, len(drop))
     return 0
 
 

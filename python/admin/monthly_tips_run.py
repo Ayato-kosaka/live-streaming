@@ -5,15 +5,23 @@
 
 **1バイトも書かない。** BigQuery と Firestore を読んで、数えて、出すだけ。
 
-## 出す額は貢献額（スパチャ ÷ 2 + Doneru）
+## 出す額は貢献額（スパチャ ÷ 2 + Doneru + 島の投げ銭）
 
 式は `python/fund_box.py` の `viewer_yen()` ひとつ。**ここで割り算を
 書かない。** 決め方は `python/monthly_tips.py` の冒頭。
 
+## 島の投げ銭は台帳から（#1405）
+
+島の `/tip` で受けた投げ銭は BigQuery に無い。**台帳（`islandTips`）の
+`source: island` の行**を読む（`monthly_tips.island_rows()`）。台帳に入って
+いるのは本番で払われ、いまも `paid` のものだけ（`python/island_tips.py`）。
+期間の切り方は Doneru と同じ（投げた瞬間の日本時間の日 `day`）。
+2026-11 より前の月は1行も無いので、順位も額も前と変わらない。
+
 ## 名寄せは図鑑（islandCharacter）
 
-スパチャは `channelId` → `islandCharacter.channelId`、
-Doneru は**名乗り → `lookupKeys`**。どちらもちょうど1人のときだけ寄せる。
+スパチャと島の投げ銭は `channelId` → `islandCharacter.channelId`、
+Doneru は**名乗り → `lookupKeys`**。どれもちょうど1人のときだけ寄せる。
 
 Doneru を どねID（`islandDonors`）から引かないのは、あやとの指示
 （2026-09-25）:
@@ -77,11 +85,9 @@ from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 from doneru.dedup import dedup_sql  # noqa: E402
 from logsafe import detail_lines, mask  # noqa: E402
 from monthly_tips import (  # noqa: E402
-    Roster, fx_detail, fx_stuck, fx_superchats, merge, rank, total,
+    Roster, fx_detail, fx_stuck, fx_superchats, island_rows, merge, rank,
+    read_ledger, total,
 )
-
-# 台帳。**円に直した額（`amountJpy`）が入っているのはここだけ**
-TIPS = "islandTips"
 
 # **円の行だけ拾う。** 外貨が数件混ざっていて、豚も GAS も円しか
 # 足していない（`python/fund_box.py` の `bq_superchats`）。ここで拾うと
@@ -166,29 +172,6 @@ def bq(sql: str, d0: str, d1: str) -> list:
     return rows
 
 
-def ledger(client, d0: str, d1: str) -> list:
-    """その期間の台帳（`islandTips`）を読む。**読むだけ。**
-
-    **範囲の下だけ Firestore に投げる**（`day` 1本の並べ替えなので、
-    自動でできる索引だけで引ける）。上は手元で切る——`build_residents.py` の
-    `fetch_tips` と同じ引き方。
-
-    Args:
-        client: 読み専用のクライアント
-        d0: 始まりの日（この日を含む）
-        d1: 終わりの日（この日を含む）
-
-    Returns:
-        1行ずつの辞書。**円に直した額（`amountJpy`）はここにしか無い**
-    """
-    out = []
-    for doc in client.collection(TIPS).where("day", ">=", d0).stream():
-        v = doc.to_dict() or {}
-        if d0 <= str(v.get("day") or "") <= d1:
-            out.append(v)
-    return out
-
-
 def roster(client) -> Roster:
     """図鑑を1回だけ全件読む。**索引を作らない**（#168）。"""
     out = []
@@ -216,7 +199,9 @@ def main() -> None:
     # **Firestore は1回だけ開く。** 台帳（円に直した額）と図鑑（名寄せ）を
     # 同じ読み専用のクライアントから引く
     ro = readonly(db())
-    fx = fx_detail(bq(SQL_FX, d0, d1), sc, ledger(ro, d0, d1))
+    # 台帳は1回だけ読む。円以外のスパチャの換算と、島の投げ銭の両方がここにある
+    led = read_ledger(ro, d0, d1)
+    fx = fx_detail(bq(SQL_FX, d0, d1), sc, led)
     stuck = fx_stuck(fx)
     add = fx_superchats(fx)
     # **円に直せたぶんを、円のスパチャと同じ土俵に足す。**
@@ -225,6 +210,14 @@ def main() -> None:
     log.info("スパチャ %d 人 / Doneru の名乗り %d 通り / 円以外 %d件"
              "（円に直して足した %d件 / 直っていない %d件）",
              len(sc) - len(add), len(dn), len(fx), len(add), len(stuck))
+
+    # 島の投げ銭（#1405）。**足せない行は 0 にしない**——件数だけ出す
+    isl, isl_stuck = island_rows(led)
+    log.info("島の投げ銭 %d件（チャンネル %d通り）",
+             len(isl), len({x["channelId"] for x in isl}))
+    if isl_stuck:
+        log.warning("**島の投げ銭 %d件 は額かチャンネルが読めず、ランキングに入っていない**"
+                    "（台帳 islandTips の source=island の行を見る）", isl_stuck)
 
     # **直っていないぶんを、名指しで出す。** 件数だけだと、月末に
     # ページを作る人が「誰が抜けているか」を自力で探すことになる（#951）。
@@ -251,13 +244,13 @@ def main() -> None:
     log.info("図鑑 %d 人（チャンネルIDの入っている人 %d）",
              len(r.by_id), sum(1 for c in r.by_id.values() if c["channelId"]))
 
-    rows = rank(merge(sc, dn, r))
+    rows = rank(merge(sc, dn, r, island=isl))
     hit = sum(1 for x in rows if x["char"])
     log.info("ランキング %d 行（図鑑に当たった %d / 当たらなかった %d）",
              len(rows), hit, len(rows) - hit)
 
     # **ここから下が画面に出るもの。** 実額は1つも出さない
-    log.info("--- 貢献額（スパチャ ÷ 2 + Doneru。実額ではない） ---")
+    log.info("--- 貢献額（スパチャ ÷ 2 + Doneru + 島の投げ銭。実額ではない） ---")
     for x in rows:
         log.info("%2d位 %-28s %7d円  %s",
                  x["rank"], x["display"], x["yen"], x["char"] or "（図鑑なし）")

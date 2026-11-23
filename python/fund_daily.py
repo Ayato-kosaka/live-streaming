@@ -10,6 +10,9 @@
    同じスパチャが2件になることがない（`python/fund_box.py`）
 3. **合計を焼き直す。** 控えと支出を全部数えて、`island/state.fund.box`
    に置く。411件を毎回読ませないため
+4. **島の投げ銭を足す**（#1405）。`islandSiteTips` のうち、本番で払われ、
+   いまも `paid` のものの合計を `fund.box.island`（円）に置く。
+   入れてよいかの条件は `fund_box.island_counts()` 1本（台帳と同じ）
 
 ## 遡らない
 
@@ -210,17 +213,33 @@ def run() -> dict:
     # ---- 合計を焼き直す ----
     s = fb.read_sums(db)
     goal = fb.read_goal(db)
-    boxed = fb.box(s["superchatFull"], 0, s["spend"])
+    # 島の投げ銭（#1405）。**読めなければ例外のまま落とす**（札が NG になり、
+    # job が赤くなる）。0 を入れて焼くと、読めなかった晩に豚が黙って減る
+    isl = fb.read_island(db)
+    boxed = fb.box(s["superchatFull"], 0, s["spend"], island_yen=isl["island"])
     logger.info(
-        "控え %d件 / スパチャ %s円（半分 %s円） / 支出 %s円（%d件） / "
-        "Doneru を除いた貯金箱 %s円",
+        "控え %d件 / スパチャ %s円（半分 %s円） / 島の投げ銭 %s円（%d件） / "
+        "支出 %s円（%d件） / Doneru を除いた貯金箱 %s円",
         s["count"],
         s["superchatFull"],
         s["superchat"],
+        isl["island"],
+        isl["islandCount"],
         s["spend"],
         s["spendCount"],
         boxed,
     )
+    if isl["islandOut"]:
+        # テストの支払い・返金・払い戻しの請求。**入れないのが正しい**ので件数だけ
+        logger.info("島の投げ銭のうち、数に入れなかったもの: %d件"
+                    "（テスト・返金・払い戻しの請求）", isl["islandOut"])
+    if isl["islandBroken"]:
+        # 数に入れてよいのに額が読めない。**0 にせず、足さずに出す**。
+        # 注記は行頭でないと拾われないので、ログとは別に素で出す
+        msg = (f"島の投げ銭 {isl['islandBroken']}件 は額が読めず、貯金箱に足していません"
+               "（islandSiteTips の amount / currency を見る）")
+        logger.warning("%s", msg)
+        print("::warning::" + msg, flush=True)
     if goal:
         logger.info("いまの目標: %s %s円", goal.get("label"), goal.get("yen"))
 
@@ -235,6 +254,13 @@ def run() -> dict:
                     "superchat": s["superchat"],
                     # 人が出した額（÷2 する前）。月末の集計用
                     "superchatFull": s["superchatFull"],
+                    # 島の投げ銭（円。払った額のまま。割らない）。本番で払われ、
+                    # いまも `paid` のものの合計。**欄の名前は `island` で固定**
+                    # ——Functions の `/fund` が `start + superchat + doneru` に
+                    # これを足す（#1405）。Functions の焼き直し（`fundDesk.ts` の
+                    # `rebake`）は `merge` で書くので、この欄を消さない
+                    "island": isl["island"],
+                    "islandCount": isl["islandCount"],
                     "count": s["count"],
                     "spend": s["spend"],
                     "spendCount": s["spendCount"],
@@ -253,6 +279,8 @@ def run() -> dict:
         "claimed": len(claimed),
         "count": s["count"],
         "superchat": s["superchat"],
+        "island": isl["island"],
+        "islandBroken": isl["islandBroken"],
         "spend": s["spend"],
         "box": boxed,
         "days": a.days,
