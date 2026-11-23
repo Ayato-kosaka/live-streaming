@@ -1,5 +1,14 @@
 """その日どの国にいたか、を1か所で持つ。
 
+## 滞在の表（2026-11-22、#1275）
+
+いつどの国に居たかを手で書くのは `site/content/stays.ts` の `STAYS` だけになった。
+国の記録（`countries.ts`）を持つ国の行が「歩き終わった国」、記録をまだ持たない国の行
+（`name` を持つ行）が下の「旅程ファイルの無い章」の受け皿の入力になる。
+`countries.ts` の `COUNTRIES[].stays` と `AHEAD_COUNTRIES` は TS の側でこの表から引いた値で、
+ここも同じ引きかたで読む（`ts_read.read_countries` / `read_ahead_countries`）。
+下の経緯の「`countries.ts` の滞在」は、いまは滞在の表のこと。
+
 ## なぜ足したか
 
 「歩いた国」は `site/content/countries.ts` が持っている。あれは**旅から帰った
@@ -79,7 +88,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 # **自前の正規表現を増やさない。** 2026-10-03 に3つあった読み方を1本に寄せたのに、
 # このファイルが4本目を生やしていた（国の滞在と旅程を、ここだけ別の読み方で
 # 読んでいた）。読み方が増えれば、その数だけ別々に腐る（`ts_read.py` の頭）
-from ts_read import read_ahead_countries, read_chapters, read_trip  # noqa: E402
+from ts_read import read_ahead_countries, read_chapters, read_stays, read_trip  # noqa: E402
 from ts_read import read_countries as read_countries_ts  # noqa: E402
 
 # 日付はぜんぶ JST で数える。配信の日付（`videos.actual_start_time`）が JST なので、
@@ -88,6 +97,7 @@ JST = timezone(timedelta(hours=9))
 
 ROOT = Path(__file__).resolve().parent.parent
 COUNTRIES_TS = ROOT / "site" / "content" / "countries.ts"
+STAYS_TS = ROOT / "site" / "content" / "stays.ts"
 NORDIC_TS = ROOT / "site" / "content" / "nordic.ts"
 NORDIC_JSON = ROOT / "site" / "content" / "nordic" / "index.json"
 CHAPTERS_TS = ROOT / "site" / "content" / "chapters.ts"
@@ -126,7 +136,9 @@ def read_countries() -> list:
     9ヶ月の塊になっていることがあるので、日単位では確かでない。
     （`docs/island-misses.md` #45）
     """
-    got = read_countries_ts(COUNTRIES_TS.read_text(encoding="utf-8"))
+    got = read_countries_ts(
+        COUNTRIES_TS.read_text(encoding="utf-8"), STAYS_TS.read_text(encoding="utf-8")
+    )
     # **止め金。** 読み落としは例外を出さず、国と街が黙って減るだけだった
     if got.declared == 0:
         raise ValueError("countries.ts に国が1つも無い（置き場が変わった？）")
@@ -279,7 +291,7 @@ def read_ahead() -> list:
     **緩めるのではなく、歩いて探す形に直した**（`ts_read._assign_at`）ので、
     跨がせない理由は残したまま、自前の在りか探しが要らなくなった。
     """
-    got = read_ahead_countries(COUNTRIES_TS.read_text(encoding="utf-8"))
+    got = read_ahead_countries(STAYS_TS.read_text(encoding="utf-8"))
     # **止め金。** 読み落としは例外を出さず、国が黙って減るだけ
     # （`read_countries()` と同じ理由）。減ると、その国の配信は行き場を失って
     # 板に `p:""` の無言の行として並ぶ
@@ -292,6 +304,64 @@ def read_ahead() -> list:
         for r in got.rows
         if r["entered"]
     ]
+
+
+def _span_rows(stays: list) -> list:
+    """滞在の行の、事実上の期間（着いた順）。終わりは `to` と「つぎに着いた日の前日」の早いほう。
+
+    `site/content/stayChapters.ts` の `STAY_SPANS` と同じ切りかた（境目の日は入った国が取る）。
+    """
+    rows = sorted(stays, key=lambda s: s["from"])
+    out = []
+    for i, s in enumerate(rows):
+        nxt = next((x for x in rows[i + 1:] if x["from"] > s["from"]), None)
+        to = min(s["to"] or "9999-12-31", _prev_day(nxt["from"]) if nxt else "9999-12-31")
+        out.append({**s, "span_to": to})
+    return out
+
+
+def chapter_countries(chapters: list, stays: list) -> dict:
+    """章 → その章で回った国（国の記録のある国の slug。着いた順、重ねない）。
+
+    **`site/content/stayChapters.ts` の `chapterCountrySlugs()` と同じ決めかた**——章と期間が重なる
+    滞在の国。枝の旅にすっぽり入る滞在は枝のもの。`name` を持つ行（記録の無い国）は入れない。
+    2つが割れていないかは `site/selftest/stays_table_selftest.mjs` が組み立てた TS と突き合わせる。
+
+    Args:
+        chapters: `read_chapters_ts()` の行
+        stays: `ts_read.read_stays()` の行
+    """
+    top = "9999-12-31"
+    spans = _span_rows(stays)
+    branches = [c for c in chapters if c["branchOf"]]
+
+    def inside(x: dict, ch: dict) -> bool:
+        return bool(ch["from"]) and ch["from"] <= x["from"] and x["span_to"] <= (ch["to"] or top)
+
+    def overlaps(x: dict, ch: dict) -> bool:
+        return x["from"] <= (ch["to"] or top) and ch["from"] <= x["span_to"]
+
+    out = {}
+    for c in chapters:
+        got: list[str] = []
+        if c["from"]:
+            for x in spans:
+                mine = inside(x, c) if c["branchOf"] else (
+                    overlaps(x, c) and not any(inside(x, b) for b in branches))
+                if mine and not x["name"] and x["country"] not in got:
+                    got.append(x["country"])
+        out[c["slug"]] = got
+    return out
+
+
+def read_stays_ts() -> list:
+    """`stays.ts` の滞在の表。**読み落としがあれば止める。**"""
+    got = read_stays(STAYS_TS.read_text(encoding="utf-8"))
+    if got.declared == 0:
+        raise ValueError("stays.ts に滞在が1つも無い（置き場が変わった？）")
+    if got.missed:
+        raise ValueError(f"stays.ts の滞在 {got.declared} 件のうち {got.missed} 件を読み落とした")
+    return got.rows
 
 
 def read_chapters_ts() -> list:

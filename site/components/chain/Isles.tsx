@@ -19,6 +19,7 @@ import {
   FUND_GOAL_YEN,
   type Chapter,
 } from "@/content/chapters";
+import { chapterCountrySlugs } from "@/content/stayChapters";
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { chapterHref } from "./route";
 import { islandRadius } from "./shapes";
@@ -323,7 +324,7 @@ export default function Isles({ isles }: { isles: AtlasIsle[] }) {
                   <b>{st.people.toLocaleString()}</b>人
                 </span>
                 <span>
-                  <b>{cur.countries.length}</b>カ国
+                  <b>{chapterCountrySlugs(cur).length}</b>カ国
                 </span>
               </>
             )}

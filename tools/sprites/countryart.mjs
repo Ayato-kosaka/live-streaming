@@ -47,9 +47,12 @@ export const sha1 = (s) => createHash("sha1").update(s).digest("hex");
 export function names() {
   const src = readFileSync(repoPath("site/content/countries.ts"), "utf8");
   const out = {};
-  for (const list of ["COUNTRIES", "AHEAD_COUNTRIES"]) {
-    for (const r of must(readArray(src, list, { keys: ["slug", "name"] }), `content/countries.ts の ${list}`)) out[r.slug] ??= r.name;
-  }
+  for (const r of must(readArray(src, "COUNTRY_RECORDS", { keys: ["slug", "name"] }), "content/countries.ts の COUNTRY_RECORDS"))
+    out[r.slug] ??= r.name;
+  /* いま歩いている旅の国は、滞在の表の `name` を持つ行（`AHEAD_COUNTRIES` はそこから引いている。#1275） */
+  const stays = readFileSync(repoPath("site/content/stays.ts"), "utf8");
+  for (const r of must(readArray(stays, "STAYS", { keys: ["country", "name"], idKey: "country" }), "content/stays.ts の STAYS"))
+    if (r.name) out[r.country] ??= r.name;
   return out;
 }
 

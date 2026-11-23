@@ -403,6 +403,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 
 | 事実 | 正 | 写し | 食い違ったら |
 | --- | --- | --- | --- |
+| **いつ、どの国・街に居たか**（予定を含む） | `site/content/stays.ts`（滞在の表） | `content/plans.ts` の移動の行、島の便り `island/state.current` の `place` | **滞在の表が正**（2026-11-22。#1275）。`COUNTRIES[].stays`・`AHEAD_COUNTRIES`・章の国・案内の出し分け・`python/stays.py` はここから引く。移動の行と便りは W2〜W4（#1276 #1277 #1278）で寄せる |
 | 住人（誰が島にいるか） | `islandUsers` ＋ `islandChannels`（本番） | `site/content/residents.ts`（焼き込み） | **本番が正。** 焼き込みは、島の状態の口が読めなかったときの受け皿 |
 | 常連の数 | `island/state.stats.activeFriends` | `residents.ts` の `ACTIVE_FRIENDS` | **本番が正**（画面に出るのはこちら） |
 | 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/plans.ts` / `legends.ts` の `PLANS` `LEGENDS` | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
@@ -520,14 +521,14 @@ Viewers 表の列は `name` / `Emoji` / `Icon` / `videoUrl` の4つで、
 
 | 欄 | 誰が決めるか | 機械は何を知っているか | 人が打たない日、どうなるか |
 | --- | --- | --- | --- |
-| `place` | **人**（街まで） | **国と章は知っている**（章は `chapters.ts`、滞在は `countries.ts`） | 打たれた日が古くなったら、機械の答えに入れ替わる——旅のあいだは章（`lib/stay.ts` の `tripAsPlace`。「北欧周遊のとちゅう」）、落ち着いていれば国（同 `stayAsPlace`）。**人の字のほうが細かいので、新しいうちは人が勝つ**（`placeOutdated`）。受け皿が1つも無い日だけ、人の古い字がそのまま残る |
+| `place` | **人**（街まで） | **国と章は知っている**（章は `chapters.ts`、滞在は `stays.ts`） | 打たれた日が古くなったら、機械の答えに入れ替わる——旅のあいだは章（`lib/stay.ts` の `tripAsPlace`。「北欧周遊のとちゅう」）、落ち着いていれば国（同 `stayAsPlace`）。**人の字のほうが細かいので、新しいうちは人が勝つ**（`placeOutdated`）。受け皿が1つも無い日だけ、人の古い字がそのまま残る |
 | `word` | **人だけ** | 何も知らない。その日どこで何を見たかは、本人の頭の中にしかない | 出ない。**埋めない**——ここに当たりさわりの無い字を置くと、毎日同じ挨拶が「今日のひとこと」として出る |
 | `week` | **中身は人／過ぎた行は機械** | 行の頭の `M/D` が今日より前かどうか | 過ぎた行は、**口と画面の両方が落とす。** 全部落ちたら「やることの書き置きは、いまはありません」 |
 | `theme` | **人**（島の景色の好み） | 何も知らない。章と景色を結ぶ表がどこにも無い（`georgia` / `nordic` / `desert` の3つは**場所ではなく色**） | 前の景色のまま。**字としては出さない**（`NowLive` の `SLUG` で弾く）ので、嘘にはならない |
 
 `current` に入っていない「いまどこ」のまわりのもの——**章・旅の何日目か・
 いまいる国に来て何日目か・配信本数・歩いた国の数**——は、**はじめから人に
-打たせていない。** 章と日数は `content/chapters.ts` と `countries.ts` から、
+打たせていない。** 章と日数は `content/chapters.ts` と `stays.ts` から、
 配信本数と人数は毎晩の `island/state.stats` から出している。
 
 #### 埋めるのは誰か — **毎晩の焼き直しではなく、画面と口でその場**
@@ -1670,7 +1671,8 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | ファイル | 中身 | なぜ機械にできないか |
 | --- | --- | --- |
 | `recipes.ts` | 作ってきた料理（クッキング・スタンプ帳の元） | **スタンプの絵を `food-*` 105枚から1枚選ぶ**（同じ絵を2品で使わない）。題名から料理名は決まらない |
-| `countries.ts` | 歩いた国と、滞在期間 | どの街にいつからいつまでいたか。本人しか知らない |
+| `stays.ts` | 滞在の表（いつ、どの国・街に居たか。予定を含む） | 国を移った日に1行。**居場所を手で書くのはここだけ**（#1275） |
+| `countries.ts` | 歩いた国の記録（紹介・見どころ・何カ国目） | 歩き終わってから書く。滞在は `stays.ts` から引く |
 | `chapters.ts` | 島の連なり（章）と、その期間 | どこで区切るか |
 | `legends.ts` | 伝説の企画 | どれを伝説と呼ぶか |
 | `plans.ts` `apps.ts` | これからの企画／作っているアプリ | 選定 |
@@ -1691,8 +1693,8 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | `chapterStats.ts` `chapterStreams.ts` | BigQuery + `chapters.ts` | `python/build_chapter_stats.py` |
 | `residents.ts` | BigQuery + `islandCharacter` + `islandTips` | `python/build_residents.py` |
 | `streamPeaks.ts` | BigQuery | `python/build_stream_peaks.py` |
-| `onThisDay.ts` | BigQuery + `countries.ts` + `streamPeaks.ts` | `python/build_on_this_day.py` |
-| `cityStreams.ts` | BigQuery + `countries.ts` | `python/build_city_streams.py` |
+| `onThisDay.ts` | BigQuery + 滞在（`python/stays.py`）+ `streamPeaks.ts` | `python/build_on_this_day.py` |
+| `cityStreams.ts` | BigQuery + 滞在（`python/stays.py`） | `python/build_city_streams.py` |
 | `countryStats.ts` | BigQuery + 滞在（`python/stays.py`） | `python/build_country_stats.py` |
 | `shorts.ts` | **YouTube のショートのタブ**（BigQuery ではない） | `python/build_shorts.py` |
 | `site.ts` の `STATS_FALLBACK` | **公開の口**（`GET /island-api/state` の `stats`） | `python/build_site_stats.py` |
@@ -1707,7 +1709,7 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 上書きする（`site/lib/liveStats.tsx`）ので、受け皿が口と食い違っていると
 **口が落ちた日だけ数字が飛ぶ。** 同じ数を2通りに数えない（3章）。
 
-`build_city_streams` だけは上流に人の書く `countries.ts` があるが、
+`build_city_streams` だけは上流に人の書く `stays.ts`（滞在の表）があるが、
 **街の一覧が止まっても街ごとの本数は機械だけで動く**ので毎晩に入れてある。
 `build_residents` は BigQuery（出席）のほかに Firestore を2つ読む——
 候補になる名簿（`islandCharacter`）と、投げ銭の台帳（`islandTips`）。

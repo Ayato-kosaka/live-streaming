@@ -34,6 +34,7 @@ import {
   type Chapter,
 } from "@/content/chapters";
 import { COUNTRIES } from "@/content/countries";
+import { chapterCountrySlugs } from "@/content/stayChapters";
 import { chapterCountries } from "@/content/walked";
 /* 「人が書いた欄が古いか」（`placeOutdated`）は、打たれた字を読む道具のほう
    （`lib/place.ts`）に移した。旅の面（`/nordic`）はそれだけを使うので、
@@ -125,7 +126,7 @@ export function stayWord(days: number, open = false): string {
  * 同じ国に何度も入っている場合、滞在を閉じるのはいちばん新しい章。
  */
 function chapterOfCountry(slug: string): Chapter | undefined {
-  return [...CHAPTERS].reverse().find((c) => !c.branchOf && c.countries.includes(slug));
+  return [...CHAPTERS].reverse().find((c) => !c.branchOf && chapterCountrySlugs(c).includes(slug));
 }
 
 /**

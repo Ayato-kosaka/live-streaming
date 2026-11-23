@@ -1,5 +1,6 @@
 import { CHAPTER_STATS } from "@/content/chapterStats";
 import { chapterDays, type Chapter } from "@/content/chapters";
+import { chapterCountrySlugs } from "@/content/stayChapters";
 import { COUNTRIES } from "@/content/countries";
 import { NORDIC_COUNTRIES } from "@/content/nordic";
 import { RESIDENTS } from "@/content/residents";
@@ -197,7 +198,7 @@ function tripPlace(c: Chapter, days: number, today: Date): IslePlaceSpec {
 export function coverSpec(c: Chapter, today = new Date()): IsleSpec {
   const art = artOf(
     c.slug,
-    c.countries
+    chapterCountrySlugs(c)
       .map((s) => COUNTRIES.find((x) => x.slug === s)?.region)
       .filter((x) => Boolean(x)) as string[],
   );

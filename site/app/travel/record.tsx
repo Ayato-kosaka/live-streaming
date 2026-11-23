@@ -6,6 +6,7 @@ import Fold from "@/components/ui/Fold";
 import { COUNTRIES, countryBySlug, isWalkedCountry, type Country } from "@/content/countries";
 import { WALKED_DONE, chapterCountries, walkingCountries } from "@/content/walked";
 import { CHAPTERS, chapterNow } from "@/content/chapters";
+import { chapterCountrySlugs } from "@/content/stayChapters";
 import { RECIPES } from "@/content/recipes";
 import { streamsOfCity, type CityStream } from "@/content/cityStreams";
 import { STREAM_DIGEST } from "@/content/streamDigest";
@@ -159,7 +160,7 @@ function walkedRecord(c: Country): CountryRecord {
     walkedNo: isWalkedCountry(c.slug) ? walkedNo : undefined,
     modified: LASTMOD.country(c),
     /* その国を数えている章。**新しい章から探す**（同じ国に2回入っていれば、あとの旅）。枝（イランまで歩く）も見る */
-    trip: [...CHAPTERS].reverse().find((x) => x.countries.includes(c.slug))?.name,
+    trip: [...CHAPTERS].reverse().find((x) => chapterCountrySlugs(x).includes(c.slug))?.name,
   };
 }
 

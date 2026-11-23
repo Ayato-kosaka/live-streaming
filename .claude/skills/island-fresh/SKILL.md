@@ -351,18 +351,19 @@ python python/build_shorts.py --build
 
 `chapter` は `chapters.ts` の slug（`before-stream` だけは章ではなく、配信を始める前の6週間）。
 
-### `countries.ts`（歩いた国と滞在期間）
+### `stays.ts`（滞在の表）と `countries.ts`（歩いた国の記録）
 
 **本人しか知らない。**「どの街にいつからいつまでいたか」を機械は当てられない。
-書いたら**必ず4章へ**（下流が2つある）。
+いつどの国・街に居たかは `site/content/stays.ts` の行に書く（`countries.ts` には書かない。#1275）。
+書いたら**必ず4章へ**（下流が3つある）。
 
-いま滞在中の国は `to: ""` で開けておく（`georgia` の2つ目の `stays` がそう）。
+いま滞在中の国は `to: ""` で開けておく（いまの行がそう）。
 
 ---
 
-## 4. `countries.ts` を触ったら、下流も焼き直す
+## 4. `stays.ts` を触ったら、下流も焼き直す
 
-**上流だけ直して終わらない。** `countries.ts` を読んでいるのは2本ある。
+**上流だけ直して終わらない。** 滞在の表（`python/stays.py` 経由）を読んでいるのは3本ある。
 
 | 焼き直すもの | 走らせ方 | ここで走るか |
 | --- | --- | --- |
@@ -371,7 +372,7 @@ python python/build_shorts.py --build
 | `onThisDay.ts` | `python python/build_on_this_day.py` | **走らない**（同上） |
 
 **この3本はもう `countries.ts` を自分で読まない。** 滞在は `python/stays.py` が
-1か所で持っていて、**歩き終わった国（`countries.ts`）と、いま歩いている旅
+1か所で持っていて、**滞在の表（`stays.ts`）と、いま歩いている旅
 （`nordic.ts` の旅程）を足して**答える。だから旅のあいだも止まらない。
 
 どれも `--sql` で SQL を出し、MCP で流した行を `--rows <file>` に渡せば

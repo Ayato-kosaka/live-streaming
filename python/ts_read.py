@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | 字 | `spans` `string_spans` `code_only` | どこが字で、どこが注釈か（日付の掃き寄せ） |
 | 構造 | `array_body` `object_body` `objects` `fields` `entries` `nested_body` | 1件ずつ・欄ごと |
-| 記録 | `read_chapters` `read_countries` `read_array` `read_map` | **数の止め金つき** |
+| 記録 | `read_chapters` `read_stays` `read_countries` `read_array` `read_map` | **数の止め金つき** |
 
 **字の高さを各所に書き写さない。** `//` を見る前に「いま文字列の中か」を
 見る歩きが3通りあって、片方だけ直した日に見ているものが違っていた。
@@ -653,8 +653,9 @@ class ChapterRead:
 def read_chapters(src: str) -> ChapterRead:
     """`chapters.ts` の字から、章を1つずつ。**並びはファイルのまま。**
 
-    返す欄は `CHAPTER_KEYS` と `plannedDays`（数。無ければ 0）と
-    `countries`（字の並び。無ければ空）。
+    返す欄は `CHAPTER_KEYS` と `plannedDays`（数。無ければ 0）。
+    **章で回った国は返さない**——`chapters.ts` に書いていない（滞在の表から引く。
+    `python/stays.py` の `chapter_countries()`）。
     無い欄は空の字で埋める——**呼ぶ側に `.get()` を書かせない**（書かせると、
     綴り違いが「欄が無い」に化けて黙って通る）。
 
@@ -673,10 +674,6 @@ def read_chapters(src: str) -> ChapterRead:
         row = {k: f.get(k, "") for k in CHAPTER_KEYS}
         days = f.get("plannedDays", "")
         row["plannedDays"] = int(days) if days.isdigit() else 0
-        # **並びの欄は `fields()` からは出てこない**（入れ子は飛ばす作り）ので、
-        # 名指しで取りに行く。`countries` は「その章で歩いた国」で、
-        # 終わった章なら埋まっているはずの欄（`python/upkeep_watch.py` が見ている）
-        row["countries"] = list_field(obj, "countries")
         rows.append(row)
     return ChapterRead(rows=rows, declared=len(SLUG_RE.findall(body)))
 
@@ -755,7 +752,48 @@ def read_map(src: str, name: str) -> list[tuple[str, str]]:
     return entries(object_body(code_only(src), name))
 
 
-# ---------------------------------------------------------------- 国（countries.ts）
+# ---------------------------------------------------------------- 滞在（stays.ts）と国（countries.ts）
+
+# 滞在1行ぶんで、読む側がみんな使う欄。**ここに無い欄は落ちる**ので、
+# 増やしたくなったらここに足す（`stays.ts` の `Stay` 型と見比べる）
+STAY_KEYS = ("country", "name", "from", "to", "note")
+# 案内の面（`guide: { … }`）の欄。無い行は空の字で埋めた `{}` ではなく `None`
+STAY_GUIDE_KEYS = ("name", "href", "lead", "icon")
+
+
+def read_stays(src: str) -> ArrayRead:
+    """`stays.ts` の `STAYS`（滞在の表）を、行ごとに。**並びはファイルのまま。**
+
+    返す欄は `STAY_KEYS`（無い欄は空の字）と `cities`（字の並び）と
+    `guide`（案内の面。`STAY_GUIDE_KEYS` の辞書か、無ければ `None`）。
+
+    **滞在を手で書くのは、この表だけ**（`site/content/stays.ts` の頭。#1275）。
+    国の滞在（`read_countries`）も、記録の無い国（`read_ahead_countries`）も、ここを通る。
+
+    Args:
+        src: `site/content/stays.ts` の中身そのもの
+
+    Returns:
+        `ArrayRead`。**`missed` を見ずに `rows` だけ使わないこと**
+
+    Raises:
+        ValueError: `STAYS` の並びが無い（別のファイルを渡した）。**空の表と同じ顔にしない**
+    """
+    code = code_only(src)
+    if array_span(code, "STAYS")[0] < 0:
+        raise ValueError("STAYS の並びが無い（`site/content/stays.ts` を渡す）")
+    body = array_body(code, "STAYS")
+    rows = []
+    for obj in objects(body):
+        f = fields(obj)
+        if not f.get("country"):
+            continue
+        row: dict = {k: f.get(k, "") for k in STAY_KEYS}
+        row["cities"] = list_field(obj, "cities")
+        g = nested_body(obj, "guide")
+        row["guide"] = {k: fields(g).get(k, "") for k in STAY_GUIDE_KEYS} if g.strip() else None
+        rows.append(row)
+    return ArrayRead(rows=rows, declared=count_keys(body, "country"))
 
 
 @dataclass(frozen=True)
@@ -764,7 +802,7 @@ class CountryRead:
 
     rows: list[dict] = field(default_factory=list)
     declared: int = 0  # ファイルが名乗っている国の数（`slug: "` の数）
-    # 名乗っている滞在の数（国ぜんぶの `stays` の中の `from:` の数）。
+    # 名乗っている滞在の数（滞在の表の行のうち、`name` を持たない＝記録のある国の行）。
     # **国が読めても、滞在が1つ落ちれば配信の行き先が変わる**ので別に数える
     stays_declared: int = 0
 
@@ -780,14 +818,21 @@ class CountryRead:
 
     @property
     def stays_missed(self) -> int:
-        """名乗っているのに読めなかった滞在の数。**0 でなければ呼ぶ側が止める。**"""
+        """名乗っているのに読めなかった滞在の数。**0 でなければ呼ぶ側が止める。**
+
+        滞在の表の行が読めなかったときのほか、**記録の無い国なのに `name` も無い行**
+        （どの国にも付かない行）もここに出る。
+        """
         return self.stays_declared - self.stays_got
 
 
-def read_countries(src: str) -> CountryRead:
-    """`countries.ts` の `COUNTRIES` から「国 → 滞在（期間と街）」を読む。
+def read_countries(src: str, stays_src: str) -> CountryRead:
+    """国の記録（`countries.ts` の `COUNTRY_RECORDS`）に、滞在の表（`stays.ts`）の行を付けて。
 
-    **ここは2人が同じものを読みに来る**（`python/stays.py` が配信を国に
+    滞在は国ごとに着いた順。`site/content/countries.ts` の `COUNTRIES` と同じ組み立て
+    （記録の無い国の行は付かない。そちらは `read_ahead_countries`）。
+
+    **ここは何人も同じものを読みに来る**（`python/stays.py` が配信を国に
     振り分けるため、`python/upkeep_watch.py` が閉じ忘れを見つけるため）。
     前は**別々の読み方**を持っていて、片方は正規表現で
     `from → to → cities` が隣り合っていることを求めていた。注釈が1行
@@ -795,40 +840,51 @@ def read_countries(src: str) -> CountryRead:
 
     Args:
         src: `site/content/countries.ts` の中身そのもの
+        stays_src: `site/content/stays.ts` の中身そのもの
 
     Returns:
         `CountryRead`。**`missed` と `stays_missed` を見ずに `rows` だけ
         使わないこと**
     """
-    body = array_body(code_only(src), "COUNTRIES")
-    rows, want = [], 0
+    body = array_body(code_only(src), "COUNTRY_RECORDS")
+    st = read_stays(stays_src)
+    rows = []
     for obj in objects(body):
         f = fields(obj)
         if not f.get("slug"):
             continue
-        sb = nested_body(obj, "stays")
-        want += count_keys(sb, "from")
-        stays = []
-        for one, inner in zip(objects(sb), object_spans(sb)):
-            g = fields(one)
-            stays.append({
-                "from": g.get("from", ""),
-                "to": g.get("to", ""),
-                "cities": list_field(sb[inner[0] + 1 : inner[1]], "cities"),
-            })
+        stays = sorted(
+            ({"from": s["from"], "to": s["to"], "cities": s["cities"]}
+             for s in st.rows if s["country"] == f["slug"]),
+            key=lambda s: s["from"],
+        )
         rows.append({"slug": f["slug"], "name": f.get("name", ""), "stays": stays})
+    # 名乗りは**字から**数える（読めた行から数えると、読み落としが永久に 0 になる）。
+    # 名乗った行のうち `name:` を持つのは記録の無い国の行なので引く
+    named = count_keys(array_body(code_only(stays_src), "STAYS"), "name")
     return CountryRead(
-        rows=rows, declared=len(SLUG_RE.findall(body)), stays_declared=want
+        rows=rows,
+        declared=len(SLUG_RE.findall(body)),
+        stays_declared=st.declared - named,
     )
 
 
-def read_ahead_countries(src: str) -> ArrayRead:
-    """`countries.ts` の `AHEAD_COUNTRIES`（これから歩く国）。
+def read_ahead_countries(stays_src: str) -> ArrayRead:
+    """これから歩く国（`countries.ts` の `AHEAD_COUNTRIES`）。`slug` / `name` / `entered`。
 
-    **`COUNTRIES` にまだ無い国の置き場。** 街も滞在も歩き終わってから書く
-    決まりなので、ここが持っているのは名前と旗の鍵と「着いた日」だけ。
+    **国の記録をまだ持たない国**＝滞在の表の、`name` を持つ行。`COUNTRIES` と同じく、
+    TS の側（`AHEAD_COUNTRIES`）が引くのと同じ引きかたで、滞在の表から組む。
+    `declared` は滞在の表が名乗っている `name` の数。
+
+    Args:
+        stays_src: `site/content/stays.ts` の中身そのもの（**`countries.ts` ではない**）
     """
-    return read_array(src, "AHEAD_COUNTRIES", keys=("slug", "name", "entered"))
+    st = read_stays(stays_src)
+    rows = [{"slug": s["country"], "name": s["name"], "entered": s["from"]}
+            for s in st.rows if s["name"]]
+    # 名乗りは字から（いちばん外側の `name:` だけ。案内の面の `name:` は数えない）
+    named = count_keys(array_body(code_only(stays_src), "STAYS"), "name")
+    return ArrayRead(rows=rows, declared=named)
 # ---------------------------------------------------------------- 旅程（nordic.ts）
 
 # 旅程1日ぶんで、読む側がみんな使う欄。**ここに無い欄は落ちる**

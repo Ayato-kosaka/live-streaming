@@ -542,8 +542,14 @@ BOOKS: dict[str, Book] = {
     ),
     "countries.ts": Book(
         HUMAN, LATEST, 150,
-        "歩いた国と滞在。**旅から帰った本人が書く**ので、旅のあいだは1行も増えない"
-        "（いまの旅の滞在は `nordic.ts` から出す）。実測の空きは最大120日",
+        "歩いた国の記録（紹介と見どころ）。**歩き終わってから書く**ので、旅のあいだは1行も増えない"
+        "（滞在は `stays.ts`）。実測の空きは最大120日",
+    ),
+    "stays.ts": Book(
+        HUMAN, LATEST, 300,
+        "滞在の表。**国を移った日に1行足す**（#1275）。いちばん長く1つの国に居たのは"
+        "ジョージアの 2025-07-19〜2026-04-18 で、日付の空きは273日。300日はその上",
+        todo="国を移っていれば、`site/content/stays.ts` のいまの行に `to` を入れて、つぎの国の行を足す",
     ),
     "nordicShops.ts": Book(
         OUTSIDE, SNAP, 30,
@@ -735,6 +741,11 @@ BOOKS: dict[str, Book] = {
         DERIVED, SKIP, 0,
         "歩いた国の数。`countries.ts` から画面が出てから数える。**自分では日付を持たない**"
         "（数が面ごとにそろっているかは `tools/sprites/walkedcount.mjs` が見る）",
+    ),
+    "stayChapters.ts": Book(
+        DERIVED, SKIP, 0,
+        "章と滞在を期間の重なりで結ぶ式だけ（#1275）。`chapters.ts` と `stays.ts` から引く。"
+        "**自分では日付を持たない**",
     ),
 }
 

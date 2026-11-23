@@ -56,7 +56,7 @@
  * 住人が「『歩いた国』から、これまで歩いた◯カ国をたどれるよー」と言う以上、
  * 行った先で数えられる数と違ってはいけない。
  *
- * ほしい数はこの道具が**自分で**組み立てる（`site/content/countries.ts` を読む）。
+ * ほしい数はこの道具が**自分で**組み立てる（`site/content/countries.ts` と `stays.ts` を読む）。
  * 画面の数をそのまま正解にすると、3面そろって間違っていても通る。
  */
 import { chromium } from "playwright-core";
@@ -74,6 +74,9 @@ const SELFTEST = process.argv.includes("--selftest");
 // ---------------------------------------------------------------- ほしい数
 
 const src = readFileSync(repoPath("site/content/countries.ts"), "utf8");
+/* 滞在の表（#1275）。いつどの国に居たかを手で書くのは `stays.ts` だけで、
+   `AHEAD_COUNTRIES` はそこの `name` を持つ行から引いている */
+const staysSrc = readFileSync(repoPath("site/content/stays.ts"), "utf8");
 
 /* 読み方は `tsread.mjs` の1本（#694）。前は**字下げの深さ**（`^    slug:`）と
    **1行に収まっていること**（`{ slug: …, name: …, entered: … }`）を当てにして
@@ -82,16 +85,18 @@ const src = readFileSync(repoPath("site/content/countries.ts"), "utf8");
 
 /** 歩き終わった国。**`-border` は国ではない**（`python/stays.py` の `is_country`） */
 const DONE = must(
-  readArray(src, "COUNTRIES", { keys: ["slug"], idKey: "slug" }),
-  "countries.ts の COUNTRIES",
+  readArray(src, "COUNTRY_RECORDS", { keys: ["slug"], idKey: "slug" }),
+  "countries.ts の COUNTRY_RECORDS",
 )
   .map((r) => r.slug)
   .filter((s) => !s.endsWith("-border"));
-/** いま歩いている旅の国と、入った日 */
+/** いま歩いている旅の国と、入った日（滞在の表の、`name` を持つ行。`content/countries.ts` の `AHEAD_COUNTRIES` と同じ引きかた） */
 const AHEAD = must(
-  readArray(src, "AHEAD_COUNTRIES", { keys: ["slug", "entered"], idKey: "slug" }),
-  "countries.ts の AHEAD_COUNTRIES",
-).map((r) => ({ slug: r.slug, entered: r.entered }));
+  readArray(staysSrc, "STAYS", { keys: ["country", "name", "from"], idKey: "country" }),
+  "stays.ts の STAYS",
+)
+  .filter((r) => r.name)
+  .map((r) => ({ slug: r.country, entered: r.from }));
 
 /**
  * 旅程（`content/nordic.ts`）の入国日と、上の写しが合っているか。**合わなければ数えない。**
