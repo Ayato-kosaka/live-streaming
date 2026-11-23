@@ -9,7 +9,8 @@ name: 北欧へ出発した
 #   1. `site/content/chapters.ts` の `caucasus.to` に日付を入れる
 #   2. `python/build_chapter_stats.py` を回す
 #   3. Hosting を配る
-#   4. 島の「いまどこ」を更新する
+#   4. 島の「いまどこ」を更新する（#1281 で外した。居場所は滞在の表 `site/content/stays.ts` が持ち、
+#      書いていた `island/state.current` は誰も読まない）
 #
 # **4つを覚えていられる人はいない。** しかも押す本人は、その日の朝に
 # 深夜1時のカトヴィツェへ降り立って、そこからヒッチハイクを始める。
@@ -34,22 +35,6 @@ on:
     inputs:
       to:
         description: "コーカサスが終わった日(YYYY-MM-DD)。空なら出発した日（ジョージア時間）"
-        required: false
-        default: ""
-        type: string
-      place:
-        # **既定を空にしてある。** 前は「ポーランド・カトヴィツェ」を既定に置いていたが、
-        # 空文字を渡しても GitHub がこの既定で埋めてしまう（2026-09-10 に空回しで実測。
-        # place="" で起動したのに、まとめの行が「いまどこ: ポーランド・カトヴィツェ」と出た）。
-        # このボタンを押すのは**飛び立った直後**で、そのときあやとはまだ空の上にいる。
-        # 既定で埋まると、着くまでの3時間35分ぶん島が嘘をつく。
-        # 場所を入れるのは着いてから、「あやと島の『いま』を更新」のほうでやる。
-        description: "島の「いまどこ」。**空のままでよい**（着いてから別のボタンで入れる）"
-        required: false
-        default: ""
-        type: string
-      word:
-        description: "島のひとこと。空なら今のまま"
         required: false
         default: ""
         type: string
@@ -155,27 +140,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run firebase-hosting-deploy-prod.yml --ref master
 
-      # 5. 島の「いまどこ」。**街の名前をそのまま入れる**
-      #    （`components/nordic/TripNow.tsx` が「ラトビア・リガ」でも
-      #      「リガ」でも当たるように、含んでいるかで見ている）
-      - name: 島の「いまどこ」を更新する
-        if: ${{ !inputs.dry_run && inputs.place != '' }}
-        env:
-          ISLAND_PLACE: ${{ inputs.place }}
-          ISLAND_WORD: ${{ inputs.word }}
-          ISLAND_THEME: nordic
-        run: python python/island_set_current.py
-
       - name: このあと
         run: |
           echo "### 北欧へ出発しました" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- Hosting のデプロイが走っています。10分ほどで出ます" >> "$GITHUB_STEP_SUMMARY"
-          if [ -n "${{ inputs.place }}" ]; then
-            echo "- いまどこ: ${{ inputs.place }}" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "- いまどこ: **変えていません**（着いたら「あやと島の「いま」を更新」で入れる）" >> "$GITHUB_STEP_SUMMARY"
-          fi
-          echo "- 街が変わったら「あやと島の「いま」を更新」から place だけ入れ直す" >> "$GITHUB_STEP_SUMMARY"
+          echo "- 居場所は滞在の表（site/content/stays.ts）に1行足す" >> "$GITHUB_STEP_SUMMARY"
           echo "- その日に起きたことは、秘書のセッションに送る（画面に書く欄はもう無い）" >> "$GITHUB_STEP_SUMMARY"
           echo "- 着いたら /nordic のいちばん下「着いた朝」の行から「着いた」を押す" >> "$GITHUB_STEP_SUMMARY"
