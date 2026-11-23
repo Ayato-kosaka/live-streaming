@@ -113,7 +113,11 @@ class Scene(Stage):
     def draw(self, c):
         Ti, T, u = c.Ti, c.T, c.u
         intro = c.clip == "intro"
-        out_k = 1 - ease(ramp(u, 0.3, 1.0))
+        if c.clip == "outro":
+            # 締めは、輪で動くもの（雪・紙吹雪・灯り・サーチライト）を滞在の頭の姿で止めて、消えるだけにする。
+            # 動きながら消えると、締めの短い予算では画質が 28dB に届かなかった（2026-11-23 の焼き: 27.0dB）
+            c.ph = 0.0
+        out_k = 1 - ease(ramp(u, 0.15, 0.85))
         back, front, heroc = Canvas(), Canvas(), Canvas()
         sp_b, sp_f = Splat(), Splat()
         lit = ease(ramp(Ti, 0.3, 1.0))
