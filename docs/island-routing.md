@@ -7,7 +7,7 @@
 
 上から順に、**最初に当たったところで止まる。**
 
-1. `redirects` — `/nordic/photos` → `/cards`、`/map/:slug` → `/travel/:slug`、`/nordic/day/:n` → `/island/nordic/day/:n`（301）
+1. `redirects` — `/nordic/photos` → `/cards`、`/map/:slug` → `/travel/:slug`、`/nordic/day/:n` → `/island/nordic/day/:n`、`/travel/iran-border` → `/travel/armenia`（301）
 2. **`public`（＝`dist`）の中の実ファイル** ← ここが本丸
 3. `rewrites` — `/island-api/**` は Functions、Expo の4面は `expo-app.html`
 4. どれにも当たらなければ **`dist/404.html` を、状態コード 404 で配る**
@@ -39,11 +39,15 @@ node tools/sprites/routemoves.mjs --dist site/.next-3130 --dist public   # 書�
 ```
 
 元帳は `tools/sprites/sitemap-*.txt`（作り直しの**便ごとに**、その前の本番の sitemap の写しを1枚足す。
-いまは第1便の前 `sitemap-2026-11-13.txt` と第2便の前 `sitemap-2026-11-14.txt`）。**古い写しは消さない**
+いまは第1便の前 `sitemap-2026-11-13.txt`、第2便の前 `sitemap-2026-11-14.txt`、イラン国境を国の道から出す前（#1355）`sitemap-2026-11-23.txt`）。**古い写しは消さない**
 ——第1便で動かした道も、第2便のあとで行き場を持っていないといけない。写しを全部合わせた道を
 1本ずつ「実ファイルとして在る」か「転送の先が実ファイルとして在る」かを見て、
 **転送の連鎖（301 → 301）も 0 であること**を見る。足すときは既存の行の順番を変えない
 （上から順に最初に当たった1本で止まる）。
+
+**転送の先を、別の転送の元にしない。** `/travel/iran-border` を `/travel/armenia` へ送った日（#1355）、
+前からある `/map/:slug` → `/travel/:slug` のせいで `/map/iran-border` が 301 → 301 になるところだった（`routemoves.mjs` の連鎖で数える）。
+`/map/iran-border` を名指しで `/travel/armenia` へ送る行を、`/map/:slug` より**上**に置いてある。
 
 **`/nordic/**` のような受け皿の転送を足さない。** `/nordic/review`（`public/nordic/review.html`。
 配信で見せた授賞式の面）と `/nordic/city/*.svg`（日ごとの面の街の地図）は動かしていないので、

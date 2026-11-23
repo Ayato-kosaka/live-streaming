@@ -384,7 +384,9 @@ export function TripList({ trips }: { trips: TripGroup[] }) {
     </ol>
   );
 
-  /** 束の頭の、旅の島へのリンク。**どの束にも1本**（前は `/travel` から旅の島へ1本も無かった） */
+  /** 束の頭の、旅の島へのリンク。**どの束にも1本**（前は `/travel` から旅の島へ1本も無かった）。
+      字は「この旅の島へ」だけ——旅の名前は束の見出しが言っている。名前を足すと、長い旅（バルカン諸国周遊）で
+      「へ」だけが2行目に落ちた */
   const isle = (g: TripGroup, label: string) => (
     <Link className="tile atrip-isle" href={g.href} prefetch={false}>
       <Icon name="island" size={30} className="tile-icon" />
@@ -407,7 +409,7 @@ export function TripList({ trips }: { trips: TripGroup[] }) {
           // 開けておくのは、いまいる旅の束ひとつ。2枚開くと、どこまで来たかが読みにくい
           open={g.slug === now}
         >
-          {isle(g, `${g.name}の島へ`)}
+          {isle(g, "この旅の島へ")}
           {list(g.rows)}
           {g.branches.map((b) => (
             <div key={b.slug} className="atrip-branch">

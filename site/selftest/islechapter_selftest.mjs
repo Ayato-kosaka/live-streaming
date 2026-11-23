@@ -263,7 +263,7 @@ const { ENTERED, GUIDE_BLURB, GUIDE_LABEL, TRIP_SPEC, chapterIsle, guideOf, guid
   req(join(OUT, "components", "isle", "spec.js"));
 const { coverSpec } = req(join(OUT, "components", "isle", "cover.js"));
 const { guideOn } = req(join(OUT, "lib", "guideDay.js"));
-const { AHEAD_COUNTRIES, COUNTRIES, isWalkedCountry } = req(join(OUT, "content", "countries.js"));
+const { AHEAD_COUNTRIES, COUNTRIES } = req(join(OUT, "content", "countries.js"));
 const { CHAPTERS, chapterNow } = req(join(OUT, "content", "chapters.js"));
 const { CHAPTER_STATS } = req(join(OUT, "content", "chapterStats.js"));
 
@@ -390,7 +390,7 @@ const isDay = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d ?? "");
 const doneSlugs = new Set(COUNTRIES.map((c) => c.slug));
 const ENTRIES = [
   ...COUNTRIES.flatMap((c) => c.stays.map((x) => ({ slug: c.slug, on: x.from, left: x.to || "" }))),
-  ...AHEAD_COUNTRIES.filter((c) => isWalkedCountry(c.slug) && !doneSlugs.has(c.slug)).map((c) => ({
+  ...AHEAD_COUNTRIES.filter((c) => !doneSlugs.has(c.slug)).map((c) => ({
     slug: c.slug,
     on: c.entered,
     left: "",
