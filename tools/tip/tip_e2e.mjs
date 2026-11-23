@@ -47,6 +47,7 @@ import { fileURLToPath } from "node:url";
 import { randomBytes } from "node:crypto";
 import { chromium } from "../sprites/node_modules/playwright-core/index.mjs";
 import { chromePath } from "../sprites/chrome.mjs";
+import { readArray, readConst, must } from "../sprites/tsread.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "../..");
@@ -57,13 +58,21 @@ const OUT = process.env.TIP_E2E_OUT || "/tmp/tip-e2e";
 const PUB = join(OUT, "pub");
 const GHA = !!process.env.GITHUB_ACTIONS;
 
-/* 公開の識別子は、**持っているファイルから読む**（ここに書き写さない。片方だけ直した日に黙ってずれる） */
-const FIREBASE_TS = readFileSync(join(root, "site/lib/firebase.ts"), "utf8");
-const API_KEY = /apiKey:\s*"(AIza[0-9A-Za-z_-]+)"/.exec(FIREBASE_TS)?.[1] ?? "";
-const PROJECT = /projectId:\s*"([a-z0-9-]+)"/.exec(FIREBASE_TS)?.[1] ?? "";
-/** あやと本人のチャンネル（公開の ID。島の「YouTube チャンネル」の行と同じもの） */
-const CHANNEL =
-  /youtube\.com\/channel\/(UC[0-9A-Za-z_-]{22})/.exec(readFileSync(join(root, "site/content/site.ts"), "utf8"))?.[1] ?? "";
+/* 公開の識別子は、**持っているファイルから読む**（ここに書き写さない。片方だけ直した日に黙ってずれる）。
+   字で読むのは `tools/sprites/tsread.mjs` の1本だけ（自前の正規表現で TS を読まない。`tsread_selftest.mjs`） */
+const FIREBASE = readConst(readFileSync(join(root, "site/lib/firebase.ts"), "utf8"), "FIREBASE");
+const API_KEY = /^AIza[0-9A-Za-z_-]+$/.test(FIREBASE.apiKey ?? "") ? FIREBASE.apiKey : "";
+const PROJECT = /^[a-z0-9-]+$/.test(FIREBASE.projectId ?? "") ? FIREBASE.projectId : "";
+/** あやと本人のチャンネル（公開の ID。島の「YouTube チャンネル」の行 `LINKS` の `youtube` と同じもの） */
+const CHANNEL = (() => {
+  const links = must(
+    readArray(readFileSync(join(root, "site/content/site.ts"), "utf8"), "LINKS", { keys: ["id", "href"], idKey: "id" }),
+    "site/content/site.ts の LINKS"
+  );
+  const href = links.find((r) => r.id === "youtube")?.href ?? "";
+  const id = href.split("/channel/")[1]?.split(/[/?#]/)[0] ?? "";
+  return /^UC[0-9A-Za-z_-]{22}$/.test(id) ? id : "";
+})();
 
 /** アラートに出る名前。試しだと分かる字にする */
 const LABEL = "案内鳥のためし";
