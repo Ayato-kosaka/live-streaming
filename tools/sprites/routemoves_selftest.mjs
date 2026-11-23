@@ -91,6 +91,8 @@ ok("揃っている台は通る（行き先の無い道 0・連鎖 0）", base.l
   JSON.stringify(base.lost));
 ok("`(まとめ)` は道に出ない段として読む", fakeTree().has("/b") && !fakeTree().has("/g/b"));
 ok("`public/` の .html も実ファイル", fakeTree().has("/old"));
+ok("動く段の当て推量だけで在る道を、当て推量と言う（字のままの面・ファイルは言わない）",
+  fakeTree().guess("/travel/zz") && !fakeTree().guess("/travel") && !fakeTree().guess("/old") && !fakeTree().guess("/nope"));
 for (const r of RULES) {
   const got = run(RULES.filter((x) => x !== r));
   const want = PATHS.filter((p) => redirectOf(p, [r]));
@@ -121,9 +123,25 @@ ok("前の道が、全部どこかへ行く（連鎖も無い）", code === 0);
 /* 元帳の道を送っている転送を、1行ずつ抜く。**抜いても落ちない行は、何も守っていない** */
 const used = rules.filter((r) => paths.some((p) => redirectOf(p, rules)?.rule === r));
 if (!used.length) stop("元帳の道を送っている転送が1行も無い");
-const loose = used.filter((r) => check({ paths, rules: rules.filter((x) => x !== r), tree }).lost.length <= res.lost.length);
-ok(`元帳の道を送っている転送 ${used.length}行は、どれを抜いても落ちる`, loose.length === 0,
-  loose.map((r) => `${r.n}行目 ${r.source}`).join(" "));
+/* **落ちる＝行き先の無い道が増える、か、連鎖が増える。** `/map/iran-border` の行は、抜くと
+   `/map/:slug` → `/travel/iran-border` → `/travel/armenia` の連鎖になる（行き先は在るので、道の数だけ見ると
+   何も守っていないように見える。#1355） */
+const worse = (r) => {
+  const got = check({ paths, rules: rules.filter((x) => x !== r), tree });
+  return got.lost.length > res.lost.length || got.chains.length > res.chains.length;
+};
+/* 置き場（書き出し無し）は、動く段（`/travel/[slug]`）をどの1段にも当てるので、国の表から外した道
+   （`/travel/iran-border`）を守る行は、抜いても「在る」と答えてしまう。**その行は、ここでは見分けられない**
+   ——黙って通さず名前を出し、書き出しで見る（`node tools/sprites/routemoves.mjs --dist …`。`docs/island-routing.md`） */
+const blind = used.filter((r) => paths.filter((p) => redirectOf(p, [r])).every((p) => tree.guess(p)));
+const loose = used.filter((r) => !blind.includes(r) && !worse(r));
+ok(`元帳の道を送っている転送 ${used.length - blind.length}行は、どれを抜いても落ちる（行き先の無い道か連鎖が増える）`,
+  loose.length === 0, loose.map((r) => `${r.n}行目 ${r.source}`).join(" "));
+if (blind.length)
+  console.log(`  △ 置き場からは見分けられない ${blind.length}行（動く段の道。書き出しで見る）: ${blind.map((r) => r.source).join(" ")}`);
+/* 見分けられない行が、いつのまにか増えていないか。**増えたら、その分だけ見張りが目を閉じている** */
+ok("置き場から見分けられない行は 1行まで（/travel/iran-border）", blind.length <= 1 && blind.every((r) => r.source === "/travel/iran-border"),
+  blind.map((r) => r.source).join(" "));
 
 /* 道具として起こしても同じ答えか（手で `--dist` を渡して回す口が、ここと別の数を言わないこと） */
 let cli = "";

@@ -164,6 +164,7 @@ erDiagram
 | --- | --- | --- |
 | M-3 | 伝説の表（`content/legends.ts`）と企画の表（`content/plans.ts`）が別 | #1356 |
 | M-4 | 移動が企画の表に入っている（滞在の表 `site/content/stays.ts` はできた） | #1276 #1277 |
+| M-5 | 表紙の島（`components/isle/cover.ts`）が `Country.region` を1か所読む。値はどの国にも入っていないので空を読むだけ。読む所が外れたら型の欄（`content/countries.ts`）ごと消す | #1276 |
 | M-6 | `Legend.pages[].href`・`Plan.href`・`Theme.href` の直書き。国の「行った街」と街のガイドは名前の文字で結ぶ。`nordic` が旅・企画・伝説で同じ字なだけ | #1356 #1357 |
 | M-20 | 居場所を3か所に手書き（滞在の表・`content/plans.ts` の移動の行・島の便りの `island/state.current`）。「イランまで歩く」は5か所、「北欧ヒッチハイク」は4か所に手書き | #1276 #1278 #1356 |
 | M-22 | 滞在の終わりを、企画の `until` に見立てで書ける | #1276 |

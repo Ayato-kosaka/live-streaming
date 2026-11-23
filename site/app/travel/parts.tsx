@@ -387,12 +387,15 @@ export function TripList({ trips }: { trips: TripGroup[] }) {
   /** 束の頭の、旅の島へのリンク。**どの束にも1本**（前は `/travel` から旅の島へ1本も無かった）。
       字は「この旅の島へ」だけ——旅の名前は束の見出しが言っている。名前を足すと、長い旅（バルカン諸国周遊）で
       「へ」だけが2行目に落ちた */
-  const isle = (g: TripGroup, label: string) => (
+  const isle = (g: TripGroup, label: string, where = "") => (
     <Link className="tile atrip-isle" href={g.href} prefetch={false}>
       <Icon name="island" size={30} className="tile-icon" />
       <span className="tile-text">
         <b>{label}</b>
-        <i>{period(g.from, g.to)}</i>
+        <i>
+          {period(g.from, g.to)}
+          {where}
+        </i>
       </span>
       <Icon name="right" size={16} className="tile-go" />
     </Link>
@@ -411,12 +414,19 @@ export function TripList({ trips }: { trips: TripGroup[] }) {
         >
           {isle(g, "この旅の島へ")}
           {list(g.rows)}
-          {g.branches.map((b) => (
-            <div key={b.slug} className="atrip-branch">
-              {isle(b, `枝の旅「${b.name}」`)}
-              {list(b.rows)}
-            </div>
-          ))}
+          {g.branches.map((b) => {
+            /* **親の束にもう居る国は、枝の下に2枚目を置かない。** 枝は親の期間の中にあるので（M-11）、
+               国はたいてい親の束と同じ。同じ札（同じ番号・同じ街）が真下にもう1枚並ぶと、2回行ったように読める。
+               どの国の中を歩いたかは、島の札の添え字で言う */
+            const inParent = b.rows.filter((r) => g.rows.some((x) => x.slug === r.slug));
+            const extra = b.rows.filter((r) => !inParent.includes(r));
+            return (
+              <div key={b.slug} className="atrip-branch">
+                {isle(b, `枝の旅「${b.name}」`, inParent.length ? `・${inParent.map((r) => r.name).join("・")}の中` : "")}
+                {extra.length > 0 && list(extra)}
+              </div>
+            );
+          })}
         </Fold>
       ))}
     </>
