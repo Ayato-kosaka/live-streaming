@@ -31,6 +31,7 @@
 
 import { BUILT_AT, daysUntil } from "@/lib/nightly";
 import { projectBySlug } from "./projects";
+import { hrefOf } from "./kinds";
 
 /** 付箋の宛先ひとつ。 */
 export type Theme = {
@@ -54,8 +55,24 @@ export type Theme = {
    * この宛先の話をしている面。押すとそこへ行ける。
    * 掲示板は島じゅうの付箋が集まる場所なので、
    * 「もっと読むならここ」ではなく「その話をしているのはここ」を指す。
+   *
+   * **表には書かない。下の鍵（`country` `city` `chapter` `day` `stream` `page`）から組む**（`hrefOfTheme`。M-6）。
+   * 前は道の字（`/travel/romania/bucharest` など17行）を直に書いていて、道の作りを変えた日に
+   * お題の行き先だけが古い道を指し続けた。
    */
   href?: string;
+  /** 結んだ国（`content/travel.ts` の国の slug）。`city` が無ければ国の面へ */
+  country?: string;
+  /** 結んだ街（`content/cities.ts` の街の slug。`country` と組で） */
+  city?: string;
+  /** 結んだ旅（`content/chapters.ts` の章の slug）。`day` が無ければ旅の島へ */
+  chapter?: string;
+  /** 結んだ旅の1日（`content/nordic.ts` の日の slug。`chapter` と組で） */
+  day?: string;
+  /** 名前の鍵を持たない単発の面（種類の表の道の型そのもの） */
+  page?: "/goods" | "/goods/stickers" | "/updates";
+  /** 面の中の欄（`#` の先） */
+  at?: string;
   /** 書く欄の上に出す一行。**何を書けばいいか**だけを言う */
   lead: string;
   /** 書く欄の見本。実際に書けそうなものにする */
@@ -169,7 +186,7 @@ export const OTHER_GROUP = "そのほか";
  * 中身が増えても札の並びが動かないので、「いつもの3つ目」で覚えたところに、
  * 次も同じものがある。
  */
-export const THEMES: Theme[] = [
+const THEME_ROWS: Omit<Theme, "href">[] = [
   {
     /* ブカレスト（2026-11-21 から）。**いちばん上に置く**——いま注文を受け付けている先が先頭、という決まり（下の注）。
        **`id` は変えない**——付箋の宛先として Firestore に `romania` で入る。国の slug と同じ字にした
@@ -178,7 +195,8 @@ export const THEMES: Theme[] = [
     name: "ブカレストでこれやって",
     group: ROMANIA_GROUP,
     /* その話をしている面。表紙の「これから」の［いまここ］→ この面 → 面のいちばん下の付箋、とソフィアと同じ道で辿れる */
-    href: "/travel/romania/bucharest",
+    country: "romania",
+    city: "bucharest",
     /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。決まっている2つ（街と、紙に載せた見どころ）を置く */
     lead: "ブカレストでやってほしいこと。紙に載っていないお店や道でも。",
     placeholder: "例）旧市街のビアホールで、いちばん安いビールを頼んでほしい",
@@ -190,7 +208,8 @@ export const THEMES: Theme[] = [
     group: BULGARIA_GROUP,
     /* 行き先は `app/travel/bulgaria/sofia/page.tsx`（前の `/bulgaria`。#1228）。
        **`id` は変えない**——付箋の宛先として Firestore に `bulgaria` で入っている。道だけ移した */
-    href: "/travel/bulgaria/sofia",
+    country: "bulgaria",
+    city: "sofia",
     /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。
        「これから行く」と書くと、着いた日から字だけが嘘になる。
        **決まっている2つを置く**——街と、紙に載せた見どころ。
@@ -213,7 +232,7 @@ export const THEMES: Theme[] = [
        アルバニアに `href` が無いのは、あちらに面が無いからで、
        ここで同じように省くと押せる先を1つ捨てることになる。
        **`id` は面の道と章の slug と同じ**（`content/chapters.ts`）。 */
-    href: "/travel/north-macedonia",
+    country: "north-macedonia",
     /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。
        「これから行く」と書くと、着いた日から字だけが嘘になり、
        焼き込みなので次のビルドまで直らない（`docs/island-misses.md` #135）。
@@ -235,7 +254,7 @@ export const THEMES: Theme[] = [
     /* **行き先を持たせない。** まだ旅の面（`/albania`）が無い。
        いまリンクを書くと、受け皿が島の玄関を 200 で返して、
        押した人は「なぜ違う面が出たのか」が分からない
-       （`app/nordic/photos/page.tsx` の同じ決まり）。 */
+       （面の無い道は 301 で送る。`firebase.json` の `redirects`）。 */
     lead: "アルバニアでやってほしいこと。行く先も、食べるものも、まだ何も決まっていない。",
     placeholder: "例）ベラトの丘の上まで登って、窓だらけの街を上から見てほしい",
     /* **旅が終わったからではない。** あやとはいまもアルバニアに居る
@@ -251,7 +270,7 @@ export const THEMES: Theme[] = [
     id: "nordic",
     name: "北欧の旅",
     group: NORDIC_GROUP,
-    href: "/island/nordic",
+    chapter: "nordic",
     /* **旅が終わったので、注文ではなく思い出を聞く欄にした。**
        見本の文の形が、そのまま集まるものの形になる（`georgia-bye` で学んだ）。
        「〜してほしい」のまま置いておくと、もう行かない国への注文が集まり続ける。
@@ -267,7 +286,7 @@ export const THEMES: Theme[] = [
     id: "poland",
     name: "ポーランド",
     group: NORDIC_GROUP,
-    href: "/travel/poland",
+    country: "poland",
     lead: "ポーランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヴァヴェル城と、火を吹く龍の像が見たい",
     closed: true,
@@ -276,7 +295,7 @@ export const THEMES: Theme[] = [
     id: "lithuania",
     name: "リトアニア",
     group: NORDIC_GROUP,
-    href: "/travel/lithuania",
+    country: "lithuania",
     lead: "リトアニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）赤煉瓦の城と、十字架の丘が見たいです",
     closed: true,
@@ -285,7 +304,7 @@ export const THEMES: Theme[] = [
     id: "latvia",
     name: "ラトビア",
     group: NORDIC_GROUP,
-    href: "/travel/latvia",
+    country: "latvia",
     lead: "ラトビアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）リガの中央市場で、地元の人が買うものを見たい",
     closed: true,
@@ -294,7 +313,7 @@ export const THEMES: Theme[] = [
     id: "estonia",
     name: "エストニア",
     group: NORDIC_GROUP,
-    href: "/travel/estonia",
+    country: "estonia",
     lead: "エストニアで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）タリンの旧市街を、朝いちばんに歩いてほしい",
     closed: true,
@@ -303,7 +322,7 @@ export const THEMES: Theme[] = [
     id: "finland",
     name: "フィンランド",
     group: NORDIC_GROUP,
-    href: "/travel/finland",
+    country: "finland",
     lead: "フィンランドで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ヘルシンキの市場で、朝ごはんを食べてほしい",
     closed: true,
@@ -312,7 +331,7 @@ export const THEMES: Theme[] = [
     id: "sweden",
     name: "スウェーデン",
     group: NORDIC_GROUP,
-    href: "/travel/sweden",
+    country: "sweden",
     lead: "スウェーデンで見てきてほしいもの、行ってほしい場所。",
     placeholder: "例）ストックホルムの島を、歩いて渡ってほしい",
     closed: true,
@@ -324,7 +343,8 @@ export const THEMES: Theme[] = [
     id: "leg-kutaisi-katowice",
     name: "クタイシ → カトヴィツェ",
     group: NORDIC_GROUP,
-    href: "/island/nordic/day/depart",
+    chapter: "nordic",
+    day: "depart",
     lead: "唯一の飛行機の日。深夜1時5分に着いて、始発まで数時間あります。",
     placeholder: "例）空港のなかを探検してほしい",
     closed: true,
@@ -386,7 +406,7 @@ export const THEMES: Theme[] = [
        **期間（9/26〜10/30）も書かない**——区切りは `python/build_monthly.py` の `FINALS` が持ち、`content/months.ts` に焼かれる */
     date: "2026-10-31",
     stream: "monthly",
-    href: "/streams/monthly",
+    /* 行き先は配信の型の面（`stream` の鍵から。`hrefOfTheme`） */
     lead: "授賞式でやってほしい賞と、もう一度みんなで観たい回を書いてください。",
     placeholder: "例）いちばん笑わせてくれた人に、笑い屋大賞をあげてほしい",
   },
@@ -422,7 +442,7 @@ export const THEMES: Theme[] = [
        ステッカーが13枚になって、索引の1欄ではなく自分の面を持った
        （あやと「あやとステッカーとして個別ページ一枚ね」）。
        **貼られた付箋はそのまま。** 変えたのは行き先だけで、`id` は触っていない。 */
-    href: "/goods/stickers",
+    page: "/goods/stickers",
     /* 行き先の面が「落として、好きなところに貼ってください。」で、
        そこに**ほしい1枚を出す**欄が付いている。字はその欄の話にそろえる。
        **枚数を書かない**——1枚足した日から嘘になる（`app/goods/page.tsx` の同じ決まり）。
@@ -441,7 +461,8 @@ export const THEMES: Theme[] = [
        （あやと「カレンダー検討中の項目は削除して」）。カレンダーは SUZURI の
        升目の1マスになるので、その話をしている場所はそちら。
        消えた `#calendar` を指したままにすると、棚の札から面の頭に落ちる */
-    href: "/goods#suzuri",
+    page: "/goods",
+    at: "suzuri",
     /* **「壁にかけるか机に置くか」はもう聞かない**（あやと 2026-10-10、#759）。
        立てて置くかたちで作る話で動いているので、聞いているのは絵のほうだけ。
        **どこの店に何が在るかは書かない**——よその品ぞろえを焼くと、
@@ -461,7 +482,8 @@ export const THEMES: Theme[] = [
     id: "goods-linestamp",
     name: "LINEスタンプ",
     group: GOODS_GROUP,
-    href: "/goods#linestamp",
+    page: "/goods",
+    at: "linestamp",
     lead: "どんな一言のスタンプがほしいか。あやとの口ぐせでも、島の住人でも。",
     placeholder: "例）「おなかすいた」をあやとの顔で。毎日つかう",
     /* 畳む（あやと 2026-10-14「付箋を締め切って」）。40種類を LINE に
@@ -489,7 +511,8 @@ export const THEMES: Theme[] = [
     group: GOODS_GROUP,
     /* 行き先はグッズの面の SUZURI の欄（`app/goods/page.tsx` の `id="suzuri"`）。
        ほかの3つと同じく `#` 付きで、その欄まで送る。 */
-    href: "/goods#suzuri",
+    page: "/goods",
+    at: "suzuri",
     lead: "ほしいグッズと、どんな絵が入っているか。",
     placeholder: "例）島の住人の絵が入ったマグカップがほしい。朝いちばんに使うから、大きいの",
   },
@@ -528,11 +551,35 @@ export const THEMES: Theme[] = [
        （この型の注）。島の玄関（`/`）は島そのものの面で、島をどう直したか・
        次にどこを直してほしいかの話はしていない。あちらを指していたころ、
        掲示板の棚からこの札を押した人は、話の続きが無い場所に着いていた。 */
-    href: "/updates",
+    page: "/updates",
     lead: "旅の話じゃないこと。サイトへの要望も、配信への注文も、ここへ。",
     placeholder: "例）配信のあとに見返せる場所がほしい",
   },
 ];
+
+/**
+ * お題の行き先。**鍵から組む**（M-6）。道の字は種類の表（`content/kinds.ts` の `hrefOf`）だけが持つ。
+ *
+ * 街 → 国 → 旅の1日 → 旅 → 配信の型 → 単発の面 の順に見る（細かい鍵が先）。どれも無ければ行き先を持たない
+ * （アルバニアは面が無いので鍵も無い。`site/selftest/themes_selftest.mjs` が「面が在るのに結んでいない」を数える）。
+ */
+export function hrefOfTheme(t: Omit<Theme, "href">): string | undefined {
+  const base =
+    t.country && t.city ? hrefOf("/travel/<国>/<街>", t.country, t.city) :
+    t.country ? hrefOf("/travel/<国>", t.country) :
+    t.chapter && t.day ? hrefOf("/island/<旅>/day/<日>", t.chapter, t.day) :
+    t.chapter ? hrefOf("/island/<旅>", t.chapter) :
+    t.stream ? hrefOf("/streams/<型>", t.stream) :
+    t.page ? hrefOf(t.page) :
+    undefined;
+  return base && t.at ? `${base}#${t.at}` : base;
+}
+
+/** 宛先の一覧（行き先を組んだもの）。読む側はこちらを使う */
+export const THEMES: Theme[] = THEME_ROWS.map((t) => {
+  const href = hrefOfTheme(t);
+  return href ? { ...t, href } : t;
+});
 
 /**
  * いま**書ける**宛先か。読む側は関係ない（棚には全部並ぶ）。

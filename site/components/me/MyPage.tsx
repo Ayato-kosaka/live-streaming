@@ -31,7 +31,7 @@ import SignIn from "@/components/live/SignIn";
  *
  * **運営の道具はここに置かない**（`/me/desk`）。旅の道具・付箋への返事・
  * 企画の段・投げ銭の紐付け・アラートボックスは、じぶんのことではなく
- * 島の手入れで、用事も開く回数も違う。同じ紙に積んだ結果、あやとの画面は
+ * 島の管理で、用事も開く回数も違う。同じ紙に積んだ結果、あやとの画面は
  * 390px 幅で 8,336px——スマホ10画面ぶん——になっていた。
  * あやとの言葉（2026-09-10）「整理されてなさすぎる。ux 悪すぎ。縦長すぎる」。
  *
@@ -126,7 +126,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
     <>
       <MeHero name={me?.nickname || user.name} face={face} channelId={me?.channelId} />
 
-      {/* 島の手入れ（`/me/desk`）。**あやとだけ。じぶんのものより上。**
+      {/* 島の管理（`/me/desk`）。**あやとだけ。じぶんのものより上。**
           旅の途中は、ここを開くために `/me` へ来る。
 
           **`me` が読めたかではなく、`owner` で出す。** `me` が読めなかった
@@ -136,7 +136,7 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
         <Link prefetch={false} className="mp-goto is-lead" href="/me/desk">
           <Icon name="signpost" size={22} />
           <span className="mp-goto-t">
-            <b>島の手入れ</b>
+            <b>島の管理</b>
             <i>{TOOL_LINE}</i>
           </span>
           <Icon name="right" size={14} />

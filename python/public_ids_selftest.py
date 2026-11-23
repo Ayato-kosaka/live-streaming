@@ -78,10 +78,10 @@ BASE = "https://live-streaming-d3cac.web.app/island-api"
 # ——あれは「呼んだ人ごとに中身が違う」ほうなので、公開の面ではない。
 PATHS = [
     "/state",
-    "/nextplans",
+    # その日の出来事の一覧。机の「配信」が `?events=1` を付けて引く（付けなくても同じ答え）。
+    # 企画に貼る古い付箋の `/notes` は #1281 で畳んだ（30日の呼び出しは、ここからの3回だけだった）
     "/nextplans?events=1",
     "/stickies",
-    "/notes",
     "/poll",
     "/fork",
     "/cards",

@@ -3,6 +3,7 @@ import { share } from "@/lib/share";
 import { JsonLd, profileLd } from "@/lib/jsonld";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import VoiceBubble from "@/components/ui/Voice";
 import { Panel, Stat, TileLink } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
@@ -340,7 +341,7 @@ export default function AboutPage() {
     .join("、");
 
   return (
-    <PageShell crumbs={[{ label: NAME }]}>
+    <PageShell crumbs={crumbsOf("/about")}>
       {/* 「この面は、この人のことを書いた面」の名札。画面には出ない（`lib/jsonld.tsx`） */}
       <JsonLd data={profileLd(NAME)} />
       <PageHead

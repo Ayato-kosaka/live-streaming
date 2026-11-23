@@ -11,7 +11,7 @@ import { STREAM_TYPES } from "@/content/streamTypes";
 import { ALL_APPS } from "@/content/apps";
 import { STATS_FALLBACK } from "@/content/site";
 import { ACTIVE_FRIENDS } from "@/content/residents";
-import { TRAVEL } from "@/content/travelPath";
+import { PLACES, placeById, type SpotId } from "@/components/island/layout";
 
 /**
  * これまでの棚。「これまで」の章の顔。
@@ -36,8 +36,9 @@ import { TRAVEL } from "@/content/travelPath";
  */
 
 type Box = {
-  href: string;
-  name: string;
+  /** 軒の鍵。**名前と行き先は入口の表から引く**（`components/island/layout.ts` の `PLACES`。R-22）。
+      前はここに手で「愉快な仲間達」と書いてあって、同じ `/friends` が島では「住んでる人」だった（#1279） */
+  id: SpotId;
   /**
    * その場所の絵。**6マスとも別のもの。**
    *
@@ -63,9 +64,8 @@ export default function Shelf() {
 
   const boxes: Box[] = [
     {
-      href: TRAVEL,
+      id: "map",
       mark: "flagpost",
-      name: "歩いた国",
       /* **終点の街を書かない。** 旅は毎日進むので、書いた翌日から嘘になる
          （`app/travel/page.tsx` の同じ注）。出発した日はもう動かないので、そこだけ言う */
       note: "日本を出てから、どこをどう通ってきたか",
@@ -93,11 +93,10 @@ export default function Shelf() {
       ),
     },
     {
-      href: "/kitchen",
+      id: "kitchen",
       /* 小屋そのものの絵（`kitchen`）は上の帯と面の見出しに既に2回出ている。
          ここが数えているのは小屋ではなく**押したスタンプの数**なので、帳面のほうを出す */
       mark: "stampbook",
-      name: "作った料理",
       note: "その土地のものを、買い出しから作って食べる",
       n: RECIPES.length,
       unit: "品",
@@ -110,9 +109,8 @@ export default function Shelf() {
       ),
     },
     {
-      href: "/streams",
+      id: "streams",
       mark: "tower",
-      name: "配信",
       note: "クッキング、おさんぽ、アプリ作り、企画会議、月末",
       n: <LiveNumber statKey="streams" fallback={s.streams} />,
       unit: "本",
@@ -127,9 +125,8 @@ export default function Shelf() {
       ),
     },
     {
-      href: "/legends",
+      id: "legends",
       mark: "hill",
-      name: "伝説の企画",
       note: LEGENDS[0]?.title ?? "いまも話に出てくる企画",
       n: LEGENDS.length,
       unit: "つの伝説",
@@ -142,9 +139,8 @@ export default function Shelf() {
       ),
     },
     {
-      href: "/apps",
+      id: "apps",
       mark: "workshop",
-      name: "アプリ",
       note: "旅先で、配信しながら作っている",
       /* **手で数えない。** ここは配信で作った2本（`APPS`）だけを数えていて、
          `/apps` も `/about` も3本（日本を出る理由になった1本目を含む）を出していた。
@@ -160,9 +156,8 @@ export default function Shelf() {
       ),
     },
     {
-      href: "/friends",
+      id: "friends",
       mark: "friends",
-      name: "愉快な仲間達",
       note: "配信に来てくれる人が、そのまま島の住人になる",
       n: <LiveNumber statKey="activeFriends" fallback={ACTIVE_FRIENDS} />,
       unit: "人",
@@ -170,10 +165,16 @@ export default function Shelf() {
     },
   ];
 
+  /* **並びも入口の表のまま**（R-20 の順）。マスの中身（数・見本）だけがここの仕事 */
+  const rank = (id: SpotId) => PLACES.findIndex((p) => p.id === id);
+  const sorted = [...boxes].sort((a, b) => rank(a.id) - rank(b.id));
+
   return (
     <div className="shelf">
-      {boxes.map((b) => (
-        <Link prefetch={false} className="shelf-box" key={b.href} href={b.href}>
+      {sorted.map((b) => {
+        const door = placeById(b.id);
+        return (
+        <Link prefetch={false} className="shelf-box" key={b.id} href={door.href}>
           <span className="shelf-mark" aria-hidden>
             <Icon name={b.mark} size={26} />
           </span>
@@ -181,14 +182,15 @@ export default function Shelf() {
             <em>{b.n}</em>
             <i>{b.unit}</i>
           </span>
-          <b className="shelf-name">{b.name}</b>
+          <b className="shelf-name">{door.label}</b>
           <span className="shelf-note">{b.note}</span>
           {b.sample}
           <span className="shelf-go" aria-hidden>
             <Icon name="right" size={14} />
           </span>
         </Link>
-      ))}
+        );
+      })}
     </div>
   );
 }

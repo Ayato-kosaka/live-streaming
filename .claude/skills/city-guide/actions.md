@@ -52,5 +52,5 @@ gh workflow run heavy_watch.yml --ref <PR の枝> -f guide=<国>/<街> -f pr=<PR
 | 積み戻すが 🔴「push できなかった」 | 押しているあいだに枝が進んでぶつかった。枝を最新にして押し直す |
 | 入力で止まった（表が出ない） | run の「入力を確かめる」の `::error::` の1行。枝と PR の番号が合っているか |
 
-書体だけを測り直したいほかの面（街のガイド以外）は `-f fonts=/next.html,…`（`fontbake`）。artifact `fonts` は表（`weights.json`）だけで、それを枝に積む。
+書体だけを測り直したいほかの面（街のガイド以外）は `-f fonts=/board.html,…`（`fontbake`）。artifact `fonts` は表（`weights.json`）だけで、それを枝に積む。
 焼いた束（woff2・fonts.css）は積まない。

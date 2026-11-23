@@ -14,18 +14,13 @@
 import { chromium } from "playwright-core";
 import { seed } from "./meseed.mjs";
 import { offline } from "./route.mjs";
+import { DESK_TOOLS, pressTab } from "./desktools.mjs";
 
 const PORT = process.env.SPORT || "4600";
 const SCENES = [
   ["me-islandme", "/me.html", null, true],
-  ["desk-photo", "/me/desk.html", "写真", false],
-  ["desk-place", "/me/desk.html", "いまどこ", false],
-  ["desk-video", "/me/desk.html", "配信", false],
-  ["desk-sticky", "/me/desk.html", "付箋", false],
-  ["desk-plan", "/me/desk.html", "企画", false],
-  ["desk-donor", "/me/desk.html", "投げ銭", false],
-  ["desk-chara", "/me/desk.html", "キャラ", false],
-  ["desk-obs", "/me/desk.html", "OBS", false],
+  /* 机の札は手で並べない（`desktools.mjs`。#1280） */
+  ...DESK_TOOLS.map((t) => [`desk-${t.id}`, "/me/desk.html", t.label, false]),
 ];
 
 const b = await chromium.launch({
@@ -47,7 +42,7 @@ for (const [id, page, tab, open] of SCENES) {
   await p.goto(`http://localhost:${PORT}${page}`, { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
   await p.waitForTimeout(1400);
   if (tab) {
-    await p.locator(".mp-tab", { hasText: new RegExp(`^${tab}`) }).first().click({ timeout: 5000 }).catch(() => {});
+    await pressTab(p, tab);
     await p.waitForTimeout(1500);
   }
   if (open) {

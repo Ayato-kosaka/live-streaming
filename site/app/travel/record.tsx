@@ -40,6 +40,7 @@ import Writer from "@/components/travel/article/Writer";
 // 料理の印はサイトで1つ。島の小屋の札と同じ絵をそのまま使う
 // （docs/island-world.md 4.2「同じ場所に絵を2つ作らない」）。
 import { ArtStamp } from "@/components/streams/Art";
+import { miniSprite } from "@/lib/miniSprite";
 
 /**
  * **国の面（`/travel/<国>`）の型。歩き終わった国も、いま歩いている旅の国も、この1つで描く。**
@@ -538,7 +539,7 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
             {passTags.map((t) => (
               <Link key={t.href} className="chip" href={t.href} prefetch={false}>
                 {"sprite" in t.art ? (
-                  <img className="mini-icon" src={`/sprites/${t.art.sprite}.webp`} alt="" />
+                  <img className="mini-icon" src={miniSprite(t.art.sprite)} alt="" />
                 ) : "icon" in t.art ? (
                   <Icon name={t.art.icon} size={20} />
                 ) : null}
@@ -764,7 +765,7 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
           <div className="chips">
             {dishes.tags.map((x) => (
               <Link key={x.key} className="chip" href={x.href} prefetch={false}>
-                {"sprite" in x.art && <img className="mini-icon" src={`/sprites/${x.art.sprite}.webp`} alt="" />}
+                {"sprite" in x.art && <img className="mini-icon" src={miniSprite(x.art.sprite)} alt="" />}
                 {x.label}
               </Link>
             ))}

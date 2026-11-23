@@ -38,8 +38,9 @@ export const CITIES: CityRow[] = [
   /* あやとは 2026-11-21 に着いた（`content/countries.ts` の `AHEAD_COUNTRIES`）。国の面は着いた日に建てた（`GUIDE_ONLY`）。
      あやと 2026-11-20「割といい感じ」「どんどん公開していいよ。あなたの裁量の範囲内」で公開前の印を外した */
   { country: "romania", slug: "bucharest", name: "ブカレスト" },
-  /* 行く前の街（移る日は未定）。国の面はまだ無い（`CITY_ONLY`） */
-  { country: "serbia", slug: "belgrade", name: "ベオグラード", draft: true },
+  /* 行く前の街（移る日は未定）。国の面はまだ無い（`CITY_ONLY`）。
+     2026-11-23 に、運営が本番の390幅・型の数・見張りを見て公開前の印を外した */
+  { country: "serbia", slug: "belgrade", name: "ベオグラード" },
   /* 行った街（2026-09-28〜10-11）。骨組みを先に置き、行った担当が facts から肉付けする。
      運営が確かめ表（`.claude/skills/city-guide/review.md`）で見てから印を外す */
   { country: "albania", slug: "tirana", name: "ティラナ", draft: true },

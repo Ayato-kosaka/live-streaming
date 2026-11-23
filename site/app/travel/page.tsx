@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import PageShell from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import { Panel, Stat } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import Walked from "@/components/atlas/Walked";
@@ -72,6 +73,7 @@ function rowsOf(c: Chapter): TripGroup["rows"] {
       en: rec?.en,
       stays: [],
       towns: [],
+      done: !!rec,
       /* 面を持たない国は空（押せない札にする。`./parts.tsx`） */
       href: travelPlace(s.country)?.href ?? "",
     };
@@ -123,7 +125,7 @@ export default function MapPage() {
   const cities = new Set(MAP.cities.filter((c) => c.kind !== "side").map((c) => c.id));
 
   return (
-    <PageShell crumbs={[{ label: TRAVEL_LABEL }]}>
+    <PageShell crumbs={crumbsOf("/travel")}>
       {/* h1 は場所の名前（docs/island-world.md 7.5）。
           国の数は静的書き出しで焼き込まれるので、見出しには入れない。
           カモメは、この下の地図の紙に「ピンを押すと」と同じことを言うので置かない。

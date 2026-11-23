@@ -16,6 +16,7 @@
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
 import { apply } from "./asme.mjs";
+import { DESK_TOOLS, pressTab } from "./desktools.mjs";
 
 const PORT = process.env.SPORT || "4800";
 /** 数える規則。触ったものと、触っていないが同じ書き方の残りを並べる。 */
@@ -35,8 +36,16 @@ const PAGES = [
   "/nordic/photos", "/nordic/day/2", "/cards", "/all", "/friends", "/design",
   "/privacy", "/me", "/me/desk", "/me/roulette", "/roulette",
 ];
-/** 机の道具は札を押さないと作られない。1面の中で9つ押して回る。 */
-const TABS = ["付箋", "企画", "カード", "写真", "いまどこ", "配信", "投げ銭", "キャラ", "スパチャ", "OBS"];
+/**
+ * 札は押さないと中が作られない。1面の中で1つずつ押して回る。
+ *
+ * **机の札は手で並べない。** `site/components/me/tools.ts` の `TOOLS` を字のまま読む
+ * （`desktools.mjs`）。ここに手書きの一覧があったころ、机から「企画」「いまどこ」が外れ、
+ * 名前が「投げ銭」「スパチャ」から変わっても一覧は古いまま残り、**押せない札を
+ * 押そうとして黙って飛ばす**だけになっていた（#1280）。
+ * じぶんのこと（`/me`）の札（`MyStuff.tsx`）は2枚だけで、そちらは書く。
+ */
+const TABS = [...new Set(["付箋", "カード", ...DESK_TOOLS.map((t) => t.label)])];
 
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 const ctx = await b.newContext({ viewport: { width: 390, height: 900 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
@@ -61,7 +70,7 @@ for (const path of PAGES) {
   // 札のある面は、札を1つずつ押して中を見る
   if (await p.$$eval(".mp-tab", (e) => e.length).catch(() => 0)) {
     for (const t of TABS) {
-      const c = await p.locator(".mp-tab", { hasText: new RegExp(`^${t}`) }).first().click({ timeout: 1500 }).then(() => true).catch(() => false);
+      const c = await pressTab(p, t, 1500);
       if (!c) continue;
       await p.waitForTimeout(900);
       await count();

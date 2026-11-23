@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import { Panel } from "@/components/ui/Bits";
 import { APPS, PAST_APPS } from "@/content/apps";
 import Icon from "@/components/ui/Icon";
@@ -43,7 +44,7 @@ const fmt = (d: string) => d.replace(/-/g, "/");
 
 export default function AppsPage() {
   return (
-    <PageShell crumbs={[{ label: "アプリ" }]}>
+    <PageShell crumbs={crumbsOf("/apps")}>
       <PageHead
         mark={<AnvilArt size={74} />}
         title="アプリ"

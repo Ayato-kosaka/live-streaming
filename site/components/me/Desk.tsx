@@ -10,7 +10,7 @@ import PlanVideos from "./PlanVideos";
 import { StickyCare, useWaiting } from "./OwnerCare";
 import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 import Fold from "@/components/ui/Fold";
-import { MAIN_TOOLS, OTHER_TOOLS, TOOLS, type ToolRow, type Tool } from "./tools";
+import { SHELVES, TOOLS, type ToolRow, type Tool } from "./tools";
 
 /* 投げ銭の紐付けとアラートボックスは、開いた札のぶんだけ降ろす。
    どちらも一覧を丸ごと引くので、机を開いただけで3本引かせない。 */
@@ -34,7 +34,7 @@ const NoteThemes = dynamic(() => import("./NoteThemes"), { ssr: false });
 const LAST = "ayato-desk-tool";
 
 /**
- * 島の手入れ。**あやとだけ。**
+ * 島の管理。**あやとだけ。**
  *
  * ## なぜ「じぶんのこと」から出したか
  *
@@ -53,11 +53,14 @@ const LAST = "ayato-desk-tool";
  * 畳みの向こうへ行くか、指で送る距離になる。**どれも1タップで出る**のが
  * この形の要点で、それは前の「旅の道具」の4つの札（#163）と同じ決め。
  *
- * ## 棚は2段。下の段は畳んでおく
+ * ## 札は用事で束ねる。配信の道具だけ畳んでおく
  *
- * あやと（2026-10-14）「『いまどこ』は…『その他』に格下げ。『OBS』も
- * ほぼ使わないのでその他に格下げ」。札が10枚あっても、旅の途中に押すのは
- * 上の棚の札。どれがどちらの棚かは `./tools.ts` が1か所で持つ。
+ * あやと（2026-11-18）「分類もあまり綺麗じゃない」。前は上の棚に7枚が
+ * 開く回数の順で並んでいて、返事とお題、写真と動画が離れていた。
+ * 視聴者さんに返す・その日の記録・人・お金を2列の束にして、
+ * 配信の道具（ルーレット・OBS）は畳みの中（あやと 2026-10-14
+ * 「OBS もほぼ使わないのでその他に格下げ」）。どれがどの用事かは
+ * `./tools.ts` が1か所で持つ。
  *
  * ## 開き直したら、続きから
  *
@@ -87,7 +90,7 @@ const LAST = "ayato-desk-tool";
  */
 export default function Desk() {
   const { owner, meRead, reloadMe } = useAuth();
-  const [tool, setTool] = useState<Tool>("photo");
+  const [tool, setTool] = useState<Tool>(TOOLS[0].id);
   /* まだ返していない付箋の数。**机を開いた時点で1本だけ引く**ので、
      「付箋」を開かなくても札にバッジが出る。読めなかった日は null のまま
      ——0 を出すと「ぜんぶ返した」に見える（§15） */
@@ -98,7 +101,7 @@ export default function Desk() {
       const v = localStorage.getItem(LAST);
       if (v && TOOLS.some((t) => t.id === v)) setTool(v as Tool);
     } catch {
-      /* 端末が localStorage を使えなくても、写真から始まるだけ */
+      /* 端末が localStorage を使えなくても、表の1枚目から始まるだけ */
     }
   }, []);
 
@@ -136,19 +139,20 @@ export default function Desk() {
     );
 
   /**
-   * 札を1段ぶん描く。**上の棚と「その他」で同じものを2度書かない。**
+   * 用事1つぶんの札を描く。**束ねた用事と畳んだ用事で同じものを2度書かない。**
    *
-   * 札は3列。390px で1枚 114px あるので、いちばん長い「写真を貼る」も
-   * 折れない（4列にすると 88px になって折れる）。
+   * 札は横向き（印が左・字が右）で、束の中で縦に積む。束を2列に置くので、
+   * 390px で札1枚が 150px ほどになり、いちばん長い「名前をつなぐ」も折れない。
+   * 前の縦向きの札（印の下に字）を3列に並べると、用事の境目が見えなかった。
    */
   const shelf = (list: ToolRow[], label: string) => (
-    <div className="mp-tabs is-3" role="tablist" aria-label={label}>
+    <div className="dk-tabs" role="tablist" aria-label={label}>
       {list.map((t) => (
         <button
           key={t.id}
           role="tab"
           aria-selected={tool === t.id}
-          className={`mp-tab${tool === t.id ? " is-on" : ""}`}
+          className={`mp-tab dk-tab${tool === t.id ? " is-on" : ""}`}
           onClick={() => pick(t.id)}
         >
           <Icon name={t.icon} size={18} />
@@ -176,14 +180,22 @@ export default function Desk() {
     <>
       <section className="panel paper">
         <h2>道具</h2>
-        {shelf(MAIN_TOOLS, "島の手入れの道具")}
+        <div className="dk-shelves">
+          {SHELVES.filter((g) => !g.fold).map((g) => (
+            <div key={g.errand} className="dk-shelf">
+              <h3 className="dk-shelf-h">{g.title}</h3>
+              {shelf(g.tools, g.title)}
+            </div>
+          ))}
+        </div>
 
-        {/* その他（あやと 2026-10-14）。**畳んでおく。** いま開いている道具が
-            こちらの棚なら開けておく——閉じたままだと、開いている札が
-            どこにも見えない。 */}
-        <Fold title="その他" open={OTHER_TOOLS.some((t) => t.id === tool)}>
-          {shelf(OTHER_TOOLS, "そのほかの道具")}
-        </Fold>
+        {/* 畳む用事（配信の道具）。いま開いている道具がこちらなら開けておく
+            ——閉じたままだと、開いている札がどこにも見えない。 */}
+        {SHELVES.filter((g) => g.fold).map((g) => (
+          <Fold key={g.errand} title={g.title} open={g.tools.some((t) => t.id === tool)}>
+            {shelf(g.tools, g.title)}
+          </Fold>
+        ))}
 
         {/* 開いていないものは、そもそも作らない。欄が同時に生きていると、
             下書きの復元が何本も同時に走る。 */}
@@ -196,22 +208,30 @@ export default function Desk() {
           {tool === "donor" && <DonorLinks />}
           {tool === "chara" && <Characters />}
           {tool === "fund" && <FundDesk />}
+          {tool === "roulette" && <RouletteGo />}
           {tool === "obs" && <AlertBoxBox />}
         </div>
       </section>
-
-      {/* 配信中に開く面。**道具の札には混ぜない。**
-          あちらは「その日のうちに入れる」もので、こちらは別の端末で開く面。
-          **島の遠隔操作はここから消した**（あやと 2026-10-14「使い物に
-          ならなかった」）。面も部品も口も残していない。 */}
-      <Link prefetch={false} className="mp-goto" href="/me/roulette">
-        <Icon name="poll" size={22} />
-        <span className="mp-goto-t">
-          <b>ルーレット</b>
-          <i>配信していない方の端末で開く</i>
-        </span>
-        <Icon name="right" size={14} />
-      </Link>
     </>
+  );
+}
+
+/**
+ * ルーレットの札を押したときに出るもの。**ここで回さない。**
+ *
+ * ルーレットは配信していない方の端末で開く1枚の面（`/me/roulette`）で、
+ * 開くと回す会（`RouletteBox`）が立つ。札を押しただけ・前に開いていたから、
+ * で会を立てると、配信していない日にも会が増える。ここは行き先だけ置く。
+ */
+function RouletteGo() {
+  return (
+    <Link prefetch={false} className="mp-goto" href="/me/roulette">
+      <Icon name="poll" size={22} />
+      <span className="mp-goto-t">
+        <b>ルーレットを開く</b>
+        <i>配信していない方の端末で開く</i>
+      </span>
+      <Icon name="right" size={14} />
+    </Link>
   );
 }

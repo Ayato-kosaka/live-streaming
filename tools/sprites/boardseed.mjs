@@ -47,7 +47,8 @@ const headTheme = () => {
   );
   /* 読み方は `tsread.mjs` の1本（#694）。前は「`export const THEMES` から先で
      最初に当たった `id:`」という切り方で、表の外の字でも当たりえた。 */
-  const got = readArray(src, "THEMES", { keys: ["id"], idKey: "id" });
+  /* 表は `THEME_ROWS`（行き先を鍵から組む前の行。`THEMES` はそこから組んだもの。#1279） */
+  const got = readArray(src, "THEME_ROWS", { keys: ["id"], idKey: "id" });
   if (!got.rows.length || got.missed) {
     throw new Error(
       `content/themes.ts から1件目の宛先の id が読めなかった` +

@@ -45,7 +45,7 @@
  * ## 対照（`docs/island-standards.md` §13）
  *
  * **毎回いっしょに、わざと検査を外した写しで回して、狙った行が赤くなるか**を
- * 見る。外すのは7つ（下の `BREAKS`）。
+ * 見る。外すものは下の `BREAKS` に並べてある（数はここに書かない）。
  *
  * 回しかた:
  *
@@ -154,14 +154,12 @@ const KNOWN_ROUTES = [
   "islandApi.ts method === 'GET' && path === '/fund/history'",
   "islandApi.ts method === 'GET' && path === '/nextplans'",
   "islandApi.ts method === 'GET' && path === '/nordic/photos'",
-  "islandApi.ts method === 'GET' && path === '/notes'",
   "islandApi.ts method === 'GET' && path === '/notes/themes'",
   "islandApi.ts method === 'GET' && path === '/poll'",
   "islandApi.ts method === 'GET' && path === '/state'",
   "islandApi.ts method === 'GET' && path === '/stickies'",
   "islandApi.ts method === 'GET' && path === '/stickies/waiting'",
   "islandApi.ts method === 'GET' && path === '/streamevents'",
-  "islandApi.ts method === 'GET' && planOne",
   "islandApi.ts method === 'GET' && rlOne",
   "islandApi.ts method === 'POST' && abSc",
   "islandApi.ts method === 'POST' && abTok",
@@ -172,21 +170,14 @@ const KNOWN_ROUTES = [
   "islandApi.ts method === 'POST' && heartMatch",
   "islandApi.ts method === 'POST' && imageOne",
   "islandApi.ts method === 'POST' && path === '/alertbox/session'",
-  "islandApi.ts method === 'POST' && path === '/current'",
   "islandApi.ts method === 'POST' && path === '/me'",
-  "islandApi.ts method === 'POST' && path === '/nextplans'",
   "islandApi.ts method === 'POST' && path === '/nordic/photos'",
-  "islandApi.ts method === 'POST' && path === '/notes'",
   "islandApi.ts method === 'POST' && path === '/notes/themes'",
   "islandApi.ts method === 'POST' && path === '/roulette/doneru'",
   "islandApi.ts method === 'POST' && path === '/roulette/start'",
   "islandApi.ts method === 'POST' && path === '/roulette/yt-token'",
   "islandApi.ts method === 'POST' && path === '/stickies'",
   "islandApi.ts method === 'POST' && path === '/visit'",
-  "islandApi.ts method === 'POST' && planArchive",
-  "islandApi.ts method === 'POST' && planHeart",
-  "islandApi.ts method === 'POST' && planOne",
-  "islandApi.ts method === 'POST' && planStatus",
   "islandApi.ts method === 'POST' && planVideos",
   "islandApi.ts method === 'POST' && pollMatch",
   "islandApi.ts method === 'POST' && replyMatch",
@@ -606,10 +597,10 @@ console.log("\n# 0. 正しい値なら通って、ちゃんと書かれる（先
     `${b.code} / 書き込み ${b.wrote}`);
   if (b.code === 200) passed += 1;
 
-  const c = await call({method: "POST", path: "/nextplans",
-    body: {title: "にせの企画", cid: "c".repeat(36)}});
-  check("`POST /nextplans` が通る", c.code === 200 && c.wrote > 0,
-    `${c.code} / 書き込み ${c.wrote}`);
+  const c = await call({method: "POST", path: "/nextplans/plan-aaaaaa/videos",
+    token: "tok-ayato", body: {videoIds: ["aaaaaaaaaaa"]}});
+  check("`POST /nextplans/{id}/videos` が、あやとなら通る",
+    c.code === 200 && c.wrote > 0, `${c.code} / 書き込み ${c.wrote}`);
   if (c.code === 200) passed += 1;
 
   const d = await call({method: "GET", path: "/state"});
@@ -617,11 +608,31 @@ console.log("\n# 0. 正しい値なら通って、ちゃんと書かれる（先
     `${d.code}`);
   if (d.code === 200) passed += 1;
 
-  const e = await call({method: "POST", path: "/current", token: "tok-ayato",
-    body: {place: "にせの場所"}});
-  check("`POST /current` が、あやとなら通る", e.code === 200 && e.wrote > 0,
-    `${e.code} / 書き込み ${e.wrote}`);
+  const e = await call({method: "GET", path: "/nextplans"});
+  check("`GET /nextplans` が返る（机の「配信」が読む一覧）",
+    e.code === 200 && Array.isArray(e.body?.plans) && e.body.plans.length > 0,
+    `${e.code} / ${e.body?.plans?.length ?? "-"} 件`);
   if (e.code === 200) passed += 1;
+
+  /* **畳んだ口（#1281。2026-11-23）。** 畳む前の30日に本番で0回だった
+     （`python/admin/api_calls.py`）。あやとの合言葉で叩いても 404 で、
+     **1バイトも書かない。** 開け直したら赤くなる。「通る」の本数には数えない。 */
+  for (const [m, p, body] of [
+    ["POST", "/current", {place: "にせの場所"}],
+    ["GET", "/notes", null],
+    ["POST", "/notes", {planId: "p1", text: "にせの字", cid: "c".repeat(36)}],
+    ["POST", "/nextplans", {title: "にせの企画", cid: "c".repeat(36)}],
+    ["GET", "/nextplans/plan-aaaaaa", null],
+    ["POST", "/nextplans/plan-aaaaaa", {title: "にせの企画", cid: "c".repeat(36)}],
+    ["POST", "/nextplans/plan-aaaaaa/heart", {cid: "c".repeat(36)}],
+    ["POST", "/nextplans/plan-aaaaaa/status", {status: "done"}],
+    ["POST", "/nextplans/plan-aaaaaa/archive", {on: true}],
+  ]) {
+    const r = await call({method: m, path: p, token: "tok-ayato",
+      ...(body ? {body} : {})});
+    check(`\`${m} ${p}\` は畳んである（404・書き込み0）`,
+      r.code === 404 && r.wrote === 0, `${r.code} / 書き込み ${r.wrote}`);
+  }
 
   /* **畳んだ口（#860。2026-10-14）。** 開いていたころは「入っている人に
      1件だけ返す」を見ていた。いまは誰が叩いても 410 で、**1バイトも
@@ -685,17 +696,6 @@ const IMPERSONATE = [
     want: 401,
   },
   {
-    name: "`GET /nextplans?mine=1` に合言葉が無い",
-    c: {method: "GET", path: "/nextplans", query: {mine: "1"}},
-    want: 401,
-  },
-  {
-    name: "`POST /nextplans/{他人の企画}` を書き換える",
-    c: {method: "POST", path: "/nextplans/plan-aaaaaa", token: "tok-b",
-      body: {title: "よこどりした題", cid: "z".repeat(36)}},
-    want: 403,
-  },
-  {
     name: "`POST /roulette/{知らない席}/spin`",
     c: {method: "POST", path: `/roulette/${"f".repeat(32)}/spin`,
       token: "tok-ayato", body: {}},
@@ -747,8 +747,11 @@ console.log("\n# 2. 長さ・型・値域を、画面ではなくサーバが守
   setup();
   const st = await call({method: "GET", path: "/state"});
   const limits = st.body?.limits ?? {};
+  /* 下で1つずつ測る4本が、どれも数で入っていること（企画の題 `planTitle` は、
+     題を書く口ごと #1281 で畳んだので返さない） */
   check("`GET /state` が `limits` を返す",
-    Object.keys(limits).length >= 5, JSON.stringify(limits));
+    ["note", "reply", "name", "link"].every((k) => Number(limits[k]) > 0),
+    JSON.stringify(limits));
 
   /* **置き場に入った字を測る。** 返りを測ると、返すときだけ切っている
      形（置き場には長いまま入る）を見逃す。 */
@@ -763,14 +766,6 @@ console.log("\n# 2. 長さ・型・値域を、画面ではなくサーバが守
     (sticky?.text ?? "").length === limits.note,
     `${(sticky?.text ?? "").length} 字`);
 
-  setup();
-  await call({method: "POST", path: "/notes",
-    body: {planId: "p1", text: long, cid: "c".repeat(36)}});
-  const note = [...(store.get("islandNotes") ?? new Map()).values()]
-    .find((v) => v.planId === "p1");
-  check(`企画の付箋も、置き場で ${limits.note} 字`,
-    (note?.text ?? "").length === limits.note,
-    `${(note?.text ?? "").length} 字`);
 
   setup();
   await call({method: "POST", path: "/stickies/sticky-aaaaaa/reply",
@@ -780,14 +775,6 @@ console.log("\n# 2. 長さ・型・値域を、画面ではなくサーバが守
       limits.reply,
     `${(store.get("islandNotes")?.get("sticky-aaaaaa")?.reply ?? "").length} 字`);
 
-  setup();
-  await call({method: "POST", path: "/nextplans",
-    body: {title: long, cid: "c".repeat(36)}});
-  const plan = [...(store.get("islandStreamEvent") ?? new Map()).values()]
-    .find((v) => v.title?.startsWith("あ"));
-  check(`企画の題が、置き場で ${limits.planTitle} 字`,
-    (plan?.title ?? "").length === limits.planTitle,
-    `${(plan?.title ?? "").length} 字`);
 
   setup();
   await call({method: "POST", path: "/me", token: "tok-a",
@@ -827,12 +814,6 @@ const RANGE = [
     want: 400,
   },
   {
-    name: "島に無い景色（`POST /current`）",
-    c: {method: "POST", path: "/current", token: "tok-ayato",
-      body: {place: "にせの場所", theme: "まほうの国"}},
-    want: 400,
-  },
-  {
     /* `/remote`（島の遠隔操作）を使っていたが、2026-10-14 に口ごと消した
        （あやと「使い物にならなかったのでリバーとして欲しい。完全削除」）。
        **この試しは残す**——「表に無い行き先は断る」は口が1つ減っても要る。
@@ -840,24 +821,6 @@ const RANGE = [
     name: "表に無い行き先（`POST /そんな道はない`）",
     c: {method: "POST", path: "/そんな道はない", token: "tok-ayato", body: {}},
     want: 404,
-  },
-  {
-    name: "題が4字に満たない企画",
-    c: {method: "POST", path: "/nextplans",
-      body: {title: "あ", cid: "c".repeat(36)}},
-    want: 400,
-  },
-  {
-    name: "12,000バイトを超える企画",
-    c: {method: "POST", path: "/nextplans",
-      body: {title: "にせの企画", cid: "c".repeat(36), note: "x".repeat(13000)}},
-    want: 400,
-  },
-  {
-    name: "端末IDが弱い企画（あとで直せる鍵になる）",
-    c: {method: "POST", path: "/nextplans",
-      body: {title: "にせの企画", cid: "みじかい"}},
-    want: 400,
   },
 ];
 
@@ -918,7 +881,6 @@ const OWNER_ONLY = [
      **`GET` は誰でも**（付箋を貼る人が貼り先を選ぶため）なのでここには入れない。 */
   ["POST", "/notes/themes"],
   ["DELETE", "/notes/themes/theme-aaaaaa"],
-  ["POST", "/current"],
   ["POST", "/nordic/arrived"],
   ["POST", "/nordic/ended"],
   ["POST", "/nordic/photos"],
@@ -930,9 +892,7 @@ const OWNER_ONLY = [
   ["POST", "/stickies/sticky-aaaaaa/seen"],
   ["POST", "/stickies/sticky-aaaaaa/archive"],
   ["DELETE", "/stickies/sticky-aaaaaa/pic"],
-  ["POST", "/nextplans/plan-aaaaaa/status"],
   ["POST", "/nextplans/plan-aaaaaa/videos"],
-  ["POST", "/nextplans/plan-aaaaaa/archive"],
   ["POST", "/roulette/start"],
   ["POST", "/roulette/doneru"],
   ["POST", "/roulette/yt-token"],
@@ -1025,21 +985,11 @@ const CAPS = [
     c: {method: "GET", path: "/stickies", query: {mine: "1"}, token: "tok-a"},
   },
   {
-    name: "`GET /nextplans?mine=1` の窓（300）",
-    fill: () => {
-      for (let i = 0; i < 300; i++) {
-        seed("islandStreamEvent", `m${i}`, {title: "にせ", uid: "uid-a",
-          hidden: false, archived: false, createdAt: i});
-      }
-    },
-    c: {method: "GET", path: "/nextplans", query: {mine: "1"}, token: "tok-a"},
-  },
-  {
     name: "`GET /streamevents?day=` の窓（30）",
     fill: () => {
       for (let i = 0; i < 30; i++) {
         seed("islandStreamEvent", `d${i}`, {title: "にせ", date: "2026-01-01",
-          hidden: false, archived: false, status: "next", createdAt: i});
+          hidden: false, archived: false, source: "seed", createdAt: i});
       }
     },
     c: {method: "GET", path: "/streamevents", query: {day: "2026-01-01"}},
@@ -1156,9 +1106,7 @@ console.log("\n# 5. 誰でも読める口の返りに、突き合わせの鍵が
     ["GET /state", {method: "GET", path: "/state"}],
     ["GET /cards", {method: "GET", path: "/cards"}],
     ["GET /stickies", {method: "GET", path: "/stickies"}],
-    ["GET /notes", {method: "GET", path: "/notes"}],
     ["GET /nextplans", {method: "GET", path: "/nextplans"}],
-    ["GET /nextplans/:id", {method: "GET", path: "/nextplans/plan-aaaaaa"}],
     ["GET /characters", {method: "GET", path: "/characters"}],
     ["GET /streamevents/:id/images",
       {method: "GET", path: "/streamevents/plan-aaaaaa/images"}],
@@ -1308,14 +1256,23 @@ const BREAKS = [
     "配信の口に **1,000万円を超える額** → 400・書き込み0",
   ],
   [
-    /* `cleanText(body.text, MAX_NOTE_LEN)` は2か所にある（`/notes` と
-       `/stickies`）。置き換えが当たるのは**先に出てくる `/notes`** の側。 */
-    "企画あての付箋の本文を切らなくする",
+    /* `cleanText(body.text, MAX_NOTE_LEN)` は `/stickies` の1か所だけ
+       （企画あての `/notes` は #1281 で畳んだ）。 */
+    "付箋の本文を切らなくする",
     "islandApi.js",
     "const text = cleanText(body.text, MAX_NOTE_LEN);",
     "const text = String(body.text ?? \"\");",
     /* 数（いまは 2,000）は口の `limits.note` から入るので、ここには書かない */
-    "企画の付箋も、置き場で ",
+    "付箋の本文が、置き場で ",
+  ],
+  [
+    /* 畳んだ口（#1281）は、どこにも当たらずに最後の 404 へ落ちる。
+       そこを 200 にすると、畳んだ口が「答える」ようになる。 */
+    "畳んだ口が、答えてしまう",
+    "islandApi.js",
+    'res.status(404).json({ error: "not found", path });',
+    'res.status(200).json({ ok: true });',
+    "`POST /current` は畳んである（404・書き込み0）",
   ],
   [
     "窓が埋まっても鳴らさない",

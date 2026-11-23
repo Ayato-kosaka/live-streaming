@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import CardWall from "@/components/cards/CardWall";
 import HowToGet from "@/components/cards/HowToGet";
 import { DAY_BRIEFS } from "@/lib/cardDays";
@@ -70,7 +71,7 @@ export const metadata: Metadata = share({
  */
 export default function CardsPage() {
   return (
-    <PageShell crumbs={[{ label: "あやと島カード" }]}>
+    <PageShell crumbs={crumbsOf("/cards")}>
       <PageHead
         icon="tent-small"
         title="あやと島カード"
