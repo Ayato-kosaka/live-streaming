@@ -40,7 +40,12 @@ const STREAMS_OPEN = 2;
 export default function TiranaSufllaqePage() {
   const country = travelPage(COUNTRY);
   const city = travelCity(COUNTRY, CITY);
-  const all = CITY_STREAMS[A.streams.country]?.[A.streams.city] ?? [];
+  /* 出発の日（10-12）の配信は、配信の一覧ではスコピエの1本目に入っている（題が「北マケドニア共和国いこかー！？」）。
+     ケバブを買ったのはティラナのバスターミナルなので、場面は引く。一覧は街をまたいで探す */
+  const all = [
+    ...(CITY_STREAMS[A.streams.country]?.[A.streams.city] ?? []),
+    ...Object.values(CITY_STREAMS).flatMap((c) => Object.values(c).flat()),
+  ];
   const cited = A.streams.videos.map((v) => {
     const s = all.find((x) => x.videoId === v);
     if (!s) throw new Error(`tirana/sufllaqe/page.tsx: 場面を引いた回 ${v} が配信の一覧（cityStreams.ts）に無い`);
