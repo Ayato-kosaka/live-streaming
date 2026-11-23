@@ -1,6 +1,6 @@
 /*
  * 島で使う字だけを焼いた丸ゴシック。**自動生成。手で直さない。**
- * 焼いた元: cf6332aef7cc31e4（tools/fonts/weights.json と subset.py の指紋。`subset.py --stale` が読む）
+ * 焼いた元: bc13045b2109c4d9（tools/fonts/weights.json と subset.py の指紋。`subset.py --stale` が読む）
  * PR には入れない。master に入ったあと .github/workflows/fontbake.yml が焼いて積む
  *   DIST=site/.next-3250 SPORT=4250 node tools/sprites/fontweigh.mjs
  *   python3 tools/fonts/subset.py --export site/.next-3250
