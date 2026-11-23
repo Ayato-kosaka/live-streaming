@@ -241,7 +241,15 @@ async function main() {
     const ctx = await b.newContext({
       viewport: { width: W, height: H }, deviceScaleFactor: DPR, isMobile: true, hasTouch: true, reducedMotion: "reduce",
     });
-    await ctx.route(/^https?:\/\//, (r) => (ALLOW.test(r.request().url()) ? r.continue() : r.abort()));
+    /* 止めた外の要求は、行き先ごとに数えて出す（止めたものが絵に写らないことを、数で残す。§24.3） */
+    const stopped = new Map();
+    await ctx.route(/^https?:\/\//, (r) => {
+      const u = r.request().url();
+      if (ALLOW.test(u)) return r.continue();
+      const host = new URL(u).host;
+      stopped.set(host, (stopped.get(host) || 0) + 1);
+      return r.abort();
+    });
     const p = await ctx.newPage();
     const errors = [];
     p.on("pageerror", (e) => errors.push(String(e?.message || e)));
@@ -325,6 +333,7 @@ async function main() {
     }
     if (!simHandles.length) console.log("  つまみ（input[type=range]・role=slider）は、この面に無い");
     meta.errors = errors.length;
+    meta.stopped = Object.fromEntries(stopped);
     await ctx.close();
 
     // ---- 表紙と地図を横 240px に（画像検索の一覧の大きさ。`python/guide_thumb.py` と同じ見かた。読めるかは人が見る）
@@ -350,6 +359,8 @@ async function main() {
   console.log(`\n── 撮ったもの（幅 ${W}px・倍率 ${DPR}）`);
   console.log(`  節 ${meta.sections.length}（${shots}枚）・つまみ ${meta.sims.length}・240px ${meta.thumbs.length}・開いた畳み ${meta.folds.opened}`);
   console.log(`  絵 ${meta.images.all}枚（壊れた絵 ${meta.images.broken}）・JS の例外 ${meta.errors}（合否は crawl.mjs）`);
+  const st = Object.entries(meta.stopped || {});
+  console.log(`  止めた外の要求 ${st.reduce((n, [, k]) => n + k, 0)}件${st.length ? `（${st.map(([h, k]) => `${h} ${k}`).join("・")}）` : ""}。絵には写っていない`);
   console.log(`  置き場 ${OUT}`);
   if (bad.length) {
     for (const x of bad) console.log(`  ✗ ${x}`);
