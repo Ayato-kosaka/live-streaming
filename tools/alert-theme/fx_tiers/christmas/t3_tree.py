@@ -15,11 +15,12 @@
 あやとが決めた中身（#1034）: 家族4匹（ピポ・ジモモ・オレオ・ラブブ）でツリーに飾りを付ける。ラブブがピポを抱き上げて
 星を付けさせ、兄たちは飾りを運ぶ。猫は下の 28% の帯（〜999円の決まり）、上は配信画面が透ける。
 
-大きさ（2026-11-23 の見直し）: 1回目は猫が箱の高さの1割ほどで帯を使い切らず、一次確認の絵に見劣りした。
-一次確認の絵と同じに、猫とツリーで帯の高さの大部分を埋める: ツリー 296px（中身 288px・箱の 22.5%）・ラブブ（ピポを抱き上げた絵）中身 282px・兄たち 中身 164〜182px
-（12.8〜14.2%）。帯の天井（キャラ絵の箱の下の端 922px と、出る瞬間のふくらみ 942px）を越えないよう、ラブブの頭が 942 に来る
-所に足もとを置いた。そのぶん足もとは箱を広げたときに切れる高さ（1140px）より下に出るが、顔はどの猫も 1140 より上にある。
-横に並べきれないので、一次確認の絵に無い右の端の家は外した。オレオは箱の縁の溶かし（右 60px）より内に置く。
+大きさ（2026-11-23 の見直し）: 1回目は猫が箱の高さの1割ほどで小さすぎた。2回目は一次確認の絵に合わせて下 28% いっぱいに
+大きくしたら、箱を手で広げたとき（投げ銭のときはいつもそう）足と体の下が画面の下で切れ、壊れて見えた。
+切れないことを先に取り、猫もツリーも全身を、帯の天井（キャラ絵が出る瞬間のふくらみ 942px）〜広げたときに切れる高さ
+（1140px）に収める: ツリー 中身 194px（箱の 15.2%）・ラブブ（ピポを抱き上げた絵）中身 185px（14.5%）・兄たち 中身 159〜160px
+（12.5%）。帯が低いぶん横に詰め、ラブブはツリーの左の裾に重ねる。一次確認の絵に無い右の端の家は外した。
+オレオは箱の縁の溶かし（右 60px）より内に置く。
 
 絵は一次確認を描いた会話の続きで、層に分けて描いた（`fx_art/christmas/t3/`）。猫は顔の大きさをそろえて並べて描かせたので、
 並べ絵ごとに同じ倍率で縮める（ラブブの顔が兄たちの 1.25 倍）。掛ける飾りのうち金のリボンはオレオの抱えた絵から切り、
@@ -39,15 +40,15 @@ ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "fx_a
 
 # 置き場（x）。ラブブは左（右を向く）、ツリーはその右（ラブブがツリーの左の裾の前に立つ）、兄たちは右。
 # プレゼントの箱はツリーの右の根もと
-LX, TX, GX, JX, OX = 145.0, 258.0, 335.0, 478.0, 592.0
-TRIP_J, TRIP_O = 385.0, 392.0   # 兄たちが飾りを掛けに行く所（ツリーの右の裾の前）
+LX, TX, GX, JX, OX = 150.0, 232.0, 318.0, 470.0, 590.0
+TRIP_J, TRIP_O = 345.0, 352.0   # 兄たちが飾りを掛けに行く所（ツリーの右の裾の前）
 # 足もと（y）。ラブブは手前、兄たちは少し奥。ツリーの根もとは雪の吹きだまりの中
-G_MOM, G_KID, G_TREE = 1228.0, 1212.0, 1238.0
+G_MOM, G_KID, G_TREE = 1129.0, 1125.0, 1139.0
 # 高さ（px）。並べ絵ごとに同じ倍率で縮めた、元の切り抜きの高さから
-H_CARRY, H_LIFT = 254.0, 286.0
-H_JW, H_JL, H_OW, H_OJ = 186.0, 168.0, 185.0, 172.0
-H_TREE, H_STAR, H_GIFT = 296.0, 50.0, 70.0
-H_BALL, H_BOW = 40.0, 46.0
+H_CARRY, H_LIFT = 167.0, 188.0
+H_JW, H_JL, H_OW, H_OJ = 164.0, 148.0, 163.0, 152.0
+H_TREE, H_STAR, H_GIFT = 198.0, 40.0, 52.0
+H_BALL, H_BOW = 30.0, 34.0
 # 絵の中の目印（絵の幅・高さに対する割合。返していない向き。返すのは pose_point がやる）
 PAW_CARRY = (0.748, 0.457)   # 抱いて歩く絵の、ピポの上げた前足
 PAW_LIFT = (0.061, 0.179)    # 抱き上げた絵の、ピポの伸ばした前足（左上。右向きに返して使う）
@@ -57,7 +58,7 @@ LAND = 1.75                  # 星がツリーに付く秒
 LIGHT = (1.78, 2.15)         # 電球が下から順に灯る秒
 # 掛けた飾りの居場所（ツリーの右の裾）と、掛かる秒（兄それぞれの輪の中の、跳んだ頂）。
 # 滞在の輪の終わり（3.7〜3.95）に光の粒になって消え、継ぎ目の前に消えきる
-BALL_AT, BOW_AT = (330.0, 1112.0), (316.0, 1046.0)
+BALL_AT, BOW_AT = (292.0, 1060.0), (278.0, 1006.0)
 HANG, GONE = 1.05, (3.7, 3.95)
 LAG_O = 1.7                  # オレオはジモモの何秒あとか
 
@@ -227,14 +228,14 @@ class Scene(Stage):
         ceil = self.ceiling(c)
         mom = self.mom(c)
         if mom is not None:
-            contact_shadow(cv, mom.x, G_MOM, 88, 0.28 * fk * mom.k)
+            contact_shadow(cv, mom.x, G_MOM, 62, 0.28 * fk * mom.k)
             put_pose(tg, mom, G_MOM, ceil, k=fk, rim=0.35, light_dir=(-0.5, -1.0))
         self.draw_star(c, cv, mom, ceil, out_k)
         ox_now = self.oreo_x(c)
         for who, pose in (("j", self.jimomo(c, ox_now)), ("o", self.oreo(c))):
             if pose is None:
                 continue
-            contact_shadow(cv, pose.x, G_KID - pose.ground, 60 * (1 - min(0.6, pose.lift / 100)), 0.28 * fk * pose.k)
+            contact_shadow(cv, pose.x, G_KID - pose.ground, 44 * (1 - min(0.6, pose.lift / 100)), 0.28 * fk * pose.k)
             put_pose(tg, pose, G_KID, ceil, k=fk, rim=0.35, light_dir=(-0.5, -1.0))
             # 掛ける瞬間（それぞれの輪の 1.05）: 抱えた飾りが光ってツリーへ渡る
             if c.clip == "stay":
@@ -256,7 +257,7 @@ class Scene(Stage):
             g = self.snow
             a_ = g.age(c)
             x = g.r[:, 0] * W + 30 * np.sin(6.283 * (a_ * 2 + g.r[:, 1]))
-            y = top + 10 + a_ * (1210 - top - 10)
+            y = top + 10 + a_ * (1130 - top - 10)
             near = g.r[:, 2] < 0.25
             kd = np.sin(np.pi * a_) ** 0.5 * amb * np.where(near, 0.6, 0.38)
             sp = Splat()
@@ -268,7 +269,7 @@ class Scene(Stage):
         for j in range(gl.n):
             tw = math.sin(math.pi * a_[j]) ** 6
             if tw > 0.05:
-                fxv.stamp(cv.L, self.kit.star["white" if j % 2 else "cyan"], 40 + gl.r[j, 0] * 640, 1214 + gl.r[j, 1] * 22,
+                fxv.stamp(cv.L, self.kit.star["white" if j % 2 else "cyan"], 40 + gl.r[j, 0] * 640, 1130 + gl.r[j, 1] * 14,
                           0.45 * tw * sk)
         self.finish_hero(hero, bloom=0.0)
         return cv.finish(bloom=0.55, edge=self.edge), None
@@ -277,11 +278,12 @@ class Scene(Stage):
         """帯の足もとの雪（波打つ上の端・下は青い陰）。下の端は箱の縁で溶ける"""
         if k <= 0.003:
             return
-        y0, y1 = 1180, 1280
+        y0, y1 = 1100, 1280
         xs = np.arange(W, dtype=np.float32)[None, :]
         ys = np.arange(y0, y1, dtype=np.float32)[:, None]
-        top = 1206 + 4 * np.sin(xs / 53.0) + 3 * np.sin(xs / 23.0 + 1.3) - 8 * np.exp(-((xs - TX) / 110) ** 2)
-        a = np.clip((ys - top) / 5.0, 0, 1)
+        top = 1128 + 4 * np.sin(xs / 53.0) + 3 * np.sin(xs / 23.0 + 1.3) - 8 * np.exp(-((xs - TX) / 110) ** 2)
+        # 吹きだまりは足もとの細い帯だけ（厚くすると、ふだんの箱の下に淡い青の板が広がって見えた）
+        a = np.clip((ys - top) / 5.0, 0, 1) * np.clip((1186 - ys) / 40.0, 0, 1)
         a = a * (0.6 + 0.4 * np.clip(1 - np.abs(xs - 360) / 420, 0, 1)) * 0.95 * k
         shade = np.clip((ys - top) / 26.0, 0, 1)[..., None]
         col = (1 - shade) * np.float32([0.97, 0.98, 1.0]) + shade * np.float32([0.66, 0.76, 0.95])
@@ -377,7 +379,7 @@ class Scene(Stage):
                 return Pose(self.j_walk, H_JW, lerp(860, JX, p), lift, flip=True, sx=1 + 0.08 * land, sy=1 - 0.1 * land)
             if 1.8 <= Ti < 2.05:
                 q = (Ti - 1.8) / 0.25
-                return Pose(self.j_lift, H_JL, JX, arc(q, 40), flip=True, sy=1 + 0.05 * math.sin(math.pi * q))
+                return Pose(self.j_lift, H_JL, JX, arc(q, 30), flip=True, sy=1 + 0.05 * math.sin(math.pi * q))
             # 着地のつぶれは登場の終わり（2.2）までに戻しきる（滞在の頭と同じ姿で終える）
             land = math.exp(-((Ti - 2.07) / 0.04) ** 2) if Ti >= 2.05 else 0.0
             return Pose(self.j_walk, H_JW, JX, 0.0, flip=True, sx=1 + 0.08 * land, sy=1 - 0.1 * land)
@@ -401,7 +403,7 @@ class Scene(Stage):
         if s < 1.3:
             # 跳び上がって、赤い玉をツリーへ掛ける（頂が 1.05）
             q = (s - 0.8) / 0.5
-            return Pose(self.j_lift, H_JL, TRIP_J - 8 * math.sin(math.pi * q), arc(q, 36), flip=True,
+            return Pose(self.j_lift, H_JL, TRIP_J - 8 * math.sin(math.pi * q), arc(q, 30), flip=True,
                         rot=-7 * math.sin(math.pi * q), sy=1 + 0.05 * math.sin(math.pi * q))
         if s < 1.9:
             p = (s - 1.3) / 0.6
@@ -434,7 +436,7 @@ class Scene(Stage):
                 return Pose(self.o_walk, H_OW, lerp(900, OX, p), lift, flip=True, sx=1 + 0.08 * land, sy=1 - 0.1 * land)
             if 1.82 <= Ti < 2.07:
                 q = (Ti - 1.82) / 0.25
-                return Pose(self.o_jump, H_OJ, OX, arc(q, 44), rot=8 * math.sin(2 * math.pi * q), sy=1 + 0.05 * math.sin(math.pi * q))
+                return Pose(self.o_jump, H_OJ, OX, arc(q, 30), rot=8 * math.sin(2 * math.pi * q), sy=1 + 0.05 * math.sin(math.pi * q))
             land = math.exp(-((Ti - 2.09) / 0.04) ** 2) if Ti >= 2.07 else 0.0
             return Pose(self.o_walk, H_OW, OX, 0.0, flip=True, sx=1 + 0.08 * land, sy=1 - 0.1 * land)
         if c.clip == "outro":
@@ -443,13 +445,13 @@ class Scene(Stage):
             return Pose(self.o_walk, H_OW, OX + w * 320, lift, sx=1 + 0.08 * land, sy=1 - 0.1 * land)
         q = self.oreo_q(c)
         # ジモモの前を通る（手前なので少し下に）
-        front = 4.0 * math.exp(-((self.oreo_x(c) - JX) / 60) ** 2)
+        front = 2.0 * math.exp(-((self.oreo_x(c) - JX) / 60) ** 2)
         if 0.2 <= q < 0.8:
             lift, land = hops(q, 0.2, 0.8, 3, 20)
             p = Pose(self.o_walk, H_OW, self.oreo_x(c), lift, flip=True, sx=1 + 0.08 * land, sy=1 - 0.1 * land)
         elif 0.8 <= q < 1.3:
             r = (q - 0.8) / 0.5
-            p = Pose(self.o_jump, H_OJ, TRIP_O, arc(r, 38), rot=-6 * math.sin(math.pi * r), sy=1 + 0.05 * math.sin(math.pi * r))
+            p = Pose(self.o_jump, H_OJ, TRIP_O, arc(r, 30), rot=-6 * math.sin(math.pi * r), sy=1 + 0.05 * math.sin(math.pi * r))
         elif 1.3 <= q < 1.9:
             lift, land = hops(q, 1.3, 1.9, 3, 18)
             p = Pose(self.o_walk, H_OW, self.oreo_x(c), lift, sx=1 + 0.08 * land, sy=1 - 0.1 * land)
