@@ -156,24 +156,38 @@ export function Stamps({ b, eaten }: { b: LegendBook; eaten: Eaten[] }) {
         </span>
         {yen > 0 && <i>{yen.toLocaleString("ja-JP")}円</i>}
       </p>
+      {/* 台紙の丸は見るだけ（390幅で1つ 30px ほどなので、押しどころにしない） */}
       <ol className="lb-card" aria-label={`${b.sections.stamps} ${eaten.length}/${b.goal.n}`}>
-        {slots.map((e, i) => (
-          <li key={i} className={e ? "is-done" : undefined}>
-            {e ? <Stamp e={e} b={b} /> : <span aria-hidden="true">{i + 1}</span>}
-          </li>
-        ))}
+        {slots.map((e, i) => {
+          const d = e?.dish ? dishOf(b, e.dish) : undefined;
+          return (
+            <li key={i} className={e ? "is-done" : undefined} style={d ? tone(d.region) : undefined} aria-hidden="true">
+              {e?.pic ? <Picture pic={e.pic} sizes="40px" ratio="1 / 1" /> : i + 1}
+            </li>
+          );
+        })}
       </ol>
+      {/* 食べた1食ずつ（新しい順）。行が配信の場面へのリンク。0食のときは出さない */}
+      {eaten.length > 0 && (
+        <ol className="lb-eaten" reversed>
+          {[...eaten].reverse().map((e) => (
+            <li key={e.n}>
+              <Stamp e={e} b={b} />
+            </li>
+          ))}
+        </ol>
+      )}
     </BookSec>
   );
 }
 
-/** 食べた1食の丸。写真・何食目・街・料理・払った額・配信の時刻 */
+/** 食べた1食の行。写真・何食目・街・料理・払った額・配信の時刻 */
 function Stamp({ e, b }: { e: Eaten; b: LegendBook }) {
   const d = e.dish ? dishOf(b, e.dish) : undefined;
   const body = (
     <>
-      {e.pic ? <Picture pic={e.pic} sizes="80px" ratio="1 / 1" /> : <b>{e.n}</b>}
-      <span className="lb-stamp-b">
+      {e.pic ? <Picture pic={e.pic} sizes="48px" ratio="1 / 1" /> : <span className="lb-eaten-n">{e.n}</span>}
+      <span>
         <b>
           {e.n}
           {b.goal.unit}目 {e.name}

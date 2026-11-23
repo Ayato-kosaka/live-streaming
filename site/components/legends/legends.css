@@ -63,7 +63,7 @@
 .lb-count.is-sec b { font-size: 40px; }
 
 .lb-start { margin: var(--sp-2) 0 0; font-size: 16px; font-weight: 800; }
-.lb-cover-card { display: flex; justify-content: center; gap: 6px; margin: var(--sp-3) auto 0; padding: 8px 0; min-height: 44px; max-width: 360px; }
+.lb-cover-card { display: flex; justify-content: center; align-items: center; gap: 6px; margin: var(--sp-3) auto 0; padding: 8px 0; min-height: 48px; max-width: 360px; }
 .lb-cover-card span { flex: 1; max-width: 26px; aspect-ratio: 1 / 1; border-radius: 50%; border: 2px dashed color-mix(in srgb, var(--ink) 25%, transparent); }
 .lb-cover-card span.is-done { border: 0; background: var(--gb-c); }
 
@@ -77,7 +77,7 @@
 .lb-quote { margin: 0; padding: var(--sp-3); border-radius: var(--r-1); background: var(--gb-c-lo); }
 .lb-quote blockquote { margin: 0; font-size: 18px; font-weight: 900; line-height: 1.5; }
 .lb-quote figcaption { margin-top: 6px; font-size: 13px; }
-.lb-quote a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--ink); }
+.lb-quote a { display: inline-flex; align-items: center; gap: 4px; min-height: 48px; color: var(--ink); }
 
 /* ---- 2 食べた100食（台紙） -------------------------------------------- */
 
@@ -107,10 +107,15 @@
 }
 
 .lb-card > li.is-done { border: 0; background: color-mix(in srgb, var(--lb-tone, var(--gb-c)) 100%, transparent); color: var(--ink); overflow: hidden; }
-.lb-card > li.is-done > a,
-.lb-card > li.is-done > span { display: grid; place-items: center; width: 100%; height: 100%; color: inherit; text-decoration: none; }
 .lb-card > li.is-done .gb-pic { width: 100%; height: 100%; border-radius: 50%; }
-.lb-stamp-b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+/* 食べた1食の行（台紙の下。丸は小さいので押しどころにしない。行が場面へのリンク） */
+.lb-eaten { display: grid; gap: 4px; margin: var(--sp-2) 0 0; padding: 0; list-style: none; }
+.lb-eaten a,
+.lb-eaten > li > span { display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 10px; min-height: 56px; padding: 4px 8px; border-radius: var(--r-1); background: var(--gb-card); color: var(--ink); text-decoration: none; }
+.lb-eaten .gb-pic { width: 48px; border-radius: 50%; }
+.lb-eaten-n { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--lb-tone, var(--gb-c-lo)); font-weight: 900; }
+.lb-eaten b { display: block; font-size: 14.5px; font-weight: 900; }
+.lb-eaten i { font-style: normal; font-size: 12.5px; color: var(--ink-2); }
 
 @media (min-width: 720px) { .lb-card { gap: 8px; max-width: 620px; padding: var(--sp-3); } .lb-card > li { font-size: 12px; } }
 
@@ -171,12 +176,14 @@
 
 .lb-regions p { margin: var(--sp-2) 0 0; font-size: 14.5px; line-height: 1.7; }
 
-.lb-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.lb-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+/* 出どころの行と押しどころが触れないように、間を空ける（`reachwatch` の「隣に食われた」） */
+.lb-regions .lb-chips { margin-bottom: var(--sp-3); }
 .lb-chips > span { font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
 
 .lb-chip {
   display: inline-grid;
-  min-height: 44px;
+  min-height: 48px;
   align-content: center;
   padding: 2px 10px;
   border-radius: 10px;
