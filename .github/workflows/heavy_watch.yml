@@ -103,7 +103,17 @@ on:
         default: ""
         type: string
       pr:
-        description: "guide の結果を書く PR の番号（押した枝がその PR の枝でなければ止まる）"
+        description: "guide・legend の結果を書く PR の番号（押した枝がその PR の枝でなければ止まる。legend は無くても走る）"
+        required: false
+        default: ""
+        type: string
+      legend:
+        description: "企画の面を1本で回す（slug。例 nomad-kitchen-car）。作業の枝（--ref）で押す。pr は任意（legend）"
+        required: false
+        default: ""
+        type: string
+      stills:
+        description: "legend の 3D の静止画を枝の site/public/legends/<slug>/stills/ に積むなら commit。空なら撮って見るだけ"
         required: false
         default: ""
         type: string
@@ -148,8 +158,8 @@ jobs:
   #   置いてある絵に当たる回（run 35421444959）… **247秒**
   #     絵を落とすところが 1秒未満になる
   browserwatch:
-    # 街のガイドを回した回は、積み戻したあとの head を見る（`guide` が無い回は飛ばされて、すぐ走る）
-    needs: [guide]
+    # 街のガイド・企画の面を回した回は、積み戻したあとの head を見る（`guide`・`legend` が無い回は飛ばされて、すぐ走る）
+    needs: [guide, legend]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない
     # 141面を JS 切り／入りで2回ずつ開くぶん（`preclaim`）を足したので 25 → 35。
@@ -160,7 +170,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ needs.guide.outputs.sha || github.sha }}
+          ref: ${{ needs.legend.outputs.sha || needs.guide.outputs.sha || github.sha }}
 
       - uses: actions/setup-node@v5
         with:
@@ -569,7 +579,7 @@ jobs:
   # `route.mjs` の `offline` が返す差し替えで足りる（`browserwatch` は図鑑の絵の
   # はみ出しを見るので要る）。そのぶんここは 345秒ぶん安い。
   reachwatch:
-    needs: [guide]
+    needs: [guide, legend]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない
     timeout-minutes: 30
@@ -577,7 +587,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ needs.guide.outputs.sha || github.sha }}
+          ref: ${{ needs.legend.outputs.sha || needs.guide.outputs.sha || github.sha }}
 
       - uses: actions/setup-node@v5
         with:
@@ -641,7 +651,8 @@ jobs:
           exit "$rc"
 
 
-  # **書体の測り直しと焼き直し**（手で押したときだけ。`fonts` を入れる。街のガイドは下の `guide` が全部の面を測る）。
+  # **書体の測り直しと焼き直し**（手で押したときだけ。`fonts` を入れる。街のガイドは下の `guide` が全部の面を、
+  # 企画の面は下の `legend` がその面を測る。どちらかと一緒に押した回は、ここは回らない——同じ表を2本で書かないため）。
   #
   # 面の字を足したら、その面を `fontweigh.mjs` で測り直して表（`tools/fonts/weights.json`）へ差し込み、
   # `subset.py` で焼き直す（`docs/country-guide.md` 6-2）。しないと、その面が焼いた束に無い字を描いて
@@ -650,7 +661,7 @@ jobs:
   # **artifact `fonts` に置くのは表（`tools/fonts/weights.json`）だけ。** 落として枝に積む。束は積まない
   # （master に入ったあと `fontbake.yml` が焼く。PR の見張りはその場で焼いてから見る）。
   fontbake:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.fonts != '' && inputs.guide == '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.fonts != '' && inputs.guide == '' && inputs.legend == '' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
@@ -989,6 +1000,405 @@ jobs:
           [[ "$PR" =~ ^[0-9]+$ ]] || { echo "::error::pr は PR の番号だけ"; exit 2; }
           [ -f /tmp/guide/rows.tsv ] || { echo "表の元が無い（guide が入力で止まった）"; exit 0; }
           python3 python/guide_run.py report --rows /tmp/guide/rows.tsv --pr "$PR" --guide "$GUIDE" --sha "$SHA" --pushed "$PUSHED"
+
+  # **企画の面（`/legends/<企画>`）を1本で回す**（手で押したときだけ。`legend=<slug>` を入れ、作業の枝で押す。`pr` は任意）。
+  #
+  #   gh workflow run heavy_watch.yml --ref <枝> -f legend=nomad-kitchen-car                   # 回して、表と絵を見る
+  #   gh workflow run heavy_watch.yml --ref <枝> -f legend=nomad-kitchen-car -f pr=<番号>      # 表を PR に1コメント
+  #   gh workflow run heavy_watch.yml --ref <枝> -f legend=nomad-kitchen-car -f stills=commit  # 3D の静止画も枝に積む
+  #
+  # 上の `guide` の写し（#1418 のキッチンカーの面のために 2026-11-23 に足した。インドの面 `india-street-food` も同じ口で回る）。
+  # 作業箱では書き出し・ブラウザ・撮影を回さない（`docs/island-standards.md` §19）。担当は**表と絵1〜2枚だけ読む**。
+  # PR を開く前から押せる（`pr` が無ければ PR には書かない）。
+  #
+  #   1. 焼く道具の `--check`（焼いたものが材料と同じか）。企画ごとの道具は「入力を確かめる」の中に1行ずつ。無ければ飛ばす
+  #   2. 書き出す
+  #   3. 書体: **この面だけ**測って、表（`tools/fonts/weights.json`）に無い字を足す（`python/font_table.py`。足すだけ）。
+  #      足したら焼き直して書き出し直す（焼いた束は見張りのためだけ。積まない——master に入ったあと `fontbake.yml` が焼く）。
+  #      **企画の面の書体はこの口の中で測って積む。** `fonts=` と一緒には押せない（`fontbake` と2本で同じ表を書くため。入力で止まる）
+  #   4. この面だけの見張り: crawl・preclaim・firstload・hitbox（48px）・字の濃さ 4.5（`tapink.mjs` は面を絞れないので、
+  #      あれが面ぜんぶに回す子 shotstable・inkpx・inkband を、同じ渡しかたでこの面だけ）・fontfall・fontbudget
+  #   5. `tools/sprites/legendshot.mjs`: 390幅・倍率2の節ごとの絵（畳みを開いた姿・つまみの最初の姿）・240px の表紙と地図・面の HTML
+  #      （前の回の HTML と比べた1行も。直しの前後で HTML が変わってはいけない面——インドの面——を比べる）
+  #   6. `tools/sprites/van3d.mjs`（3D を持つ企画だけ。道具が在れば）: 3D の静止画と合格の数
+  #   7. 絵を枝 `review-media/legend-<slug>` に置く（orphan・1コミット・force。作業箱は artifact を落とせないので git で取る:
+  #      `git fetch origin review-media/legend-<slug>` → `git show FETCH_HEAD:<ファイル>`）。artifact `legend-shots` にも同じもの
+  #   8. 生まれたファイルだけを枝に積み戻す（書体の表と、`stills=commit` で van3d が緑の回だけ `site/public/legends/<slug>/stills/`。
+  #      ほかが変わっていたら1つも積まない。master には積まない）→ 積んだ head で Selftests を起こす
+  #   9. 表は `legend_report` が組む（同じ run の重い見張りが終わってから。job の summary・log の末尾・`pr` があれば PR に1コメント。
+  #      何度押しても同じ1つを書き換える）。途中の行は、この job の log の末尾にも出す
+  #
+  # datebake・preclaim（全面）・nextempty・firstload（全面）・reachwatch は、同じ run の `browserwatch` と `reachwatch` が
+  # **積み戻したあとの head** で回す（2本は `needs: [guide, legend]`）。
+  legend:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.legend != '' }}
+    runs-on: ubuntu-24.04
+    # 書き出し2回・字の濃さ（送りながら）・3D の静止画で、ひと回り30分前後の見込み（2026-11-23。測ったら直す）
+    timeout-minutes: 75
+    permissions:
+      contents: write
+      actions: write
+      issues: write
+      pull-requests: write
+    concurrency:
+      group: legend-${{ github.ref }}
+      cancel-in-progress: false
+    outputs:
+      sha: ${{ steps.push.outputs.sha }}
+      pushed: ${{ steps.push.outputs.pushed }}
+      media: ${{ steps.media.outputs.branch }}
+    env:
+      LEGEND: ${{ inputs.legend }}
+      PR: ${{ inputs.pr }}
+      STILLS: ${{ inputs.stills }}
+      WITH_GUIDE: ${{ inputs.guide }}
+      WITH_FONTS: ${{ inputs.fonts }}
+      ROWS: /tmp/legend/rows.tsv
+      SHOTS: /tmp/legend-shots
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      # **企画・枝・PR が合っていなければ、1つも回さない。** 積み戻す先を取り違えると、別の枝に書体の表と静止画が積まれる
+      - name: 入力を確かめる（企画・PR・押した枝）
+        run: |
+          set -euo pipefail
+          printf '%s' "$LEGEND" | grep -Eq '^[a-z0-9]+(-[a-z0-9]+)*$' || { echo "::error::legend は企画の slug（小文字・数字・-）: $LEGEND"; exit 2; }
+          test -f "site/app/legends/$LEGEND/page.tsx" || { echo "::error::企画の面が無い: site/app/legends/$LEGEND/page.tsx"; exit 2; }
+          [ -z "$WITH_GUIDE" ] || { echo "::error::guide と legend は別々に押す"; exit 2; }
+          [ -z "$WITH_FONTS" ] || { echo "::error::legend は面の書体を自分で測って積む。fonts と一緒に押さない"; exit 2; }
+          case "$STILLS" in ""|commit) ;; *) echo "::error::stills は commit か空: $STILLS"; exit 2;; esac
+          case "$GITHUB_REF_NAME" in master|main) [ -z "$STILLS" ] || { echo "::error::master には積み戻さない。作業の枝で押す（--ref <枝>）"; exit 2; };; esac
+          if [ -n "$PR" ]; then
+            [[ "$PR" =~ ^[0-9]+$ ]] || { echo "::error::pr は PR の番号だけ: $PR"; exit 2; }
+            head="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" -q 'select(.state=="open") | .head.ref')"
+            [ "$head" = "$GITHUB_REF_NAME" ] || { echo "::error::#$PR の枝（${head:-閉じている}）と押した枝（$GITHUB_REF_NAME）が違う"; exit 2; }
+          fi
+          mkdir -p /tmp/legend "$SHOTS"
+          # 企画ごとの道具（焼く道具は python/<名>.py、3D は tools/sprites/<名>.mjs。無い道具は飛ばす。企画を足したら1行ずつ）
+          bake=legend_book_bake
+          v3=""
+          if [ "$LEGEND" = nomad-kitchen-car ]; then
+            bake=legend_kitchen_bake
+            v3=van3d
+          fi
+          { echo "BAKE=$bake"; echo "V3=$v3"; echo "PAGE=/legends/$LEGEND"; } >> "$GITHUB_ENV"
+
+      - name: 依存を入れる
+        run: |
+          set -euo pipefail
+          (cd site && npm ci --no-audit --no-fund)
+          (cd tools/sprites && npm ci --no-audit --no-fund)
+          pip install -r python/requirements.txt fonttools brotli
+
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          test -x /opt/pw-browsers/chromium-1194/chrome-linux/chrome
+
+      - name: 1. 焼いたものが材料と同じか（焼く道具の --check）
+        run: |
+          set -uo pipefail
+          if [ -f "python/$BAKE.py" ]; then
+            python3 python/guide_run.py run --rows "$ROWS" --name "焼いたものが材料と同じか（$BAKE --check）" -- python3 "python/$BAKE.py" "$LEGEND" --check
+          else
+            python3 python/guide_run.py row "焼いたものが材料と同じか" skip --why "焼く道具（python/$BAKE.py）がまだ無い" --rows "$ROWS"
+          fi
+
+      - name: 2. 書き出す
+        working-directory: site
+        env:
+          NEXT_DIST_DIR: .next-ci
+        run: python3 ../python/guide_run.py run --rows "$ROWS" --name "書き出す（next build）" -- npx next build
+
+      # **この面だけを測る**（字だけでなく窓と送りも見る、手で押す fontbake と同じ測りかた）。表には足すだけ（`font_table.py` の和）。
+      # 焼き直したら書き出し直す——束は CSS に焼き込まれるので、書き出し直さないと下の見張りが古い束を見る
+      - name: 3. この面の書体を測って焼く
+        run: |
+          set -uo pipefail
+          R=(python3 python/guide_run.py run --rows "$ROWS")
+          if [ ! -f "site/.next-ci$PAGE.html" ]; then
+            python3 python/guide_run.py row "書体を測る（この面）" skip --why "書き出しに面が無い（site/.next-ci$PAGE.html）" --rows "$ROWS"
+            exit 0
+          fi
+          python3 -m http.server 4215 --directory site/.next-ci >/tmp/legend/serve-fw.log 2>&1 &
+          sv=$!
+          for _ in $(seq 30); do curl -sf -o /dev/null "http://127.0.0.1:4215/index.html" && break; sleep 1; done
+          "${R[@]}" --name "書体を測る（この面）" -- \
+            timeout 1200 env ONLY="$PAGE.html" OUT=/tmp/legend/w.json DIST=site/.next-ci SPORT=4215 node tools/sprites/fontweigh.mjs
+          kill "$sv" 2>/dev/null || true
+          "${R[@]}" --name "書体の表に差し込む（font_table）" -- python3 python/font_table.py --got /tmp/legend/w.json
+          # 焼いたものは積まない（master に入ったあと fontbake.yml が焼く）。ここで焼くのは、下の見張りが
+          # master で焼かれるものと同じ束を見るため
+          if python3 tools/fonts/subset.py --stale; then
+            python3 python/guide_run.py row "書体を焼く（見張りのため。積まない）" skip --why "焼いたものが表に追いついている" --rows "$ROWS"
+            exit 0
+          fi
+          "${R[@]}" --name "書体を焼く（見張りのため。積まない）" -- python3 tools/fonts/subset.py --export site/.next-ci
+          cd site && NEXT_DIST_DIR=.next-ci python3 ../python/guide_run.py run --rows "$ROWS" --name "焼いた書体で書き出し直す" -- npx next build
+
+      # 1本ずつ終了コードを行にする（落ちた1本で止めない）。止まった道具で job ごと打ち切られないよう、1本20分で切る
+      - name: 4. この面の見張り
+        run: |
+          set -uo pipefail
+          R=(python3 python/guide_run.py run --rows "$ROWS")
+          if [ ! -f "site/.next-ci$PAGE.html" ]; then
+            python3 python/guide_run.py row "この面の見張り" skip --why "書き出しに面が無い（site/.next-ci$PAGE.html）" --rows "$ROWS"
+            exit 0
+          fi
+          python3 -m http.server 4215 --directory site/.next-ci >/tmp/legend/serve.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do curl -sf -o /dev/null "http://127.0.0.1:4215/index.html" && break; sleep 1; done
+          echo "見る面: $PAGE"
+          # 押しどころの札は hitbox.mjs の SEL_ALL（tapink.mjs と同じもの。ここに写さない）
+          SEL="$(node --input-type=module -e 'const { SEL_ALL } = await import("./tools/sprites/hitbox.mjs"); console.log(SEL_ALL)')"
+          freeze="$PWD/tools/sprites/freeze.mjs"
+          T=(timeout 1200)
+          "${R[@]}" --name "h1・JSエラー・横あふれ・リンク切れ（crawl）" -- "${T[@]}" env DIST=site/.next-ci SPORT=4215 ONLY="$PAGE.html" node tools/sprites/crawl.mjs
+          "${R[@]}" --name "JS が動く前の言い切り（preclaim）" -- "${T[@]}" env DIST=site/.next-ci SPORT=4215 ONLY="$PAGE.html" node tools/sprites/preclaim.mjs
+          "${R[@]}" --name "最初の1画面の重さ（firstload）" -- "${T[@]}" env DIST=site/.next-ci SPORT=4215 ONLY="$PAGE" node tools/sprites/firstload.mjs
+          "${R[@]}" --name "押しどころ 48px（hitbox）" -- "${T[@]}" env PORT=4215 W=390 SEL="$SEL" PAGES="$PAGE" node tools/sprites/hitbox.mjs
+          # 字の濃さは、撮りが揃う面でしか読めない（tapink.mjs の頭）。この行が赤なら下の2行は読まない
+          "${R[@]}" --name "撮りの安定（shotstable）" -- "${T[@]}" env PORT=4215 W=390 DPR=2 SEED="$freeze" PAGES="$PAGE" node tools/sprites/shotstable.mjs
+          "${R[@]}" --name "字の濃さ 4.5（inkpx）" -- "${T[@]}" env PORT=4215 W=390 DPR=2 TAG=legend OPEN=1 SEED="$freeze" PAGES="$PAGE" node tools/sprites/inkpx.mjs
+          "${R[@]}" --name "字の濃さ 4.5・送りながら（inkband）" -- "${T[@]}" env PORT=4215 W=390 DPR=2 TAG=legend-band PAGES="$PAGE" node tools/sprites/inkband.mjs
+          "${R[@]}" --name "端末の書体に落ちる字（fontfall）" -- "${T[@]}" env SPORT=4215 node tools/sprites/fontfall.mjs "$PAGE"
+          "${R[@]}" --name "書体の重さと表の古さ（fontbudget）" -- "${T[@]}" env DIST=site/.next-ci node tools/sprites/fontbudget_selftest.mjs
+
+      - name: 5. 撮る（legendshot・van3d）
+        run: |
+          set -uo pipefail
+          R=(python3 python/guide_run.py run --rows "$ROWS")
+          if [ ! -f "site/.next-ci$PAGE.html" ]; then
+            python3 python/guide_run.py row "撮る" skip --why "書き出しに面が無い（site/.next-ci$PAGE.html）" --rows "$ROWS"
+            exit 0
+          fi
+          # 比べる相手は、枝 review-media/legend-<slug> に今ある前の回の HTML
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          mkdir -p /tmp/legend/before
+          if git fetch -q --depth=1 "$url" "refs/heads/review-media/legend-$LEGEND" 2>/dev/null; then
+            for f in page.norm.html meta.json; do
+              git show "FETCH_HEAD:$f" > "/tmp/legend/before/$f" 2>/dev/null || rm -f "/tmp/legend/before/$f"
+            done
+          fi
+          python3 -m http.server 4215 --directory site/.next-ci >/tmp/legend/serve-shot.log 2>&1 &
+          sv=$!
+          trap 'kill "$sv" 2>/dev/null || true' EXIT
+          for _ in $(seq 30); do curl -sf -o /dev/null "http://127.0.0.1:4215/index.html" && break; sleep 1; done
+          "${R[@]}" --name "節ごとの絵・240px・面の HTML（legendshot）" -- \
+            timeout 1200 env DIST=site/.next-ci SPORT=4215 LEGEND="$LEGEND" OUT="$SHOTS" BEFORE=/tmp/legend/before node tools/sprites/legendshot.mjs
+          # 違っても落とさない（字を直した回は違って当たり前）。比べた1行だけを表に出す
+          if [ -s "$SHOTS/html-compare.txt" ]; then
+            python3 python/guide_run.py row "面の HTML を置いた（前の回と比べて）" 0 --why "$(head -1 "$SHOTS/html-compare.txt")" --rows "$ROWS"
+          fi
+          # 3D の道具に渡すもの: 面（PAGE）・確かめの絵の置き場（OUT。枝 review-media に載る）・積む静止画の置き場（STILLS。800×600 の webp）
+          if [ -n "$V3" ] && [ -f "tools/sprites/$V3.mjs" ]; then
+            "${R[@]}" --name "3D の静止画と合格の数（van3d）" -- \
+              timeout 1800 env DIST=site/.next-ci SPORT=4215 LEGEND="$LEGEND" PAGE="$PAGE" OUT="$SHOTS/van3d" STILLS=/tmp/legend/stills node "tools/sprites/$V3.mjs"
+          elif [ -n "$V3" ]; then
+            python3 python/guide_run.py row "3D の静止画と合格の数（van3d）" skip --why "道具（tools/sprites/$V3.mjs）がまだ無い" --rows "$ROWS"
+          fi
+
+      # 前の回の絵は残さない（節が減った回に、前の節の絵が混ざって見える）。枝はいつも1コミット
+      - name: 6. 絵を枝 review-media/legend-<slug> に置く
+        id: media
+        if: ${{ always() }}
+        run: |
+          set -uo pipefail
+          [ -d "$SHOTS" ] && [ -n "$(ls -A "$SHOTS" 2>/dev/null)" ] || { echo "置くものが無い"; exit 0; }
+          b="review-media/legend-$LEGEND"
+          pub="$RUNNER_TEMP/legend-media"
+          rm -rf "$pub" && mkdir -p "$pub"
+          cp -a "$SHOTS"/. "$pub"/
+          if [ -d /tmp/legend/stills ] && [ -n "$(ls -A /tmp/legend/stills 2>/dev/null)" ]; then cp -a /tmp/legend/stills "$pub/stills"; fi
+          url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          who=(-c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com')
+          git -C "$pub" init -q -b media
+          git -C "$pub" add -A
+          git -C "$pub" "${who[@]}" commit -q -m "企画の面の絵（$LEGEND・$GITHUB_REF_NAME・${GITHUB_SHA:0:7}）"
+          n="$(find "$pub" -type f -not -path '*/.git/*' | wc -l)"
+          for wait in 0 15 40; do
+            sleep "$wait"
+            if git -C "$pub" push -q -f "$url" "HEAD:refs/heads/$b"; then
+              echo "branch=$b" >> "$GITHUB_OUTPUT"
+              python3 python/guide_run.py row "絵を置く（枝 $b）" 0 --why "${n}個。git fetch origin $b" --rows "$ROWS"
+              exit 0
+            fi
+          done
+          echo "::warning::絵を $b に置けなかった"
+          python3 python/guide_run.py row "絵を置く（枝 $b）" 1 --why "push できなかった" --rows "$ROWS"
+
+      - name: 撮った絵を置く（artifact legend-shots）
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: legend-shots
+          path: /tmp/legend-shots/
+          if-no-files-found: ignore
+
+      # **生まれたファイルだけを積む。** 許す置き場（書体の表・静止画）の外が変わっていたら、1つも積まずに赤くする（`guide` と同じ作法）。
+      # 書き出しが書き足す `site/tsconfig.json`・`site/next-env.d.ts` と、見張りのために焼いた束は戻してから見る
+      - name: 7. 枝に積み戻す（書体の表・stills=commit のとき静止画）
+        id: push
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          echo "sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          git checkout -- site/tsconfig.json site/next-env.d.ts 2>/dev/null || true
+          # 焼いた束は積まない（PR どうしがぶつかる元。`tools/fonts/subset.py` の頭）
+          git checkout -- site/public/fonts site/app/css/fonts.css tools/fonts/buckets.txt tools/fonts/absent.json
+          git clean -fdq -- site/public/fonts
+          case "$GITHUB_REF_NAME" in
+            master|main) printf '枝に積み戻す\tskip\tmaster には積まない\n' >> "$ROWS"; exit 0;;
+          esac
+          d="site/public/legends/$LEGEND/stills"
+          why=""
+          if [ "$STILLS" = commit ]; then
+            v3rc="$(awk -F'\t' '$1 ~ /（van3d）$/ {rc = $2} END {print rc}' "$ROWS")"
+            if [ "$v3rc" = 0 ] && ls /tmp/legend/stills/*.webp >/dev/null 2>&1; then
+              mkdir -p "$d"
+              find "$d" -maxdepth 1 -name '*.webp' -delete
+              cp /tmp/legend/stills/*.webp "$d"/
+            else
+              why="静止画は積まない（van3d が緑でない・撮れていない）"
+            fi
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A tools/fonts/weights.json
+          if [ -d "$d" ]; then git add -A "$d"; fi
+          extra="$(git status --porcelain | grep -v '^[MADR] ' || true)"
+          if [ -n "$extra" ]; then
+            echo "::error::許す置き場の外が変わった。積まない:"; echo "$extra"
+            printf '枝に積み戻す\t1\t許す置き場の外が変わった: %s\n' "$(echo "$extra" | head -3 | tr '\n' ' ')" >> "$ROWS"
+            exit 1
+          fi
+          if git diff --cached --quiet; then
+            printf '枝に積み戻す\tskip\t積むものが無い（いまの枝と同じ）%s\n' "${why:+。$why}" >> "$ROWS"
+            exit 0
+          fi
+          n() { git diff --cached --name-only -- "$@" | wc -l; }
+          pushed="書体の表 $(n tools/fonts/weights.json)・静止画 $(n "$d")"
+          git --no-pager diff --cached --stat | tail -1
+          git commit -q -m "企画の面を回して積み戻す: $LEGEND" \
+            -m "作業箱で回すとトークンを食う重い処理（面の書体を測る・3D の静止画を撮る）を Actions で回し、生まれたファイルだけを持ち帰った（$pushed）。" \
+            -m "$RUN_URL"
+          for i in 1 2 3; do
+            if git pull -q --rebase origin "$GITHUB_REF_NAME" && git push -q origin "HEAD:$GITHUB_REF_NAME"; then
+              sha="$(git rev-parse HEAD)"
+              echo "sha=$sha" >> "$GITHUB_OUTPUT"
+              echo "pushed=${sha:0:7}（$pushed）" >> "$GITHUB_OUTPUT"
+              printf '枝に積み戻す\t0\t%s\n' "$why" >> "$ROWS"
+              # 積んだ head で検査を起こす。GITHUB_TOKEN の push から起きる pull_request の run は承認待ちで止まる（`guide` と同じ）
+              gh workflow run selftest.yml --ref "$GITHUB_REF_NAME" || echo "::warning::Selftests を起こせなかった。手で起こす"
+              exit 0
+            fi
+            sleep $((i * 10))
+          done
+          printf '枝に積み戻す\t1\tpush できなかった（枝が先に進んでぶつかった）\n' >> "$ROWS"
+          exit 1
+
+      - name: 表の元を置く（legend_report が読む）
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: legend-rows
+          path: /tmp/legend/rows.tsv
+          if-no-files-found: ignore
+
+      # 作業箱は job summary も artifact も読めない。途中の行を log の末尾に出す（表は legend_report が組む）
+      - name: 途中の行（log の末尾に）
+        if: ${{ always() }}
+        run: |
+          if [ -f "$ROWS" ]; then cat "$ROWS"; else echo "表の元が無い（入力で止まった）"; fi
+
+  # **企画の面の表を組む**（`legend` と同じ run の重い見張りが終わってから）。job の summary と log の末尾に出し、
+  # `pr` があれば PR に1コメント（頭の印 `<!-- legend-run -->`。何度押しても同じ1つを書き換える）。
+  # 行の印と重い見張りの読みかたは `python/guide_run.py` のものを借りる（同じ表の読みかたを2か所に持たない）
+  legend_report:
+    needs: [legend, browserwatch, reachwatch]
+    if: ${{ always() && github.event_name == 'workflow_dispatch' && inputs.legend != '' && needs.legend.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: python
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: legend-rows
+          path: /tmp/legend
+      - name: 表を組む（summary・log の末尾・PR）
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LEGEND: ${{ inputs.legend }}
+          PR: ${{ inputs.pr }}
+          SHA: ${{ needs.legend.outputs.sha || github.sha }}
+          PUSHED: ${{ needs.legend.outputs.pushed }}
+          MEDIA: ${{ needs.legend.outputs.media }}
+        run: |
+          [ -f /tmp/legend/rows.tsv ] || { echo "表の元が無い（legend が入力で止まった）"; exit 0; }
+          python3 - <<'PY'
+          import os
+          import sys
+          from pathlib import Path
+
+          sys.path.insert(0, "python")
+          import guide_run as g
+
+          MARK = "<!-- legend-run -->"
+          env = os.environ
+          repo, run_id = env["GITHUB_REPOSITORY"], env["GITHUB_RUN_ID"]
+          run_url = f"{env['GITHUB_SERVER_URL']}/{repo}/actions/runs/{run_id}"
+          gh = g.Gh(repo, env.get("GITHUB_TOKEN", ""))
+          rows = g.read_rows(Path("/tmp/legend/rows.tsv"))
+          try:
+              rows += g.heavy_rows(gh.jobs(run_id))
+          except Exception as e:  # 読めなかったことを行にする（緑に見せない）
+              rows.append(("重い見張り", "2", f"job を読めなかった: {e}"))
+          red = sum(1 for _, rc, _ in rows if g.mark(rc) == "🔴")
+          yellow = sum(1 for _, rc, _ in rows if g.mark(rc) == "🟡")
+          head = "🟢 ぜんぶ緑" if not red and not yellow else f"🔴 赤 {red}・🟡 数えられない {yellow}"
+          media = env.get("MEDIA", "")
+          lines = [MARK, f"### 企画の面を回した: `{env['LEGEND']}`（`{env.get('SHA', '')[:7]}`）— {head}", "",
+                   "| 段 | 結果 | 落ちた所 |", "| --- | :---: | --- |"]
+          lines += [f"| {n} | {g.mark(rc)} | {why} |" for n, rc, why in rows]
+          where = f"枝 `{media}`（`git fetch origin {media}`）" if media else "置いていない"
+          lines += ["", f"積み戻し: {env.get('PUSHED') or 'なし'} · 絵: {where} · [run]({run_url})"]
+          body = "\n".join(lines) + "\n"
+          print(body)
+          with open(env["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write(body)
+          pr = env.get("PR", "")
+          if pr.isdigit():
+              mine = [c for c in gh.comments(int(pr)) if (c.get("body") or "").startswith(MARK)]
+              if mine:
+                  gh.req("PATCH", f"/issues/comments/{mine[0]['id']}", {"body": body})
+              else:
+                  gh.req("POST", f"/issues/{pr}/comments", {"body": body})
+              print(f"PR #{pr} に書いた")
+          PY
 
   # **上の2本が赤いあいだ、issue を1本だけ開いておく**（`python/heavy_down.py`）。
   # また通れば自分で閉じる。

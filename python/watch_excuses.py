@@ -220,15 +220,9 @@ EXCUSES: dict[str, str] = {
     # `measure()` を呼んでいる**（`heavy_watch.yml` から master と毎晩）。
     # そのうえ `python/mutation_drill.py` が、この実物を壊して
     # `reachwatch.mjs` が赤くなるかを当てている。**断りのほうが古かった。**
-    "tools/sprites/inkpx.mjs":
-        "字の濃さを画素から測る。同じく面を手で渡す作りで、"
-        "26面ぶんは `tapink.mjs` が回す（2026-09-19）",
-    "tools/sprites/inkband.mjs":
-        "字の濃さを送りながら測る。`tapink.mjs` が子として起こす側なので、"
-        "単体では繋がない（2026-09-19）",
-    "tools/sprites/shotstable.mjs":
-        "同じ面を2回撮って揃うかを見る。`tapink.mjs` が濃さの前に通す子で、"
-        "単体では繋がない（2026-09-19）",
+    # `tools/sprites/inkpx.mjs`・`inkband.mjs`・`shotstable.mjs` の断りは 2026-11-23 に外した。企画の面を1本で回す
+    # `heavy_watch.yml` の `legend` が、`tapink.mjs` と同じ渡しかたで、その面ぶん（`PAGES=`）を毎回回している
+    # （tapink は面を絞れない）。面ぜんぶを回すのは今までどおり `tapink.mjs`（出す前のチェック）
     "tools/sprites/cardmove.mjs":
         "カードの紙で、指で引きずって立ち位置が動くか・自分のカードのときだけ"
         "覚えるか・あやとを並べても2人が重ならないかを、焼き上がりの画素から"
