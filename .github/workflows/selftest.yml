@@ -412,5 +412,12 @@ jobs:
           DIST=site/.next-ci SPORT=4213 node tools/sprites/fontfall.mjs \
             /bulgaria /north-macedonia /nordic/guide || fr=$?
           echo "── fontfall 終了コード ${fr}"
+          # **書き出した面の上で、札の組を名指しで踏む**（`tagreach.mjs`。#1357）。
+          # 料理→国・旅↔月ほか14組。札を引く関数が正しくても、面が並べていなければ辿れない。
+          # 字を読むだけ（ブラウザは要らない）なので、書き出しを持つこの job に相乗りさせる（14面で 0.1秒）
+          tr=0
+          DIST=site/.next-ci node tools/sprites/tagreach.mjs || tr=$?
+          echo "── tagreach 終了コード ${tr}"
           [ "$rc" = 0 ] || exit "$rc"
-          exit "$fr"
+          [ "$fr" = 0 ] || exit "$fr"
+          exit "$tr"

@@ -9,6 +9,8 @@ import { clump, type Spot } from "./clump";
 import { Compass } from "./art";
 import { bucket } from "./dots";
 import { COUNTRIES } from "@/content/countries";
+import { CHAPTERS } from "@/content/chapters";
+import { staysOfChapter } from "@/content/stayChapters";
 import Flag from "@/components/ui/Flag";
 // 印はブラウザまで運ぶぶんの表から取る。`Icon.tsx` を読むと 223種 174KB が
 // まるごと束に入る（`components/ui/IconCore.tsx` の注）。
@@ -35,7 +37,8 @@ import { travelHref } from "@/content/travelPath";
  * 線の太さと点の大きさは `1/k` を掛けて、寄せても見た目が変わらないようにする。
  */
 
-type Chapter = { id: string; label: string; box: number[] };
+/** 地図を寄せるボタン1つ。「ぜんぶ」と、本線の旅ひとつずつ */
+type TripTab = { id: string; label: string; box: number[] };
 
 /** 凡例に出す移動のしかた。多い順に並べる。 */
 const LEGEND: [string, string][] = [
@@ -168,6 +171,48 @@ const FIT: Record<string, number[]> = (() => {
   return out;
 })();
 
+/**
+ * 寄せるボタン。**「ぜんぶ」と、本線の旅ひとつずつ**（行った順）。
+ *
+ * 前はボタンを地図の焼き込み（`route.json` の `chapters`）が持っていて、名前は地域（ヨーロッパ・中東・コーカサス）
+ * だった。北欧周遊の6か国は「ヨーロッパ」に入り、バルカン諸国周遊にはボタンが無かった。国を束ねる語彙は旅だけ
+ * （`docs/spec/model.md` M-5）なので、**枠は旅で回った国の点（国の印と泊まった街）から組む。** 旅を1つ足しても、
+ * 地図を焼き直さずにボタンが1つ増える。
+ *
+ * 点が1つも無い旅（地図をまだ焼いていない国だけを回っている旅）にはボタンを出さない。押しても何も写らない。
+ * 枝の旅（イランまで歩く）は親の旅の枠の中なので、ボタンにしない。
+ */
+const TRIP_TABS: TripTab[] = (() => {
+  const cities = MAP.cities as { country: string; x: number; y: number }[];
+  const anchors = MAP.anchors as Record<string, { x: number; y: number }>;
+  const tabs: TripTab[] = [{ id: "all", label: "ぜんぶ", box: [0, 0, W, H] }];
+  for (const c of CHAPTERS.filter((x) => !x.branchOf && x.from).sort((a, b) => a.from.localeCompare(b.from))) {
+    const mine = new Set(staysOfChapter(c).map((s) => s.country));
+    const pts = [
+      ...[...mine].flatMap((slug) => (anchors[slug] ? [[anchors[slug].x, anchors[slug].y]] : [])),
+      ...cities.filter((x) => mine.has(x.country)).map((x) => [x.x, x.y]),
+    ];
+    if (!pts.length) continue;
+    const xs = pts.map((q) => q[0]);
+    const ys = pts.map((q) => q[1]);
+    /* 点の外に、国の名札とピンが収まるだけの余白を足す（点ぎりぎりだと端の国の札が切れる）。
+       そのうえで**地図と同じ縦横比**に広げる（国の寄り枠 `FIT` と同じ決まり） */
+    let w = Math.max(300, (Math.max(...xs) - Math.min(...xs)) * 1.3 + 120);
+    let h = Math.max(300 / RATIO, (Math.max(...ys) - Math.min(...ys)) * 1.3 + 120);
+    if (w / h < RATIO) w = h * RATIO;
+    else h = w / RATIO;
+    if (w > W) { w = W; h = H; }
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+    const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    tabs.push({
+      id: c.slug,
+      label: c.name,
+      box: [Math.max(0, Math.min(W - w, cx - w / 2)), Math.max(0, Math.min(H - h, cy - h / 2)), w, h],
+    });
+  }
+  return tabs;
+})();
+
 const ymd = (d: string) => (d ? d.replace(/-/g, "/") : "");
 
 export default function WorldRoute({
@@ -197,7 +242,7 @@ export default function WorldRoute({
    * 章を選び直すか、国を開くと消える。
    */
   const [zoom, setZoom] = useState<number[] | null>(null);
-  const chapters = MAP.chapters as Chapter[];
+  const chapters = TRIP_TABS;
   const anchors = MAP.anchors as Record<string, { x: number; y: number; order: number; city: string }>;
 
   /**
@@ -495,7 +540,16 @@ export default function WorldRoute({
               setChap(i);
             }}
           >
-            {c.label}
+            {/* 折るなら「周遊」の前（`atlas.css` の `.amap-tab`） */}
+            {c.label.endsWith("周遊") ? (
+              <>
+                {c.label.slice(0, -2)}
+                <wbr />
+                周遊
+              </>
+            ) : (
+              c.label
+            )}
           </button>
         ))}
       </div>

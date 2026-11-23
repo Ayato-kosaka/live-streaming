@@ -211,7 +211,6 @@ const SCENES = [
 const BRANCHES = [
   // Board.tsx（付箋ひとつになったので、ここが持つのは周りだけ）
   ["Board.tsx むちゃの証拠（伝説へ）", ".chip.link", 5, "note"],
-  ["Board.tsx これからのタイル", 'a.tile[href="/next"]', 1, "note"],
   ["Board.tsx 伝説のタイル", 'a.tile[href="/legends"]', 1, "note"],
   ["Board.tsx 畳みの見出し（終わった宛先／ログイン）", "details.fold summary", 2, "note"],
   ["Board.tsx 畳みの中のログイン", ".signin-go", 1, "note"],

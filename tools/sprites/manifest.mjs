@@ -740,7 +740,7 @@ const SPRITES_BASE = [
   { name: "hedge-gate", parts: [`${BK}/hedge-gate.glb`] },
 
   /* ---------- 丘の記念碑 ----------
-     `site/content/legends.ts` の企画1つに絵1つ。名前は slug に合わせる。 */
+     `site/content/projects.ts` の伝説の企画1つに絵1つ。名前は slug に合わせる。 */
   { name: "legend-iran-walk", parts: legendWalk() },
   { name: "legend-egypt-festival", parts: legendRuins(), opts: SANDSTONE },
   { name: "legend-newyear-24h", parts: legendVigil(), opts: VIGIL },
@@ -989,7 +989,7 @@ const SPRITES_BASE = [
  * 長辺 640px でもう1枚焼き、`sprites/hero/` に置く。画面側は srcset で
  * 2倍の画面にだけそちらを配るので、増えるのは詳細を開いた人の1枚だけ。
  *
- * どれが主役かは recipes.ts / legends.ts / streamTypes.ts が決めている。
+ * どれが主役かは recipes.ts / projects.ts / streamTypes.ts が決めている。
  * ここに名前を写すと品が増えたとき片方だけ古くなるので、その3つを読んで拾う。
  *
  * `streamTypes.ts` を足したのは、`/streams/[型]` だけ 320px のまま取り残されて
@@ -1017,7 +1017,8 @@ const CONTENT = new URL("../../site/content/", import.meta.url);
    `heroicon_selftest.mjs` が同じ3冊を読む（あちらは焼き忘れを数える側）。 */
 const HERO_BOOKS = [
   ["recipes.ts", "RECIPES"],
-  ["legends.ts", "LEGENDS"],
+  /* 伝説の絵は企画の表（伝説はその印。印の無い企画は絵を持たないので数えない） */
+  ["projects.ts", "PROJECTS"],
   ["streamTypes.ts", "STREAM_TYPES"],
 ];
 

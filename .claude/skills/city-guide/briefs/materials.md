@@ -2,7 +2,7 @@
 
 > **運営へ。** `<…>` を全部埋めて、下の線から下をそのまま貼る（`grep -c '<国>\|<街>' ` が 0 になるまで）。
 > 埋める欄: `<国>`（slug。例 romania）・`<街>`（slug。例 bucharest）・`<国の名前>`・`<街の名前>`・`<段>`（行く前／行った）・
-> `<移る日>`（`site/content/plans.ts` のその国へ移る日）・`<前の国>`（付箋を閉じる国の slug）・`<運営のスクラッチ>`。
+> `<移る日>`（`site/content/stays.ts` のその国の行の `from`）・`<前の国>`（付箋を閉じる国の slug）・`<運営のスクラッチ>`。
 > 配るのはこれ1通。絵担当（`art.md`）は、この担当の報告が来てから。
 
 ---
@@ -49,7 +49,7 @@
 6. **注文書**: 鍵が `guidebook.json` に入ってから `python/data/guide/<国>/<街>/art_order.json` を書く（ブカレストの形。表紙は `catch` を書く）。**ここで一度 push する**
 7. **面**: `python3 python/guidebook_bake.py <国>/<街>` → `site/app/travel/<国>/<街>/page.tsx` はブカレストのを写す → 名簿 `site/content/guidebook/index.ts` に1行・
    `site/content/travel.ts` の `CITIES` に **`draft: true` つきで**1行（国の面が無い国は `CITY_ONLY`）→ `python/data/seo_targets.json` の `targets` と `pages`
-8. **新しい国なら**（`docs/country-guide.md` 6章の表も見る）: 企画 `site/content/plans.ts` に次の国が在るか（無ければ足す。表の中は字そのもので書く・`href` を持たせる。#336）
+8. **新しい国なら**（`docs/country-guide.md` 6章の表も見る）: 滞在の表 `site/content/stays.ts` に次の国の行が在るか（無ければ足す。案内の面は行の `guide` に。移動は企画ではない——告知の札の表 `plans.ts` は #1277 で畳んだ）
 9. **マイマップ**: `python3 python/guide_book_check.py <国>/<街> --mymaps` → `python3 .claude/skills/mymaps/mymaps.py sync python/data/guide/<国>/<街>/mymaps --city <街の名前>`
    （EC2・`run_in_background`）→ `move` → `verify` が 0。自分で起こした EC2 は終わりに `python3 .claude/skills/ec2-chrome/ec2.py stop`
 10. **書体**: 作業箱で `fontweigh`・`subset.py` を回さない・woff2 を積まない。`tools/fonts/subset.py` の `SOLO` に面を1行足し、焼くのは `actions.md` の書体
@@ -70,7 +70,7 @@
 ## 触ってよい範囲
 
 - `python/data/guide/<国>/<街>/`・`python/data/guide/cities.json`・`python/data/seo_targets.json`
-- `site/app/travel/<国>/<街>/`・`site/content/guidebook/`（焼いたものと名簿）・`site/content/travel.ts`・`tools/fonts/subset.py` の `SOLO`・新しい国なら `site/content/plans.ts`
+- `site/app/travel/<国>/<街>/`・`site/content/guidebook/`（焼いたものと名簿）・`site/content/travel.ts`・`tools/fonts/subset.py` の `SOLO`・新しい国なら `site/content/stays.ts`
 - 公開の枝だけ: 13 の表のファイル
 - **触らない**: `.claude/skills/chatgpt-image/`・`site/public/guide/<国>/<街>/` の描いた絵（絵担当。`photos/` は写真の道具が置く）・`.github/workflows/`・`python/` の道具（公開の枝の `seo_audit.py` の `PRESETS` 1行を除く）・woff2・ほかの街の材料
 

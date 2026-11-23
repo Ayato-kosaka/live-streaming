@@ -180,10 +180,10 @@ TWO_SIDES: dict[str, tuple[int, int]] = {
     "stays.ts": (273, 400),  # いちばん長く1つの国に居た日付の空き（ジョージア 2025-07-19〜2026-04-18）
     "apps.ts": (102, 200),  # 2026-02-26 → 06-08 の102日
     "chapters.ts": (126, 400),  # 章の間隔の中央値126日
-    "legends.ts": (222, 400),  # 2025-05-07 → 12-15 の222日
+    "projects.ts": (222, 400),  # 伝説の 2025-05-07 → 12-15 の222日
     "shorts.ts": (45, 130),  # 130 は #119 の127日のすぐ上
     "chapterStreams.ts": (130, 400),  # 章が閉じる間隔は3〜6ヶ月
-    # **`COVERS` の3本（`nordic.ts` `nordicSun.ts` `plans.ts`）と
+    # **`COVERS` の2本（`nordic.ts` `nordicSun.ts`）と
     # `SNAP` の1本（`nordicShops.ts`）はここに居ない。**
     # あちらは「今日から何日前か」ではなく「**旅が終わっているか**」で境目が
     # 変わるので、日数1本では両側を作れない。4通りを下の「3c」「3f」で当てる
@@ -235,7 +235,7 @@ def _rewrite_dates(src: str, when: date) -> str:
 PLANT_RE = {
     "recipes.ts": re.compile(r'^\s+slug: "([^"]+)"'),
     "kitchenTalk.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{'),
-    "legends.ts": re.compile(r'^\s+slug: "([^"]+)"'),
+    "projects.ts": re.compile(r'^\s+slug: "([^"]+)"'),
     "legendDays.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{'),
     "residents.ts": re.compile(r'^\s+\{ icon: "([^"]+)"'),
     "characterBox.ts": re.compile(r'^\s+"([^"]+)"(?:,|: \[)'),
@@ -533,22 +533,14 @@ def main() -> int:
         check(f"{name} の表が、章の最終日まで届いている",
               base[name].dates[-1] >= sp.end, True)
 
-    # --- 3e. 企画の表（`plans.ts`）は、ここでは見ない ----------------------
+    # --- 3e. 告知の札の表（`plans.ts`）は畳んだ（#1277）----------------------
     #
-    # 一度ここに `COVERS` の足を1本足した（2026-10-06、`ENDLESS`）。
-    # **消しようのない赤になった**——あやとの返事（2026-10-07 / #673）が
-    # 「これからの予定はとくになし」で、先の予定が0件なのが正常な状態だから。
-    #
-    # 本当の不具合は0件そのものではなく、**0件のときに画面が「行ってきた」企画を
-    # 「いま、いちばん近い企画」として出すこと。** 日付の表ではなく画面の作りの話で、
-    # ここでは測れない。見張りは `site/selftest/leadplan_selftest.mjs` に移した。
-    #
-    # **「見ない」に戻したことを、ここで数える。** 黙って外すと、あとから
-    # 読んだ人が「企画の表には見張りが無い」としか分からない
-    check("plans.ts は、ここでは見ない（見張りは leadplan_selftest.mjs）",
-          BOOKS["plans.ts"].rule, SKIP)
-    check("plans.ts の理由に、見張りの移り先が書いてある",
-          "leadplan_selftest.mjs" in BOOKS["plans.ts"].why, True)
+    # 一度ここに `COVERS` の足を1本足して（2026-10-06）、**消しようのない赤**になった
+    # （先の予定が0件なのは正常な状態。あやと 2026-10-07 / #673）。表ごと畳んだので、
+    # 本の表に名前が残っていないことを数える（残ると、無い本を見る行が黙って緑になる）。
+    # 0件のときに画面が過去の企画を出さないかは `site/selftest/leadplan_selftest.mjs`
+    check("plans.ts は本の表に無い（畳んだ表）", "plans.ts" in BOOKS, False)
+    check("planDays.ts は本の表に無い（畳んだ表）", "planDays.ts" in BOOKS, False)
 
     # --- 3f. 旅ごとに取り直す写し（`SNAP`）---------------------------------
     #

@@ -29,7 +29,8 @@
  * 区間も、実際に付箋が付いているものだけ置く。
  */
 
-import { BUILT_AT, daysUntil, planById, planPhase } from "./plans";
+import { BUILT_AT, daysUntil } from "@/lib/nightly";
+import { projectBySlug } from "./projects";
 
 /** 付箋の宛先ひとつ。 */
 export type Theme = {
@@ -81,6 +82,23 @@ export type Theme = {
    * datebake。`isOpenTheme` の注）。サーバーは日付で断る（`functions/src/shutThemes.ts`）ので、JS の前に選べても貼れない。
    */
   closesOn?: string;
+  /**
+   * **結んだ企画**（`content/projects.ts` の slug。名前の鍵。M-6）。
+   *
+   * 企画あてのお題（`PLAN_GROUP`）は、棚と締め切りを企画の日から決める（`groupOf`）。
+   * id が同じ字かどうかでは結ばない——前は `planById(t.id)` で、企画の札の表と字が同じことに頼っていた。
+   */
+  project?: string;
+  /**
+   * **結んだ日**（`YYYY-MM-DD`、日本時間の暦日）。その日いっぱいは貼れて、次の日から締まる。
+   * 企画に結ばない1日のお題（定例の配信の回）が持つ。
+   */
+  date?: string;
+  /**
+   * その日が、どの定例の配信の回か（`content/streamTypes.ts` の slug）。**`date` を持つお題だけ。**
+   * 表紙の「これから」の「定例の配信のつぎの回」（M-32）と、`/streams` の「今夜は◯◯の日」が読む。
+   */
+  stream?: string;
 };
 
 /** 旅の宛先を束ねる見出し。島の面（`components/isle/spec.ts`）もこの字で引く。 */
@@ -120,9 +138,8 @@ export const ROMANIA_GROUP = "ルーマニアの旅";
 /**
  * 企画あての札を束ねる見出し。**日で行き先が変わるのは、この2つだけ。**
  *
- * ここに置いた宛先は `content/plans.ts` の企画と id が同じなので、
- * その企画が終わったかどうかを日付で聞ける。聞かずに字で持っていたころ、
- * 9月6日に終わったフード＆ワイン祭りが、9月9日になっても
+ * ここに置いた宛先は、結んだ企画（`project`）か日（`date`）から、終わったかどうかを日付で聞く。
+ * 聞かずに字で持っていたころ、9月6日に終わったフード＆ワイン祭りが、9月9日になっても
  * 「これからの企画」に並んでいた（あやとが見つけた）。
  */
 export const PLAN_GROUP = "これからの企画";
@@ -160,7 +177,7 @@ export const THEMES: Theme[] = [
     id: "romania",
     name: "ブカレストでこれやって",
     group: ROMANIA_GROUP,
-    /* その話をしている面。企画の札（`content/plans.ts` の `romania`）→ この面 → 面のいちばん下の付箋、とソフィアと同じ道で辿れる */
+    /* その話をしている面。表紙の「これから」の［いまここ］→ この面 → 面のいちばん下の付箋、とソフィアと同じ道で辿れる */
     href: "/travel/romania/bucharest",
     /* **時制を1文字も書かない**（`docs/island-standards.md` 16章）。決まっている2つ（街と、紙に載せた見どころ）を置く */
     lead: "ブカレストでやってほしいこと。紙に載っていないお店や道でも。",
@@ -203,7 +220,7 @@ export const THEMES: Theme[] = [
        「やってほしいこと」が、もう先の話だと言っている。
 
        **「まだ何も決まっていない」とも書かない。** 腰を据える街は決まっている
-       （`content/plans.ts` の `north-macedonia`）。決まっている2つを置いて、
+       （滞在の表 `content/stays.ts` の `north-macedonia`）。決まっている2つを置いて、
        書く人がどちらの話でもいいと分かるようにする。 */
     lead: "北マケドニアでやってほしいこと。首都スコピエでも、オフリド湖のほうでも。",
     placeholder: "例）オフリド湖のそばの古い教会を、朝いちばんに見てほしい",
@@ -312,15 +329,13 @@ export const THEMES: Theme[] = [
     placeholder: "例）空港のなかを探検してほしい",
     closed: true,
   },
-  /* ---- 企画（`content/plans.ts` の `PLANS`）----
-     **企画の id を、そのままテーマの id にする。** 対応表を別に持つと、
-     どちらかを直し忘れた日に、企画の面から貼った付箋が誰にも読めない棚に入る。
-     `/next` の面は `themeById(plan.id)` で引くだけなので、ここに1行足せば
-     その企画に付箋の欄が出る。**足さなければ欄そのものが出ない。**
+  /* ---- 企画あて（`content/projects.ts` の企画に `project` で結ぶ）と、定例の配信の回（`date`）----
+     **id は変えない。** 付箋がこの字で Firestore に貼られている。企画の slug と同じ字なのは
+     前の作り（企画の面 `/next`）の名残で、結ぶのは `project` の鍵（M-6）。
 
-     あやとの指示（2026-09-06）「まず国と企画どまりで始めて」のとおり、
-     いま動いている企画は3つとも置く。区間（`leg-`）と違って、
-     `/next` にその企画の面があり、そこに書く欄が出るので、空の棚にはならない。
+     企画を並べる面（`/next`）は畳んだ（#1277。`docs/adr/0006-fold-next-and-now.md`）。
+     `/next#<id>` は `/board#<id>` へ着き、掲示板がそのお題の棚を開く（`components/live/Notes.tsx`）。
+     だから**企画あての `href` は書かない**——その話をしている面が、掲示板のほかに無い。
 
      **終わった企画の行を消さないこと。** 消すと `/board` から棚が消えて、
      貼られた付箋がどこからも読めなくなる（消えてはいないが、届かない）。 */
@@ -328,7 +343,7 @@ export const THEMES: Theme[] = [
     id: "food-wine-fest",
     name: "フード＆ワイン祭り",
     group: PLAN_GROUP,
-    href: "/next#food-wine-fest",
+    project: "food-wine-fest",
     lead: "ムタツミンダ公園のお祭りで、食べるもの・飲むもの。",
     placeholder: "例）クヴェヴリ仕込みの赤を、3種類ならべて飲み比べてほしい",
   },
@@ -336,7 +351,7 @@ export const THEMES: Theme[] = [
     id: "georgia-bye",
     name: "ジョージアバイバイ",
     group: PLAN_GROUP,
-    href: "/next#georgia-bye",
+    project: "georgia-bye",
     /* **思い出を集める欄。注文を集める欄ではない。** あやとの指示（2026-09-06）
        「ジョージア1年の方は、1年の思い出を書いて欲しい」。
        見本を「〜してほしい」にしていたころ、書かれるものが全部注文になった。
@@ -348,7 +363,7 @@ export const THEMES: Theme[] = [
     id: "japan-2years",
     name: "海外出発二周年",
     group: PLAN_GROUP,
-    href: "/next#japan-2years",
+    project: "japan-2years",
     /* あやとの指示（2026-09-06）「二周年の方は、付箋に 二周年に対する想い を
        書いて欲しい」。**節目に思うことを集める。** 3年目への注文は
        「まだ決まっていないこと」のほうで聞いているので、ここでは聞かない。 */
@@ -366,7 +381,12 @@ export const THEMES: Theme[] = [
     id: "monthly-2026-10",
     name: "10月の月末配信",
     group: PLAN_GROUP,
-    href: "/next#monthly-2026-10",
+    /* 月末配信は企画ではない（M-4 と同じ考え。配信の型のつぎの回）。日（あやと 2026-10-15「10月31日にやります」）で結ぶ。
+       **時刻は持たせない**——月末配信の始まりは実測で 17:59〜19:00 と散っていて、決まっていない時刻を数字にしない。
+       **期間（9/26〜10/30）も書かない**——区切りは `python/build_monthly.py` の `FINALS` が持ち、`content/months.ts` に焼かれる */
+    date: "2026-10-31",
+    stream: "monthly",
+    href: "/streams/monthly",
     lead: "授賞式でやってほしい賞と、もう一度みんなで観たい回を書いてください。",
     placeholder: "例）いちばん笑わせてくれた人に、笑い屋大賞をあげてほしい",
   },
@@ -527,9 +547,8 @@ export const THEMES: Theme[] = [
  * 判定の出どころは2つある。**どちらも「字で持たない」ほうを選んでいる。**
  *
  *   1. 旅の宛先 … `closed`（こちらが畳んだ印）と `closesOn`（移る日。日付で閉じる）
- *   2. 企画の宛先 … **同じ id の企画に日付を聞く**（`groupOf` と同じ）。
- *      字で「終わった」と持つと、`/next` が「もう行ってきた」に置いたものが
- *      掲示板ではまだ書けたままになる
+ *   2. 企画あて・日あての宛先 … **結んだ企画か日に日付を聞く**（`groupOf` と同じ）。
+ *      字で「終わった」と持つと、終わった企画に掲示板でまだ書けたままになる
  */
 export function isOpenTheme(t: Theme, now: Date | null): boolean {
   if (t.closed) return false;
@@ -681,17 +700,47 @@ export const writeShelves = (list: Theme[], now: Date | null): Shelf[] =>
 /**
  * その宛先が、いまどの見出しの下にいるか。
  *
- * 企画あて（`PLAN_GROUP`）だけ、同じ id の企画に日付を聞く。
- * **`planPhase` に合わせる。** `/next` が「もう行ってきた」に置いたものが
+ * 企画あて（`PLAN_GROUP`）だけ、結んだ企画か日に日付を聞く（`lastDayOf`）。
+ * 表紙の「これから」（`lib/leadPlan.ts`）と同じ日で切る——表紙から下がったものが
  * 掲示板では「これから」に並ぶ、という食い違いを作らないため。
  */
 function groupOf(t: Theme, now: Date | null): string {
   if (t.group !== PLAN_GROUP) return t.group;
-  const p = planById(t.id);
-  if (!p) return t.group;
-  /* 画面が出る前は、**焼いた日**で仕分ける（`content/plans.ts` の `BUILT_AT`）。
+  const last = lastDayOf(t);
+  if (!last) return t.group;
+  /* 画面が出る前は、**焼いた日**で仕分ける（`lib/nightly.ts` の `BUILT_AT`）。
      ここを「分からないから、これから」にしていたので、9月6日に終わった
      フード＆ワイン祭りが、9月10日に配られた HTML でも
      「これからの企画」の棚に並んでいた（あやと 2026-09-10）。 */
-  return planPhase(p, now ?? BUILT_AT) === "after" ? PLAN_DONE_GROUP : PLAN_GROUP;
+  return (daysUntil(last, now ?? BUILT_AT) ?? 0) < 0 ? PLAN_DONE_GROUP : PLAN_GROUP;
 }
+
+/**
+ * お題がいつまで貼れるか（その日いっぱい）。**結んだ先から引く**（`planById` を読まない）。
+ * - 企画に結んだお題 … 企画の期間（`range`）の終わり、期間が無ければ企画の日
+ * - 日に結んだお題 … その日
+ */
+function lastDayOf(t: Theme): string | undefined {
+  if (t.project) {
+    const p = projectBySlug(t.project);
+    return p && (p.range?.[1] ?? p.date);
+  }
+  return t.date;
+}
+
+/* 結んだ企画が在るか（M-15。名前の鍵の指す先が在る）。無い slug を結ぶと棚が日で動かなくなるので、書き出しを止める */
+{
+  const lost = THEMES.filter((t) => t.project && !projectBySlug(t.project)).map((t) => `${t.id} → ${t.project}`);
+  if (lost.length) throw new Error(`content/themes.ts: 結んだ企画が content/projects.ts に無い（${lost.join(", ")}）`);
+}
+
+/**
+ * その定例の配信の回が立っている日（`YYYY-MM-DD`、古い順）。**立っていなければ空。**
+ *
+ * 返すのは日付だけ。`/streams` はこれをブラウザへ渡すので、お題の表まるごとを連れていかせない
+ * （`components/streams/WeekRail.tsx`）。
+ */
+export const streamDays = (slug: string): string[] =>
+  THEMES.filter((t) => t.stream === slug && t.date)
+    .map((t) => t.date as string)
+    .sort();

@@ -27,7 +27,8 @@
 `claude -p` を呼ぶ所（`call_model`）は**偽物に差し替える**（本物は呼ばない。鍵もネットワークも要らない）。
 見るのは5つ——1枚に視聴者さんの素性が無い（チャットは本文だけ・呼びかけと @名前 と投げ銭の額は `〇〇`）／
 伏せ残しの見張りが、残った名前を見つける／NG の行を添えて直させると2回目で直る／直させるのは1回まで／
-2回目も落ちた項目だけを落として残りを置く／項目が0件になった回は置かない。
+2回目も落ちた項目だけを落として残りを置く／項目が0件になった回は置かない／
+モデルは省けば haiku（比べて決めた値を字で見る）で、`--model` で替えられる。
 
 **守りを1つずつ外して、その守りの対照だけが落ちることも、ここで当てる**（`DRILL`）。
 `mutation_drill.py` は `guide_extract.py` を当て先にしない（隣の selftest の名前で選ぶので）。だから外しかたを
@@ -526,10 +527,11 @@ class FakeClaude:
     """`claude -p` の代わり。reply(1枚, 何回目) が返す data を、`claude -p --output-format json` の形で返す。"""
 
     def __init__(self, reply):
-        self.reply, self.prompts = reply, []
+        self.reply, self.prompts, self.models = reply, [], []
 
     def __call__(self, prompt, model, schema, timeout, effort=None):
         self.prompts.append(prompt)
+        self.models.append(model)
         return {"structured_output": self.reply(prompt, len(self.prompts)), "duration_ms": 10, "total_cost_usd": 0,
                 "usage": {"input_tokens": len(prompt), "output_tokens": 100}}
 
@@ -538,14 +540,14 @@ def bad_items() -> list:
     return edit(4, quote=BAD_QUOTE)
 
 
-def run_extract(root: Path, table: Path, d: Path, reply) -> tuple[int, str, FakeClaude, Path]:
+def run_extract(root: Path, table: Path, d: Path, reply, extra: tuple = ()) -> tuple[int, str, FakeClaude, Path]:
     fake = FakeClaude(reply)
     keep = ge.call_model
     ge.call_model = fake
     buf = io.StringIO()
     try:
         with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(io.StringIO()):
-            rc = ge.main([STEM_C, "--root", str(root), "--table", str(table), "--out", str(d / "out")])
+            rc = ge.main([STEM_C, "--root", str(root), "--table", str(table), "--out", str(d / "out"), *extra])
     finally:
         ge.call_model = keep
     return rc, buf.getvalue(), fake, root / "2026" / "10" / f"{STEM_C}.facts.json"
@@ -572,6 +574,19 @@ def extract_cases() -> dict[str, bool]:
         found = set(ge.leaks(raw, m.names))
         got["漏れの見張り: 伏せていない材料から、名前・呼びかけ・@名前・投げ銭の額を見つける"] = (
             {"チャットの投稿者の名前", "呼びかけ", "@名前", "投げ銭の額"} <= found)
+        city_n, country_n = m.city["name"], m.country["name"]
+        back = m.restore([{"kind": "fact", "place": {"name": city_n, "heard": []}},
+                          {"kind": "price", "place": {"name": country_n, "heard": []}},
+                          {"kind": "place", "place": {"name": city_n, "heard": []}},
+                          {"kind": "food", "place": {"name": "広場の屋台", "heard": []}},
+                          {"kind": "quote", "about": "place", "place": {"name": city_n, "heard": []}},
+                          {"kind": "move", "place": {"name": f"{country_n}・{city_n}", "heard": []}}])
+        got[CITYPLACE] = ([("place" in x) for x in back] == [False, False, True, True, False, False]
+                          and back[4].get("about") == "fact")
+        masked = ge.mask_text("マイキー・歌（UTA）・まこ", (set(), {"uta"}))
+        got[BRACKET] = "歌(〇〇)" in masked and "uta" not in masked.casefold()
+        got[FIXED] = (ge.leaks(ge.RULES + "\n本文", ({"fact"}, set())) == []
+                      and "チャットの投稿者の名前" in ge.leaks(ge.RULES + "\nたろうが来た", ({"fact", "たろう"}, set())))
 
         def good(p, n):
             return {"items": copy.deepcopy(GOOD)}
@@ -580,6 +595,11 @@ def extract_cases() -> dict[str, bool]:
         got["抜く: 返ってきた項目が check を通れば、頭を機械で埋めて置く"] = (
             rc == 0 and len(fake.prompts) == 1 and len(written.get("items", [])) == len(GOOD)
             and written.get("video_id") == "CCC" and written.get("city") == "town")
+        # 既定は字で見る（MODEL を読み返すと、既定を戻されても通ってしまう）
+        got[MODEL_DEFAULT] = bool(fake.models) and set(fake.models) == {"haiku"}
+        dest.unlink(missing_ok=True)
+        rc, out, fake, dest = run_extract(root, table_p, d, good, ("--model", "sonnet"))
+        got[MODEL_ARG] = rc == 0 and bool(fake.models) and set(fake.models) == {"sonnet"}
         dest.unlink(missing_ok=True)
 
         def heals(p, n):
@@ -624,22 +644,27 @@ def extract_cases() -> dict[str, bool]:
 ZERO = "0件: 項目が0件の返事も、落として0件になった回も置かない（終了 2）"
 PARTIAL = "直す: 直しの返事が NG の無い項目を落としていたら、足し戻して置く（黙って減らさない）"
 DROP = "落とす: 2回目も落ちた項目だけを落として、残りを置く（落とした数を札ごとに出す）"
+CITYPLACE = "場所: place の名前が国・街の名前そのものなら外す（項目は残す。kind が place の項目と、ほかの名前は残す）"
+BRACKET = "伏せる: 括弧の中にだけ書いた短い名前（「歌（UTA）」）も、敬称が無くても伏せる"
+FIXED = "漏れの見張り: 名前が1枚の決まった字（種類の名前 fact）と同じ形なだけでは止めない。ほかの名前は見つける"
+MODEL_DEFAULT = "モデル: 省けば、ティラナ3本で比べて決めた haiku で呼ぶ（SKILL.md §6）"
+MODEL_ARG = "モデル: --model で替えられる（sonnet と渡せば、どの呼び出しも sonnet）"
 # 呼べたときだけ通る対照（0件の対照は、呼ばずに終了 2 でも通るので入れない）
 EXTRACT_E2E = {"抜く: 返ってきた項目が check を通れば、頭を機械で埋めて置く",
                "直す: NG の行を添えて同じ1枚で直させると、2回目で直る（落とさない）",
-               "直す: 直させるのは1回まで（呼ぶのは2回）", DROP, PARTIAL}
+               "直す: 直させるのは1回まで（呼ぶのは2回）", DROP, PARTIAL, MODEL_DEFAULT, MODEL_ARG}
 _fix_prompt, _drop_ng = ge.fix_prompt, ge.drop_ng
 # 守りの外しかた → そのとき落ちるはずの対照（これ以外は通るはず）
 DRILL = [
     ("字幕・議事録・見出しの名前を伏せない（mask_text を素通しに）",
      {"mask_text": lambda s, names: gf.norm(s)},
-     {"伏せる: 1枚に、チャットの投稿者名・呼びかけ・@名前・見出しの名前・投げ銭の額が無い"}),
+     {"伏せる: 1枚に、チャットの投稿者名・呼びかけ・@名前・見出しの名前・投げ銭の額が無い", BRACKET}),
     ("チャットの投稿者名と投げ銭の額を1枚に出す（chat_line）",
      {"chat_line": lambda c, names: f"    チャット {c['paid'] or ''} {c['name']}: {c['body']}"},
      {"伏せる: 1枚に、チャットの投稿者名・呼びかけ・@名前・見出しの名前・投げ銭の額が無い"} | EXTRACT_E2E),
     ("伏せ残しの見張りを外す（leaks が何も見つけない）",
      {"leaks": lambda text, names: []},
-     {"漏れの見張り: 伏せていない材料から、名前・呼びかけ・@名前・投げ銭の額を見つける"}),
+     {"漏れの見張り: 伏せていない材料から、名前・呼びかけ・@名前・投げ銭の額を見つける", FIXED}),
     ("直しの1枚に NG の行を載せない",
      {"fix_prompt": lambda base, items, ng: _fix_prompt(base, items, [])},
      {"直す: NG の行を添えて同じ1枚で直させると、2回目で直る（落とさない）"}),
@@ -650,6 +675,11 @@ DRILL = [
     ("2回目も落ちた項目を落とさない（drop_ng を素通しに）",
      {"drop_ng": lambda m, table, items: (items, Counter(), ge.check_items(m, table, items))}, {DROP, ZERO}),
     ("0件を通す（verdict が見るものの無さを見ない）", {"verdict": lambda r: 1 if r.ng else 0}, {ZERO}),
+    ("既定のモデルを sonnet に戻す（MODEL）", {"MODEL": "sonnet"}, {MODEL_DEFAULT}),
+    ("国・街の名前の place を外さない（drop_city_place を素通しに）",
+     {"drop_city_place": lambda items, country, city: items}, {CITYPLACE}),
+    ("括弧の中の短い名前を伏せない（bracketed を素通しに）", {"bracketed": lambda s, short: s}, {BRACKET}),
+    ("決まった字に在るだけの形も伏せ残しと数える（fixed_forms を空に）", {"fixed_forms": lambda: ""}, {FIXED}),
 ]
 
 

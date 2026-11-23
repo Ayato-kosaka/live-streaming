@@ -12,6 +12,7 @@ import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import Writer from "@/components/travel/article/Writer";
+import CityTags from "@/components/travel/CityTags";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { countryBySlug } from "@/content/countries";
@@ -138,6 +139,9 @@ export default function SkopjePage() {
         <Writer by={GUIDE_BY.after} went={went ? { city: G.name, from: went } : undefined} />
         <Sources g={g} drawn={usedDrawn} />
       </article>
+
+      {/* いつ居たか・どの旅で・企画・料理の札（`components/travel/CityTags.tsx`。0件なら出ない） */}
+      <CityTags country={G.country} city={G.city} name={G.name} />
 
       <p className="gb-back">
         <Link prefetch={false} href="/">

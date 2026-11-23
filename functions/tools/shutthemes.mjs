@@ -24,7 +24,7 @@
  * 畳みかたは2通りある（`content/themes.ts` の `isOpenTheme`）。
  *
  *   1. `closed: true` … こちらが畳んだ印。**ずっと書けない**
- *   2. 企画あて … 同じ id の企画の**日が過ぎたら**書けなくなる
+ *   2. 企画あて・日あて … 結んだ企画か日の**日が過ぎたら**書けなくなる
  *   3. 旅の宛先の閉じる日（`closesOn`。2026-11-20 に足した）… その日の 00:00 JST から書けなくなる。
  *      判定は島の `isOpenTheme` のまま呼ぶので、ここは何も足さずに写せる（ソフィアあての `bulgaria`）
  *
@@ -89,7 +89,8 @@ function bring(src, name) {
 bring(join(SITE, "lib", "builtAt.ts"), "builtAt.ts");
 bring(join(SITE, "content", "chapters.ts"), "chapters.ts");
 bring(join(SITE, "lib", "nightly.ts"), "nightly.ts");
-bring(join(SITE, "content", "plans.ts"), "plans.ts");
+/* 企画の表。企画あての宛先は、結んだ企画（`project`）の日で締まる（`themes.ts` の `lastDayOf`） */
+bring(join(SITE, "content", "projects.ts"), "projects.ts");
 bring(join(SITE, "content", "themes.ts"), "themes.ts");
 
 execFileSync(

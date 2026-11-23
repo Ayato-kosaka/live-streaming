@@ -49,7 +49,7 @@ BigQuery から数えて Firestore（`island/state.stats`）に書き、口が�
 | `updatedAt` | **焼く** | 口の `stats.updatedAt`（その数を数えた日）の写し |
 | `recipes` | 触らない | `RECIPES.length` から数えている（手で書かないと決めた欄） |
 | `since` | 触らない | 初回の配信日。増えも減りもしない |
-| `SITE` `PROFILE` `NOW_FALLBACK` `LINKS` | **触らない** | 本人から聞いた事実・画面に出す言葉 |
+| `SITE` `PROFILE` `LINKS` | **触らない** | 本人から聞いた事実・画面に出す言葉 |
 
 **同じファイルに人の欄が同居している。** だから当てるのは
 `export const STATS_FALLBACK = {` 〜 `};` の中だけで、そこから外れた1バイトでも

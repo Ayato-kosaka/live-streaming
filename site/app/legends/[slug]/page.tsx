@@ -12,6 +12,9 @@ import { Fig, Vid, VidGone } from "@/components/streams/Vid";
 import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
 import { ArtBook, ArtCam, ArtMonument, ArtShelf } from "@/components/streams/Art";
 import { legendDays } from "@/content/legendDays";
+import { crumbsOf } from "@/lib/pages";
+import { tagsOfProject } from "@/lib/tags";
+import Tags from "@/components/ui/Tags";
 
 export function generateStaticParams() {
   return LEGENDS.map((l) => ({ slug: l.slug }));
@@ -50,13 +53,11 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
   const days = all?.days ?? new Set(streams.map((s) => s.date)).size;
   /** 見どころに選んである配信。全部の並びの中で印を付けるのに使う。 */
   const picked = new Set(streams.map((s) => s.videoId).filter(Boolean));
+  const tags = tagsOfProject(l.slug);
 
   return (
     <PageShell
-      crumbs={[
-        { label: "伝説の企画", href: "/legends" },
-        { label: l.title },
-      ]}
+      crumbs={crumbsOf(`/legends/${l.slug}`)}
     >
       <Sheet>
         {/* 図鑑の1枚。この面の主役は絵1つで、数字はその次
@@ -241,6 +242,13 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
           </Zone>
         )}
 
+        {/* どの旅の中で・通った国と街・関係する料理。札は `lib/tags.ts` から（0件の段は来ない） */}
+        {tags.length > 0 && (
+          <Zone>
+            <H art={<ArtShelf size={32} />}>この企画とつながっているもの</H>
+            <Tags rows={tags} />
+          </Zone>
+        )}
       </Sheet>
 
       {/* 前へ／次へも、指が乗ってから読む。画面に入っただけで両隣を先読みしない */}

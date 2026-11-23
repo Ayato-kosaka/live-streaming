@@ -489,7 +489,7 @@ const PLANTS_OF: Record<Ground, IslandArt["props"]> = {
   ],
 };
 
-/** その章が回った土地。国の region の多数決で決める。国が無ければ温帯 */
+/** 表に無い章の土地。渡された土地の名前の多数決で決める。無ければ温帯 */
 export function groundOf(regions: string[]): Ground {
   let dry = 0;
   for (const r of regions) if (r === "中東・アフリカ") dry++;
@@ -507,7 +507,8 @@ function hashOf(s: string): number {
  * その章の島の絵。表にあればそれ、無ければ土地から作る。
  *
  * @param slug   章の slug
- * @param regions その章で回った国の region（`content/countries.ts`）
+ * @param regions 土地の名前。**国の表からは渡さない**（国は地域を持たない。`docs/spec/model.md` M-5）。
+ *   いまの章はどれも `ISLAND_ART` に形を持っているので、ここを通るのは表に無い章だけ
  */
 export function artOf(slug: string, regions: string[] = []): IslandArt {
   const known = ISLAND_ART[slug];

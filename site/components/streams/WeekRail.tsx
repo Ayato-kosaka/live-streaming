@@ -1,5 +1,5 @@
 import { STREAM_TYPES } from "@/content/streamTypes";
-import { streamPlanDays } from "@/content/plans";
+import { streamDays } from "@/content/themes";
 import { ArtSun, ArtTrophy } from "./Art";
 import Tonight, { type FreeKind, type WeekKind } from "./Tonight";
 import WeekToday from "./WeekToday";
@@ -42,12 +42,12 @@ export default function WeekRail() {
 
   return (
     <div className="wk">
-      {/* 月末配信の日は**企画の表から引く**（`content/plans.ts` の `streamPlanDays`）。
-          渡すのは日付の配列だけ——企画の表そのものを渡すと、写真も本文も
-          外への口もこの面に付いてくる（この器が `STREAM_TYPES` を
+      {/* 月末配信の日は**日を持つお題から引く**（`content/themes.ts` の `streamDays`）。
+          渡すのは日付の配列だけ——お題の表そのものを渡すと、
+          この面に付いてくる（この器が `STREAM_TYPES` を
           渡していないのと同じ理由）。立っていなければ空の配列で、
           `Tonight` はその夜、月末配信のことを言わない */}
-      <Tonight week={weekKinds} free={freeKinds} monthendDays={streamPlanDays("monthly")} />
+      <Tonight week={weekKinds} free={freeKinds} monthendDays={streamDays("monthly")} />
 
       {/* 曜日の見出しと帯は、同じ7列の格子に載っている。今日の列を1本だけ
           通したいので、その2つをここで1つの箱にまとめて、地にする */}

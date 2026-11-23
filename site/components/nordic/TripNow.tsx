@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { loadState } from "@/lib/liveStats";
 import { setHereSeq } from "./here";
-import { placeOutdated, samePlace } from "@/lib/place";
 import { planOver, planStop, tripDate } from "./where";
 import { BUILT_AT } from "@/lib/builtAt";
 import { Mark } from "./Marks";
@@ -38,8 +37,9 @@ import { Mark } from "./Marks";
  * そのときに意味のある数字だけを、いちばん大きく出す。
  *
  * 静的書き出しなので、日付も現在地もビルド時の値を焼くわけにいかない。
- * 残り時間は画面が出てから毎秒数え直し、いる場所は `/island-api/state` の
- * `current.place` を読んで、ルートの街の名前と突き合わせる。
+ * 残り時間は画面が出てから毎秒数え直し、いる場所は旅程の日付と、島から届いた
+ * 「着いた」の事実（`/island-api/state` の `nordic`）で決める。手で打った
+ * `current.place` は、打つ欄ごと畳んだので読まない（#1278）。
  *
  * 分かった現在地は、同じ画面にある地図にも渡す。React で描き直すと
  * 地図の SVG まるごとが作り直しになるので、class を付け外しするだけにしてある
@@ -65,8 +65,7 @@ export type Stop = {
   /**
    * ここを発つ日／ここへ着く日(YYYY-MM-DD)。**旅程表と同じ日付。**
    *
-   * いる場所の一次情報がこれ。手打ちの `current.place` は上書きに降りた
-   * （`components/nordic/where.ts` に理由）。
+   * いる場所の一次情報がこれ（`components/nordic/where.ts` に理由）。
    */
   leaveOn?: string;
   arriveOn?: string;
@@ -178,13 +177,6 @@ export default function TripNow({
    */
   const [today, setToday] = useState<string | null>(null);
   /**
-   * 本人が打った「いまいる場所」。**旅より前のまま**なら受け取らない。
-   *
-   * 「ジョージア・トビリシ / 2026-09-04」は出発の1週間前に打たれた字で、
-   * 旅の17日間そのまま残る（`lib/stay.ts` の `placeOutdated`）。
-   */
-  const [place, setPlace] = useState<string | null>(null);
-  /**
    * ストックホルムに着いた日。**着いた、であって、終わった、ではない。**
    *
    * ここが無かったあいだ、着いたことを言えるのは `current.place` に
@@ -218,16 +210,11 @@ export default function TripNow({
 
   useEffect(() => {
     let alive = true;
-    // 島の様子は面のどこか（`components/island/Theme.tsx`）でもう読んでいる。
-    // 約束を配ってもらって、同じ面から2回聞きにいかない
+    // 島の様子は面のほかの部品（数字など）も読む。控えから約束を配ってもらって、
+    // 同じ面から2回聞きにいかない
     loadState()
       .then((s) => {
         if (!alive) return;
-        const p = (s?.current?.place ?? "").trim();
-        /* **古い字は「いま」ではない。** ここを素通しにしていたので、旅の17日間
-           ずっと「いま ジョージア・トビリシ」と出ていた（`where.ts` に経緯）。
-           日付が読めないものも古いものとして扱う（`lib/stay.ts`）。 */
-        setPlace(p && !placeOutdated(s?.current?.updatedAt) ? p : null);
         setArrivedOn(s?.nordic?.arrivedOn ?? null);
         setEndedOn(s?.nordic?.endedOn ?? null);
       })
@@ -263,16 +250,12 @@ export default function TripNow({
   const endedDay = endedOn ?? (over ? until : null);
 
   /**
-   * 本人の字が指しているルートの街。無ければ -1。
+   * 旅程の日付から引いた、きょうの居どころ。**予定であって「いま」ではない。**
    *
-   * 「リガ」でも「ラトビア・リガ」でも当たるように、含んでいるかで見る。
-   * **1字ずれても当たるようにする**（`lib/place.ts`）。走っている車の中で
-   * 打つので「ヴィリニュス」が「ビリニュス」になるのはふつうに起きる。
+   * 前は本人が打った「いまどこ」（`current.place`）が旅程の街に当たればそちらを採っていたが、
+   * 打つ欄ごと畳んだ（#1278）。旅は終わっていて、着いた事実（`arrivedDay`）が残る。
    */
-  const typedAt = place ? stops.findIndex((st) => st.id && samePlace(place, st.name)) : -1;
-  /** 旅程の日付から引いた、きょうの居どころ。**予定であって「いま」ではない。** */
-  const planAt = planStop(stops, today, until);
-  const at = typedAt >= 0 ? typedAt : planAt;
+  const at = planStop(stops, today, until);
   /**
    * 居どころを、**旅程の予定ではなく事実で押さえられている**か。
    *
@@ -280,7 +263,7 @@ export default function TripNow({
    * その日は進まないので、予定の街を「いま ここ」と言い切ってはいけない。
    * 地図の札・旅程表の印・残り距離の一行が、ここで言い方を変える。
    */
-  const sure = typedAt >= 0 || !!arrivedDay;
+  const sure = !!arrivedDay;
   const last = stops.length - 1;
   /**
    * 旅程表のどの行に「いま、ここ」を出すか。**日付で引く。居どころでは引かない。**
@@ -410,19 +393,13 @@ export default function TripNow({
   const d = left != null && left > 0 ? Math.floor(left / 1000) : 0;
 
   /**
-   * 本人が、いま出している街とは別の街を打っている。**その字をそのまま出す。**
-   *
-   * 旅程から外れるのはヒッチハイクではふつうに起きる（足止め・寄り道）。
-   * 打ってあるのに旅程の街で上書きしたら、また画面が嘘をつく。
-   */
-  const off = !arrivedDay && !!place && !(now && samePlace(place, now.name));
-  /**
    * 出しているのが、**旅程から引いただけの街**か。
    *
-   * そのときだけ「きょうは」。本人の字も島からの事実もあれば「いま」、
+   * そのときだけ「きょうは」。島からの事実（着いた）があれば「いま」、
    * どちらも無く旅程からも引けなければ、街の名前は出さない。
+   * （本人が打った別の街をそのまま出す枝 `off` は、打つ欄ごと畳んだので外した。#1278）
    */
-  const fromPlan = !place && !arrivedDay && at != null;
+  const fromPlan = !arrivedDay && at != null;
   /**
    * 「いま」に出す街の名前。**分からなければ `null`。**
    *
@@ -433,19 +410,8 @@ export default function TripNow({
    * こちらは知らない。**知らないことを字で言わずに、板で場所だけ取る**
    * （`docs/island-design.md` 4章）。
    */
-  const nowName = arrivedDay
-    ? (place ?? stops[last].name)
-    : off
-      ? place!
-      : (now?.name ?? null);
-  /* 国の名前は、出している街と食い違ったら出さない。**着いたあとも街は動く。**
-     旅が終わってティラナにいる日に、`stops[last].country` をそのまま出していて
-     「いま アルバニア・ティラナ / スウェーデン」と書いてあった。
-     ルートの外の街も同じで、打った字にはたいてい国が入っている。 */
-  const nowCountry =
-    off || (arrivedDay && place && !samePlace(place, stops[last].name))
-      ? ""
-      : (now?.country ?? "");
+  const nowName = arrivedDay ? stops[last].name : (now?.name ?? null);
+  const nowCountry = now?.country ?? "";
 
   return (
     // 器は紙の正本（`.panel.paper`）をそのまま借りる。

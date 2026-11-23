@@ -324,7 +324,9 @@ def chapter_countries(chapters: list, stays: list) -> dict:
     """章 → その章で回った国（国の記録のある国の slug。着いた順、重ねない）。
 
     **`site/content/stayChapters.ts` の `chapterCountrySlugs()` と同じ決めかた**——章と期間が重なる
-    滞在の国。枝の旅にすっぽり入る滞在は枝のもの。`name` を持つ行（記録の無い国）は入れない。
+    滞在の国。枝の旅も同じ引きかたで、1つの国がいくつもの旅に出てよい（アルメニアはコーカサス周遊と
+    イランまで歩くの両方。#1355 の前は「枝にすっぽり入る滞在は枝のもの」と読んで、重なった国境の行を
+    本線から外していた）。`name` を持つ行（記録の無い国）は入れない。
     2つが割れていないかは `site/selftest/stays_table_selftest.mjs` が組み立てた TS と突き合わせる。
 
     Args:
@@ -333,10 +335,6 @@ def chapter_countries(chapters: list, stays: list) -> dict:
     """
     top = "9999-12-31"
     spans = _span_rows(stays)
-    branches = [c for c in chapters if c["branchOf"]]
-
-    def inside(x: dict, ch: dict) -> bool:
-        return bool(ch["from"]) and ch["from"] <= x["from"] and x["span_to"] <= (ch["to"] or top)
 
     def overlaps(x: dict, ch: dict) -> bool:
         return x["from"] <= (ch["to"] or top) and ch["from"] <= x["span_to"]
@@ -346,9 +344,7 @@ def chapter_countries(chapters: list, stays: list) -> dict:
         got: list[str] = []
         if c["from"]:
             for x in spans:
-                mine = inside(x, c) if c["branchOf"] else (
-                    overlaps(x, c) and not any(inside(x, b) for b in branches))
-                if mine and not x["name"] and x["country"] not in got:
+                if overlaps(x, c) and not x["name"] and x["country"] not in got:
                     got.append(x["country"])
         out[c["slug"]] = got
     return out
@@ -459,17 +455,6 @@ def chapter_stays(chapters: list, ahead: list, after: str = "", today: str = "")
 def read_ahead_chapters(after: str = "") -> list:
     """旅程ファイルの無い章の滞在。本番のファイルを読んで `chapter_stays()` に渡すだけ。"""
     return chapter_stays(read_chapters_ts(), read_ahead(), after=after)
-
-
-def is_country(slug: str) -> bool:
-    """「歩いた国」に数えてよい slug か。
-
-    **`iran-border` は国ではない。** 「イラン（国境まで）」という区間で、
-    国境までは歩いたが入国はしていない。表紙の「◯カ国を歩いた」に混ぜると、
-    行っていない国を1つ足すことになる。
-    `countries.ts` は区間も国と同じ形で持っているので、ここで分ける。
-    """
-    return not slug.endswith("-border")
 
 
 def read_all() -> list:

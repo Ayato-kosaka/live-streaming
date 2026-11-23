@@ -37,7 +37,7 @@ export function travelFixedRoutes(site) {
 export const sitemapReadsTravel = (sitemapSrc) => /\bTRAVEL_PLACES\b/.test(sitemapSrc) && /\bTRAVEL\b/.test(sitemapSrc);
 
 /**
- * 街のガイド（`/travel/<国>/<街>`）の名簿（`content/travel.ts` の `CITIES`）。`draft` は公開前の印。
+ * 街のガイド（`/travel/<国>/<街>`）の名簿（`content/cities.ts` の `CITIES`）。`draft` は公開前の印。
  *
  * 街の面の `robots` は面に字で書いてなく、印から決まる（`travelCityShare`）。だから「索引に出さないと
  * 自分で言っている面か」は、面の `metadata` ではなく名簿の印で読む。印の無い街は、索引が
@@ -45,13 +45,13 @@ export const sitemapReadsTravel = (sitemapSrc) => /\bTRAVEL_PLACES\b/.test(sitem
  */
 export function travelCities(site) {
   const root = travelRoot(site);
-  const src = readFileSync(join(site, "content", "travel.ts"), "utf8");
-  const rows = must(readArray(src, "CITIES", { keys: ["country", "slug", "draft"] }), "content/travel.ts の CITIES");
+  const src = readFileSync(join(site, "content", "cities.ts"), "utf8");
+  const rows = must(readArray(src, "CITIES", { keys: ["country", "slug", "draft"] }), "content/cities.ts の CITIES");
   return rows.map((r) => ({ route: `${root}/${r.country}/${r.slug}`, draft: r.draft === "true" }));
 }
 
 /** 索引が街の名簿（公開してよい街だけ）を読んでいるか */
-export const sitemapReadsCities = (sitemapSrc) => /\bpublicCities\(/.test(sitemapSrc);
+export const sitemapReadsCities = (sitemapSrc) => /\bpublicCities\(|\bTRAVEL_CITIES\b/.test(sitemapSrc);
 
 /**
  * 街の記事（`/travel/<国>/<街>/<話>`）の名簿（`content/travel.ts` の `ARTICLES`）。`draft` は公開前の印。
@@ -68,4 +68,4 @@ export function travelArticles(site) {
 }
 
 /** 索引が記事の名簿（公開してよい記事だけ）を読んでいるか */
-export const sitemapReadsArticles = (sitemapSrc) => /\bpublicArticles\(/.test(sitemapSrc);
+export const sitemapReadsArticles = (sitemapSrc) => /\bpublicArticles\(|\bTRAVEL_ARTICLES\b/.test(sitemapSrc);

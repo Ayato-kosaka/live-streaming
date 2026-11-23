@@ -33,7 +33,7 @@ import { chromium } from "playwright-core";
 import { open } from "./prod.mjs";
 
 const PAGES = (process.env.PAGES ||
-  "/,/now,/next,/board,/map,/streams,/kitchen,/friends,/nordic,/cards,/legends,/about")
+  "/,/board,/map,/streams,/kitchen,/friends,/nordic,/cards,/legends,/about")
   .split(",").map((s) => s.trim()).filter(Boolean);
 
 /** 1面ぶん開いて、投げた例外とコンソールのエラーと落ちた要求を数える */

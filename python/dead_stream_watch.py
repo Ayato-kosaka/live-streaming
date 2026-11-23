@@ -214,12 +214,12 @@ LABEL = {
 }
 
 # 焼き込み1本ずつの「どの面に出るか」。**重さが違う。**
-# `legends.ts` に出ている1本と `onThisDay.ts` にしか出ていない1本は、
+# `projects.ts`（企画の表。伝説の見どころの配信）に出ている1本と `onThisDay.ts` にしか出ていない1本は、
 # 同じ1件でも島の見え方がまるで違う。件数だけ出すと、そこが消える。
 # **面の名前は人が書く。** 取り込み元から導けるのは「どのファイルに在るか」までで、
 # それがどの画面のどこに出るかは import の網からは決まらない（1本が何面からも読まれる）
 PAGES: dict[str, str] = {
-    "legends.ts": "語り継がれている企画（/legends, /streams, 島の棚）",
+    "projects.ts": "企画の表。伝説の見どころの配信（/legends, /streams, 島の棚）",
     "countries.ts": "歩いた国（/map/<国>）と、その話の出てくる配信",
     "recipes.ts": "台所の品（/kitchen/<品>）",
     "apps.ts": "作ったアプリ（/apps/<名前>）",
@@ -278,7 +278,7 @@ PAGES: dict[str, str] = {
 # 国の代表配信も、旅のその日の配信も、行き先はその1本しかない
 # 街のガイドも押し出す側。一言も額も「押せば、その場面で本人がそう言っている」が証拠で、
 # 行き先はその1本しかない
-FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
+FRONT = ("projects.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
          "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "albania-tirana.ts", "bulgaria-sofia-went.ts",
          "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts",
          "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts",

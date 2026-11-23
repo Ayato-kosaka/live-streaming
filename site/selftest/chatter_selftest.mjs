@@ -74,14 +74,14 @@
  *    動かない数（22時・1日12時間・イランの12日380km・100万再生・年越し24時間・
  *    年月日）は落とさない。線引きの根拠と、**単位で当てるようにした経緯**
  *    （`docs/island-misses.md` #162）は `MOVING` のところに書いた。
- *  - **「伝説の企画が8つ」が `legends.ts` の件数と合っているか。**
+ *  - **「伝説の企画が8つ」が、企画の表（`projects.ts`）の伝説の件数と合っているか。**
  *    いま5本のセリフが字で「8つ」と言っている。9件目を足した日、5本とも
  *    黙って嘘になる。件数は毎晩は動かない（人が企画を足したときだけ動く）ので
  *    手で書いてよいが、食い違ったら落とす。
  *
  * どちらも**いまの数を写したしきい値ではない。** 比べる相手は毎回
- * `countryStats.ts` / `residents.ts` / `legends.ts` から読み直している。
- * 写しは `COUNTRY_STATS_TS` / `RESIDENTS_TS` / `LEGENDS_TS` で差し替えられる。
+ * `countryStats.ts` / `residents.ts` / `projects.ts` から読み直している。
+ * 写しは `COUNTRY_STATS_TS` / `RESIDENTS_TS` / `PROJECTS_TS` で差し替えられる。
  * **上流の値だけをずらした写しで回せる**ようにしてあるのは、
  * 「いまの値と一致したから拾った」のか「その数を指しているから拾ったのか」を
  * 分けて見るため（下の「壊した写しで落ちることまで見る」）。
@@ -158,8 +158,8 @@
  * CHATTER_TS=/tmp/c-22koku.ts COUNTRY_STATS_TS=/tmp/cs-21.ts \
  *   node site/selftest/chatter_selftest.mjs                            # 1 で落ちる
  *
- * # legends.ts を9件に見せかけた写し（`];` の手前に1件足すだけ）
- * LEGENDS_TS=/tmp/legends-9.ts node site/selftest/chatter_selftest.mjs  # 1 で落ちる
+ * # 企画の表の伝説を10件に見せかけた写し（`PROJECTS` の閉じ `];` の手前に、`legend: true` の行を1件足すだけ）
+ * PROJECTS_TS=/tmp/projects-10.ts node site/selftest/chatter_selftest.mjs  # 1 で落ちる
  * ```
  *
  * **守りを外したら対照が落ちるところまで見る。** この見張り自身の写しを作って、
@@ -192,7 +192,9 @@ const CONTENT = join(SITE, "content");
 /** 組み立てるもの。**落ちることを確かめる写しだけ、ここを差し替える。** */
 const CHATTER = process.env.CHATTER_TS || join(CONTENT, "chatter.ts");
 const RESIDENTS_SRC = process.env.RESIDENTS_TS || join(CONTENT, "residents.ts");
-const LEGENDS_SRC = process.env.LEGENDS_TS || join(CONTENT, "legends.ts");
+/* 伝説は企画の表の印（`docs/spec/model.md` M-3）。`legends.ts` は旅程の表（`nordic.ts`）まで連れてくるので、
+   数えるのは企画の表の、印の付いた行 */
+const PROJECTS_SRC = process.env.PROJECTS_TS || join(CONTENT, "projects.ts");
 /* 歩いた国の数。**ここも差し替えられるようにしてある。**
    「いまの値と一致したから拾った」のか「その数を指しているから拾ったのか」は、
    本物の値のままでは区別が付かない。値だけずらした写しで回して、
@@ -218,7 +220,14 @@ const bring = (src, as) =>
 
 bring(CHATTER, "chatter.ts");
 bring(RESIDENTS_SRC, "residents.ts");
-bring(LEGENDS_SRC, "legends.ts");
+/* 企画の表は告知の欄の型を `plans.ts` から借りている（型だけ）。数えるのは伝説の行の数なので、型は字で受ける */
+writeFileSync(
+  join(WORK, "projects.ts"),
+  readFileSync(PROJECTS_SRC, "utf8").replace(
+    /^import type \{ Plan \} from "\.\/plans";$/m,
+    "type Plan = Record<string, unknown>;",
+  ),
+);
 // chatter.ts が連れてくるぶん
 bring(COUNTRY_STATS_SRC, "countryStats.ts");
 bring(join(CONTENT, "chapters.ts"), "chapters.ts");
@@ -228,6 +237,9 @@ bring(join(CONTENT, "countries.ts"), "countries.ts");
 /* 国の表と章の国が引く滞在の表（#1275）。案内の面の絵の名前（`IconName`）は部品の側の型なので、
    ここでは字で受ける——数えるのは歩いた国で、絵の名前ではない */
 bring(join(CONTENT, "stayChapters.ts"), "stayChapters.ts");
+/* 滞在の表が読む2枚（街の名簿と種類の表。どちらも何も読まない。#1357） */
+bring(join(CONTENT, "cities.ts"), "cities.ts");
+bring(join(CONTENT, "kinds.ts"), "kinds.ts");
 writeFileSync(
   join(WORK, "stays.ts"),
   readFileSync(join(CONTENT, "stays.ts"), "utf8").replace(
@@ -244,7 +256,7 @@ try {
   execFileSync(TSC, [
     join(WORK, "chatter.ts"),
     join(WORK, "residents.ts"),
-    join(WORK, "legends.ts"),
+    join(WORK, "projects.ts"),
     /* **名指しで渡す。** `chatter.ts` はもう `countryStats.ts` を直に読まない
        （歩いた国の数は `walked.ts` が数える）ので、渡さないと書き出されず、
        下の `COUNTRIES_WALKED` を読むところで落ちる */
@@ -288,7 +300,8 @@ try {
 const req = createRequire(import.meta.url);
 const {VOICES, hasVoice, linesOf, greetOf, COMMON_LINES, COMMON_GREET} = req(join(OUT, "chatter.js"));
 const {RESIDENTS} = req(join(OUT, "residents.js"));
-const {LEGENDS} = req(join(OUT, "legends.js"));
+const {PROJECTS} = req(join(OUT, "projects.js"));
+const LEGENDS = Array.isArray(PROJECTS) ? PROJECTS.filter((p) => p.legend === true) : [];
 /* 「まだ動く数」の側の値。**セリフの字と突き合わせる相手**なので、
    焼き込みから直に読む（下の MOVING）。 */
 const {COUNTRIES_WALKED} = req(join(OUT, "countryStats.js"));
@@ -663,12 +676,12 @@ for (const lit of SPOKEN) {
   }
 }
 const legendWrong = legendClaims.filter((c) => c.said !== LEGENDS.length);
-check(`「伝説の企画」の件数を言うセリフが、legends.ts の ${LEGENDS.length} 件と合っている`
+check(`「伝説の企画」の件数を言うセリフが、企画の表の伝説 ${LEGENDS.length} 件と合っている`
   + `（${legendClaims.length} 本を見た）`,
   legendWrong.length === 0,
   `食い違いが ${legendWrong.length} 件: `
     + legendWrong.map((c) => `${c.line}行目 「${c.text}」`).join(" / ")
-    + `。legends.ts はいま ${LEGENDS.length} 件`);
+    + `。企画の表の伝説はいま ${LEGENDS.length} 件`);
 if (legendClaims.length === 0) {
   console.log("       ※ 件数を言うセリフが1本も無かったので、上の ok は"
     + "「合っていた」ではなく「言っていない」。");

@@ -7,10 +7,11 @@ import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
 import { travelHref } from "@/content/travelPath";
-/* 「あと◯日」の日を引くためだけ。**`content/plans.ts` の `nextPlan()` は
-   読まない**——あちらは先の予定が0件になると行ってきた企画を返すので、
-   島が過ぎた日からシールを数えることになる（`lib/leadPlan.ts` の注・#673）。 */
-import { leadPlan } from "@/lib/leadPlan";
+/* 「あと◯日」の日を引くためだけ。**表紙の「これから」の段と同じもの**（つぎの滞在の着く日と、
+   まだ来ていない回の日）から引く（`lib/leadPlan.ts` の `countdownDay`。#1276）。
+   移動の企画は読まない——読むと、段は「ルーマニア」なのにシールが「ルーマニアへ移動」の日から数える。
+   行ってきた企画は入らない（#673）。 */
+import { countdownDay } from "@/lib/leadPlan";
 import { pier } from "./pier";
 import { chapterCountries } from "@/content/walked";
 /* **値を2つだけ借りる。** どちらも `content/` しか読まない小さいもので、
@@ -64,14 +65,14 @@ const HOME_PLACES: IslePlaceSpec[] = PLACES.map((p) => ({
  * 1分ごとに数え直す）。日数を焼くと、配った日の数で止まる。
  *
  * **日本時間の0時**にそろえる。日付だけ（`2026-10-31`）を渡すと UTC の0時＝
- * 9時 JST になり、その日の朝9時まで「あと1日」と出る（`/next` の
- * `daysUntil` は JST の暦日で切っている。`content/plans.ts`）。
+ * 9時 JST になり、その日の朝9時まで「あと1日」と出る（`daysUntil` は
+ * JST の暦日で切っている。`lib/nightly.ts`）。
  *
  * 近い予定が無ければ欄ごと落とす。`IsleStage` は過ぎた日のシールを出さないが、
  * **出すものが無い日に空の欄を渡さない**ほうが、読む側の分岐が1つ減る。
  */
 function withCountdown(today: Date): IslePlaceSpec[] {
-  const day = leadPlan(today)?.date;
+  const day = countdownDay(today);
   if (!day) return HOME_PLACES;
   const at = `${day}T00:00:00+09:00`;
   return HOME_PLACES.map((p) =>

@@ -22,7 +22,6 @@ import uae from "@/content/atlas/c/uae.json";
 import azerbaijan from "@/content/atlas/c/azerbaijan.json";
 import georgia from "@/content/atlas/c/georgia.json";
 import armenia from "@/content/atlas/c/armenia.json";
-import iranBorder from "@/content/atlas/c/iran-border.json";
 import poland from "@/content/atlas/c/poland.json";
 import lithuania from "@/content/atlas/c/lithuania.json";
 import latvia from "@/content/atlas/c/latvia.json";
@@ -70,7 +69,6 @@ export const COUNTRY_MAPS: Record<string, CountryMapData> = {
   azerbaijan,
   georgia,
   armenia,
-  "iran-border": iranBorder,
   poland,
   lithuania,
   latvia,

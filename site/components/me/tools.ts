@@ -18,11 +18,9 @@ import type { IconName } from "@/components/ui/Icon";
  */
 export type Tool =
   | "photo"
-  | "place"
   | "video"
   | "sticky"
   | "dest"
-  | "plan"
   | "donor"
   | "chara"
   | "fund"
@@ -53,7 +51,6 @@ export const TOOLS: ToolRow[] = [
   /* 付箋を貼れる先そのものを足す／締め切る（`NoteThemes.tsx`）。
      上の「付箋」が1枚ずつへの返事で、こちらは棚のほう。用事が続くので隣に置く。 */
   { id: "dest", label: "貼る先", icon: "signpost" },
-  { id: "plan", label: "企画", icon: "checklist" },
   { id: "donor", label: "投げ銭", icon: "coin" },
   /* 投げ銭の下。**紐付けたあとに絵を足す**という順で使うことが多い
      （知らない どねID が来た → つないだ → その人の絵をまだ持っていない）。 */
@@ -64,8 +61,9 @@ export const TOOLS: ToolRow[] = [
      **「スパチャ」から名前を変えた**（2026-09-24）。中身がスパチャの控え
      だけだったころの名前で、いまは出費と目標もここに入る。財布は1つ（#639）。 */
   { id: "fund", label: "貯金箱", icon: "wallet" },
-  /* ここから下は「その他」の棚（あやと 2026-10-14）。 */
-  { id: "place", label: "いまどこ", icon: "pin", shelf: "other" },
+  /* ここから下は「その他」の棚（あやと 2026-10-14）。
+     「いまどこ」はここに在ったが外した（#1278）。居場所は滞在の表（`content/stays.ts`）1か所で、
+     机から打つ欄は残さない（`docs/adr/0006-fold-next-and-now.md`）。前に開いていた人は写真から始まる */
   { id: "obs", label: "OBS", icon: "screen", shelf: "other" },
 ];
 

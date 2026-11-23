@@ -9,7 +9,9 @@ import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import WorldRoute from "@/components/atlas/WorldRoute";
 import { stayClosedOn, stayNow, stayWord, travelNow, tripDayWord, type StayNow, type TravelNow } from "@/lib/stay";
-import { tripDate } from "@/content/chapters";
+import { chapterNow, tripDate } from "@/content/chapters";
+import { countryNameBySlug } from "@/content/countries";
+import { STAYS } from "@/content/stays";
 import { BUILT_AT } from "@/lib/builtAt";
 import { NOT_YET, useToday } from "@/lib/useToday";
 import { tripPageOf } from "@/content/trip";
@@ -31,11 +33,20 @@ const LEAD =
   "2024年10月28日、パリで「日本語を話したい」と言いながら配信を始めました。そこからヨーロッパを回って、中東に降りて、";
 
 /**
- * 面の頭。**最後の1文だけが「いま」を言う。**
+ * その日までに入った、いちばん新しい国の名前（滞在の表の、着いた日がいちばん新しい行）。
  *
- * @param region いちばん新しく歩いた国の地方（「コーカサス」）
+ * 前はここに国の地方（`region`。「コーカサス」）を渡していた。地域は種類ではない（`docs/spec/model.md` M-5）ので、
+ * 国の名前で言う。歩き終わった国の表（`COUNTRIES`）からではなく滞在の表から引くのは、いま歩いている国
+ * （記録をまだ持たない国）まで言うため。
  */
-export function MapHead({ region }: { region: string }) {
+const lastCountry = (now: Date): string => {
+  const day = tripDate(now);
+  const s = [...STAYS].filter((x) => x.from <= day).sort((a, b) => a.from.localeCompare(b.from)).at(-1);
+  return s ? (countryNameBySlug(s.country)?.name ?? s.name ?? "") : "";
+};
+
+/** 面の頭。**最後の1文だけが「いま」を言う。** */
+export function MapHead() {
   /* 最初の描画は**焼いた時刻**で引く（`docs/island-misses.md` #30）。
      引数なしで呼ぶと、焼いた HTML とブラウザの最初の描画で答えが変わる。 */
   const [trip, setTrip] = useState<TravelNow | null>(() => travelNow(BUILT_AT));
@@ -51,11 +62,13 @@ export function MapHead({ region }: { region: string }) {
      **この字が出ているあいだは、旅が終わっていても押せる。** 名前と行き先を
      別の条件で出しわけると、名前だけ残って行けない日がまた来る。 */
   const [dest, setDest] = useState<string | null>(() => tripPageOf(travelNow(BUILT_AT)?.slug));
+  const [region, setRegion] = useState(() => lastCountry(BUILT_AT));
   useEffect(() => {
     const now = new Date();
     setTrip(travelNow(now));
     setStay(stayNow(now));
     setDest(tripPageOf(travelNow(now)?.slug));
+    setRegion(lastCountry(now));
   }, []);
   const lead = trip ? (
     <>
@@ -71,7 +84,7 @@ export function MapHead({ region }: { region: string }) {
       のとちゅうです。
     </>
   ) : stay ? (
-    `${LEAD}いまは${region}にいます。`
+    `${LEAD}いまは${stay.name}にいます。`
   ) : (
     // 旅にも出ていないし、いる国も引けない日。**「いま」を名乗らない**
     `${LEAD}${region}まで来ました。`
@@ -139,25 +152,6 @@ export function HereStat({ slug, name }: { slug: string; name: string }) {
       }
     />
   );
-}
-
-/**
- * 年表の「いまここ」。
- *
- * 付ける行はビルド時に決まる（いちばん新しく歩いた国）。
- * その国を出たかどうかだけを、画面が出てから見る。
- *
- * **最初の描画も、焼いた時刻で引く**（`docs/island-misses.md` #30）。
- * ここは `useState(true)` で始めていたので、**焼いた HTML には必ず
- * 「いまここ」が入っていた。** 出発したあとは画面が出た瞬間に消えるが、
- * 消えるまでのあいだ——回線の細いところでは数秒——年表のジョージアが
- * 「いまここ」に見える。同じ面の `MapHead` も `HereStat` も `TripCountries` も
- * 焼いた時刻で引いているので、ここだけが揃っていなかった。
- */
-export function HereTag({ slug }: { slug: string }) {
-  const [on, setOn] = useState(() => stayNow(BUILT_AT)?.slug === slug);
-  useEffect(() => setOn(stayNow(new Date())?.slug === slug), [slug]);
-  return on ? <span className="atrip-here">いまここ</span> : null;
 }
 
 /**
@@ -246,168 +240,193 @@ export function HereRoute({ slug }: { slug: string }) {
   return <WorldRoute here={ring} focus={slug} />;
 }
 
-/** いま歩いている旅の国1つ（組み立ては `./page.tsx`）。 */
-export type TripStep = {
+
+/** 束の中の国1つ（組み立ては `./page.tsx`。滞在の行から） */
+export type TripRow = {
   slug: string;
   name: string;
-  /** 英字の国名。**旅程を持たない旅では無い。** 無いものを埋めない */
+  /** 英字の国名。**記録を持たない国には無い**（無いものを埋めない） */
   en?: string;
-  /** 入った日（YYYY-MM-DD） */
-  from: string;
-  /** 出た日。まだ先の日付でも入っている（出すかどうかは今日と見比べて決める）。無ければ空 */
-  to: string;
-  /** 通った街と、その日。旅程を持たない旅では空 */
-  towns: { name: string; date: string }[];
-  /** その国を歩いた章の slug。ここで見出しを分ける */
-  chapter: string;
-  /** その章の名前（`content/chapters.ts` が正本）。そのまま見出しになる */
-  chapterName: string;
-  /** その国の面。**持たない旅もある**ので、無ければ空（押せない札にする） */
+  /** その旅の中の滞在（着いた順）。先の日付の滞在も入っている（出すかどうかは今日と見比べて決める） */
+  stays: { from: string; to: string }[];
+  /** 行った街。分からない国では空 */
+  towns: string[];
+  /** その国の面。**持たない国もある**ので、無ければ空（押せない札にする） */
   href: string;
 };
 
-/** 「2026/09/11」。年表の他の行（`./page.tsx` の `span`）と同じ並びで、日まで出す。 */
-const ymd = (d: string) => `${d.slice(0, 4)}/${d.slice(5, 7)}/${d.slice(8, 10)}`;
+/** 旅ひとつの束 */
+export type TripGroup = {
+  slug: string;
+  /** 旅の名前（`content/chapters.ts` が正本）。そのまま束の見出しになる */
+  name: string;
+  /** 旅の島（`/island/<旅>`） */
+  href: string;
+  from: string;
+  to: string;
+  rows: TripRow[];
+  /** 枝の旅（イランまで歩く）。親の束の中に置く */
+  branches: TripGroup[];
+};
+
+const ym = (d: string) => (d ? `${d.slice(0, 4)}/${d.slice(5, 7)}` : "いま");
+
+/** 滞在の期間を「2024/10 – 11」のように縮める。同じ年なら年を省く。まだ居る滞在は「2026/11 –」 */
+function span(s: { from: string; to: string }, day: string) {
+  const a = ym(s.from);
+  /* 終わりが先の日付なら、まだ終わっていない（今日と見比べる。焼いた日の答えを出さない） */
+  if (!s.to || s.to > day) return `${a} –`;
+  const b = ym(s.to);
+  if (a === b) return a;
+  return a.slice(0, 4) === b.slice(0, 4) ? `${a} – ${b.slice(5)}` : `${a} – ${b}`;
+}
+
+/** 「2024/10/28 – 2025/03/29」。旅の島へのリンクの添え書き */
+const period = (from: string, to: string) => `${from.replace(/-/g, "/")} –${to ? ` ${to.replace(/-/g, "/")}` : ""}`;
 
 /**
- * いま歩いている旅の国。**`content/countries.ts` に記録が入るまでのあいだ、ここが受ける。**
+ * 「行った順に、ぜんぶ」。**旅で束ねる**（`docs/spec/model.md` M-5）。
  *
- * 出すのは**今日までに入った国だけ。** 国境を越えた日に1行増えて、次の国に入った日に
- * 前の国の「出た日」が入る。**焼いた日の答えを出さない**——旅は9/27まで毎日動くので、
- * 焼いたまま出すと、次の国境を越えた日から古くなる。
+ * 束は本線の旅を始まった順に並べ、枝の旅（イランまで歩く）は親の束の中に置く。国は滞在から束に入るので、
+ * 2つの旅に入った国（アルメニア）は両方の束に出る。
+ *
+ * **出すのは今日までに入った国だけ**（滞在の表には着く予定の行も書ける）。国境を越えた日に1行増える。
+ * 焼いた日の答えで描いてから、画面が出たら今日で引き直す（`docs/island-misses.md` #30）。
+ * 旅の日付は現地の暦で切る（`tripDate`）。
  */
-export function TripCountries({
-  steps,
-  start,
-  open,
-}: {
-  steps: TripStep[];
-  /** 通し番号の続き。`COUNTRIES` の最後の番号 */
-  start: number;
-  open: boolean;
-}) {
-  /* 最初の描画は焼いた日で。本物の今日で引き直すのは画面が出てから
-     （`docs/island-misses.md` #30）。旅の日付は現地の暦で切る（`tripDate`）。 */
+export function TripList({ trips }: { trips: TripGroup[] }) {
   const [day, setDay] = useState(() => tripDate(BUILT_AT));
-  const [live, setLive] = useState(false);
+  const [now, setNow] = useState(() => chapterNow(BUILT_AT).slug);
   useEffect(() => {
-    const now = new Date();
-    setDay(tripDate(now));
-    setLive(travelNow(now) != null);
+    const t = new Date();
+    setDay(tripDate(t));
+    setNow(chapterNow(t).slug);
   }, []);
 
-  const walked = steps.filter((x) => x.from <= day);
-  if (!walked.length) return null;
+  /** 今日までに入った滞在だけを残した国。1つも残らない国は出さない */
+  const seen = (rows: TripRow[]) =>
+    rows.flatMap((r) => {
+      const stays = r.stays.filter((s) => s.from <= day);
+      return stays.length ? [{ ...r, stays }] : [];
+    });
+  const groups = trips
+    .map((g) => ({
+      ...g,
+      rows: seen(g.rows),
+      branches: g.branches.map((b) => ({ ...b, rows: seen(b.rows) })).filter((b) => b.rows.length),
+    }))
+    .filter((g) => g.rows.length);
+  if (!groups.length) return null;
 
-  /* **畳みは旅ごとに分ける。** 旅がひとつ終わって次が始まっても、まだどちらの国も
-     `COUNTRIES` に移っていない日がありうる。1枚にまとめると、見出しの章名が
-     どちらか片方の嘘になる。見出しの名前は `chapterName`（`content/chapters.ts`）。 */
-  const groups: { chapter: string; label: string; steps: TripStep[] }[] = [];
-  for (const x of walked) {
-    const g = groups[groups.length - 1];
-    if (g && g.chapter === x.chapter) g.steps.push(x);
-    else groups.push({ chapter: x.chapter, label: x.chapterName, steps: [x] });
-  }
-  // 通し番号は旅をまたいで続ける。畳みが分かれても「◯カ国目」は1本の列
-  const noOf = new Map(walked.map((x, i) => [x.slug, start + i + 1]));
-  /** いちばん新しく入った国。「いまここ」はここにしか付かない */
-  const latest = walked[walked.length - 1];
+  /* **番号は、初めてその国に入った順**（束をまたいで1本の列）。2つの束に出る国は、どちらでも同じ番号 */
+  const first = new Map<string, string>();
+  for (const g of groups)
+    for (const r of [...g.rows, ...g.branches.flatMap((b) => b.rows)])
+      for (const s of r.stays) if (!first.has(r.slug) || s.from < first.get(r.slug)!) first.set(r.slug, s.from);
+  const noOf = new Map(
+    [...first.entries()].sort((a, b) => a[1].localeCompare(b[1]) || a[0].localeCompare(b[0])).map(([slug], i) => [slug, i + 1]),
+  );
+  /* 「いまここ」は、終わりの日が空の滞在（M-13）。**国に付く印**で、日付の隣に置く（街の列の末尾に置くと
+     「その街にいる」と読める） */
+  const hereOf = (r: TripRow) => r.stays.some((s) => !s.to);
+
+  const list = (rows: TripRow[]) => (
+    <ol className="atrip">
+      {rows.map((r) => {
+        const body = (
+          <>
+            <span className="atrip-flag">
+              <Flag slug={r.slug} size={34} />
+            </span>
+            <span className="atrip-body">
+              <span className="atrip-name">
+                <b>{r.name}</b>
+                {r.en && <em>{r.en}</em>}
+              </span>
+              <span className="atrip-when">
+                {r.stays.map((s) => span(s, day)).join("、")}
+                {hereOf(r) && <span className="atrip-here">いまここ</span>}
+              </span>
+              {/* 街が分かっていない国では、列ごと出さない。空の列は隙間になるだけ */}
+              {r.towns.length > 0 && (
+                <span className="atrip-tags">
+                  {r.towns.slice(0, 5).map((t) => (
+                    <span key={t}>{t}</span>
+                  ))}
+                  {r.towns.length > 5 && <span>ほか{r.towns.length - 5}</span>}
+                </span>
+              )}
+            </span>
+          </>
+        );
+        return (
+          <li key={r.slug}>
+            <span className="atrip-rail" aria-hidden />
+            <span className="atrip-no" aria-hidden>
+              {noOf.get(r.slug)}
+            </span>
+            {/* **行き先を持たない国は、押せる形にしない。** 矢印（`tile-go`）と厚み（台）は「押すと進む」の合図
+                なので、行き先が無い札には出さない（`docs/island-design.md` 3章。数えるのは `tools/sprites/popcheck.mjs`）。
+                落ち影だけ残して、札の形は同じにする */}
+            {r.href ? (
+              <Link className="atrip-card" href={r.href} prefetch={false}>
+                {body}
+                <Icon name="right" size={15} className="tile-go" />
+              </Link>
+            ) : (
+              <span className="atrip-card" style={{ boxShadow: "var(--shadow-1)", transform: "none" }}>
+                {body}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+
+  /** 束の頭の、旅の島へのリンク。**どの束にも1本**（前は `/travel` から旅の島へ1本も無かった）。
+      字は「この旅の島へ」だけ——旅の名前は束の見出しが言っている。名前を足すと、長い旅（バルカン諸国周遊）で
+      「へ」だけが2行目に落ちた */
+  const isle = (g: TripGroup, label: string, where = "") => (
+    <Link className="tile atrip-isle" href={g.href} prefetch={false}>
+      <Icon name="island" size={30} className="tile-icon" />
+      <span className="tile-text">
+        <b>{label}</b>
+        <i>
+          {period(g.from, g.to)}
+          {where}
+        </i>
+      </span>
+      <Icon name="right" size={16} className="tile-go" />
+    </Link>
+  );
 
   return (
     <>
-      {groups.map((g, gi) => (
+      {groups.map((g) => (
         <Fold
-          key={g.chapter}
-          title={g.label}
-          /* **見出しと同じ語を、その下でもう一度言わない。** 旅の名前がそのまま
-             国名の章（アルバニア）は、1カ国のあいだ「アルバニア／アルバニアから」と
-             2段で同じ字が並ぶ。回る国が増えれば「アルバニアから◯◯まで」になって
-             ひとりでに意味を持つので、消すのは重なっているあいだだけ。 */
-          lead={
-            g.steps.length > 1
-              ? `${g.steps[0].name}から${g.steps[g.steps.length - 1].name}まで`
-              : g.label === g.steps[0].name
-                ? ""
-                : `${g.steps[0].name}から`
-          }
-          note={`${g.steps.length}カ国`}
-          // 開けておくのはいちばん新しい旅ひとつ。2枚開くと、どこまで来たかが読みにくい
-          open={open && gi === groups.length - 1}
+          key={g.slug}
+          title={g.name}
+          lead={g.rows.length > 1 ? `${g.rows[0].name}から${g.rows[g.rows.length - 1].name}まで` : g.rows[0].name}
+          note={`${g.rows.length}カ国`}
+          // 開けておくのは、いまいる旅の束ひとつ。2枚開くと、どこまで来たかが読みにくい
+          open={g.slug === now}
         >
-          <ol className="atrip">
-            {g.steps.map((x) => {
-              const towns = [...new Set(x.towns.filter((t) => t.date <= day).map((t) => t.name))];
-              const out = x.to && x.to <= day ? x.to : "";
-              const body = (
-                <>
-                  <span className="atrip-flag">
-                    <Flag slug={x.slug} size={34} />
-                  </span>
-                  <span className="atrip-body">
-                    <span className="atrip-name">
-                      <b>{x.name}</b>
-                      {/* 旅程を持たない旅には英字の国名が無い。**空の欄を置かない** */}
-                      {x.en && <em>{x.en}</em>}
-                    </span>
-                    <span className="atrip-when">
-                      {/* 同じ日に入って出た国（ヘルシンキ乗り継ぎ）は、日付ひとつ。
-                          `./page.tsx` の `span` が同じ月をまとめるのと同じ決まり */}
-                      {!out
-                        ? `${ymd(x.from)} –`
-                        : out === x.from
-                          ? ymd(x.from)
-                          : `${ymd(x.from)} – ${ymd(out).slice(5)}`}
-                      {/* 「いまここ」は**国に付く**印で、街に付く印ではない。
-                          下の街の列の末尾に置くと、列の最後の街の隣に並ぶので
-                          「その街にいる」と読める（実際そう読み違えた）。
-                          日付の「09/11 –」の隣なら、「その日からこの国にいる」に
-                          しか読めない。**まだ出ていない国だけ**に付ける。 */}
-                      {live && !out && x === latest && <span className="atrip-here">いまここ</span>}
-                    </span>
-                    {/* 街が分かっていない国では、列ごと出さない。空の列は隙間になるだけ */}
-                    {towns.length > 0 && (
-                      <span className="atrip-tags">
-                        {towns.slice(0, 5).map((t) => (
-                          <span key={t}>{t}</span>
-                        ))}
-                        {towns.length > 5 && <span>ほか{towns.length - 5}</span>}
-                      </span>
-                    )}
-                  </span>
-                </>
-              );
-              return (
-                <li key={x.slug}>
-                  <span className="atrip-rail" aria-hidden />
-                  <span className="atrip-no" aria-hidden>
-                    {noOf.get(x.slug)}
-                  </span>
-                  {/* **行き先を持たない国は、押せる形にしない。** 旅程の無い旅には
-                      国ごとの面が無い。矢印（`tile-go`）は「押すと進む」の印なので、
-                      行き先が無い札には出さない（`docs/island-misses.md` #12）。
-
-                      厚み（`0 6px 0` の台）と浮き上がりも外す。島では**厚みが
-                      「押せる」の合図ひとつ**と決まっているので、押せない札に
-                      残すと合図が嘘になる（`docs/island-design.md` 3章。
-                      数えているのは `tools/sprites/popcheck.mjs`）。
-                      落ち影だけ残して、札としての形は同じにする。 */}
-                  {x.href ? (
-                    <Link className="atrip-card" href={x.href} prefetch={false}>
-                      {body}
-                      <Icon name="right" size={15} className="tile-go" />
-                    </Link>
-                  ) : (
-                    <span
-                      className="atrip-card"
-                      style={{ boxShadow: "var(--shadow-1)", transform: "none" }}
-                    >
-                      {body}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
+          {isle(g, "この旅の島へ")}
+          {list(g.rows)}
+          {g.branches.map((b) => {
+            /* **親の束にもう居る国は、枝の下に2枚目を置かない。** 枝は親の期間の中にあるので（M-11）、
+               国はたいてい親の束と同じ。同じ札（同じ番号・同じ街）が真下にもう1枚並ぶと、2回行ったように読める。
+               どの国の中を歩いたかは、島の札の添え字で言う */
+            const inParent = b.rows.filter((r) => g.rows.some((x) => x.slug === r.slug));
+            const extra = b.rows.filter((r) => !inParent.includes(r));
+            return (
+              <div key={b.slug} className="atrip-branch">
+                {isle(b, `枝の旅「${b.name}」`, inParent.length ? `・${inParent.map((r) => r.name).join("・")}の中` : "")}
+                {extra.length > 0 && list(extra)}
+              </div>
+            );
+          })}
         </Fold>
       ))}
     </>

@@ -61,7 +61,7 @@ issue 1本（`#511`）にまとまって出ていて、そこから「どれが�
 | 持ち主 | どこへ出るか | 何が入るか |
 | --- | --- | --- |
 | **あやと**（`UPKEEP`） | issue #664 の区画 | 人しか書けないものだけ。ひとこと・着いた日・歩いた国 |
-| **こちら**（`SYSTEM` / `Count.ours`） | **区画に出さない。この見張りを赤くする** | 機械が埋めるはずのものが埋まっていない。配り忘れ・不具合 |
+| **こちら**（`SYSTEM` / `Count.ours`） | **区画に出さない。この見張りを赤くする** | 機械が埋めるはずのものが埋まっていない。配り忘れ・不具合（**いまこちらへ出す引き金は無い**。下の 2026-11-23） |
 | **焼くほう**（`Count.system`） | `bake_down` の側 | 焼き込みが古い。焼き直しが動いていない |
 
 **区画に出すのは1列目だけ。** 2列目を混ぜると「読んでも自分の出番が無い
@@ -116,12 +116,15 @@ issue 1本（`#511`）にまとまって出ていて、そこから「どれが�
 「空いていない」と答えて毎晩通る。どれも「数えられない」に積んで、
 区画を書き換えずに止まる。
 
-**日数はここに1つも書かない。** 便りの古さの境目は画面と同じものを使う
-（`site/lib/place.ts` の `PLACE_STALE_DAYS` を読む）。読めなければ
-「数えられない」で止める——既定値を置くと、あちらの書きかたが変わった日に
-黙ってすり替わって、画面と札が別のことを言う。
+**2026-11-23 に島の便りの2本を外した（#1278）。** 「島の便りのひとこと」
+（`letter_word_missing`。#664 の「急ぐ」に毎日出ていた）と「過ぎた行が落ちていない」
+（`letter_past_week_left`。こちら側）。島だより（`/now`）を面ごと畳み、
+画面が `island/state.current` を1つも読まなくなった（`docs/adr/0006-fold-next-and-now.md`）。
+居場所は滞在の表が持つので、国を移った日の手入れは「いまの章の滞在」が見る。
+**守る相手の無い引き金は残さない。** 便りを読みに行く口（`fetch_state`）も、
+古さの境目を画面から借りる読み（`PLACE_STALE_DAYS`）も一緒に外した。
 
-前者は**あちらの判定をそのまま借りる。** 同じ日数を2か所に書くと、片方を
+焼き込みの判定は**あちらの判定をそのまま借りる。** 同じ日数を2か所に書くと、片方を
 直し忘れた日に食い違う（`docs/island-fresh.md` 2章と同じ決めごと）。
 借りたうえで、**持ち主が「人」の赤だけ**をこちらへ出す。
 
@@ -191,14 +194,11 @@ issue 1本（`#511`）にまとまって出ていて、そこから「どれが�
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import os
 import re
 import subprocess
 import sys
-import urllib.error
-import urllib.request
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
@@ -234,9 +234,9 @@ COUNTRIES_TS = "site/content/countries.ts"
 # 滞在の表。**いつどの国に居たかを手で書くのはここだけ**（#1275）
 STAYS_TS = "site/content/stays.ts"
 ABOUT_TSX = "site/app/about/page.tsx"
-PLACE_TS = "site/lib/place.ts"
 UPDATES_TS = "site/content/updates.ts"
-LEGENDS_TS = "site/content/legends.ts"
+# 伝説は企画の表の印（`docs/spec/model.md` M-3）。字で読める表は企画の表だけ
+PROJECTS_TS = "site/content/projects.ts"
 
 # **視聴者さんから見える変更が入る置き場。**
 #
@@ -256,13 +256,6 @@ SHOWN_PATHS = ("site/app", "site/components")
 # **あやとの机は、視聴者さんから見えない。** ここを入れると、机を直すたびに
 # 「お知らせに1行足せ」と言われる（読む人には何も起きていない）
 SHOWN_NOT = (":(exclude)site/app/me", ":(exclude)site/components/me")
-
-# 島の便り。**打つのはあやとで、スマホから**（`POST /island-api/current`。
-# 画面は `/me` の「いまどこ」＝`site/components/me/TripTools.tsx`）
-STATE_URL = "https://live-streaming-d3cac.web.app/island-api/state"
-# **印の中に印を入れない。** `Gap.where` は丸ごと `…` で囲まれるので、
-# ここに ` を置くと入れ子になって、札の上で字が崩れる
-STATE_WHERE = "/me の「いまどこ」（島の便り）"
 
 # 書き込む先。**常設の札1本だけ。新しく立てない。**
 # 番号で引くのは、この札が「旅がつぎの国へ移ったときの手入れ」という
@@ -333,9 +326,7 @@ class World:
     stays: list[dict]                 # `stays.ts` の滞在の表（`country` / `from` / `to` / …）
     itineraries: set[str]             # 旅程のある章の slug（`site/content/<slug>.ts`）
     about: str                        # `/about` の年表の字（`STORY` の中身）
-    legends: list[dict]               # `legends.ts` の伝説（`slug` / `date` / `range`）
-    current: dict                     # 島の便り（`/island-api/state` の `current`）
-    stale_days: int                   # `site/lib/place.ts` の `PLACE_STALE_DAYS`
+    legends: list[dict]               # 企画の表（`projects.ts`）の伝説の印が付いた行（`slug` / `date` / `trip`）
     shown_at: date | None             # 視聴者さんから見える変更が入った、いちばん新しい日
     updates_at: date | None           # `updates.ts` のいちばん新しい日
 
@@ -408,58 +399,6 @@ def read_about_steps(src: str) -> str:
     return ts_read.array_body(ts_read.code_only(src), "STORY")
 
 
-def read_place_stale_days(src: str) -> int:
-    """`site/lib/place.ts` の `PLACE_STALE_DAYS`。読めなければ 0。
-
-    **日数をここに書かない。** 画面（`placeOutdated`）とこの見張りが別の
-    境目を持つと、島が「もう『いま』ではない」と言っている便りを、
-    札のほうは「まだ新しい」と数える日が来る
-    （`docs/island-fresh.md` 2章「日数を2か所に置かない」）。
-
-    読めなかったら 0 を返して、呼ぶ側が**「数えられない」で止める。**
-    既定値をここに置くと、あちらの書きかたが変わった日に黙ってすり替わる。
-    """
-    return ts_read.const_int(ts_read.code_only(src), "PLACE_STALE_DAYS")
-
-
-# 島の便りの `week` の行頭（「9/27 ストックホルムを発つ」）。
-# **年は書かれていない。** 今日のいちばん近くに寄せて解く
-WEEK_DAY_RE = re.compile(r"^\s*(\d{1,2})\s*/\s*(\d{1,2})\b")
-
-
-def week_days(week, today: date) -> list[date]:
-    """`week` の行の頭にある日付。**年は今日のいちばん近くに寄せる。**
-
-    `week` は「今週やること」なので、どの行も今日の前後ひと月あたりに在る。
-    年をまたぐ晩（12/30 の行を 1/2 に読む）にずれないよう、
-    前年・今年・翌年の3つから**今日にいちばん近い**ものを採る。
-
-    日付の付いていない行（「回る先はこれから」）は数えない。
-
-    Args:
-        week: 島の便りの `week`（字の並び。何が来るか分からない）
-        today: きょう
-
-    Returns:
-        読めた日付だけ。並びはファイルのまま
-    """
-    out = []
-    for line in (week if isinstance(week, list) else []):
-        m = WEEK_DAY_RE.match(str(line))
-        if not m:
-            continue
-        mm, dd = int(m.group(1)), int(m.group(2))
-        got = []
-        for y in (today.year - 1, today.year, today.year + 1):
-            try:
-                got.append(date(y, mm, dd))
-            except ValueError:
-                pass  # 2/30 のような字。日付ではないので数えない
-        if got:
-            out.append(min(got, key=lambda d: abs((d - today).days)))
-    return out
-
-
 def read_updates_on(src: str) -> list[str]:
     """`updates.ts` の `UPDATES` が持っている `on:` の字を、書いてある順に。
 
@@ -506,47 +445,6 @@ def last_shown_change(root: Path, paths=SHOWN_PATHS, keep=SHOWN_NOT) -> date | N
         env={**os.environ, "TZ": "Asia/Tokyo"},
     )
     return _as_date(out.stdout.strip()) if out.returncode == 0 else None
-
-
-@dataclass
-class StateRead:
-    """島の便りを読んだ結果。**届かなかったことを、空と同じ顔にしない。**"""
-
-    current: dict = field(default_factory=dict)
-    error: str = ""
-
-
-def fetch_state(url: str = STATE_URL, tries: int = 3, timeout: int = 20) -> StateRead:
-    """`/island-api/state` の `current` だけを取る。
-
-    **`current` のほかは1つも持ち帰らない。** あの口は `residents` や
-    `residentDays`（チャンネルIDが鍵）も返すので、手元に置いた時点で
-    ログに混ざる道ができる。持ち帰らなければ混ざりようがない。
-
-    届かなければ `error` を立てて返す。**呼ぶ側は「数えられない」で止める**
-    ——届かなかった晩に「手入れ待ちはありません」と書くほうが悪い。
-
-    Args:
-        url: 口の在りか
-        tries: 何回試すか（ひと呼吸おいて繰り返す）
-        timeout: 1回あたりの待ち（秒）
-
-    Returns:
-        `StateRead`
-    """
-    why = ""
-    for n in range(tries):
-        try:
-            with urllib.request.urlopen(url, timeout=timeout) as r:
-                got = json.loads(r.read().decode("utf-8"))
-            cur = got.get("current")
-            if not isinstance(cur, dict):
-                return StateRead(error=f"{url} の返事に `current` がありません")
-            return StateRead(current=cur)
-        except (urllib.error.URLError, OSError, ValueError) as e:
-            # **本文を出さない。** 返事そのものに便りの字が入っている
-            why = f"{type(e).__name__}（{n + 1}回目）"
-    return StateRead(error=f"島の便り（{url}）に届きません: {why}")
 
 
 def arrived_without_from(w: World) -> list[Gap]:
@@ -672,99 +570,6 @@ def running_without_stay(w: World) -> list[Gap]:
                 urgent=False)]
 
 
-def letter_word_missing(w: World) -> list[Gap]:
-    """**島の便りのうち、人しか書けない欄が空いている。**
-
-    あやとの言葉（2026-10-13 / #808）:
-
-    > これ、わたし打つの面倒なので仕組みを見直してください。
-    > 最低でもあなたは知ってるはずだし、**過去のものが出るのはシステムとして
-    > おかしい**
-
-    ここは長いあいだ `place` と `week` も一緒に呼んでいた。**どちらも機械が
-    知っている。**
-
-    | 欄 | 誰が埋めるか |
-    | --- | --- |
-    | `place`（いまいる国） | **機械。** 人の字が古くなったら章か国で受ける（`site/lib/stay.ts` の `tripAsPlace` / `stayAsPlace`） |
-    | `week` の過ぎた行 | **機械。** 口が落としてから返す（`functions/src/islandApi.ts` の `weekAhead`） |
-    | `word`（ひとこと） | **人だけ。** その日どこで何を見たかは本人の頭の中にしかない |
-    | `theme`（島の景色） | 人。ただし**字としては出さない**ので、古くても嘘にならない |
-
-    だからここが呼ぶのは **`word` ひとつ**。仕分けの表は
-    `docs/island-db.md` の 3.5。
-
-    見るのは2つ。**片方だけでは、いつでも通る判定になる。**
-
-    1. **打たれた日が古い**（`site/lib/place.ts` の `placeOutdated` と同じ境目。
-       いまの章より前か、`PLACE_STALE_DAYS` 日より前か）。
-       **日数は暦日で数える**——時刻で引くと、同じ便りが朝と夜で答えが変わる。
-       画面は日本時間の暦日で切っていて、こちらは走った箱の暦日なので、
-       **ちょうど境目の1日だけは、画面と答えが1日ずれることがある。**
-       7日の境目に対して1日なので、札の読み手には効かない
-    2. **`word` が空**（打たれた日が新しくても、ひとことが無ければ出ない）
-
-    1 だけでは、章が始まった日に打てば**その章が何ヶ月続いても永久に
-    「新しい」**。2 だけでは、2週間前のひとことが「いま」として出つづける。
-
-    急ぐ側。**島がいま、人の言葉を1つも出せていない。**
-
-    **中身を印字しない。** 出すのは日付だけ（`word` はあやとの言葉で、
-    ここは公開の issue に出る）。
-    """
-    out = []
-    cur = w.current
-    said = _as_date(str(cur.get("updatedAt") or ""))
-    now = w.chapter_now()
-    began = (_as_date(now["from"]) or _as_date(now["opensAt"])) if now else None
-    where = f"`{STATE_WHERE}` の `word`"
-
-    if said is None:
-        out.append(Gap(where, "ひとこと（**打たれた日が読めません**）", urgent=True))
-        return out
-
-    age = (w.today - said).days
-    if age > w.stale_days or (began is not None and said < began):
-        out.append(Gap(
-            where,
-            f"ひとこと（いまの便りは {said}＝{age}日前。"
-            f"{w.stale_days}日を超えたら「いま」ではない）。"
-            f"**いまいる国は書かなくていい**——古くなったら機械が受けます",
-            urgent=True))
-    elif not str(cur.get("word") or "").strip():
-        out.append(Gap(where, "ひとこと（日付は新しいのに、字が入っていません）",
-                       urgent=True))
-    return out
-
-
-def letter_past_week_left(w: World) -> list[Gap]:
-    """**過ぎた日の行が、口からまだ返ってきている。こちらの落ち。**
-
-    `week` の行が過ぎたかどうかは**機械が知っている。** 知っていることを
-    人に消させていたのが #808 の指摘で、いまは
-    `GET /island-api/state` が落としてから返す
-    （`functions/src/islandApi.ts` の `weekAhead`）。
-
-    **それでもここが拾うなら、落とすほうが動いていない。** 考えられるのは
-    Functions を配り忘れた（`firebase-functions-deploy.yml`）か、日付の
-    読み方を片側だけ直したか。どちらも**あやとには1ミリも関係がない**ので、
-    札には出さず、この見張りを赤くしてこちらに鳴らす（`Count.ours`）。
-
-    持ち主は `SYSTEM`。**あやとを呼ばない。**
-
-    **中身を印字しない。** 出すのは日付と件数だけ。
-    """
-    past = [d for d in week_days(w.current.get("week"), w.today) if d < w.today]
-    if not past:
-        return []
-    return [Gap(
-        "`functions/src/islandApi.ts` の `weekAhead`（`GET /island-api/state`）",
-        f"過ぎた日の行が **{len(past)}行** 返ってきています"
-        f"（いちばん古いのが {min(past)}）。落とすほうが動いていません"
-        f"——Functions を配り忘れていないか見てください",
-        urgent=True, owner=SYSTEM)]
-
-
 def about_without_chapter(w: World) -> list[Gap]:
     """**`/about` の年表に、いまの章の行が無い。**
 
@@ -843,23 +648,25 @@ def updates_behind(w: World) -> list[Gap]:
                 urgent=False)]
 
 
-def _legend_covers(lg: dict, a: date, b: date) -> bool:
-    """その伝説が、`a`〜`b`（章の期間）のものか。
+def _legend_covers(lg: dict, ch: dict, a: date, b: date) -> bool:
+    """その伝説が、章 `ch`（期間 `a`〜`b`）の島に建つものか。
 
-    **見るのは `date` 1つだけ。島と同じ見かたにする。**
-    島にどの記念碑が建つかを決めているのは
-    `site/components/isle/spec.ts` の `legendsOf()` で、あちらが見るのも
-    「`date` が章の期間に入っているか」だけ（`inSpan`）。
+    **島と同じ見かたにする。** 島にどの記念碑が建つかを決めているのは
+    `site/components/isle/spec.ts` の `legendsOf()` で、引きかたは2つだけ:
+
+    - 旅を指している伝説（旅と1対1。企画の表の `trip`）は、**その旅の島にだけ**建つ
+    - 旅を指していない伝説は、`date` が期間に入る**本線の旅**の島に建つ。
+      枝の旅（`branchOf`）の島には、その旅を指した伝説しか建たない
 
     **`range` を足して甘くしない。** 足すと、`range` だけが重なっている
     伝説でここが黙るのに、**島にはその記念碑が1枚も建たない**——
     見張りが緑なのに、見張りたかったものが起きている状態になる。
     同じ答えが要るものは、同じ見かたを通す（`CLAUDE.md`）。
-
-    そのぶん、**伝説の `date` は章の中に置くこと**が決まりになる。
-    北欧旅の `date` が出発の 9/11 ではなく1日目の 9/12 なのはそれが理由で、
-    `content/legends.ts` のその行にも書いてある。
     """
+    if lg.get("trip"):
+        return lg["trip"] == ch["slug"]
+    if ch.get("branchOf"):
+        return False
     d = _as_date(lg.get("date", ""))
     return bool(d and a <= d <= b)
 
@@ -867,10 +674,10 @@ def _legend_covers(lg: dict, a: date, b: date) -> bool:
 def ended_without_legend(w: World) -> list[Gap]:
     """**旅（章）が終わったのに、その章の伝説が1つも無い。**
 
-    `content/legends.ts` は「どれを伝説と呼ぶか」で、**人しか決められない**
+    企画の表（`content/projects.ts`）の伝説の印は「どれを伝説と呼ぶか」で、**人しか決められない**
     （`docs/island-fresh.md` 4章）。だから古くなっても誰も鳴らさず、
     北欧旅は終わってから16日のあいだ、丘に1枚も立たなかった。
-    `legends.ts` に付いている見かたは `LATEST` の300日（床）だけで、
+    伝説（当時の `legends.ts`）に付いていた見かたは `LATEST` の300日（床）だけで、
     **章が1つまるごと抜けても緑**だった。
 
     数えられる理由は、**いままで例外が無かった**から。終わった5つの章は
@@ -898,11 +705,12 @@ def ended_without_legend(w: World) -> list[Gap]:
             # 期間が読めない章は数えない。**空で通さず、ここで黙る**のは
             # 「着いた日が入っていない」が先に立つから（二重に鳴らさない）
             continue
-        if any(_legend_covers(lg, a, b) for lg in w.legends):
+        if any(_legend_covers(lg, r, a, b) for lg in w.legends):
             continue
         out.append(Gap(
-            f"`{LEGENDS_TS}`（`{r['slug']}` の章）",
-            f"その旅の伝説を1つ（`date` は {a}〜{b} の中に）。"
+            f"`{PROJECTS_TS}`（`{r['slug']}` の章）",
+            f"その旅の伝説を1つ（旅そのものが企画なら `trip: \"{r['slug']}\"`、"
+            f"そうでなければ `date` を {a}〜{b} の中に）。"
             f"丘（`/legends`）にも島にも、この旅のものが1枚も立っていない",
             urgent=False))
     return out
@@ -915,12 +723,9 @@ TRIGGERS: tuple[Trigger, ...] = (
     Trigger("滞在日数", False, running_without_days),
     Trigger("閉じた章の滞在", True, ended_with_open_stay),
     Trigger("いまの章の滞在", False, running_without_stay),
-    # **人しか書けない欄だけを呼ぶ**（#808）。`place` と `week` の過ぎた行は
-    # 機械が受けるので、ここからは外した
-    Trigger("島の便りのひとこと", True, letter_word_missing),
-    # **こちら側。** 機械が落とすはずのものが落ちていない＝配り忘れか不具合。
-    # 札には出さず、この見張りを赤くする（`Count.ours`）
-    Trigger("過ぎた行が落ちていない", True, letter_past_week_left),
+    # 島の便り（`island/state.current`）の2本——「ひとこと」と「過ぎた行が落ちていない」——は外した
+    # （#1278）。島だより（`/now`）ごと畳んで、画面が `current` を1つも読まなくなった。
+    # 守る相手の無い引き金は残さない
     Trigger("年表のいま", False, about_without_chapter),
     Trigger("終わった旅の伝説", False, ended_without_legend),
     Trigger("島の直したところ", False, updates_behind),
@@ -1008,7 +813,7 @@ def stale_gaps(v, red_names: set[str], books: dict | None = None
 
 
 def count(content_dir: Path, today: date, books: dict | None = None,
-          site: Path | None = None, state: StateRead | None = None,
+          site: Path | None = None,
           shown_at: date | None = None, root: Path | None = None) -> Count:
     """**いま空いている欄**を数える。GitHub を1バイトも触らない。
 
@@ -1016,12 +821,7 @@ def count(content_dir: Path, today: date, books: dict | None = None,
         content_dir: `site/content`（仕込みの写しを渡してもよい）
         today: きょう
         books: 仕分けの表（省略時は `stale.BOOKS`）
-        site: `site/`（省略時は `content_dir` の親）。`app/about/page.tsx` と
-            `lib/place.ts` と `components/isle/spec.ts` をここから引く
-        state: 島の便り（省略時は**口を叩いて取りに行く**）。
-            **仕込みでは必ず渡す**——毎 PR で回る対照を本番の口に繋ぐと、
-            本番が返らない日に関係のない PR が赤くなる
-            （`python/watch_excuses.py` の `cardgo.mjs` と同じ理由）
+        site: `site/`（省略時は `content_dir` の親）。`app/about/page.tsx` をここから引く
         shown_at: 視聴者さんから見える変更が入った、いちばん新しい日
             （省略時は**git の履歴を読む**）。**仕込みでは必ず渡す**——
             本物の履歴に繋ぐと、対照の合否がその日のコミットで入れ替わる
@@ -1132,37 +932,23 @@ def count(content_dir: Path, today: date, books: dict | None = None,
     # 伝説。**読めなかったら空で渡さない**——空で渡すと、終わった章ぜんぶが
     # 「伝説が無い」になって、毎晩ありもしない手入れを並べる
     legends: list[dict] = []
-    lg = content_dir / "legends.ts"
+    lg = content_dir / "projects.ts"
     if not lg.is_file():
-        blind.append(f"{LEGENDS_TS} がありません")
+        blind.append(f"{PROJECTS_TS} がありません")
     else:
-        got_l = ts_read.read_array(lg.read_text(encoding="utf-8"), "LEGENDS",
-                                   keys=("slug", "date"))
+        got_l = ts_read.read_array(lg.read_text(encoding="utf-8"), "PROJECTS",
+                                   keys=("slug", "date", "trip", "legend"))
         if not got_l.declared:
-            blind.append(f"{LEGENDS_TS} が伝説を1つも名乗っていません")
+            blind.append(f"{PROJECTS_TS} が企画を1つも名乗っていません")
         elif got_l.missed:
             blind.append(
-                f"{LEGENDS_TS} の伝説を {got_l.missed}個 読み落としました"
+                f"{PROJECTS_TS} の企画を {got_l.missed}個 読み落としました"
                 f"（名乗り {got_l.declared} / 読めた {len(got_l.rows)}）"
             )
+        elif not (marked := [r for r in got_l.rows if r["legend"] == "true"]):
+            blind.append(f"{PROJECTS_TS} に伝説の印（`legend: true`）が1つもありません")
         else:
-            legends = got_l.rows
-
-    stale_days = 0
-    pl = site / "lib" / "place.ts"
-    if not pl.is_file():
-        blind.append(f"{PLACE_TS} がありません")
-    else:
-        stale_days = read_place_stale_days(pl.read_text(encoding="utf-8"))
-        if not stale_days:
-            blind.append(
-                f"{PLACE_TS} から `PLACE_STALE_DAYS` を読めません。"
-                f"**既定値で代わりにしない**——画面と札が別の境目を持つことになる"
-            )
-
-    st = fetch_state() if state is None else state
-    if st.error:
-        blind.append(st.error)
+            legends = marked
 
     # --- (d) 島をなおしたところ（`updates.ts`）---
     #
@@ -1187,7 +973,6 @@ def count(content_dir: Path, today: date, books: dict | None = None,
 
     w = World(today=today, rows=rows, stays=stay_rows,
               itineraries=itineraries, about=about, legends=legends,
-              current=st.current, stale_days=stale_days,
               shown_at=(last_shown_change(root or REPO_ROOT)
                         if shown_at is None else shown_at),
               updates_at=updates_at)

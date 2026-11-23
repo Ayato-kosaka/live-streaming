@@ -49,8 +49,6 @@ const PAGES = (process.env.PAGES || [
   "/index.html",
   "/atlas.html",
   "/all.html",
-  "/now.html",
-  "/next.html",
   "/board.html",
   "/nordic.html",
   "/island/europe.html",
