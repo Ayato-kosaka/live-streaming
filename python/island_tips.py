@@ -759,6 +759,39 @@ def log_island(site: Optional[List[tuple]], plan: dict, rows: List[dict]) -> Non
         print("::warning::" + msg, flush=True)
 
 
+def probe(d0: str, d1: str) -> int:
+    """島の当て方（`SQL_ISLAND`）を、**Doneru の本番の時刻**で確かめる。
+
+    島の投げ銭が本番に1件も無いうちは、`SQL_ISLAND` は毎晩1度も流れない。
+    **最初の1件が来た晩に初めて流れて、そこで文が壊れていたら台帳の job ごと
+    落ちる。** だから先に、同じ時間帯（`_WIN`）で当ててある Doneru の投げ銭の
+    時刻を `SQL_ISLAND` に通して、videoId と配信の始まりが**1件残らず同じ**かを
+    数える。Firestore は開かない。**1バイトも書かない。** 出すのは件数だけ。
+
+        script: tips_pull
+        args:   {"days": 30, "probe": true}
+
+    Args:
+        d0: 始まりの日
+        d1: 終わりの日
+
+    Returns:
+        0=全件同じ / 1=違うものが在る / 2=比べる Doneru の投げ銭が0件
+    """
+    dn = fetch_doneru(d0, d1, {})
+    if not dn:
+        logger.warning("比べる Doneru の投げ銭が0件です（期間を広げる）")
+        return 2
+    hits = window_hits([r["donatedAt"] for r in dn])
+    hit = sum(1 for r in dn if r["videoId"])
+    diff = sum(1 for r in dn
+               if ((hits.get(r["donatedAt"]) or {}).get("video_id") or None) != r["videoId"]
+               or (hits.get(r["donatedAt"]) or {}).get("started_ms") != r["videoStartedAt"])
+    logger.info("島の当て方 × Doneru の当て方: %d件（配信に当たった %d件）のうち、違う %d件",
+                len(dn), hit, diff)
+    return 0 if diff == 0 else 1
+
+
 def main() -> int:
     """エントリポイント。"""
     ap = argparse.ArgumentParser()
@@ -766,6 +799,9 @@ def main() -> int:
     ap.add_argument("--days", type=int, default=DEFAULT_DAYS, help="直近この日数ぶん")
     ap.add_argument("--all", action="store_true", help="ぜんぶ入れ直す（最初の1回）")
     ap.add_argument("--dry-run", action="store_true", help="書かずに出すだけ")
+    ap.add_argument("--probe", action="store_true",
+                    help="島の当て方（SQL_ISLAND）を Doneru の本番の時刻で確かめる。"
+                         "Firestore を開かない・1バイトも書かない")
     a = ap.parse_args()
 
     if a.all:
@@ -778,6 +814,9 @@ def main() -> int:
         d1 = (today + timedelta(days=1)).isoformat()
         d0 = (today - timedelta(days=max(1, a.days) - 1)).isoformat()
     logger.info("%s 〜 %s", d0, d1)
+
+    if a.probe:
+        return probe(d0, d1)
 
     db = firestore.Client(project=BQ_PROJECT_ID)
     donors = {d.id: (d.to_dict() or {}) for d in db.collection("islandDonors").stream()}

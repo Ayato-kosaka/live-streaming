@@ -15,7 +15,8 @@
      2回目は1件も書かない）
   4. **`channelId` はそのまま入る。** 日・時刻・配信は Doneru と同じ当て方
   5. **読めなかった晩に、台帳の島の行を消さない**（読めたのに0件の晩も）
-  6. **Doneru と島が、同じ時間帯・同じ選び方の SQL を使う**（当て方を2つにしない）
+  6. **Doneru と島が、同じ時間帯・同じ選び方の SQL を使う**（当て方を2つにしない）。
+     `--probe`（本番の Doneru の時刻で島の当て方を確かめる口）が違いを数えられること
   7. **貯金箱（`fund_daily.py`）が `fund.box.island` を `box()` で焼く**
 
 ## 対照（`BREAK=`。`docs/island-standards.md` §15）
@@ -421,6 +422,18 @@ def case_sql():
     ok("島の SQL が共通の選び方を使う", I._PICK in I.SQL_ISLAND, True)
     ok("時間帯の終わりは最後のチャット + 30分", "INTERVAL 30 MINUTE" in I._WIN, True)
     ok("またがったら始まりの新しいほう", "ORDER BY w.started_ms DESC LIMIT 1" in I._PICK, True)
+
+    # `--probe`（本番の Doneru の時刻で島の当て方を確かめる口）が、違いを数えられるか。
+    # **両側。** 同じなら 0、1件でも違えば 1、比べるものが無ければ 2
+    dn = [{"donatedAt": PAID_A, "videoId": VIDEO["video_id"], "videoStartedAt": VIDEO["started_ms"]},
+          {"donatedAt": PAID_B, "videoId": None, "videoStartedAt": None}]
+    I.fetch_doneru = lambda d0, d1, donors: dn
+    I.window_hits = lambda ms: {m: HITS[m] for m in ms if m in HITS}
+    ok("probe: 当て方が全件同じなら 0", I.probe("d0", "d1"), 0)
+    I.window_hits = lambda ms: {m: {"video_id": "vOTHER", "started_ms": 1} for m in ms}
+    ok("probe: 1件でも違えば 1", I.probe("d0", "d1"), 1)
+    I.fetch_doneru = lambda d0, d1, donors: []
+    ok("probe: 比べるものが無ければ 2（0件を「同じ」と言わない）", I.probe("d0", "d1"), 2)
 
 
 def case_box():
