@@ -107,12 +107,8 @@ EXCUSES: dict[str, str] = {
         "YouTube を1本ずつ叩いて記録の有無を見る。外に出るので PR ごとには"
         "回さない（2026-09-19。回し役の SKIP と同じ「外に出る」）",
 
-    # ---- 書き出しが要る。workflows を触る別 PR で CI に載せるまでの断り ----
-    "tools/sprites/tagreach.mjs":
-        "書き出した面の上で札の組（料理→国・旅↔月ほか14組）を踏む。書き出しが要るので"
-        "`selftest.yml` の `reachkeys` job（`site/.next-ci` を作っている）に相乗りさせる。"
-        "workflows は ship.yml で出せないので別 PR に分けた（2026-11-23。#1357。手元で14組 0.1秒）。"
-        "**その PR が入ったら、この行を消す**（同じ PR で消してある）",
+    # `tools/sprites/tagreach.mjs` はここに在ったが、`selftest.yml` の `reachkeys` job に載せたので外した
+    # （2026-11-23。#1357。書き出しを持つ job に相乗りで、14面を 0.1秒）。
 
     # ---- 部品。単体では走らない ----
     # `tools/sprites/route.mjs` はここに在ったが、**借りる側が CI から走るように
