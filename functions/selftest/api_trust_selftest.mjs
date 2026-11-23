@@ -193,6 +193,11 @@ const KNOWN_ROUTES = [
   "islandCharacter.ts q.method === 'GET' && q.path === '/characters'",
   "islandCharacter.ts q.method === 'GET' && q.path === '/characters/lookup'",
   "publicPurge.ts q.method === 'GET'",
+  /* 島で受ける投げ銭(#1405)。支払い画面はログインとチャンネルが要り、
+     知らせは Stripe の署名で見分ける（あやとだけの口ではない）。
+     断りの試験は `tip_selftest.mjs` */
+  "tip.ts q.method === 'POST' && q.path === '/stripe/webhook'",
+  "tip.ts q.method === 'POST' && q.path === '/tip/checkout'",
 ];
 
 if (process.argv.includes("--routes")) {

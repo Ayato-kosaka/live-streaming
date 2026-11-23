@@ -35,6 +35,7 @@ master へ押し込む run なので、**読む人はいない。**
 | 5 | **そのルールを `RULES` から外すと、同じ写しが通る** | 別のルールが先に捕まえている（＝この行は要らない、か、重なっている） |
 | 6 | **`match` が、名簿と帳尻の合う縮みを通し、合わない形で止まる** | 正しい縮みを止めている（2026-10-03 の 103→100 がこれ）か、何も見ていない |
 | 7 | **絵の表を焼けなかった晩に、他の焼き込みが巻き添えにならない** | 外のサービスが落ちただけで島の数字が丸ごと止まる（#105 で「1本が落ちても後ろを止めない」と決めた） |
+| 8 | **`roster` が、滞在の表から消えた国の縮みを通し、表に居る国の落ちで止まる** | 正しい縮みを止めている（2026-11-23 の `iran-border` がこれ）か、名簿の読みかたが焼く道具の国とずれている |
 
 3 と 4 は**対**で見る。片方だけだと、何にでも赤を出す関所でも通る
 （`docs/island-standards.md` §15 の決めごと）。
@@ -51,19 +52,21 @@ master へ押し込む run なので、**読む人はいない。**
 
 ## 壊しかたを、ルールの種類で変える理由
 
-`RULES` の見かたは5つ（`keep` / `floor` / `band` / `share` / `match`）。
-壊しかたを変えるのは前の4つ。**`match` は 6章でまとめて見る**（物差しが
-「前の版」ではなく「同じ回に焼いた別のファイル」なので、やせ具合では読めない）。
+`RULES` の見かたは6つ（`keep` / `floor` / `band` / `share` / `match` / `roster`）。
+壊しかたを変えるのは前の4つ。**`match` は 6章、`roster` は 8章でまとめて見る**（物差しが
+「前の版」ではなく「同じ置き場の別のファイル」なので、やせ具合では読めない）。
 前の4つはどれも**同じ物差し（やせた割合）**で壊す——そうしないと
 「どれくらいやせたら鳴るか」を並べて読めない。
 ただし**そのルールだけがやせる**ように、当てかたは分けてある。
+（`roster` も 4b・5章には並ぶ。国の鍵を潰すと「名簿に居るのに落ちた」になるので、
+数を数えるものと同じ壊しかたで当たる）
 
-- **数を数えるもの**（`keep` / `count` の `floor`）→ 当たっている字を潰す。
+- **数を数えるもの**（`keep` / `count` の `floor` / `roster`）→ 当たっている字を潰す。
   **数字を持っている当たりは、小さいほうから。** 大きいほうから潰すと、
   同じ字を数えている合計のルールまで一緒に鳴る
 - **数字を足すもの**（`sum` の `floor` / `band`）→ **字はそのままで数字だけ減らす。**
-  潰すと件数まで減って、`countryStats.ts` の「国」と「配信」のように
-  同じ字を見ている2本が同時に鳴る
+  潰すと件数まで減って、同じ字を見ている別のルールまで一緒に鳴る
+  （前は `countryStats.ts` の「国」と「配信」が両方 `lives:` を見ていた）
 - **割合（`share`）**→ **分子だけ**潰す。分母（`"v":` など）は残す。
   分子の当たりが分母の当たりを含んでいるときは、**分母のぶんだけ残して切る**
 
@@ -199,11 +202,11 @@ def neutralize(text: str, pat: str, n: int) -> str:
     同じ長さの `@` に置き換える。`@` は `RULES` のどの正規表現にも出てこないので、
     **潰したところが別のルールに当たり直すことはない。**
 
-    **数字を持っている当たりは、小さいほうから潰す。** `countryStats.ts` の
-    「国」（`lives: (\\d+)` を数える）は、**いちばん小さい国が落ちたときに
-    捕まえるための行**（本数の合計を見る「配信」では 5% に届かない）。
+    **数字を持っている当たりは、小さいほうから潰す。** 実際に起きる壊れかた
+    （小さいものが1つ消える）に寄せる。前は `countryStats.ts` の「国」が
+    `lives: (\\d+)` を件数で数えていて、同じ字を合計で見る「配信」と重なっていた。
     大きいほうから潰すと合計まで一緒に落ちて、**どちらの行が捕まえたのか
-    分からなくなる。** 実際に起きる壊れかた（小さい国が1つ消える）に寄せる。
+    分からなくなる**（いまは国の鍵を数えるので、潰しても `lives:` は残る）。
     """
     ms = list(re.finditer(pat, text, re.M))
     if ms and ms[0].lastindex and all(m.group(1).isdigit() for m in ms):
@@ -218,9 +221,9 @@ def shrink_sum(text: str, pat: str, amount: int) -> str:
     """当たっている字はそのまま、**中の数字だけ**を減らして合計を `amount` 落とす。
 
     合計で見るルール（`sum`）を、**件数を1件も減らさずに**やせさせる。
-    潰してしまうと、同じ字を数えている別のルール（`countryStats.ts` の
-    「国」と「配信」は両方 `lives: (\\d+)`）まで一緒に鳴って、
-    どちらが捕まえたのか分からなくなる。
+    潰してしまうと件数まで減って、同じ字を件数で数える別のルールがあれば
+    一緒に鳴り、どちらが捕まえたのか分からなくなる（前は `countryStats.ts` の
+    「国」と「配信」が両方 `lives: (\\d+)` を見ていた）。
 
     減らすのは**小さいほうから**。大きい1つを 0 にすると行き過ぎるので、
     「どれくらいやせたら鳴るか」がその1つの大きさに引きずられる。
@@ -358,16 +361,46 @@ def seed(name: str) -> str:
     だから種だけ、**今夜の焼き直しが書くはずの形**（名簿とそろった 100箱）に
     直す。いま入っている 103箱のほうは 6章で名指しで当てる——
     **「箱だけ残っている」で止まること**が、そちらの見どころなので。
+
+    国の焼き込み（`roster` で見るファイル）も同じ理由で直す（`country_matched()`）。
     """
     if name not in _SEED:
         text = (CONTENT / name).read_text(encoding="utf-8")
-        _SEED[name] = roster_matched(text) if name == "characterBox.ts" else text
+        if name == "characterBox.ts":
+            text = roster_matched(text)
+        _SEED[name] = country_matched(name, text)
     return _SEED[name]
 
 
+_GUARD: dict = {}
+
+
+def country_matched(name: str, text: str) -> str:
+    """国の焼き込みを**滞在の表とそろえた形**にする（＝今夜の焼き直しが書くはずの形）。
+
+    2026-11-23 に master に入っている `countryStats.ts` は、**滞在の表に居ない国を
+    1つ持っている**（`iran-border`。#1355 で国の行から外したが、焼き直しが関所で
+    止まっていて入っていない）。関所はそれを「名簿に居ない国が在る」で止めるので、
+    そのまま種にすると3章が仕様どおりに落ちる。`characterBox.ts` と同じく、種だけ
+    直す（居ない国の鍵を潰す。行の数字は残るが、この確かめが見るのは国の名前だけ）。
+    いま入っている形は 8章で名指しで当てる。**焼き直しが通れば、ここは何もしなくなる。**
+    """
+    if not _GUARD:
+        _GUARD.update(load_guard())
+    g = _GUARD
+    for r in g["RULES"].get(name, []):
+        if r["kind"] != g["ROSTER"]:
+            continue
+        roster = g["roster_of"](seed(r["mate"]), r["mate_pat"])
+        stray = [m for m in re.finditer(r["pat"], text, re.M) if m.group(1) not in roster]
+        for m in reversed(stray):
+            text = text[:m.start()] + "@" * (m.end() - m.start()) + text[m.end():]
+    return text
+
+
 def mate_of(g: dict, rule: dict) -> str | None:
-    """`match` のルールが帳尻を合わせる相手の字面。ほかの見かたでは None。"""
-    return seed(rule["mate"]) if rule["kind"] == g["MATCH"] else None
+    """`match` / `roster` のルールが帳尻を合わせる相手の字面。ほかの見かたでは None。"""
+    return seed(rule["mate"]) if rule["kind"] in (g["MATCH"], g["ROSTER"]) else None
 
 
 def stage(td: Path, override: dict[str, str] | None = None,
@@ -376,7 +409,10 @@ def stage(td: Path, override: dict[str, str] | None = None,
 
     **種は本番のファイル**（`site/content/*.ts`）。作り物の2行で試すと、
     焼き込みの書き方が変わった日に、変わったことに気づけない。
-    `characterBox.ts` だけ種を直している理由は `seed()` に書いた。
+    `characterBox.ts` と国の2枚だけ種を直している理由は `seed()` に書いた。
+
+    **焼かない相手（`MATES`。滞在の表）も「焼いた後」の置き場に置く。** 関所は
+    `roster` の相手を焼き込みの隣から読むので、置かないと「読めない」で止まる。
     """
     before, work = td / "before", td / "after"
     (work / "site" / "content").mkdir(parents=True, exist_ok=True)
@@ -388,10 +424,15 @@ def stage(td: Path, override: dict[str, str] | None = None,
         text = (override or {}).get(name) or seed(name)
         (work / "site" / "content" / name).write_text(text, encoding="utf-8")
         paths.append(f"site/content/{name}")
+    for name in sorted(MATES):
+        text = (override or {}).get(name) or seed(name)
+        (work / "site" / "content" / name).write_text(text, encoding="utf-8")
     return before, work, paths
 
 
 WATCHED: list[str] = []
+# 関所が読むが、焼かないファイル（`roster` の相手の滞在の表）。1章で `RULES` から拾う
+MATES: list[str] = []
 
 
 # ---------------------------------------------------------------- 1・2. 分母
@@ -450,6 +491,10 @@ def check_denominator(g: dict) -> None:
     for n in names:
         if n in g["RULES"] and (CONTENT / n).exists():
             WATCHED.append(n)
+    for n in WATCHED:
+        for r in g["RULES"][n]:
+            if r["mate"] and r["mate"] not in WATCHED and r["mate"] not in MATES:
+                MATES.append(r["mate"])
 
     print("\n2. ルールの正規表現が、いまの焼き込みに当たるか（＝鳴れるか）")
     if not WATCHED:
@@ -472,6 +517,13 @@ def check_denominator(g: dict) -> None:
                 theirs = g["measure"](mate_of(g, r), r["mate_pat"], "count")
                 hit = min(mine, theirs)
                 shown = f"{mine}+{spare} / {r['mate_label']} {theirs}"
+            elif r["kind"] == g["ROSTER"]:
+                # ここも相手（滞在の表）が読めないと鳴れない——どころか、
+                # 名簿が空なら関所は「読めない」で毎晩止まる
+                mine = g["measure"](text, r["pat"], "count")
+                theirs = len(g["roster_of"](mate_of(g, r), r["mate_pat"]))
+                hit = min(mine, theirs)
+                shown = f"{mine} / {r['mate_label']} {theirs}国"
             else:
                 hit = g["measure"](text, r["pat"], r["mode"])
                 shown = f"{hit:,}"
@@ -525,10 +577,10 @@ def check_broken(g: dict) -> None:
             tag = f"{name} の「{r['label']}」"
             mate = mate_of(g, r)
 
-            # 4a. **正常な晩で鳴らないこと。** `keep` と `match` は「1つでも
-            #     食い違ったら止める」ための行なので、ここは見ない
-            #     （見ると、仕様どおりの行が落ちる）
-            if r["kind"] in (g["KEEP"], g["MATCH"]):
+            # 4a. **正常な晩で鳴らないこと。** `keep` と `match` と `roster` は
+            #     「1つでも食い違ったら止める」ための行なので、ここは見ない
+            #     （見ると、仕様どおりの行が落ちる。`roster` の正常な縮みは 8章）
+            if r["kind"] in (g["KEEP"], g["MATCH"], g["ROSTER"]):
                 quiet += 1
                 print(f"  --   {tag} —— 正常な晩は見ない"
                       f"（`{r['kind']}` は1つ食い違っただけで止めるための行）")
@@ -797,6 +849,149 @@ def check_unbaked(g: dict) -> None:
         "外すのは**その回だけ**。`RULES` と分母からは外れていない（1章がそこを見ている）")
 
 
+# ---------------------------------------------------------------- 8. 国の名簿とそろっているか
+
+
+def drop_country(text: str, pat: str, slug: str) -> str:
+    """`pat`（slug を1つ拾う形）に当たる字のうち、`slug` のものを**全部**潰す。
+
+    滞在の表なら「その国が表から消えた」、焼き込みなら「その国が焼き込みから落ちた」。
+    フランスのように行を2つ持つ国があるので、1つ目だけでは消えない。
+    """
+    ms = [m for m in re.finditer(pat, text, re.M) if m.group(1) == slug]
+    for m in reversed(ms):
+        text = text[:m.start()] + "@" * (m.end() - m.start()) + text[m.end():]
+    return text
+
+
+def in_comments(stays: str, pat: str, slug: str) -> str:
+    """`slug` を表から外し、**その行の字を注釈の中にだけ残す**（ブロックと `//` の両方）。
+
+    経緯を書く注釈に、昔の行をそのまま写した日の形。注釈まで数えると、
+    消えた国が名簿に戻って、正しい縮みがまた止まる。
+    """
+    m = next(m for m in re.finditer(pat, stays, re.M) if m.group(1) == slug)
+    note = f"\n/* 前は {{ {m.group(0)}, cities: [] }} が国の行として居た */\n  // {{ {m.group(0)} }}\n"
+    return drop_country(stays, pat, slug) + note
+
+
+def check_country_roster(g: dict) -> None:
+    """**滞在の表から消えた国の縮みを通し、表に居る国の落ちで止まるか。**
+
+    物差しが「前の版」ではなく滞在の表（`stays.ts`）なので、4・5章のやせ具合では
+    「正しい縮みを通すか」が読めない。**本番の焼き込みと本番の表を種に、国の名前で当てる。**
+
+    2026-11-23 まで国は `keep`（1国も減らない）で見ていて、W8（#1355）でイラン国境を
+    国の行から外した晩に、正しい縮み（27 → 26）で毎晩止まるようになった。
+    """
+    print("\n8. 国の焼き込みが、滞在の表（stays.ts）と合っているか")
+    rules = [(n, r) for n in WATCHED for r in g["RULES"][n] if r["kind"] == g["ROSTER"]]
+    names = sorted(n for n, _ in rules)
+    say(names == ["cityStreams.ts", "countryStats.ts"],
+        f"国の2枚とも、物差しが滞在の表（`roster` で見ているもの: {names or 'なし'}）")
+    if not rules:
+        return
+
+    # **名簿の読みかたが、焼く道具の国と1つも違わないか。** 関所は表を字で読む
+    # （焼く側の読み口を通さない）ので、ずれたら黙る。突き合わせる相手は
+    # 焼く2本が実際に国として数えている `stays.read_all()`（別の読み手）
+    from stays import read_all
+    tools = {c["slug"] for c in read_all()}
+    mate, mate_pat = rules[0][1]["mate"], rules[0][1]["mate_pat"]
+    stays = seed(mate)
+    roster = g["roster_of"](stays, mate_pat)
+    print(f"     焼く道具の国（stays.read_all）{len(tools)} / 関所の名簿 {len(roster)}国")
+    say(bool(tools) and tools <= roster,
+        f"焼く道具が国として数える国が、ぜんぶ関所の名簿に居る（居ない: {sorted(tools - roster) or 'なし'}）")
+    if roster - tools:
+        print(f"     名簿にだけ居る国（先の日付の行＝まだ着いていない国）: {sorted(roster - tools)}")
+
+    empty = stays
+    for s in roster:
+        empty = drop_country(empty, mate_pat, s)
+
+    for name, r in rules:
+        text = seed(name)
+        keys = [k for k in re.findall(r["pat"], text, re.M) if k in roster]
+        if len(keys) < 2:
+            say(False, f"{name}: 名簿に居る国が2つ以上ある（{len(keys)}）")
+            continue
+        x, y = keys[0], keys[1]
+        less = drop_country(stays, mate_pat, x)
+        lost_x = drop_country(text, r["pat"], x)
+        # (前, 後, 表, 止まってほしいか, 出てほしい字, 何を見ているか)
+        cases = [
+            (text, lost_x, less, False, f"消えた国: {x}",
+             f"表から {x} が消えて、焼き込みからも {x} が落ちた。**正しい縮み**"),
+            (text, lost_x, stays, True, f"に居るのに落ちた: {x}",
+             f"表はそのままで、焼き込みから {x} だけ落ちた（読み落とし）"),
+            (text, drop_country(text, r["pat"], y), less, True, f"に居るのに落ちた: {y}",
+             f"表から {x} が消えた晩に、焼き込みは {x} を残して {y} を落とした"
+             "——**数で比べると差し引き0で通ってしまう形**"),
+            (text, text, less, True, f"に居ない国が在る: {x}",
+             f"表から {x} が消えたのに、焼き込みに {x} が残ったまま（名簿の読みかたが外れた形）"),
+            (text, lost_x, in_comments(stays, mate_pat, x), False, f"消えた国: {x}",
+             f"{x} の行が注釈の中にだけ残っている表で、{x} が落ちた（注釈は名簿に数えない）"),
+            (text, text, empty, True, "国が1つも読めない",
+             "表から国が1つも読めない（書きかたが変わった）。**空の名簿で通すと、どの国が落ちても寝る**"),
+        ]
+        # いま master に入っている形を、今夜そのまま焼いたら（2026-11-23 の `iran-border`）。
+        # **焼き直しが通れば master は表とそろう**ので、そのあとは当てるものが無い
+        real = (CONTENT / name).read_text(encoding="utf-8")
+        gone = sorted(set(re.findall(r["pat"], real, re.M)) - roster)
+        if gone:
+            cases.insert(0, (real, text, stays, False, f"消えた国: {', '.join(gone)}",
+                             f"**いま master に入っている焼き込みを、今夜そのまま焼いたら。**"
+                             f" 表に居ない {', '.join(gone)} が落ちる"))
+        else:
+            print(f"  --   {name}: いま master の焼き込みは表とそろっている（今夜の形は当てるものが無い）")
+
+        for before_t, after_t, stays_t, want_stop, frag, why in cases:
+            # **同じ表を国の2枚が読む。** 相方は表に合わせて焼けた形にしておく
+            # （本番でも2枚は同じ晩に、同じ表から焼き直る）。でないと相方が
+            # 「居ない国が在る」で止まって、こちらの「通る」が読めない
+            fit = g["roster_of"](stays_t, mate_pat)
+            over = {name: after_t, mate: stays_t}
+            for n2, r2 in rules:
+                if n2 != name:
+                    t2 = seed(n2)
+                    for s in set(re.findall(r2["pat"], t2, re.M)) - fit:
+                        t2 = drop_country(t2, r2["pat"], s)
+                    over[n2] = t2
+            with tempfile.TemporaryDirectory() as td:
+                b, work, paths = stage(Path(td), over, {name: before_t})
+                code, out = run_guard(b, work, paths)
+                ok, line = roster_verdict(out, name, code, want_stop, frag)
+                say(ok, f"{name}: {'止まる' if want_stop else '通る'}: {why}（終了コード {code}）")
+                if line:
+                    print("         → " + line)
+
+        # 表そのものが無い（置き場が変わった）。**読めないものを「名簿から消えた」と読まない**
+        with tempfile.TemporaryDirectory() as td:
+            b, work, paths = stage(Path(td), {name: lost_x})
+            (work / "site" / "content" / mate).unlink()
+            code, out = run_guard(b, work, paths)
+            ok, line = roster_verdict(out, name, code, True, "読めないので数えていない")
+            say(ok, f"{name}: 止まる: 滞在の表が置き場に無い晩に {x} が落ちた（終了コード {code}）")
+            if line:
+                print("         → " + line)
+
+
+def roster_verdict(out: str, name: str, code: int, want_stop: bool, frag: str) -> tuple[bool, str]:
+    """関所の出力から、`name` の「国」の行が思ったとおりかを読む。(合っているか, 見せる1行)
+
+    **止まった理由の字まで見る。** 止まりさえすればよいことにすると、守りを1つ外しても
+    別の守りが違う理由で止めて、外したことに気づけない（名簿が空の晩は
+    「居ない国が在る」でも止まる）。
+    """
+    hit = [ln for ln in out.splitlines()
+           if ln.startswith("::error::") and name in ln and "「国」" in ln]
+    row = [ln for ln in out.splitlines() if ln.startswith(f"| {name} | 国 |")]
+    if want_stop:
+        return code == 1 and len(hit) == 1 and frag in hit[0], (hit[0].replace("::error::", "") if hit else "")
+    return code == 0 and not hit and bool(row) and frag in row[0], (row[0] if row else "")
+
+
 def main() -> int:
     g = load_guard()
     print(f"見張りを {YML.name} の step「{STEP}」から切り出した（{len(guard_src().splitlines())} 行）")
@@ -807,6 +1002,7 @@ def main() -> int:
     check_broken(g)
     check_roster(g)
     check_unbaked(g)
+    check_country_roster(g)
 
     print()
     if fails:

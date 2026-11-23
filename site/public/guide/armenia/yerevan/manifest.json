@@ -1,0 +1,665 @@
+{
+ "cover": {
+  "src": "/guide/armenia/yerevan/エレバン-観光ガイド-1600.webp",
+  "src_small": "/guide/armenia/yerevan/エレバン-観光ガイド-800.webp",
+  "w": 1600,
+  "h": 900,
+  "alt": "エレバン観光ガイド「「ピンクシティ」と称えられた街」。晴れた午後の、ピンクと黄色の石の建物と時計塔の政府庁舎に囲まれた共和国広場。空の向こうに雪をかぶったアララト山。エレバンの絵",
+  "kind": "ai",
+  "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。共和国広場は写真を形の手本として渡した。下は広場の石畳、上は空とアララト山。3:2 で描かせて 16:9 に切った。字なし",
+  "titled": true,
+  "og": {
+   "src": "/guide/armenia/yerevan/yerevan-cover-1200x630.jpg",
+   "w": 1200,
+   "h": 630,
+   "alt": "晴れた午後の、ピンクと黄色の石の建物と時計塔の政府庁舎に囲まれた共和国広場。空の向こうに雪をかぶったアララト山。エレバンの絵"
+  },
+  "ld": [
+   {
+    "src": "/guide/armenia/yerevan/yerevan-cover-16x9.jpg",
+    "w": 1200,
+    "h": 675
+   },
+   {
+    "src": "/guide/armenia/yerevan/yerevan-cover-4x3.jpg",
+    "w": 1200,
+    "h": 900
+   },
+   {
+    "src": "/guide/armenia/yerevan/yerevan-cover-1x1.jpg",
+    "w": 1200,
+    "h": 1200
+   }
+  ]
+ },
+ "cover_tall": {
+  "src": "/guide/armenia/yerevan/エレバン-観光ガイド-縦-1600.webp",
+  "src_small": "/guide/armenia/yerevan/エレバン-観光ガイド-縦-800.webp",
+  "w": 1600,
+  "h": 2000,
+  "alt": "エレバン観光ガイド「「ピンクシティ」と称えられた街」。晴れた午後の、ピンクと黄色の石の建物に囲まれた共和国広場と、空の向こうの雪のアララト山。エレバンの絵",
+  "kind": "ai",
+  "prompt_note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "titled": true
+ },
+ "areamap": {
+  "src": "/guide/armenia/yerevan/エレバン-見どころマップ-地区分け-1200.webp",
+  "src_small": "/guide/armenia/yerevan/エレバン-見どころマップ-地区分け-800.webp",
+  "w": 1200,
+  "h": 1500,
+  "alt": "エレバンの見どころマップ（地区分け）。共和国広場周辺・カスケード周辺の2つの地区を色で分け、名前を書いた絵地図。共和国広場・ブルーモスク・オペラ座・カスケード・母なるアルメニア像の目印の絵と名前つき",
+  "kind": "ai",
+  "prompt_note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・2つの地区の色・目印5か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。地の色はエレバンの凝灰岩の淡いばら色。地図の外は縁の矢印（虐殺記念館と日帰りの町5つ。いちばん狭い絵で札と目印に重ならない数に絞り、エレブニ要塞とエレバン湖は見たいものの地図に任せた）。母なるアルメニア像の頭が題の帯にかからないよう、上を少なく切った",
+  "baked": true,
+  "areas": [
+   {
+    "id": "republic",
+    "name": "共和国広場周辺",
+    "label": [
+     "共和国広場周辺"
+    ],
+    "local": "Hanrapetutyan hraparak",
+    "color": "#ffc4d2",
+    "x": 0.41,
+    "y": 0.59,
+    "source": [
+     "https://www.veltra.com/jp/europe/armenia/a/188787",
+     "https://www.travel.co.jp/guide/matome/3139/"
+    ],
+    "w": 0.3483,
+    "h": 0.0687
+   },
+   {
+    "id": "cascade",
+    "name": "カスケード周辺",
+    "label": [
+     "カスケード",
+     "周辺"
+    ],
+    "local": "Kaskad",
+    "color": "#d9ccf5",
+    "x": 0.69,
+    "y": 0.19,
+    "source": [
+     "https://jp.trip.com/moments/yerevan-21357/",
+     "https://www.travel.co.jp/guide/matome/3139/"
+    ],
+    "w": 0.265,
+    "h": 0.108
+   }
+  ],
+  "bbox": {
+   "west": 44.4925,
+   "east": 44.5285,
+   "south": 40.1622,
+   "north": 40.2034
+  },
+  "beyond": [
+   {
+    "id": "genocide",
+    "name": "虐殺記念館",
+    "local": "Tsitsernakaberd",
+    "dir": "w",
+    "x": 0.0,
+    "y": 0.32,
+    "lat": 40.185718,
+    "lon": 44.489184,
+    "source": [
+     "https://en.wikipedia.org/wiki/Tsitsernakaberd"
+    ]
+   },
+   {
+    "id": "etchmiadzin",
+    "name": "エチミアジン",
+    "local": "Ejmiatsni Mayr tachar",
+    "dir": "w",
+    "x": 0.0,
+    "y": 0.45,
+    "lat": 40.16184,
+    "lon": 44.291116,
+    "source": [
+     "https://en.wikipedia.org/wiki/Etchmiadzin_Cathedral"
+    ]
+   },
+   {
+    "id": "sevanavank",
+    "name": "セヴァン湖",
+    "local": "Sevanavank",
+    "dir": "ne",
+    "x": 1.0,
+    "y": 0.395,
+    "lat": 40.563984,
+    "lon": 45.010808,
+    "source": [
+     "https://en.wikipedia.org/wiki/Sevanavank"
+    ]
+   },
+   {
+    "id": "garni",
+    "name": "ガルニ神殿",
+    "local": "Garnii tachar",
+    "dir": "e",
+    "x": 1.0,
+    "y": 0.555,
+    "lat": 40.112341,
+    "lon": 44.730219,
+    "source": [
+     "https://en.wikipedia.org/wiki/Temple_of_Garni"
+    ]
+   },
+   {
+    "id": "noravank",
+    "name": "ノラヴァンク",
+    "local": "Noravank",
+    "dir": "se",
+    "x": 1.0,
+    "y": 0.865,
+    "lat": 39.684823,
+    "lon": 45.233039,
+    "source": [
+     "https://en.wikipedia.org/wiki/Noravank"
+    ]
+   },
+   {
+    "id": "khorvirap",
+    "name": "ホル・ヴィラップ",
+    "local": "Khor Virap",
+    "dir": "s",
+    "x": 0.33,
+    "y": 1.0,
+    "lat": 39.878388,
+    "lon": 44.57635,
+    "source": [
+     "https://en.wikipedia.org/wiki/Khor_Virap"
+    ]
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  },
+  "painted": [
+   {
+    "name": "エレバン 見どころマップ",
+    "x": 0.5,
+    "y": 0.0468,
+    "w": 1.0,
+    "h": 0.0936
+   },
+   {
+    "name": "母なるアルメニア像",
+    "x": 0.87,
+    "y": 0.285,
+    "w": 0.19,
+    "h": 0.0667
+   },
+   {
+    "name": "カスケード",
+    "x": 0.45,
+    "y": 0.3,
+    "w": 0.1633,
+    "h": 0.0407
+   },
+   {
+    "name": "オペラ座",
+    "x": 0.47,
+    "y": 0.455,
+    "w": 0.1367,
+    "h": 0.0407
+   },
+   {
+    "name": "ブルーモスク",
+    "x": 0.32,
+    "y": 0.755,
+    "w": 0.19,
+    "h": 0.0407
+   },
+   {
+    "name": "共和国広場",
+    "x": 0.51,
+    "y": 0.78,
+    "w": 0.1633,
+    "h": 0.0407
+   }
+  ]
+ },
+ "food": {
+  "khorovats": {
+   "src": "/guide/armenia/yerevan/food-khorovats-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-khorovats-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "炭火で焼いた肉の塊と、焼いたなす・トマト・ピーマン、輪切りの玉ねぎのホロヴァツ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "kebab": {
+   "src": "/guide/armenia/yerevan/food-kebab-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-kebab-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "細長いひき肉の串焼き2本と、薄いパン・玉ねぎ・香草のキャバブ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "lavash": {
+   "src": "/guide/armenia/yerevan/food-lavash-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-lavash-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "折りたたんで重ねた、大きくて薄いパンのラヴァシュ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "dolma": {
+   "src": "/guide/armenia/yerevan/food-dolma-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-dolma-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ぶどうの葉で包んだ小さな包みが並ぶ皿と、白いヨーグルトのドルマ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "khash": {
+   "src": "/guide/armenia/yerevan/food-khash-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-khash-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白いスープの深い鉢と、にんにく・乾いた薄いパンのハシュ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "harissa": {
+   "src": "/guide/armenia/yerevan/food-harissa-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-harissa-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "とろりとした麦の粥に、溶かしバターをかけたハリサ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "spas": {
+   "src": "/guide/armenia/yerevan/food-spas-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-spas-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白いヨーグルトのスープに、麦と緑の香草をのせたスパス",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "lahmajo": {
+   "src": "/guide/armenia/yerevan/food-lahmajo-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-lahmajo-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "丸く薄い生地に赤いひき肉をのせて焼いたラフマジョと、レモンのくし切り",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "khachapuri": {
+   "src": "/guide/armenia/yerevan/food-khachapuri-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-khachapuri-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "とろけたチーズの入った、まるいパンのハチャプリ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "shaurma": {
+   "src": "/guide/armenia/yerevan/food-shaurma-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-shaurma-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "薄いパンで巻いた細長いシャウルマの断面。肉と細いじゃがいも、野菜",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "zhingyalov": {
+   "src": "/guide/armenia/yerevan/food-zhingyalov-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-zhingyalov-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "刻んだ緑の香草がたっぷり透ける、平たく焼いたジンガロフ・ハツ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "manti": {
+   "src": "/guide/armenia/yerevan/food-manti-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-manti-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "焼き皿に並ぶ小さな舟形のマンティと、ヨーグルトのソース",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "kufta": {
+   "src": "/guide/armenia/yerevan/food-kufta-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-kufta-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "なめらかな大きな肉団子の輪切りに、溶かしバターをかけたキュフタ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "ghapama": {
+   "src": "/guide/armenia/yerevan/food-ghapama-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-ghapama-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "丸ごと焼いたかぼちゃを切り分けたガパマ。米とドライフルーツと木の実の詰め物",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "sujukh": {
+   "src": "/guide/armenia/yerevan/food-sujukh-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-sujukh-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "薄く切った、赤黒くて細長い干したソーセージのスジュフ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "matnakash": {
+   "src": "/guide/armenia/yerevan/food-matnakash-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-matnakash-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "指で筋をつけた、金色の皮の楕円のマトナカシュ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "matsun": {
+   "src": "/guide/armenia/yerevan/food-matsun-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-matsun-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "素焼きの器に入った、白くて固めのヨーグルトのマツン",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "gata": {
+   "src": "/guide/armenia/yerevan/food-gata-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-gata-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "模様を押した、丸くて平たい甘いパンのガタと、切り口の詰め物の層",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "ponchik": {
+   "src": "/guide/armenia/yerevan/food-ponchik-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-ponchik-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "粉砂糖をかけた揚げパンのポンチクと、割った断面のカスタード",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "apricot": {
+   "src": "/guide/armenia/yerevan/food-apricot-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-apricot-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "オレンジ色の生のあんずと、干したあんず",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "tan": {
+   "src": "/guide/armenia/yerevan/food-tan-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-tan-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白い飲み物のタンを注いだグラスと、瓶",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "brandy": {
+   "src": "/guide/armenia/yerevan/food-brandy-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-brandy-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "琥珀色のブランデーを注いだふくらんだグラスと、瓶",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "areni": {
+   "src": "/guide/armenia/yerevan/food-areni-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-areni-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "深い赤のアレニのワインのグラスと、ぶどうの房",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  },
+  "oghi": {
+   "src": "/guide/armenia/yerevan/food-oghi-800.webp",
+   "src_small": "/guide/armenia/yerevan/food-oghi-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "透きとおった果物のウォッカ、オギの小さなグラスと桑の実",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし"
+  }
+ },
+ "buy": {
+  "brandy": {
+   "src": "/guide/armenia/yerevan/buy-brandy-800.webp",
+   "src_small": "/guide/armenia/yerevan/buy-brandy-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "箱に入った琥珀色のアルメニアのブランデーの瓶",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし"
+  },
+  "wine": {
+   "src": "/guide/armenia/yerevan/buy-wine-800.webp",
+   "src_small": "/guide/armenia/yerevan/buy-wine-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "アレニの赤ワインの瓶と、ぶどうの葉",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし"
+  },
+  "carpet": {
+   "src": "/guide/armenia/yerevan/buy-carpet-800.webp",
+   "src_small": "/guide/armenia/yerevan/buy-carpet-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "巻いた赤と紺の手織りのじゅうたんと、広げた模様の角",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし"
+  },
+  "khachkar": {
+   "src": "/guide/armenia/yerevan/buy-khachkar-800.webp",
+   "src_small": "/guide/armenia/yerevan/buy-khachkar-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "十字と細かな組みひもの模様を彫った、小さな石の板のハチュカル",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし"
+  },
+  "duduk": {
+   "src": "/guide/armenia/yerevan/buy-duduk-800.webp",
+   "src_small": "/guide/armenia/yerevan/buy-duduk-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "あんずの木の茶色く短い縦笛のドゥドゥクと、平たいリード",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし"
+  },
+  "driedfruit": {
+   "src": "/guide/armenia/yerevan/buy-driedfruit-800.webp",
+   "src_small": "/guide/armenia/yerevan/buy-driedfruit-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "干したあんず・桃・プルーンと、くるみを詰めた干し桃",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし"
+  },
+  "ttulavash": {
+   "src": "/guide/armenia/yerevan/buy-ttulavash-800.webp",
+   "src_small": "/guide/armenia/yerevan/buy-ttulavash-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "薄く干した赤と橙の果物の板を、くるくる巻いたトゥトゥ・ラヴァシュ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし"
+  },
+  "jam": {
+   "src": "/guide/armenia/yerevan/buy-jam-800.webp",
+   "src_small": "/guide/armenia/yerevan/buy-jam-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "黒いくるみの実のジャムと、橙のサジーのジャムの小瓶",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし"
+  },
+  "chocolate": {
+   "src": "/guide/armenia/yerevan/buy-chocolate-800.webp",
+   "src_small": "/guide/armenia/yerevan/buy-chocolate-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "包み紙の色とりどりの飴と、板チョコレート",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし"
+  }
+ },
+ "do": {
+  "cascade": {
+   "src": "/guide/armenia/yerevan/do-cascade-1200.webp",
+   "src_small": "/guide/armenia/yerevan/do-cascade-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "上の段から、白い大階段カスケードと噴水のテラス、ピンクの街と遠くの雪のアララト山を見下ろす、小さな人の後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。カスケード・ヴェルニサージュ・ガルニ神殿・ホル・ヴィラップ・エチミアジン大聖堂は写真を形の手本として渡した（写真のふりはさせない。セヴァナヴァンクの写真は壁の彫り石で、形は描写の2つの教会で決まった）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/armenia/yerevan/do-cascade-1200.webp",
+     "src_small": "/guide/armenia/yerevan/do-cascade-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "khorovats": {
+   "src": "/guide/armenia/yerevan/do-khorovats-1200.webp",
+   "src_small": "/guide/armenia/yerevan/do-khorovats-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "炭火の上に並ぶ肉となす・トマト・ピーマンの串と、重ねたラヴァシュをちぎる手元の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。カスケード・ヴェルニサージュ・ガルニ神殿・ホル・ヴィラップ・エチミアジン大聖堂は写真を形の手本として渡した（写真のふりはさせない。セヴァナヴァンクの写真は壁の彫り石で、形は描写の2つの教会で決まった）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/armenia/yerevan/do-khorovats-1200.webp",
+     "src_small": "/guide/armenia/yerevan/do-khorovats-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "brandy": {
+   "src": "/guide/armenia/yerevan/do-brandy-1200.webp",
+   "src_small": "/guide/armenia/yerevan/do-brandy-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "石の熟成庫に並ぶ古い樽と、琥珀色のブランデーを注いだグラス。樽のあいだを歩く小さな後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。カスケード・ヴェルニサージュ・ガルニ神殿・ホル・ヴィラップ・エチミアジン大聖堂は写真を形の手本として渡した（写真のふりはさせない。セヴァナヴァンクの写真は壁の彫り石で、形は描写の2つの教会で決まった）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/armenia/yerevan/do-brandy-1200.webp",
+     "src_small": "/guide/armenia/yerevan/do-brandy-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "vernissage": {
+   "src": "/guide/armenia/yerevan/do-vernissage-1200.webp",
+   "src_small": "/guide/armenia/yerevan/do-vernissage-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "公園の青空市ヴェルニサージュ。地面に広げた赤い手織りのじゅうたん、木彫りのバックギャモンの盤、石の十字架の細工と、品を手に取る手元の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。カスケード・ヴェルニサージュ・ガルニ神殿・ホル・ヴィラップ・エチミアジン大聖堂は写真を形の手本として渡した（写真のふりはさせない。セヴァナヴァンクの写真は壁の彫り石で、形は描写の2つの教会で決まった）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/armenia/yerevan/do-vernissage-1200.webp",
+     "src_small": "/guide/armenia/yerevan/do-vernissage-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "garni": {
+   "src": "/guide/armenia/yerevan/do-garni-1200.webp",
+   "src_small": "/guide/armenia/yerevan/do-garni-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "渓谷の崖の上に立つ、柱の並ぶ石のガルニ神殿と、渓谷の壁の六角の石の柱。石の段を上る小さな後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。カスケード・ヴェルニサージュ・ガルニ神殿・ホル・ヴィラップ・エチミアジン大聖堂は写真を形の手本として渡した（写真のふりはさせない。セヴァナヴァンクの写真は壁の彫り石で、形は描写の2つの教会で決まった）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/armenia/yerevan/do-garni-1200.webp",
+     "src_small": "/guide/armenia/yerevan/do-garni-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "khorvirap": {
+   "src": "/guide/armenia/yerevan/do-khorvirap-1200.webp",
+   "src_small": "/guide/armenia/yerevan/do-khorvirap-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "丘の上の石のホル・ヴィラップ修道院と、その向こうにそびえる雪のアララト山。手前の平原に小さな人の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。カスケード・ヴェルニサージュ・ガルニ神殿・ホル・ヴィラップ・エチミアジン大聖堂は写真を形の手本として渡した（写真のふりはさせない。セヴァナヴァンクの写真は壁の彫り石で、形は描写の2つの教会で決まった）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/armenia/yerevan/do-khorvirap-1200.webp",
+     "src_small": "/guide/armenia/yerevan/do-khorvirap-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "etchmiadzin": {
+   "src": "/guide/armenia/yerevan/do-etchmiadzin-1200.webp",
+   "src_small": "/guide/armenia/yerevan/do-etchmiadzin-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "とがった屋根の古い石のエチミアジン大聖堂と前の広い庭。入口へ向かう小さな後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。カスケード・ヴェルニサージュ・ガルニ神殿・ホル・ヴィラップ・エチミアジン大聖堂は写真を形の手本として渡した（写真のふりはさせない。セヴァナヴァンクの写真は壁の彫り石で、形は描写の2つの教会で決まった）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/armenia/yerevan/do-etchmiadzin-1200.webp",
+     "src_small": "/guide/armenia/yerevan/do-etchmiadzin-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "sevan": {
+   "src": "/guide/armenia/yerevan/do-sevan-1200.webp",
+   "src_small": "/guide/armenia/yerevan/do-sevan-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "青いセヴァン湖に突き出た半島の上の、黒っぽい石の小さな修道院。湖を見下ろす小さな後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。カスケード・ヴェルニサージュ・ガルニ神殿・ホル・ヴィラップ・エチミアジン大聖堂は写真を形の手本として渡した（写真のふりはさせない。セヴァナヴァンクの写真は壁の彫り石で、形は描写の2つの教会で決まった）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/armenia/yerevan/do-sevan-1200.webp",
+     "src_small": "/guide/armenia/yerevan/do-sevan-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  }
+ }
+}

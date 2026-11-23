@@ -1,0 +1,317 @@
+{
+ "republic": {
+  "q": "Republic Square, Yerevan",
+  "lat": 40.178026,
+  "lon": 44.512877,
+  "name": "Հանրապետության հրապարակ",
+  "osm": "https://www.openstreetmap.org/node/9740281135",
+  "type": "square",
+  "addr": "Հանրապետության հրապարակ, Կենտրոն, Erevan, 0010, Armenia"
+ },
+ "matenadaran": {
+  "q": "Matenadaran",
+  "lat": 40.192461,
+  "lon": 44.522209,
+  "name": "Երևանի Մատենադարան",
+  "osm": "https://www.openstreetmap.org/relation/20960090",
+  "type": "museum",
+  "addr": "Երևանի Մատենադարան, 53, Մեսրոպ Մաշտոցի պողոտա, Կենտրոն, Erevan, 0009, Armenia"
+ },
+ "mother": {
+  "q": "Mother Armenia",
+  "lat": 40.195155,
+  "lon": 44.524674,
+  "name": "Մայր Հայաստան",
+  "osm": "https://www.openstreetmap.org/node/375565244",
+  "type": "artwork",
+  "addr": "Մայր Հայաստան, Аллея маршала Баграмяна, Քանաքեռ-Զեյթուն, Erevan, 0037, Armenia"
+ },
+ "gregory": {
+  "q": "Saint Gregory the Illuminator Cathedral",
+  "lat": 40.172074,
+  "lon": 44.516871,
+  "name": "Սուրբ Գրիգոր Լուսավորիչ եկեղեցի",
+  "osm": "https://www.openstreetmap.org/way/31622320",
+  "type": "place_of_worship",
+  "addr": "Սուրբ Գրիգոր Լուսավորիչ եկեղեցի, 5, Երվանդ Քոչարի փողոց, Կրիվո, Կենտրոն, Erevan, 0070, Armenia"
+ },
+ "bluemosque": {
+  "q": "Blue Mosque, Yerevan",
+  "lat": 40.177883,
+  "lon": 44.50556,
+  "name": "Կապույտ Մզկիթ",
+  "osm": "https://www.openstreetmap.org/way/235841246",
+  "type": "place_of_worship",
+  "addr": "Կապույտ Մզկիթ, 12, Մեսրոպ Մաշտոցի պողոտա, Կենտրոն, Erevan, 0015, Armenia"
+ },
+ "vernissage": {
+  "q": "Vernissage, Yerevan",
+  "lat": 40.175976,
+  "lon": 44.51818,
+  "name": "Vernissage",
+  "osm": "https://www.openstreetmap.org/way/31662730",
+  "type": "marketplace",
+  "addr": "Vernissage, 1,3, Փավստոս Բուզանդի փողոց, Կենտրոն, Erevan, 0010, Armenia"
+ },
+ "erebuni": {
+  "q": "Erebuni Fortress",
+  "lat": 40.140305,
+  "lon": 44.538147,
+  "name": "Էրեբունու ամրոց",
+  "osm": "https://www.openstreetmap.org/way/445380061",
+  "type": "archaeological_site",
+  "addr": "Էրեբունու ամրոց, Խաչիկ Դաշտենցի փողոց, Էրեբունի, Erevan, 0094, Armenia"
+ },
+ "history": {
+  "q": "History Museum of Armenia",
+  "lat": 40.178514,
+  "lon": 44.513861,
+  "name": "Հայաստանի պատմության թանգարան",
+  "osm": "https://www.openstreetmap.org/node/1436858079",
+  "type": "museum",
+  "addr": "Հայաստանի պատմության թանգարան, 4, Հանրապետության հրապարակ, Կենտրոն, Erevan, 0010, Armenia"
+ },
+ "brandy": {
+  "q": "Yerevan Brandy Company",
+  "lat": 40.176361,
+  "lon": 44.496414,
+  "name": "Երևանի Կոնյակի Գործարան",
+  "osm": "https://www.openstreetmap.org/way/468079561",
+  "type": "winery",
+  "addr": "Երևանի Կոնյակի Գործարան, 2, Կենտրոն, Erevan, 0082, Armenia"
+ },
+ "gum": {
+  "q": "GUM Market, Yerevan",
+  "lat": 40.167397,
+  "lon": 44.514941,
+  "name": "GumMarket",
+  "osm": "https://www.openstreetmap.org/way/31651862",
+  "type": "marketplace",
+  "addr": "GumMarket, 35, Մովսես Խորենացու փողոց, Կրիվո, Կենտրոն, Erevan, 0018, Armenia"
+ },
+ "northern": {
+  "q": "Northern Avenue, Yerevan",
+  "lat": 40.182178,
+  "lon": 44.514677,
+  "name": "Հյուսիսային պողոտա",
+  "osm": "https://www.openstreetmap.org/way/430406007",
+  "type": "pedestrian",
+  "addr": "Հյուսիսային պողոտա, Կենտրոն, Erevan, 0001, Armenia"
+ },
+ "parajanov": {
+  "q": "Parajanov Museum",
+  "lat": 40.178897,
+  "lon": 44.50007,
+  "name": "Սերգեյ Փարաջանովի թանգարան",
+  "osm": "https://www.openstreetmap.org/node/1957114625",
+  "type": "museum",
+  "addr": "Սերգեյ Փարաջանովի թանգարան, 15/16, Ձորագյուղի փողոց, Կենտրոն, Erevan, 0015, Armenia"
+ },
+ "yerevanlake": {
+  "q": "Yerevan Lake",
+  "lat": 40.161597,
+  "lon": 44.478547,
+  "name": "Երևանյան լիճ",
+  "osm": "https://www.openstreetmap.org/relation/15674125",
+  "type": "lake",
+  "addr": "Երևանյան լիճ, Շենգավիթ, Erevan, Armenia"
+ },
+ "kond": {
+  "q": "Kond, Yerevan",
+  "lat": 40.183129,
+  "lon": 44.502232,
+  "name": "Կոնդ",
+  "osm": "https://www.openstreetmap.org/way/1177704856",
+  "type": "neighbourhood",
+  "addr": "Կոնդ, Կենտրոն, Erevan, Armenia"
+ },
+ "garni": {
+  "q": "Garni Temple",
+  "lat": 40.112341,
+  "lon": 44.730219,
+  "name": "Գառնիի հեթանոսական տաճար",
+  "osm": "https://www.openstreetmap.org/way/108255791",
+  "type": "temple",
+  "addr": "Գառնիի հեթանոսական տաճար, Մարզպետունի փողոց, Գառնի, Garni village, Գառնի համայնք, Կոտայքի մարզ, 2215, Armenia"
+ },
+ "symphony": {
+  "q": "Symphony of Stones",
+  "lat": 40.115054,
+  "lon": 44.741141,
+  "name": "Symphony of Stones",
+  "osm": "https://www.openstreetmap.org/way/1149049717",
+  "type": "cliff",
+  "addr": "Symphony of Stones, Չարենցի փողոց, Գառնի, Garni village, Գառնի համայնք, Կոտայքի մարզ, 2215, Armenia"
+ },
+ "etchmiadzin": {
+  "q": "Etchmiadzin Cathedral",
+  "lat": 40.16184,
+  "lon": 44.291116,
+  "name": "Էջմիածնի Մայր Տաճար",
+  "osm": "https://www.openstreetmap.org/way/133909119",
+  "type": "place_of_worship",
+  "addr": "Էջմիածնի Մայր Տաճար, Մովսես Խորենացու փողոց, Ecimiadzin, Վաղարշապատ համայնք, Provincia Armavir, 1105, Armenia"
+ },
+ "hripsime": {
+  "q": "Saint Hripsime Church",
+  "lat": 40.16698,
+  "lon": 44.309558,
+  "name": "Սուրբ Հռիփսիմե եկեղեցի",
+  "osm": "https://www.openstreetmap.org/way/190331200",
+  "type": "place_of_worship",
+  "addr": "Սուրբ Հռիփսիմե եկեղեցի, Մեսրոպ Մաշտոցի փողոց, Լիսավան, Ecimiadzin, Վաղարշապատ համայնք, Provincia Armavir, 1107, Armenia"
+ },
+ "khorvirap": {
+  "q": "Khor Virap",
+  "lat": 39.878388,
+  "lon": 44.57635,
+  "name": "Խոր Վիրապ",
+  "osm": "https://www.openstreetmap.org/way/81992498",
+  "type": "place_of_worship",
+  "addr": "Խոր Վիրապ, ճանապարհ դեպի Խոր Վիրապ, Վեդի համայնք, Provincia Ararat, Armenia"
+ },
+ "sevanavank": {
+  "q": "Sevanavank",
+  "lat": 40.563984,
+  "lon": 45.010808,
+  "name": "Սեւանավանք",
+  "osm": "https://www.openstreetmap.org/way/503179918",
+  "type": "place_of_worship",
+  "addr": "Սեւանավանք, Ձկնորսների փողոց, Sevan, Սևան համայնք, Provincia Gegharkunik, 1505, Armenia"
+ },
+ "noravank": {
+  "q": "Noravank",
+  "lat": 39.684823,
+  "lon": 45.233039,
+  "name": "Նորավանք",
+  "osm": "https://www.openstreetmap.org/node/955156087",
+  "type": "place_of_worship",
+  "addr": "Նորավանք, Ճանապարհ դեպի Նորավանք, Եղեգնաձոր համայնք, Provincia Vayots Dzor, 3604, Armenia"
+ },
+ "karas": {
+  "q": "Karas, Yerevan",
+  "lat": 40.190495,
+  "lon": 44.463084,
+  "name": "Կարաս",
+  "osm": "https://www.openstreetmap.org/way/397093245",
+  "type": "fast_food",
+  "addr": "Կարաս, 1/1, Քըրք Քըրքորյանի փողոց, Աջափնյակ, Erevan, 0031, Armenia"
+ },
+ "artlunch": {
+  "q": "Art Lunch, Yerevan",
+  "lat": 40.150326,
+  "lon": 44.516478,
+  "name": "Art Lunch",
+  "osm": "https://www.openstreetmap.org/way/369823759",
+  "type": "fast_food",
+  "addr": "Art Lunch, 34/4, Ռոստովյան փողոց, Նոր Արեշ, Էրեբունի, Erevan, 0008, Armenia"
+ },
+ "masterclass": {
+  "q": "Master Class, Yerevan",
+  "lat": 40.166511,
+  "lon": 44.505983,
+  "name": "Master Class",
+  "osm": "https://www.openstreetmap.org/node/11040330589",
+  "type": "cafe",
+  "addr": "Master Class, Արշակունյաց պողոտա, Կենտրոն, Erevan, 0023, Armenia"
+ },
+ "ost": {
+  "q": "OST, Yerevan",
+  "lat": 40.186089,
+  "lon": 44.507588,
+  "name": "ՕՍՏ",
+  "osm": "https://www.openstreetmap.org/node/4411411953",
+  "type": "restaurant",
+  "addr": "ՕՍՏ, 16, Սարյանի փողոց, Կենտրոն, Erevan, 0002, Armenia"
+ },
+ "tumanyan": {
+  "q": "Tumanyan Shaurma",
+  "lat": 40.179104,
+  "lon": 44.51326,
+  "name": "Tumanyan Shaurma",
+  "osm": "https://www.openstreetmap.org/node/10924674649",
+  "type": "fast_food",
+  "addr": "Tumanyan Shaurma, 1/1, Աբովյան փողոց, Կենտրոն, Erevan, 0010, Armenia"
+ },
+ "embassy": {
+  "q": "Embassy of Japan, Yerevan",
+  "lat": 40.198411,
+  "lon": 44.515918,
+  "name": "Ճապոնիայի Դեսպանություն",
+  "osm": "https://www.openstreetmap.org/way/1518979292",
+  "type": "diplomatic",
+  "addr": "Ճապոնիայի Դեսպանություն, 23/4, Բաբայան փողոց, Արաբկիր, Erevan, 0037, Armenia"
+ },
+ "cascade": {
+  "q": "Կասկադ",
+  "lat": 40.191463,
+  "lon": 44.515587,
+  "name": "Կասկադ",
+  "osm": "https://www.openstreetmap.org/way/83688503",
+  "type": "attraction",
+  "addr": "Կասկադ, Սարմենի փողոց, Կենտրոն, Erevan, 0009, Armenia"
+ },
+ "geghard": {
+  "q": "Գեղարդավանք",
+  "lat": 40.140327,
+  "lon": 44.81839,
+  "name": "Գեղարդի վանք",
+  "osm": "https://www.openstreetmap.org/way/405284197",
+  "type": "monastery",
+  "addr": "Գեղարդի վանք, Գեղարդի խճուղի, Գողթ, Գառնի համայնք, Կոտայքի մարզ, 2218, Armenia"
+ },
+ "genocide": {
+  "q": "Ծիծեռնակաբերդ",
+  "lat": 40.185718,
+  "lon": 44.489184,
+  "name": "Ծիծեռնակաբերդ",
+  "osm": "https://www.openstreetmap.org/way/1168573628",
+  "type": "attraction",
+  "addr": "Ծիծեռնակաբերդ, Ծիծեռնակաբերդի խճուղի, Կենտրոն, Erevan, 0082, Armenia"
+ },
+ "opera": {
+  "q": "Opera Theatre, Yerevan",
+  "lat": 40.185749,
+  "lon": 44.515063,
+  "name": "Օպերայի և բալետի ազգային ակադեմիական թատրոն",
+  "osm": "https://www.openstreetmap.org/relation/19203229",
+  "type": "theatre",
+  "addr": "Օպերայի և բալետի ազգային ակադեմիական թատրոն, Ազատության հրապարակ, Կենտրոն, Erevan, 0001, Armenia"
+ },
+ "zvartnots": {
+  "q": "Zvartnots archaeological site",
+  "lat": 40.160031,
+  "lon": 44.336343,
+  "name": "Զվարթնոց տաճար",
+  "osm": "https://www.openstreetmap.org/way/1169668461",
+  "type": "archaeological_site",
+  "addr": "Զվարթնոց տաճար, Օստրովսկու փողոց, Զվարթնոց, Ecimiadzin, Վաղարշապատ համայնք, Provincia Armavir, 0219, Armenia"
+ },
+ "mertaghe": {
+  "q": "Mer Taghe",
+  "lat": 40.183152,
+  "lon": 44.516107,
+  "name": "ՄԵՐ ԹԱՂԸ",
+  "osm": "https://www.openstreetmap.org/node/5002025526",
+  "type": "fast_food",
+  "addr": "ՄԵՐ ԹԱՂԸ, Թումանյան փողոց, Կենտրոն, Erevan, 0001, Armenia"
+ },
+ "grandcandy": {
+  "q": "Ponchikanots",
+  "lat": 40.190233,
+  "lon": 44.519125,
+  "name": "Պոնչիկանոց",
+  "osm": "https://www.openstreetmap.org/node/1456826041",
+  "type": "cafe",
+  "addr": "Պոնչիկանոց, 54, Մեսրոպ Մաշտոցի պողոտա, Կենտրոն, Erevan, 0009, Armenia"
+ },
+ "tunlahmajo": {
+  "q": "Tun Lahmajo",
+  "lat": 40.182834,
+  "lon": 44.514285,
+  "name": "Տուն Լահմաջո",
+  "osm": "https://www.openstreetmap.org/node/5064245821",
+  "type": "restaurant",
+  "addr": "Տուն Լահմաջո, 23, Տերյան փողոց, Կենտրոն, Erevan, 0010, Armenia"
+ }
+}

@@ -1220,7 +1220,7 @@ Stripe の Checkout Session の ID なので、**同じ知らせが2回届いて
 | `displayNameSnapshot` | string | アラートに出した名前（そのときのチャンネル名） |
 | `amount` | number | 払った額（円）。**Stripe が知らせてきた額**を入れる。画面から送られてきた額は使わない |
 | `currency` | string | `JPY` だけ |
-| `message` | string | メッセージ。字数の上限は Doneru に合わせる |
+| `message` | string | メッセージ。**70字まで**（Doneru であやとが設定している字数。2026-11-23 に読んだ値） |
 | `paidAt` | number | 払い終わった時刻（ミリ秒。Stripe の `created`） |
 | `paymentIntentId` | string | Stripe の支払いの ID（返金・払い戻し請求を引くため） |
 | `settlementAmount` | number \| null | 手数料を引いた額（Stripe の `balance_transaction.net`）。引けなければ null |
@@ -1378,6 +1378,19 @@ Functions から BigQuery は引けないので、`python/doneru_ledger.py` が�
 ずれていないことは `functions/selftest/fund_docid_selftest.mjs` が
 毎 PR で突き合わせる（同じ入力を両方に食わせて、1文字でも違えば落ちる）。
 口の一覧は [`island-api.md`](./island-api.md) の 1.1。
+
+**`islandFundConfig/tip`** — 島の投げ銭の設定（決定の記録 0017・#1405）
+
+**島にひとつ。** 口（`/tip/checkout`・Stripe の知らせを受ける口）が読む。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `ngWords` | string[] | 禁止ワード。**Doneru であやとが設定している禁止ワードを写したもの**（2026-11-23 に読んだときは191語）。メッセージに1語でも入っていれば `/tip/checkout` が断る。**リポジトリにも公開のログにも出さない** |
+| `ngWordsSyncedAt` / `ngWordsSource` | string | 写した時刻と、どこから写したか（`doneru`） |
+| `testAlertboxId` | string | テスト環境の支払いを書く `islandAlertFeed` の合言葉（32桁の16進）。本番のアラートの合言葉とは別 |
+
+**`ngWords` を書くのは `python/admin/tip_ngwords_sync.py` だけ**（`run_admin_script`。既定は下見、`{"apply": true}` で書く。
+取れなかった・0語のときは書かない——0語で上書きすると守りが黙って消える）。
 
 **`islandFundConfig/doneru`** — Doneru の鍵（#639）
 

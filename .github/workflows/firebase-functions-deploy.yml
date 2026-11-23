@@ -14,11 +14,27 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # 島の投げ銭（#1405）の鍵2本は、**空なら1行も書かない。**
+      # Stripe のアカウントを作る前から、このワークフローは毎回回る。鍵が無いあいだ
+      # 口は 503（`tip not configured`）を返す作りなので、ここで落とすと
+      # 投げ銭と関係のない口まで配れなくなる。
+      # 鍵は `env:` で渡す（`run:` の字に `${{ }}` で直に埋めると、値がスクリプトの
+      # 一部として読まれる）。
       - name: 🏗️ `.env` ファイルの作成
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |
           echo "YOUTUBE_CLIENT_ID=${{ secrets.YOUTUBE_CLIENT_ID }}" >> functions/.env
           echo "YOUTUBE_CLIENT_SECRET=${{ secrets.YOUTUBE_CLIENT_SECRET }}" >> functions/.env
           echo "YOUTUBE_REFRESH_TOKEN=${{ secrets.YOUTUBE_REFRESH_TOKEN }}" >> functions/.env
+          for k in STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET; do
+            if [ -n "${!k}" ]; then
+              printf '%s=%s\n' "$k" "${!k}" >> functions/.env
+            else
+              echo "::notice::$k が空なので .env に書かない（島の投げ銭の口は 503 のまま）"
+            fi
+          done
 
       - name: 📦 依存関係のインストール
         run: npm ci

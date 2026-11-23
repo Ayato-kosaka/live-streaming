@@ -163,6 +163,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "6DQiR--an-U", date: "2026-11-20", title: "🇲🇰北マケドニア旅行中にパソコンを送ったら、まさかの事態に！" },
     { id: "Dm9T7chfvv4", date: "2026-11-21", title: "🇧🇬ブルガリアに着いたら、1,500円の宿が屋根裏の25人部屋でやばかった！" },
     { id: "FgLkHZofCT8", date: "2026-11-22", title: "🇧🇬ブルガリアのヨーグルト、本当に美味しいか検証して見た！" },
+    { id: "NTmUYChJSo0", date: "2026-11-23", title: "🇧🇬ブルガリアで名物のバニツァを探したら、見どころが多すぎた！" },
   ],
 };
 

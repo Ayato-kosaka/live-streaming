@@ -144,11 +144,27 @@ def yen_of(rows: list) -> int:
     return sum(int(v.get("yen") or 0) for _, v in rows)
 
 
+def half(yen: int) -> int:
+    """スパチャの満額から、貯金箱に入る半分を出す。**割るのは `viewer_yen()`。**
+
+    ここで `//` を書くと、割り方が2か所になる（`docs/island-money.md` 1章）。
+    この道具が比べるのは GAS の表と控え（スパチャだけ）なので、Doneru と
+    島の投げ銭（#1405）は 0 を渡す。
+
+    Args:
+        yen: スパチャの満額
+
+    Returns:
+        円
+    """
+    return fb.viewer_yen(yen, 0, island_yen=0)
+
+
 def line(label: str, rows: list) -> None:
     """表の1行を出す。**件数・満額・貯金箱ぶん・どの日**だけ。
 
     貯金箱ぶんは **この塊だけを足して半分**にした数ではなく、
-    `満額 // 2` を出す。全体は「全部足してから半分」なので、
+    満額の半分（`half()`）を出す。全体は「全部足してから半分」なので、
     塊ごとの半分を足したものとは奇数円のぶんだけずれる。**そこも出す。**
 
     Args:
@@ -156,7 +172,7 @@ def line(label: str, rows: list) -> None:
         rows: `(書類ID, 中身)` の配列
     """
     y = yen_of(rows)
-    log.info("  %-34s %3d件 / %8d円 / 半分 %7d円 / %s", label, len(rows), y, y // 2, days_of(rows))
+    log.info("  %-34s %3d件 / %8d円 / 半分 %7d円 / %s", label, len(rows), y, half(y), days_of(rows))
 
 
 def main() -> int:
@@ -199,7 +215,7 @@ def main() -> int:
     only_gas = [(doc, v) for doc, v in gas if doc not in led_ids]
     log.info("")
     log.info("台帳にだけ在る: %d件 / %d円（半分 %d円）",
-             len(only_led), yen_of(only_led), yen_of(only_led) // 2)
+             len(only_led), yen_of(only_led), half(yen_of(only_led)))
     log.info("GAS にだけ在る: %d件 / %d円", len(only_gas), yen_of(only_gas))
     if only_gas:
         log.warning("  **GAS にしか無いものがあります。**移行が通っていない可能性")
@@ -272,9 +288,9 @@ def main() -> int:
              s["superchatFull"], s["superchat"], s["spend"], s["spendCount"],
              fb.start_amount(s["spend"]))
     gas_full = yen_of(gas)
-    log.info("GAS の合計: スパチャ %d円（半分 %d円）", gas_full, gas_full // 2)
+    log.info("GAS の合計: スパチャ %d円（半分 %d円）", gas_full, half(gas_full))
     log.info("切り替えで動く額（Doneru と支出が同じなら）: %+d円",
-             s["superchat"] - gas_full // 2)
+             s["superchat"] - half(gas_full))
 
     # ---- 本番と並べて、合わせかたを数で出す ----
     prod = prod_fund()
@@ -284,10 +300,10 @@ def main() -> int:
     gas_start = fb.to_yen(g.get("startAmount"))
     log.info("GAS の Goals: startAmount=%d / superChatAmount=%d / targetAmount=%d",
              gas_start, gas_sc, fb.to_yen(g.get("targetAmount")))
-    if gas_sc != gas_full // 2:
+    if gas_sc != half(gas_full):
         log.warning("  **Goals の superChatAmount と表の合計の半分が合いません**"
                     "（%d ≠ %d）。表を読んだ時刻と Goals を読んだ時刻のあいだに"
-                    "投げ銭が入ると1件ぶんずれる", gas_sc, gas_full // 2)
+                    "投げ銭が入ると1件ぶんずれる", gas_sc, half(gas_full))
     if not prod.get("total") or not gas_sc:
         log.warning("本番の額か GAS の Goals が読めないので、合わせかたの数は出せません")
         return 1 if rest else 0
@@ -297,6 +313,8 @@ def main() -> int:
     # 返している額から逆算する（`fund_box` の「Doneru はここに入れない」）。
     # **逆算に台帳の支出を使わない。** 本番の額は GAS の起点でできているので、
     # 台帳の支出に補正を1行足したとたんに、逆算した Doneru が同じだけ太る
+    # 島の投げ銭（#1405）は GAS に無い。本番の total に入っていても、この
+    # 引き算で doneru 側に吸われるので、下の `box()` には `island_yen=0` を渡す
     doneru = prod_total - gas_sc - gas_start
     log.info("本番の /island-api/fund: total=%s / given=%s / goal=%s / people=%s",
              prod_total, prod.get("given"), prod.get("goal"), prod.get("people"))
@@ -328,8 +346,8 @@ def main() -> int:
 
     # **差の内訳。** 「台帳にだけ在る」と「台帳がまだ拾っていない」は別もので、
     # 後者は fund_sync が回れば自分で消える。**補正に入れてよいのは前者だけ。**
-    led_only = yen_of(only_led) // 2
-    gas_only = yen_of(only_gas) // 2
+    led_only = half(yen_of(only_led))
+    gas_only = half(yen_of(only_gas))
     spend_gap = -s["spend"] - gas_start
     log.info("  差の内訳: 台帳にだけ在る半分 %+d / 台帳がまだ拾っていない半分 %+d / "
              "支出と起点の差 %+d", led_only, -gas_only, spend_gap)
@@ -343,7 +361,7 @@ def main() -> int:
         if not day:
             continue
         before, after_cut = split(ledger, day)
-        cut_total = fb.box(yen_of(after_cut), doneru, s["spend"])
+        cut_total = fb.box(yen_of(after_cut), doneru, s["spend"], island_yen=0)
         log.info("案1 %s（%s）より前を数えない: 落ちるのが %d件 / %d円、"
                  "total=%d円（いまとの差 %+d円）",
                  name, day, len(before), yen_of(before), cut_total,
@@ -354,7 +372,7 @@ def main() -> int:
     # BigQuery にまだ入っていない今日ぶんが混ざっているので、そちらを入れると
     # 明日そのぶんだけ足りなくなる
     settled = led_only + spend_gap
-    fixed = fb.box(s["superchatFull"], doneru, s["spend"] + settled)
+    fixed = fb.box(s["superchatFull"], doneru, s["spend"] + settled, island_yen=0)
     log.info("案2 支出に補正を1行足す: 入れるのは %d円"
              "（台帳にだけ在る %d件の半分）。台帳が今日ぶんを拾い終わったあとの "
              "total=%d円（いまとの差 %+d円）",

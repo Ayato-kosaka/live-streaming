@@ -109,10 +109,15 @@ const nodeRequire = createRequire(import.meta.url);
 /**
  * `lib/fundDesk.js` を、偽の firebase-admin で読み込む。
  * **本番の置き場には1バイトも触らない。**
+ *
+ * 隣の `lib/*.js`（`./tip` など）も**同じ偽物で**読む（2026-11-23。#1405）。
+ * 本物の `require` に任せると、隣のファイルが本物の firebase-admin を起こして
+ * 資格情報を探しに行く。
+ * @param {string} [name] 拡張子なしの名前
  * @return {object} 書き出された関数
  */
-function loadTs() {
-  const file = join(LIB, "fundDesk.js");
+function loadTs(name = "fundDesk") {
+  const file = join(LIB, `${name}.js`);
   const src = readFileSync(file, "utf8");
   const mod = {exports: {}};
   const db = {collection: () => ({doc: () => ({})})};
@@ -129,6 +134,7 @@ function loadTs() {
   const req = (id) => {
     if (id === "firebase-admin") return admin;
     if (id === "firebase-functions") return {logger: {warn() {}, info() {}}};
+    if (id.startsWith("./")) return loadTs(id.slice(2));
     return nodeRequire(id);
   };
   new Function(
@@ -158,7 +164,7 @@ print(json.dumps({
   "chats": [fb.manual_id(d, y, w) for d, y, w in args["chats"]],
   "claims": [fb.claim_key(d, y) for d, y, _ in args["chats"]],
   "rate": fb.SUPERCHAT_RATE,
-  "box": [fb.box(f, 0, s) for f, s in args["box"]],
+  "box": [fb.box(f, 0, s, island_yen=0) for f, s in args["box"]],
   "start": [fb.start_amount(s) for s in args["start"]],
 }, ensure_ascii=False))
 `;
