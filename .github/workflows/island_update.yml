@@ -1,35 +1,19 @@
 name: あやと島の「いま」を更新
 
-# 手動実行専用。Claude Code から「今どこ更新して」と頼むとこれが走る。
-# 空欄にした項目は、いまの値がそのまま残る。
+# 手動実行専用。島の数字（配信の本数・コメント数ほか）を BigQuery から取り直す。
+#
+# **「いまどこ」「ひとこと」「今週やること」「島の景色」の欄は外した**（#1278）。
+# 島だより（`/now`）を面ごと畳み、画面は Firestore の `island/state.current` を1つも
+# 読まなくなった（`docs/adr/0006-fold-next-and-now.md`）。居場所は滞在の表
+# （`site/content/stays.ts`）が持つので、国を移った日はそこを直す（`/island-daily` の4）。
+# 書く口（`POST /island-api/current`）を縮めるのは Functions の側（#1281）。
+#
+# 名前は据え置く——`workflow_run` で名前から繋いでいる道があれば、変えると黙って切れる。
 on:
   workflow_dispatch:
     inputs:
-      place:
-        description: "今どこ（例: ジョージア・トビリシ）"
-        required: false
-        type: string
-      word:
-        description: "ひとこと"
-        required: false
-        type: string
-      week:
-        description: "今週やること（改行区切り）"
-        required: false
-        type: string
-      theme:
-        description: "島の景色"
-        required: false
-        default: ""
-        type: choice
-        options:
-          - ""
-          - georgia
-          - nordic
-          - desert
-          - default
       refresh_stats:
-        description: "数字も BigQuery から取り直す"
+        description: "数字を BigQuery から取り直す"
         required: false
         default: true
         type: boolean
@@ -57,15 +41,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r python/requirements.txt
-
-      - name: 「いま」を更新
-        if: inputs.place != '' || inputs.word != '' || inputs.week != '' || inputs.theme != ''
-        env:
-          ISLAND_PLACE: ${{ inputs.place }}
-          ISLAND_WORD: ${{ inputs.word }}
-          ISLAND_WEEK: ${{ inputs.week }}
-          ISLAND_THEME: ${{ inputs.theme }}
-        run: python python/island_set_current.py
 
       - name: 数字を取り直す
         if: inputs.refresh_stats
