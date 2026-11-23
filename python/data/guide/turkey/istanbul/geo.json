@@ -1,0 +1,308 @@
+{
+ "blue": {
+  "q": "Sultan Ahmet Camii",
+  "lat": 41.005384,
+  "lon": 28.976853,
+  "name": "Sultanahmet Camii",
+  "osm": "https://www.openstreetmap.org/relation/18055570",
+  "type": "place_of_worship",
+  "addr": "Sultanahmet Camii, 7, Atmeydanı Caddesi, Sultan Ahmet Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34122, Turc"
+ },
+ "topkapi": {
+  "q": "Topkapı Sarayı",
+  "lat": 41.01298,
+  "lon": 28.984066,
+  "name": "Topkapı Sarayı",
+  "osm": "https://www.openstreetmap.org/way/335415778",
+  "type": "castle",
+  "addr": "Topkapı Sarayı, Valide Taşlığı, Cankurtaran Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34122, Turcia"
+ },
+ "cistern": {
+  "q": "Yerebatan Sarnıcı",
+  "lat": 41.008479,
+  "lon": 28.978383,
+  "name": "Yerebatan Sarnıcı",
+  "osm": "https://www.openstreetmap.org/node/11006008339",
+  "type": "cistern",
+  "addr": "Yerebatan Sarnıcı, 1, Yerebatan Caddesi, Alemdar Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34110, Turcia"
+ },
+ "spice": {
+  "q": "Mısır Çarşısı",
+  "lat": 41.016479,
+  "lon": 28.970538,
+  "name": "Mısır Çarşısı",
+  "osm": "https://www.openstreetmap.org/way/24234971",
+  "type": "marketplace",
+  "addr": "Mısır Çarşısı, Kalçın Sokağı, Eminönü, Rüstempaşa Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34116, Turcia"
+ },
+ "galata": {
+  "q": "Galata Kulesi",
+  "lat": 41.025641,
+  "lon": 28.974213,
+  "name": "Galata Kulesi",
+  "osm": "https://www.openstreetmap.org/way/23236783",
+  "type": "tower",
+  "addr": "Galata Kulesi, Büyük Hendek Caddesi, Kuledibi, Bereketzade Mahallesi, Beyoğlu, Istanbul, Marmara Bölgesi, 34420, Turcia"
+ },
+ "suleymaniye": {
+  "q": "Süleymaniye Camii",
+  "lat": 41.016229,
+  "lon": 28.963955,
+  "name": "Süleymaniye Camii",
+  "osm": "https://www.openstreetmap.org/relation/1564032",
+  "type": "place_of_worship",
+  "addr": "Süleymaniye Camii, 1, Profesör Doktor Sıddık Sami Onar Caddesi, Süleymaniye Mahallesi, Istanbul, Fatih, Istanbul, Marmar"
+ },
+ "dolmabahce": {
+  "q": "Dolmabahçe Sarayı",
+  "lat": 41.038961,
+  "lon": 28.999773,
+  "name": "Dolmabahçe Sarayı",
+  "osm": "https://www.openstreetmap.org/way/24826707",
+  "type": "park",
+  "addr": "Dolmabahçe Sarayı, Vişnezade Mahallesi, Beşiktaş, Istanbul, Marmara Bölgesi, Turcia"
+ },
+ "hippodrome": {
+  "q": "Sultanahmet Meydanı",
+  "lat": 41.006516,
+  "lon": 28.975977,
+  "name": "Sultanahmet Meydanı",
+  "osm": "https://www.openstreetmap.org/way/25512790",
+  "type": "pedestrian",
+  "addr": "Sultanahmet Meydanı, Binbirdirek Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, Turcia"
+ },
+ "archaeology": {
+  "q": "İstanbul Arkeoloji Müzeleri",
+  "lat": 41.011699,
+  "lon": 28.981323,
+  "name": "İstanbul Arkeoloji Müzeleri",
+  "osm": "https://www.openstreetmap.org/way/335374188",
+  "type": "museum",
+  "addr": "İstanbul Arkeoloji Müzeleri, Osman Hamdibey Yokuşu Sokağı, Cankurtaran Mahallesi, Istanbul, Fatih, Istanbul, Marmara Böl"
+ },
+ "rustem": {
+  "q": "Rüstem Paşa Camii",
+  "lat": 41.017665,
+  "lon": 28.968699,
+  "name": "Rüstem Paşa Camii",
+  "osm": "https://www.openstreetmap.org/way/175518494",
+  "type": "place_of_worship",
+  "addr": "Rüstem Paşa Camii, 62, Hasırcılar Caddesi, Rüstempaşa Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34116, Turc"
+ },
+ "istiklal": {
+  "q": "İstiklal Caddesi",
+  "lat": 41.033861,
+  "lon": 28.978167,
+  "name": "İstiklal Caddesi",
+  "osm": "https://www.openstreetmap.org/way/485070951",
+  "type": "pedestrian",
+  "addr": "İstiklal Caddesi, Kuloğlu, Kuloğlu Mahallesi, Beyoğlu, Istanbul, Marmara Bölgesi, 34433, Turcia"
+ },
+ "galatabridge": {
+  "q": "Galata Köprüsü",
+  "lat": 41.020006,
+  "lon": 28.973121,
+  "name": "Galata Köprüsü",
+  "osm": "https://www.openstreetmap.org/way/280961352",
+  "type": "bridge",
+  "addr": "Galata Köprüsü, Azapkapı, Arap Cami, Arap Cami Mahallesi, Beyoğlu, Istanbul, Marmara Bölgesi, 34421, Turcia"
+ },
+ "maiden": {
+  "q": "Kız Kulesi",
+  "lat": 41.021049,
+  "lon": 29.004132,
+  "name": "Kız Kulesi",
+  "osm": "https://www.openstreetmap.org/way/103821246",
+  "type": "attraction",
+  "addr": "Kız Kulesi, Üsküdar Harem Sahil Yolu, Salacak Mahallesi, Üsküdar, Istanbul, Marmara Bölgesi, 34668, Turcia"
+ },
+ "ortakoy": {
+  "q": "Ortaköy Camii",
+  "lat": 41.047287,
+  "lon": 29.026772,
+  "name": "Büyük Mecidiye Camii",
+  "osm": "https://www.openstreetmap.org/way/498861735",
+  "type": "place_of_worship",
+  "addr": "Büyük Mecidiye Camii, İskele Sokağı, Mecidiye Mahallesi, Beşiktaş, Istanbul, Marmara Bölgesi, 34347, Turcia"
+ },
+ "rumeli": {
+  "q": "Rumelihisarı",
+  "lat": 41.084917,
+  "lon": 29.056712,
+  "name": "Rumeli Hisarı",
+  "osm": "https://www.openstreetmap.org/relation/7318154",
+  "type": "museum",
+  "addr": "Rumeli Hisarı, Yahya Kemal Caddesi, Rumelihisarı Mahallesi, Sarıyer, Istanbul, Marmara Bölgesi, 34470, Turcia"
+ },
+ "balat": {
+  "q": "Balat, Fatih",
+  "lat": 41.032003,
+  "lon": 28.948293,
+  "name": "Balat Mahallesi",
+  "osm": "https://www.openstreetmap.org/relation/2463371",
+  "type": "administrative",
+  "addr": "Balat Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, Turcia"
+ },
+ "buyukada": {
+  "q": "Büyükada",
+  "lat": 40.856355,
+  "lon": 29.119037,
+  "name": "Büyükada",
+  "osm": "https://www.openstreetmap.org/relation/7590784",
+  "type": "island",
+  "addr": "Büyükada, Adalar, Istanbul, Marmara Bölgesi, 34970, Turcia"
+ },
+ "chora": {
+  "q": "Kariye Camii",
+  "lat": 41.031214,
+  "lon": 28.938955,
+  "name": "Kariye Camii",
+  "osm": "https://www.openstreetmap.org/relation/7614527",
+  "type": "place_of_worship",
+  "addr": "Kariye Camii, 18, Kariye Cami Sokağı, Derviş Ali Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34087, Turcia"
+ },
+ "beylerbeyi": {
+  "q": "Beylerbeyi Sarayı",
+  "lat": 41.042718,
+  "lon": 29.040036,
+  "name": "Beylerbeyi Sarayı",
+  "osm": "https://www.openstreetmap.org/way/61736367",
+  "type": "museum",
+  "addr": "Beylerbeyi Sarayı, Beylerbeyi Sarayı Tüneli, Beylerbeyi Mahallesi, Üsküdar, Istanbul, Marmara Bölgesi, 34676, Turcia"
+ },
+ "bazaar": {
+  "q": "Kapalı Çarşı, Beyazıt",
+  "lat": 41.010954,
+  "lon": 28.968022,
+  "name": "Kapalı Çarşı",
+  "osm": "https://www.openstreetmap.org/way/303807317",
+  "type": "marketplace",
+  "addr": "Kapalı Çarşı, Beyazıt Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34126, Turcia"
+ },
+ "pierreloti": {
+  "q": "Pierre Loti, Eyüpsultan",
+  "lat": 41.053291,
+  "lon": 28.933368,
+  "name": "Pierre Loti Teleferik İstasyonu",
+  "osm": "https://www.openstreetmap.org/way/1311677944",
+  "type": "station",
+  "addr": "Pierre Loti Teleferik İstasyonu, Balmumcu Sokağı, Merkez Mahallesi, Eyüpsultan, Istanbul, Marmara Bölgesi, 34050, Turcia"
+ },
+ "hafiz": {
+  "q": "Hafız Mustafa, Sirkeci",
+  "lat": 41.016011,
+  "lon": 28.97336,
+  "name": "Hafiz Mustafa 1864",
+  "osm": "https://www.openstreetmap.org/node/6324428785",
+  "type": "cafe",
+  "addr": "Hafiz Mustafa 1864, 84, Hamidiye Caddesi, Sirkeci, Hobyar Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34112, "
+ },
+ "mehmetefendi": {
+  "q": "Kurukahveci Mehmet Efendi",
+  "lat": 40.990906,
+  "lon": 29.025167,
+  "name": "Kurukahveci Mehmet Efendi",
+  "osm": "https://www.openstreetmap.org/way/463482382",
+  "type": "coffee",
+  "addr": "Kurukahveci Mehmet Efendi, 14, Söğütlüçeşme Caddesi, Osmanağa Mahallesi, Kadıköy, Istanbul, Marmara Bölgesi, 34714, Turc"
+ },
+ "gulluoglu": {
+  "q": "Karaköy Güllüoğlu",
+  "lat": 41.024885,
+  "lon": 28.980958,
+  "name": "Karaköy Güllüoğlu",
+  "osm": "https://www.openstreetmap.org/node/4548658690",
+  "type": "confectionery",
+  "addr": "Karaköy Güllüoğlu, 67, Kemankeş Caddesi, Karaköy, Kemankeş Karamustafa Paşa, Kemankeş Karamustafa Paşa Mahallesi, Beyoğl"
+ },
+ "mado": {
+  "q": "Mado, İstiklal Caddesi",
+  "lat": 41.03535,
+  "lon": 28.981602,
+  "name": "Mado",
+  "osm": "https://www.openstreetmap.org/node/5715720942",
+  "type": "cafe",
+  "addr": "Mado, İstiklal caddesi, İstiklal, Asmalı Mescit, Asmalı Mescit Mahallesi, Beyoğlu, Istanbul, Marmara Bölgesi, 34430, Tur"
+ },
+ "kizilkayalar": {
+  "q": "Kızılkayalar, Taksim",
+  "lat": 41.036177,
+  "lon": 28.984678,
+  "name": "Kızılkayalar",
+  "osm": "https://www.openstreetmap.org/node/2982682484",
+  "type": "fast_food",
+  "addr": "Kızılkayalar, 2/C, Sıraselveler Caddesi, Taksim, Gümüşsuyu, Gümüşsuyu Mahallesi, Beyoğlu, Istanbul, Marmara Bölgesi, 344"
+ },
+ "haciabdullah": {
+  "q": "Hacı Abdullah, Beyoğlu",
+  "lat": 41.035249,
+  "lon": 28.980314,
+  "name": "Haci Abdullah Lokantasi",
+  "osm": "https://www.openstreetmap.org/node/9066394617",
+  "type": "restaurant",
+  "addr": "Haci Abdullah Lokantasi, 9/A, Atıf Yılmaz Caddesi, Hüseyinağa, Hüseyinağa Mahallesi, Beyoğlu, Istanbul, Marmara Bölgesi,"
+ },
+ "consulate": {
+  "q": "Tekfen Tower",
+  "lat": 41.081717,
+  "lon": 29.008513,
+  "name": "Tekfen Tower",
+  "osm": "https://www.openstreetmap.org/way/905819810",
+  "type": "commercial",
+  "addr": "Tekfen Tower, Esentepe Mahallesi, Şişli, Istanbul, Marmara Bölgesi, Turcia"
+ },
+ "taksim": {
+  "q": "Taksim Meydanı",
+  "lat": 41.037833,
+  "lon": 28.985017,
+  "name": "Taksim Meydanı",
+  "osm": "https://www.openstreetmap.org/relation/4473230",
+  "type": "pedestrian",
+  "addr": "Taksim Meydanı, Taksim, Gümüşsuyu, Gümüşsuyu Mahallesi, Beyoğlu, Istanbul, Marmara Bölgesi, Turcia"
+ },
+ "kadikoy": {
+  "q": "Kadıköy İskelesi",
+  "lat": 40.992908,
+  "lon": 29.022868,
+  "name": "Kadıköy İskelesi",
+  "osm": "https://www.openstreetmap.org/way/560203763",
+  "type": "transportation",
+  "addr": "Kadıköy İskelesi, Kadıköy 2 İskelesi, Bahariye, Caferağa Mahallesi, Kadıköy, Istanbul, Marmara Bölgesi, 34710, Turcia"
+ },
+ "hacibekir": {
+  "q": "Ali Muhiddin Hacı Bekir",
+  "lat": 41.015791,
+  "lon": 28.973523,
+  "name": "Ali Muhiddin Hacı Bekir",
+  "osm": "https://www.openstreetmap.org/node/7303906185",
+  "type": "confectionery",
+  "addr": "Ali Muhiddin Hacı Bekir, Hamidiye Caddesi, Sirkeci, Hobyar Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34112,"
+ },
+ "vefa": {
+  "q": "Vefa Bozacısı, Fatih",
+  "lat": 41.015324,
+  "lon": 28.958419,
+  "name": "Vefa Bozacısı 1876",
+  "osm": "https://www.openstreetmap.org/node/5110342187",
+  "type": "cafe",
+  "addr": "Vefa Bozacısı 1876, 66, Vefa Caddesi, Vefa, Molla Hüsrev Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34134, T"
+ },
+ "ayasofya": {
+  "q": "Ayasofya-i Kebir Cami-i Şerifi",
+  "lat": 41.008505,
+  "lon": 28.980011,
+  "name": "Hagia Sofia din Istanbul",
+  "osm": "https://www.openstreetmap.org/way/109862851",
+  "type": "place_of_worship",
+  "addr": "Hagia Sofia din Istanbul, 1, Ayasofya Meydanı, Cankurtaran Mahallesi, Istanbul, Fatih, Istanbul, Marmara Bölgesi, 34122,"
+ },
+ "iskender": {
+  "q": "Şakayık Sokağı, Şişli",
+  "lat": 41.050933,
+  "lon": 28.994447,
+  "name": "Şakayık Sokağı",
+  "osm": "https://www.openstreetmap.org/way/24804839",
+  "type": "residential",
+  "addr": "Şakayık Sokağı, Teşvikiye Mahallesi, Nişantaşı, Şişli, Istanbul, Marmara Bölgesi, 34365, Turcia"
+ }
+}
