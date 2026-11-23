@@ -81,6 +81,8 @@ const RECORD_CARD: ShareKey = "map";
 const WALKED_FIXED: { slug: string; card: ShareKey }[] = [
   { slug: "north-macedonia", card: "northMacedonia" },
   { slug: "bulgaria", card: "bulgaria" },
+  /* ティラナのガイドが同じ段に入った（2026-11-23）。絵は `[slug]` のときと同じ地図の1枚 */
+  { slug: "albania", card: "map" },
 ];
 
 function build(): TravelPlace[] {
