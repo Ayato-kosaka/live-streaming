@@ -73,6 +73,7 @@ function rowsOf(c: Chapter): TripGroup["rows"] {
       en: rec?.en,
       stays: [],
       towns: [],
+      done: !!rec,
       /* 面を持たない国は空（押せない札にする。`./parts.tsx`） */
       href: travelPlace(s.country)?.href ?? "",
     };
