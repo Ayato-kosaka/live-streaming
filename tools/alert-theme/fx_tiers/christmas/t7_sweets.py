@@ -11,10 +11,10 @@
 - 3.28 杖を振る → ジンジャーブレッドの兵隊さんが左右に立ち上がって敬礼
 - 3.86 杖を振る → 左にケーキのツリー、右にお菓子のお城が立ち上がる（飾りと窓が灯る）
 - 3.95〜4.65: あやとが上の帯へ退き、雲が腰までふくらむ（滞在は雲から上だけを、上の帯に大きく）
-- キャラ絵が出たら（5.3）: 金の輪がはじける
+- キャラ絵が出たら（4.7）: 金の輪がはじける（登場の終わり 5.4 までに消えきる）
 - 滞在（3秒の輪）: 背景の1枚とお菓子の世界は全面のまま。あやとが雲の中でゆれて、杖の星から2回光が飛ぶ。花火が3発、リボンの光が流れ、
   キャンディケインがゆれ、兵隊さんが交代で敬礼し、お城の窓とツリーの飾りがまたたき、じゅうたんの縁を金の光が奥へ走る
-- 締め 1.5秒: あやとが上へ飛び去り、景色が溶ける（輪で動くものは滞在の頭の姿で止める）
+- 締め 1.2秒: あやとが上へ飛び去り、景色が溶ける（輪で動くものは滞在の頭の姿で止める）
 
 あやとが決めた中身（#1034）: 1万円〜は、黒と赤の王子のあやと・敷かれる赤いじゅうたん・豪華なお菓子の世界が
 魔法で現れる。部品は分けて描いてある（`fx_art/christmas/t7/`）ので、直しは部品の差し替えで済む。
@@ -119,7 +119,8 @@ def bez(P, s):
 
 class Scene(Stage):
     TIER = 7
-    INTRO, STAY, OUTRO, REVEAL = 6.0, 3.0, 1.5, 5.3
+    # 登場 6.0・締め 1.5 では Actions の焼きが 2回続けて途中で止まった（2026-11-23。段6 の長さに近づける）
+    INTRO, STAY, OUTRO, REVEAL = 5.4, 3.0, 1.2, 4.7
     VARIANTS = ("full",)
     FRONT = {"full": True}
 
@@ -143,7 +144,7 @@ class Scene(Stage):
         self.sparkles = np.stack([30 + R.random(20) * 660, 40 + R.random(20) * 600, R.random(20), R.random(20)], -1)
         self.rib = []
         for P0, P1, P2, P3, wd, t0 in RIBBONS:
-            n = 640
+            n = 480
             self.rib.append(dict(P=(P0, P1, P2, P3), w=wd, t0=t0, s=np.linspace(0, 1, n),
                                  o=np.clip(R.normal(0, 0.4, n), -1, 1), ph=R.random(n), m=R.integers(1, 3, n)))
         # 降る紙吹雪は焼くと重い（44粒で back が 1秒 90KB）。16粒に
@@ -178,7 +179,7 @@ class Scene(Stage):
             for i, d in enumerate(SOLDIER_D):
                 items.append(dict(kind="soldier", d=d, lat=side_ * CANE_LAT, h=SOLDIER_H, t=SOLDIER_T + 0.12 * i + (0.06 if side_ > 0 else 0),
                                   side=side_, i=i))
-        for j in range(20):
+        for j in range(12):
             side_ = -1 if j % 2 == 0 else 1
             d = 1.0 + R.random() ** 1.3 * 1.8
             lat = side_ * (CW + 30 + R.random() * 270)
@@ -377,7 +378,7 @@ class Scene(Stage):
         sp_b.into(back)
 
         # ---- キャラ絵が出る瞬間: 真ん中の後ろから金の輪
-        rv = (T - self.REVEAL) / 0.7 if intro else 9
+        rv = (T - self.REVEAL) / 0.6 if intro else 9
         if 0 <= rv < 1:
             yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
             rr_ = 110 + 300 * ease_out(rv)
@@ -407,13 +408,13 @@ class Scene(Stage):
             fxv.stamp(front.L, spr, x, y, kk)
         if intro:
             rv = T - self.REVEAL
-            if 0 <= rv < 0.9:
+            if 0 <= rv < 0.65:
                 R = np.random.default_rng(79)
                 for k in range(26):
                     ang_ = R.random() * 6.283
-                    dist = 170 + 220 * ease_out(rv / 0.9) * (0.6 + 0.4 * R.random())
+                    dist = 170 + 220 * ease_out(rv / 0.65) * (0.6 + 0.4 * R.random())
                     fxv.stamp(front.L, self.kit.star["gold" if k % 3 else "white"], 360 + math.cos(ang_) * dist * 0.9,
-                              760 + math.sin(ang_) * dist * 1.05, 0.85 * (1 - rv / 0.9) ** 1.5 * (0.5 + 0.5 * R.random()))
+                              760 + math.sin(ang_) * dist * 1.05, 0.85 * (1 - rv / 0.65) ** 1.5 * (0.5 + 0.5 * R.random()))
         return out_b, self.finish_front(front, bloom=0.7)
 
     def _events_at(self, Tp):
