@@ -103,6 +103,14 @@ const SINGLE: Record<string, Line> = {
 
 /** 街の探し言葉。**人が書く字**（面の中身の見どころ・食べもの）。無い街は名前と slug だけで引く */
 const CITY_Q: Record<string, Line> = {
+  /* 行った街。探し言葉は面に在る語だけ */
+  "armenia/yerevan": {
+    note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・ことば",
+    q: q(
+      "アルメニア armenia エレバン yerevan カスケード kaskad 共和国広場 マテナダラン matenadaran アララト " +
+        "ガルニ ゲガルド geghard エチミアジン ホル・ヴィラップ khor virap セヴァン sevanavank ホロヴァツ khorovats ラヴァシュ lavash ドラム コーカサス",
+    ),
+  },
   /* 2026-11-23 に公開した行った街。探し言葉は面に在る語だけ（記事6本は記事の名簿から別の行で並ぶ） */
   "albania/tirana": {
     note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの。行った人の話つき",

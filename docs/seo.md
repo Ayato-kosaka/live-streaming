@@ -86,6 +86,7 @@
 | 2026-11-20 | **下げた: 足もとの街のガイドを、全部から1本に**（あやと「行ったのにスコピエ観光ガイドとかソフィア観光ガイドが出てきてる。これ全部出す気ですか」）。出すのは、いまいる街か次に行く街の1本だけ（滞在の表 `content/plans.ts` から引き、画面が出てから今日で選び直す。`site/lib/guideStop.ts`）。行った街のガイドへは国の面と `/travel` から。採点の「島の中からのリンク」は、行った街のぶん下がる | `tools/sprites/orphanpage.mjs`（どこからも入れない面）・`datebake.mjs`（焼いた日で止まらない） |
 | 2026-11-23 | **ベオグラードを検索に出した**（ガイド `/travel/serbia/belgrade` の公開前の印を外した。行く前の街で、移る日は未定。物価の面はまだ無い。運営が本番の390幅・型の数・見張りを見て公開した。`/city-guide` 段5）。`/travel`・索引・IndexNow はひとりでに。`/all` にセルビアの棚を立てた。国の面はまだ無い（`CITY_ONLY`）。付箋・島の板・足もとのリンクは、セルビアへ移る日が決まってから | `--expect prod` の `jsonld:/travel/serbia/belgrade`・採点の「検索に出している」 |
 | 2026-11-23 | **ティラナを検索に出した**（ガイド `/travel/albania/tirana` と記事6本 `walk` `sufllaqe` `airport` `hostel` `gjelltore` `mosque` の公開前の印を外した。行った街で、骨組みは外の出どころの事実、行った箱は配信の facts から。運営が本番の390幅・型の数・記事を見て公開した。`/city-guide` 段5）。`/travel`・索引・IndexNow・`/all` はひとりでに。アルバニアの国の面の「行った街」は配信16本の畳みから街の札へ替わり、記事は札の下に畳まれ、配信は「この国であったこと」へ移る（スコピエと同じ。`app/travel/record.tsx`）。付箋・島の板・足もとのリンクは足さない（もう出た国） | `--expect prod` の `jsonld:/travel/albania/tirana` と記事6本の `Article`・採点の「検索に出している」 |
+| 2026-11-23 | **エレバンを検索に出した**（ガイド `/travel/armenia/yerevan` の公開前の印を外した。行った街で、骨組みは外の出どころの事実、行った箱は配信の facts から。運営が型の数と見張りを見て公開した。`/city-guide` 段5）。`/travel`・索引・IndexNow はひとりでに。`/all` の棚は名簿から（探し言葉は `CITY_Q`）。付箋・島の板は、もうアルメニアを出た街なので足さない | `--expect prod` の `jsonld:/travel/armenia/yerevan`・採点の「検索に出している」 |
 
 **入れていないもの**: Bing Webmaster Tools（入るには、あやとの Google アカウントの情報を bing.com に渡す同意と、
 新しい Bing の利用者の作成が要る。#1262 で止めた）。IndexNow で URL は Bing に届く。順位や語の数を Bing の側で見たくなったら、そのとき入る。
