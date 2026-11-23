@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { BOOK_PROJECTS, PROJECT_ROWS } from "@/content/projects";
+import { BOOK_PROJECTS, PROJECT_ROWS } from "@/content/projectDrafts";
 import { share } from "@/lib/share";
 
 import { INDIA_STREET_FOOD } from "./india-street-food";

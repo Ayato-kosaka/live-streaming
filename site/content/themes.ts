@@ -30,7 +30,7 @@
  */
 
 import { BUILT_AT, daysUntil } from "@/lib/nightly";
-import { PROJECT_ROWS, projectBySlug } from "./projects";
+import { projectBySlug } from "./projects";
 import { hrefOf } from "./kinds";
 
 /** 付箋の宛先ひとつ。 */
@@ -777,9 +777,6 @@ function lastDayOf(t: Theme): string | undefined {
 
 /* 結んだ企画が在るか（M-15。名前の鍵の指す先が在る）。無い slug を結ぶと棚が日で動かなくなるので、書き出しを止める */
 {
-  /* 下書きの企画（M-33）は `projectBySlug` で引けない。お題（付箋の宛先）は、印を外す日に足す */
-  const drafts = THEMES.filter((t) => t.project && PROJECT_ROWS.some((p) => p.slug === t.project && p.draft)).map((t) => `${t.id} → ${t.project}`);
-  if (drafts.length) throw new Error(`content/themes.ts: 下書きの企画にお題を結んでいる（${drafts.join(", ")}）。お題は印を外す日に足す（M-33）`);
   const lost = THEMES.filter((t) => t.project && !projectBySlug(t.project)).map((t) => `${t.id} → ${t.project}`);
   if (lost.length) throw new Error(`content/themes.ts: 結んだ企画が content/projects.ts に無い（${lost.join(", ")}）`);
 }

@@ -12,7 +12,8 @@
  * 「まだ動線をつなげるのは待ってほしい」（あやと 2026-11-23）ので、面は建てるが、どこからも引かない。
  *
  * 引く所ごとに印を見る作りにすると、引く所が増えた日に1か所だけ見落とす。だから下書きの行は、島じゅうが読む `PROJECTS` ではなく
- * `DRAFT_PROJECTS` に置き、下書きまで読むのは面の名簿と面だけにした（`PROJECT_ROWS`・`BOOK_PROJECTS`）。
+ * `content/projectDrafts.ts` の `DRAFT_PROJECTS` に置き、下書きまで読むのは面の名簿と面だけにした（`PROJECT_ROWS`・`BOOK_PROJECTS`）。
+ * 企画の表は client の束にも入るので、下書きの行をあちらに置くと、出す前の企画の名前が全部の面の JS に乗る（5 で見る）。
  * ここは、その形が崩れていないかを**本物の口で**見る。
  *
  * ## 何を見ているか
@@ -22,6 +23,7 @@
  *     島じゅうの企画（`PROJECTS`）・表紙の「これから」と便り（`AHEAD`・`upNext`・`aheadOn`）・伝説の丘と島の上と掲示板と表紙の棚
  *     （`LEGENDS`・`legendsOf`）・カードの日（`DAY_BRIEFS`）・お題（`THEMES`）・索引と `/all`（`listedPages`）・llms.txt
  *  3. 面は在る: 面の一覧（`pagesOf("/legends/<企画>")`）に、索引に出さない面として並ぶ。面の `robots` は `index: false`
+ *  5. 企画の表（client の束に入る `content/projects.ts`）に、下書きの企画の名前が1字も無い
  *  4. **対照**——同じ表の写しで、出す日の手順（`draft: true` を消して、行を `PROJECTS` へ移す）をして組み直すと、
  *     表紙の「これから」・便り・索引・llms.txt に出て、`robots` が外れる（「何も見ていない緑」でないこと。`docs/island-standards.md` §15）
  *
@@ -37,14 +39,15 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SITE = join(HERE, "..");
 const TSC = join(SITE, "node_modules", ".bin", "tsc");
-/** 組み立てる企画の表。**落ちることを確かめる写しだけ、ここを差し替える** */
+/** 組み立てる企画の表と下書きの並び。**落ちることを確かめる写しだけ、ここを差し替える** */
 const PROJECTS_SRC = process.env.PROJECTS_TS || join(SITE, "content", "projects.ts");
+const DRAFTS_SRC = process.env.DRAFTS_TS || join(SITE, "content", "projectDrafts.ts");
 
 const BREAK_HINT = `わざと壊して、ここが落ちることを見るには:
 
-  # 1) 表紙の「これから」が下書きまで読む（PROJECTS ではなく PROJECT_ROWS を引く）→ 2 が落ちる
+  # 1) 表紙の「これから」が下書きまで読む（PROJECTS ではなく PROJECT_ROWS を引く）→ 2 が落ちる（PROJECT_ROWS は content/projectDrafts.ts から）
   cp site/lib/leadPlan.ts /tmp/lead.keep.ts
-  sed -i 's|...PROJECTS.map(ofProject)|...PROJECT_ROWS.map(ofProject)|; s|import { PROJECTS, |import { PROJECT_ROWS, PROJECTS, |' site/lib/leadPlan.ts
+  sed -i 's|...PROJECTS.map(ofProject)|...PROJECT_ROWS.map(ofProject)|; 1i import { PROJECT_ROWS } from "@/content/projectDrafts";' site/lib/leadPlan.ts
   node site/selftest/draftproject_selftest.mjs; cp /tmp/lead.keep.ts site/lib/leadPlan.ts
 
   # 2) 面の名簿が面の印を読まない → 3 と 4 が落ちる
@@ -61,13 +64,14 @@ function stop(why) {
   process.exit(2);
 }
 
-/** 置き場の写しを作って組み立てる。`projects` を渡すと、企画の表だけ差し替える */
-function build(projectsSrc) {
+/** 置き場の写しを作って組み立てる。企画の表と下書きの並びだけ、渡した字に差し替える */
+function build(projectsSrc, draftsSrc) {
   const work = mkdtempSync(join(tmpdir(), "draftproject-"));
   process.on("exit", () => rmSync(work, { recursive: true, force: true }));
   for (const d of ["content", "lib", "components", "app"]) cpSync(join(SITE, d), join(work, d), { recursive: true });
   symlinkSync(join(SITE, "node_modules"), join(work, "node_modules"));
   writeFileSync(join(work, "content", "projects.ts"), projectsSrc);
+  writeFileSync(join(work, "content", "projectDrafts.ts"), draftsSrc);
   const out = join(work, "out");
   writeFileSync(
     join(work, "tsconfig.json"),
@@ -124,7 +128,7 @@ function load(out) {
   const r = (p) => req(join(out, p));
   try {
     return {
-      P: r("content/projects.js"),
+      P: { ...r("content/projects.js"), ...r("content/projectDrafts.js") },
       L: r("lib/leadPlan.js"),
       G: r("lib/pages.js"),
       D: r("lib/cardDays.js"),
@@ -178,9 +182,10 @@ async function where(m, slug) {
 
 // ------------------------------------------------------------------ 本物の表
 const realSrc = readFileSync(PROJECTS_SRC, "utf8");
-const real = load(build(realSrc));
+const draftSrc = readFileSync(DRAFTS_SRC, "utf8");
+const real = load(build(realSrc, draftSrc));
 const drafts = real.P.PROJECT_ROWS.filter((p) => p.draft);
-console.log(`# 組み立てた企画の表: ${PROJECTS_SRC}`);
+console.log(`# 組み立てた企画の表: ${PROJECTS_SRC}（下書き: ${DRAFTS_SRC}）`);
 console.log(`# 企画の行 ${real.P.PROJECT_ROWS.length}・うち下書き ${drafts.length}（${drafts.map((p) => p.slug).join(", ")}）`);
 if (!drafts.length) stop("下書きの企画が1つも無い（無いなら、この見張りは何も見ていない）");
 
@@ -192,20 +197,22 @@ for (const p of drafts) {
   check(`${p.slug} の面は在る（面の一覧に、索引に出さない面として）`, !!pg && pg.unlisted === true, pg ? `unlisted=${pg.unlisted}` : "面の一覧に無い");
   const robots = real.B.bookRobots(p.slug);
   check(`${p.slug} の面は検索に出さない（robots の index が false）`, robots?.index === false, JSON.stringify(robots));
+  check(`${p.slug} の名前が、client の束に入る企画の表に無い`, !realSrc.includes(p.slug) && !realSrc.includes(p.title), "content/projects.ts に字が在る");
 }
 
 // ------------------------------------------------------------------ 対照
 console.log("[4] 対照: 出す日の手順（印を消して、行を PROJECTS へ移す）をした写しでは、出る側へ倒れる");
 const slug = drafts[0].slug;
-/* その行（`{ … slug: "<slug>" … }`）を下書きの並びから切り出し、印を消して、島じゅうの並びの頭へ移す（ほかの行に触らない） */
-const at = realSrc.indexOf(`slug: "${slug}"`);
-const begin = realSrc.lastIndexOf("{", at);
-const end = realSrc.indexOf("}", at) + 1;
-const row = realSrc.slice(begin, end);
+/* その行（`{ … slug: "<slug>" … }`）を下書きの並びから切り出し、印を消して、企画の表の頭へ移す（ほかの行に触らない） */
+const at = draftSrc.indexOf(`slug: "${slug}"`);
+const begin = draftSrc.lastIndexOf("{", at);
+const end = draftSrc.indexOf("}", at) + 1;
+const row = draftSrc.slice(begin, end);
 const head = "export const PROJECTS: Project[] = [";
 if (at < 0 || !/\n\s*draft: true,/.test(row) || !realSrc.includes(head)) stop(`写しが作れない（${slug} の行か、PROJECTS の頭が見つからない）`);
-const openSrc = (realSrc.slice(0, begin) + realSrc.slice(end).replace(/^,/, "")).replace(head, `${head}\n  ${row.replace(/\n\s*draft: true,/, "")},`);
-const open = load(build(openSrc));
+const openDrafts = draftSrc.slice(0, begin) + draftSrc.slice(end).replace(/^,/, "");
+const openSrc = realSrc.replace(head, `${head}\n  ${row.replace(/\n\s*draft: true,/, "")},`);
+const open = load(build(openSrc, openDrafts));
 const shown = await where(open, slug);
 for (const want of ["島じゅうの企画（PROJECTS）", "表紙の「これから」（upNext）", "その日の便り（aheadOn）", "索引と /all（listedPages）", "llms.txt"]) {
   check(`印を外すと ${want} に出る`, shown.includes(want), `出た所: ${shown.join("・") || "どこにも"}`);

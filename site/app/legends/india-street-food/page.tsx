@@ -9,7 +9,7 @@ import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { mustBeDrawn, readBookDrawn } from "@/content/legends/drawn";
 import { bookOf, bookShare } from "@/content/legends/index";
-import { PROJECT_ROWS } from "@/content/projects";
+import { PROJECT_ROWS } from "@/content/projectDrafts";
 import { crumbsOf } from "@/lib/pages";
 
 import "@/components/guidebook/guidebook.css";

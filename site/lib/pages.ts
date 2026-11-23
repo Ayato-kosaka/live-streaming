@@ -30,7 +30,7 @@ import { KINDS, kindOf, routeOf, type Route } from "@/content/kinds";
 import { LEGENDS } from "@/content/legends";
 import { bookOf } from "@/content/legends/index";
 import { MONTHS } from "@/content/months";
-import { BOOK_PROJECTS } from "@/content/projects";
+import { BOOK_PROJECTS } from "@/content/projectDrafts";
 import { DAY_PAGES, NORDIC_GUIDE_HREF, dayHref, dayName } from "@/content/nordic";
 import { RECIPES } from "@/content/recipes";
 import { SITE } from "@/content/site";
