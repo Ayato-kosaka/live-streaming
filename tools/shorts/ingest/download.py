@@ -70,6 +70,23 @@ def yt_args(client: str) -> list[str]:
     return a
 
 
+# 締め出しと「消された」を見分ける対照。あやとのチャンネル（UCCwutAH6ieHNvdyJAfSld7w）の公開の配信
+# アーカイブ（2026-08-17 の北欧企画会議。docs/island-meeting-nordic.md が根拠にしている動画）。
+# 自分の公開の記録で、年齢制限も限定公開も無く、消すことが無い。これが見えないのは動画の側ではなく
+# こちらの側（IP・Cookie）の問題
+CONTROL_VIDEO = "Td0AVFbSLk8"
+CONTROL_URL = f"https://www.youtube.com/watch?v={CONTROL_VIDEO}"
+# FINAL（下）の語で始めない。始めると取り直さずに次へ進み、一時的な締め出しが消された扱いで確定する
+LOCKOUT_WHY = "締め出し（一時的）。対照の公開動画も見えない。あとで出し直す"
+
+
+def _control_visible(client: str) -> bool:
+    ok, why, dt = clip.probe_client(CONTROL_URL, client)
+    print(f"   [対照 {'見えた' if ok else '駄目  '}] {client:<13} {dt:5.1f}秒"
+          f"{'' if ok else '  ' + why[:80]}", flush=True)
+    return bool(ok)
+
+
 def find_client(url: str, first: str | None, rounds: int = 3, pause: int = 60) -> tuple[str | None, str]:
     order = ([first] if first else []) + [c for c in clip.CLIENTS if c != first]
     for r in range(rounds):
@@ -85,6 +102,12 @@ def find_client(url: str, first: str | None, rounds: int = 3, pause: int = 60) -
         # **全部の口が「Video unavailable」なら、粘っても出てこない**（消された・非公開）。
         # 1つの口だけがそう言うことはある（2026-10-15 に default が言って mweb で取れた）
         if whys and all("Video unavailable" in w for w in whys):
+            # **ただし YouTube の一時的な締め出しも、全部の口が同じ文句になる**（2026-11-23 12:14 UTC に
+            # 参考4本が全滅し、1時間後の出し直しで取れた）。見分けは、誰でも見られる対照を同じ口で
+            # 1本だけ探ること。対照も見えなければ、こちらが締め出されている
+            if url != CONTROL_URL and not _control_visible(order[0]):
+                print("   対照の動画も見えない。締め出し（一時的）とみなす", flush=True)
+                return None, LOCKOUT_WHY
             print("   どの口でも Video unavailable。粘らない", flush=True)
             return None, "動画が見られない（どの口でも Video unavailable）"
         if r < rounds - 1:
