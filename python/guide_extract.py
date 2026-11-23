@@ -272,7 +272,10 @@ def drop_city_place(items: list, country: dict, city: dict) -> list:
     「どこへ行った」の言い回し（about が place）で街の名前のものは、街そのものの感想なので about を fact にする
     （place を外すだけだと check が「場所の項目には place.name が要る」で落とす）
     """
-    gen = {country.get("name"), *country.get("heads", []), city.get("name"), *city.get("heads", [])} - {None, ""}
+    cs = {country.get("name"), *country.get("heads", [])} - {None, ""}
+    ts = {city.get("name"), *city.get("heads", [])} - {None, ""}
+    # 「エジプト・シワ」のように、議事録の場所の頭そのままで来ることもある（シワ12本で13件）
+    gen = cs | ts | {f"{c}・{t}" for c in cs for t in ts}
     gen -= {t.get("name") for t in city.get("trips", {}).values()}
     gen = {gf.norm(g) for g in gen}
     out = []
