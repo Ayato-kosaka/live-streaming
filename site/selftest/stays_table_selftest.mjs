@@ -94,7 +94,9 @@ const ON = [nextDay(lastFrom), jstToday].sort().at(-1);
 const openRow = ROWS.find((r) => r.f.to === "");
 if (!openRow) stop("content/stays.ts に終わりの空いた行が無い（足す前に閉じる行が見つからない）");
 const openSrc = STAYS_SRC.slice(openRow.at, openRow.end);
-const closedSrc = openSrc.replace(/\bto: ""/, `to: "${ON}"`);
+/* 行の場所と「終わりが空」は tsread が読んだもの（`openRow`）。ここは字を1か所差し替えるだけなので、
+   正規表現で表を読まない（`tools/sprites/tsread_selftest.mjs` の 4 が数える） */
+const closedSrc = openSrc.replace('to: ""', `to: "${ON}"`);
 if (closedSrc === openSrc) stop("終わりの空いた行の `to: \"\"` に当たらない（閉じる仕込みを直す）");
 const FAKE = "zz-island";
 const FAKE_HREF = "/travel/zz-island";
