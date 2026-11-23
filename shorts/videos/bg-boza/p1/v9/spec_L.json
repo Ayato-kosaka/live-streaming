@@ -87,13 +87,22 @@
    "orig_voice": "",
    "visual": "配信 0:49:22（小さい瓶を探して、ヨーグルトの棚を見回す）→ 写真（積んだ大きなボザの瓶。Commons・Apostoloff・CC BY-SA 3.0）",
    "telop": "",
-   "mood": "tense_tilt",
+   "mood": "plain",
    "src": [
     "0:49:21.5",
     "bozPhoP1v09 0:02:00.5"
    ],
    "still": "0:49:24",
-   "hold": 0.0
+   "hold": 0.0,
+   "caption_parts": [
+    {
+     "text": "けど、超でかい"
+    },
+    {
+     "text": "1Lしか無い。",
+     "big": "static_white"
+    }
+   ]
   },
   {
    "line": "鬼のようにまずかったら、捨てる覚悟で買った。",
@@ -215,7 +224,7 @@
     },
     {
      "text": "めちゃくちゃうまい！",
-     "big": "shake_white",
+     "big": "taste_good",
      "split": "めちゃくちゃ｜うまい！"
     }
    ],
@@ -243,8 +252,7 @@
      "text": "甘酒\n甘酒や"
     },
     {
-     "text": "甘酒の小麦版や！",
-     "big": "glow_yellow"
+     "text": "甘酒の小麦版や！"
     }
    ],
    "hold": 0.0
@@ -600,5 +608,6 @@
    ],
    "note": "行ごとに配信の時刻を spec の why に書いた。札の「小麦を発酵させた飲み物」は本人の読んだ説明（0:45:00）とチャッピーの答え（0:56:30）"
   }
- }
+ },
+ "_axis_note": "様式は F の型「食べ物の反応」（presets/food.json）。大きい字は判定と数だけ（1L・めちゃくちゃうまい）。味の言い表しと出来事は字幕の黄（overrides の highlight）"
 }

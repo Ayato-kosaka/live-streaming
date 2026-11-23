@@ -104,13 +104,23 @@
    "orig_voice": "",
    "visual": "配信 0:02:36（見上げる本人の顔。湯船の画が3秒を越えて続かないよう、顔を挟む。v4g の11行目と同じ）",
    "telop": "",
-   "mood": "tense_shake",
+   "mood": "plain",
    "src": [
     "0:02:36.0"
    ],
    "still": "0:02:36",
    "hold": 0.0,
-   "tts_text": "100度とかあったらどうしよう……"
+   "tts_text": "100度とかあったらどうしよう……",
+   "caption_parts": [
+    {
+     "text": "100度",
+     "big": "static_white"
+    },
+    {
+     "text": "とかあったらどうしよう……",
+     "mood": "tense_shake"
+    }
+   ]
   },
   {
    "line": "思い切って触ってみたら……",
@@ -149,7 +159,7 @@
    "caption_parts": [
     {
      "text": "あちあちちあちちちちち！",
-     "big": "shake_red"
+     "big": "shake_white"
     }
    ],
    "hold": 0.0
@@ -272,7 +282,7 @@
    "caption_parts": [
     {
      "text": "うわ、まっずい。",
-     "big": "shake_white"
+     "big": "taste_bad"
     }
    ],
    "hold": 0.0
@@ -292,8 +302,6 @@
     "onsPhoP1v05 0:03:00.5"
    ],
    "still": "",
-   "big": true,
-   "big_style": "brush_zoom",
    "hold": 0.2,
    "tts_text": "温泉卵の汁みたいな味！"
   },
@@ -620,5 +628,6 @@
    ],
    "note": "行ごとに配信の時刻を spec の why に書いた。49か所は英語版ウィキペディア「Sofia」。「並んで取り合い」は本人の言葉（0:30:04）"
   }
- }
+ },
+ "_axis_note": "様式は F の型「やってみた・体験」（presets/try.json）。大きい字は判定と数だけ（100度・あちあち・まっずい）。味の言い表しと出来事は字幕の黄（overrides の highlight）"
 }
