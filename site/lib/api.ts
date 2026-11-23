@@ -123,6 +123,12 @@ export type IslandLimits = {
   name: number;
   /** 付箋に貼るリンク */
   link: number;
+  /** 島の投げ銭の1回のいちばん小さい額（円）。入力欄の初期値もこれ（#1405） */
+  tipYenMin: number;
+  /** 島の投げ銭の1回のいちばん大きい額（円）。あやとの決めではなく Stripe の1回の上限 */
+  tipYenMax: number;
+  /** 島の投げ銭のメッセージの字数 */
+  tipMessageMax: number;
 };
 
 /** 端末ごとの ID。1人1票と連投制限のために使う（ログインはしない）。 */
