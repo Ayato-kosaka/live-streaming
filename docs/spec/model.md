@@ -167,3 +167,4 @@ erDiagram
 | M-5 | 表紙の島（`components/isle/cover.ts`）が `Country.region` を1か所読む。値はどの国にも入っていないので空を読むだけ。読む所が外れたら型の欄（`content/countries.ts`）ごと消す | #1276 |
 | 札 | カードの札（その日に居た国と街）が無い。引きかたは `lib/tags.ts` の `stayOn` | 未定 |
 | 配信1回 | 表が無い。videoId が7つの焼き込みに別々に出る | 未定（足すときは `/feature-design`） |
+| M-30 | 企画の表（`content/projects.ts`）は `date`（始まる日）が必須で、日の決まっていない企画を行にできない。表紙の「これから」（`lib/leadPlan.ts`）も、企画を `date` で並べて状態を決める | #1418 |
