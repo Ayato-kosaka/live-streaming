@@ -732,6 +732,11 @@ compose = {
         "guide/airport": {"story": {"text": "着いた夜は空港の床で寝ましたが、寒くてほとんど眠れませんでした。市街へ向かうバスは400レク、約800円で、調べた額と同じでした。",
                                     "facts": ["HjSLfg57t7E@540#caution", "HjSLfg57t7E@690#price"]},
                           "article": "airport"},
+        "guide/safety": {"story": {"text": "泊まったホステルで、1週間に2回、物を盗まれました。料理中に椅子に置いたカバンの携帯と、寝ている間のポーチです。"
+                                           "街では、歩道の信号が青でも車が突っ込んでくることがあります。",
+                                   "facts": ["yGEacTlskmY@600#caution", "XKpFeM0mQ2I@480#caution", "xNWJQCt3SLc@660#caution",
+                                             "2zJMCF5TfJ8@1775#caution"]},
+                         "article": "hostel"},
     },
     "about": {"hero": {"q": "スカンデルベグって誰？", "icon": "statue"}, "isolation": {"q": "共産主義の時代は？", "icon": "tunnel"}},
     "areas": {"skanderbeg": {"color": "#ffd98a", "plan": [2, 1, 2]}, "pazari": {"color": "#d9ccf5", "plan": [3, 1, 1]},

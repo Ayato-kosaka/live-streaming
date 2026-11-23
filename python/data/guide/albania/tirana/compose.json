@@ -206,6 +206,18 @@
     ]
    },
    "article": "airport"
+  },
+  "guide/safety": {
+   "story": {
+    "text": "泊まったホステルで、1週間に2回、物を盗まれました。料理中に椅子に置いたカバンの携帯と、寝ている間のポーチです。街では、歩道の信号が青でも車が突っ込んでくることがあります。",
+    "facts": [
+     "yGEacTlskmY@600#caution",
+     "XKpFeM0mQ2I@480#caution",
+     "xNWJQCt3SLc@660#caution",
+     "2zJMCF5TfJ8@1775#caution"
+    ]
+   },
+   "article": "hostel"
   }
  },
  "about": {

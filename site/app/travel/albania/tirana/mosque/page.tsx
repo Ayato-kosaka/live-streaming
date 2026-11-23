@@ -31,7 +31,7 @@ export const metadata: Metadata = travelArticleShare(COUNTRY, CITY, SLUG, {
   description: A.description,
 });
 
-/** 行った日（配信の日）。2本の配信にまたがるので、最初と最後の日 */
+/** 行った日（配信の日）。09-29 に中へ入り、10-06 に礼拝を教わった。最初と最後の日 */
 const FROM = "2026-09-29";
 const TO = "2026-10-06";
 

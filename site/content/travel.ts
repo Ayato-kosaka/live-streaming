@@ -315,6 +315,8 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "albania", city: "tirana", slug: "gjelltore", crumb: "大衆食堂ジェルトレ", draft: true },
   /* ティラナ空港からバスで市街へ出てきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
   { country: "albania", city: "tirana", slug: "airport", crumb: "空港から市街へ", draft: true },
+  /* ティラナのホステルで2回盗まれた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "albania", city: "tirana", slug: "hostel", crumb: "ホステルの盗難", draft: true },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */
