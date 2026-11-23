@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "BfuvH7Pl8WU__reference",
+ "mode": "reference",
+ "dest": "BfuvH7Pl8WU/reference",
+ "video": "BfuvH7Pl8WU",
+ "channel": null,
+ "request": "shorts/requests/teko-F-edit-axis-20261123.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1400,
+  "tar_gz": 1093,
+  "encrypted": 1104
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1104,
+   "sha256": "091c2cfa65c6e82fd82d4182a9ed044fdc038feaeb09b3e30cac72252a667388"
+  }
+ ],
+ "hmac_sha256": "8d0d30b60e70e7f98dd197b2ddd2f709050f2f6f5127c4afa2f71ed9bc495dc3",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45216402792",
+ "created_at": "2026-11-23T16:50:30+00:00"
+}
