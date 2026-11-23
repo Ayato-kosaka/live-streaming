@@ -6,6 +6,7 @@ import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import type { CityStream } from "@/content/cityStreams";
 import { AYATO_SRC } from "@/lib/ayatoArt";
+import { streamPart } from "@/lib/streamPart";
 
 import { hms, jpDate, md, videoUrl, watchUrl } from "./scene";
 import type { ArticleSection, Block, Day, Ext, Photo, PriceRow, Quote, Scene } from "./types";
@@ -362,20 +363,20 @@ export function Keyword({ k }: { k: NonNullable<ArticleSection["keyword"]> }) {
 
 /* ---------------------------------------------------------------- 面の終わり */
 
-/** この記事の配信。場面をよく引いた回を先に。**題はそのまま**（`tg-vids` は見張りの印） */
+/** この記事の配信。場面をよく引いた回を先に。**題はそのまま**（`tg-vids` は見張りの印）。同じ日に同じ題が2本ある回は、題の外に「この日の何本目か」（`lib/streamPart.ts`） */
 export function Streams({ open, rest }: { open: CityStream[]; rest: CityStream[] }) {
   return (
     <>
       <div className="tg-vids ta-vids">
         {open.map((s) => (
-          <Vid key={s.videoId} videoId={s.videoId} title={s.title} date={s.date} />
+          <Vid key={s.videoId} videoId={s.videoId} title={s.title} date={s.date} tag={streamPart(s.videoId)} />
         ))}
       </div>
       {rest.length > 0 && (
         <Fold title="ほかの回" note={`${rest.length}本`}>
           <div className="tg-vids ta-vids">
             {rest.map((s) => (
-              <Vid key={s.videoId} videoId={s.videoId} title={s.title} date={s.date} />
+              <Vid key={s.videoId} videoId={s.videoId} title={s.title} date={s.date} tag={streamPart(s.videoId)} />
             ))}
           </div>
         </Fold>

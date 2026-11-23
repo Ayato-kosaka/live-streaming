@@ -1554,7 +1554,8 @@ html.gb-lock { overflow: hidden; }
 .gb-streams img { width: 128px; height: 72px; object-fit: cover; border-radius: 10px; background: #2a1d10; }
 .gb-streams span { display: grid; gap: 2px; min-width: 0; }
 .gb-streams b { font-size: 13.5px; line-height: 1.45; }
-.gb-streams time { font-size: var(--fs-min); color: var(--ink-2); }
+.gb-streams time,
+.gb-streams small { font-size: var(--fs-min); color: var(--ink-2); }
 
 /* ---- 面の終わり --------------------------------------------------------- */
 
