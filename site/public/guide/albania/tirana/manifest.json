@@ -1,0 +1,686 @@
+{
+ "cover": {
+  "src": "/guide/albania/tirana/ティラナ-観光ガイド-1600.webp",
+  "src_small": "/guide/albania/tirana/ティラナ-観光ガイド-800.webp",
+  "w": 1600,
+  "h": 900,
+  "alt": "ティラナ観光ガイド「「ヨーロッパの隠れた宝石」と称えられる国の首都」。秋の午後の日に照らされた、スカンデルベグ広場の騎馬像と、エトヘム・ベイ・モスクの丸屋根と時計塔。遠くにダイティ山。ティラナの絵",
+  "kind": "ai",
+  "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。スカンデルベグ広場・エトヘム・ベイ・モスク・時計塔は写真を形の手本として渡した。上は空、左下は広場の石畳。3:2 で描かせて 16:9 に切った。字なし",
+  "titled": true,
+  "og": {
+   "src": "/guide/albania/tirana/tirana-cover-1200x630.jpg",
+   "w": 1200,
+   "h": 630,
+   "alt": "秋の午後の日に照らされた、スカンデルベグ広場の騎馬像と、エトヘム・ベイ・モスクの丸屋根と時計塔。遠くにダイティ山。ティラナの絵"
+  },
+  "ld": [
+   {
+    "src": "/guide/albania/tirana/tirana-cover-16x9.jpg",
+    "w": 1200,
+    "h": 675
+   },
+   {
+    "src": "/guide/albania/tirana/tirana-cover-4x3.jpg",
+    "w": 1200,
+    "h": 900
+   },
+   {
+    "src": "/guide/albania/tirana/tirana-cover-1x1.jpg",
+    "w": 1200,
+    "h": 1200
+   }
+  ]
+ },
+ "cover_tall": {
+  "src": "/guide/albania/tirana/ティラナ-観光ガイド-縦-1600.webp",
+  "src_small": "/guide/albania/tirana/ティラナ-観光ガイド-縦-800.webp",
+  "w": 1600,
+  "h": 2000,
+  "alt": "ティラナ観光ガイド「「ヨーロッパの隠れた宝石」と称えられる国の首都」。秋の午後の、スカンデルベグ広場の騎馬像とエトヘム・ベイ・モスクと時計塔。ティラナの絵",
+  "kind": "ai",
+  "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。スカンデルベグ広場・エトヘム・ベイ・モスク・時計塔は写真を形の手本として渡した。上は空、左下は広場の石畳。横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "titled": true
+ },
+ "areamap": {
+  "src": "/guide/albania/tirana/ティラナ-見どころマップ-地区分け-1200.webp",
+  "src_small": "/guide/albania/tirana/ティラナ-見どころマップ-地区分け-800.webp",
+  "w": 1200,
+  "h": 1500,
+  "alt": "ティラナの見どころマップ（地区分け）。スカンデルベグ広場周辺・パザリ・イ・リ・ブロックの3つの地区を色で分け、名前を書いた絵地図。スカンデルベグの騎馬像・エトヘム・ベイ・モスクと時計塔・キリスト復活大聖堂・パザリ・イ・リの市場・ピラミッド・ブロックのカフェ通りの目印の絵と名前つき",
+  "kind": "ai",
+  "prompt_note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・公園・川・3つの地区の色・目印6か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。ダイティ山・グランドパーク・クルヤ・ドゥラス・ベラトは地図の外（矢印）。地区の範囲は材料（guidebook.json の about.areas）から",
+  "baked": true,
+  "areas": [
+   {
+    "id": "skanderbeg",
+    "name": "スカンデルベグ広場周辺",
+    "label": [
+     "スカンデルベグ",
+     "広場周辺"
+    ],
+    "local": "Sheshi Skënderbej",
+    "color": "#ffd98a",
+    "x": 0.67,
+    "y": 0.445,
+    "source": [
+     "https://www.veltra.com/jp/yokka/article/things-to-do-in-albania-tirana/",
+     "https://www.veltra.com/jp/guide/international/spot-international/36187/"
+    ],
+    "w": 0.3483,
+    "h": 0.108
+   },
+   {
+    "id": "pazari",
+    "name": "パザリ・イ・リ",
+    "label": [
+     "パザリ・イ・リ"
+    ],
+    "local": "Pazari i Ri",
+    "color": "#d9ccf5",
+    "x": 0.72,
+    "y": 0.17,
+    "source": [
+     "https://en.wikipedia.org/wiki/New_Bazaar,_Tirana"
+    ],
+    "w": 0.3483,
+    "h": 0.0687
+   },
+   {
+    "id": "blloku",
+    "name": "ブロック",
+    "label": [
+     "ブロック"
+    ],
+    "local": "Blloku",
+    "color": "#ffc4d2",
+    "x": 0.33,
+    "y": 0.79,
+    "source": [
+     "https://en.wikipedia.org/wiki/Ish-Blloku",
+     "https://en.wikivoyage.org/wiki/Tirana"
+    ],
+    "w": 0.2233,
+    "h": 0.0687
+   }
+  ],
+  "bbox": {
+   "west": 19.8085,
+   "east": 19.832,
+   "south": 41.3116,
+   "north": 41.3381
+  },
+  "beyond": [
+   {
+    "id": "kruja",
+    "name": "クルヤ",
+    "local": "Krujë",
+    "lat": 41.506891,
+    "lon": 19.793933,
+    "source": [
+     "https://en.wikipedia.org/wiki/Fortress_of_Kruj%C3%AB"
+    ],
+    "x": 0.2,
+    "y": 0.2,
+    "dir": "n"
+   },
+   {
+    "id": "durres",
+    "name": "ドゥラス",
+    "local": "Durrës",
+    "lat": 41.312123,
+    "lon": 19.445002,
+    "source": [
+     "https://en.wikipedia.org/wiki/Amphitheatre_of_Durr%C3%ABs"
+    ],
+    "x": 0.07,
+    "y": 0.5,
+    "dir": "w"
+   },
+   {
+    "id": "dajti",
+    "name": "ダイティ山",
+    "local": "Mali i Dajtit",
+    "lat": 41.350831,
+    "lon": 19.861161,
+    "source": [
+     "https://dajtiekspres.com/faq/",
+     "https://dajtiekspres.com/rates-and-opening-hours/"
+    ],
+    "x": 0.93,
+    "y": 0.42,
+    "dir": "e"
+   },
+   {
+    "id": "lake",
+    "name": "グランドパーク",
+    "local": "Parku i Madh",
+    "lat": 41.311489,
+    "lon": 19.829455,
+    "source": [
+     "https://en.wikipedia.org/wiki/Grand_Park_of_Tirana"
+    ],
+    "x": 0.66,
+    "y": 0.95,
+    "dir": "s"
+   },
+   {
+    "id": "berat",
+    "name": "ベラト",
+    "local": "Berat",
+    "lat": 40.705387,
+    "lon": 19.949939,
+    "source": [
+     "https://en.wikivoyage.org/wiki/Berat",
+     "https://en.wikipedia.org/wiki/Berat"
+    ],
+    "x": 0.2,
+    "y": 0.95,
+    "dir": "s"
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  },
+  "painted": [
+   {
+    "name": "ティラナ 見どころマップ",
+    "x": 0.5,
+    "y": 0.0468,
+    "w": 1.0,
+    "h": 0.0936
+   },
+   {
+    "name": "スカンデルベグ像",
+    "x": 0.235,
+    "y": 0.33,
+    "w": 0.2433,
+    "h": 0.0407
+   },
+   {
+    "name": "エトヘム・ベイモスクと時計塔",
+    "x": 0.665,
+    "y": 0.345,
+    "w": 0.2167,
+    "h": 0.0667
+   },
+   {
+    "name": "キリスト復活大聖堂",
+    "x": 0.195,
+    "y": 0.44,
+    "w": 0.1633,
+    "h": 0.0667
+   },
+   {
+    "name": "屋根付き市場",
+    "x": 0.86,
+    "y": 0.25,
+    "w": 0.19,
+    "h": 0.0407
+   },
+   {
+    "name": "ピラミッド",
+    "x": 0.57,
+    "y": 0.635,
+    "w": 0.1633,
+    "h": 0.0407
+   },
+   {
+    "name": "カフェ通り",
+    "x": 0.31,
+    "y": 0.715,
+    "w": 0.1633,
+    "h": 0.0407
+   }
+  ]
+ },
+ "food": {
+  "fergese": {
+   "src": "/guide/albania/tirana/food-fergese-800.webp",
+   "src_small": "/guide/albania/tirana/food-fergese-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "素焼きの土鍋に入った、ピーマンとトマトとチーズの熱いフェルゲセ。パンを添えて",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "tave-dheu": {
+   "src": "/guide/albania/tirana/food-tave-dheu-800.webp",
+   "src_small": "/guide/albania/tirana/food-tave-dheu-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "茶色の土鍋に入った、レバーとピーマンとチーズの焼きもの、タヴェ・ゼウ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "tave-kosi": {
+   "src": "/guide/albania/tirana/food-tave-kosi-800.webp",
+   "src_small": "/guide/albania/tirana/food-tave-kosi-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "表面がこんがり焼けたヨーグルトの生地の下に、羊肉と米。タヴェ・コシ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "tasqebap": {
+   "src": "/guide/albania/tirana/food-tasqebap-800.webp",
+   "src_small": "/guide/albania/tirana/food-tasqebap-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "トマトと玉ねぎで煮た羊肉の煮込み、タスケバプ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "qofte": {
+   "src": "/guide/albania/tirana/food-qofte-800.webp",
+   "src_small": "/guide/albania/tirana/food-qofte-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "焼いた小さな肉団子コフテに、トマトときゅうりのサラダとパン",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "speca": {
+   "src": "/guide/albania/tirana/food-speca-800.webp",
+   "src_small": "/guide/albania/tirana/food-speca-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白いチーズを詰めて焼いた赤と緑のピーマン",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "japrak": {
+   "src": "/guide/albania/tirana/food-japrak-800.webp",
+   "src_small": "/guide/albania/tirana/food-japrak-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ぶどうの葉で米を包んだヤプラクと、ヨーグルトのソース",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "flija": {
+   "src": "/guide/albania/tirana/food-flija-800.webp",
+   "src_small": "/guide/albania/tirana/food-flija-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "薄い生地を何層にも重ねて焼いたフリアの切り口と、サワークリーム",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "djathe": {
+   "src": "/guide/albania/tirana/food-djathe-800.webp",
+   "src_small": "/guide/albania/tirana/food-djathe-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白くやわらかいチーズの塊と、黒と緑のオリーブ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "byrek": {
+   "src": "/guide/albania/tirana/food-byrek-800.webp",
+   "src_small": "/guide/albania/tirana/food-byrek-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "丸い焼き型で焼いたほうれん草のビュレクを切り分けて",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "sufllaqe": {
+   "src": "/guide/albania/tirana/food-sufllaqe-800.webp",
+   "src_small": "/guide/albania/tirana/food-sufllaqe-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "肉とフライドポテトとソースをピタで包んだスフラチェ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "petulla": {
+   "src": "/guide/albania/tirana/food-petulla-800.webp",
+   "src_small": "/guide/albania/tirana/food-petulla-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "粉砂糖をかけた丸い揚げパンのペトゥラと、いちじくのジャム",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "bakllava": {
+   "src": "/guide/albania/tirana/food-bakllava-800.webp",
+   "src_small": "/guide/albania/tirana/food-bakllava-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "くるみを重ねてシロップをしみこませた、ひし形のバクラヴァ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "kadaif": {
+   "src": "/guide/albania/tirana/food-kadaif-800.webp",
+   "src_small": "/guide/albania/tirana/food-kadaif-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "細い麺の生地でくるみを巻いた、つやのあるカダイフ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "trilece": {
+   "src": "/guide/albania/tirana/food-trilece-800.webp",
+   "src_small": "/guide/albania/tirana/food-trilece-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ミルクのしみたスポンジに、キャラメルをかけたトリレチェ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "kabuni": {
+   "src": "/guide/albania/tirana/food-kabuni-800.webp",
+   "src_small": "/guide/albania/tirana/food-kabuni-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "干しぶどう入りの甘い米の菓子カブニ。シナモンをふって",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "ballokume": {
+   "src": "/guide/albania/tirana/food-ballokume-800.webp",
+   "src_small": "/guide/albania/tirana/food-ballokume-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "表面にひびの入った、丸くふくらんだバロクメ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "kafe": {
+   "src": "/guide/albania/tirana/food-kafe-800.webp",
+   "src_small": "/guide/albania/tirana/food-kafe-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "小さなカップのエスプレッソとマキアート",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "caj-mali": {
+   "src": "/guide/albania/tirana/food-caj-mali-800.webp",
+   "src_small": "/guide/albania/tirana/food-caj-mali-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ガラスのカップの黄金色の山のお茶と、干したお茶の束、蜂蜜とレモン",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "dhalle": {
+   "src": "/guide/albania/tirana/food-dhalle-800.webp",
+   "src_small": "/guide/albania/tirana/food-dhalle-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白いヨーグルトの飲み物ザッレのグラス",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "boza": {
+   "src": "/guide/albania/tirana/food-boza-800.webp",
+   "src_small": "/guide/albania/tirana/food-boza-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "とろりとした薄い黄土色の飲み物、ボザ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "raki": {
+   "src": "/guide/albania/tirana/food-raki-800.webp",
+   "src_small": "/guide/albania/tirana/food-raki-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "小さなグラスの透明な蒸留酒ラキと、ぶどう",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "birra": {
+   "src": "/guide/albania/tirana/food-birra-800.webp",
+   "src_small": "/guide/albania/tirana/food-birra-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "グラスに注いだ金色のビールと、字の無い茶色の瓶",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  },
+  "vere": {
+   "src": "/guide/albania/tirana/food-vere-800.webp",
+   "src_small": "/guide/albania/tirana/food-vere-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤ワインのグラスと、字の無いラベルの瓶",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし"
+  }
+ },
+ "buy": {
+  "felt": {
+   "src": "/guide/albania/tirana/buy-felt-800.webp",
+   "src_small": "/guide/albania/tirana/buy-felt-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白い丸いフェルトの帽子チェレシェと、フェルトの室内ばき",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  },
+  "carpet": {
+   "src": "/guide/albania/tirana/buy-carpet-800.webp",
+   "src_small": "/guide/albania/tirana/buy-carpet-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤と黒の幾何学の模様の、手織りのじゅうたん",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  },
+  "eagle": {
+   "src": "/guide/albania/tirana/buy-eagle-800.webp",
+   "src_small": "/guide/albania/tirana/buy-eagle-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤い地に黒い双頭の鷲の小さな旗とマグネット",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  },
+  "costume": {
+   "src": "/guide/albania/tirana/buy-costume-800.webp",
+   "src_small": "/guide/albania/tirana/buy-costume-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "金の糸で刺繍した民族衣装のベストと、古い銅の水差し",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  },
+  "coffee": {
+   "src": "/guide/albania/tirana/buy-coffee-800.webp",
+   "src_small": "/guide/albania/tirana/buy-coffee-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "絵柄の付いた四角いコーヒーの缶と、小さな銅のコーヒー沸かし",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  },
+  "bunker": {
+   "src": "/guide/albania/tirana/buy-bunker-800.webp",
+   "src_small": "/guide/albania/tirana/buy-bunker-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "丸いトーチカの形をした、白い石の小さな灰皿",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  },
+  "caj-mali": {
+   "src": "/guide/albania/tirana/buy-caj-mali-800.webp",
+   "src_small": "/guide/albania/tirana/buy-caj-mali-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "紙の袋からのぞく、干した山のお茶の花と茎",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  },
+  "olive": {
+   "src": "/guide/albania/tirana/buy-olive-800.webp",
+   "src_small": "/guide/albania/tirana/buy-olive-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "緑がかった金色のオリーブオイルの瓶と、オリーブの実",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  },
+  "raki": {
+   "src": "/guide/albania/tirana/buy-raki-800.webp",
+   "src_small": "/guide/albania/tirana/buy-raki-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "手作りの瓶に入った、透明な蒸留酒ラキ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  },
+  "wine": {
+   "src": "/guide/albania/tirana/buy-wine-800.webp",
+   "src_small": "/guide/albania/tirana/buy-wine-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "字の無いラベルの赤ワインの瓶",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし"
+  }
+ },
+ "do": {
+  "bunkart": {
+   "src": "/guide/albania/tirana/do-bunkart-1200.webp",
+   "src_small": "/guide/albania/tirana/do-bunkart-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "裸電球の続くコンクリートの地下の廊下と、分厚い鉄の扉。奥へ歩いていく小さな後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。バンクアート・ピラミッド・ダイティ・エクスプレス・ブロック・クルヤ・ベラトは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/albania/tirana/do-bunkart-1200.webp",
+     "src_small": "/guide/albania/tirana/do-bunkart-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "pyramid": {
+   "src": "/guide/albania/tirana/do-pyramid-1200.webp",
+   "src_small": "/guide/albania/tirana/do-pyramid-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "白いコンクリートのピラミッドの斜面の階段を、小さな人たちが上っていく。まわりに色のついた箱の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。バンクアート・ピラミッド・ダイティ・エクスプレス・ブロック・クルヤ・ベラトは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/albania/tirana/do-pyramid-1200.webp",
+     "src_small": "/guide/albania/tirana/do-pyramid-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "dajti": {
+   "src": "/guide/albania/tirana/do-dajti-1200.webp",
+   "src_small": "/guide/albania/tirana/do-dajti-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "森の斜面の上を行く小さなロープウェイと、下に広がるティラナの街並みの絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。バンクアート・ピラミッド・ダイティ・エクスプレス・ブロック・クルヤ・ベラトは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/albania/tirana/do-dajti-1200.webp",
+     "src_small": "/guide/albania/tirana/do-dajti-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "byrek": {
+   "src": "/guide/albania/tirana/do-byrek-1200.webp",
+   "src_small": "/guide/albania/tirana/do-byrek-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "紙に包んだ焼きたてのビュレクを手に持つ。後ろに丸い焼き型のパン屋の台の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。バンクアート・ピラミッド・ダイティ・エクスプレス・ブロック・クルヤ・ベラトは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/albania/tirana/do-byrek-1200.webp",
+     "src_small": "/guide/albania/tirana/do-byrek-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "fergese": {
+   "src": "/guide/albania/tirana/do-fergese-1200.webp",
+   "src_small": "/guide/albania/tirana/do-fergese-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "素焼きの土鍋の熱いフェルゲセに、パンをひたす手元の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。バンクアート・ピラミッド・ダイティ・エクスプレス・ブロック・クルヤ・ベラトは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/albania/tirana/do-fergese-1200.webp",
+     "src_small": "/guide/albania/tirana/do-fergese-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "cafe": {
+   "src": "/guide/albania/tirana/do-cafe-1200.webp",
+   "src_small": "/guide/albania/tirana/do-cafe-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "並木の通りのテラスのカフェで、小さなカップのエスプレッソとマキアート。向こうに色を塗った建物の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。バンクアート・ピラミッド・ダイティ・エクスプレス・ブロック・クルヤ・ベラトは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/albania/tirana/do-cafe-1200.webp",
+     "src_small": "/guide/albania/tirana/do-cafe-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "kruja": {
+   "src": "/guide/albania/tirana/do-kruja-1200.webp",
+   "src_small": "/guide/albania/tirana/do-kruja-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "古いバザールの石畳の坂と木の店。軒にじゅうたんとフェルトの帽子、上に山の城。坂を上る小さな旅人の後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。バンクアート・ピラミッド・ダイティ・エクスプレス・ブロック・クルヤ・ベラトは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/albania/tirana/do-kruja-1200.webp",
+     "src_small": "/guide/albania/tirana/do-kruja-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "berat": {
+   "src": "/guide/albania/tirana/do-berat-1200.webp",
+   "src_small": "/guide/albania/tirana/do-berat-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "川の向こうの丘の斜面に、白い壁にたくさんの窓が並ぶ家々が重なるベラトの町並みと城の石垣の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。バンクアート・ピラミッド・ダイティ・エクスプレス・ブロック・クルヤ・ベラトは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/albania/tirana/do-berat-1200.webp",
+     "src_small": "/guide/albania/tirana/do-berat-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  }
+ }
+}
