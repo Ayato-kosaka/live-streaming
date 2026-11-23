@@ -1088,6 +1088,15 @@ PRESETS = {
         "jsonld:/travel/albania/tirana/walk=Article", "jsonld:/travel/albania/tirana/sufllaqe=Article",
         "jsonld:/travel/albania/tirana/airport=Article", "jsonld:/travel/albania/tirana/hostel=Article",
         "jsonld:/travel/albania/tirana/gjelltore=Article", "jsonld:/travel/albania/tirana/mosque=Article",
+        # エレバン（行った街。2026-11-23 に公開前の印を外した。ソフィアと同じ線と、記事7本）
+        "jsonld:/travel/armenia/yerevan=Article+ItemList+FAQPage",
+        "jsonld:/travel/armenia/yerevan/sevan=Article",
+        "jsonld:/travel/armenia/yerevan/bus=Article",
+        "jsonld:/travel/armenia/yerevan/lake=Article",
+        "jsonld:/travel/armenia/yerevan/cascade=Article",
+        "jsonld:/travel/armenia/yerevan/memorial=Article",
+        "jsonld:/travel/armenia/yerevan/bakery=Article",
+        "jsonld:/travel/armenia/yerevan/market=Article",
         "jsonld-bad=0", "crumbs=jsonld", "time-plain<=1", "tools-noindex=all",
         # img-main-blank: 58 → 40（2026-11-18。国の面の配信の小さな絵に alt。#1296）
         "title-short<=0", "desc-short<=0", "img-main-blank<=40", "youtube-none<=0",
