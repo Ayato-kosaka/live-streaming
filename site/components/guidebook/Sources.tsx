@@ -38,7 +38,14 @@ export default function Sources({ g, drawn }: { g: Guidebook; drawn: boolean }) 
         <ul className="gb-src-list">
           {src.map((s) => (
             <li key={s.url}>
-              <a href={s.url} target="_blank" rel="noreferrer" aria-label={`${s.name}（${s.url.replace(/^https?:\/\//, "").slice(0, 64)}）`}>
+              {/* 題は外の記事の題をそのまま引いたもの。`data-quote="src"` は見張りへの目印（`parts.tsx` の `SrcLine` と同じ） */}
+              <a
+                href={s.url}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`${s.name}（${s.url.replace(/^https?:\/\//, "").slice(0, 64)}）`}
+                data-quote="src"
+              >
                 {s.name}
               </a>
               <i>{s.url.replace(/^https?:\/\//, "").slice(0, 64)}</i>
