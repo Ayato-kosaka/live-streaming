@@ -30,11 +30,6 @@ const CASES = [
 ];
 
 const SEL = {
-  "/now.html": {
-    "いまどこ 大文字": ".now-place",
-    "札ぜんぶ": ".now-hero .tiles",
-    "チップ": ".now-hero .chips",
-  },
   "/nordic.html": {
     "大きい数字": ".tnow-counts",
     "いま／つぎ": ".tnow-pair",
@@ -43,7 +38,7 @@ const SEL = {
   },
   "/index.html": {
     "いちばん近い企画": ".nextup-card",
-    "名刺 いまどこ": ".mei-go[href='/now'] b",
+    "名刺 いまどこ": ".mei-go[href^='/island/'] b",
   },
 };
 

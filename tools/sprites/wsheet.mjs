@@ -40,7 +40,6 @@ const PAGES = [
   ["16-nordic-guide", "/nordic/guide"],
   ["17-nordic-country", "/nordic/finland"],
   ["18-friends", "/friends"],
-  ["19-now", "/now"],
   ["20-design", "/design"],
 ];
 

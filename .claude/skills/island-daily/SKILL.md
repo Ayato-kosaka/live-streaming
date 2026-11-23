@@ -20,7 +20,7 @@ description: 配信が終わった日の棚卸し。キャラクター（最優�
 | 1 | キャラクター | 出してくれた人が、島に居ないまま次の日になる |
 | 2 | 切り抜き候補 | その日のうちに切れない（アーカイブの熱が冷める） |
 | 3 | 日誌 | その日が島から消える |
-| 4 | いまどこ | 島が昨日の国を指したままになる |
+| 4 | いまどこ（滞在の表） | 表紙の［いまここ］・名刺・島が前の国を指したままになる |
 | 5 | 取り込みの見届け | 翌朝、数字が全部止まる |
 
 ## 0. その日の配信を特定する
@@ -199,18 +199,19 @@ curl -s "https://live-streaming-d3cac.web.app/island-api/streamevents?day=2026-0
 
 出すのは `/island-ship`。**Hosting は手で起動する**（`push` トリガーは効いていない）。
 
-## 4. いまどこ
+## 4. いまどこ（滞在の表）
 
-    Actions > island_update.yml（workflow_dispatch）
-    place / word / week / refresh_stats: true
+**国を移った日だけ、`site/content/stays.ts`（滞在の表）を直す。** 表紙の「これから」の
+［いまここ］・名刺と `/about` の「いま ◯◯」・島のカモメと今日の板は、ぜんぶここ1か所から引く
+（`docs/spec/model.md` M-20。#1278）。
 
-⚠ **確かめるのは `place` の欄そのもの。** 文字列で探すと、前の日の `word`
-（「あしたはタリンまで308km」）に当たって「もう入っている」に見える。
+- その日の配信で**着いたと確かめられた**ら、いまの行の `to` に出た日を入れ、つぎの国の行を足す
+  （書きかたは `stays.ts` の頭の「行の決まり」。予定の日で書かない・街は歩き終わってから）
+- 国を移っていない日は、何もしない
+- **Firestore の `island/state.current` は書かない。** `/now`（島だより）を畳んで、画面は
+  `current` を1つも読まなくなった。`island_update.yml` で直すのは数字の取り直しだけ
 
-```bash
-curl -s "https://live-streaming-d3cac.web.app/island-api/state" \
-  | python3 -c "import sys,json;print(json.load(sys.stdin)['current']['place'])"
-```
+確かめは、配ったあとの表紙の［いまここ］と名刺の「いま ◯◯」が同じ国を言っているか。
 
 ## 5. 取り込みの見届け
 

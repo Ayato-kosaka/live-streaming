@@ -1220,31 +1220,6 @@ a.chip:active, button.chip:active, .chip.link:active {
 }
 .pager a:active { transform: translateY(6px); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8); }
 
-/* いま */
-.now-hero { text-align: center; }
-/* 道しるべのスプライト（`.now-pin`）は `NowLive.tsx` から `<img>` ごと外した。
-
-   いまいる国の旗を大きく出した（`live.css` の `.now-flag`）ので、
-   1つの面に「見出しの地球儀」「道しるべ」「国旗」の3つが縦に並んでいた。
-   道しるべはどの国でも同じ絵で、この面が言いたい「いまどこ」を
-   何も言っていない。国を言っているのは旗だけなので、そちらに1本化した。
-
-   前は CSS で `display: none` にして隠すだけにしてあった。隠した絵は
-   出ないだけでマークアップには残るので、読み上げにも DOM にも
-   「そこに絵がある」ことになる。持ち場が分かれていて手が出せなかっただけで、
-   隠す理由は無かった。 */
-.now-place { display: block; font-size: clamp(22px, 6.2vw, 32px); font-weight: 900; letter-spacing: var(--ls-head); margin: var(--sp-1) 0 var(--sp-2); }
-/* 今週の予定。左の太い帯を「紙に貼ったふせん」に見せる */
-.week { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
-/* 読むだけの一覧。箱を並べず、罫で切る（island-world 4章の部品表「区切り」）。
-   1件ずつ枠で囲うと、押せないものが押せるカードの形になる。 */
-.week li {
-  padding: var(--sp-3) var(--sp-1);
-  border-bottom: 1px solid color-mix(in srgb, var(--rule) 55%, transparent);
-  font-size: var(--fs-body); font-weight: 700; line-height: 1.75;
-}
-.week li:first-child { border-top: 1px solid color-mix(in srgb, var(--rule) 55%, transparent); }
-
 /* 付箋 */
 /* 小見出しは本文より小さいので、色で沈めるより枠で分ける */
 .sub {

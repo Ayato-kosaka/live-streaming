@@ -157,9 +157,8 @@ const MEMBERS: Record<Route, Member> = {
   "/me/roulette": { listed: false, pages: () => one("/me/roulette", "ルーレットの操作") },
   "/cards/import": { listed: false, pages: () => one("/cards/import", "写真をまとめて登録") },
   "/roulette": { listed: false, pages: () => one("/roulette", "ルーレット") },
-  /* 廃止予定の1枚は、畳む PR（#1278）で、仕様の表・種類の表と一緒にここから消える。
-     `/next` と `/next/new` は #1277 で畳んだ（`/board` へ 301。索引にも出さない） */
-  "/now": { listed: true, pages: () => one("/now", "いまどこ") },
+  /* `/next` と `/next/new` は #1277 で畳んだ（`/board` へ 301）。`/now` は #1278 で畳んだ（`/` へ 301）。
+     どちらも索引に出さない。残る廃止予定は下の控え1枚 */
   "/nordic/photos": { listed: false, pages: () => one("/nordic/photos", "旅の写真") },
 };
 

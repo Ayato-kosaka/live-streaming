@@ -254,40 +254,6 @@ ABOUT_BY_DATE = ABOUT_NO_NOW.replace(
     "];\n", '  {\n    date: "2026-09-29",\n    kind: "travel",\n'
             '    what: "アルバニアに着いた",\n  },\n];\n')
 
-# 仕込みの `site/lib/place.ts`。**数は1か所**（ここと画面が同じ境目を持つ）
-PLACE_TS_SRC = """// いまどこの便りが、何日たったら「いま」ではなくなるか
-export const PLACE_STALE_DAYS = 7;
-"""
-
-
-def make_state(updatedAt: str = "2026-10-02",
-               week: list[str] | None = None,
-               word: str = "ティラナに着きました。") -> uw.StateRead:
-    """仕込みの島の便り。**口は叩かない。**
-
-    毎 PR で回る対照を本番の口に繋ぐと、本番が返らない日に関係のない PR が
-    赤くなる（`python/watch_excuses.py` の `cardgo.mjs` と同じ理由）。
-
-    既定で `word` を入れてあるのは、**「ひとことが無い」を既定にしない**ため。
-    既定が空だと、`word` を見ていない確かめまで全部そこで鳴って、
-    何を見ているのか分からなくなる（#808 で一度そうなった）。
-    """
-    return uw.StateRead(current={
-        "updatedAt": updatedAt,
-        "word": word,
-        "week": ["10/4 ティラナを歩く", "回る先はこれから"] if week is None else week,
-    })
-
-
-# **口を叩かない。** 本物の `fetch_state` をここで塞ぐ。
-# `count()` は `state` を渡さなければ口を叩きにいく作りなので、渡し忘れた
-# 確かめが1つでもあると、**毎 PR の対照が本番の口に繋がる**（本番が返らない日に、
-# 関係のない PR が赤くなる。`python/watch_excuses.py` の `cardgo.mjs` と同じ理由）。
-# 塞いでおけば、渡し忘れても外には出ない
-REAL_FETCH = uw.fetch_state
-uw.fetch_state = lambda *a, **k: make_state()
-
-
 def make_content(tmp: Path, *, voices: str = "2026-10-01",
                  shorts: str = "2026-10-01",
                  recipes: str = "2026-10-01",
@@ -295,7 +261,6 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
                  chapters: str | None = None,
                  countries: str | None = None,
                  about: str | None = None,
-                 place: str | None = None,
                  updates: str = "2026-10-01",
                  itinerary: str = "", legends: str | None = None,
                  stays: str | None = None) -> Path:
@@ -305,18 +270,14 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
     で `blind` を立てて、数えられなくなる（それ自体は正しい挙動なので、
     別の確かめで踏む）。
 
-    章のほかに引き金が見るもの（国の表・滞在の表・年表・`PLACE_STALE_DAYS`）も、
-    同じ木の下に置く。`count()` は `site` の下から `app/about/page.tsx` と
-    `lib/place.ts` を引くので、**置き場の親が `site` になる。**
+    章のほかに引き金が見るもの（国の表・滞在の表・年表）も、同じ木の下に置く。
+    `count()` は `site` の下から `app/about/page.tsx` を引くので、**置き場の親が `site` になる。**
     """
     d = tmp / "content"
     d.mkdir(parents=True, exist_ok=True)
     (tmp / "app" / "about").mkdir(parents=True, exist_ok=True)
     (tmp / "app" / "about" / "page.tsx").write_text(
         ABOUT_FULL if about is None else about, encoding="utf-8")
-    (tmp / "lib").mkdir(parents=True, exist_ok=True)
-    (tmp / "lib" / "place.ts").write_text(
-        PLACE_TS_SRC if place is None else place, encoding="utf-8")
     if itinerary:
         # 旅程（`site/content/<章の slug>.ts`）。在れば、その章の滞在は
         # `countries.ts` に無くてよい
@@ -876,28 +837,27 @@ def case10_unreachable(tmp: Path):
     # **こちらが埋め損ねていたら 1**（#808）。あやとの手入れは赤くしないが、
     # 「機械が落とすはずのものが落ちていない」は**この仕組みが動いていない**
     # ので赤くする。札には1行も出さない（出してもあやとには直せない）
+    # 島の便りの「過ぎた行が落ちていない」（#808）がそれだったが、便りごと畳んで外した（#1278）。
+    # **いまこちらへ出す引き金は1本も無い**ので、こちら側の引き金を1本だけ仕込んで、
+    # 「こちらへ出たら 1・札には出ない」の作りそのものを当てる
     d2 = make_content(tmp / "c10b")
-    real_fetch = uw.fetch_state
-    uw.fetch_state = lambda *a, **k: make_state(updatedAt="2026-10-02",
-                                                week=["9/27 発つ"])
+    real_t = uw.TRIGGERS
+    ours = uw.Trigger("仕込みのこちら側", True, lambda w: [uw.Gap(
+        "`仕込みの口`", "落とすほうが動いていません", urgent=True, owner=uw.SYSTEM)])
+    uw.TRIGGERS = real_t + (ours,)
     gh3 = FakeGh()
     try:
         code, said = said_while(lambda: act(gh3, apply=True, d=d2))
     finally:
-        uw.fetch_state = real_fetch
+        uw.TRIGGERS = real_t
     ck("こちらが埋め損ねていたら **1**", code == 1, code)
     ck("ログに ::error:: で出る", "こちらが埋め損ねています" in said, "出る")
     ck("あやとの区画には出ない",
-       "weekAhead" not in gh3.body(), gh3.body()[-200:])
+       "仕込みの口" not in gh3.body(), gh3.body()[-200:])
 
-    # 対照——落ちていれば 0 に戻る
-    uw.fetch_state = lambda *a, **k: make_state(updatedAt="2026-10-02",
-                                                week=["10/4 歩く"])
-    try:
-        code = act(FakeGh(), apply=True, d=make_content(tmp / "c10c"))
-    finally:
-        uw.fetch_state = real_fetch
-    ck("落ちていれば 0 に戻る", code == 0, code)
+    # 対照——こちら側の引き金が黙っていれば 0 に戻る
+    code = act(FakeGh(), apply=True, d=make_content(tmp / "c10c"))
+    ck("こちら側が黙っていれば 0 に戻る", code == 0, code)
 
     # 資格が無ければ 1（`run_watch.act`）
     real = uw.Gh
@@ -1029,97 +989,13 @@ def case14_new_triggers(tmp: Path):
     ck("(2) 前の章から開いたままの滞在は、出どころに数えない",
        any("STAYS" in x for x in c.later), (c.urgent, c.later))
 
-    # --- (3) 島の便り。**人しか書けない欄だけを呼ぶ**（#808） --------------
-    #
-    # ここは前まで `place` と `week` も一緒に呼んでいた。どちらも機械が
-    # 知っているので、呼ぶのを `word` ひとつにした。**過ぎた行は、
-    # 落とすほうが動いていないときだけ、こちら側（`ours`）に鳴る。**
-    d = make_content(tmp / "c14f")
-
-    c = uw.count(d, TODAY, state=make_state(updatedAt="2026-10-02",
-                                            week=["10/4 ティラナを歩く"]))
-    ck("(3) 新しい便り × 先の予定 → 鳴らない", c.waiting == 0, (c.urgent, c.later))
-
-    c = uw.count(d, TODAY, state=make_state(updatedAt="2026-09-28",
-                                            week=["10/4 ティラナを歩く"]))
-    ck("(3) 便りが5日前（しきい値 7日の内側）→ 鳴らない",
-       c.waiting == 0, (c.urgent, c.later))
-
-    # **日数の境目は、章の始まりから離れた日で当てる。** いまの章は 2026-09-28
-    # 始まりなので、`TODAY`（2026-10-03）の7日前は章より前になってしまい、
-    # **日数の足と章の足のどちらで鳴ったのか分からない。** 1週間ずらして当てる
-    late = date(2026, 10, 10)
-    c = uw.count(d, late, state=make_state(updatedAt="2026-10-03",
-                                           week=["10/14 ティラナを歩く"]))
-    ck("(3) 便りが7日前ちょうど → 鳴らない（境目は超えたとき）",
-       c.waiting == 0, (c.urgent, c.later))
-    c = uw.count(d, late, state=make_state(updatedAt="2026-10-02",
-                                           week=["10/14 ティラナを歩く"]))
-    ck("(3) 便りが8日前 → **急ぐ**側に1件",
-       len(c.urgent) == 1 and "word" in c.urgent[0], (c.urgent, c.later))
-    ck("(3) **いまいる国は呼ばない**（機械が受ける）",
-       "place" not in c.urgent[0], c.urgent[0])
-    ck("(3) 書かなくていいことを、そう書いてある",
-       "機械が受けます" in c.urgent[0], c.urgent[0])
-
-    # 章より前に打たれていれば、日数の内側でも鳴る（足は2本）
-    c = uw.count(d, TODAY, state=make_state(updatedAt="2026-09-27",
-                                            week=["10/4 ティラナを歩く"]))
-    ck("(3) 日数の内側でも、いまの章より前に打たれていれば鳴る",
-       len(c.urgent) == 1 and "word" in c.urgent[0], (c.urgent, c.later))
-
-    # **日付が新しくても、ひとことが空なら鳴る。** 片足だけだと、
-    # 打ち直すたびに日付だけ新しくなって中身が空、でも通る
-    c = uw.count(d, TODAY, state=make_state(updatedAt="2026-10-02", word=""))
-    ck("(3) 日付は新しいのに、ひとことが空 → 鳴る",
-       len(c.urgent) == 1 and "word" in c.urgent[0], (c.urgent, c.later))
-    c = uw.count(d, TODAY, state=make_state(updatedAt="2026-10-02", word="   "))
-    ck("(3) 空白だけも空とみなす", len(c.urgent) == 1, (c.urgent, c.later))
-
-    # **過ぎた行は、あやとを呼ばない。こちらに鳴る**（#808 の本題）。
-    # これが 2026-10-13 の本番で、見張りが「2行消してください」と
-    # あやとを呼んでいた形
-    c = uw.count(d, TODAY, state=make_state(
-        updatedAt="2026-10-02",
-        week=["9/27 ストックホルムを発つ", "9/28 アルバニア着", "回る先はこれから"]))
-    ck("(3) week に過ぎた日の行 → **あやとの札には1行も出ない**",
-       c.waiting == 0, (c.urgent, c.later))
-    ck("(3) 過ぎた日の行 → **こちら側**に1件",
-       len(c.ours) == 1, (c.ours, c.urgent))
-    ck("(3) 落とすほう（口）の名前が出る",
-       "islandApi" in c.ours[0] and "weekAhead" in c.ours[0], c.ours[0])
-    ck("(3) 過ぎた行の数が出る", "2行" in c.ours[0], c.ours[0])
-    ck("(3) **週の字そのものは出さない**",
-       "ストックホルム" not in c.ours[0], "出さない")
-
-    # 対照のもう片側——落ちていれば、こちらにも鳴らない
-    c = uw.count(d, TODAY, state=make_state(updatedAt="2026-10-02",
-                                            week=["10/4 ティラナを歩く", "回る先はこれから"]))
-    ck("(3) 過ぎた行が落ちていれば、こちらにも鳴らない",
-       not c.ours, c.ours)
-
-    # 日付の付いていない行は数えない（「回る先はこれから」だけ）
-    c = uw.count(d, TODAY, state=make_state(updatedAt="2026-10-02",
-                                            week=["回る先はこれから"]))
-    ck("(3) 日付の無い行は数えない", c.waiting == 0 and not c.ours, (c.urgent, c.ours))
-
-    # 打たれた日が読めない／無い
-    c = uw.count(d, TODAY, state=make_state(updatedAt="", week=["10/4 歩く"]))
-    ck("(3) 打たれた日が無ければ鳴る",
-       len(c.urgent) == 1 and "読めません" in c.urgent[0], c.urgent)
-
-    # **章が長く続いても、永久に「新しい」と言わない。**
-    # これが `placeOutdated` に空いていた穴そのもの——章の始まりだけを見ると、
-    # 章が始まった日に打った便りは**何ヶ月たっても新しい**
-    far = date(2027, 1, 1)
-    c = uw.count(d, far, state=make_state(updatedAt="2026-09-28",
-                                          week=["12/31 どこかにいる"]))
-    ck("(3) **章の始まりに打った便りも、3ヶ月たてば鳴る**",
-       any("word" in x for x in c.urgent), c.urgent)
-
-    # 届かなければ「数えられない」。**「ありません」と書かない**
-    c = uw.count(d, TODAY, state=uw.StateRead(error="島の便りに届きません: 仕込み"))
-    ck("(3) 便りに届かなければ数えられない", not c.countable, c.blind)
+    # --- (3) 島の便り（#808）は、便りごと畳んだので外した（#1278）-------------
+    # 引き金が残っていないことだけを見る。**戻したら、ここで落ちる**
+    names = {t.name for t in uw.TRIGGERS}
+    ck("(3) 島の便りの引き金（ひとこと・過ぎた行）が残っていない",
+       not names & {"島の便りのひとこと", "過ぎた行が落ちていない"}, sorted(names))
+    ck("(3) 便りを読みに行く口が残っていない",
+       not hasattr(uw, "fetch_state") and not hasattr(uw, "read_place_stale_days"), "残っていない")
 
     # --- (4) `/about` の年表に、いまの章の行が無い -------------------------
     d = make_content(tmp / "c14g", about=ABOUT_NO_NOW)
@@ -1132,28 +1008,6 @@ def case14_new_triggers(tmp: Path):
     ck("(4) 章から引いた行が在れば鳴らない", c.waiting == 0, (c.urgent, c.later))
     c = uw.count(make_content(tmp / "c14i", about=ABOUT_BY_DATE), TODAY)
     ck("(4) 日付そのもので置いた行でも鳴らない", c.waiting == 0, (c.urgent, c.later))
-
-    # --- 日数は `site/lib/place.ts` から読む。**2か所に置かない** -----------
-    #
-    # 数をこちらに書き写すと、画面（`placeOutdated`）と札が別の境目を持つ日が来る。
-    # **本当にあちらから読んでいるか**を、あちらの数を変えて当てる
-    d = make_content(tmp / "c14j",
-                     place="export const PLACE_STALE_DAYS = 3;\n")
-    # 2026-09-28 は**いまの章が始まった日**（章の足では鳴らない）。
-    # `TODAY` の5日前なので、日数の足だけで両側を作れる
-    c = uw.count(d, TODAY, state=make_state(updatedAt="2026-09-28",
-                                            week=["10/4 歩く"]))
-    ck("place.ts の数を 3 にすると、5日前の便りが鳴る",
-       len(c.urgent) == 1 and "3日を超えたら" in c.urgent[0], c.urgent)
-    c = uw.count(make_content(tmp / "c14k"), TODAY,
-                 state=make_state(updatedAt="2026-09-28", week=["10/4 歩く"]))
-    ck("既定（7日）では、同じ便りで鳴らない", c.waiting == 0, (c.urgent, c.later))
-
-    # 読めなければ「数えられない」。**既定値で代わりにしない**
-    d = make_content(tmp / "c14l", place="export const SOMETHING = 7;\n")
-    c = uw.count(d, TODAY)
-    ck("place.ts から数を読めなければ数えられない",
-       not c.countable and any("PLACE_STALE_DAYS" in x for x in c.blind), c.blind)
 
     # --- 読めなかったものを、空で通さない ----------------------------------
     for label, kw, want in (
@@ -1177,34 +1031,20 @@ def case14_new_triggers(tmp: Path):
         ("いまの章の滞在", make_content(tmp / "c14o", countries=COUNTRIES_NO_ALBANIA,
                                      stays=STAYS_NO_ALBANIA), None),
         ("歩いた国", make_content(tmp / "c14o2", stays=STAYS_NO_NORDIC), None),
-        ("島の便りのひとこと", make_content(tmp / "c14p"),
-         make_state(updatedAt="2026-01-01", word="")),
         ("年表のいま", make_content(tmp / "c14q", about=ABOUT_NO_NOW), None),
         ("終わった旅の伝説", make_content(tmp / "c14r", legends=LEGENDS_NONE), None),
     )
     real = uw.TRIGGERS
-    for name, d, st in broke:
-        before = uw.count(d, TODAY, state=st).waiting
+    for name, d, _ in broke:
+        before = uw.count(d, TODAY).waiting
         try:
             uw.TRIGGERS = tuple(t for t in real if t.name != name)
-            after = uw.count(d, TODAY, state=st).waiting
+            after = uw.count(d, TODAY).waiting
         finally:
             uw.TRIGGERS = real
         ck(f"引き金「{name}」を外すと、空いた欄が見えなくなる",
            before > 0 and after < before, f"{before}件 → {after}件")
 
-    # **こちら側の引き金も、外したら見えなくなる。** こちらは `waiting`（札）
-    # ではなく `ours` に出るので、数えるところが違う。同じ形で両側を当てる
-    d = make_content(tmp / "c14r")
-    st = make_state(updatedAt="2026-10-02", week=["9/27 発つ"])
-    before = len(uw.count(d, TODAY, state=st).ours)
-    try:
-        uw.TRIGGERS = tuple(t for t in real if t.name != "過ぎた行が落ちていない")
-        after = len(uw.count(d, TODAY, state=st).ours)
-    finally:
-        uw.TRIGGERS = real
-    ck("引き金「過ぎた行が落ちていない」を外すと、こちらの落ちが見えなくなる",
-       before > 0 and after < before, f"{before}件 → {after}件")
 
 
 def case16_updates(tmp: Path):
@@ -1384,23 +1224,7 @@ def case12_real():
     """
     print("\n[12] 本番の site/content を食わせる")
 
-    # **島の便りは、取れれば本物。取れなければ写し。** どちらを使ったかを印字する。
-    # 取れなかっただけで落とさない——毎 PR の対照を本番の口に縛ると、本番が
-    # 返らない日に関係のない PR が赤くなる（`watch_excuses.py` の `cardgo.mjs`）。
-    # **黙って写しに落ちない**ところが肝心で、印字が「写し」なら、
-    # ここから下の件数は本番の便りを見ていない
-    live = REAL_FETCH(tries=1, timeout=10)
-    if live.error:
-        live = make_state()
-        print(f"    島の便り: **写し**（本物に届きませんでした）")
-    else:
-        said = str(live.current.get("updatedAt") or "?")
-        week = uw.week_days(live.current.get("week"), date.today())
-        print(f"    島の便り: 本物（打たれた日 {said} / "
-              f"`week` の日付つきの行 {len(week)}行、うち過ぎたのが "
-              f"{sum(1 for d in week if d < date.today())}行）")
-
-    c = uw.count(CONTENT, date.today(), state=live)
+    c = uw.count(CONTENT, date.today())
     print(f"    きょう（{date.today()}）の本番: "
           f"手入れ待ち {c.waiting}件（急ぐ {len(c.urgent)} / 急がない {len(c.later)}）、"
           f"仕組みの側 {len(c.system)}件")
@@ -1432,9 +1256,6 @@ def case12_real():
             (CONTENT / "projects.ts").read_text(encoding="utf-8"), "PROJECTS",
             keys=("slug", "date", "trip", "legend"), lists=("range",)).rows
             if r["legend"] == "true"],
-        current=live.current,
-        stale_days=uw.read_place_stale_days(
-            (ROOT / "site" / "lib" / "place.ts").read_text(encoding="utf-8")),
         # **ここだけは本物の git を読む。** 12 は「本番のデータで、いま何が
         # 立つか」を印字する回で、合否にしていない（人が欄を埋めれば減るのが
         # 正しい）。立ちかたの表に「島の直したところ」が出てこないと、
@@ -1451,15 +1272,13 @@ def case12_real():
         got = t.find(w)
         print(f"      {'立つ' if got else '立たない'}  {t.name}"
               f"（{'急ぐ' if t.urgent else '急がない'}）… {len(got)}件")
-    ck("`PLACE_STALE_DAYS` を本番の place.ts から読めている", w.stale_days > 0,
-       w.stale_days)
     got12 = uw.read_countries((CONTENT / "countries.ts").read_text(encoding="utf-8"), stays12)
     ck("本番の `countries.ts` / `stays.ts` を読み落としていない",
        got12.missed == 0 and got12.stays_missed == 0, (got12.missed, got12.stays_missed))
     ck("本番の年表（`STORY`）を読めている", len(w.about) > 0, len(w.about))
 
     far = date(2030, 1, 1)
-    c2 = uw.count(CONTENT, far, state=live)
+    c2 = uw.count(CONTENT, far)
     print(f"    {far} で測ると: 整備 {c2.waiting}件 / 仕組み {len(c2.system)}件")
     joined = "".join(c2.urgent + c2.later)
     ck("先の日で測ると、人の持ち分が整備に出る", c2.waiting > 0, c2.waiting)

@@ -12,17 +12,15 @@ import { hasVoice, linesOf } from "@/content/chatter";
 import { Gull } from "./Guide";
 import Today from "@/components/today/Today";
 import { rememberVisit, VISITED } from "@/components/today/visit";
-import { daysUntil, jstNow, readNight } from "@/lib/nightly";
+import { BUILT_AT, daysUntil, jstNow, readNight } from "@/lib/nightly";
 import { AYATO_ASPECT } from "@/lib/ayatoArt";
 import AyatoSprite, { ayatoFlip, ayatoTurn, newAyatoTurn, setAyatoDir, setAyatoWalking } from "@/components/isle/AyatoSprite";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import HereFolks from "./HereFolks";
 import { here } from "@/lib/here";
-import { countdownDay } from "@/lib/leadPlan";
-import { NOW_FALLBACK } from "@/content/site";
+import { countdownDay, stayHere } from "@/lib/leadPlan";
 /* 「いまどこ」の判定と言い方は1か所（`lib/stay.ts`）。島だけ別の字を言わない。 */
-import { placeWord } from "@/lib/stay";
 import { MAX_LEAD, around, hits, lead } from "@/components/isle/plates";
 import Say from "@/components/ui/Say";
 import { nights } from "@/content/nights";
@@ -258,18 +256,13 @@ const HINT_SPAN = 5200;
    同じことを二度言わないよう、言い方を変えてある。
    地名を1つ入れて、ぼんやりした自己紹介にしない（`content/voice.ts` の決めごと）。
    ------------------------------------------------------------------------ */
-/* **場所も時刻も、呼ぶときに決める。** ここは `NOW_FALLBACK.place` と「毎晩22時」を
-   直に埋めた定数だったので、旅に出ても「毎晩22時、いまはジョージア・トビリシだよ。」と
-   言い続けていた（あの欄は出発の1週間前で止まっていて、旅の17日間は打ち直せない）。
-   定数のまま `placeWord` や `nights` を通すこともできない——**焼くときとブラウザで
-   答えが変わるので、水あわせが崩れる。** カモメが喋るのは画面が出たあとなので、
-   そのときの日付で作る。 */
+/* **場所も時刻も、呼ぶときに決める。** 定数にすると、焼くときとブラウザで答えが変わって水あわせが崩れる
+   （前は Firestore の `current.place` の焼き込みを埋めていて、旅に出ても前の国を言い続けた）。
+   場所は滞在の表の［いまここ］（`stayHere`。表紙の名刺と同じ1本。#1278）。
+   カモメが喋るのは画面が出たあとなので、そのときの日付で作る。 */
+const hereWord = (now: Date) => stayHere(now)?.place || "世界のどこか";
 const greeting = (now: Date = new Date()) =>
-  `ようこそ、あやと島へ。あやとは${nights(now).bare}、旅先から生配信してる。いまは${placeWord(
-    NOW_FALLBACK.place,
-    NOW_FALLBACK.updatedAt,
-    now,
-  )}だよ。`;
+  `ようこそ、あやと島へ。あやとは${nights(now).bare}、旅先から生配信してる。いまは${hereWord(now)}だよ。`;
 /** 吹き出しの主が、住人ではなく案内役のカモメであることを表す番号 */
 const GUIDE = -1;
 const clampToIsland = (x: number, y: number): [number, number] => {
@@ -495,9 +488,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const [onAir, setOnAir] = useState(false);
   /* 配信中の札に出す「いまどこ」。**焼かない。** 焼くと配った日の場所で固まり、
      旅に出た晩に前の国から繋いでいることになる（`content/voice.ts` の LIVE）。 */
-  const [nowPlace, setNowPlace] = useState(() =>
-    placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt),
-  );
+  const [nowPlace, setNowPlace] = useState(() => hereWord(BUILT_AT));
   useEffect(() => {
     /* 静的書き出しなので、ビルド時の「今日」を焼き込まないよう画面が出てから決める。
        **1分ごとに数え直す。** 21:59 に開いたまま22時をまたぐ人がいる。
@@ -512,7 +503,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       const n = todayNews(now);
       setTodaySpot(spotOfHref(n.href) ?? TODAY_AT[n.kind] ?? null);
       setOnAir(readNight(now).onAir);
-      setNowPlace(placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt, now));
+      setNowPlace(hereWord(now));
     };
     read();
     const id = setInterval(read, 60_000);
