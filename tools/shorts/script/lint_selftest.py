@@ -123,11 +123,12 @@ CUTS = {
             {"yen"}, "現地の通貨を拾わない"),
     "length": ("lint.py", "    if n <= MAX_CHARS:\n", "    if True:\n",
                {"length"}, "字数を見ない"),
-    "end_invite": ("lint.py", "    if invites(last):\n        return []\n", "", {"end", "approved"}, "次の配信への誘いで終える形を落とす"),
+    # L-END は △ になった（F-091）ので、誘い・アーカイブの許しを外しても、通した原稿（approved は ✕ 0 を見る）は落ちない
+    "end_invite": ("lint.py", "    if invites(last):\n        return []\n", "", {"end"}, "次の配信への誘いで終える形を拾う"),
     "end_any": ("lint.py", '    return [Hit("L-END", len(c.lines), last,', '    return [] and [Hit("L-END", len(c.lines), last,',
                 {"end"}, "どんな終わりも通す"),
     "end_archive": ("lint.py", '    if "アーカイブ" in last:\n        return []\n', "",
-                    {"end", "approved"}, "アーカイブの1行で終える形を落とす"),
+                    {"end"}, "アーカイブの1行で終える形を拾う"),
     "ashi_rows": ("lint.py", '        if "【足】" in (r.get("why") or ""):\n            rows.add(i)\n', "        pass\n",
                   {"ashi"}, "spec の【足】の印を読まない"),
     "as_of": ("lint.py", "        if not in_force(r.since, as_of):\n", "        if False:\n",
@@ -393,8 +394,9 @@ def leg_length(L):
 
 
 def leg_end(L):
+    # L-END は △（F-091 で、終わりは臨機応変になった）。拾うかどうかは △ も含めて見て、落とさないことは別の足で見る
     def hits(lines):
-        return [h for h in fails(L, ctx(L, lines)) if h.rule == "L-END"]
+        return [h for h in L.lint(ctx(L, lines), TODAY)["hits"] if h.rule == "L-END"]
     return [("問いで切る（「みんなは、この宿、泊まれる？」）は通す", not hits(["題", "宿", "みんなは、この宿、泊まれる？"])),
             ("次の配信への誘い（あやと #1014「…本日22時から作るので配信見にきてね！」）で終えるのも通す",
              not hits(["題", "うまい！", "リベンジにワンパンピザを本日22時から作るので配信見にきてね！"])),
@@ -404,7 +406,10 @@ def leg_end(L):
             ("問いのあとの「ありがとう！」を拾う", bool(hits(["題", "みんなは？", "見てくれてありがとう！"]))),
             ("問い → アーカイブ → 挨拶（アーカイブのあとにも足した）を拾う",
              bool(hits(["題", "みんなは？", "続きは配信のアーカイブ見てね！", "またね！"]))),
-            ("問いもアーカイブも無い終わりを拾う", bool(hits(["題", "ほんまに楽しかった。"])))]
+            ("問いもアーカイブも無い終わりを拾う", bool(hits(["題", "ほんまに楽しかった。"]))),
+            ("落ちで切る終わり（F-091）は、拾っても △ で、落とさない",
+             bool(hits(["題", "さっきの7分、僕はこの絵の真下で突っ立ってた。"]))
+             and all(h.look for h in hits(["題", "さっきの7分、僕はこの絵の真下で突っ立ってた。"])))]
 
 
 def leg_ashi(L):
