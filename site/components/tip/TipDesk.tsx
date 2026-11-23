@@ -13,15 +13,16 @@ import { TipClosed, TipDone, TipNoChannel, TipSignIn, TipWaiting } from "./TipPa
 type Why = Extract<CheckoutResult, { ok: false }>["why"];
 
 /** 口に断られたとき、紙に出す1行（**次に何をすればいいか**だけ。仕組みの話はしない） */
-const FAIL: Record<Why, string> = {
-  signin: "入りなおしてから、もう一度。",
-  channel: "",
+const FAIL: Record<Why, string[]> = {
+  /* 折ってよいのは塊のあいだだけ（`components/ui/Phrase.tsx`。390px で「度。」が1行に落ちていた） */
+  signin: ["入りなおしてから、", "もう一度。"],
+  channel: [],
   /* どの語かは言わない（言うと、言い換えて通すための答えになる） */
-  ngword: "使えない言葉が入っています",
-  range: "額かメッセージを、なおしてもう一度。",
-  today: "今日はここまで。また明日、投げてね。",
-  closed: "",
-  down: "いま、つなげなかった。少し待って、もう一度。",
+  ngword: ["使えない言葉が", "入っています"],
+  range: ["額かメッセージを、", "なおしてもう一度。"],
+  today: ["今日はここまで。", "また明日、投げてね。"],
+  closed: [],
+  down: ["いま、つなげなかった。", "少し待って、", "もう一度。"],
 };
 
 /**
@@ -60,7 +61,7 @@ export default function TipDesk() {
   useEffect(() => {
     if (lim.st !== "ok" || yen !== null || done) return;
     const d = readDraft();
-    setYen(d?.yen ?? String(lim.lim.tipYenMin));
+    setYen(d?.yen ?? lim.lim.tipYenMin.toLocaleString("ja-JP"));
     if (d) setMessage(d.message.slice(0, lim.lim.tipMessageMax));
   }, [lim, yen, done]);
 
@@ -135,7 +136,7 @@ export default function TipDesk() {
         setStep("check");
       }}
       fail={why && why !== "ngword" ? FAIL[why] : null}
-      msgFail={why === "ngword" ? FAIL.ngword : null}
+      msgFail={why === "ngword" ? FAIL.ngword.join("") : null}
     />
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { readySignIn, useAuth } from "@/lib/auth";
 import { SignInWarn } from "@/components/live/SignIn";
 import { Gull } from "@/components/island/Guide";
+import Phrase from "@/components/ui/Phrase";
 
 /**
  * 投げ銭の面の、入力のほかの1枚ずつ。どれも紙1枚（`.panel.paper`）で、見出しは紙に貼った札。
@@ -52,7 +53,9 @@ export function TipSignIn() {
   return (
     <section className="panel paper tip-paper">
       <h2>YouTube で入ろう</h2>
-      <p className="tip-lead">アラートには、YouTube のチャンネルの名前で出るよ。</p>
+      <p className="tip-lead">
+        <Phrase parts={["アラートには、", "YouTube のチャンネルの", "名前で出るよ。"]} />
+      </p>
       <GoSignIn label="YouTubeでログイン" />
     </section>
   );
@@ -64,8 +67,8 @@ export function TipNoChannel({ name }: { name: string }) {
     <section className="panel paper tip-paper">
       <h2>チャンネルで入りなおそう</h2>
       <p className="tip-lead">
-        いまの <b>{name}</b> には、YouTube のチャンネルが見つからなかった。
-        アラートに名前を出すチャンネルを選んで、入りなおしてね。
+        いまの <b>{name}</b> には、
+        <Phrase parts={["YouTube のチャンネルが", "見つからなかった。", "アラートに名前を出す", "チャンネルを選んで、", "入りなおしてね。"]} />
       </p>
       <GoSignIn label="チャンネルを選んで入りなおす" />
     </section>
@@ -81,10 +84,12 @@ export function TipDone() {
         <span className="gsay-bird">
           <Gull size={56} />
         </span>
-        <p className="gsay-bubble">ありがとう！ メッセージは、配信のアラートに出るよ。</p>
+        <p className="gsay-bubble">
+          <Phrase parts={["ありがとう！", "メッセージは、", "配信のアラートに", "出るよ。"]} />
+        </p>
       </div>
       <div className="tip-done-go">
-        {/* 同じ面の `?done=1` を外すだけ。打ちかけは、払ったときに捨ててある */}
+        {/* 同じ面の `?done=1` を外すだけ。打ちかけは、この紙を出したときに捨ててある（`TipDesk`） */}
         <Link prefetch={false} href="/tip" className="blank-go">
           もう一回なげる
         </Link>

@@ -1,5 +1,6 @@
 "use client";
 
+import Phrase from "@/components/ui/Phrase";
 import { yenText } from "./yen";
 
 /**
@@ -21,8 +22,8 @@ export default function TipCheck({
   yen: number;
   message: string;
   sending: boolean;
-  /** 口に断られたときの1行 */
-  fail?: string | null;
+  /** 口に断られたときの1行（折ってよい塊ごと） */
+  fail?: string[] | null;
   /** 今日はもう作れない、のように押しても通らないときは false */
   canPay: boolean;
   onPay: () => void;
@@ -40,24 +41,34 @@ export default function TipCheck({
         </div>
         <div>
           <dt>なにに</dt>
-          <dd>メッセージを、配信のアラートに出す</dd>
+          <dd>
+            <Phrase parts={["メッセージを、", "配信のアラートに", "出す"]} />
+          </dd>
         </div>
         <div className="tip-slip-msg">
           <dt>メッセージ</dt>
-          <dd>{message.trim() ? message : <span className="tip-none">なし（名前と額だけ出る）</span>}</dd>
+          <dd>{message.trim() ? message : <Phrase className="tip-none" parts={["なし", "（名前と額だけ出る）"]} />}</dd>
         </div>
         <div className="tip-slip-no">
           <dt>取り消し</dt>
-          <dd>払ったあとは、取り消せない</dd>
+          <dd>
+            <Phrase parts={["払ったあとは、", "取り消せない"]} />
+          </dd>
         </div>
       </dl>
 
-      {fail && <p className="err">{fail}</p>}
+      {fail?.length ? (
+        <p className="err">
+          <Phrase parts={fail} />
+        </p>
+      ) : null}
       {signInAgain}
       <button type="button" className="bbtn tip-go" disabled={sending || !canPay} onClick={onPay}>
         {sending ? "つないでいます…" : `${yenText(yen)} を払う`}
       </button>
-      <p className="tip-next">押すと、支払いの画面に移ります。</p>
+      <p className="tip-next">
+        <Phrase parts={["押すと、", "支払いの画面に移ります。"]} />
+      </p>
       <button type="button" className="tip-back" onClick={onBack} disabled={sending}>
         なおす
       </button>

@@ -156,7 +156,8 @@
 }
 .tip-paper .err { margin: 0 0 var(--sp-2); }
 .tip-next {
-  margin: var(--sp-2) 0 0;
+  /* 上のボタンは下へ厚みを持つ（`.bbtn` の側面）。字をその厚みに付けない */
+  margin: calc(var(--sp-3) + var(--pop-d4)) 0 0;
   text-align: center;
   font-size: var(--fs-note);
   font-weight: 700;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Phrase from "@/components/ui/Phrase";
 import { presetsIn, readYen, yenProblem, yenText, type TipLimits, type YenProblem } from "./yen";
 
 /**
@@ -31,8 +32,8 @@ export default function TipForm({
   onYen: (v: string) => void;
   onMessage: (v: string) => void;
   onNext: () => void;
-  /** 口に断られて戻ってきたときの1行 */
-  fail?: string | null;
+  /** 口に断られて戻ってきたときの1行（折ってよい塊ごと） */
+  fail?: string[] | null;
   /** メッセージのほうを直してほしいときの1行（メッセージの欄のすぐ下に出す） */
   msgFail?: string | null;
 }) {
@@ -75,7 +76,7 @@ export default function TipForm({
             type="button"
             className="tip-preset"
             aria-pressed={picked === v}
-            onClick={() => onYen(String(v))}
+            onClick={() => onYen(v.toLocaleString("ja-JP"))}
           >
             {yenText(v)}
           </button>
@@ -103,7 +104,11 @@ export default function TipForm({
         <span>あと {Math.max(0, left).toLocaleString("ja-JP")}字</span>
       </p>
 
-      {fail && <p className="err">{fail}</p>}
+      {fail?.length ? (
+        <p className="err">
+          <Phrase parts={fail} />
+        </p>
+      ) : null}
       <button type="button" className="bbtn tip-go" disabled={problem !== null} onClick={onNext}>
         たしかめる
       </button>
