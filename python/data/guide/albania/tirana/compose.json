@@ -1,0 +1,131 @@
+{
+ "_meta": {
+  "何か": "ティラナのガイドブックの面（/travel/albania/tirana）の組み立て。材料（guidebook.json）にあるのは事実で、ここにあるのは選びかたと並べかただけ。焼くのは python/guidebook_bake.py",
+  "行った": "行った街。カード・話・一言は、行った担当が facts から足す（ここでは空）",
+  "どんな街": "問いは日本語の頁がティラナを語る2つ（材料の about.why_src）。前の街の問いを写していない",
+  "題": "「ティラナ観光ガイド」が頭（docs/island-misses.md #332・#333）"
+ },
+ "title": "ティラナ観光ガイド【2026年】見どころマップ・やりたいこと・グルメ｜アルバニア",
+ "description": {
+  "text": "アルバニアの首都ティラナの観光ガイド。見どころマップと、やりたいこと{todo}つ（核シェルターの博物館、ピラミッド、ダイティ山のロープウェイ、クルヤ城への日帰り）、フェルゲセとビュレク。",
+  "facts": []
+ },
+ "persona": [
+  "バルカンを周る20〜30代の個人旅行者。スコピエやコソボからバスで入り、ティラナに何日いて何をするか決めかねている（いちばん大事な読み手）",
+  "クルヤやベラトへの日帰りの拠点を探している人",
+  "共産主義の時代の跡（バンカー・ピラミッド・葉の館）を見たい人"
+ ],
+ "terms": [
+  "ティラナ 観光",
+  "ティラナ 見どころ",
+  "ティラナ 地図",
+  "アルバニア ティラナ 観光",
+  "ティラナ 日帰り"
+ ],
+ "published": "2026-11-23",
+ "cover": {
+  "catch": 0
+ },
+ "cards": {},
+ "say": {},
+ "items": {},
+ "about": {
+  "hero": {
+   "q": "スカンデルベグって誰？",
+   "icon": "statue"
+  },
+  "isolation": {
+   "q": "共産主義の時代は？",
+   "icon": "tunnel"
+  }
+ },
+ "areas": {
+  "skanderbeg": {
+   "color": "#ffd98a",
+   "plan": [
+    2,
+    1,
+    2
+   ]
+  },
+  "pazari": {
+   "color": "#d9ccf5",
+   "plan": [
+    3,
+    1,
+    1
+   ]
+  },
+  "blloku": {
+   "color": "#ffc4d2",
+   "plan": [
+    1,
+    2,
+    2
+   ]
+  }
+ },
+ "summary": {
+  "season": {
+   "icon": "sun",
+   "value": "4〜5月・9〜10月",
+   "lead": "平年の最高気温が19〜28℃",
+   "to": "#guide-season"
+  },
+  "safety": {
+   "icon": "key",
+   "value": "夜の行動は控えめに",
+   "lead": "日本人の被害の情報は無い",
+   "to": "#guide-safety"
+  },
+  "budget": {
+   "icon": "wallet",
+   "label": "乗り物の目安",
+   "value": "空港バス400レク",
+   "lead": "広場まで30〜40分",
+   "to": "#budget"
+  },
+  "transit": {
+   "icon": "bus",
+   "value": "地下鉄は無い",
+   "lead": "歩きと市バスで回る",
+   "to": "#guide-transit"
+  }
+ },
+ "guides": {
+  "airport": {
+   "icon": "plane",
+   "lead": "空港バスでスカンデルベグ広場へ"
+  },
+  "transit": {
+   "icon": "bus",
+   "lead": "中心は歩ける。市バスはGoogleマップで"
+  },
+  "pay": {
+   "icon": "currency",
+   "lead": "通貨はレク。チップは要らない"
+  },
+  "sim": {
+   "icon": "sim",
+   "lead": "Vodafone か One。空港の売り場は高い"
+  },
+  "safety": {
+   "icon": "key",
+   "lead": "夜の行動と、荒い車に気をつける"
+  },
+  "phrases": {
+   "icon": "phrase"
+  }
+ },
+ "season": {
+  "lead": "歩きやすいのは4〜5月と9〜10月"
+ },
+ "pack": {
+  "passport": "passport",
+  "cash": "coin",
+  "umbrella": "umbrella",
+  "bottle": "bottle",
+  "insurance": "firstaid",
+  "battery": "powerbank"
+ }
+}
