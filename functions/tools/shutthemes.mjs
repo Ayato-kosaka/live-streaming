@@ -91,6 +91,8 @@ bring(join(SITE, "content", "chapters.ts"), "chapters.ts");
 bring(join(SITE, "lib", "nightly.ts"), "nightly.ts");
 /* 企画の表。企画あての宛先は、結んだ企画（`project`）の日で締まる（`themes.ts` の `lastDayOf`） */
 bring(join(SITE, "content", "projects.ts"), "projects.ts");
+/* 種類の表（お題の行き先を鍵から組む `hrefOf`。何も読まない1枚。site #1279） */
+bring(join(SITE, "content", "kinds.ts"), "kinds.ts");
 bring(join(SITE, "content", "themes.ts"), "themes.ts");
 
 execFileSync(
