@@ -197,8 +197,11 @@ see = [
      "info": [{"label": "入場", "text": "火〜日曜10〜17時。大人350ディナール", "src": s("wv")}],
      "maps": maps("Vojni muzej"), "links": {"todo": ["kalemegdan"]},
      "photo": photo("military", "要塞の中の軍事博物館の建物と、前に並ぶ大砲")},
-    {"key": "zemun", "town": "belgrade", "name": "ゼムン", "local": loc("Zemun", "Zemun", "zemun"),
-     "rank": 2, "what": t("ドナウ川の右岸の古い町で、1934年にベオグラードに入った。ガルドシュの丘の東に、散歩と食事の店の並ぶゼムン河岸が続く。", "zemun", "wv"),
+    # 地区（エリア）の「ゼムン」と同じ字にしない。同じ名前のリンクが2つの先（#area-zemun と #see-zemun）を指すと、
+    # 読み上げで区別がつかない（reachkeys の「おなじ字」。#1365）。見に行くのは河岸の散歩道なので、その名前にする。
+    # 名前は Wikipedia「Zemun」の「Zemunski Kej, a kilometers long promenade」、座標と地図の検索も同じ河岸
+    {"key": "zemun", "town": "belgrade", "name": "ゼムン河岸", "local": loc("Zemunski kej", "Zemunski kej", "zemun"),
+     "rank": 2, "what": t("ゼムンの、ドナウ川に沿って何kmも続く散歩道。ガルドシュの丘の東に、食事の店が並ぶ。ゼムンは1934年にベオグラードに入った古い町。", "zemun", "wv"),
      "went": False, **at("zemun"), "info": [], "maps": maps("Zemunski kej"), "links": {"todo": ["riblja"]},
      "photo": photo("zemun", "ガルドシュの塔から見た、赤い屋根の並ぶゼムンの町とドナウ川")},
     {"key": "gardos", "town": "belgrade", "name": "ガルドシュの塔", "local": loc("Kula na Gardošu", "Kula na Gardosu", "gardos"),

@@ -2941,10 +2941,10 @@
   {
    "key": "zemun",
    "town": "belgrade",
-   "name": "ゼムン",
+   "name": "ゼムン河岸",
    "local": {
-    "text": "Zemun",
-    "roman": "Zemun",
+    "text": "Zemunski kej",
+    "roman": "Zemunski kej",
     "src": [
      {
       "name": "Wikipedia「Zemun」",
@@ -2955,7 +2955,7 @@
    },
    "rank": 2,
    "what": {
-    "text": "ドナウ川の右岸の古い町で、1934年にベオグラードに入った。ガルドシュの丘の東に、散歩と食事の店の並ぶゼムン河岸が続く。",
+    "text": "ゼムンの、ドナウ川に沿って何kmも続く散歩道。ガルドシュの丘の東に、食事の店が並ぶ。ゼムンは1934年にベオグラードに入った古い町。",
     "src": [
      {
       "name": "Wikipedia「Zemun」",

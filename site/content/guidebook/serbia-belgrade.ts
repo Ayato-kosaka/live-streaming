@@ -1438,11 +1438,11 @@ export const BELGRADE: Guidebook = /* BEGIN GUIDE */
    },
    {
     "id": "zemun",
-    "name": "ゼムン",
+    "name": "ゼムン河岸",
     "local": {
-     "text": "Zemun",
+     "text": "Zemunski kej",
      "lang": "sr",
-     "roman": "Zemun"
+     "roman": "Zemunski kej"
     },
     "rank": 2,
     "pic": {
@@ -1458,7 +1458,7 @@ export const BELGRADE: Guidebook = /* BEGIN GUIDE */
       "page": "https://commons.wikimedia.org/wiki/File:Zemun_panorama_from_Gardo%C5%A1_tower.jpg"
      }
     },
-    "body": "ドナウ川の右岸の古い町で、1934年にベオグラードに入った。ガルドシュの丘の東に、散歩と食事の店の並ぶゼムン河岸が続く。",
+    "body": "ゼムンの、ドナウ川に沿って何kmも続く散歩道。ガルドシュの丘の東に、食事の店が並ぶ。ゼムンは1934年にベオグラードに入った古い町。",
     "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=Zemunski+kej+Beograd&hl=ja",
     "todo": [
@@ -1917,7 +1917,7 @@ export const BELGRADE: Guidebook = /* BEGIN GUIDE */
    },
    {
     "id": "zemun",
-    "name": "ゼムン",
+    "name": "ゼムン河岸",
     "what": "",
     "maps": "https://www.google.com/maps/search/?api=1&query=Zemunski+kej+Beograd&hl=ja",
     "km": 4.2
@@ -4036,6 +4036,6 @@ export const BELGRADE: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-22",
  "updated": "2026-11-23",
- "hash": "7a02fd481ea8ea77"
+ "hash": "f3d25eca203e0961"
 }
 /* END GUIDE */;
