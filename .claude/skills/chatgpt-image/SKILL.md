@@ -192,3 +192,25 @@ EC2 に残っていると、一括は描かずに古い絵を返す。2026-11-18
 
 **見どころマップには題の帯と目印の名前も焼く**（#332。画像検索の上位の地図の形）。頼み書きの `areamap.title`（`name` 街・`label`「見どころマップ」）と
 `areamap.names[]`（`label` 行の並び・札の中心 `x` `y`。描けた絵を見て目印の絵の真下か脇へ）。**番号の点は足さない**。名前を焼くのは描いてある目印だけ。
+
+## 7. 企画の面の絵を一括で描く（料理の100枚・表紙・地域の地図）
+
+道具は `legend_art.py`、企画ごとに変わるのは**頼み書き** `legend/<企画>.json` だけ。品と描写は材料担当の注文書
+（`python/data/legends/<企画>/art_order.json`）から読み、描き直しの `v`・`fix` は頼み書きに書く（材料担当の字は直さない）。
+頼む文の型・EC2 の一括・持ち帰り・札の焼きかたは `guide_art.py` と `guide_layout.py` から借りる（街の絵の動きは変えない）。
+置き場は `site/public/legends/<企画>/`（`dishes/<id>.webp`・`cover.webp`（題を焼いた）・`cover-base.webp`・
+`cover-1200x630.jpg`・`map.webp`・`map-base.webp`・`manifest.json`。manifest の `job` `v` `prompt_sha` がどの頼みで描けたか）。
+
+```bash
+L=.claude/skills/chatgpt-image/legend_art.py; P=india-street-food; W=<スクラッチ>/legend-art
+python3 $L $P layout --work $W     # 地図の下敷き（OpenStreetMap の海岸線と州の境界に、地域の色）
+python3 $L $P run --work $W        # manifest に無い品だけ EC2 へ（札 chatgpt を待つ）
+python3 $L $P wait --every 600     # run_in_background で。描けた数が --until に届くか、一括が終わるまで
+python3 $L $P fetch --work $W && python3 $L $P finalize --work $W && python3 $L $P sheet --work $W
+```
+
+- 料理は街のガイドと同じ手本（ソフィアのショプスカ・サラダ）を渡す。並べると街のガイドの料理と同じ卓・角度・光になる
+- 表紙にあやとを描くなら、島に在るあやとの絵（`site/public/characters/ayato.webp`・`ayato-walk.webp`）を手本に渡す。
+  手本は白い地に置いてから送る（透過のまま PNG に直すと、抜けたところが黒になる）。題は `finalize` が上の空に焼く
+- 地図は、ChatGPT に描かせるのは海岸・地域の色・地域ごとの料理の小さな絵だけ。回る街の点・点線・地域と街の名前は
+  `finalize` が緯度経度から焼く（点と名前がずれない）。札の位置は頼み書きの `map.labels` `map.cities` で、重なれば止まる

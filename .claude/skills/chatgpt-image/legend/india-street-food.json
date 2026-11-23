@@ -1,0 +1,39 @@
+{
+ "ja": "インド屋台飯100食",
+ "order": "python/data/legends/india-street-food/art_order.json",
+ "book": "python/data/legends/india-street-food/book.json",
+ "ec2_dir": "/home/ubuntu/chatgpt/india-street-food",
+ "model": "bulgaria/sofia:food-shopska-salata",
+ "dish_size": 600,
+ "dishes": {},
+ "cover": {
+  "v": 1,
+  "people": ["site/public/characters/ayato.webp", "site/public/characters/ayato-walk.webp"],
+  "scene": "Scene: a lively Mumbai street-food stall at dusk. A simple wooden cart-stall with a big black iron wok of golden, freshly fried round potato fritters (vada) in bubbling oil, a tray stacked with soft square white bread rolls (pav), small clear glasses of steaming milky tea on the counter, warm glowing bulbs hanging on a string above the stall, a few cheerful passers-by in the middle distance, a hint of old Mumbai buildings and palm trees behind. In the lower right foreground stands Ayato, the main character of the series, seen from behind in a three-quarter back view (a little of his cheek visible), looking happily at the stall. The top third of the picture is a calm, simple dusk sky (soft orange fading to lavender) with nothing in it.",
+  "ayato": "The attached images show Ayato, the main character of this travel series: the first from the front, the second from all sides (the bottom row is from behind). Draw him as exactly this same person: big fluffy curly dark-brown hair, a black puffer jacket with white zipper trim, black trousers, black-and-white sneakers, a silver tablet under his arm. Keep his cute, rounded proportions, but paint him in the same hand-painted style as the rest of the picture (no black outlines, no sticker look, no white border). Do NOT copy the white background of the reference images. ",
+  "alt": "夕方のムンバイの屋台。鉄鍋で揚がるヴァダとパオ、湯気の立つチャイを、あやとが後ろから見ている絵",
+  "title": {"lines": ["インド屋台飯100食、", "食べるまで出られません"], "x": 0.5, "y": 0.05, "scale": 1.0},
+  "og_bias": 0.55
+ },
+ "map": {
+  "v": 1,
+  "bbox": {"west": 67.3, "east": 98.1, "south": 4.6, "north": 33.4},
+  "land": "#DED8C8",
+  "water": "#A0C8E4",
+  "regions": {
+   "north": {"name": "北インド", "color": "#EED08C", "tag": "#F5DEA5",
+             "states": ["Jammu and Kashmir", "Ladakh", "Himachal Pradesh", "Punjab", "Chandigarh", "Haryana", "Delhi", "Uttarakhand", "Uttar Pradesh", "Rajasthan", "Madhya Pradesh"]},
+   "west": {"name": "西インド", "color": "#C08A5B", "tag": "#DEBA96",
+            "states": ["Gujarat", "Maharashtra", "Goa", "Dadra and Nagar Haveli and Daman and Diu"]},
+   "east": {"name": "東インド", "color": "#D2AA1E", "tag": "#EED46E",
+            "states": ["West Bengal", "Odisha", "Bihar", "Jharkhand", "Chhattisgarh", "Sikkim", "Assam", "Arunachal Pradesh", "Nagaland", "Manipur", "Mizoram", "Tripura", "Meghalaya", "Andaman and Nicobar Islands"]},
+   "south": {"name": "南インド", "color": "#96C378", "tag": "#C4E2AA",
+             "states": ["Karnataka", "Kerala", "Tamil Nadu", "Andhra Pradesh", "Telangana", "Puducherry", "Lakshadweep"]},
+   "srilanka": {"name": "スリランカ", "color": "#C85F50", "tag": "#EEAA9B", "country": "lk", "q": "Sri Lanka"}
+  },
+  "prompt": "The attached image is the exact layout of this map: India and Sri Lanka traced from real OpenStreetMap coastlines and borders. Trace it exactly: keep the same coastline, the same borders and the same five colored regions at exactly the same positions, shapes and sizes, and keep the same framing (do not zoom, shift, rotate or crop). Turn it into a warm, hand-painted picture map. The blue is the sea: paint a calm sea with a few soft wave strokes. The pale greyish-beige land is the neighbouring countries: paint it as soft, muted plain land with no detail and no icons. Paint each colored region in its own color: north India wheat gold, west India peanut brown, east India mustard yellow, south India banana-leaf green with touches of coconut white, Sri Lanka red-rice red; the borders between regions are soft lines of a slightly darker shade. Add exactly one small, cute food icon inside each region near its middle: a stack of naan bread in north India, a vada pav burger in west India, a bowl of fish curry in east India, a rolled golden dosa on a banana leaf in south India, a bowl-shaped hopper (appam) in Sri Lanka. No route, no dotted lines, no city dots, no pins, no markers, no rivers drawn as lines, no mountains icons, no compass, no legend, no frame. ",
+  "alt": "インドとスリランカの料理の地図。北・西・東・南インドとスリランカを5つの色に分け、回る13の街を点線でつないだ絵",
+  "labels": {},
+  "cities": {}
+ }
+}
