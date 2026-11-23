@@ -2651,16 +2651,8 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
      "roman": "Raki"
     },
     "body": "アルバニアでいちばん飲まれる蒸留酒。ぶどう・すもも・ブラックベリーのものが多い。町や家で作る。",
-    "facts": [
-     {
-      "label": "どこで",
-      "text": "パノラマ（クルヤ城のそばのレストラン）"
-     }
-    ],
+    "facts": [],
     "maps": "https://www.google.com/maps/search/?api=1&query=Raki+Tirana&hl=ja",
-    "places": [
-     "panorama"
-    ],
     "kinds": [
      "drinks"
     ],
@@ -2882,8 +2874,7 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
      }
     ],
     "roman": "Panorama Krujë",
-    "km": 20.3,
-    "went": false
+    "km": 20.3
    }
   ],
   "map": {
@@ -3937,6 +3928,6 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "b4fec831539d405d"
+ "hash": "e8345644058b66b0"
 }
 /* END GUIDE */;
