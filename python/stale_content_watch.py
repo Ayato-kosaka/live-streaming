@@ -638,18 +638,6 @@ BOOKS: dict[str, Book] = {
         "伝説の企画を面の形に組むだけの口（`projects.ts` の印の付いた行。北欧の数は旅程から数える）。"
         "表を持たないので、古くなるのは上流の `projects.ts` のほう",
     ),
-    "plans.ts": Book(
-        HUMAN, SKIP, 0,
-        "企画の表。**ここで日付を測らない。** あやとの返事（2026-10-07 / #673）が"
-        "「これからの予定はとくになし」で、**先の予定が0件なのは正常な状態**。"
-        "`COVERS`（いちばん先の日付が今日以降か）で見たら、人が何をしても消せない"
-        "赤になり、毎晩の焼き直しがそれで赤くなった（§13 §15）。"
-        "**本当の不具合は0件そのものではなく、0件のときに画面が"
-        "「行ってきた」企画を「いま、いちばん近い企画」として出すこと。**"
-        "見ているのは `site/selftest/leadplan_selftest.mjs`"
-        "（先が0件なら `lib/leadPlan.ts` が何も返さない・画面が `nextPlan()` を"
-        "読んでいない）。日付の表ではなく画面の作りを見る見張りなので、ここには置けない",
-    ),
     "aboutWords.ts": Book(
         HUMAN, SKIP, 0,
         "2026-09-11 に本人が書いた文そのもの。**1字も直さない**ので、古くならない"
@@ -667,7 +655,7 @@ BOOKS: dict[str, Book] = {
         "——行ってしまえば取り直す理由の無い表なので、誰にも直せない"
         "（`nordicShops.ts` の注と同じ罠）。"
         "**その日が来ると嘘になる字は置いていない**（行事は「毎年11月中旬〜12月下旬」まで。"
-        "移る日は企画の表 `plans.ts` が持つ）",
+        "移る日は滞在の表 `stays.ts` が持つ）",
     ),
     "northMacedonia.ts": Book(
         HUMAN, SKIP, 0,
@@ -743,7 +731,6 @@ BOOKS: dict[str, Book] = {
         "そちらは `stream_digest_selftest.py` が見る。日数を2か所に置かない",
     ),
     "place.ts": Book(DERIVED, SKIP, 0, "打たれた場所から国と街を引く。`countries.ts` と `nordic.ts` から"),
-    "planDays.ts": Book(DERIVED, SKIP, 0, "日付→企画の表。`plans.ts` と `nordic.ts` から組む"),
     "directory.ts": Book(DERIVED, SKIP, 0, "島にある紙ぜんぶの一覧。ほかの焼き込みを集めるだけ"),
     "travel.ts": Book(
         DERIVED, SKIP, 0,

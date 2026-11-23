@@ -132,10 +132,6 @@ QUOTES: dict[str, str] = {
 # 黙って落とさずに表へ出す（`docs/island-standards.md` §15）。
 ALLOW: dict[tuple[str, str], str] = {
     (
-        "content/projects.ts",
-        "着いて終わりではない。友だちの家に7泊して、${md(NORDIC_UNTIL)",
-    ): "旅の終わりの決めごと。日が過ぎても「27日に発つまでが北欧旅」は本当のまま",
-    (
         "content/nordicFood.ts",
         "木曜日に出る。旅では9月24日がそれ",
     ): "スウェーデンの木曜の食べもの。旅の木曜が9月24日だったことは、日が過ぎても本当",
@@ -165,8 +161,10 @@ def broken(leg: str) -> bool:
 # **1つの企画の中では、いちばん先の日がその文の期限**として読む。
 _CARRY_DATE = re.compile(r'^\s*(?:date|until|done|when): (?:"(\d{4}-\d{2}-\d{2})"|[A-Z_]+),')
 CARRY_FROM: dict[str, re.Pattern[str]] = {
-    "content/plans.ts": _CARRY_DATE,
-    # 企画の表。告知の欄を持つ企画（祭り・節目・北欧）の文は、ここに在る（`plans.ts` は札の形に組むだけ）。
+    # 付箋の宛先の表。日を持つお題（定例の配信の回。`date:`）の文は、その日を過ぎると嘘になりうる。
+    # 前の置き場は告知の札の表（`content/plans.ts`。#1277 で畳んだ）
+    "content/themes.ts": _CARRY_DATE,
+    # 企画の表。告知の欄（`notice: {`）を持つ企画の文だけ（下の `CARRY_ONLY`）。
     # 同じ当てかたを2本に書き写さない（`python/ts_readers_selftest.py` が数える）
     "content/projects.ts": _CARRY_DATE,
 }

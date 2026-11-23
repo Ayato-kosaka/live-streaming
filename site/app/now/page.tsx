@@ -1,12 +1,9 @@
-import { placeById } from "@/components/island/layout";
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { SayRoom } from "@/components/ui/Say";
 import { say } from "@/content/nights";
 import NowLive from "@/components/live/NowLive";
-import Icon from "@/components/ui/Icon";
-import Link from "next/link";
 import { NowCountry, NowTrail } from "./parts";
 import "./now.css";
 
@@ -64,29 +61,6 @@ export default function NowPage() {
         <NowCountry />
         <NowTrail />
 
-        <section className="pap-sec">
-          <h2 className="pap-h">この先の話</h2>
-          {/* YouTube への札をここから外した。上の「今夜の配信まで あと◯時間」が
-              同じ行き先を持っていて、**1つの面から同じところへ2回出ていた。**
-              いまいる国の旗を大きく出したぶん、面が 150px 伸びている
-              （`docs/island-ux.md` 8.1「入口の面は3画面まで」）。
-              減らすなら、2つあるほうから減らす。 */}
-          <div className="pap-gos" style={{ marginTop: "var(--sp-3)" }}>
-            <Link prefetch={false} className="pap-go" href="/next">
-              <img src="/sprites/tent.webp" alt="" />
-              {/* **札も添え書きも、島の表（`layout.ts`）から引く。**
-                  ここに手で「これから」と書いていたので、島の札を直しても
-                  この1枚だけ古い字が残った（`navtruth.mjs` が拾った）。
-                  入口の札に時制を入れない決まりは
-                  `docs/island-standards.md` 16章。 */}
-              <span>
-                <b>{placeById("next").label}</b>
-                <i>{placeById("next").blurb}</i>
-              </span>
-              <Icon name="right" size={14} />
-            </Link>
-          </div>
-        </section>
       </NowLive>
     </PageShell>
   );

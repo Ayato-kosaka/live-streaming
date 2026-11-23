@@ -23,7 +23,7 @@ import { SCALE_MAX, SCALE_MIN, TILT_MAX } from "./place";
  * （`functions/src/cards.ts` 冒頭）。こちら側でやるのは4つだけ。
  *
  *   1. 絵の付いたカードだけを残す（絵を当てるのはサーバー。`withIcons`）
- *   2. その日の企画を日付で引く（表は面が渡してくる。`content/plans.ts`）
+ *   2. その日の札（企画・旅の1日・居た所）を日付で引く（表は面が渡してくる。`lib/cardDays.ts`）
  *   3. 同じ写真から出たカードを、写真1枚にまとめる（`byPhoto`）
  *   4. 4か所（`/cards`・`/about`・`/friends`・`/me`）で同じ形に出す
  */
@@ -31,9 +31,28 @@ import { SCALE_MAX, SCALE_MIN, TILT_MAX } from "./place";
 /** カードに乗せるキャラクターの絵。焼いてある幅は 128 / 256 / 640 の3つ。 */
 export const cardIcon = (id: string, size: 128 | 256 | 640) => charImg(id, size);
 
-/** 面（server）から渡ってくる、その日の企画。`content/plans.ts` の表。 */
+/** カードに添える札1枚。名前と、その話がある面。 */
 export type PlanBrief = { title: string; href: string };
-export type PlanDays = Record<string, PlanBrief[]>;
+/** 滞在1つぶんの札。日をまたぐので、期間のまま渡す（`lib/cardDays.ts` の注） */
+export type StaySpan = { from: string; to?: string; title: string; href: string };
+/** 面（server）から渡ってくる札の表（`lib/cardDays.ts` の `DAY_BRIEFS`）。日は `briefsOn` で引く */
+export type DayBriefs = { byDay: Record<string, PlanBrief[]>; stays: StaySpan[] };
+/** 呼ぶ側の名前は前のまま（札の表）。中身は `DayBriefs` */
+export type PlanDays = DayBriefs;
+
+/**
+ * その日（`YYYY-MM-DD`）の札。企画と旅の1日が先、いちばん下にその日に居た所。
+ *
+ * 居た所は、その日が入る滞在のうち**いちばんあとに着いたもの**——国を移る日は、前の行の出た日と
+ * つぎの行の着いた日が同じになる（境目の日は入った国が取る。`content/stays.ts` の「行の決まり」）。
+ */
+export function briefsOn(d: DayBriefs, day: string): PlanBrief[] {
+  const stay = d.stays.reduce<StaySpan | undefined>(
+    (a, s) => (s.from <= day && (!s.to || day <= s.to) && (!a || s.from >= a.from) ? s : a),
+    undefined,
+  );
+  return [...(d.byDay[day] ?? []), ...(stay ? [{ title: stay.title, href: stay.href }] : [])];
+}
 
 /** 絵の決まったカード。**画面に出るのはこれだけ。** */
 export type ShownCard = IslandCard & { icon: string };

@@ -12,14 +12,13 @@ import { hasVoice, linesOf } from "@/content/chatter";
 import { Gull } from "./Guide";
 import Today from "@/components/today/Today";
 import { rememberVisit, VISITED } from "@/components/today/visit";
-import { jstNow, readNight } from "@/lib/nightly";
+import { daysUntil, jstNow, readNight } from "@/lib/nightly";
 import { AYATO_ASPECT } from "@/lib/ayatoArt";
 import AyatoSprite, { ayatoFlip, ayatoTurn, newAyatoTurn, setAyatoDir, setAyatoWalking } from "@/components/isle/AyatoSprite";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import HereFolks from "./HereFolks";
 import { here } from "@/lib/here";
-import { daysUntil } from "@/content/plans";
 import { countdownDay } from "@/lib/leadPlan";
 import { NOW_FALLBACK } from "@/content/site";
 /* 「いまどこ」の判定と言い方は1か所（`lib/stay.ts`）。島だけ別の字を言わない。 */
@@ -112,7 +111,6 @@ const spotOfHref = (href: string): SpotId | null => {
  */
 const TODAY_AT: Partial<Record<TodayNews["kind"], SpotId>> = {
   live: "streams",
-  plan: "next",
   recipe: "kitchen",
   past: "map",
 };
@@ -508,8 +506,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
       const now = new Date();
       /* 札に出す「あと何日」。**選ぶのは `lib/leadPlan.ts` の `countdownDay`**——表紙の
          「これから」の段と同じもの（つぎの滞在の着く日と、まだ来ていない回の日）。
-         移動の企画は読まない（#1276）。`content/plans.ts` の `nextPlan()` も読まない
-         （先が0件になると行ってきた企画を返す。#673）。
+         行ってきた企画は入らない（#673）。
          先が無ければ `null`——下の札は `days >= 0` でしか出さないので消える。 */
       setDays(daysUntil(countdownDay(now), now));
       const n = todayNews(now);

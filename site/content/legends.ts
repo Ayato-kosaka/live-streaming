@@ -52,7 +52,7 @@ const pageHref = (l: LegendProject, pg: ProjectPage): string => {
 };
 
 const toLegend = (l: LegendProject): Legend => {
-  const { figure: f, facts, pages, notice: _notice, legend: _legend, ...rest } = l;
+  const { figure: f, facts, pages, legend: _legend, ...rest } = l;
   return {
     ...rest,
     figure: figure(f),

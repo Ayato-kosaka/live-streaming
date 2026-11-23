@@ -8,7 +8,7 @@ import Icon from "@/components/ui/Icon";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import PlanVideos from "./PlanVideos";
 import { TripPlace } from "./TripTools";
-import { PlanCare, StickyCare, useWaiting } from "./OwnerCare";
+import { StickyCare, useWaiting } from "./OwnerCare";
 import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 import Fold from "@/components/ui/Fold";
 import { MAIN_TOOLS, OTHER_TOOLS, TOOLS, type ToolRow, type Tool } from "./tools";
@@ -39,7 +39,7 @@ const LAST = "ayato-desk-tool";
  *
  * ## なぜ「じぶんのこと」から出したか
  *
- * 旅の道具・付箋への返事・企画の段・投げ銭の紐付け・アラートボックス。
+ * 旅の道具・付箋への返事・企画の段（2026-11 に畳んだ。#1277）・投げ銭の紐付け・アラートボックス。
  * この5つが `/me` に縦に積んであって、あやとの画面は 390px 幅で 8,336px、
  * スマホ10画面ぶんあった。あやとの言葉（2026-09-10）
  * 「オーナーマイページ画面が整理されてなさすぎる。ux 悪すぎ。縦長すぎる」。
@@ -58,7 +58,7 @@ const LAST = "ayato-desk-tool";
  *
  * あやと（2026-10-14）「『いまどこ』は…『その他』に格下げ。『OBS』も
  * ほぼ使わないのでその他に格下げ」。札が10枚あっても、旅の途中に押すのは
- * 上の8枚。どれがどちらの棚かは `./tools.ts` が1か所で持つ。
+ * 上の棚の札。どれがどちらの棚かは `./tools.ts` が1か所で持つ。
  *
  * ## 開き直したら、続きから
  *
@@ -69,7 +69,7 @@ const LAST = "ayato-desk-tool";
  * ## 残っている数は、道具の1行目にある
  *
  * 札には出さない。**札に数を出すには、開いていない道具のぶんまで先に
- * 引くことになる**（企画の「いま◯件」は一覧を丸ごと降ろさないと出ない）。
+ * 引くことになる**（たとえば投げ銭の「いま◯件」は一覧を丸ごと降ろさないと出ない）。
  * 開いた道具の1行目で言えば足りる。
  *
  * ### 付箋だけは、札にも出す（2026-10-13）
@@ -83,8 +83,8 @@ const LAST = "ayato-desk-tool";
  * （`GET /stickies/waiting`。本文も名前も返らない）。前は一覧と自分のぶんの
  * 2本を引いて差し引く形だったので、札には出せなかった。
  *
- * **ほかの8つには付けない。** どれも一覧を丸ごと降ろさないと数が出ないし、
- * 9つ全部にバッジが付けば、どれが待っているのかは結局読めない。
+ * **ほかの道具には付けない。** どれも一覧を丸ごと降ろさないと数が出ないし、
+ * 全部にバッジが付けば、どれが待っているのかは結局読めない。
  */
 export default function Desk() {
   const { owner, meRead, reloadMe } = useAuth();
@@ -195,7 +195,6 @@ export default function Desk() {
           {tool === "video" && <PlanVideos />}
           {tool === "sticky" && <StickyCare waiting={waiting} />}
           {tool === "dest" && <NoteThemes />}
-          {tool === "plan" && <PlanCare />}
           {tool === "donor" && <DonorLinks />}
           {tool === "chara" && <Characters />}
           {tool === "fund" && <FundDesk />}
