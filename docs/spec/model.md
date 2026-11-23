@@ -171,4 +171,3 @@ erDiagram
 | M-5 | 表紙の島（`components/isle/cover.ts`）が `Country.region` を1か所読む。値はどの国にも入っていないので空を読むだけ。読む所が外れたら型の欄（`content/countries.ts`）ごと消す | #1276 |
 | 札 | カードの札（その日に居た国と街）が無い。引きかたは `lib/tags.ts` の `stayOn` | 未定 |
 | 配信1回 | 表が無い。videoId が7つの焼き込みに別々に出る | 未定（足すときは `/feature-design`） |
-| M-8・M-33 | 企画の表に面の印と下書きの印が無い。面は伝説の印の付いた企画にしか建たない（`content/legends.ts`） | #1404 |

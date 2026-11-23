@@ -103,6 +103,12 @@ export function BookCover({ b, eaten, drawn }: { b: LegendBook; eaten: Eaten[]; 
       <p className="lb-start">
         <time dateTime={b.meta.start}>{b.start}</time>
       </p>
+      {/* 台紙の頭（企画書4章の最初の1画面）。押すと台紙の節へ */}
+      <a className="lb-cover-card" href="#stamps" aria-label={`${b.sections.stamps} ${eaten.length}/${b.goal.n}`}>
+        {Array.from({ length: 10 }, (_, i) => (
+          <span key={i} className={eaten[i] ? "is-done" : undefined} />
+        ))}
+      </a>
       <p className="lb-updated">
         最終更新 <time dateTime={b.updated}>{jpDate(b.updated)}</time>
       </p>

@@ -63,6 +63,10 @@
 .lb-count.is-sec b { font-size: 40px; }
 
 .lb-start { margin: var(--sp-2) 0 0; font-size: 16px; font-weight: 800; }
+.lb-cover-card { display: flex; justify-content: center; gap: 6px; margin: var(--sp-3) auto 0; padding: 8px 0; min-height: 44px; max-width: 360px; }
+.lb-cover-card span { flex: 1; max-width: 26px; aspect-ratio: 1 / 1; border-radius: 50%; border: 2px dashed color-mix(in srgb, var(--ink) 25%, transparent); }
+.lb-cover-card span.is-done { border: 0; background: var(--gb-c); }
+
 .lb-updated { margin: var(--sp-2) 0 0; font-size: var(--fs-min); color: var(--ink-2); }
 
 /* ---- 1 決まり ---------------------------------------------------------- */
@@ -108,7 +112,7 @@
 .lb-card > li.is-done .gb-pic { width: 100%; height: 100%; border-radius: 50%; }
 .lb-stamp-b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 
-@media (min-width: 720px) { .lb-card { gap: 8px; padding: var(--sp-3); } .lb-card > li { font-size: 12px; } }
+@media (min-width: 720px) { .lb-card { gap: 8px; max-width: 620px; padding: var(--sp-3); } .lb-card > li { font-size: 12px; } }
 
 /* ---- 3 用語・見ておきたい所の札 --------------------------------------- */
 
@@ -188,6 +192,9 @@
 /* ---- 5 街ごとの食べ比べ ------------------------------------------------ */
 
 .lb-compare { display: grid; gap: var(--sp-3); }
+/* 格子の子は既定で中身の幅まで広がる。横に送る並び（`.lb-row`）を、面の幅の中に留める */
+.lb-compare > article,
+.lb-regions > li { min-width: 0; }
 .lb-compare h3 { margin: 0 0 4px; font-size: 17.5px; font-weight: 900; }
 .lb-compare p { margin: 0 0 var(--sp-2); font-size: 14.5px; line-height: 1.7; }
 
@@ -195,7 +202,7 @@
 .lb-row {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(104px, 1fr);
+  grid-auto-columns: minmax(104px, 150px);
   gap: var(--sp-2);
   margin: 0 0 var(--sp-2);
   padding: 0 0 6px;
