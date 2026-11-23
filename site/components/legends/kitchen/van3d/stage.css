@@ -1,0 +1,169 @@
+/* キッチンカーの着せ替え（VanStage）。字の頭は kc-van。押せるものは厚み（--pop-d3）だけで知らせる */
+
+.kc-van {
+  --kc-van-sky: linear-gradient(#8fd0ff, #c4ebff 55%, #effaff);
+  display: grid;
+  gap: 12px;
+}
+
+.kc-van-box {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--kc-van-sky);
+}
+
+.kc-van-img,
+.kc-van-holder,
+.kc-van-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.kc-van-img {
+  object-fit: cover;
+  display: block;
+}
+
+/* 縦はページ送り、横の指だけ回す */
+.kc-van-canvas {
+  display: block;
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.kc-van-canvas:active {
+  cursor: grabbing;
+}
+
+.kc-van[data-mode="live"] .kc-van-img {
+  visibility: hidden;
+}
+
+.kc-van-looks,
+.kc-van-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.kc-van-chip,
+.kc-van-btn,
+.kc-van-move {
+  appearance: none;
+  min-height: 48px;
+  min-width: 48px;
+  border: 1px solid color-mix(in srgb, var(--frame-dark, #ce8327) 35%, transparent);
+  border-radius: 999px;
+  background: #fffdf3;
+  color: var(--ink, #4a3517);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 var(--pop-d3, 5px) 0 var(--frame-dark, #ce8327);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.kc-van-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 0 8px;
+}
+
+.kc-van-btn {
+  padding: 0 18px;
+}
+
+.kc-van-chip[aria-pressed="true"],
+.kc-van-btn[aria-pressed="true"] {
+  background: #ffe9a8;
+}
+
+.kc-van-chip:active,
+.kc-van-btn:active,
+.kc-van-move:active:not(:disabled) {
+  transform: translateY(var(--pop-d3, 5px));
+  box-shadow: none;
+}
+
+.kc-van-chip:focus-visible,
+.kc-van-btn:focus-visible,
+.kc-van-move:focus-visible {
+  outline: 3px solid var(--accent-2, #005f80);
+  outline-offset: 2px;
+}
+
+.kc-van-sw {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  flex: none;
+}
+
+.kc-van-order {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  width: min(100%, 360px);
+}
+
+.kc-van-order li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kc-van-item {
+  flex: 1;
+  font-weight: 700;
+}
+
+.kc-van-move {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+
+/* 動かせない向きは平ら（押せないものに厚みを付けない） */
+.kc-van-move:disabled {
+  box-shadow: none;
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* 撮るとき: 舞台だけを左上に、決まった大きさで */
+.kc-van.is-shot {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2147483647;
+  display: block;
+}
+
+.kc-van.is-shot .kc-van-box {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+  border-radius: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kc-van-chip:active,
+  .kc-van-btn:active,
+  .kc-van-move:active:not(:disabled) {
+    transform: none;
+  }
+}
