@@ -19,13 +19,44 @@
 
 いまは滞在の形で分ける。
 
-- **街が2つ以上ある滞在** … 題名にその街の名前（`ALIASES` 込み）が出るものだけ。
-  どの街にいたかは題名でしか分からないので、分からないものは足さない
+- **街が2つ以上ある滞在** … その回の**議事録の場所**（下の「議事録の場所で街を決める」）。
+  議事録も facts も無い回だけ、題名にその街の名前（`ALIASES` 込み）が出るもの。
+  どちらでも決まらない回は街に入れない（国の配信には残る）
 - **街が1つだけの滞在** … その期間の配信は全部その街のもの。旅の前半は題名が
   「ハンガリー最高だぜ」のように**国名**で書かれていて街の名前が一度も出ない。
   名前で絞ると0本になり、画面が「配信はのこっていない」と嘘をつく。
   ただし**他の国の名前が出ている配信は外す**（滞在の最終日は、次の国へ移った日と
   重なっていることがある。「チェコに着いたので」がブラチスラバの欄に入っていた）
+
+## 議事録の場所で街を決める（2026-11-23、#1400）
+
+題名で決めていたころ、アルメニア（6街を1行で持つ滞在）のエレバンは
+**議事録の場所がエレバンの27本のうち、5本しか一覧に入っていなかった。** 題名は「アルメニア最終日やぁぁ」
+「ショート動画が出せたよ！」のように街を名乗らないので、カスケード・虐殺記念碑・
+市場の回が街の欄に無く、ガイドの記事から引けなかった（記事は一覧に無い回を引くと
+書き出しを止める）。逆に「明日は13時からセヴァン湖」はエレバンで撮った回なのに
+セヴァン湖に入っていた。**題名は予告と行き先を書くので、居た街の証拠にならない。**
+
+居た街は議事録（`streams/YYYY/MM/<stem>.md`）の `- 場所:` に書いてある。形は
+「国・街（街の中の場所→…）→次に行った所」で、**括弧の外がその回に居た所の並び、
+括弧の中は街の中の場所と注釈**（「ロンドンから飛行機で着いた」「トビリシ行きの
+バス乗り場」のような、居なかった街の名前はここに入る）。だから読み方は4段。
+
+1. 頭の国が**別の国**なら、この国のどの街にも入れない（国境を越えた日の回）
+2. **括弧の外**に滞在の街が出ていれば、その街**ぜんぶ**。エレバンから
+   セヴァン湖へ日帰りした回は両方に入る（どちらのガイドもその回を引く）
+3. 括弧の外に1つも無ければ（頭が「アルメニア」「ジョージア」だけの移動日）、
+   括弧の中で**いちばん後ろに出てくる街**——その回が着いた所。
+   「ゴリスの宿→…→タテヴのゲストハウス」はタテフ
+4. どれでも決まらない（街の名前が1つも出ない）回は、題名で決める
+
+議事録が無い回は facts（`<stem>.facts.json` の `place_line`）の場所の行を同じに読む。
+どちらも無い回は 4 と同じく題名で決める。**街が1つの滞在は、ここを通らない**
+（期間の配信が全部その街のもの、のまま）。
+
+議事録の綴りは題名と違うことがある（カズベキ／カズベギ、タテフ／タテヴ）。
+綴りのゆれは `ALIASES` に足す。**議事録の行を滞在の表の綴りに書き換えない**——
+議事録は字幕と本人の言い方を写したもので、こちらの都合で直す字ではない。
 
 本数の上限は置かない。画面は `<details>` で畳んであって、閉じている間の背は
 本数で変わらない。上限で切ると、畳んだ札に出る「N本の配信」が実物より少ない数を
@@ -145,6 +176,11 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_TS = ROOT / "site" / "content" / "cityStreams.ts"
+# 議事録と facts の置き場。見張りは小さな置き場に差し替えて回す
+STREAMS = ROOT / "streams"
+# 議事録・facts のファイル名（`2026-05-22_2201_YFxoJhKOasQ.md`）。video_id は「_」を含みうるので、
+# 頭の日付と時刻を外した残りぜんぶ
+STEM = re.compile(r"^\d{4}-\d\d-\d\d_\d{4}_(?P<vid>.+)$")
 
 # タイトルの書き方がぶれる街の言い換え。
 # ローマ字（Tatev / Goris / Glasgow）は、歩く企画の題名がそう書いていたもの。
@@ -156,11 +192,16 @@ ALIASES = {
     "メグリ（国境）": ["メグリ", "イラン"],
     "セヴァン湖": ["セヴァン"],
     "死海": ["死海"],
-    "南フランス": ["南フランス", "ニース", "マルセイユ", "プロヴァンス"],
-    "タテフ": ["Tatev"],
+    # 後ろの5つは議事録の場所の頭（「フランス・コリウール」）。どれも南フランスの町で、
+    # 題名は「リル=シュル=ラ=ソルギュ(南フランス)」と書いている
+    "南フランス": ["南フランス", "ニース", "マルセイユ", "プロヴァンス",
+                  "ヴァンス", "コリウール", "ポン・デュ・ガール", "リル＝シュル＝ラ＝ソルギュ", "リル=シュル=ラ=ソルギュ"],
+    # タテヴ・カズベギ・ステパンツミンダ（カズベキの町の正式な名前）・ギザは議事録の綴り
+    "タテフ": ["Tatev", "タテヴ"],
+    "カズベキ": ["カズベギ", "ステパンツミンダ"],
     "ゴリス": ["Goris"],
     "グラスゴー": ["Glasgow"],
-    "カイロ": ["ピラミッド"],
+    "カイロ": ["ピラミッド", "ギザ"],
     # 旅の題名が「リトアニアヴィリュニュス観光日」と綴っている（本人の書き方）。
     # 題名は引用なので直さない。こちら側で当てる
     "ヴィリニュス": ["ヴィリュニュス"],
@@ -247,7 +288,88 @@ def names_of(city: str) -> list:
     return base
 
 
-def pick(videos: list, stay: dict, city: str, country: str, others: set) -> list:
+def read_places(root: Path | None = None) -> dict:
+    """video_id → その回の場所の行。議事録の `- 場所:` を先に、無ければ facts の `place_line`。
+
+    **読めないファイルは黙って飛ばさない**（壊れた facts は例外のまま上げる）。
+    飛ばすと、その回は題名で決まり直して、街の欄が静かに入れ替わる。
+    """
+    root = root or STREAMS
+    out = {}
+    for p in sorted(root.glob("*/*/*.facts.json")):
+        m = STEM.match(p.name.removesuffix(".facts.json"))
+        line = json.loads(p.read_text(encoding="utf-8")).get("place_line") if m else ""
+        if line:
+            out[m["vid"]] = line.strip()
+    for p in sorted(root.glob("*/*/*.md")):
+        m = STEM.match(p.stem)
+        if not m:
+            continue
+        for raw in p.read_text(encoding="utf-8").splitlines():
+            if raw.startswith("- 場所:"):
+                if raw[len("- 場所:"):].strip():
+                    out[m["vid"]] = raw[len("- 場所:"):].strip()
+                break
+    return out
+
+
+def outside(line: str) -> str:
+    """括弧の外だけ（入れ子も数える）。外した括弧は「｜」1字に置く——
+    前後の字がつながって、無かった名前ができないように。"""
+    out, depth = [], 0
+    for ch in line:
+        if ch in "（(":
+            depth += 1
+            if depth == 1:
+                out.append("｜")
+        elif ch in "）)":
+            depth = max(0, depth - 1)
+        elif depth == 0:
+            out.append(ch)
+    return "".join(out)
+
+
+def elsewhere(line: str, others: set) -> bool:
+    """1. 場所の頭が別の国か（「フランス・パリ（ロンドンから飛行機で着いた）」がイギリスの最終日に居る）。"""
+    head = re.split(r"[（(→]", line, maxsplit=1)[0].strip()
+    return any(head.startswith(o) for o in others)
+
+
+def named_outside(line: str, cities: list) -> list:
+    """2. 括弧の外に出てくる滞在の街ぜんぶ。日帰りで2つの街に居た回は両方。"""
+    top = outside(line)
+    return [c for c in cities if any(k in top for k in names_of(c))]
+
+
+def last_named(line: str, cities: list) -> list:
+    """3. 括弧の中まで見て、いちばん後ろに出てくる街1つ（その回が着いた所）。無ければ空。"""
+    at, last = max(((line.rfind(k), c) for c in cities for k in names_of(c)), default=(-1, None))
+    return [last] if at >= 0 else []
+
+
+def named_in_title(title: str, cities: list) -> list:
+    """4. 題名に名前（`ALIASES` 込み）が出る街。議事録が決めない回だけここへ来る。"""
+    return [c for c in cities if any(k in title for k in names_of(c))]
+
+
+def cities_in_place(line: str, cities: list, others: set) -> list | None:
+    """場所の行から、この滞在のどの街に居たか。決まらなければ None（題名で決める）。
+
+    読み方は冒頭の「議事録の場所で街を決める」の4段。
+    """
+    if elsewhere(line, others):
+        return []
+    return named_outside(line, cities) or last_named(line, cities) or None
+
+
+def city_of(v: dict, cities: list, others: set, places: dict) -> list:
+    """街が2つ以上ある滞在で、この回をどの街に入れるか。議事録（facts）→ 題名の順。"""
+    line = places.get(v["video_id"])
+    got = cities_in_place(line, cities, others) if line else None
+    return named_in_title(v["title"], cities) if got is None else got
+
+
+def pick(videos: list, stay: dict, city: str, country: str, others: set, places: dict | None = None) -> list:
     """その街の配信を選ぶ。決め方は冒頭の docstring にある。"""
     lo = stay["from"]
     hi = stay["to"] or "9999-12-31"
@@ -255,7 +377,7 @@ def pick(videos: list, stay: dict, city: str, country: str, others: set) -> list
     keys = names_of(city)
     named = [v for v in window if any(k in v["title"] for k in keys)]
     if len(stay["cities"]) > 1:
-        return named
+        return [v for v in window if city in city_of(v, stay["cities"], others, places or {})]
     # 街が1つの滞在。名前で当たったものは無条件で残し、残りは
     # 「他の国の名前が出ていない」ものだけ足す（移動日を隣の国から借りない）。
     #
@@ -301,6 +423,9 @@ def main() -> int:
     logger.info("配信 %d 本、国 %d カ国", len(videos), len(countries))
 
     names = {c["name"] for c in countries.values()}
+    # 街が2つ以上ある滞在は、議事録の場所で街を決める（冒頭の docstring）
+    places = read_places()
+    logger.info("議事録・facts の場所の行 %d 本", len(places))
     # 街の欄が0本になると画面は「配信はのこっていない」と言い切る。
     # 本当に0なのか、拾えていないだけなのかは目で見ないと分からないので、必ず残す。
     empty = []
@@ -309,7 +434,7 @@ def main() -> int:
         cities = {}
         for stay in c["stays"]:
             for city in stay["cities"]:
-                chosen = pick(videos, stay, city, c["name"], names - {c["name"]})
+                chosen = pick(videos, stay, city, c["name"], names - {c["name"]}, places)
                 if not chosen:
                     empty.append(f"{slug}/{city}")
                     continue
@@ -331,7 +456,7 @@ def main() -> int:
     OUT_TS.write_text(
         "/**\n"
         " * 街ごとの配信。python/build_city_streams.py が BigQuery から作る。\n"
-        " * 街が2つ以上ある滞在は、題名にその街の名前が出る配信だけ。\n"
+        " * 街が2つ以上ある滞在は、議事録の `- 場所:` に出る街（議事録も facts も無い回だけ題名）。\n"
         " * 街が1つの滞在は、その期間の配信ぜんぶ（題名が国名で書かれている時期があるため）。\n"
         " * 手で編集せず、スクリプトを流し直すこと。\n"
         " */\n"
