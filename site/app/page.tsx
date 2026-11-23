@@ -11,7 +11,7 @@ import { LiveNumber } from "@/lib/liveStats";
 import { IslandFooter } from "@/components/ui/PageShell";
 import { LINKS, STATS_FALLBACK } from "@/content/site";
 import { HERO, HOME } from "@/content/voice";
-import { guidesOf } from "@/components/isle/spec";
+import { GUIDE_LABEL, guidesOf } from "@/components/isle/spec";
 import NextUp from "@/components/live/NextUp";
 import Icon from "@/components/ui/Icon";
 import Chapter from "@/components/home/Chapter";
@@ -222,7 +222,10 @@ export default function Home() {
 
               前は「いま」の章にも同じ案内の板（`GuideLink`）を置いていた。［いまここ］の札が
               その面へ行くので、同じ行き先の板が1画面のうちに2枚並ぶ。こちらに寄せた（#1276） */}
+          {/* 行き先のボタンの字は、島の札と同じ「この国の歩きかた」（`spec.ts` の `GUIDE_LABEL`）。
+              国の名前は札の題が言っているので、ボタンでくり返さない */}
           <NextUp
+            guideLabel={GUIDE_LABEL}
             guides={guidesOf(baked.slug).map((g) => ({
               href: g.href,
               name: g.name,

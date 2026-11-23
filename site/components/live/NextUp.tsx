@@ -8,6 +8,7 @@ import { upNext, type StayCard, type UpNext } from "@/lib/leadPlan";
 import { guideOn, type GuideSpan } from "@/lib/guideDay";
 import Icon from "@/components/ui/IconCore";
 import Wrote from "@/components/ui/Wrote";
+import Phrase from "@/components/ui/Phrase";
 
 /** その国の案内の面。**面（サーバ側）で `guidesOf` から引いて渡す**（島の札と同じ表・同じ式） */
 export type GuideItem = GuideSpan & {
@@ -46,7 +47,7 @@ export type GuideItem = GuideSpan & {
  * 行き先は `components/isle/spec.ts` の `guidesOf`（面で引いて渡す）から、
  * `lib/guideDay.ts` の `guideOn` で選ぶ。島の札（`guideOf`）と同じ1本で、写しを持たない。
  */
-export default function NextUp({ guides }: { guides: GuideItem[] }) {
+export default function NextUp({ guides, guideLabel }: { guides: GuideItem[]; guideLabel: string }) {
   const [view, setView] = useState<UpNext>(() => upNext(BUILT_AT));
   /** 今日。**画面が出るまでは `null`**——日数（「あと3日」）は、今日を知ってから出す */
   const [today, setToday] = useState<Date | null>(null);
@@ -67,12 +68,25 @@ export default function NextUp({ guides }: { guides: GuideItem[] }) {
   return (
     <section className="nextup">
       {here && (
-        <StayBlock stay={here} role="here" guide={guideOf(guides, here, today ?? BUILT_AT)} today={today} />
+        <StayBlock
+          stay={here}
+          role="here"
+          guide={guideOf(guides, here, today ?? BUILT_AT)}
+          label={guideLabel}
+          today={today}
+        />
       )}
       {next && (
         <>
           <p className="nextup-eyebrow nextup-eyebrow2">つぎ</p>
-          <StayBlock stay={next} role="next" guide={guideOf(guides, next, noonOf(next.from))} today={today} small />
+          <StayBlock
+            stay={next}
+            role="next"
+            guide={guideOf(guides, next, noonOf(next.from))}
+            label={guideLabel}
+            today={today}
+            small
+          />
         </>
       )}
       {lead && (
@@ -110,6 +124,13 @@ function guideOf(guides: GuideItem[], stay: StayCard, on: Date): GuideItem | nul
 /** 着く日の日本時間の正午。0時ちょうどだと、日の境目で前の日の行に当たることがある */
 const noonOf = (day: string) => new Date(`${day}T12:00:00+09:00`);
 
+/** 札の題を、折ってよい所で切ったもの。［つぎ］は「◯◯へ」 */
+function titleParts(stay: StayCard, role: "here" | "next"): string[] {
+  const parts = stay.place === stay.countryName ? [stay.place] : [`${stay.countryName}・`, stay.place.slice(stay.countryName.length + 1)];
+  if (role === "next") parts[parts.length - 1] += "へ";
+  return parts;
+}
+
 /** 「2026-11-21」→「11月21日」 */
 const md = (d: string) => `${Number(d.slice(5, 7))}月${Number(d.slice(8, 10))}日`;
 
@@ -122,12 +143,14 @@ function StayBlock({
   stay,
   role,
   guide,
+  label,
   today,
   small,
 }: {
   stay: StayCard;
   role: "here" | "next";
   guide: GuideItem | null;
+  label: string;
   today: Date | null;
   small?: boolean;
 }) {
@@ -152,7 +175,10 @@ function StayBlock({
         )}
       </span>
       <span className="nextup-body">
-        <b className="nextup-title">{role === "next" ? `${stay.place}へ` : stay.place}</b>
+        {/* 折ってよい所は「・」のあとだけ。ひと続きにすると 390px で「ソフ／ィア」と街の名前の中で折れた */}
+        <b className="nextup-title">
+          <Phrase parts={titleParts(stay, role)} />
+        </b>
         <i className="nextup-when">{md(stay.from)}から</i>
         {/* ひとことは滞在の行が持つ（`note`）。無ければ案内の面の1行 */}
         <Wrote t={stay.note ?? guide?.lead} className="nextup-note" />
@@ -160,7 +186,7 @@ function StayBlock({
       {guide && (
         <span className="nextup-go" aria-hidden>
           {guide.art}
-          {guide.name}の歩きかた
+          {label}
           <Icon name="right" size={14} />
         </span>
       )}
