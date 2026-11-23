@@ -1,0 +1,126 @@
+# 島で受ける投げ銭を、Stripe のテスト環境で、払ってからテスト用のアラートに出るまで、
+# 本番の面と口で通して確かめる（#1405 段2。決定の記録 0017）。
+#
+# 中身は `tools/tip/tip_e2e.mjs`（頭の説明に、1回の回しでやること・ログに出さないもの・止まるところ）。
+#
+#   e2e   … Firebase の管理の鍵で、試し専用の人（admin なし・名前も顔も出さない）を作り、
+#           対照2つ（禁止ワード・額 99）と ¥100・¥1,000・¥10,000 の3回を回して、片づける。
+#           表は job summary に出す。録画と絵は artifact に置くだけ（この job は書き込みの権限を持たない）
+#   media … 録画と絵を、枝 `review-media/tip-e2e` に1コミットだけ置く（orphan・force push）。
+#           作業箱は Actions の artifact を落とせないので、git で取れる形にする（`alert_check.yml` と同じ置きかた）
+#
+# **押すと本番に書く**（テストの支払い3回ぶんの `islandSiteTips`・テスト用の合言葉の `islandAlertFeed`・
+# 試しの人。試しの人は終わりに消す）。台帳・豚・本番のアラート・配信のチャットには入らない
+# （入らないことを、この回し自身が前と後で数えて確かめる）。
+#
+# ログは公開。鍵・合言葉・uid・メール・Stripe の ID は、道具が見つけたその場で伏せる（`::add-mask::`）。
+name: 島の投げ銭を通しで確かめる
+
+on:
+  workflow_dispatch:
+    inputs:
+      site:
+        description: 確かめる面（本番の入口）
+        required: true
+        default: https://ayato-arigato.com
+
+permissions:
+  contents: read
+
+concurrency:
+  # 試しの人とテストの1枚を、2本で取り合わない
+  group: tip-e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない（selftest.yml と同じ）
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      # firebase-admin は口（functions/）と同じ版を使う。playwright-core は tools/sprites の 1.56.0（上げない）
+      - name: 依存を入れる
+        run: |
+          set -euo pipefail
+          (cd tools/sprites && npm ci --no-audit --no-fund)
+          (cd functions && npm ci --omit=dev --no-audit --no-fund)
+
+      # 置き場は作業箱・selftest.yml と同じ /opt/pw-browsers。chromium を入れると ffmpeg（録画）も入る
+      - name: ブラウザを入れる
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /opt/pw-browsers
+          sudo chown "$(id -u):$(id -g)" /opt/pw-browsers
+          node tools/sprites/node_modules/playwright-core/cli.js install --with-deps chromium
+          chrome="$(cd tools/sprites && node -e 'import("playwright-core").then((m) => console.log(m.chromium.executablePath()))')"
+          test -x "$chrome"
+          echo "CHROME=$chrome" >> "$GITHUB_ENV"
+
+      - name: Google Cloud 認証
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      # 終了コード 0=合格 / 1=落ちた条件がある / 2=回せなかった。表は道具が job summary に書く
+      - name: 通しで確かめる
+        id: run
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+          TIP_E2E_SITE: ${{ inputs.site }}
+          TIP_E2E_OUT: /tmp/tip-e2e
+        run: node tools/tip/tip_e2e.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tip-e2e-pub
+          path: /tmp/tip-e2e/pub
+          if-no-files-found: ignore
+          retention-days: 7
+
+  media:
+    needs: e2e
+    if: always() && needs.e2e.result != 'skipped'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: tip-e2e-pub
+          path: /tmp/tip-e2e/pub
+
+      # 1コミットだけの orphan を force push する（前の回は残さない。枝が太らない）。
+      # GITHUB_TOKEN の push はワークフローを起こさない
+      - name: 録画と絵を枝に置く
+        env:
+          TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -uo pipefail
+          pub=/tmp/tip-e2e/pub
+          mkdir -p "$pub"
+          if [ -z "$(ls -A "$pub")" ]; then
+            echo "置くものが無い（e2e が録画の前に止まった）"
+            exit 0
+          fi
+          who=(-c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com')
+          git -C "$pub" init -q -b media
+          git -C "$pub" add -A
+          git -C "$pub" "${who[@]}" commit -q -m "島の投げ銭の通しの録画（${SHA:0:7}）"
+          if git -C "$pub" push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/review-media/tip-e2e"; then
+            echo "置いた: review-media/tip-e2e" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::review-media/tip-e2e への push に失敗した"
+          fi
