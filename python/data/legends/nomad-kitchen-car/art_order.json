@@ -1,0 +1,212 @@
+{
+ "style": "Calm editorial illustration for a grown-up travel art book: transparent watercolour and gouache with no outlines, warm paper tone, muted natural palette, soft natural daylight and gentle shading; shapes slightly simplified, keeping one characteristic feature per building. Not photorealistic, no lens blur, no gloss. Do not paint a specific real landmark, shop or street as it really looks. Absolutely no text anywhere: no letters, no numbers, no words, no signboards with writing, no menus with writing, no logos, no license plates, no watermark. No recognisable people: if people appear at all they are tiny distant figures with no visible faces; never draw a specific person. No cloth of any kind: no napkin, no tablecloth, no placemat, no tea towel. The kitchen car's body, hatch and signboard stay blank: its name is not decided yet.",
+ "food_style": "A square 1:1 food picture in the same setup as the island's city-guide dishes: camera at a 45-degree overhead angle, the food centred and filling about 60% of the frame, a bare warm light-oak table and nothing else on it, soft daylight from the upper left, bright and airy, the far side fading into a soft blur. Plain off-white stoneware or plain brown paper without print. No hands, no people. No cloth of any kind: no napkin, no tablecloth, no placemat, no tea towel. Absolutely no text anywhere: no letters, no numbers, no words, no signboards with writing, no menus with writing, no logos, no license plates, no watermark.",
+ "skin_style": "Flat island style for textures that are wrapped onto the 3D van: no outlines, flat colours (at most two tones per colour), no perspective, no shading, no highlights, no reflections. Absolutely no text anywhere: no letters, no numbers, no words, no signboards with writing, no menus with writing, no logos, no license plates, no watermark. Tiles must repeat seamlessly on all four edges. Bands are horizontal 3:2 strips for the lower body and the awning valance. The finished textures are packed by tools/van3d/skin_pack.py into the 1536x1024 van template (1 m = 150 px; regions LEFT, BACK, ROOF, RIGHT, FRONT as in the trial template van3d/SKIN.md, re-cut from dims.json by the 3D担当). Keep important motifs 45 px inside each region edge, where the body corners curve.",
+ "cover": {
+  "draw": "Wide 16:9 cover (1600x900). On the sunny harbour promenade of a southern European seaside town, a small cream box-van kitchen car is parked with its side serving hatch open: awning lifted, counter folded down, a soft glow inside. Behind it pastel houses with terracotta roofs climb a hillside, small wooden fishing boats float in a little harbour, and a deep blue Mediterranean sea with a bright sky fills the background, so the picture reads at first glance as a European sea. Late-morning light, a few potted lemon trees. No people near the van. Keep the top third a calm sky for the title, which we bake ourselves. No lettering on the van or the signboard."
+ },
+ "map": {
+  "draw": "Portrait 4:5 picture map of western, northern and south-eastern Europe in the same art-book style, traced over OpenStreetMap coastlines inside the bounding box: sea in soft blue-grey, land in warm paper colour, very faint country borders, a few soft hills and lakes. Keep the true shape and direction of the coasts. Draw no route line, no dots, no markers, no labels, no numbers, no compass letters and no legend: the dotted line (book.json route.line) and the three place names are baked by finalize from latitude and longitude.",
+  "bbox": {
+   "west": -11.5,
+   "east": 28.5,
+   "south": 34.5,
+   "north": 62.5
+  }
+ },
+ "views": [
+  {
+   "id": "lake-town",
+   "title": "湖のある町",
+   "draw": "4:3. A quiet lake town in the European countryside: wooden boathouses, a slender church spire and forested hills mirrored in still water; the small cream kitchen car is parked on the lakeside path with its hatch open."
+  },
+  {
+   "id": "sea-town",
+   "title": "海が見える町",
+   "draw": "4:3. A hillside town above the sea: narrow lanes step down between white and ochre houses to a blue bay; the kitchen car is parked at a small lookout with the sea spread out below."
+  },
+  {
+   "id": "mountain-town",
+   "title": "山の途中の町",
+   "draw": "4:3. A small stone village halfway up a mountain trail: pine slopes, distant peaks, a wooden trail post without writing, a bench where hikers rest; the kitchen car is parked beside the trail."
+  },
+  {
+   "id": "local-spot",
+   "title": "地元の穴場",
+   "draw": "4:3. A hidden local spot at golden hour: a riverside meadow below an old stone bridge, two wooden picnic tables; the kitchen car is parked under a big tree."
+  },
+  {
+   "id": "italy-seaside",
+   "title": "イタリアの海辺",
+   "draw": "4:3. An Italian-style seaside promenade: striped beach umbrellas, turquoise water, lemon trees in pots, pastel facades; the kitchen car by the beach with plain glass bottles of dark soda on ice (bottles without labels)."
+  }
+ ],
+ "foods": [
+  {
+   "id": "taiyaki",
+   "title": "たい焼き",
+   "draw": "three golden-brown fish-shaped taiyaki on plain brown paper, one broken open to show chocolate, banana and strawberry inside",
+   "ref": "https://en.wikipedia.org/wiki/Taiyaki"
+  },
+  {
+   "id": "takoyaki",
+   "title": "たこ焼き",
+   "draw": "six round takoyaki in a plain paper boat with a wooden pick: three dusted with powdered sugar and drizzled with chocolate sauce, three topped with tomato sauce and melted cheese",
+   "ref": "https://en.wikipedia.org/wiki/Takoyaki"
+  },
+  {
+   "id": "crepe",
+   "title": "クレープ",
+   "draw": "a thin crêpe folded into a cone in a plain paper sleeve, filled with sliced banana and chocolate spread",
+   "ref": "https://en.wikipedia.org/wiki/Cr%C3%AApe"
+  },
+  {
+   "id": "waffle",
+   "title": "ワッフル",
+   "draw": "a Liège-style waffle with a caramelised pearl-sugar crust, topped with strawberries, banana slices and chocolate sauce, on a plain paper tray",
+   "ref": "https://en.wikipedia.org/wiki/Waffle"
+  },
+  {
+   "id": "pizza",
+   "title": "ピザ",
+   "draw": "a small round Neapolitan-style margherita pizza with tomato, mozzarella and basil on a plain wooden board",
+   "ref": "https://en.wikipedia.org/wiki/Pizza_Margherita"
+  }
+ ],
+ "vehicles": [
+  {
+   "id": "small-van",
+   "title": "小さい車",
+   "draw": "4:3, oblique side view. A compact minivan the size of a family people-carrier, converted into a tiny food stall: rear tailgate lifted as a roof, a small fold-out counter, one folding stool. Cream paint, no lettering."
+  },
+  {
+   "id": "box-van",
+   "title": "窓口つきの箱バン",
+   "draw": "4:3, oblique side view. A small box-van kitchen car: short cab in front, a boxy body with the side serving hatch open (awning up, counter down), a roof vent. Cream paint with a pale band, no lettering."
+  },
+  {
+   "id": "campervan-tent",
+   "title": "キャンピングバン＋テントの屋台",
+   "draw": "4:3, oblique side view. A camper van parked next to a small white pop-up market tent with a folding table and a griddle. No lettering on the van or the tent."
+  },
+  {
+   "id": "camper-trailer",
+   "title": "キャンピングカー＋販売トレーラー",
+   "draw": "4:3, oblique side view. A mid-size motorhome towing a small rounded food trailer with its serving hatch open. No lettering."
+  }
+ ],
+ "looks": [
+  {
+   "id": "nordic",
+   "title": "北欧風",
+   "exterior": {
+    "mode": "tile",
+    "draw": "Seamless square tile (1:1): simple Scandinavian folk flowers, tulips and leaves in red, deep indigo and soft green on a white ground. Band (3:2): the same flowers in a single row between two thin indigo lines. Awning valance: red-and-white stripes."
+   },
+   "interior": {
+    "draw": "Inner wall: pale birch-wood boards with the same folk-flower band at about 30% strength at shoulder height; white counter."
+   },
+   "ref": [
+    "https://commons.wikimedia.org/wiki/Category:Rosemaling"
+   ]
+  },
+  {
+   "id": "majolica",
+   "title": "イタリアのマジョリカ焼き",
+   "exterior": {
+    "mode": "panel",
+    "draw": "Each long side (LEFT and RIGHT regions) painted as one picture: a white glazed ground with large hand-painted Italian maiolica motifs, lemons with glossy leaves, blossoms and small cobalt scrolls, in lemon yellow, cobalt blue and leaf green with brushy edges like painted ceramic. FRONT and BACK: one smaller matching lemon motif each. ROOF: plain white with a thin yellow border. Awning valance: yellow-and-white."
+   },
+   "interior": {
+    "draw": "Inner walls after the flower room of Sanssouci Palace (the Voltaire room): warm yellow lacquered panels with colourful carved flowers, fruit garlands and small birds (parrot, goldfinch, crane) flattened into the island style with no perspective and no shading; thin soft-gold trim."
+   },
+   "ref": [
+    "https://www.deutsche-digitale-bibliothek.de/item/I2GDFFLJYWYQAC2A22EHWKMFSQOJOCZG",
+    "https://de.wikipedia.org/wiki/Schloss_Sanssouci",
+    "https://commons.wikimedia.org/wiki/Category:Ceramics_of_Vietri_sul_Mare"
+   ]
+  },
+  {
+   "id": "azulejo",
+   "title": "ポルトガルのタイル",
+   "exterior": {
+    "mode": "tile",
+    "draw": "Seamless square tile (1:1): a Portuguese azulejo pattern repeating every four tiles, cobalt blue on white with thin grid lines between the tiles. Band (3:2): a blue border frieze. Awning valance: blue-and-white stripes."
+   },
+   "interior": {
+    "draw": "Inner wall: the lower half in the same blue-and-white tiles, the upper half plain white."
+   },
+   "ref": [
+    "https://commons.wikimedia.org/wiki/Category:Azulejo_patterns"
+   ]
+  },
+  {
+   "id": "wa",
+   "title": "和風",
+   "exterior": {
+    "mode": "tile",
+    "draw": "Seamless square tile (1:1): Japanese seigaiha waves and asanoha hemp-leaf pattern in white on deep indigo. Band (3:2): a single row of seigaiha. Awning valance shaped like a short noren curtain in indigo with a white wave pattern, no characters."
+   },
+   "interior": {
+    "draw": "Inner wall: light wood boards with a faint seigaiha pattern at about 30% strength; a short indigo noren over the hatch, no characters."
+   },
+   "ref": [
+    "https://commons.wikimedia.org/wiki/File:Japanese_Wave_Pattern.svg",
+    "https://commons.wikimedia.org/wiki/Category:Seigaiha"
+   ]
+  }
+ ],
+ "photos": {
+  "rule": "キッチンカーの実際の様子の写真の候補（Wikimedia Commons。public domain・CC0・CC BY・CC BY-SA だけ）。運営が 2026-11-23 に 500px の縮小で、人の顔・店の名前・ロゴが分からないことを見た。絵担当は 960px で見直し、4〜8枚を photos.json に選ぶ（checked に見た日）。面に添えるのは撮った人と許諾だけ",
+  "candidates": [
+   {
+    "id": "brussels-waffle-van",
+    "page": "https://commons.wikimedia.org/wiki/File:Belgian_Waffle_Van.jpg",
+    "by": "Super Nintendo Chalmers",
+    "lic": "CC0",
+    "taken": "2013-07-07",
+    "note": "ブリュッセルの黄色いワッフルのバン。車の字は「温かいワッフル」の一般の語と値段だけ。人は遠くに小さく顔は分からない。元の幅は720px"
+   },
+   {
+    "id": "citroen-hy-van",
+    "page": "https://commons.wikimedia.org/wiki/File:Citroen_HY_1500_(13639065644).jpg",
+    "by": "FaceMePLS from The Hague, The Netherlands",
+    "lic": "CC BY 2.0",
+    "taken": "2014-03-27",
+    "note": "庇を開けた古い箱型のバン。字は「肉」の一般の語だけ。人なし。車の番号の板が写る"
+   },
+   {
+    "id": "peugeot-crepe-truck",
+    "page": "https://commons.wikimedia.org/wiki/File:Peugeot_J5_Cr%C3%AAperie.jpg",
+    "by": "BarnCas",
+    "lic": "CC BY-SA 4.0",
+    "taken": "2014-07-15",
+    "note": "窓口を開けた赤いトラックと机と椅子。人なし。窓口の中の小さな札が読めないかを 960px で見る"
+   },
+   {
+    "id": "renault-juva-stall",
+    "page": "https://commons.wikimedia.org/wiki/File:Recycl%C3%A9e..._Juva_4_Renault_(34221529145).jpg",
+    "by": "Sylvie burr",
+    "lic": "CC0",
+    "taken": "2017-04-23",
+    "note": "古い白いバンを屋台にしたもの。左の奥の暗い所に人がいないかを 960px で見る"
+   },
+   {
+    "id": "faro-churros-stall",
+    "page": "https://commons.wikimedia.org/wiki/File:Faro_100_8378_(3832645135).jpg",
+    "by": "Dubas from Oviedo, España",
+    "lic": "CC BY-SA 2.0",
+    "taken": "2009-08-06",
+    "note": "ポルトガルのファロの揚げ菓子の屋台（閉まっている）。字は料理の一般の名前だけ。人なし"
+   },
+   {
+    "id": "dresden-three-wheeler",
+    "page": "https://commons.wikimedia.org/wiki/File:Tempo_Hanseat.jpg",
+    "by": "Fotostudio Štěpán Bartoš",
+    "lic": "CC BY-SA 3.0",
+    "taken": "2007-06-23",
+    "note": "ドレスデンの古い三輪の販売車。人なし。扉の丸い印が店のロゴかを 960px で見る"
+   }
+  ]
+ }
+}
