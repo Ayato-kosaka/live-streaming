@@ -43,7 +43,11 @@
             "stay": "t3-full-back-stay.webm",
             "outro": "t3-full-back-outro.webm"
           },
-          "front": null
+          "front": {
+            "intro": "t3-full-front-intro.webm",
+            "stay": "t3-full-front-stay.webm",
+            "outro": "t3-full-front-outro.webm"
+          }
         }
       },
       "revealAt": 1.4,
