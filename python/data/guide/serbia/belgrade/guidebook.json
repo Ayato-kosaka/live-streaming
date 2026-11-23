@@ -5051,40 +5051,7 @@
       }
      ]
     },
-    "stores": [
-     {
-      "key": "trisesira",
-      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
-      "local": "Tri šešira",
-      "area": "skadarlija",
-      "lat": 44.818149,
-      "lon": 20.464616,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap「Три шешира」",
-        "url": "https://www.openstreetmap.org/way/150590534",
-        "seen": "2026-11-22"
-       }
-      ],
-      "why": {
-       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
-       "src": [
-        {
-         "name": "Wikipedia「Skadarlija」",
-         "url": "https://en.wikipedia.org/wiki/Skadarlija",
-         "seen": "2026-11-22"
-        },
-        {
-         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
-         "url": "https://trisesira.rs/jelovnik/",
-         "seen": "2026-11-22"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
-     }
-    ],
+    "stores": [],
     "went": false,
     "pork_note": {
      "text": "中身はチーズ・肉・ほうれん草・じゃがいもなど。肉の種類は確かめていない。",
@@ -5099,7 +5066,7 @@
    },
    {
     "key": "pita",
-    "name": "ピタ（チーズや肉のパイ）",
+    "name": "チーズのピタ（薄い生地のパイ）",
     "local": {
      "text": "Pita",
      "roman": "Pita",
@@ -7219,7 +7186,7 @@
    "why": "店の名前と、いまも置いていることを書いた品書きが見つからない（スーパーのネットの品書きは画面が出てから読む形で、この箱から読めなかった）"
   },
   {
-   "what": "サルマ・ピーマンの肉詰め・ギバニツァ・トゥファヒヤ・ヴァニリツェを出す店",
+   "what": "ブレク（パン屋の店の名前と品書き）と、サルマ・ピーマンの肉詰め・ギバニツァ・トゥファヒヤ・ヴァニリツェを出す店",
    "why": "献立の読めた店には載っていなかった。ドヴァ・イェレナ（スカダルリヤ）の2026年の献立は https で開けないので、店に結んでいない"
   },
   {

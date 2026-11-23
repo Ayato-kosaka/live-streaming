@@ -2524,18 +2524,11 @@ export const BELGRADE: Guidebook = /* BEGIN GUIDE */
     "body": "チーズ・肉・ほうれん草・じゃがいもを薄い生地で包んで焼いたパイ。飲むヨーグルトと食べるのが昔からの食べかた。",
     "facts": [
      {
-      "label": "どこで",
-      "text": "トリ・シェシラ（スカダルリヤのカファナ）"
-     },
-     {
       "label": "豚肉",
       "text": "中身はチーズ・肉・ほうれん草・じゃがいもなど。肉の種類は確かめていない。"
      }
     ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Burek+Beograd&hl=ja",
-    "places": [
-     "trisesira"
-    ],
     "kinds": [
      "quick"
     ],
@@ -2554,7 +2547,7 @@ export const BELGRADE: Guidebook = /* BEGIN GUIDE */
    },
    {
     "id": "pita",
-    "name": "ピタ（チーズや肉のパイ）",
+    "name": "チーズのピタ（薄い生地のパイ）",
     "local": {
      "text": "Pita",
      "lang": "sr",
@@ -4043,6 +4036,6 @@ export const BELGRADE: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-22",
  "updated": "2026-11-23",
- "hash": "0e3d24d7dd8b3add"
+ "hash": "7a02fd481ea8ea77"
 }
 /* END GUIDE */;
