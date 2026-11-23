@@ -14,6 +14,7 @@
 | 台本が無い | 2 |
 | 出どころを集める | やりたいことの `src` は、窓の事実の出どころを重ねずに集める |
 | 座標 | 国の表の枠の外の点を捨てる。全部外なら書かずに 1。在る鍵は引き直さない |
+| 日帰りの町の地図 | 日帰りの町の店には、泊まる街ではなくその町の名前を足す。問いに入っている町の名前は重ねない。`TRIP_AREAS` に無い町の店 → 1 |
 """
 
 from __future__ import annotations
@@ -57,6 +58,25 @@ todos = [todo("t1", "見たい！", "見出し", {"what": [t("事実1", "a")], "
 see = [{"key": "x", "photo": photo("ph1", "写真"), **at("p1")}]
 eat = [dish("d1", "料理", "Dish", ["local"], False, False, t("料理の字", "a"), ["shop"])]
 book = {"todo": todos, "see": see, "eat": {"items": eat}}
+compose = {"title": "x"}
+'''
+
+# 日帰りの町（cities.json の trips の「far」）の店と見たいもの。見たいものは店と同じ道具（maps(問い, 町)）で作る
+TRIP = '''
+SEEN = "2026-11-23"
+TOWN = "testville"
+MAPS_AREA = "Test"
+TRIP_AREAS = {"far": "Faraway"}
+DISH_LOCAL_SRC = "a"
+SRC = {"a": ("出どころA", "https://example.org/a")}
+STORES = {
+    "shop": store("shop", "店", "Shop", "center", "p1", "店の理由。", s("a")),
+    "named": store("named", "名前入りの店", "Cafe Test", "center", "p1", "店の理由。", s("a")),
+    "tripshop": store("tripshop", "日帰りの店", "Market of Faraways", "far", "p1", "店の理由。", s("a")),
+    "far2": store("far2", "日帰りの橋", "Old Bridge", "far", "p1", "店の理由。", s("a")),
+}
+see = [{"key": "tripshop", "town": "far", "maps": maps("Market of Faraways", "far")}]
+book = {"see": see, "stores": STORES}
 compose = {"title": "x"}
 '''
 
@@ -105,6 +125,18 @@ def main() -> int:
         ok("写真の alt を台本の字で入れる", book["see"][0]["photo"]["alt"] == "写真", book["see"][0]["photo"])
         ok("店の座標と出どころ", book["eat"]["items"][0]["stores"][0]["coord_src"][0]["url"].endswith("/node/1"), book["eat"]["items"][0]["stores"][0])
         ok("todo の既定の街は TOWN", book["todo"][0]["town"] == "testville", book["todo"][0]["town"])
+
+        # 日帰りの町の地図（ティラナのクルヤのバザール。店に「Tiranë」を足して、見たいものと別の先を指した）
+        k2 = city(tmp, TRIP)
+        b2, _ = gb.run(k2, tmp)
+        st = b2["stores"]
+        q = lambda u: u.split("query=")[1].split("&")[0]  # noqa: E731
+        ok("日帰りの町の店には、その町の名前を足す（泊まる街を足さない）", q(st["tripshop"]["maps"]) == "Market+of+Faraways", st["tripshop"]["maps"])
+        ok("日帰りの町の店と、同じ場所の見たいものは同じ先", st["tripshop"]["maps"] == b2["see"][0]["maps"], b2["see"][0]["maps"])
+        ok("泊まる街の店には泊まる街の名前を足す", q(st["shop"]["maps"]) == "Shop+Test", st["shop"]["maps"])
+        ok("問いに入っている町の名前は重ねない", q(st["named"]["maps"]) == "Cafe+Test", st["named"]["maps"])
+        ok("日帰りの町の名前が問いに無ければ足す", q(st["far2"]["maps"]) == "Old+Bridge+Faraway", st["far2"]["maps"])
+        key = city(tmp, SCRIPT)  # 同じ置き場なので、下の確かめの前に元の台本へ戻す
         rc, _ = quiet(gb.build, key, root=tmp)
         written = (gb.city_dir(key, tmp) / "guidebook.json").read_text(encoding="utf-8")
         ok("書いたものは道具の形（dumps）と同じ", rc == 0 and written == gb.dumps(book), rc)
@@ -117,6 +149,7 @@ def main() -> int:
             ("photos.json に無い写真", SCRIPT.replace('photo("ph1"', 'photo("ph9"'), "写真の鍵「ph9」"),
             ("STORES に無い店", SCRIPT.replace('["shop"])]', '["nope"])]'), "店の鍵「nope」"),
             ("材料を作っていない台本", SCRIPT.replace("book = {", "boo = {"), "`book`"),
+            ("TRIP_AREAS に無い日帰りの町の店", TRIP.replace("TRIP_AREAS = ", "_TRIP_AREAS = "), "日帰りの町「far」"),
         ):
             k = city(tmp, bad)
             rc, out = quiet(gb.build, k, root=tmp)

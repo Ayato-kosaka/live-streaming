@@ -16,6 +16,8 @@
 SEEN = "2026-11-23"
 TOWN = "tirana"
 MAPS_AREA = "Tiranë"
+# 日帰りの町の、地図の検索語に足す名前（鍵は cities.json の trips）。店の地区がこの町なら「Tiranë」ではなくこちらを足す
+TRIP_AREAS = {"kruja": "Krujë", "durres": "Durrës", "berat": "Berat"}
 DISH_LOCAL_SRC = "wval"
 
 SRC = {
@@ -197,29 +199,29 @@ see = [
      "photo": photo("petrela", "丘の上のペトレラ城の石の塔")},
     {"key": "kruja", "town": "kruja", "name": "クルヤ城", "local": loc("Kalaja e Krujës", "Kalaja e Krujes", "krujac"),
      "rank": 2, "what": t("スカンデルベグがオスマン帝国に立ち向かった拠点の城。中にベクタシュ派の修道場、スカンデルベグ博物館、モスクの跡と塔、民族学博物館、ハマム（浴場）がある。", "krujac"),
-     "went": False, **at("kruja"), "info": [], "maps": "https://www.google.com/maps/search/?api=1&query=Kalaja+e+Kruj%C3%ABs&hl=ja", "links": {"todo": ["kruja"]},
+     "went": False, **at("kruja"), "info": [], "maps": maps("Kalaja e Krujës", "kruja"), "links": {"todo": ["kruja"]},
      "photo": photo("kruja", "山の斜面に立つクルヤ城の石の塔")},
     {"key": "skmuseum", "town": "kruja", "name": "スカンデルベグ博物館", "local": loc("Muzeu Kombëtar Gjergj Kastrioti Skënderbeu", "Muzeu Kombetar Gjergj Kastrioti Skenderbeu", "skm"),
      "rank": 2, "what": t("クルヤ城の中の、国の英雄スカンデルベグの博物館。1982年11月1日に開いた。昔の石の塔の家にならった形で、設計の1人はエンヴェル・ホッジャの娘プランヴェラ。", "skm"),
      "went": False, **at("skmuseum"),
      "info": [{"label": "入場料", "text": "500レク", "src": s("wvkruja")}],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Muzeu+Sk%C3%ABnderbeu+Kruj%C3%AB&hl=ja", "links": {"todo": ["kruja"]},
+     "maps": maps("Muzeu Skënderbeu Krujë", "kruja"), "links": {"todo": ["kruja"]},
      "photo": photo("skmuseum", "石の壁と塔の形のスカンデルベグ博物館")},
     {"key": "krujabazaar", "town": "kruja", "name": "クルヤの古いバザール", "local": loc("Pazari i Vjetër", "Pazari i Vjeter", "wvkruja"),
      "rank": 2, "what": t("17世紀からの古いバザールで、地元ではデレジクと呼ぶ。市役所のそばから城の門まで、かつては200ほどの店が並んだ。", "wvkruja"),
      "went": False, **at("krujabazaar"),
      "info": [{"label": "開いている時間", "text": "毎日7時〜23時", "src": s("wvkruja")}],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Pazari+i+Kruj%C3%ABs&hl=ja", "links": {"todo": ["kruja"]},
+     "maps": maps("Pazari i Krujës", "kruja"), "links": {"todo": ["kruja"]},
      "photo": photo("krujabazaar", "クルヤの古いバザールの、みやげの並ぶ木の店")},
     {"key": "berat", "town": "berat", "name": "ベラト（千の窓の町）", "local": loc("Berat", "Berat", "wvberat"),
      "rank": 2, "what": t("白い壁にたくさんの窓が並ぶ家々から「千の窓の町」と呼ばれる。オスマン帝国と東ローマの建物が残り、2008年にユネスコの世界遺産になった。ティラナの南70km。", "wvberat", "bera"),
      "went": False, **at("mangalem"), "info": [],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Mangalem+Berat&hl=ja", "links": {"todo": ["berat"]},
+     "maps": maps("Mangalem Berat", "berat"), "links": {"todo": ["berat"]},
      "photo": photo("berat", "斜面に重なる白い家と窓のマンガレム地区")},
     {"key": "durres", "town": "durres", "name": "ドゥラスの円形劇場", "local": loc("Amfiteatri i Durrësit", "Amfiteatri i Durresit", "amph"),
      "rank": 3, "what": t("2世紀にトラヤヌス帝の時代に建て始めたローマの円形劇場。バルカン半島でいちばん大きく、2万人が入れた。1966年の終わりに見つかった。", "amph"),
      "went": False, **at("durres"), "info": [],
-     "maps": "https://www.google.com/maps/search/?api=1&query=Amfiteatri+i+Durr%C3%ABsit&hl=ja",
+     "maps": maps("Amfiteatri i Durrësit", "durres"),
      "photo": photo("durres", "ドゥラスの円形劇場の石のアーチと客席の跡")},
 ]
 

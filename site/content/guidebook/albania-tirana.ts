@@ -844,7 +844,7 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
     },
     "body": "1988年にエンヴェル・ホッジャの記念館として開いた建物。1991年からは会議場、1999年のコソボ紛争ではNATOの拠点になった。オランダの設計事務所MVRDVが直し、2023年に若者のITの学びの場として開いた。",
     "facts": [],
-    "maps": "https://www.google.com/maps/search/?api=1&query=Piramida+e+Tiran%C3%ABs+Tiran%C3%AB&hl=ja",
+    "maps": "https://www.google.com/maps/search/?api=1&query=Piramida+e+Tiran%C3%ABs&hl=ja",
     "todo": [
      "pyramid"
     ],
@@ -1384,7 +1384,7 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
     },
     "body": "3世紀のローマの家の跡とされ、5〜6世紀にまわりに教会が建った。鳥や魚の模様の床のモザイクが残る。市内で唯一の遺跡。",
     "facts": [],
-    "maps": "https://www.google.com/maps/search/?api=1&query=Mozaiku+i+Tiran%C3%ABs+Tiran%C3%AB&hl=ja",
+    "maps": "https://www.google.com/maps/search/?api=1&query=Mozaiku+i+Tiran%C3%ABs&hl=ja",
     "src": [
      {
       "name": "Wikipedia「Tirana Mosaic」",
@@ -2782,7 +2782,7 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
     "id": "quickbite",
     "name": "クイック・バイト（食堂）",
     "what": "日替わりのスープと煮込みの食堂。品書きにタスケバプ（350レク）・家のコフテとピラフ（500レク）。",
-    "maps": "https://www.google.com/maps/search/?api=1&query=Quick+Bite+Tiran%C3%AB+Tiran%C3%AB&hl=ja",
+    "maps": "https://www.google.com/maps/search/?api=1&query=Quick+Bite+Tiran%C3%AB&hl=ja",
     "src": [
      {
       "name": "Wolt「Quick Bite」（配達の品書き）",
@@ -2851,7 +2851,7 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
     "id": "artisti",
     "name": "アルティスティ（ピザとカフェ）",
     "what": "エルバサン通りのピザとカフェの店。品書きにトリレチェ（250レク）。",
-    "maps": "https://www.google.com/maps/search/?api=1&query=Artisti+Tiran%C3%AB+Tiran%C3%AB&hl=ja",
+    "maps": "https://www.google.com/maps/search/?api=1&query=Artisti+Tiran%C3%AB&hl=ja",
     "src": [
      {
       "name": "Wolt「Artisti Pizza」（配達の品書き）",
@@ -2865,7 +2865,7 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
     "id": "panorama",
     "name": "パノラマ（クルヤ城のそばのレストラン）",
     "what": "クルヤ城のそばの店。村の鶏の料理と甘い米の菓子カブニを出し、セイヨウサンシュユとブラックベリーの地元のラキも飲める。",
-    "maps": "https://www.google.com/maps/search/?api=1&query=Panorama+Kruj%C3%AB+Tiran%C3%AB&hl=ja",
+    "maps": "https://www.google.com/maps/search/?api=1&query=Panorama+Kruj%C3%AB&hl=ja",
     "src": [
      {
       "name": "Wikivoyage「Krujë」",
@@ -3154,7 +3154,7 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
     "id": "krujabazaar",
     "name": "クルヤの古いバザール",
     "what": "城の入口へ続く石畳の古いバザール。毎日7時から23時まで。じゅうたん・手作りのフェルトの品・民族衣装の古着・鷲の旗のみやげ。安いみやげは100レクから。",
-    "maps": "https://www.google.com/maps/search/?api=1&query=Pazari+i+Kruj%C3%ABs+Tiran%C3%AB&hl=ja",
+    "maps": "https://www.google.com/maps/search/?api=1&query=Pazari+i+Kruj%C3%ABs&hl=ja",
     "src": [
      {
       "name": "Wikivoyage「Krujë」",
@@ -3928,6 +3928,6 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "e8345644058b66b0"
+ "hash": "ddc72dac59525125"
 }
 /* END GUIDE */;
