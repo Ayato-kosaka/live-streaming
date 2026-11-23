@@ -69,10 +69,10 @@ class Scene(Stage):
         self.sparkles = np.stack([30 + R.random(26) * 660, 30 + R.random(26) * 640, R.random(26), R.random(26)], -1)
         self.snow_far = Loop(130, 6102, cycles=(1, 1))
         self.snow_mid = Loop(150, 6103, cycles=(2, 2))
-        self.near = Loop(110, 6104, cycles=(3, 3))
+        self.near = Loop(30, 6104, cycles=(3, 3))
         self.flake = {r: soft_dot(r) for r in (1.6, 3.0, 6.5)}
-        self.dust = Loop(90, 6105, cycles=(2, 2))
-        self.bok = Loop(18, 6106, cycles=(2, 2))
+        self.dust = Loop(30, 6105, cycles=(2, 2))
+        self.bok = Loop(10, 6106, cycles=(2, 2))
         self.glitter = Loop(80, 6107, cycles=(1, 2))
         # オーロラの縦の筋（1/8 の細かさの格子）
         self.au_h, self.au_w = 170, 90
@@ -236,6 +236,7 @@ class Scene(Stage):
             glow(back, 360, 760, 220, GOLD * 0.6 + MAGENTA * 0.2, 0.6 * (1 - rv) ** 2)
         out_b = back.finish(bloom=0.8, edge=self.edge)
         out_b = over_rgba(self.finish_hero(heroc, bloom=0.45), out_b)
+        back_glitter = Canvas()  # 紙吹雪は back に（front は焼くと重い。front の予算は1通りの 15%）
 
         # ---- front（光と粒だけ）: 手前の雪（snowfall で足した）・金の粉・きらめく紙吹雪・ぼけ玉・キャラ絵のふちの星
         sk = ease(ramp(Ti, 0.8, 1.4)) * out_k
@@ -255,7 +256,7 @@ class Scene(Stage):
             tw_ = (0.5 + 0.5 * math.sin(6.283 * (a4[j] * 4 + rr[2]))) ** 2
             kk = math.sin(math.pi * a4[j]) ** 0.6 * (0.3 + 0.5 * tw_) * sk
             if kk > 0.02:
-                fxv.stamp(front.L, self.kit.star[("gold", "white", "magenta", "cyan")[j % 4]], xg, yg, kk)
+                fxv.stamp(back_glitter.L, self.kit.star[("gold", "white", "magenta", "cyan")[j % 4]], xg, yg, kk)
         for j in range(self.bok.n):
             rr = self.bok.r[j]
             a1 = self.bok.age(c)[j]
@@ -273,4 +274,5 @@ class Scene(Stage):
                     dist = 170 + 230 * ease_out(rv / 0.9) * (0.6 + 0.4 * R.random())
                     fxv.stamp(front.L, self.kit.star[("gold", "white", "magenta")[k % 3]], 360 + math.cos(ang_) * dist * 0.9,
                               760 + math.sin(ang_) * dist * 1.05, 0.9 * (1 - rv / 0.9) ** 1.5 * (0.5 + 0.5 * R.random()))
+        out_b = over_rgba(back_glitter.finish(bloom=0.3, edge=self.edge), out_b)
         return out_b, self.finish_front(front, bloom=0.7)
