@@ -399,13 +399,6 @@ export const SHELVES: Shelf[] = [
         note: "どこが変わったか。こうしてほしいも、ここから",
         q: q("島をなおしたところ updates 変わった 直した 要望 改良 お知らせ"),
       },
-      /* 索引に出している面は、ここにも並べる（種類の表と同じ行き先。下の確かめ） */
-      {
-        href: "/privacy",
-        name: "プライバシーポリシー",
-        note: "島で預かるものと、その使いかた",
-        q: q("プライバシーポリシー privacy 個人情報 決まりごと"),
-      },
       {
         href: "/design",
         name: "デザインの見本",
@@ -435,8 +428,13 @@ const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
    - 棚の行き先が、面の一覧に無い → 止める。押した先が無い行を並べない
    棚の添え書き（1行・探し言葉）は人が書く字なのでここが持つが、**行き先の集まりは種類の表と同じ**になる */
 const LISTED = listedPages().map((p) => p.path);
-/* この面（`/all`）そのものは、棚に並べない（自分の中に自分への行を置かない） */
-const offShelf = LISTED.filter((h) => h !== "/all" && !DEST_HREFS.has(h));
+/* **検索には出すが、棚には並べない面。** 理由ごとここに書く（`tools/sprites/prodsweep.mjs` の `ABSENCES` と同じ決め）。
+   - `/all` … この面そのもの。自分の中に自分への行を置かない
+   - `/privacy` … 読み物ではない。Google の OAuth 審査に URL を出す都合で持っている面なので、
+     検索からは引けるようにして、島の索引には並べない（2026-09-19 の決め。W10 で種類の表から
+     棚を作り直したときに並んでしまい、配ったあとの見回りが落ちた。2026-11-23） */
+const OFF_SHELF = new Set(["/all", "/privacy"]);
+const offShelf = LISTED.filter((h) => !OFF_SHELF.has(h) && !DEST_HREFS.has(h));
 if (offShelf.length) throw new Error(`content/directory.ts: 索引に出す面が /all の棚に無い（${offShelf.join(", ")}）`);
 const ghost = [...DEST_HREFS].filter((h) => !pageAt(h));
 if (ghost.length) throw new Error(`content/directory.ts: /all の棚の行き先が、面の一覧（lib/pages.ts）に無い（${ghost.join(", ")}）`);
