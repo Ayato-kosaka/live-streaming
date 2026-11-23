@@ -32,6 +32,7 @@
 | `sep` | 落ちすぎ: 要素の境目で字をくっつけない | 「1:12:40」＋「円は」を 40円 と読む |
 | `scope` | 落ちすぎ: 一言と配信の題は案内鳥の字ではない | 一言の中の「できます」 |
 | `srctitle` | 落ちすぎ: 外の出どころの題（`data-quote="src"` のリンクの字）は案内鳥の字ではない（#1365） | 出どころの題の「おすすめ」 |
+| `srcamount` | 落ちすぎ: 外の出どころの題の中の額は facts と突き合わせない（2026-11-24 イスタンブール） | 出どころの一覧の題の「46,20 TL」 |
 | `blind` | 本文（`article.tg`）が無い面を「0件」にしない | 本文の無い面が通る |
 | `many` | 節の一言: 本人の一言は節に1つまで（#323） | 1節に一言が2つ |
 | `perline` | 場面: 行った話の場面のリンクは1本（一文ごとに付けない） | 話の中に場面が2本 |
@@ -69,7 +70,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # 抜いたときに赤くなってよい足。落ちすぎの守り（sep・scope）を抜くと、きれいな面（clean）も一緒に赤くなる。
 # 合計の通る面（sum）も、境目の字をくっつけて読むと内訳の額が読めなくなるので、sep を抜くと一緒に赤くなる
 EXPECT = {"sep": {"sep", "clean", "sum"}, "scope": {"scope", "clean"}}
-LEGS = ["verify", "unbacked", "row", "nolink", "sec", "chat", "bare", "tone", "mech", "sep", "scope", "srctitle", "blind",
+LEGS = ["verify", "unbacked", "row", "nolink", "sec", "chat", "bare", "tone", "mech", "sep", "scope", "srctitle", "srcamount", "blind",
         "many", "perline", "wentlink", "extscene", "nosrc", "sum", "floor", "drawn"]
 FAILED: list[tuple[str, str]] = []   # (足, 確かめの名前)
 CHECKED = 0
@@ -213,6 +214,16 @@ e = run(page(extra='<div class="gb-ext" data-src=""><table><tbody><tr><th>市バ
                    '<time datetime="2026-11-15">11/15</time></p></div>'))
 ok("clean", "外の出どころの表（data-src）は、場面の表として突き合わせない（落ちすぎない）", legs_of(e, "額"), [])
 ok("clean", "ガイドブック型の面（article.gb）も、前の面（article.tg）と同じに読む", run(page(cls="gb")), [])
+
+# 出どころの一覧は外の事実の箱（data-src）の外に並ぶ。題は他人の字で、トルコの記事の題「…Tam bilet 46,20 TL」の
+# 小数のカンマで切れた「20」を額と読まない（2026-11-24 イスタンブール）。同じ額を題の外に書けば、今までどおり落ちる
+SRC_LIST = ('<ul class="gb-src-list"><li><a data-quote="src" href="https://news.example/zam-4620">'
+            'news「Yeni zam: Tam bilet 46,20 MKD」（2026年7月17日）</a><i>news.example/zam-4620</i></li></ul>')
+e = run(page(extra=SRC_LIST))
+# 比べるのは、題を足す前の同じ面の額（`sep` を抜いた回は、元の面も「30円」で赤くなる。題のぶんだけ増えないこと）
+ok("srcamount", "出どころの題（リンクの字）の中の「46,20 MKD」→ 落ちない", legs_of(e, "額"), legs_of(run(page()), "額"))
+e = run(page(extra=SRC_LIST + "<p>市バスは1回46,20 MKD。</p>"))
+ok("unbacked", "同じ額を出どころの題の外（地の文）に書く → 落ちる", any("20デナール が facts のどの行にも無い" in x for x in legs_of(e, "額")), True)
 
 
 # ---------------------------------------------------------------- 3. 一言

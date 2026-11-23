@@ -54,7 +54,8 @@
 - 本文は `<article class="tg">`（記事）か `<article class="gb">`（街のガイドブック）の中だけ（島の枠——看板・足元——は全部の面に共通なので、ここでは見ない）
 - 場面のリンクは `https://www.youtube.com/watch?v=<id>&t=<秒>s`（`scene.ts`）
 - 額は `guide_facts.money_in`（字幕を読む道具と同じ単位の表 `python/data/guide/cities.json`）で拾う。
-  外の出どころの行（`.tg-ext`）の額は、その出どころが正なので facts とは突き合わせない
+  外の出どころの行（`.tg-ext`）の額は、その出どころが正なので facts とは突き合わせない。
+  外の出どころの題（`data-quote="src"` のリンクの字）の中の額も読まない（下の「外の出どころの題を口調から外した」と同じ理由）
 
 ## 2026-11-23 に、外の出どころの題を口調から外した
 
@@ -64,6 +65,14 @@
 同じ外の事実の箱（`data-src`）の中でも、案内鳥が書いた地の文は今までどおり全部読む（箱ごと飛ばすと、地の文の「おすすめ」が素通りする。
 `mutation_drill.py` の当て先）。赤の1行が NEWT だけだったのは、口調の赤を**語ごとに1行**にまとめ、最初に出た所だけを添えていたから
 （地球の歩き方の題も同じ1行に畳まれていた。VELTRA の題は材料の中だけで、面には出ていない）。いまは何か所あったかも添える。
+
+## 2026-11-24 に、外の出どころの題を額からも外した
+
+イスタンブールの面が「20リラ が facts のどの行にも無い」で赤くなった。拾ったのは出どころの一覧に並んだ
+sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」——トルコの記事の題で、小数のカンマで切れた
+「20 TL」を額と読んでいた。口調の見張りは 11-23 から題を飛ばしていたが、額の見張りは飛ばしていなかった。
+出どころの一覧は外の事実の箱（`data-src`）の外に並ぶので、箱で飛ばす守りにも掛からない。
+飛ばすのは口調と同じ**印の付いた外へのリンクの字だけ**で、箱の外にある案内鳥とあやとの字の額は、今までどおり facts と突き合わせる。
 
 対照は `python/guide_watch_selftest.py`（足を1本ずつ抜いて、その足だけが赤くなるか）。
 """
@@ -296,8 +305,10 @@ def check_money(art: Node, rows: list[dict], units: dict, r: Report, outside: se
         (held if hold else ready).update(amounts_of(x, units))
 
     def ext(n: Node) -> bool:
-        # 外の出どころの事実は、その出どころが正（facts と突き合わせない）。配信の題は、題のまま
-        return is_src(n) or verbatim(n)
+        # 外の出どころの事実は、その出どころが正（facts と突き合わせない）。配信の題は、題のまま。
+        # 外の出どころの題（リンクの字）も他人の字（口調の見張りと同じ `ext_title`）。面の終わりの出どころの一覧は
+        # 外の事実の箱（`data-src`）の外に並ぶので、題の中の額（「Tam bilet 46,20 TL」）を読んでいた（2026-11-24 イスタンブール）
+        return is_src(n) or verbatim(n) or (ext_title(n) and "srcamount" not in BREAK)
 
     # 1. 面のどこに出た額も、確かめの要らない行に在る
     body = art.text(skip=ext, sep=SEP)
