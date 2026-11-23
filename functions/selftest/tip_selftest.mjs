@@ -11,10 +11,13 @@
  *     admin.auth()             → 決め打ちの合言葉
  *     require("stripe")        → 支払い画面を作る・支払いを引くところだけ偽物。
  *                                **署名の確かめ（`Stripe.webhooks`）は本物**
+ *     require("googleapis")    → YouTube の窓口（鍵・配信を探す・チャットに書く）だけ偽物。
+ *                                **探すと、その鍵の持ち主の配信だけが返る**（本物と同じ）
  *     globalThis.fetch         → Doneru の累計（豚の額を測るため）
  *
  * 知らせの署名は `Stripe.webhooks.generateTestHeaderString` で作る。
  * 鍵は `whsec_selftest…` の偽物で、**本物の Stripe には1回も届かない。**
+ * YouTube の鍵も偽の字で、**本番の配信のチャットには1回も書かない。**
  *
  * ## 先に「通る」を見る（`docs/island-standards.md` §15）
  *
@@ -32,7 +35,16 @@
  * | `sig` | 署名を確かめずに本文を読む | 署名違い |
  * | `dup` | 「もう在るか」を見ない（前の安い門と、取引の中の門の両方） | 同じ知らせ2回 |
  * | `ng` | 禁止ワードを見ない | 禁止ワードの3本（当たらない足は通ったまま） |
- * | `live` | テストの支払いを本番として扱う | テストの支払いの2本 |
+ * | `live` | テストの支払いを本番として扱う | テストの支払いの2本＋チャットのテストの支払い |
+ * | `chatlive` | テストの支払いでもチャットの1行を作る | チャットのテストの支払い |
+ * | `chatdup` | `written` でなくてもチャットに書く | 同時に2通 |
+ * | `chatkey` | 案内鳥の鍵が空でも窓口を作る | 鍵なし |
+ * | `chatoff` | 配信していなくても書きに行く | 配信していない |
+ * | `chatwho` | 書くのにあやとの鍵を使う | 配信中・本番 |
+ * | `chatcatch` | YouTube が投げたものを飲まない | 例外でも 200 |
+ * | `chatcap` | 待つ上限を外す | 上限まで |
+ *
+ * `dup` と `ng` も、チャットの足を赤くする（同じ守りに乗っているので）。
  *
  * 回しかた:
  *
@@ -90,6 +102,11 @@ const blind = (why) => {
 const store = new Map();
 /** 起きた書き込み（`{col, id}` だけ） */
 let writes = [];
+/**
+ * 次の1回だけ、この書類（`col/id`）を「無い」と読ませる。**同じ知らせが同時に
+ * 2通来て、2通とも取引の手前の安い門をすり抜けた**形を作るため。
+ */
+let hideOnce = "";
 /** 出たログ。**素性が出ていないかを最後に数える。** */
 const logs = [];
 
@@ -137,7 +154,13 @@ function refOf(col, id) {
   return {
     id,
     path: `${col}/${id}`,
-    get: async () => snapOf(col, id, read(col, id)),
+    get: async () => {
+      if (hideOnce === `${col}/${id}`) {
+        hideOnce = "";
+        return snapOf(col, id, undefined);
+      }
+      return snapOf(col, id, read(col, id));
+    },
     set: async (v, opt) => {
       writes.push({col, id});
       seed(col, id, apply(read(col, id), v, !!opt?.merge));
@@ -275,6 +298,81 @@ function FakeStripe(key) {
 }
 FakeStripe.webhooks = RealStripe.webhooks;
 
+/* ================= 偽の YouTube（googleapis の窓口だけ） ================= */
+
+/** あやとの鍵と案内鳥の鍵。**偽の字。** 窓口は、どちらの鍵で作られたかを覚える */
+const RT_AYATO = "rt-ayato-selftest";
+const RT_GUIDE = "rt-guide-selftest";
+/** いま配信中のチャット。**偽の字。** */
+const LIVE_CHAT = "chat-selftest-live";
+/**
+ * 偽の YouTube の様子。`setup()` で毎回入れ直す。
+ * live: あやとが配信しているか / fails: 書くと断る / hangMs: 書くのにかかる時間
+ * lists: 配信を探した鍵 / inserts: 書いた鍵・チャット・1行
+ */
+let yt = {};
+const ytReset = () => {
+  yt = {live: true, fails: false, hangMs: 0, lists: [], inserts: []};
+};
+ytReset();
+
+/** `new google.auth.OAuth2(…)` の偽物。鍵（refresh token）だけを覚える。 */
+class FakeOAuth2 {
+  constructor() {
+    this.rt = "";
+  }
+  setCredentials(c) {
+    this.rt = String(c?.refresh_token ?? "");
+  }
+  async getAccessToken() {
+    return {token: "at-selftest"};
+  }
+}
+
+/** 断りの形（googleapis が投げるものと同じ欄）。**中身は偽の字。** */
+const ytRefusal = (status, reason) =>
+  Object.assign(new Error(`selftest refused ${status}`),
+    {status, errors: [{reason}]});
+
+/**
+ * `google.youtube({auth})` の偽物。**探すと、その鍵の持ち主の配信だけが返る**
+ * （`broadcastStatus` は本物でも持ち主の配信に絞る）。配信しているのはあやとだけ。
+ * @param {object} o `{auth}`
+ * @return {object} 窓口
+ */
+const fakeYoutube = ({auth}) => ({
+  liveBroadcasts: {list: async (p) => {
+    yt.lists.push({who: auth.rt, status: p?.broadcastStatus});
+    const mine = auth.rt === RT_AYATO && yt.live &&
+      p?.broadcastStatus === "active";
+    return {data: {items: mine ?
+      [{id: "b-selftest", snippet: {liveChatId: LIVE_CHAT}}] : []}};
+  }},
+  liveChatMessages: {
+    insert: async (p) => {
+      const sn = p?.requestBody?.snippet ?? {};
+      /* **書きに来た時点で数える。** 待たせて返す回も、数は1回 */
+      yt.inserts.push({who: auth.rt, chat: sn.liveChatId ?? null,
+        text: sn.textMessageDetails?.messageText});
+      if (!sn.liveChatId) throw ytRefusal(400, "liveChatNotFound");
+      if (yt.fails) throw ytRefusal(403, "forbidden");
+      if (yt.hangMs) await new Promise((r) => setTimeout(r, yt.hangMs));
+      return {data: {}};
+    },
+    list: async () => ({data: {items: []}}),
+  },
+});
+
+const RealGoogleapis = nodeRequire("googleapis");
+/** 窓口と鍵だけ差し替える。ほかの口が使う `google.auth.GoogleAuth` などは本物のまま */
+const fakeGoogle = Object.create(RealGoogleapis.google);
+fakeGoogle.auth = Object.create(RealGoogleapis.google.auth);
+fakeGoogle.auth.OAuth2 = FakeOAuth2;
+fakeGoogle.youtube = fakeYoutube;
+const fakeGoogleapis = {google: fakeGoogle};
+/* あやとの窓口は読み込んだときに作られるので、読み込む前に鍵を入れる */
+process.env.YOUTUBE_REFRESH_TOKEN = RT_AYATO;
+
 /* ================= lib を読み込む ================= */
 
 if (!BREAK) {
@@ -287,20 +385,42 @@ if (!BREAK) {
   }
 }
 
-/** `TIP_BREAK=` → `lib/tip.js` のどこをどう外すか。[探す字, 置き換える字] */
+/**
+ * `TIP_BREAK=` → `lib/` のどのファイルの、どこをどう外すか。
+ * [ファイル, 探す字, 置き換える字]
+ */
 const BREAKS = {
-  sig: [[
+  sig: [["tip",
     "stripe_1.default.webhooks.constructEvent(raw, sig, secret)",
     "JSON.parse(raw.toString(\"utf8\"))",
   ]],
-  dup: [["if (before.exists)", "if (false)"], ["if (cur.exists)", "if (false)"]],
-  ng: [["return words.some((w) => m.includes(w));", "return false;"]],
-  live: [[
+  dup: [["tip", "if (before.exists)", "if (false)"],
+    ["tip", "if (cur.exists)", "if (false)"]],
+  ng: [["tip", "return words.some((w) => m.includes(w));", "return false;"]],
+  live: [["tip",
     "const livemode = event.livemode === true;",
     "const livemode = true;",
   ]],
+  chatlive: [["tip",
+    "const chat = livemode ? (0, exports.tipChatLine)(name, yen, shown) : \"\";",
+    "const chat = (0, exports.tipChatLine)(name, yen, shown);",
+  ]],
+  chatdup: [["tip", "if (outcome === \"written\" && chat)", "if (chat)"]],
+  chatkey: [["youtubeClient", "if (!token)\n        return null;", ""]],
+  chatoff: [["liveChat", "if (!chat)\n        return \"not-live\";", ""]],
+  chatwho: [["liveChat",
+    "await yt.liveChatMessages.insert(",
+    "await youtubeClient_1.youtube.liveChatMessages.insert(",
+  ]],
+  chatcatch: [["tip",
+    ", (e) => ({ said: \"failed\", why: whyOf(e) })",
+    "",
+  ]],
+  chatcap: [["tip", "Promise.race([said, late])", "said"]],
 };
 if (BREAK && !BREAKS[BREAK]) blind(`知らない TIP_BREAK: ${BREAK}`);
+/** 当たった細工の数。**読み込みのあとで、全部当たったかを見る** */
+let broke = 0;
 
 let handler = null;
 const loaded = new Map();
@@ -309,13 +429,13 @@ function load(name) {
   if (loaded.has(name)) return loaded.get(name);
   const file = join(LIB, `${name}.js`);
   let src = readFileSync(file, "utf8");
-  if (name === "tip" && BREAK) {
-    for (const [from, to] of BREAKS[BREAK]) {
-      /* **当たらなかった細工を、黙って見逃さない。** 当たらなければ、
-         壊していない字を測ることになる。 */
-      if (!src.includes(from)) blind(`TIP_BREAK=${BREAK} が当たらなかった`);
-      src = src.split(from).join(to);
-    }
+  for (const [where, from, to] of BREAKS[BREAK] ?? []) {
+    if (where !== name) continue;
+    /* **当たらなかった細工を、黙って見逃さない。** 当たらなければ、
+       壊していない字を測ることになる。 */
+    if (!src.includes(from)) blind(`TIP_BREAK=${BREAK} が当たらなかった`);
+    src = src.split(from).join(to);
+    broke += 1;
   }
   const mod = {exports: {}};
   loaded.set(name, mod.exports);
@@ -329,6 +449,7 @@ function load(name) {
       }};
     }
     if (id === "stripe") return FakeStripe;
+    if (id === "googleapis") return fakeGoogleapis;
     if (id.startsWith("./")) return load(id.slice(2));
     return nodeRequire(id);
   };
@@ -355,6 +476,14 @@ try {
   blind(`lib/islandApi.js を読み込めなかった: ${String(e).slice(0, 300)}`);
 }
 if (typeof handler !== "function") blind("onRequest から本体を取り出せなかった");
+if (BREAK && broke !== BREAKS[BREAK].length) {
+  blind(`TIP_BREAK=${BREAK} の細工が ${broke}/${BREAKS[BREAK].length} しか当たらなかった`);
+}
+/** 配信のチャットを待つ上限。**口の数をそのまま読む**（ここに数を写さない） */
+const CHAT_WAIT = loaded.get("tip")?.TIP_CHAT_WAIT_MS;
+if (!Number.isInteger(CHAT_WAIT) || CHAT_WAIT <= 0) {
+  blind("tip.ts の TIP_CHAT_WAIT_MS が読めない");
+}
 
 /* ================= 叩く ================= */
 
@@ -371,8 +500,11 @@ function setup() {
   store.clear();
   created = [];
   retrieveFails = false;
+  hideOnce = "";
+  ytReset();
   process.env.STRIPE_SECRET_KEY = SK;
   process.env.STRIPE_WEBHOOK_SECRET = WHSEC;
+  process.env.YOUTUBE_GUIDE_REFRESH_TOKEN = RT_GUIDE;
   seed("islandUsers", "uid-ayato", {admin: true, alertboxId: OWNER_KEY,
     channelId: "UCzzzzzzzzzzzzzzzzzzzzzz", name: "おーなー"});
   seed("islandUsers", "uid-a", {channelId: CH_A, handle: "@hitorime",
@@ -819,17 +951,170 @@ const fund = () => call({method: "GET", path: "/fund"});
     `${a.code} ${a.body?.currentAmount}`);
 }
 
-/* ================= 5. ログ ================= */
+/* ================= 5. 配信のチャット ================= */
 
-console.log("\n# 5. ログに素性・額・メッセージ・Stripe の ID が出ない");
+console.log("\n# 5. 配信していれば、案内鳥としてチャットに1行（決定の記録 0019）");
+/** その足のあいだに出た「tip chat:」のログ */
+const chatLogsSince = (at) =>
+  logs.slice(at).filter((l) => l.includes("tip chat:"));
+/** 決めた形の1行（あやと 2026-11-23。**一字一句この字**） */
+const LINE_1000 =
+  "@hitorimeさん ¥1,000 島の投げ銭ありやと！「にせのメッセージ」";
+{
+  setup();
+  const at = logs.length;
+  const r = await deliver(paidEvent({yen: 1000}));
+  const w = yt.inserts[0] ?? {};
+  check("配信中・本番 → 案内鳥として1回だけ・字が決めた形と一字一句同じ（探すのはあやとの鍵）",
+    r.code === 200 && r.body?.outcome === "written" &&
+      yt.inserts.length === 1 && w.text === LINE_1000 &&
+      w.who === RT_GUIDE && w.chat === LIVE_CHAT &&
+      yt.lists.length === 1 && yt.lists[0].who === RT_AYATO &&
+      JSON.stringify(chatLogsSince(at)) ===
+        JSON.stringify(["info tip chat: said"]),
+    JSON.stringify({n: yt.inserts.length, who: w.who, text: w.text,
+      lists: yt.lists, logs: chatLogsSince(at)}));
+}
+{
+  setup();
+  const got = [];
+  for (const [yen, sid] of [[100, "cs_live_c1"], [1000, "cs_live_c2"],
+    [12345678, "cs_live_c3"]]) {
+    await deliver(paidEvent({yen, session: sid}));
+  }
+  for (const w of yt.inserts) got.push(String(w.text).split(" ")[1]);
+  check("額は3桁区切り（¥100・¥1,000・¥12,345,678）",
+    JSON.stringify(got) === JSON.stringify(["¥100", "¥1,000", "¥12,345,678"]),
+    JSON.stringify(got));
+}
+{
+  setup();
+  yt.live = false;
+  const at = logs.length;
+  const r = await deliver(paidEvent());
+  check("配信していない → チャット0回（探すのは1回だけ）・200",
+    r.code === 200 && r.body?.outcome === "written" &&
+      count("islandSiteTips") === 1 && yt.inserts.length === 0 &&
+      yt.lists.length === 1 &&
+      JSON.stringify(chatLogsSince(at)) ===
+        JSON.stringify(["info tip chat: not-live"]),
+    JSON.stringify({n: yt.inserts.length, lists: yt.lists.length,
+      logs: chatLogsSince(at)}));
+}
+{
+  setup();
+  const at = logs.length;
+  const r = await deliver(paidEvent({livemode: false}));
+  check("テストの支払い → チャット0回（配信も探さない）",
+    r.code === 200 && r.body?.outcome === "written" &&
+      yt.inserts.length === 0 && yt.lists.length === 0 &&
+      chatLogsSince(at).length === 0,
+    JSON.stringify({n: yt.inserts.length, lists: yt.lists.length}));
+}
+{
+  setup();
+  const a = await deliver(paidEvent());
+  const b = await deliver(paidEvent());
+  check("同じ知らせ2回 → チャット1回",
+    a.body?.outcome === "written" && b.body?.outcome === "already" &&
+      yt.inserts.length === 1,
+    `${a.body?.outcome} / ${b.body?.outcome} / ${yt.inserts.length}`);
+}
+{
+  /* 2通とも、取引の手前の安い門（「もう在るか」）をすり抜けた。
+     取引の中で `written` になるのは1通だけで、2通目は `already`。 */
+  setup();
+  const a = await deliver(paidEvent());
+  hideOnce = "islandSiteTips/cs_live_selftest1";
+  const b = await deliver(paidEvent());
+  check("同じ知らせが同時に2通（手前の門をすり抜けた）→ 2通目は already・チャット1回",
+    hideOnce === "" && a.body?.outcome === "written" &&
+      b.body?.outcome === "already" && count("islandSiteTips") === 1 &&
+      yt.inserts.length === 1,
+    `${a.body?.outcome} / ${b.body?.outcome} / ${yt.inserts.length} ` +
+      `hide=${hideOnce === "" ? "used" : "unused"}`);
+}
+{
+  setup();
+  await deliver(paidEvent({md: {message: ""}}));
+  check("メッセージなし → 「」ごと出さない",
+    yt.inserts.length === 1 &&
+      yt.inserts[0].text === "@hitorimeさん ¥777 島の投げ銭ありやと！",
+    String(yt.inserts[0]?.text));
+}
+{
+  setup();
+  await deliver(paidEvent({md: {message: "この ばかもの め"}}));
+  check("禁止ワードに当たる → 「」ごと出さない（名前と額は出す）",
+    yt.inserts.length === 1 &&
+      yt.inserts[0].text === "@hitorimeさん ¥777 島の投げ銭ありやと！",
+    String(yt.inserts[0]?.text));
+}
+{
+  setup();
+  await deliver(paidEvent({md: {name: ""}}));
+  check("名前が無い → 名無しさん（さんを重ねない）",
+    yt.inserts[0]?.text ===
+      "名無しさん ¥777 島の投げ銭ありやと！「にせのメッセージ」",
+    String(yt.inserts[0]?.text));
+}
+{
+  setup();
+  delete process.env.YOUTUBE_GUIDE_REFRESH_TOKEN;
+  const at = logs.length;
+  const r = await deliver(paidEvent());
+  check("鍵なし → チャット0回・配信も探さない・ログ1行・200",
+    r.code === 200 && r.body?.outcome === "written" &&
+      count("islandSiteTips") === 1 && yt.inserts.length === 0 &&
+      yt.lists.length === 0 &&
+      JSON.stringify(chatLogsSince(at)) ===
+        JSON.stringify(["warn tip chat: no-key"]),
+    JSON.stringify({code: r.code, n: yt.inserts.length,
+      lists: yt.lists.length, logs: chatLogsSince(at)}));
+}
+{
+  setup();
+  yt.fails = true;
+  const at = logs.length;
+  const r = await deliver(paidEvent());
+  check("書くのが例外を投げても 200（台帳は入っている）",
+    r.code === 200 && r.body?.outcome === "written" &&
+      count("islandSiteTips") === 1 && yt.inserts.length === 1 &&
+      JSON.stringify(chatLogsSince(at)) ===
+        JSON.stringify(["warn tip chat: failed (403 forbidden)"]),
+    JSON.stringify({code: r.code, logs: chatLogsSince(at)}));
+}
+{
+  /* YouTube が上限より3秒長く黙る。**返事は上限で返る。** */
+  setup();
+  yt.hangMs = CHAT_WAIT + 3000;
+  const at = logs.length;
+  const t0 = Date.now();
+  const r = await deliver(paidEvent());
+  const ms = Date.now() - t0;
+  check("書くのが返ってこなくても、待つのは上限まで・200",
+    r.code === 200 && r.body?.outcome === "written" &&
+      ms >= CHAT_WAIT - 50 && ms < CHAT_WAIT + 1500 &&
+      yt.inserts.length === 1 &&
+      JSON.stringify(chatLogsSince(at)) ===
+        JSON.stringify(["warn tip chat: timeout"]),
+    `${r.code} ${ms}ms (上限 ${CHAT_WAIT}ms) ${JSON.stringify(chatLogsSince(at))}`);
+  console.log(`  待った時間: ${ms}ms（上限 ${CHAT_WAIT}ms）`);
+}
+
+/* ================= 6. ログ ================= */
+
+console.log("\n# 6. ログに素性・額・メッセージ・Stripe の ID・チャットの1行が出ない");
 {
   const text = logs.join("\n");
   const leaked = [
     ["uid", /uid-(a|b|ayato)/], ["チャンネルID", /UC[A-Za-z0-9_-]{22}/],
-    ["名前", /hitorime|ひとりめ/], ["メッセージ", /にせのメッセージ|ばかもの/],
-    ["額", /\b777\b/], ["Stripe の ID", /\b(cs|pi|evt)_[A-Za-z0-9_]+/],
+    ["名前", /hitorime|ひとりめ|名無しさん/],
+    ["メッセージ", /にせのメッセージ|ばかもの/],
+    ["額", /\b777\b|¥\d|12,345,678/], ["Stripe の ID", /\b(cs|pi|evt)_[A-Za-z0-9_]+/],
+    ["チャットの1行", /ありやと/],
   ].filter(([, re]) => re.test(text)).map(([n]) => n);
-  check("ログに素性・額・メッセージ・Stripe の ID が出ない",
+  check("ログに素性・額・メッセージ・Stripe の ID・チャットの1行が出ない",
     leaked.length === 0 && logs.length > 0, leaked.join(" / "));
   console.log(`  出たログ: ${logs.length} 行`);
 }
@@ -837,18 +1122,36 @@ console.log("\n# 5. ログに素性・額・メッセージ・Stripe の ID が�
 /* ================= 対照 ================= */
 
 /** 外した守り → 赤くなってほしい足（**これと1本も違ってはいけない**） */
+const C_TEST = "テストの支払い → チャット0回（配信も探さない）";
+const C_RACE =
+  "同じ知らせが同時に2通（手前の門をすり抜けた）→ 2通目は already・チャット1回";
 const WANT = {
   sig: ["署名違い → 400 で何も書かない"],
-  dup: ["同じ知らせ2回 → 1件のまま・seq も豚も1回だけ"],
+  dup: [
+    "同じ知らせ2回 → 1件のまま・seq も豚も1回だけ",
+    "同じ知らせ2回 → チャット1回",
+    C_RACE,
+  ],
   ng: [
     "知らせを受けたときも禁止ワードを見る → アラートの字は空",
     "禁止ワードが当たる → 400 ng word・書き込み0",
     "全角・大文字・半角カナでも当たる → 400",
+    "禁止ワードに当たる → 「」ごと出さない（名前と額は出す）",
   ],
   live: [
     "テストの支払い → テストの合言葉の1枚だけ。本番の1枚と豚は動かない",
     "テスト用の合言葉が本番と同じなら、どの1枚にも書かない",
+    C_TEST,
   ],
+  chatlive: [C_TEST],
+  chatdup: [C_RACE],
+  chatkey: ["鍵なし → チャット0回・配信も探さない・ログ1行・200"],
+  chatoff: ["配信していない → チャット0回（探すのは1回だけ）・200"],
+  chatwho: [
+    "配信中・本番 → 案内鳥として1回だけ・字が決めた形と一字一句同じ（探すのはあやとの鍵）",
+  ],
+  chatcatch: ["書くのが例外を投げても 200（台帳は入っている）"],
+  chatcap: ["書くのが返ってこなくても、待つのは上限まで・200"],
 };
 
 if (!BREAK) {
