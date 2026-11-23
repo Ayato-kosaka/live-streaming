@@ -7,7 +7,9 @@
  * - `POST /tip/checkout` … ログイン済みで、YouTube のチャンネルを結んだ人だけ。
  *   Stripe の支払い画面を作って URL を返す
  * - `POST /stripe/webhook` … Stripe だけ（署名で見分ける）。払い終わった知らせを
- *   `islandSiteTips` と `islandAlertFeed` に書く
+ *   `islandSiteTips` と `islandAlertFeed` に書く。本番の支払いで、**そのとき配信して
+ *   いれば**、配信のチャットにチャンネル「あやと島案内鳥」として1行書く
+ *   （決定の記録 0019）
  *
  * ## 信じるもの・信じないもの
  *
@@ -32,11 +34,13 @@
  *
  * 名前・額・メッセージ・uid・チャンネルID・Stripe の ID を1文字も出さない。
  * 出すのは「何の知らせを、どう扱ったか」だけ（`fundDesk.ts` と同じ決め）。
+ * 配信のチャットに書いた1行も出さない（名前・額・メッセージがそのまま入っている）。
  */
 
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import Stripe from "stripe";
+import {GuideSaid, sayOnLiveAsGuide} from "./liveChat";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -99,6 +103,15 @@ const RETURN_HOST = new RegExp(
 const LOCAL_HOST = /^(?:localhost|127\.0\.0\.1)(?::\d{1,5})?$/;
 /** 当てはまらないときの戻り先。**正の URL**（`site/content/site.ts` の `SITE.url`）。 */
 const HOME = "https://ayato-arigato.com";
+/**
+ * 配信のチャットに書くのを待つ上限（ms）。**知らせへの返事を、これより長く遅らせない。**
+ *
+ * 書くのは取引が済んだあと（台帳・豚・アラートはもう入っている）。チャットは
+ * 添え物なので、YouTube が遅い晩に Stripe への返事を道連れにしない。
+ * ふだんは配信を探す1回と書く1回で1〜2秒。上限で返ったあとに YouTube が
+ * 書き終えても、それは1回目の書き込みで、2回目は起きない（再送は `already`）。
+ */
+export const TIP_CHAT_WAIT_MS = 4000;
 
 /* ---------------------------------------------------------------- 入れ物 */
 
@@ -293,6 +306,39 @@ const hasNgWord = (message: string, words: string[]): boolean => {
 };
 
 /**
+ * 額を3桁で区切る（`1000` → `1,000`）。**`toLocaleString` を使わない**
+ * （区切りが実行する場所の言語の設定で変わる）。
+ * @param {number} yen 円（整数）
+ * @return {string} 区切った字
+ */
+const yenText = (yen: number): string =>
+  String(yen).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+/**
+ * 配信のチャットに書く1行。**形はあやとの決め**（2026-11-23。決定の記録 0019）。
+ *
+ *     〇〇さん ¥1,000 島の投げ銭ありやと！「メッセージ」
+ *
+ * Doneru が書いている `〇〇 1000 円、投げ銭ありやと！` に、メッセージを足した形。
+ * メッセージが無い・禁止ワードに当たった（`text` が空）ときは「」ごと出さない。
+ * 名前が無いときは「名無しさん」（「さん」を重ねない）。
+ *
+ * 長さは最長でも 161字（名前 64・額 ¥99,999,999・メッセージ 70）で、
+ * YouTube のチャットの1行の上限（200字）に収まる。だから切らない。
+ * @param {string} name アラートに出す名前。無ければ空文字
+ * @param {number} yen Stripe が知らせてきた額
+ * @param {string} text アラートに出すメッセージ（禁止ワードで空にしたあと）
+ * @return {string} 1行
+ */
+export const tipChatLine = (
+  name: string,
+  yen: number,
+  text: string,
+): string =>
+  `${name ? `${name}さん` : "名無しさん"} ¥${yenText(yen)} ` +
+  `島の投げ銭ありやと！${text ? `「${text}」` : ""}`;
+
+/**
  * テスト用の合言葉（`islandFundConfig/tip.testAlertboxId`）。
  *
  * **本番の合言葉と同じなら返さない。** 同じものが入っていると、テストの支払いが
@@ -379,6 +425,13 @@ type Outcome =
   | "no-tip"
   | "ignored";
 
+/** 払い終わった知らせを扱った結果と、**書けたときに**配信のチャットへ書く1行。 */
+type Paid = {
+  outcome: Outcome;
+  /** 書く1行。本番の支払いだけ。テストの支払い・この口のものでない知らせは空 */
+  chat: string;
+};
+
 /**
  * 払い終わった知らせ（`checkout.session.completed`）を書く。
  *
@@ -388,18 +441,21 @@ type Outcome =
  * **同じ知らせが何度来ても1件。** 書類IDが Session の ID で、取引の中で
  * 「もう在るか」を見る。在れば何も書かない（`seq` も豚も動かない）。
  * Stripe は 2xx を受け取るまで何度でも送り直してくるので、ここが要る。
+ *
+ * **配信のチャットには、ここでは書かない。** 書く1行を返すだけで、書くのは
+ * 呼ぶ側が取引のあとに、`written` のときだけ（同じ知らせで2回書かない）。
  * @param {Stripe.Event} event 確かめた知らせ
  * @param {Function} clean 字を整える道具
- * @return {Promise<Outcome>} どう扱ったか
+ * @return {Promise<Paid>} どう扱ったかと、チャットに書く1行
  */
 async function onPaid(
   event: Stripe.Event,
   clean: TipDeps["clean"],
-): Promise<Outcome> {
+): Promise<Paid> {
   const s = event.data.object as Stripe.Checkout.Session;
   /* カードだけを受けているので、払い終わった知らせはいつも `paid`。
      そうでないものが来たら、お金が動いていないので書かない。 */
-  if (s.payment_status !== "paid") return "unpaid";
+  if (s.payment_status !== "paid") return {outcome: "unpaid", chat: ""};
   const md = (s.metadata ?? {}) as Record<string, string>;
   const yen = Number(s.amount_total);
   if (
@@ -407,7 +463,7 @@ async function onPaid(
     !SESSION_ID.test(String(s.id)) ||
     s.currency !== "jpy" || !Number.isInteger(yen) || yen <= 0
   ) {
-    return "not-ours";
+    return {outcome: "not-ours", chat: ""};
   }
   /* **本番かどうかは、署名を確かめた知らせの印で決める。** */
   const livemode = event.livemode === true;
@@ -416,7 +472,7 @@ async function onPaid(
   /* 2回目の知らせなら、Stripe を叩かずに返す（手数料を引きに行かない）。
      **守りは下の取引の中にもある。** ここは安く返すためだけ。 */
   const before = await tipRef.get();
-  if (before.exists) return "already";
+  if (before.exists) return {outcome: "already", chat: ""};
 
   const conf = await tipConfig();
   const [key, settlement] = await Promise.all([
@@ -430,16 +486,20 @@ async function onPaid(
 
   /* **時刻は Stripe の値**（払い終わった知らせが作られた時刻）。 */
   const paidAt = Number(event.created) * 1000;
-  const who = clean(md.name, 64) || "名無しさん";
+  const name = clean(md.name, 64);
+  const who = name || "名無しさん";
   const text = clean(md.message, TIP_MESSAGE_MAX);
   /* **支払い画面を作ったあとで禁止ワードが足されたとき**のための2つめの門。
      払われたお金は受ける（台帳の元にはメッセージも残す）が、配信には
-     名前と額だけを出す。 */
+     名前と額だけを出す。**チャットの1行も同じ字から作る**（アラートと
+     チャットで出す字を変えない）。 */
   const shown = hasNgWord(text, conf.ngWords) ? "" : text;
+  /* **テストの支払いはチャットに書かない**（あやとの決め。決定の記録 0019）。 */
+  const chat = livemode ? tipChatLine(name, yen, shown) : "";
   const iso = new Date().toISOString();
   const feedRef = key ? ALERT_FEED.doc(key) : null;
 
-  return db.runTransaction(async (tx) => {
+  const outcome = await db.runTransaction(async (tx) => {
     const cur = await tx.get(tipRef);
     const feed = feedRef ? await tx.get(feedRef) : null;
     if (cur.exists) return "already" as Outcome;
@@ -480,6 +540,58 @@ async function onPaid(
     }
     return "written" as Outcome;
   });
+  return {outcome, chat};
+}
+
+/** 配信のチャットに書いた結果。**ログにはこの名前と、断られた理由の札だけ。** */
+type Chat = {said: GuideSaid | "failed" | "timeout"; why: string};
+
+/**
+ * YouTube が断った理由の札（`403 liveChatEnded` など）。**本文は出さない**
+ * （断りの返事に、送った1行が混ざることがある）。英数字の札だけを残す。
+ * @param {unknown} e 投げられたもの
+ * @return {string} 札。分からなければ空文字
+ */
+const whyOf = (e: unknown): string => {
+  const g = (e ?? {}) as {
+    status?: unknown;
+    code?: unknown;
+    errors?: Array<{reason?: unknown}>;
+  };
+  const tag = (v: unknown): string =>
+    String(v ?? "").replace(/[^A-Za-z0-9_.-]/g, "").slice(0, 40);
+  return [tag(g.status ?? g.code), tag(g.errors?.[0]?.reason)]
+    .filter(Boolean).join(" ");
+};
+
+/**
+ * 配信のチャットに、案内鳥として1行書く。**投げない・上限より待たない。**
+ *
+ * 呼ぶのは取引が済んだあとで、知らせには 200 を返す（チャットは添え物）。
+ * だから YouTube がしくじっても投げずに `failed`、遅ければ `TIP_CHAT_WAIT_MS` で
+ * `timeout` を返す。**書き直しに行かない**（2回書くより、1回欠けるほうがよい）。
+ * @param {string} line 書く1行
+ * @return {Promise<Chat>} どうなったか
+ */
+async function chatTip(line: string): Promise<Chat> {
+  /* **投げたものは、ここで飲む。** 上限で先に返ったあとで YouTube が
+     断ってきても、拾い手のいない reject（インスタンスごと落ちる）にしない。 */
+  const said: Promise<Chat> = sayOnLiveAsGuide(line).then(
+    (s): Chat => ({said: s, why: ""}),
+    (e): Chat => ({said: "failed", why: whyOf(e)}),
+  );
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<Chat>((done) => {
+    timer = setTimeout(
+      () => done({said: "timeout", why: ""}),
+      TIP_CHAT_WAIT_MS,
+    );
+  });
+  try {
+    return await Promise.race([said, late]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
@@ -649,8 +761,11 @@ export async function handleTip(
       return true;
     }
     let outcome: Outcome = "ignored";
+    let chat = "";
     if (event.type === "checkout.session.completed") {
-      outcome = await onPaid(event, deps.clean);
+      const paid = await onPaid(event, deps.clean);
+      outcome = paid.outcome;
+      chat = paid.chat;
     } else if (
       event.type === "charge.refunded" ||
       event.type === "charge.dispute.created"
@@ -662,6 +777,16 @@ export async function handleTip(
       logger.warn(`stripe webhook: ${event.type} ${outcome}`);
     } else {
       logger.info(`stripe webhook: ${event.type} ${outcome}`);
+    }
+    /* **配信のチャットは、書けたときだけ。** Stripe の再送（`already`）では
+       書かない。同じ知らせが同時に2通来て、両方が手前の安い門をすり抜けても、
+       取引の中で `written` になるのは1通だけ。 */
+    if (outcome === "written" && chat) {
+      const {said, why} = await chatTip(chat);
+      /* 出すのは結果の名前と札だけ。1行そのものは出さない。 */
+      const note = `tip chat: ${said}${why ? ` (${why})` : ""}`;
+      if (said === "said" || said === "not-live") logger.info(note);
+      else logger.warn(note);
     }
     res.json({received: true, outcome});
     return true;

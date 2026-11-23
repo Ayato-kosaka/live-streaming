@@ -870,7 +870,7 @@ node functions/selftest/api_trust_selftest.mjs
 | メソッド | パス | 誰が | 何を |
 | --- | --- | --- | --- |
 | `POST` | `/tip/checkout` | ログイン済みで、**YouTube のチャンネルを結んだ人だけ** | Stripe の支払い画面（Checkout Session）を作り、その URL を返す |
-| `POST` | `/stripe/webhook` | **Stripe だけ**（`Stripe-Signature` の署名で見分ける） | 払い終わった知らせを受け、`islandSiteTips` と `islandAlertFeed` に書く |
+| `POST` | `/stripe/webhook` | **Stripe だけ**（`Stripe-Signature` の署名で見分ける） | 払い終わった知らせを受け、`islandSiteTips` と `islandAlertFeed` に書く。本番の支払いで、そのとき配信していれば、配信のチャットに案内鳥として1行書く（下） |
 
 ### `/tip/checkout` が受け取るもの・受け取らないもの
 
@@ -892,6 +892,42 @@ node functions/selftest/api_trust_selftest.mjs
 - **同じ知らせが何度来ても1件**（書類IDが Checkout Session の ID）
 - **`livemode` が偽（テスト環境）なら、テスト用の合言葉の `islandAlertFeed` にだけ書く。** 台帳・貯金箱・本番のアラートに入れない
 - 返金（`charge.refunded`）と払い戻し請求（`charge.dispute.created`）は、`islandSiteTips.status` を直す。アラートには出さない
+
+### 配信のチャットに書く（決定の記録 0019）
+
+**本番の支払いを `written` で書けたとき、そのとき配信していれば、** 配信のチャットに
+チャンネル「あやと島案内鳥」として1行書く（`functions/src/tip.ts` の `tipChatLine`）。
+
+```
+〇〇さん ¥1,000 島の投げ銭ありやと！「メッセージ」
+```
+
+| ところ | 入れるもの |
+| --- | --- |
+| 〇〇 | アラートに出す名前（口が `islandUsers` から引いたもの）。無ければ「名無しさん」（「さん」を重ねない） |
+| 額 | Stripe が知らせてきた額。3桁で区切る（`¥1,000`）。アラートの `yen` と同じ数 |
+| 「メッセージ」 | アラートに出す字。無い・禁止ワードに当たったときは「」ごと出さない |
+
+いちばん長くても 161字（名前 64字・¥99,999,999・メッセージ 70字）で、YouTube のチャットの1行の上限（200字）に収まる。切らない。
+
+| こうなら | チャット | ログ（`tip chat: …`） | 知らせへの返事 |
+| --- | --- | --- | --- |
+| 本番の支払い・`written`・配信中 | 1回書く | `said`（info） | 200 |
+| 配信していない | **書かない。あとからまとめもしない** | `not-live`（info） | 200 |
+| テストの支払い（`livemode` が偽） | 書かない。配信も探さない | 出さない | 200 |
+| Stripe の再送（`already`） | 書かない | 出さない | 200 |
+| 案内鳥の鍵（`YOUTUBE_GUIDE_REFRESH_TOKEN`）が無い | 書かない。配信も探さない | `no-key`（warn）を1行 | 200 |
+| YouTube が断った | 書き直さない | `failed (403 forbidden)` の形。状態番号と理由の札だけ（warn） | 200 |
+| YouTube が `TIP_CHAT_WAIT_MS`（4秒）で返ってこない | 待たずに返す | `timeout`（warn） | 200 |
+
+- **配信を探すのはあやとの鍵（`YOUTUBE_REFRESH_TOKEN`）、書くのだけ案内鳥の鍵。** `liveBroadcasts.list` の `broadcastStatus` は鍵の持ち主の配信を返すので、案内鳥の鍵で探すと案内鳥の（無い）配信を探してしまう
+- 案内鳥の鍵は、あやとの鍵と同じ OAuth のクライアント（`YOUTUBE_CLIENT_ID`）で出したもの。GitHub Secrets から Functions を配るときに `.env` へ書く（空なら書かない）。口は呼ばれたときに鍵を読む
+- **書くのは取引が済んだあと。** 書けなくても知らせには 200 を返す（台帳・豚・アラートはもう入っている）。待つのは `TIP_CHAT_WAIT_MS` まで
+- **1回の支払いで書くのは1回だけ。** 書くのは `written` のときだけ。同じ知らせが2通、どちらも取引の手前の「もう在るか」をすり抜けても、取引の中で `written` になるのは1通
+- **ログに名前・額・メッセージ・書いた1行を出さない。** 出すのは結果の名前と、断られたときの状態番号・理由の札だけ
+- YouTube の1日の割り当て（2026-11-23 に YouTube の表で確かめた）: 配信を探す `liveBroadcasts.list` が1単位、書く `liveChatMessages.insert` が20単位。**配信は投げ銭ごとに探し直す**（使い回すと、配信を始めてから5分のあいだ「配信していない」が残る）。配信中の投げ銭1件で21単位、配信していないときの1件で1単位
+- 案内鳥は、あやとのチャンネルでモデレーターにする（書いた1行が確認待ちに回されないように。#1405）
+- 確かめは `functions/selftest/tip_selftest.mjs` の5章。守りを1本ずつ外す対照は `TIP_BREAK=chat…`
 
 ### アラート画面へは、この口を通さない
 
