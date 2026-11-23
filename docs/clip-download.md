@@ -1,5 +1,7 @@
 # 配信の動画そのものを落とすとき
 
+種別: 手順
+
 **この箱からは落とせない。Actions でやる。**
 使うのは `.github/workflows/clip_fetch.yml`（「切り抜きの mp4 を取る」）。
 

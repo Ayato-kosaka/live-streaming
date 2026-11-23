@@ -1,5 +1,7 @@
 # 文書の台帳
 
+種別: 台帳
+
 **このリポジトリの文書は、ここに1行ずつ載っている。** 載っていない文書は置けない（`python/docs_index_selftest.py` が止める）。
 決めた理由は [`adr/0001-docs-kinds.md`](./adr/0001-docs-kinds.md)。
 
@@ -14,6 +16,9 @@
 | **手順** | どう回すか | 上から順に打てば終わる形 | 手順が変わったら直す |
 | **台帳** | いま何が、どこに、どう在るか | 事実だけ。数は道具から引く | 現状が変わったら直す |
 | **記録** | そのとき起きたこと・調べたこと・検討して決めた経緯（まだ決めていない案は issue。D-10） | 日付つき | 直さない。新しい日付で書き足す |
+
+- 仕様・手順・台帳の文書は、題のすぐ下に `種別: 仕様` のように1行で種別を名乗る（台帳の字と同じ）。記録と決定は直さない決まりなので、名乗りを求めない。
+- 台帳の「状態」は 有効・北欧の旅だけ・廃止予定（#畳む issue）のどれか。古くなった文書は、直すか消す。状態で古さを抱えない。
 
 ## 2. 決まり
 
@@ -43,7 +48,7 @@
 | `docs/island-design.md` | 仕様 | 絵と触りごこち | 有効 |
 | `docs/island-world.md` | 仕様 | 板と紙。部品の割りあて | 有効 |
 | `docs/island-atlas.md` | 仕様 | 島の連なり（旅ごとの島）のかたち | 有効 |
-| `docs/island-ux.md` | 仕様 | 操作感。面の分けかたは `spec/model.md` と `spec/routes.md` が正 | 一部古い |
+| `docs/island-ux.md` | 仕様 | 操作感。面の分けかたは `spec/model.md` と `spec/routes.md` が正 | 有効 |
 | `docs/island-money.md` | 仕様 | 視聴者さんに見せる額の式 | 有効 |
 | `docs/island-cards.md` | 仕様 | あやと島カード | 有効 |
 | `docs/card-import.md` | 仕様 | 写真のまとめ取り込み | 有効 |
@@ -55,8 +60,8 @@
 | `docs/nordic-fund.md` | 仕様 | 旅の貯金箱（投げ銭を参加にする） | 有効 |
 | `docs/nordic-depart.md` | 仕様 | 北欧の旅の、出発前・最中・あと | 北欧の旅だけ |
 | `docs/nordic-photos.md` | 仕様 | その日の写真と、埋め込むキャラクター | 有効 |
-| `docs/island-concept.md` | 仕様 | 何のための島か。入口と道は `spec/` が正 | 一部古い |
-| `docs/island-plan-drafts.md` | 仕様 | 企画のページを視聴者さんと作る（畳んだ道） | 廃止予定 |
+| `docs/island-concept.md` | 仕様 | 何のための島か。入口と道は `spec/` が正 | 有効 |
+| `docs/island-plan-drafts.md` | 仕様 | 企画のページを視聴者さんと作る（畳んだ道） | 廃止予定（#1277） |
 
 ## 4. 決定
 
@@ -93,7 +98,7 @@
 | `docs/island-audit.md` | 台帳 | いま何が、どこに、いくつ在るか | 有効 |
 | `docs/island-card-data.md` | 台帳 | カードのデータの棚卸し | 有効 |
 | `docs/island-misses-map.md` | 台帳 | 記録（`island-misses.md`）の決めごとの行き先。節番号 → 仕様の条 | 有効 |
-| `README.md` | 台帳 | リポジトリの入口 | 有効 |
+| `README.md` | 台帳 | リポジトリの入口。`CLAUDE.md` と この台帳を指す | 有効 |
 
 ## 7. 記録（直さない）
 
@@ -111,14 +116,6 @@
 | `docs/ac-reference.md` | 記録 | どうぶつの森と島を並べて見た結果 | 有効 |
 | `docs/shorts-analytics-2026-11.md` | 記録 | ショートの数字のまとめ（2026-11-11） | 有効 |
 | `docs/seo-2026-11/` | 記録 | 検索からの入口の調査（2026-11） | 有効 |
-| `BIGQUERY_MERGE_COMPLETE_FIX.md` | 記録 | 島より前の作業の報告 | 片づけ待ち |
-| `BIGQUERY_MERGE_FINAL_IMPLEMENTATION.md` | 記録 | 同上 | 片づけ待ち |
-| `BIGQUERY_MERGE_MINIMAL_FIX.md` | 記録 | 同上 | 片づけ待ち |
-| `BIGQUERY_STRUCT_QUERY_PARAMETER_FINAL.md` | 記録 | 同上 | 片づけ待ち |
-| `DEPLOYMENT_GUIDE.md` | 記録 | 同上 | 片づけ待ち |
-| `DISCOVERY_REFACTORING_SUMMARY.md` | 記録 | 同上 | 片づけ待ち |
-| `IMPLEMENTATION_REPORT.md` | 記録 | 同上 | 片づけ待ち |
-| `IMPLEMENTATION_SUMMARY.md` | 記録 | 同上 | 片づけ待ち |
 
 ## 8. プロンプト（Claude Code への指示）
 

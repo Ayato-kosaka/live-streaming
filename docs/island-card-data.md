@@ -1,5 +1,7 @@
 # あやと島カード — データの棚卸し
 
+種別: 台帳
+
 **この文書は事実だけを書く。** どう直すか・どちらがよいかは1行も書いていない。
 元の思想は [`island-cards.md`](./island-cards.md)、置き場ぜんぶの設計は
 [`island-db.md`](./island-db.md)、口の一覧は [`island-api.md`](./island-api.md)。

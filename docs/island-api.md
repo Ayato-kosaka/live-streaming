@@ -1,5 +1,7 @@
 # あやと島 — API（`/island-api/*`）
 
+種別: 台帳
+
 島の「動くところ」を読み書きする口。**ブラウザから Firestore を直接は触らせない**
 （`islandHere` だけが例外。理由は [`island-db.md`](./island-db.md) の責務の表）。
 
