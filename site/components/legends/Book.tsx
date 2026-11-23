@@ -281,6 +281,7 @@ export function Compare({ b, drawn }: { b: LegendBook; drawn: BookDrawn }) {
                       <a href={`#${sheetId("dish", d.id)}`}>
                         <Picture pic={drawn.dishes[d.id]} sizes="120px" ratio="1 / 1" label={shortName(d.name).slice(0, 1)} />
                         <b>{d.city}</b>
+                        <span>{shortName(d.name)}</span>
                         <i>{it.note}</i>
                       </a>
                     </li>

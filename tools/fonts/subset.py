@@ -310,6 +310,8 @@ SOLO = [
     "travel/armenia/yerevan/memorial",
     "travel/armenia/yerevan/bakery",
     "travel/armenia/yerevan/market",
+    # 企画の面（面の印。M-8）。100品の窓と用語・地域・食べ比べの字で、街のガイドと同じく字の多い面（#1404）
+    "legends/india-street-food",
 ]
 
 
