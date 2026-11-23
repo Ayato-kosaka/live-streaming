@@ -44,8 +44,15 @@ def fit(src, out, max_side=1400, q=90, crop=None):
 
 
 def _cutout(src, min_island=1500, gaps=True):
+    im = Image.open(src)
+    # 「透過PNGで」と頼んで透過で返った並べ絵（12月の部品はそう返った）は、透明をそのまま使う。
+    # 白い地として抜き直すと、白い縁取りや雪の白まで地として削る
+    if im.mode in ("RGBA", "LA", "P"):
+        rgba = np.asarray(im.convert("RGBA"))
+        if (rgba[..., 3] < 8).mean() > 0.2:
+            return rgba.copy()
     import cutout  # noqa: E402  .claude/skills/chatgpt-image/cutout.py
-    C = np.asarray(Image.open(src).convert("RGB"), np.float64)
+    C = np.asarray(im.convert("RGB"), np.float64)
     return cutout.cut(C, min_island=min_island, gaps=gaps)
 
 
