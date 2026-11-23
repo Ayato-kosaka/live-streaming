@@ -302,6 +302,14 @@ SOLO = [
     "travel/albania/tirana/mosque",
     "travel/albania/tirana/sufllaqe",
     "travel/albania/tirana/walk",
+    "travel/armenia/yerevan",
+    "travel/armenia/yerevan/sevan",
+    "travel/armenia/yerevan/bus",
+    "travel/armenia/yerevan/lake",
+    "travel/armenia/yerevan/cascade",
+    "travel/armenia/yerevan/memorial",
+    "travel/armenia/yerevan/bakery",
+    "travel/armenia/yerevan/market",
 ]
 
 
