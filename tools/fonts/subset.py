@@ -305,6 +305,7 @@ SOLO = [
     "travel/armenia/yerevan",
     "travel/armenia/yerevan/sevan",
     "travel/armenia/yerevan/bus",
+    "travel/armenia/yerevan/lake",
 ]
 
 
