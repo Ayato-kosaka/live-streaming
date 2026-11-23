@@ -105,7 +105,6 @@ def cmd_plan(o):
     theme = os.environ.get("IN_THEME") or "castle"
     quality = os.environ.get("IN_QUALITY") or "final"
     sha = os.environ["SHA"]
-    have = scripts_of(theme)
     notes = []
     if ev == "push":
         ref = os.environ["REF_NAME"]
@@ -114,6 +113,15 @@ def cmd_plan(o):
         cmp = gh_api(f"repos/{repo}/compare/{base}...{sha}")
         files = [f["filename"] for f in (cmp or {}).get("files", [])]
         changed = [f for f in files if f.startswith("tools/alert-theme/fx_tiers/")]
+        # push には theme の入力が無い。テーマ専用の置き場（fx_tiers/<theme>/）の台本だけが変わったなら、そのテーマを焼く。
+        # 決めないと城（直下）の同じ段の台本を焼くので、12月の台本を直した push で 11月の段を焼き直してしまう
+        subs = {f.split("/")[3] for f in changed if f.count("/") == 4}
+        if len(subs) == 1 and all(f.count("/") == 4 for f in changed):
+            theme = subs.pop()
+        changed = [f for f in changed if (f.count("/") == 4 and f.split("/")[3] == theme)
+                   or (f.count("/") == 3 and not os.path.isdir(os.path.join(TOOLS, "fx_tiers", theme)))]
+    have = scripts_of(theme)
+    if ev == "push":
         tiers = set()
         for f in changed:
             m = re.match(r"t(\d+)_", os.path.basename(f))
@@ -394,8 +402,14 @@ def cmd_tier(o):
         r["reasons"] += ["fx_check: " + b for b in ct.get("bad", [])] or ["fx_check: " + (c.get("unchecked") or " / ".join(tail(txt_c, 2)))]
 
     old_has = str(tier) in ((load(os.path.join(pub, "manifest.json")) or {}).get("tiers") or {})
-    if old_has:
-        mot = [py, tools("fx_motion.py"), stage, "--old", pub, "--tiers", str(tier), "--min", "0", "--json", os.path.join(res, "motion.json")]
+    # 新しいテーマの段は、まだ public に前の版が無い。動きの量は、いま出ている城の同じ段と比べる
+    # （「前の月の同じ段より動いているか」。比べないと表の動きの欄が空のまま）
+    old = pub if old_has else os.path.join(ROOT, "public/alert/themes/castle/fx")
+    if not old_has and str(tier) not in ((load(os.path.join(old, "manifest.json")) or {}).get("tiers") or {}):
+        old = None
+    if old:
+        r["motion_vs"] = o.theme if old_has else "castle"
+        mot = [py, tools("fx_motion.py"), stage, "--old", old, "--tiers", str(tier), "--min", "0", "--json", os.path.join(res, "motion.json")]
         run_tool(mot, os.path.join(logs, "motion.txt"))
         m = load(os.path.join(res, "motion.json")) or {}
         r["motion"] = (m.get("tiers") or {}).get(str(tier))
@@ -544,6 +558,8 @@ def cmd_digest(o):
         psnr = f"{min(ps):.1f}dB" if ps else "—"
         mo = x.get("motion")
         mov = f"{mo['ratio_pixels']:.2f}×" if mo else "—"
+        if mo and x.get("motion_vs") not in (None, x.get("theme")):
+            mov += f"（{x['motion_vs']}比）"
         h = x.get("hero") or {}
         real = h.get("real") or 0
         vis = (f"{h['visible'] * 100:.0f}%（本物{real}＋見本{(h.get('chars') or real) - real}）"
