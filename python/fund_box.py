@@ -15,7 +15,11 @@
 
 ## 式
 
-    貯金箱 = スパチャ合計 ÷ 2 + Doneru － 支出合計
+    貯金箱 = スパチャ合計 ÷ 2 + Doneru + 島の投げ銭 － 支出合計
+
+島の投げ銭（Stripe。2026-11-23 から）は**払った額のまま**足す
+（決定の記録 0017・`docs/island-money.md` 1章）。`viewer_yen()` と `box()` の
+`island_yen` は**省略できない**——無い場面でも呼ぶ側が 0 を書く。
 
 **「÷ 2」は仕様で、演出でも丸めでもない。** あやとの言葉:
 「スパチャは投げ銭してくれたお金の**半分**を貯金箱に入れている」。
@@ -90,6 +94,18 @@ C_GOAL = "islandFundGoals"
 # 入ったまま生き延びていた。**鍵は目標より長生きする。**
 C_CONFIG = "islandFundConfig"
 DONERU_DOC = "doneru"
+
+# 島で受けた投げ銭（Stripe。決定の記録 0017・#1405）。**書くのは Functions の
+# Stripe の知らせを受ける口だけ。** こちらは読むだけ。書類IDは Checkout Session の ID
+C_ISLAND = "islandSiteTips"
+
+# 台帳（`islandTips.source`）での島の投げ銭の名前。書くのは `python/island_tips.py`、
+# 読むのは月末（`python/monthly_tips.py`）。**字を1か所に置く**
+SOURCE_ISLAND = "island"
+
+# 島の投げ銭の状態のうち、**台帳・貯金箱・貢献額に入れてよいもの**。
+# `refunded`（返金）と `disputed`（払い戻しの請求）は入れない
+ISLAND_PAID = "paid"
 
 # Doneru の鍵の形。**32桁の16進。**
 #
@@ -216,18 +232,21 @@ def spend_id(day: str, title: str, yen: int) -> str:
     return f"{day}-{h}"
 
 
-def box(superchat_yen: int, doneru: int, spend_yen: int) -> int:
+def box(superchat_yen: int, doneru: int, spend_yen: int, *, island_yen: int) -> int:
     """貯金箱にいくら入っているか。**この式が正。**
 
-        貯金箱 = スパチャ合計 ÷ 2 + Doneru － 支出合計
+        貯金箱 = スパチャ合計 ÷ 2 + Doneru + 島の投げ銭 － 支出合計
 
     **足してから半分にする。** 1件ずつ半分にすると、奇数円のスパチャの
     数だけ豚とずれる（GAS の `=SUM(...)/2` がそうなっている）。
+
+    **`island_yen` は省略できない。** 理由は `viewer_yen()` と同じ。
 
     Args:
         superchat_yen: スパチャの円の合計（半分にする前）
         doneru: Doneru の累計（円）
         spend_yen: 支出の合計（円）
+        island_yen: 島の投げ銭の合計（円。払った額のまま）。無い場面でも 0 を渡す
 
     Returns:
         貯金箱の額（円）
@@ -235,16 +254,30 @@ def box(superchat_yen: int, doneru: int, spend_yen: int) -> int:
     # **式は `viewer_yen()` ひとつ。** ここで書き直さない。
     # 貯金箱と、視聴者さんに見せる額で割り方が別れると、
     # ランキングの合計と貯金箱の増えかたが静かにずれる
-    return viewer_yen(superchat_yen, doneru) - spend_yen
+    return viewer_yen(superchat_yen, doneru, island_yen=island_yen) - spend_yen
 
 
-def viewer_yen(superchat_yen: int, doneru_yen: int) -> int:
+def viewer_yen(superchat_yen: int, doneru_yen: int, *, island_yen: int) -> int:
     """**視聴者さんに見せる額は、全部これを通す。**
 
-        貢献額 = スパチャ ÷ 2 + Doneru
+        貢献額 = スパチャ ÷ 2 + Doneru + 島の投げ銭
 
     貯金箱（`box()`）から支出を引かないだけで、**式は同じもの。**
     月末配信のランキングも、島の面も、見せる額はここを通す。
+
+    ## 島の投げ銭は割らない（決定の記録 0017・#1405）
+
+    島の `/tip` で受ける Stripe の投げ銭は、**払った額のまま**足す。
+    Stripe の手数料（3.6%と、その消費税）は引かない——Doneru も手数料を
+    引く前の額で足しているので、島だけ引くと、同じ¥1,000が出どころで
+    別の貢献額になる（`docs/island-money.md` 1章）。
+
+    ## `island_yen` に既定値を持たせない
+
+    持たせると、渡し忘れた所で島の投げ銭が**黙って 0円 になる**
+    （`docs/island-standards.md` 30.4）。島の投げ銭が無い場面（GAS の移行・
+    2026-11 より前の月）でも、呼ぶ側が `island_yen=0` と書く。
+    渡し忘れたら `TypeError` で落ちる——それがこの決めの狙い。
 
     ## なぜ「いくら出したか」ではないのか
 
@@ -270,11 +303,12 @@ def viewer_yen(superchat_yen: int, doneru_yen: int) -> int:
     Args:
         superchat_yen: その人のスパチャの円の合計（半分にする前）
         doneru_yen: その人の Doneru の円の合計
+        island_yen: その人の島の投げ銭の円の合計（払った額のまま。割らない）
 
     Returns:
         貢献額（円）
     """
-    return superchat_yen // SUPERCHAT_RATE + doneru_yen
+    return superchat_yen // SUPERCHAT_RATE + doneru_yen + island_yen
 
 
 def start_amount(spend_yen: int) -> int:
@@ -291,6 +325,98 @@ def start_amount(spend_yen: int) -> int:
         負の数
     """
     return -spend_yen
+
+
+# ---------------------------------------------------------------- 島の投げ銭
+
+
+def island_counts(v: dict) -> bool:
+    """島の投げ銭1件（`islandSiteTips` の中身）を、**数に入れてよいか。**
+
+    **ここ1か所で決める。** 台帳（`python/island_tips.py`）と貯金箱
+    （`python/fund_daily.py` の `read_island()`）が同じ1本を通す。片方だけ
+    自前の条件を書くと、テストの支払いが貯金箱にだけ入る日が来る
+    （`docs/island-standards.md` 30.1）。
+
+    入れるのは、次の2つを**両方**満たすものだけ。
+
+    - `livemode` が**真そのもの**（Stripe の本番の支払い）。テスト環境の
+      支払いは、台帳・貯金箱・貢献額のどれにも入れない（決定の記録 0017 の7）。
+      `"true"` のような字や 1 は通さない——欄の形が崩れた行を本番の支払いと
+      読まないため
+    - `status` が `paid`。返金（`refunded`）と払い戻しの請求（`disputed`）は入れない
+
+    Args:
+        v: `islandSiteTips/{checkoutSessionId}` の中身
+
+    Returns:
+        入れてよければ True
+    """
+    return (v or {}).get("livemode") is True and (v or {}).get("status") == ISLAND_PAID
+
+
+def island_yen_of(v: dict):
+    """数に入れてよい島の投げ銭1件から、**足す円**を取り出す。
+
+    島の投げ銭は円だけ（`docs/island-db.md` の `islandSiteTips.currency`）。
+    額が読めない・円でない行は **0 にしない**。None を返して、呼ぶ側が
+    「足せなかった件数」として出す（`docs/island-standards.md` 10）。
+
+    Args:
+        v: `island_counts()` を通った中身
+
+    Returns:
+        円（int）。足せなければ None
+    """
+    amount = (v or {}).get("amount")
+    if isinstance(amount, bool) or not isinstance(amount, (int, float)):
+        return None
+    if str((v or {}).get("currency") or "JPY").upper() != "JPY":
+        return None
+    if amount <= 0 or amount != int(amount):
+        return None
+    return int(amount)
+
+
+def read_island(db) -> dict:
+    """島の投げ銭を数えて、**貯金箱に足す円**を出す（`fund.box.island`）。
+
+    **期間はスパチャの `superchat` と同じ数え方**——控え（`islandFundSuperChats`）
+    を全部足すのと同じく、`islandSiteTips` を全部読んで、数に入れてよいもの
+    （`island_counts()`）を全部足す。窓で切らない。
+
+    台帳（`islandTips`）からではなく、**受け取りの書類から直に読む。**
+    台帳は別のジョブ（`tips_after_doneru.yml`）が書くので、台帳から読むと
+    2本の順番に額が左右される（`docs/island-standards.md` 31.1）。
+    入れてよいかの条件は `island_counts()` 1本なので、台帳と食い違わない。
+
+    **読めなかったら例外のまま上へ投げる。** ここで 0 を返すと、
+    読めなかった晩に貯金箱が島の投げ銭のぶんだけ黙って減る。
+
+    Args:
+        db: Firestore クライアント
+
+    Returns:
+        `island`（円）・`islandCount`（足した件数）・`islandBroken`
+        （数に入れてよいのに額が読めず、足せなかった件数）・`islandOut`
+        （テスト・返金・払い戻しの請求で、数に入れなかった件数）
+    """
+    yen = 0
+    count = 0
+    broken = 0
+    out = 0
+    for d in db.collection(C_ISLAND).stream():
+        v = d.to_dict() or {}
+        if not island_counts(v):
+            out += 1
+            continue
+        got = island_yen_of(v)
+        if got is None:
+            broken += 1
+            continue
+        yen += got
+        count += 1
+    return {"island": yen, "islandCount": count, "islandBroken": broken, "islandOut": out}
 
 
 # ---------------------------------------------------------------- 取り込み元
@@ -497,7 +623,9 @@ def read_sums(db) -> dict:
         spend_count += 1
     return {
         "superchatFull": full,
-        "superchat": full // SUPERCHAT_RATE,
+        # **割り算は `viewer_yen()` の1行だけ**（`docs/island-money.md` 1章）。
+        # ここで `// SUPERCHAT_RATE` と書くと、割り方が2か所になる
+        "superchat": viewer_yen(full, 0, island_yen=0),
         "count": count,
         "names": len(who),
         "spend": spend,
