@@ -1676,7 +1676,14 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
     "maps": "https://www.google.com/maps/search/?api=1&query=Amfiteatri+i+Durr%C3%ABsit&hl=ja",
     "km": 31
    }
-  ]
+  ],
+  "map": {
+   "mid": "1L9thsYMaBokQ_vBAivcPD35ZAAee5tA",
+   "title": "ティラナ｜見たいもの",
+   "ll": "41.3209,19.8169",
+   "z": 13,
+   "pins": 24
+  }
  },
  "eat": {
   "kinds": [
@@ -2635,7 +2642,14 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
     "km": 20.3,
     "went": false
    }
-  ]
+  ],
+  "map": {
+   "mid": "1gtJHQIvQKBcxmQhIbTCANbV64jP2lrA",
+   "title": "ティラナ｜食べたいもの",
+   "ll": "41.4146,19.8093",
+   "z": 12,
+   "pins": 8
+  }
  },
  "buy": {
   "items": [
@@ -2937,7 +2951,14 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
     ],
     "roman": "Mulliri i Vjetër"
    }
-  ]
+  ],
+  "map": {
+   "mid": "1h-pJ4_ilUkmXubj1LqhcbsvmXUb5avg",
+   "title": "ティラナ｜買いたいもの",
+   "ll": "41.4203,19.8074",
+   "z": 12,
+   "pins": 2
+  }
  },
  "videos": {
   "streams": {
@@ -3599,6 +3620,6 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "51f0ae671c7aee8e"
+ "hash": "61dec4cc35f3a189"
 }
 /* END GUIDE */;
