@@ -2101,6 +2101,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "ir-qwKKlr2k",
         "title": "🇷🇴ルーマニア着きました",
         "date": "2026-11-22"
+      },
+      {
+        "videoId": "-Zw_89-eL2Q",
+        "title": "🇷🇴ルーマニアついたし、湖みにいこか！",
+        "date": "2026-11-22"
       }
     ]
   }
