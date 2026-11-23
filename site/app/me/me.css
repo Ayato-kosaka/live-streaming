@@ -148,15 +148,14 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-4) var(--sp-3);
 }
-/* 用事の見出し。**札より小さく、札より薄く。** 押すのは札で、ここは
-   どの束かを言うだけ。紙の見出し（`.panel > h2`）とは別の顔にする。 */
+/* 用事の見出し。紙の中の入れ子の見出し（`pages.css` の蛍光ペン）をそのまま借りて、
+   字だけ札より小さくする。押すのは札で、ここはどの束かを言うだけ。 */
 .dk-shelf-h {
   margin: 0 0 var(--sp-2);
   font-size: var(--fs-note);
   font-weight: 900;
   letter-spacing: var(--ls-body);
-  line-height: 1.3;
-  color: var(--ink-2);
+  line-height: 1.5;
 }
 .dk-tabs {
   display: grid;
