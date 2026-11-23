@@ -4,8 +4,9 @@
 流れ（秒は登場の動画の時刻）:
 - 前兆 0〜1.0: 夜空が降りてきて、オーロラのカーテンが下から立ち上がり、星が瞬く。下に雪の大地と丘の上の白いお城。
   町の窓が灯る。雪が降り始める
+- 先触れ 0.3〜2.5: ソリより先に、左の外から光の尾を引くプレゼントが4つ、夜空を横切って降る
 - 登場 0.8〜1.8: 左から、ソリが箱の幅いっぱい（約 90%）の大きさで駆け込んでくる。ソリの後ろに金の星くずの尾
-- 山場 1.4〜3.1: あやとがプレゼントをぽーんと放る。プレゼントは光の尾を引いて降っていく。真ん中で手を振り、
+- 山場 1.4〜3.1: あやとがプレゼントをぽーんと放る（1.4 に3つ、2.05 に2つを高く）。プレゼントは光の尾を引いて降っていく。真ん中で手を振り、
   金の粒がはじける。2.6〜3.1 にソリが右上へ弧を描いて昇り、上の帯で止まる（大きさは箱の幅の 58%）
 - キャラ絵が出たら（3.2）: 金の輪がはじける。2,000円からは全面の景色のまま
 - 滞在（3秒の輪）: 上の帯でソリが浮かんでゆれ、あやとが手を振り、2回プレゼントを放る（光の尾を引いて降る）。
@@ -38,7 +39,11 @@ REST, W_REST = (390.0, 150.0), 430.0    # 上の帯で止まる所（ソリの�
 HOVER, W_BIG = (360.0, 560.0), 660.0    # 登場で真ん中に浮かぶ所と幅（箱の幅の 92%）
 ENTER = (0.8, 1.8)
 SWOOP = (2.6, 3.1)
-TOSS_INTRO = 1.4
+TOSS_INTRO = (1.4, 2.05)                # 登場で放る秒（1.4 に3つ、2.05 に2つ。録画の 2.5 秒で尾が新しい）
+# ソリが来る前に、左の外から投げ込まれて夜空を横切るプレゼント（放った秒, x, y, 横の速さ, 縦の速さ）。
+# ソリは 0.8〜1.8 で入ってくるので、録画の 1.0 秒にはまだ放る所が画面の外。光の尾が 1.0 秒で読めるように先に飛ばす
+HERALD = ((0.30, -40.0, 430.0, 430.0, -320.0), (0.48, -40.0, 560.0, 380.0, -280.0),
+          (0.66, -40.0, 330.0, 400.0, -220.0), (0.84, -40.0, 640.0, 350.0, -300.0))
 TOSS_STAY = (0.25, 1.4)                 # 滞在の輪の中で放る秒（降り終わりが輪の終わり 3.0 をまたがないように）
 BACK_PT = (0.2, 0.18)                   # ソリの絵の中の、プレゼントを放る所（あやとの後ろ・左上）
 TAIL_PT = (0.06, 0.78)                  # ソリの絵の中の、星くずがこぼれる所（ソリの後ろの下）
@@ -95,7 +100,7 @@ class Scene(Stage):
                 y = lerp(650, HOVER[1], p) - 30 * math.sin(math.pi * p)
                 return self.wave, x, y, W_BIG, -6 * (1 - p) + 2 * math.sin(T * 9)
             if T < SWOOP[0]:
-                art = self.toss if TOSS_INTRO <= T < TOSS_INTRO + 0.45 else self.wave
+                art = self.toss if any(t0 <= T < t0 + 0.45 for t0 in TOSS_INTRO) else self.wave
                 return art, HOVER[0], HOVER[1] + 8 * math.sin(T * 6), W_BIG, 2 * math.sin(T * 5)
             if T < SWOOP[1]:
                 p = ease(ramp(T, *SWOOP))
@@ -134,21 +139,22 @@ class Scene(Stage):
         up_ = cv2.resize(out, (W, H), interpolation=cv2.INTER_CUBIC)
         cv.emit((np.clip(up_, 0, None) * k).astype(np.float32))
 
-    def gift_flight(self, cv, sp, x0, y0, age, j, k, big=1.0):
-        """放ったプレゼント1つ: 後ろへ飛んで、回りながら光の尾を引いて降る（age 秒）"""
-        if not (0 <= age < 1.4) or k <= 0.003:
+    def gift_flight(self, cv, sp, x0, y0, age, j, k, big=1.0, v=None, g=520.0, life=1.4):
+        """放ったプレゼント1つ: 後ろへ飛んで、回りながら光の尾を引いて降る（age 秒）。
+        尾は 0.5 秒ぶん・芯 2.0・にじみ 11（芯 1.2・にじみ 7・0.35 秒では、録画の縮んだ絵で尾が読めなかった）"""
+        if not (0 <= age < life) or k <= 0.003:
             return
-        vx, vy, g = -(140 + 40 * j), -(120 - 30 * j), 520.0
+        vx, vy = v if v is not None else (-(140 + 40 * j), -(120 - 30 * j))
         x = x0 + vx * age
         y = y0 + vy * age + 0.5 * g * age * age
-        fade = 1 - ease(ramp(age, 1.0, 1.4))
-        tau = np.linspace(0, 0.35, 300)
+        fade = 1 - ease(ramp(age, life - 0.4, life))
+        tau = np.linspace(0, 0.5, 360)
         ta = np.clip(age - tau, 0, None)
         tx = x0 + vx * ta
         ty = y0 + vy * ta + 0.5 * g * ta * ta
-        trail(self.kit, cv, sp, tx, ty, (1 - tau / 0.35) ** 1.4 * (age - tau > 0), k * fade, head="gold", core=1.2, halo=7.0)
-        sprite(cv, self.gifts[j % 3], x, y, 46 * big, anchor=(0.5, 0.5), rot=360 * age * (0.8 + 0.3 * j), k=k * fade)
-        glow(cv, x, y, 22, GOLD * 0.6 + WHITE * 0.3, 0.35 * k * fade)
+        trail(self.kit, cv, sp, tx, ty, (1 - tau / 0.5) ** 1.2 * (age - tau > 0), k * fade, head="gold", core=2.0, halo=11.0)
+        sprite(cv, self.gifts[j % 3], x, y, 50 * big, anchor=(0.5, 0.5), rot=360 * age * (0.8 + 0.3 * j), k=k * fade)
+        glow(cv, x, y, 26, GOLD * 0.6 + WHITE * 0.3, 0.4 * k * fade)
 
     def draw(self, c):
         Ti, T, u = c.Ti, c.T, c.u
@@ -204,11 +210,15 @@ class Scene(Stage):
                 tx, ty = np.array(tx), np.array(ty)
                 fade = (1 - np.linspace(0, 1, len(tx))) ** 1.3
                 trail(self.kit, back, sp_b, tx, ty, fade, 0.9 * hk, head="gold", core=1.4, halo=8.0)
-            # 放ったプレゼント（登場の 1.4 に3つ、滞在は 0.25 と 1.4 に1つずつ）
+            # 放ったプレゼント（登場の 1.4 に3つ・2.05 に2つ、滞在は 0.25 と 1.4 に1つずつ）
             if intro and T < SWOOP[0] + 1.4:
                 bx, by = self.pt(HOVER[0], HOVER[1], W_BIG, 0.0, BACK_PT)
                 for j in range(3):
-                    self.gift_flight(back, sp_b, bx, by, T - TOSS_INTRO - 0.12 * j, j, 1.0, big=1.3)
+                    self.gift_flight(back, sp_b, bx, by, T - TOSS_INTRO[0] - 0.12 * j, j, 1.0, big=1.3)
+                # 2回目は高く放り上げる（左の端のぼかしに沿わず、ソリの左上の暗い空に尾が立つ）
+                for j in range(2):
+                    self.gift_flight(back, sp_b, bx, by, T - TOSS_INTRO[1] - 0.12 * j, j + 1, 1.0, big=1.3,
+                                     v=(-120 - 30 * j, -360 + 50 * j))
             if not intro or T >= SWOOP[1]:
                 bx, by = self.pt(REST[0], REST[1], W_REST, 0.0, BACK_PT)
                 for j, t0 in enumerate(TOSS_STAY):
@@ -218,6 +228,11 @@ class Scene(Stage):
             if intro:
                 hx_, hy_ = self.pt(HOVER[0], HOVER[1], W_BIG, 0.0, (0.25, 0.1))
                 burst(back, self.kit, hx_, hy_, (T - 2.0) / 0.6, 6108, n=20, spread=110, cols=("gold", "white", "magenta"))
+
+        # ---- ソリより先に、左の外から投げ込まれて夜空を横切るプレゼント
+        if intro and T < 3.0:
+            for j, (t0, x0, y0, vx, vy) in enumerate(HERALD):
+                self.gift_flight(back, sp_b, x0, y0, T - t0, j, 1.0, big=1.2, v=(vx, vy), g=420.0, life=1.7)
 
         # ---- 雪（箱ぜんぶに。奥・中は back、手前は front）
         amb = ease(ramp(Ti, 0.1, 0.8)) * out_k

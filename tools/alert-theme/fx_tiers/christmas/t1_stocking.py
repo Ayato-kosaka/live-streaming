@@ -30,9 +30,12 @@ from xmas_kit import burst, emit_masked, lip_of, soft_dot  # noqa: E402
 ART = os.path.join(ME, "..", "..", "fx_art", "christmas", "t1")
 
 FX, FB, H_FIRE = 200.0, 1138.0, 210.0   # 暖炉（真ん中の x・下の端・高さ）
-SX, H_STOCK = 296.0, 122.0             # 靴下（x・高さ）。吊るす輪が棚の下の端に来る
+SX, H_STOCK = 296.0, 136.0             # 靴下（x・高さ）。つま先が 1138、吊るす鉤は棚の前の面に掛かる
 CUFF = (0.17, 0.40)                    # 靴下の絵の中の、口のふわふわ（縦の割合）
-H_PIPO = 105.0                          # ピポ（胸から上の絵）の高さ。顔の幅が 50px 前後
+# ピポ（胸から上の絵）の高さ。頭（耳まで入れたフード）の幅は高さの 0.68 で 58px、靴下の口は高さの 0.48 で 65px。
+# 頭が口より太いと「靴下から出てきた」に見えない（2026-11-23 の見立て）ので、口のほうを太くしておく。
+# 縦は、ピポの頭の上の端（跳ねて 9px 上がっても）942 より下と、つま先 1140 より上の両方に収まる大きさ
+H_PIPO = 86.0
 POP = 0.3                               # ひょこっ
 BLUE = np.float32([0.45, 0.75, 1.0])
 
@@ -52,7 +55,7 @@ class Scene(Stage):
         self.cuff = Art(lip_of(self.stock.levels[0], CUFF[0] + 0.02, CUFF[1]))
         self.fire_win = fs.window_mask(self.fire.levels[0])
         # 靴下の置き場: 口のふわふわの上の端（ピポの前足が掛かる所）
-        self.s_top = FB - H_FIRE * 0.58          # 吊るす輪の上の端（棚の下の端）
+        self.s_top = FB - H_STOCK                # 鉤の上の端（つま先が暖炉の下の端にそろう）
         self.cuff_y = self.s_top + CUFF[0] * H_STOCK
         self.spill = Loop(40, 1101, cycles=(1, 2))
         self.float_ = Loop(16, 1102, cycles=(1, 1))

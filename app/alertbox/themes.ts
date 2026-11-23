@@ -900,8 +900,9 @@ export const THEMES: SeasonTheme[] = [
     slots: [],
     tiers: [{ min: 0, accent: "#C62828", slots: 0, files: [], bats: 0, waves: 0 }],
     /* 段の切れ目・色・字・キャラ絵の上の空きは11月と同じ（字はハロウィン2版目のまま。#1079）。
-       **段7（1万円〜）は仮**: 12月の段7（黒と赤の王子）は描き直し中なので、manifest の段7 は11月の城の段7 の動画の写し。
-       絵が決まって焼けば、`alert_fx_render.yml` の place が置き換える */
+       段7（1万円〜）も12月のもの（黒と赤の王子・敷かれる赤いじゅうたん・お菓子の世界。台本は
+       `tools/alert-theme/fx_tiers/christmas/t7_sweets.py`）。札の道の上の端（manifest の段の `plateTop`）と顔の線
+       （`heroBands` の段7）は、あやとが上の帯に退いたあとの顔の下の端から引いてある */
     fxVideo: { dir: "/alert/themes/christmas/fx", live: true, variant: "full", tiers: CASTLE_FX_TIERS },
     finale: null,
   },
