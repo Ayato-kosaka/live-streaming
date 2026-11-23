@@ -123,6 +123,8 @@ def main() -> int:
                   GUIDE, len(names))
         return 1
     log.info("channels.list mine=true の名前: %s", GUIDE)
+    # 押した側は注記しか読めない（ログ本体は口から読めない）。名前は合っていたときの1つだけ
+    notice(f"channels.list mine=true の名前: {GUIDE}")
 
     # **平文はここまで。** 以降、ログにも注記にも暗号文しか出ない
     blob = pack(seal(rt.encode(), pub))
