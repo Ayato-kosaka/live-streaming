@@ -289,7 +289,7 @@ const XmasScene: React.FC<Props & { parts: Loaded }> = ({ theme, parts, currentA
         if (!on) return;
         if (animate) pop(bow?.firstElementChild, 520);
         fullLoops.push(
-          m.play(glow, [{ opacity: 0.55, transform: "scale(0.96)" }, { opacity: 0.95, transform: "scale(1.04)" }, { opacity: 0.55, transform: "scale(0.96)" }], {
+          m.play(glow, [{ opacity: 0.55, transform: "scale(0.94)" }, { opacity: 0.95, transform: "scale(1)" }, { opacity: 0.55, transform: "scale(0.94)" }], {
             duration: 2600,
             iterations: Infinity,
             easing: "ease-in-out",
@@ -837,6 +837,8 @@ const XmasScene: React.FC<Props & { parts: Loaded }> = ({ theme, parts, currentA
     const sleighBox = { x: X(sx), y: Y(sy), w: sw * S, h: sh * S };
     const front = d.sleigh.front.map(([fx, fy]) => `${(fx * 100).toFixed(2)}% ${(fy * 100).toFixed(2)}%`).join(", ");
     const full = bagMorph(d, 1).rect;
+    // 光の縦は、ふくらんでも場面の上の端を越えない高さまで（豚の 1.6 倍の四角の外に光をにじませない）
+    const glowH = Math.min(full.h * 1.7, (full.y + full.h / 2) * 2 * 0.96) * S;
     const [bx, by] = d.bag.base;
     const giftW = d.gifts.w * S;
     const bowW = d.bow.w * S;
@@ -850,9 +852,9 @@ const XmasScene: React.FC<Props & { parts: Loaded }> = ({ theme, parts, currentA
           style={{
             position: "absolute",
             left: X(full.x + full.w / 2) - full.w * S * 0.85,
-            top: Y(full.y + full.h / 2) - full.h * S * 0.85,
+            top: Y(full.y + full.h / 2) - glowH / 2,
             width: full.w * S * 1.7,
-            height: full.h * S * 1.7,
+            height: glowH,
             borderRadius: "50%",
             visibility: "hidden",
             pointerEvents: "none",
