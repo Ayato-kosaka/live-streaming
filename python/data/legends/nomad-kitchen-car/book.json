@@ -1618,11 +1618,10 @@
     "id": "idp-1year",
     "group": "免許",
     "title": "国外運転免許証が1年で切れる",
-    "plan": "旅のあいだに代わりの人に申請してもらう道を使う",
+    "plan": "旅のあいだに取り直す手立てを、出発の前に住所地の窓口で確かめる",
     "stars": 2,
     "src": [
-     "https://www.pref.aichi.jp/police/menkyo/qa/menkyo/kokusai.html",
-     "https://www.keishicho.metro.tokyo.lg.jp/menkyo/menkyo/kokugai/kokugai02.html"
+     "https://www.npa.go.jp/policies/application/license_renewal/living_abroad.html"
     ]
    },
    {
@@ -1985,7 +1984,7 @@
   {
    "date": "2026-11-23",
    "what": "車の最初の姿を窓口つきの箱バンにした",
-   "why": "窓口と台所と寝床が1台に収まり、ひと目でキッチンカーと分かるため",
+   "why": "窓口と台所と寝床を1台に収められ、ひと目でキッチンカーと分かるため",
    "by": "guide"
   },
   {
