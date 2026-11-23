@@ -278,12 +278,6 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikipedia.org/wiki/Beylerbeyi_Palace",
      "seen": "2026-11-23"
     }
-   ],
-   "marks": [
-    {
-     "kind": "price",
-     "text": "往復640リラ"
-    }
    ]
   },
   {
@@ -307,12 +301,6 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
      "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
      "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
      "seen": "2026-11-23"
-    }
-   ],
-   "marks": [
-    {
-     "kind": "price",
-     "text": "垢すり4,050リラ"
     }
    ]
   },
@@ -412,12 +400,6 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
      "seen": "2026-11-23"
     }
-   ],
-   "marks": [
-    {
-     "kind": "price",
-     "text": "昼1,500リラ"
-    }
    ]
   },
   {
@@ -428,7 +410,7 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
    "how": "カドゥキョイへの船は、ヨーロッパ側のエミノニュ・カラキョイ・ベシクタシュから出る。着いたら、魚市場（9時〜20時30分）と、牛の像から南へ延びる歩行者の通りバハリイェ通りへ。",
    "time": "",
    "money": "カドゥキョイとエミノニュの船は65.21リラ（約200円。2026年7月20日から）。",
-   "tip": "イスタンブールカードは、街角の小さな店や駅の機械で買え、現金かクレジットカードで足せる。",
+   "tip": "イスタンブールカードは、街角の小さな店や駅の券売機で買え、現金かクレジットカードで足せる。",
    "route": "",
    "see": [
     "kadikoy",
@@ -3320,7 +3302,7 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
     "id": "budget",
     "icon": "wallet",
     "label": "乗り物の目安",
-    "value": "1回46.20リラ",
+    "value": "カードで乗る",
     "lead": "メトロ・トラム・バス",
     "to": "#budget"
    },
@@ -3388,7 +3370,7 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
     "parts": [
      {
       "h": "",
-      "text": "カードのイスタンブールカードは、街角の小さな店や駅の機械で買える。足すのは現金かクレジットカード。"
+      "text": "カードのイスタンブールカードは、街角の小さな店や駅の券売機で買える。足すのは現金かクレジットカード。"
      },
      {
       "h": "",
@@ -4016,6 +3998,6 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-24",
- "hash": "e2c7936ad89879af"
+ "hash": "5346399e20731f9c"
 }
 /* END GUIDE */;

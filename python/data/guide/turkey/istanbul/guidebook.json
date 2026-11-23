@@ -694,20 +694,7 @@
    },
    "photo": {
     "drawn": "do"
-   },
-   "marks": [
-    {
-     "kind": "price",
-     "text": "往復640リラ",
-     "src": [
-      {
-       "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
-       "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
-       "seen": "2026-11-23"
-      }
-     ]
-    }
-   ]
+   }
   },
   {
    "key": "hammam",
@@ -814,20 +801,7 @@
    "went": false,
    "photo": {
     "drawn": "do"
-   },
-   "marks": [
-    {
-     "kind": "price",
-     "text": "垢すり4,050リラ",
-     "src": [
-      {
-       "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
-       "url": "https://www.cemberlitashamami.com/en/",
-       "seen": "2026-11-23"
-      }
-     ]
-    }
-   ]
+   }
   },
   {
    "key": "bazaar",
@@ -1205,20 +1179,7 @@
    },
    "photo": {
     "drawn": "do"
-   },
-   "marks": [
-    {
-     "kind": "price",
-     "text": "昼1,500リラ",
-     "src": [
-      {
-       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
-       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
-       "seen": "2026-11-23"
-      }
-     ]
-    }
-   ]
+   }
   },
   {
    "key": "ferry",
@@ -1287,7 +1248,7 @@
     ],
     "tips": [
      {
-      "text": "イスタンブールカードは、街角の小さな店や駅の機械で買え、現金かクレジットカードで足せる。",
+      "text": "イスタンブールカードは、街角の小さな店や駅の券売機で買え、現金かクレジットカードで足せる。",
       "src": [
        {
         "name": "Wikivoyage「Istanbul」",
@@ -6125,7 +6086,7 @@
     "title": "市内の乗り物",
     "points": [
      {
-      "text": "カードのイスタンブールカードは、街角の小さな店や駅の機械で買える。足すのは現金かクレジットカード。",
+      "text": "カードのイスタンブールカードは、街角の小さな店や駅の券売機で買える。足すのは現金かクレジットカード。",
       "src": [
        {
         "name": "Wikivoyage「Istanbul」",

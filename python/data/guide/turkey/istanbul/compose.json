@@ -307,7 +307,7 @@
   "budget": {
    "icon": "wallet",
    "label": "乗り物の目安",
-   "value": "1回46.20リラ",
+   "value": "カードで乗る",
    "lead": "メトロ・トラム・バス",
    "to": "#budget"
   },
