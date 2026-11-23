@@ -3,7 +3,7 @@
   "何か": "イスタンブールを「ガイドブック型の街の面」（/travel/turkey/istanbul）にするための材料。行った街（2025-03-30〜04-13）。焼くのは python/guidebook_bake.py",
   "見張り": "python3 python/guide_book_check.py turkey/istanbul（出どころの無い事実・座標の無い店・枠の外の座標）。マイマップの CSV も同じ道具が書く（--mymaps）",
   "出どころ": "事実を持つ欄には src（https と見た日）。座標は OpenStreetMap（Nominatim）。値段と「いまも」は2024年以降の出どころ。確かめきれないものは unknown へ",
-  "行った": "行った街だが、ここは骨組みだけで went は全部 false。行った箱と記事は行った担当が streams の facts から肉付けする",
+  "行った": "行った街（2025-03-30〜04-13）。went は配信の facts の行だけを持つ（台本の「行った」の段。名前を言っていない所を品に結んだ理由もそこ）。骨組みの字には混ぜない",
   "店": "店に結ぶ品は、その店のいまのサイトの品書き・品の一覧（2026-11-23 に見た）に載っている品だけ",
   "円": "円は 1ユーロ＝55.5788リラ・174.35円（2026年11月20日の欧州中央銀行の参照レート。1リラ＝約3.14円）で直し、10円で丸めた",
   "地図": "多角形（range.polygon）は、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない。ドルマバフチェ宮殿より北のボスポラス海峡・バラット・ピエール・ロティの丘・プリンスィズ諸島は見どころマップの外（矢印）",
@@ -935,7 +935,42 @@
      "seen": "2026-11-23"
     }
    ],
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "t0VuytEmnaI@0#place",
+      "ref": "04-08 0:00:00",
+      "video": "t0VuytEmnaI",
+      "t": 0,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=0s"
+     },
+     {
+      "id": "t0VuytEmnaI@2040#fact",
+      "ref": "04-08 0:34:00",
+      "video": "t0VuytEmnaI",
+      "t": 2040,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2040s"
+     },
+     {
+      "id": "t0VuytEmnaI@2760#fact",
+      "ref": "04-08 0:46:00",
+      "video": "t0VuytEmnaI",
+      "t": 2760,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2760s"
+     },
+     {
+      "id": "t0VuytEmnaI@2820#fact",
+      "ref": "04-08 0:47:00",
+      "video": "t0VuytEmnaI",
+      "t": 2820,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2820s"
+     }
+    ]
+   },
    "links": {
     "see": [
      "bazaar",
@@ -944,6 +979,12 @@
    },
    "photo": {
     "drawn": "do"
+   },
+   "scene": {
+    "id": "t0VuytEmnaI@2040#fact",
+    "video": "t0VuytEmnaI",
+    "t": 2040,
+    "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2040s"
    }
   },
   {
@@ -1280,7 +1321,50 @@
      "seen": "2026-11-23"
     }
    ],
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "UULcHjBHSJM@790#price",
+      "ref": "04-11 0:13:10",
+      "video": "UULcHjBHSJM",
+      "t": 790,
+      "kind": "price",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=790s"
+     },
+     {
+      "id": "UULcHjBHSJM@2150#move",
+      "ref": "04-11 0:35:50",
+      "video": "UULcHjBHSJM",
+      "t": 2150,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=2150s"
+     },
+     {
+      "id": "UULcHjBHSJM@2200#caution",
+      "ref": "04-11 0:36:40",
+      "video": "UULcHjBHSJM",
+      "t": 2200,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=2200s"
+     },
+     {
+      "id": "UULcHjBHSJM@2270#move",
+      "ref": "04-11 0:37:50",
+      "video": "UULcHjBHSJM",
+      "t": 2270,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=2270s"
+     },
+     {
+      "id": "UULcHjBHSJM@3040#quote",
+      "ref": "04-11 0:50:40",
+      "video": "UULcHjBHSJM",
+      "t": 3040,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=3040s"
+     }
+    ]
+   },
    "links": {
     "see": [
      "kadikoy",
@@ -1289,6 +1373,12 @@
    },
    "photo": {
     "drawn": "do"
+   },
+   "scene": {
+    "id": "UULcHjBHSJM@3040#quote",
+    "video": "UULcHjBHSJM",
+    "t": 3040,
+    "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=3040s"
    }
   },
   {
@@ -1381,7 +1471,58 @@
      "seen": "2026-11-23"
     }
    ],
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "aUpMiuFhaMk@790#price",
+      "ref": "03-30 0:13:10",
+      "video": "aUpMiuFhaMk",
+      "t": 790,
+      "kind": "price",
+      "url": "https://www.youtube.com/watch?v=aUpMiuFhaMk&t=790s"
+     },
+     {
+      "id": "aUpMiuFhaMk@795#quote",
+      "ref": "03-30 0:13:15",
+      "video": "aUpMiuFhaMk",
+      "t": 795,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=aUpMiuFhaMk&t=795s"
+     },
+     {
+      "id": "UULcHjBHSJM@7520#food",
+      "ref": "04-11 2:05:20",
+      "video": "UULcHjBHSJM",
+      "t": 7520,
+      "kind": "food",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=7520s"
+     },
+     {
+      "id": "UULcHjBHSJM@7840#price",
+      "ref": "04-11 2:10:40",
+      "video": "UULcHjBHSJM",
+      "t": 7840,
+      "kind": "price",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=7840s"
+     },
+     {
+      "id": "UULcHjBHSJM@8350#food",
+      "ref": "04-11 2:19:10",
+      "video": "UULcHjBHSJM",
+      "t": 8350,
+      "kind": "food",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=8350s"
+     },
+     {
+      "id": "UULcHjBHSJM@8500#food",
+      "ref": "04-11 2:21:40",
+      "video": "UULcHjBHSJM",
+      "t": 8500,
+      "kind": "food",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=8500s"
+     }
+    ]
+   },
    "links": {
     "eat": [
      "doner",
@@ -1391,6 +1532,12 @@
    },
    "photo": {
     "drawn": "do"
+   },
+   "scene": {
+    "id": "UULcHjBHSJM@8350#food",
+    "video": "UULcHjBHSJM",
+    "t": 8350,
+    "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=8350s"
    }
   },
   {
@@ -1522,7 +1669,50 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "Far6D8kifM4@1860#place",
+      "ref": "04-03 0:31:00",
+      "video": "Far6D8kifM4",
+      "t": 1860,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1860s"
+     },
+     {
+      "id": "Far6D8kifM4@1650#caution",
+      "ref": "04-03 0:27:30",
+      "video": "Far6D8kifM4",
+      "t": 1650,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1650s"
+     },
+     {
+      "id": "Far6D8kifM4@2100#fact",
+      "ref": "04-03 0:35:00",
+      "video": "Far6D8kifM4",
+      "t": 2100,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=2100s"
+     },
+     {
+      "id": "Far6D8kifM4@2550#quote",
+      "ref": "04-03 0:42:30",
+      "video": "Far6D8kifM4",
+      "t": 2550,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=2550s"
+     },
+     {
+      "id": "x8Kbm9dDpYg@2980#place",
+      "ref": "04-04 0:49:40",
+      "video": "x8Kbm9dDpYg",
+      "t": 2980,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=x8Kbm9dDpYg&t=2980s"
+     }
+    ]
+   },
    "lat": 41.008505,
    "lon": 28.980011,
    "coord_src": [
@@ -1576,6 +1766,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/500px-Hagia_Sophia_Mars_2013.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/960px-Hagia_Sophia_Mars_2013.jpg"
     }
+   },
+   "scene": {
+    "id": "Far6D8kifM4@2550#quote",
+    "video": "Far6D8kifM4",
+    "t": 2550,
+    "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=2550s"
    }
   },
   {
@@ -1604,7 +1800,74 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "x8Kbm9dDpYg@2530#place",
+      "ref": "04-04 0:42:10",
+      "video": "x8Kbm9dDpYg",
+      "t": 2530,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=x8Kbm9dDpYg&t=2530s"
+     },
+     {
+      "id": "x8Kbm9dDpYg@3120#quote",
+      "ref": "04-04 0:52:00",
+      "video": "x8Kbm9dDpYg",
+      "t": 3120,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=x8Kbm9dDpYg&t=3120s"
+     },
+     {
+      "id": "x8Kbm9dDpYg@2710#price",
+      "ref": "04-04 0:45:10",
+      "video": "x8Kbm9dDpYg",
+      "t": 2710,
+      "kind": "price",
+      "url": "https://www.youtube.com/watch?v=x8Kbm9dDpYg&t=2710s"
+     },
+     {
+      "id": "x8Kbm9dDpYg@3290#caution",
+      "ref": "04-04 0:54:50",
+      "video": "x8Kbm9dDpYg",
+      "t": 3290,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=x8Kbm9dDpYg&t=3290s"
+     },
+     {
+      "id": "J_l0cVwfMPo@1800#caution",
+      "ref": "04-07 0:30:00",
+      "video": "J_l0cVwfMPo",
+      "t": 1800,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=J_l0cVwfMPo&t=1800s"
+     },
+     {
+      "id": "J_l0cVwfMPo@2460#fact",
+      "ref": "04-07 0:41:00",
+      "video": "J_l0cVwfMPo",
+      "t": 2460,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=J_l0cVwfMPo&t=2460s"
+     },
+     {
+      "id": "J_l0cVwfMPo@2520#place",
+      "ref": "04-07 0:42:00",
+      "video": "J_l0cVwfMPo",
+      "t": 2520,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=J_l0cVwfMPo&t=2520s"
+     },
+     {
+      "id": "UULcHjBHSJM@2560#quote",
+      "ref": "04-11 0:42:40",
+      "video": "UULcHjBHSJM",
+      "t": 2560,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=2560s"
+     }
+    ]
+   },
    "lat": 41.005384,
    "lon": 28.976853,
    "coord_src": [
@@ -1658,6 +1921,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG/500px-Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG/960px-Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG"
     }
+   },
+   "scene": {
+    "id": "x8Kbm9dDpYg@3120#quote",
+    "video": "x8Kbm9dDpYg",
+    "t": 3120,
+    "url": "https://www.youtube.com/watch?v=x8Kbm9dDpYg&t=3120s"
    }
   },
   {
@@ -1855,7 +2124,66 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "t0VuytEmnaI@0#place",
+      "ref": "04-08 0:00:00",
+      "video": "t0VuytEmnaI",
+      "t": 0,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=0s"
+     },
+     {
+      "id": "t0VuytEmnaI@90#fact",
+      "ref": "04-08 0:01:30",
+      "video": "t0VuytEmnaI",
+      "t": 90,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=90s"
+     },
+     {
+      "id": "t0VuytEmnaI@1530#fact",
+      "ref": "04-08 0:25:30",
+      "video": "t0VuytEmnaI",
+      "t": 1530,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=1530s"
+     },
+     {
+      "id": "t0VuytEmnaI@1710#fact",
+      "ref": "04-08 0:28:30",
+      "video": "t0VuytEmnaI",
+      "t": 1710,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=1710s"
+     },
+     {
+      "id": "t0VuytEmnaI@2040#fact",
+      "ref": "04-08 0:34:00",
+      "video": "t0VuytEmnaI",
+      "t": 2040,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2040s"
+     },
+     {
+      "id": "t0VuytEmnaI@2760#fact",
+      "ref": "04-08 0:46:00",
+      "video": "t0VuytEmnaI",
+      "t": 2760,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2760s"
+     },
+     {
+      "id": "t0VuytEmnaI@2820#fact",
+      "ref": "04-08 0:47:00",
+      "video": "t0VuytEmnaI",
+      "t": 2820,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2820s"
+     }
+    ]
+   },
    "lat": 41.010954,
    "lon": 28.968022,
    "coord_src": [
@@ -1919,6 +2247,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg/500px-Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg/960px-Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg"
     }
+   },
+   "scene": {
+    "id": "t0VuytEmnaI@2820#fact",
+    "video": "t0VuytEmnaI",
+    "t": 2820,
+    "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2820s"
    }
   },
   {
@@ -1947,7 +2281,58 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "nJzo0OMugaM@580#caution",
+      "ref": "04-12 0:09:40",
+      "video": "nJzo0OMugaM",
+      "t": 580,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=580s"
+     },
+     {
+      "id": "nJzo0OMugaM@970#place",
+      "ref": "04-12 0:16:10",
+      "video": "nJzo0OMugaM",
+      "t": 970,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=970s"
+     },
+     {
+      "id": "nJzo0OMugaM@1060#fact",
+      "ref": "04-12 0:17:40",
+      "video": "nJzo0OMugaM",
+      "t": 1060,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=1060s"
+     },
+     {
+      "id": "nJzo0OMugaM@1140#fact",
+      "ref": "04-12 0:19:00",
+      "video": "nJzo0OMugaM",
+      "t": 1140,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=1140s"
+     },
+     {
+      "id": "nJzo0OMugaM@1265#fact",
+      "ref": "04-12 0:21:05",
+      "video": "nJzo0OMugaM",
+      "t": 1265,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=1265s"
+     },
+     {
+      "id": "nJzo0OMugaM@1360#caution",
+      "ref": "04-12 0:22:40",
+      "video": "nJzo0OMugaM",
+      "t": 1360,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=1360s"
+     }
+    ]
+   },
    "lat": 41.016479,
    "lon": 28.970538,
    "coord_src": [
@@ -1995,6 +2380,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg/500px-Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg/960px-Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg"
     }
+   },
+   "scene": {
+    "id": "nJzo0OMugaM@970#place",
+    "video": "nJzo0OMugaM",
+    "t": 970,
+    "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=970s"
    }
   },
   {
@@ -2028,7 +2419,42 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "hhW0LTh3xIw@6200#move",
+      "ref": "04-05 1:43:20",
+      "video": "hhW0LTh3xIw",
+      "t": 6200,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=6200s"
+     },
+     {
+      "id": "hhW0LTh3xIw@7150#quote",
+      "ref": "04-05 1:59:10",
+      "video": "hhW0LTh3xIw",
+      "t": 7150,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=7150s"
+     },
+     {
+      "id": "hhW0LTh3xIw@7470#place",
+      "ref": "04-05 2:04:30",
+      "video": "hhW0LTh3xIw",
+      "t": 7470,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=7470s"
+     },
+     {
+      "id": "hhW0LTh3xIw@7570#price",
+      "ref": "04-05 2:06:10",
+      "video": "hhW0LTh3xIw",
+      "t": 7570,
+      "kind": "price",
+      "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=7570s"
+     }
+    ]
+   },
    "lat": 41.025641,
    "lon": 28.974213,
    "coord_src": [
@@ -2082,6 +2508,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Galata_Tower_January_2015.JPG/500px-Galata_Tower_January_2015.JPG",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Galata_Tower_January_2015.JPG/960px-Galata_Tower_January_2015.JPG"
     }
+   },
+   "scene": {
+    "id": "hhW0LTh3xIw@7470#place",
+    "video": "hhW0LTh3xIw",
+    "t": 7470,
+    "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=7470s"
    }
   },
   {
@@ -2777,7 +3209,58 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "UULcHjBHSJM@2920#fact",
+      "ref": "04-11 0:48:40",
+      "video": "UULcHjBHSJM",
+      "t": 2920,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=2920s"
+     },
+     {
+      "id": "UULcHjBHSJM@2980#place",
+      "ref": "04-11 0:49:40",
+      "video": "UULcHjBHSJM",
+      "t": 2980,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=2980s"
+     },
+     {
+      "id": "UULcHjBHSJM@3010#quote",
+      "ref": "04-11 0:50:10",
+      "video": "UULcHjBHSJM",
+      "t": 3010,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=3010s"
+     },
+     {
+      "id": "UULcHjBHSJM@3640#fact",
+      "ref": "04-11 1:00:40",
+      "video": "UULcHjBHSJM",
+      "t": 3640,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=3640s"
+     },
+     {
+      "id": "UULcHjBHSJM@4330#fact",
+      "ref": "04-11 1:12:10",
+      "video": "UULcHjBHSJM",
+      "t": 4330,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=4330s"
+     },
+     {
+      "id": "UULcHjBHSJM@4420#food",
+      "ref": "04-11 1:13:40",
+      "video": "UULcHjBHSJM",
+      "t": 4420,
+      "kind": "food",
+      "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=4420s"
+     }
+    ]
+   },
    "lat": 40.992908,
    "lon": 29.022868,
    "coord_src": [
@@ -2836,6 +3319,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg/500px-Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg/960px-Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg"
     }
+   },
+   "scene": {
+    "id": "UULcHjBHSJM@2980#place",
+    "video": "UULcHjBHSJM",
+    "t": 2980,
+    "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=2980s"
    }
   },
   {
@@ -3682,7 +4171,82 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Hac%C4%B1+Abdullah+%C4%B0stanbul&hl=ja"
      }
     ],
-    "went": false,
+    "went": {
+     "facts": [
+      {
+       "id": "Far6D8kifM4@720#food",
+       "ref": "04-03 0:12:00",
+       "video": "Far6D8kifM4",
+       "t": 720,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=720s"
+      },
+      {
+       "id": "Far6D8kifM4@1110#food",
+       "ref": "04-03 0:18:30",
+       "video": "Far6D8kifM4",
+       "t": 1110,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1110s"
+      },
+      {
+       "id": "Far6D8kifM4@1140#quote",
+       "ref": "04-03 0:19:00",
+       "video": "Far6D8kifM4",
+       "t": 1140,
+       "kind": "quote",
+       "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1140s"
+      },
+      {
+       "id": "Far6D8kifM4@1170#food",
+       "ref": "04-03 0:19:30",
+       "video": "Far6D8kifM4",
+       "t": 1170,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1170s"
+      },
+      {
+       "id": "Far6D8kifM4@1230#food",
+       "ref": "04-03 0:20:30",
+       "video": "Far6D8kifM4",
+       "t": 1230,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1230s"
+      },
+      {
+       "id": "Far6D8kifM4@1240#quote",
+       "ref": "04-03 0:20:40",
+       "video": "Far6D8kifM4",
+       "t": 1240,
+       "kind": "quote",
+       "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1240s"
+      },
+      {
+       "id": "Far6D8kifM4@1320#quote",
+       "ref": "04-03 0:22:00",
+       "video": "Far6D8kifM4",
+       "t": 1320,
+       "kind": "quote",
+       "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1320s"
+      },
+      {
+       "id": "Far6D8kifM4@1350#quote",
+       "ref": "04-03 0:22:30",
+       "video": "Far6D8kifM4",
+       "t": 1350,
+       "kind": "quote",
+       "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1350s"
+      },
+      {
+       "id": "Far6D8kifM4@1380#quote",
+       "ref": "04-03 0:23:00",
+       "video": "Far6D8kifM4",
+       "t": 1380,
+       "kind": "quote",
+       "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1380s"
+      }
+     ]
+    },
     "pork_note": {
      "text": "トルコでは豚肉は一部の店にあるだけで、ふだんはあまり食べない（ムスリムが多いため）。肉の種類は店で確かめる。",
      "src": [
@@ -3692,6 +4256,12 @@
        "seen": "2026-11-23"
       }
      ]
+    },
+    "scene": {
+     "id": "Far6D8kifM4@1380#quote",
+     "video": "Far6D8kifM4",
+     "t": 1380,
+     "url": "https://www.youtube.com/watch?v=Far6D8kifM4&t=1380s"
     }
    },
    {
@@ -3756,7 +4326,58 @@
      ]
     },
     "stores": [],
-    "went": false,
+    "went": {
+     "facts": [
+      {
+       "id": "Q2nn9RXxN7Q@280#stay",
+       "ref": "04-01 0:04:40",
+       "video": "Q2nn9RXxN7Q",
+       "t": 280,
+       "kind": "stay",
+       "url": "https://www.youtube.com/watch?v=Q2nn9RXxN7Q&t=280s"
+      },
+      {
+       "id": "Q2nn9RXxN7Q@300#food",
+       "ref": "04-01 0:05:00",
+       "video": "Q2nn9RXxN7Q",
+       "t": 300,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=Q2nn9RXxN7Q&t=300s"
+      },
+      {
+       "id": "Q2nn9RXxN7Q@400#stay",
+       "ref": "04-01 0:06:40",
+       "video": "Q2nn9RXxN7Q",
+       "t": 400,
+       "kind": "stay",
+       "url": "https://www.youtube.com/watch?v=Q2nn9RXxN7Q&t=400s"
+      },
+      {
+       "id": "Q2nn9RXxN7Q@430#caution",
+       "ref": "04-01 0:07:10",
+       "video": "Q2nn9RXxN7Q",
+       "t": 430,
+       "kind": "caution",
+       "url": "https://www.youtube.com/watch?v=Q2nn9RXxN7Q&t=430s"
+      },
+      {
+       "id": "UULcHjBHSJM@1400#stay",
+       "ref": "04-11 0:23:20",
+       "video": "UULcHjBHSJM",
+       "t": 1400,
+       "kind": "stay",
+       "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=1400s"
+      },
+      {
+       "id": "nJzo0OMugaM@3760#stay",
+       "ref": "04-12 1:02:40",
+       "video": "nJzo0OMugaM",
+       "t": 3760,
+       "kind": "stay",
+       "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=3760s"
+      }
+     ]
+    },
     "note": {
      "text": "トマト・ピーマン・玉ねぎ・オリーブ油・卵で作る卵料理メネメンもある。",
      "src": [
@@ -3766,6 +4387,12 @@
        "seen": "2026-11-23"
       }
      ]
+    },
+    "scene": {
+     "id": "Q2nn9RXxN7Q@300#food",
+     "video": "Q2nn9RXxN7Q",
+     "t": 300,
+     "url": "https://www.youtube.com/watch?v=Q2nn9RXxN7Q&t=300s"
     }
    },
    {
@@ -4081,7 +4708,40 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Haf%C4%B1z+Mustafa+1864+%C4%B0stanbul&hl=ja"
      }
     ],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "hhW0LTh3xIw@3460#caution",
+       "ref": "04-05 0:57:40",
+       "video": "hhW0LTh3xIw",
+       "t": 3460,
+       "kind": "caution",
+       "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=3460s"
+      },
+      {
+       "id": "hhW0LTh3xIw@4060#food",
+       "ref": "04-05 1:07:40",
+       "video": "hhW0LTh3xIw",
+       "t": 4060,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=4060s"
+      },
+      {
+       "id": "nJzo0OMugaM@1360#food",
+       "ref": "04-12 0:22:40",
+       "video": "nJzo0OMugaM",
+       "t": 1360,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=1360s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "hhW0LTh3xIw@4060#food",
+     "video": "hhW0LTh3xIw",
+     "t": 4060,
+     "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=4060s"
+    }
    },
    {
     "key": "lokum",
@@ -4330,7 +4990,72 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Mado+%C4%B0stanbul&hl=ja"
      }
     ],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "itQ8b_XeK0U@2435#place",
+       "ref": "04-09 0:40:35",
+       "video": "itQ8b_XeK0U",
+       "t": 2435,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=itQ8b_XeK0U&t=2435s"
+      },
+      {
+       "id": "itQ8b_XeK0U@2645#caution",
+       "ref": "04-09 0:44:05",
+       "video": "itQ8b_XeK0U",
+       "t": 2645,
+       "kind": "caution",
+       "url": "https://www.youtube.com/watch?v=itQ8b_XeK0U&t=2645s"
+      },
+      {
+       "id": "itQ8b_XeK0U@2705#price",
+       "ref": "04-09 0:45:05",
+       "video": "itQ8b_XeK0U",
+       "t": 2705,
+       "kind": "price",
+       "url": "https://www.youtube.com/watch?v=itQ8b_XeK0U&t=2705s"
+      },
+      {
+       "id": "itQ8b_XeK0U@3035#food",
+       "ref": "04-09 0:50:35",
+       "video": "itQ8b_XeK0U",
+       "t": 3035,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=itQ8b_XeK0U&t=3035s"
+      },
+      {
+       "id": "itQ8b_XeK0U@3155#food",
+       "ref": "04-09 0:52:35",
+       "video": "itQ8b_XeK0U",
+       "t": 3155,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=itQ8b_XeK0U&t=3155s"
+      },
+      {
+       "id": "itQ8b_XeK0U@3245#food",
+       "ref": "04-09 0:54:05",
+       "video": "itQ8b_XeK0U",
+       "t": 3245,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=itQ8b_XeK0U&t=3245s"
+      },
+      {
+       "id": "itQ8b_XeK0U@3335#quote",
+       "ref": "04-09 0:55:35",
+       "video": "itQ8b_XeK0U",
+       "t": 3335,
+       "kind": "quote",
+       "url": "https://www.youtube.com/watch?v=itQ8b_XeK0U&t=3335s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "itQ8b_XeK0U@3335#quote",
+     "video": "itQ8b_XeK0U",
+     "t": 3335,
+     "url": "https://www.youtube.com/watch?v=itQ8b_XeK0U&t=3335s"
+    }
    },
    {
     "key": "sutlac",
@@ -4432,7 +5157,32 @@
      ]
     },
     "stores": [],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "Q2nn9RXxN7Q@380#food",
+       "ref": "04-01 0:06:20",
+       "video": "Q2nn9RXxN7Q",
+       "t": 380,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=Q2nn9RXxN7Q&t=380s"
+      },
+      {
+       "id": "vbagkjbCw4Q@1500#food",
+       "ref": "03-31 0:25:00",
+       "video": "vbagkjbCw4Q",
+       "t": 1500,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=vbagkjbCw4Q&t=1500s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "Q2nn9RXxN7Q@380#food",
+     "video": "Q2nn9RXxN7Q",
+     "t": 380,
+     "url": "https://www.youtube.com/watch?v=Q2nn9RXxN7Q&t=380s"
+    }
    },
    {
     "key": "kahve",
@@ -4492,7 +5242,32 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Kurukahveci+Mehmet+Efendi+%C4%B0stanbul&hl=ja"
      }
     ],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "Q2nn9RXxN7Q@380#food",
+       "ref": "04-01 0:06:20",
+       "video": "Q2nn9RXxN7Q",
+       "t": 380,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=Q2nn9RXxN7Q&t=380s"
+      },
+      {
+       "id": "vbagkjbCw4Q@1500#food",
+       "ref": "03-31 0:25:00",
+       "video": "vbagkjbCw4Q",
+       "t": 1500,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=vbagkjbCw4Q&t=1500s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "Q2nn9RXxN7Q@380#food",
+     "video": "Q2nn9RXxN7Q",
+     "t": 380,
+     "url": "https://www.youtube.com/watch?v=Q2nn9RXxN7Q&t=380s"
+    }
    },
    {
     "key": "ayran",
@@ -4524,7 +5299,24 @@
      ]
     },
     "stores": [],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "hhW0LTh3xIw@11950#food",
+       "ref": "04-05 3:19:10",
+       "video": "hhW0LTh3xIw",
+       "t": 11950,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=11950s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "hhW0LTh3xIw@11950#food",
+     "video": "hhW0LTh3xIw",
+     "t": 11950,
+     "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=11950s"
+    }
    },
    {
     "key": "boza",
@@ -5033,7 +5825,24 @@
     },
     "alcohol": false,
     "stores": [],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "nJzo0OMugaM@1265#fact",
+       "ref": "04-12 0:21:05",
+       "video": "nJzo0OMugaM",
+       "t": 1265,
+       "kind": "fact",
+       "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=1265s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "nJzo0OMugaM@1265#fact",
+     "video": "nJzo0OMugaM",
+     "t": 1265,
+     "url": "https://www.youtube.com/watch?v=nJzo0OMugaM&t=1265s"
+    }
    },
    {
     "key": "kilim",
@@ -5066,7 +5875,24 @@
     },
     "alcohol": false,
     "stores": [],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "t0VuytEmnaI@2040#fact",
+       "ref": "04-08 0:34:00",
+       "video": "t0VuytEmnaI",
+       "t": 2040,
+       "kind": "fact",
+       "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2040s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "t0VuytEmnaI@2040#fact",
+     "video": "t0VuytEmnaI",
+     "t": 2040,
+     "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=2040s"
+    }
    },
    {
     "key": "pestemal",
@@ -5254,6 +6080,43 @@
         "seen": "2026-11-23"
        }
       ]
+     },
+     {
+      "text": "着いたのは、アジア寄りで街から遠いサビハ・ギョクチェン空港。空港で4時間ほど寝てから、市街まで3時間ほどかかりました。帰りの空港では、建物に入るときと待合のターミナルに入るときの2回、荷物検査があって、パソコンのネジを締めるドライバーを取られました。",
+      "facts": [
+       {
+        "id": "6cRyzHIezD4@185#place",
+        "ref": "03-30 0:03:05",
+        "video": "6cRyzHIezD4",
+        "t": 185,
+        "kind": "place",
+        "url": "https://www.youtube.com/watch?v=6cRyzHIezD4&t=185s"
+       },
+       {
+        "id": "aUpMiuFhaMk@20#move",
+        "ref": "03-30 0:00:20",
+        "video": "aUpMiuFhaMk",
+        "t": 20,
+        "kind": "move",
+        "url": "https://www.youtube.com/watch?v=aUpMiuFhaMk&t=20s"
+       },
+       {
+        "id": "7Amy9E2U7wo@240#caution",
+        "ref": "04-13 0:04:00",
+        "video": "7Amy9E2U7wo",
+        "t": 240,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=7Amy9E2U7wo&t=240s"
+       },
+       {
+        "id": "7Amy9E2U7wo@375#caution",
+        "ref": "04-13 0:06:15",
+        "video": "7Amy9E2U7wo",
+        "t": 375,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=7Amy9E2U7wo&t=375s"
+       }
+      ]
      }
     ]
    },
@@ -5305,6 +6168,43 @@
         "seen": "2026-11-23"
        }
       ]
+     },
+     {
+      "text": "電車は1回40リラ、約160円で、ヨーロッパより安い。イスタンブールカードを買って、チャージして使いました。トラムの駅には改札があってしっかりしていますが、乗る路線を間違えて、降りてやり直したこともあります。",
+      "facts": [
+       {
+        "id": "aUpMiuFhaMk@1000#price",
+        "ref": "03-30 0:16:40",
+        "video": "aUpMiuFhaMk",
+        "t": 1000,
+        "kind": "price",
+        "url": "https://www.youtube.com/watch?v=aUpMiuFhaMk&t=1000s"
+       },
+       {
+        "id": "aUpMiuFhaMk@1200#move",
+        "ref": "03-30 0:20:00",
+        "video": "aUpMiuFhaMk",
+        "t": 1200,
+        "kind": "move",
+        "url": "https://www.youtube.com/watch?v=aUpMiuFhaMk&t=1200s"
+       },
+       {
+        "id": "hhW0LTh3xIw@430#move",
+        "ref": "04-05 0:07:10",
+        "video": "hhW0LTh3xIw",
+        "t": 430,
+        "kind": "move",
+        "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=430s"
+       },
+       {
+        "id": "hhW0LTh3xIw@490#caution",
+        "ref": "04-05 0:08:10",
+        "video": "hhW0LTh3xIw",
+        "t": 490,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=490s"
+       }
+      ]
      }
     ]
    },
@@ -5351,6 +6251,35 @@
         "seen": "2026-11-23"
        }
       ]
+     },
+     {
+      "text": "現金は、着いた日に300リラ、約1,200円を下ろしました。リラは日によって値動きが大きくて、店の手書きのメニューの値段が古いことがあります。値札は、ホワイトボードやシールで書き直せるようになっていました。",
+      "facts": [
+       {
+        "id": "aUpMiuFhaMk@1400#fact",
+        "ref": "03-30 0:23:20",
+        "video": "aUpMiuFhaMk",
+        "t": 1400,
+        "kind": "fact",
+        "url": "https://www.youtube.com/watch?v=aUpMiuFhaMk&t=1400s"
+       },
+       {
+        "id": "hhW0LTh3xIw@3650#caution",
+        "ref": "04-05 1:00:50",
+        "video": "hhW0LTh3xIw",
+        "t": 3650,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=hhW0LTh3xIw&t=3650s"
+       },
+       {
+        "id": "UULcHjBHSJM@1260#price",
+        "ref": "04-11 0:21:00",
+        "video": "UULcHjBHSJM",
+        "t": 1260,
+        "kind": "price",
+        "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=1260s"
+       }
+      ]
      }
     ]
    },
@@ -5375,6 +6304,35 @@
         "name": "Wikivoyage「Istanbul」",
         "url": "https://en.wikivoyage.org/wiki/Istanbul",
         "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "外を歩いているときは電波が安定していましたが、ブルーモスクの中に入ったころに電波がなくなりました。20GBのSIMが切れたときは、Wi-Fiをつないで復活しました。",
+      "facts": [
+       {
+        "id": "x8Kbm9dDpYg@2260#fact",
+        "ref": "04-04 0:37:40",
+        "video": "x8Kbm9dDpYg",
+        "t": 2260,
+        "kind": "fact",
+        "url": "https://www.youtube.com/watch?v=x8Kbm9dDpYg&t=2260s"
+       },
+       {
+        "id": "x8Kbm9dDpYg@3600#caution",
+        "ref": "04-04 1:00:00",
+        "video": "x8Kbm9dDpYg",
+        "t": 3600,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=x8Kbm9dDpYg&t=3600s"
+       },
+       {
+        "id": "UULcHjBHSJM@15970#caution",
+        "ref": "04-11 4:26:10",
+        "video": "UULcHjBHSJM",
+        "t": 15970,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=UULcHjBHSJM&t=15970s"
        }
       ]
      }
@@ -5421,6 +6379,43 @@
         "name": "Wikivoyage「Istanbul」",
         "url": "https://en.wikivoyage.org/wiki/Istanbul",
         "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "着いた初日、公園で声をかけてきたおじさんについて行くと、親戚の絨毯屋とケバブ屋に連れて行かれて、ビール代は全部こちらが払うと思われていました。ブルーモスクの周りでは、日本語で声をかけられることもあります。",
+      "facts": [
+       {
+        "id": "vbagkjbCw4Q@420#caution",
+        "ref": "03-31 0:07:00",
+        "video": "vbagkjbCw4Q",
+        "t": 420,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=vbagkjbCw4Q&t=420s"
+       },
+       {
+        "id": "vbagkjbCw4Q@600#place",
+        "ref": "03-31 0:10:00",
+        "video": "vbagkjbCw4Q",
+        "t": 600,
+        "kind": "place",
+        "url": "https://www.youtube.com/watch?v=vbagkjbCw4Q&t=600s"
+       },
+       {
+        "id": "vbagkjbCw4Q@990#caution",
+        "ref": "03-31 0:16:30",
+        "video": "vbagkjbCw4Q",
+        "t": 990,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=vbagkjbCw4Q&t=990s"
+       },
+       {
+        "id": "x8Kbm9dDpYg@2430#caution",
+        "ref": "04-04 0:40:30",
+        "video": "x8Kbm9dDpYg",
+        "t": 2430,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=x8Kbm9dDpYg&t=2430s"
        }
       ]
      }
@@ -5817,6 +6812,43 @@
      "name": "Wikipedia「Time in Turkey」",
      "url": "https://en.wikipedia.org/wiki/Time_in_Turkey",
      "seen": "2026-11-23"
+    }
+   ]
+  },
+  "autumn": {
+   "text": "3月30日に着いた日は、日差しが強くて南国のような暑さでした。ところが4月7日は6度の土砂降りで、今まで感じた中でいちばん寒い日。4月のトルコは暑いと思っていたら、7〜9度ほどの寒い日もありました。",
+   "facts": [
+    {
+     "id": "aUpMiuFhaMk@185#fact",
+     "ref": "03-30 0:03:05",
+     "video": "aUpMiuFhaMk",
+     "t": 185,
+     "kind": "fact",
+     "url": "https://www.youtube.com/watch?v=aUpMiuFhaMk&t=185s"
+    },
+    {
+     "id": "J_l0cVwfMPo@1350#fact",
+     "ref": "04-07 0:22:30",
+     "video": "J_l0cVwfMPo",
+     "t": 1350,
+     "kind": "fact",
+     "url": "https://www.youtube.com/watch?v=J_l0cVwfMPo&t=1350s"
+    },
+    {
+     "id": "J_l0cVwfMPo@1410#fact",
+     "ref": "04-07 0:23:30",
+     "video": "J_l0cVwfMPo",
+     "t": 1410,
+     "kind": "fact",
+     "url": "https://www.youtube.com/watch?v=J_l0cVwfMPo&t=1410s"
+    },
+    {
+     "id": "t0VuytEmnaI@90#fact",
+     "ref": "04-08 0:01:30",
+     "video": "t0VuytEmnaI",
+     "t": 90,
+     "kind": "fact",
+     "url": "https://www.youtube.com/watch?v=t0VuytEmnaI&t=90s"
     }
    ]
   }

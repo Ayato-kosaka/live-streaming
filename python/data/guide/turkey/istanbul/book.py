@@ -7,8 +7,9 @@
 座標は同じ置き場の `geo.json`、借りた写真の欄は `photos.json`（どちらも同じ道具の `geo` `photo` で足す）。
 **JSON を手で直さない。** ここを直して build する。
 
-イスタンブールは「行った」街（2025-03-30〜04-13）。ここは骨組み（外の出どころの事実）だけで、`went` は全部 false。
-行った箱と記事は、行った担当が配信の facts から肉付けする（`.claude/skills/city-guide/briefs/articles.md`）。
+イスタンブールは「行った」街（2025-03-30〜04-13）。骨組み（外の出どころの事実）のあとに、行った担当が配信の facts から
+行った箱を肉付けしている（下の「行った」。`.claude/skills/city-guide/briefs/articles.md`）。厚い所は記事
+（`python/data/guide/turkey/istanbul/<話>.json`）にして、窓には要約と「続きを読む」だけを残す。
 店に結ぶ品は、その店のいまのサイトの品書き・品の一覧（2026-11-23 に見た）に載っている品だけ。
 """
 
@@ -550,12 +551,132 @@ unknown = [
     {"what": "ハジュ・アブドゥッラー・マド・ハフズ・ムスタファの、いまの店の場所", "why": "店の座標は OpenStreetMap の点。店のサイトで支店の住所を確かめていない（ケバプチュ・イスケンデルは通りの点）"},
 ]
 
+# ------------------------------------------------------------------ 行った（配信の facts。行った担当が足す）
+# イスタンブールに居たのは 2025-03-30〜04-13 の16本。facts は `streams/2025/<月>/<stem>.facts.json`（`python/guide_facts.py`）。
+# **ガイドの品にだけ肉付けする**（facts から品を作らない）。骨組みの字（出どころつき）には混ぜず、行った箱に入る字だけを持つ。
+# 配信で名前を言っていない所を品に結んだものは、何で結んだかを書いておく:
+#   - 04-03 の葉っぱの包み → ヤプラック・サルマ: 0:06:30 に「このヤプラックサルマを食べたい」と言ってから食べている（facts の行には名前が無い）
+#   - 宿の朝食と宿の周りの朝ごはん（04-01・04-11・04-12）→ カフヴァルトゥ: 卵・チーズ・ジャム・オリーブ・パンの、トルコの朝ごはんの並び
+# 結ばなかったもの: 03-30 に見た「生まれて見たいちばん大きなモスク」（名前を言っていない）・サバサンド（04-11 は値段を見ただけで、
+# 食べていない）・トルコ石屋（04-10。品が無い）・スーパーの買い物（04-01・04-02。品が無い）・寿司（04-06。品が無い）
+# この街の日のあやと島カードは無い（2025-03-30〜04-13 の日のカードが0枚）。行った箱は話と場面だけ
+
+import json as _json
+
+
+def _days() -> dict:
+    """動画の id → 配信の日（MM-DD）。facts.json の date_local（見張りの ref と同じ物差し）"""
+    out = {}
+    for p in sorted((ROOT / "streams").glob("*/*/*.facts.json")):
+        d = _json.loads(p.read_text(encoding="utf-8"))
+        out[d["video_id"]] = d["date_local"][5:]
+    return out
+
+
+_DAY = _days()
+
+
+def fx(fid: str) -> dict:
+    """facts の行の結び（`<動画>@<秒>#<種類>`）を、材料の形（ref・url つき）にする"""
+    v, rest = fid.split("@")
+    t, kind = rest.split("#")
+    t = int(t)
+    if v not in _DAY:
+        raise BookError(f"facts の行「{fid}」の配信が streams に無い")
+    return {"id": fid, "ref": f"{_DAY[v]} {t // 3600}:{t % 3600 // 60:02d}:{t % 60:02d}", "video": v, "t": t, "kind": kind,
+            "url": f"https://www.youtube.com/watch?v={v}&t={t}s"}
+
+
+def went(xs: list, key: str, ids: list, scene: str) -> None:
+    """品（鍵）に行った行と場面を付ける。場面は結んだ行のどれか（一言に選ぶ品は、一言の行）"""
+    x = next((x for x in xs if x["key"] == key), None)
+    if x is None or scene not in ids:
+        raise BookError(f"行った: 品「{key}」が無いか、場面「{scene}」が結んだ行に無い")
+    x["went"] = {"facts": [fx(i) for i in ids]}
+    sc = fx(scene)
+    x["scene"] = {"id": sc["id"], "video": sc["video"], "t": sc["t"], "url": sc["url"]}
+
+
+# 配信（日付順）。03-30 は2本（朝に空港から・夜に街から）
+AIR = "6cRyzHIezD4"   # 03-30 サビハ・ギョクチェン空港に着いた回
+TOWN = "aUpMiuFhaMk"  # 03-30 市街に着いて、物価と大きなモスクを見た回
+PARK = "vbagkjbCw4Q"  # 03-31 公園で声をかけられた話
+HOST = "Q2nn9RXxN7Q"  # 04-01 宿の朝食とスーパー
+SARM = "Far6D8kifM4"  # 04-03 ヤプラック・サルマとアヤソフィア
+BLUE = "x8Kbm9dDpYg"  # 04-04 ブルーモスク（1回目）
+NEW = "hhW0LTh3xIw"   # 04-05 新市街・ガラタ塔
+RAIN = "J_l0cVwfMPo"  # 04-07 ブルーモスク（2回目・雨）
+GBZ = "t0VuytEmnaI"   # 04-08 グランドバザール
+ICE = "itQ8b_XeK0U"   # 04-09 トルコアイス
+ASIA = "UULcHjBHSJM"  # 04-11 フェリーでアジア側へ
+SPC = "nJzo0OMugaM"   # 04-12 エジプシャン・バザール
+BYE = "7Amy9E2U7wo"   # 04-13 帰りの空港
+
+went(see, "ayasofya", [f"{SARM}@1860#place", f"{SARM}@1650#caution", f"{SARM}@2100#fact", f"{SARM}@2550#quote", f"{BLUE}@2980#place"],
+     f"{SARM}@2550#quote")
+went(see, "blue", [f"{BLUE}@2530#place", f"{BLUE}@3120#quote", f"{BLUE}@2710#price", f"{BLUE}@3290#caution", f"{RAIN}@1800#caution",
+                   f"{RAIN}@2460#fact", f"{RAIN}@2520#place", f"{ASIA}@2560#quote"], f"{BLUE}@3120#quote")
+went(see, "galata", [f"{NEW}@6200#move", f"{NEW}@7150#quote", f"{NEW}@7470#place", f"{NEW}@7570#price"], f"{NEW}@7470#place")
+went(see, "bazaar", [f"{GBZ}@0#place", f"{GBZ}@90#fact", f"{GBZ}@1530#fact", f"{GBZ}@1710#fact", f"{GBZ}@2040#fact", f"{GBZ}@2760#fact",
+                     f"{GBZ}@2820#fact"], f"{GBZ}@2820#fact")
+went(see, "spice", [f"{SPC}@580#caution", f"{SPC}@970#place", f"{SPC}@1060#fact", f"{SPC}@1140#fact", f"{SPC}@1265#fact",
+                    f"{SPC}@1360#caution"], f"{SPC}@970#place")
+went(see, "kadikoy", [f"{ASIA}@2920#fact", f"{ASIA}@2980#place", f"{ASIA}@3010#quote", f"{ASIA}@3640#fact", f"{ASIA}@4330#fact",
+                      f"{ASIA}@4420#food"], f"{ASIA}@2980#place")
+
+went(todos, "ferry", [f"{ASIA}@790#price", f"{ASIA}@2150#move", f"{ASIA}@2200#caution", f"{ASIA}@2270#move", f"{ASIA}@3040#quote"],
+     f"{ASIA}@3040#quote")
+went(todos, "bazaar", [f"{GBZ}@0#place", f"{GBZ}@2040#fact", f"{GBZ}@2760#fact", f"{GBZ}@2820#fact"], f"{GBZ}@2040#fact")
+went(todos, "kebab", [f"{TOWN}@790#price", f"{TOWN}@795#quote", f"{ASIA}@7520#food", f"{ASIA}@7840#price", f"{ASIA}@8350#food",
+                      f"{ASIA}@8500#food"], f"{ASIA}@8350#food")
+
+went(eat_items, "sarma", [f"{SARM}@720#food", f"{SARM}@1110#food", f"{SARM}@1140#quote", f"{SARM}@1170#food", f"{SARM}@1230#food",
+                          f"{SARM}@1240#quote", f"{SARM}@1320#quote", f"{SARM}@1350#quote", f"{SARM}@1380#quote"], f"{SARM}@1380#quote")
+went(eat_items, "dondurma", [f"{ICE}@2435#place", f"{ICE}@2645#caution", f"{ICE}@2705#price", f"{ICE}@3035#food", f"{ICE}@3155#food",
+                             f"{ICE}@3245#food", f"{ICE}@3335#quote"], f"{ICE}@3335#quote")
+went(eat_items, "baklava", [f"{NEW}@3460#caution", f"{NEW}@4060#food", f"{SPC}@1360#food"], f"{NEW}@4060#food")
+went(eat_items, "kahvalti", [f"{HOST}@280#stay", f"{HOST}@300#food", f"{HOST}@400#stay", f"{HOST}@430#caution", f"{ASIA}@1400#stay",
+                             f"{SPC}@3760#stay"], f"{HOST}@300#food")
+went(eat_items, "ayran", [f"{NEW}@11950#food"], f"{NEW}@11950#food")
+went(eat_items, "cay", [f"{HOST}@380#food", f"{PARK}@1500#food"], f"{HOST}@380#food")
+went(eat_items, "kahve", [f"{HOST}@380#food", f"{PARK}@1500#food"], f"{HOST}@380#food")
+
+went(buy_items, "kilim", [f"{GBZ}@2040#fact"], f"{GBZ}@2040#fact")
+went(buy_items, "spice", [f"{SPC}@1265#fact"], f"{SPC}@1265#fact")
+
+
+def own(key: str, text: str, ids: list) -> None:
+    """基本情報の札に、行った人の話を1つ足す（出どころの無い、facts だけを持つ字。行った箱に入る）"""
+    g = next(g for g in basics["guide"] if g["key"] == key)
+    g["points"].append({"text": text, "facts": [fx(i) for i in ids]})
+
+
+own("airport", "着いたのは、アジア寄りで街から遠いサビハ・ギョクチェン空港。空港で4時間ほど寝てから、市街まで3時間ほどかかりました。"
+               "帰りの空港では、建物に入るときと待合のターミナルに入るときの2回、荷物検査があって、パソコンのネジを締めるドライバーを取られました。",
+    [f"{AIR}@185#place", f"{TOWN}@20#move", f"{BYE}@240#caution", f"{BYE}@375#caution"])
+own("transit", "電車は1回40リラ、約160円で、ヨーロッパより安い。イスタンブールカードを買って、チャージして使いました。"
+               "トラムの駅には改札があってしっかりしていますが、乗る路線を間違えて、降りてやり直したこともあります。",
+    [f"{TOWN}@1000#price", f"{TOWN}@1200#move", f"{NEW}@430#move", f"{NEW}@490#caution"])
+own("pay", "現金は、着いた日に300リラ、約1,200円を下ろしました。リラは日によって値動きが大きくて、店の手書きのメニューの値段が古いことがあります。"
+           "値札は、ホワイトボードやシールで書き直せるようになっていました。",
+    [f"{TOWN}@1400#fact", f"{NEW}@3650#caution", f"{ASIA}@1260#price"])
+own("sim", "外を歩いているときは電波が安定していましたが、ブルーモスクの中に入ったころに電波がなくなりました。"
+           "20GBのSIMが切れたときは、Wi-Fiをつないで復活しました。",
+    [f"{BLUE}@2260#fact", f"{BLUE}@3600#caution", f"{ASIA}@15970#caution"])
+own("safety", "着いた初日、公園で声をかけてきたおじさんについて行くと、親戚の絨毯屋とケバブ屋に連れて行かれて、ビール代は全部こちらが払うと思われていました。"
+              "ブルーモスクの周りでは、日本語で声をかけられることもあります。",
+    [f"{PARK}@420#caution", f"{PARK}@600#place", f"{PARK}@990#caution", f"{BLUE}@2430#caution"])
+# 季節の行った話。道具（`guidebook_bake.Baker.season`）が読む欄の名前が `autumn` なのでそこに置くが、中身は春（3月末〜4月）の話
+basics["autumn"] = {"text": "3月30日に着いた日は、日差しが強くて南国のような暑さでした。ところが4月7日は6度の土砂降りで、今まで感じた中でいちばん寒い日。"
+                            "4月のトルコは暑いと思っていたら、7〜9度ほどの寒い日もありました。",
+                    "facts": [fx(i) for i in [f"{TOWN}@185#fact", f"{RAIN}@1350#fact", f"{RAIN}@1410#fact", f"{GBZ}@90#fact"]]}
+
 book = {
     "_meta": {
         "何か": "イスタンブールを「ガイドブック型の街の面」（/travel/turkey/istanbul）にするための材料。行った街（2025-03-30〜04-13）。焼くのは python/guidebook_bake.py",
         "見張り": "python3 python/guide_book_check.py turkey/istanbul（出どころの無い事実・座標の無い店・枠の外の座標）。マイマップの CSV も同じ道具が書く（--mymaps）",
         "出どころ": "事実を持つ欄には src（https と見た日）。座標は OpenStreetMap（Nominatim）。値段と「いまも」は2024年以降の出どころ。確かめきれないものは unknown へ",
-        "行った": "行った街だが、ここは骨組みだけで went は全部 false。行った箱と記事は行った担当が streams の facts から肉付けする",
+        "行った": "行った街（2025-03-30〜04-13）。went は配信の facts の行だけを持つ（台本の「行った」の段。名前を言っていない所を品に結んだ理由もそこ）。骨組みの字には混ぜない",
         "店": "店に結ぶ品は、その店のいまのサイトの品書き・品の一覧（2026-11-23 に見た）に載っている品だけ",
         "円": "円は 1ユーロ＝55.5788リラ・174.35円（2026年11月20日の欧州中央銀行の参照レート。1リラ＝約3.14円）で直し、10円で丸めた",
         "地図": "多角形（range.polygon）は、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない。ドルマバフチェ宮殿より北のボスポラス海峡・バラット・ピエール・ロティの丘・プリンスィズ諸島は見どころマップの外（矢印）",
@@ -583,7 +704,7 @@ book = {
 compose = {
     "_meta": {
         "何か": "イスタンブールのガイドブックの面（/travel/turkey/istanbul）の組み立て。材料（guidebook.json）にあるのは事実で、ここにあるのは選びかたと並べかただけ。焼くのは python/guidebook_bake.py",
-        "行った": "行った街だが、カード・話・一言は行った担当が足す（ここは骨組み）",
+        "行った": "行った街。この街の日のあやと島カードは無いので、行った箱は話と場面だけ。話（story）は facts の行をつないだあやとの一人称（docs/guide-blog.md）で、記事のある品は要約だけ（article）。一言は節に1つ",
         "どんな街": "問いは日本語の頁と旅行のガイドがイスタンブールを語る3つ（材料の about.why_src）。前の街の問いを写していない",
         "題": "「イスタンブール観光ガイド」が頭（docs/island-misses.md #332・#333）",
     },
@@ -598,8 +719,67 @@ compose = {
     "published": "2026-11-23",
     "cover": {"catch": 0},
     "cards": {},
-    "say": {},
-    "items": {},
+    "say": {"see": "blue", "todo": "ferry", "eat": "sarma"},
+    "items": {
+        "see/ayasofya": {"story": {"text": "ブルーモスクより先に行きました。前は大渋滞で道も狭く、最近まで無料だったのが、観光客が増えすぎて有料になったそうです。"
+                                           "横から見ると、お城みたいでかっこよかったです。",
+                                   "facts": [f"{SARM}@1650#caution", f"{SARM}@2100#fact", f"{SARM}@2550#quote"]},
+                         "article": "blue"},
+        "see/blue": {"story": {"text": "入場は無料ですが、中に入る列は2時間待ちでした。次に行った雨の月曜日は、礼拝の時間で30分待ってから、靴を脱いで入りました。"
+                                       "中は空いていて、猫もいました。",
+                               "facts": [f"{BLUE}@2710#price", f"{BLUE}@3290#caution", f"{RAIN}@1800#caution", f"{RAIN}@2460#fact",
+                                         f"{RAIN}@2520#place"]},
+                     "article": "blue"},
+        "see/galata": {"story": {"text": "近いので歩いて向かいましたが、坂がすごくて、トルコは登山だと思いました。入場は4,500円ほどで、見送りました。",
+                                 "facts": [f"{NEW}@6200#move", f"{NEW}@7150#quote", f"{NEW}@7570#price"]},
+                       "article": "galata"},
+        "see/bazaar": {"story": {"text": "4月なのに7〜9度ほどで、寒い日でした。金銀財宝が売っていて面白かったけれど、自分で買うなら欲しいものはあまりなく、"
+                                         "今回は特に買うものはありませんでした。値切りは、やったことがありません。",
+                                 "facts": [f"{GBZ}@90#fact", f"{GBZ}@2820#fact", f"{GBZ}@1530#fact", f"{GBZ}@2760#fact", f"{GBZ}@1710#fact"]}},
+        "see/spice": {"story": {"text": "道が分からなくなりながら、入り口に着きました。食べ物の市場かと思ったら、おもちゃも売っていて、食べ物以外も多い。"
+                                        "スパイス売り場には、ローズマリーやクローブがありました。値段の書いていない店が多かったです。",
+                                "facts": [f"{SPC}@580#caution", f"{SPC}@970#place", f"{SPC}@1060#fact", f"{SPC}@1140#fact", f"{SPC}@1265#fact",
+                                          f"{SPC}@1360#caution"]}},
+        "see/kadikoy": {"story": {"text": "アジア側でいちばん大きい街で、思っていたより近代的でした。パリっぽい店があって、市場の野菜は水を上げられていて、新鮮に見えました。",
+                                  "facts": [f"{ASIA}@2980#place", f"{ASIA}@2920#fact", f"{ASIA}@3640#fact", f"{ASIA}@4330#fact"]},
+                        "article": "ferry"},
+        "todo/ferry": {"story": {"text": "地元の人も通勤に使うフェリーで、アジア側へ渡りました。船の上はめちゃくちゃ寒かったけれど、晴れた景色がよくて、この日にしてよかったです。",
+                                 "facts": [f"{ASIA}@2150#move", f"{ASIA}@2200#caution", f"{ASIA}@3040#quote"]},
+                       "article": "ferry"},
+        "todo/bazaar": {"story": {"text": "金銀財宝が売っていて、面白かったです。手織りの絨毯は、見る方向で色の濃さが変わるのを、実際に見て確かめました。"
+                                          "今回は特に買うものはありませんでした。",
+                                  "facts": [f"{GBZ}@2820#fact", f"{GBZ}@2040#fact", f"{GBZ}@2760#fact"]}},
+        "todo/kebab": {"story": {"text": "アヤソフィア近くの観光客向けの店では、ケバブが350リラ、1,400円もしました。イギリスでも、そこまではしません。"
+                                         "別の日に100gで頼んだケバブは800円ぐらいで、炭火焼きのような焦げ目があって、断然うまかったです。",
+                                 "facts": [f"{TOWN}@790#price", f"{TOWN}@795#quote", f"{ASIA}@7520#food", f"{ASIA}@7840#price", f"{ASIA}@8350#food",
+                                           f"{ASIA}@8500#food"]}},
+        "eat/sarma": {"story": {"text": "フォークを入れると、葉っぱの中に何か入っていました。食べてみるとぬめぬめしていて、初めての味。中身はふにゃふにゃのご飯で、"
+                                        "ピクルスでお粥を包んだみたいです。思ったより癖がなくて、普通に美味しかったので、晩ごはんにすることにしました。",
+                                "facts": [f"{SARM}@720#food", f"{SARM}@1110#food", f"{SARM}@1140#quote", f"{SARM}@1170#food", f"{SARM}@1240#quote",
+                                          f"{SARM}@1320#quote", f"{SARM}@1350#quote"]}},
+        "eat/dondurma": {"story": {"text": "店で食べてみなとアイスを出されて、食べようとすると引っこめられ、鼻をつつかれました。スモールで600円くらい。"
+                                           "噛めるほどの弾力で、溶ける寸前のハイチュウのような食感です。溶けて落ちてこず、ネバネバ伸びる。1回慣れるとうまいです。",
+                                   "facts": [f"{ICE}@2645#caution", f"{ICE}@2705#price", f"{ICE}@3155#food", f"{ICE}@3245#food", f"{ICE}@3335#quote"]}},
+        "eat/baklava": {"story": {"text": "目当ての有名店は閉まっていましたが、ピスタチオのバクラヴァを買って、手で食べました。"
+                                          "めちゃくちゃ美味しいので、トルコに来たらぜひ食べてほしいです。",
+                                  "facts": [f"{NEW}@3460#caution", f"{NEW}@4060#food", f"{SPC}@1360#food"]}},
+        "eat/kahvalti": {"story": {"text": "泊まった宿の朝食は、ゆで卵1個、チーズ2種、ジャム3種、レタス、オリーブ、バゲット食べ放題。ただ朝8時から10時前までで、"
+                                           "8時に起きるつもりが、起きたら12時でした。宿の周りの朝ごはんも安くてしっかりしていて、2週間ほど食べました。",
+                                   "facts": [f"{HOST}@300#food", f"{HOST}@400#stay", f"{HOST}@430#caution", f"{ASIA}@1400#stay"]}},
+        "eat/ayran": {"story": {"text": "無糖のヨーグルトをさらさらにした味で、ラッシーより好きかもしれません。", "facts": [f"{NEW}@11950#food"]}},
+        "eat/cay": {"story": {"text": "トルコのチャイは、トルココーヒーと同じく美味しかったです。", "facts": [f"{HOST}@380#food"]}},
+        "eat/kahve": {"story": {"text": "トルココーヒーも、トルコのチャイも、美味しかったです。", "facts": [f"{HOST}@380#food"]}},
+        "buy/kilim": {"story": {"text": "グランドバザールで、手織りの絨毯が、見る方向で色の濃さが変わるのを、実際に見て確かめました。",
+                                "facts": [f"{GBZ}@2040#fact"]}},
+        "buy/spice": {"story": {"text": "エジプシャン・バザールのスパイス売り場には、ローズマリーやクローブがありました。", "facts": [f"{SPC}@1265#fact"]}},
+        "guide/airport": {"story": {"text": "アジア寄りのサビハ・ギョクチェン空港に着いて、市街まで3時間ほど。帰りの空港は荷物検査が2回あって、ドライバーを取られました。",
+                                    "facts": [f"{AIR}@185#place", f"{TOWN}@20#move", f"{BYE}@240#caution", f"{BYE}@375#caution"]},
+                          "article": "arrival"},
+        "guide/safety": {"story": {"text": "着いた初日に、公園で声をかけてきたおじさんについて行きました。親戚の絨毯屋とケバブ屋を回って、"
+                                           "ビール代は全部こちらが払うと思われていて、最後は走って帰りました。",
+                                   "facts": [f"{PARK}@420#caution", f"{PARK}@600#place", f"{PARK}@990#caution", f"{PARK}@1320#quote"]},
+                         "article": "touts"},
+    },
     "about": {"crossroads": {"q": "なぜ「文明の十字路」？", "icon": "bridge"}, "history": {"q": "どんな歴史？", "icon": "castle"},
               "ayasofya": {"q": "アヤソフィアって何？", "icon": "mosque"}},
     "areas": {"oldcity": {"color": "#ffd98a", "plan": [1, 2, 2]}, "beyoglu": {"color": "#d9ccf5", "plan": [1, 1, 2]},

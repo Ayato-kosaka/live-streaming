@@ -303,6 +303,11 @@ SOLO = [
     "travel/albania/tirana/sufllaqe",
     "travel/albania/tirana/walk",
     "travel/turkey/istanbul",
+    "travel/turkey/istanbul/blue",
+    "travel/turkey/istanbul/galata",
+    "travel/turkey/istanbul/ferry",
+    "travel/turkey/istanbul/touts",
+    "travel/turkey/istanbul/arrival",
 ]
 
 
