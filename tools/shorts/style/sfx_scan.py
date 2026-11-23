@@ -9,7 +9,8 @@
   scan.json     候補（立ち上がりの秒・長さ・はね上がった帯の数と周波数・4kHz より上の割合・声の頭か・形の見当・
                 同じ音の繰り返しの束）・声の割合と大きさ・side（左右の差。BGM がよく出る）の大きさ・
                 BGM の落ち（side が前後3秒より 15dB 以上 0.2〜3秒落ちた所）・カットが拍に乗る割合と偶然の割合
-  overview.jpg  22秒ごとの段に、音の絵（80Hz〜16kHz の対数）・side の細い帯・声（緑）・カット（白）・候補（▲。同じ音の束は水色）
+  overview.jpg  22秒ごとの段に、音の絵（80Hz〜16kHz の対数）・side の細い帯・声（緑）・カット（白）・見る候補（▲。同じ音の束は水色）
+  tiles.jpg     見る候補ごとの音の絵（1.2秒ずつ）。効果音の形を見分ける
 
 **候補は効果音そのものではない。** 合成の音（声＋オーケストラの BGM＋効果音5つ）で試すと、声の音節と BGM の音の頭も拾い、
 27 の候補のうち本物は5つだった（2026-11-23）。効果音は同じ波形なので何度使っても同じ形になる（`repeat_groups`）が、
@@ -358,6 +359,23 @@ def main() -> int:
         c["near_cut"] = bool(any(abs(c["t"] - ct) <= 0.25 for ct in cuts))
     res["bgm_drops"] = bgm_drops(side_db)
     res["beat_sync"] = beat_sync(side, freqs, cuts)
+    # 効果音らしさの順（こちらのヨーグルトの回で当てた: はね上がった帯の数 ×（0.5＋4kHz より上の割合）、声の頭は 0.6倍）。
+    # 0.35秒以内の候補は1つにまとめ、上位（尺 ÷ 3.5秒 の数）だけを「見る候補」にする。ヨーグルトの回では、指示書の効果音11個のうち
+    # 9個が見る候補15に入った（風切り音の2つは立ち上がりが遅く、0.2秒あとの候補で当たる）。外れた2つは柔らかい音（キラ・ふわ）
+    def sfx_score(c):
+        return c["bands"] * (0.5 + c["hi_share"]) * (0.6 if c["at_word_start"] else 1.0)
+    order = sorted(range(len(cand)), key=lambda i: -sfx_score(cand[i]))
+    picked = []
+    for i in order:
+        if all(abs(cand[i]["t"] - cand[j]["t"]) > 0.35 for j in picked):
+            picked.append(i)
+        if len(picked) >= max(4, int(dur / 3.5)):
+            break
+    for r, i in enumerate(sorted(picked, key=lambda i: cand[i]["t"])):
+        cand[i]["look"] = True
+    for c in cand:
+        c["sfx_score"] = round(sfx_score(c), 1)
+    res["look"] = [cand[i]["t"] for i in sorted(picked, key=lambda i: cand[i]["t"])]
     groups = repeats(X, cand)
     for gi, g in enumerate(groups):
         for i in g:
@@ -365,6 +383,7 @@ def main() -> int:
     res["repeat_groups"] = [[cand[i]["t"] for i in g] for g in groups]
     (out / "scan.json").write_text(json.dumps(res, ensure_ascii=False, indent=1))
     overview(out / "overview.jpg", mid, side, freqs, words, cuts, cand, dur, d.parent.name)
+    tiles(out / "tiles.jpg", mid, side, freqs, cand)
     return 0
 
 
@@ -431,11 +450,50 @@ def overview(path: Path, mid, side, freqs, words, cuts, cand, dur, title, pps: i
         for k, c in enumerate(cand):
             if t0 <= c["t"] < t1:
                 x = 5 + int((c["t"] - t0) * pps)
+                if not c.get("look"):
+                    continue
                 col = (80, 230, 255) if "rep" in c else (255, 220, 40)
                 dr.polygon([(x - 4, y + 129), (x + 4, y + 129), (x, y + 121)], fill=col)
                 lab = f"{k}" + (f"={chr(65 + c['rep'] % 26)}" if "rep" in c else "")
                 dr.text((x + 3, y + 112), lab, fill=col, font=font)
     img.save(path, quality=80)
+
+
+def tiles(path: Path, mid, side, freqs, cand):
+    """見る候補ごとの音の絵（頭の 0.2秒前から 1.2秒・80Hz〜16kHz の対数）。効果音の形（シュッは広い帯の霞・ポンは短い音の筋・
+    ドンは低い所の塊・キラは高い所の横の筋）を見分ける1枚。上の段が mid+side、下の細い段が side"""
+    from PIL import Image, ImageDraw, ImageFont
+    try:
+        font = ImageFont.truetype("/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf", 12)
+    except OSError:
+        font = ImageFont.load_default()
+    look = [c for c in cand if c.get("look")]
+    if not look:
+        return
+    full = spec_img(mid + side, freqs, rows=110)
+    sid = spec_img(side, freqs, rows=30)
+    hi, his = np.percentile(full, 99.7), np.percentile(sid, 99.7)
+    tw, th, per = 150, 170, 8
+    rows = (len(look) + per - 1) // per
+    img = Image.new("RGB", (per * tw, rows * (th + 18)), (18, 18, 18))
+    dr = ImageDraw.Draw(img)
+
+    def gray(a, h):
+        return Image.fromarray((np.clip((a - (h - 65)) / 65, 0, 1) * 255).astype(np.uint8)).convert("RGB")
+    for k, c in enumerate(look):
+        r, q = divmod(k, per)
+        x, y = q * tw, r * (th + 18)
+        a = max(0, int((c["t"] - 0.2) * FPS))
+        b = min(full.shape[1], a + int(1.2 * FPS))
+        if b - a < 2:
+            continue
+        img.paste(gray(full[:, a:b], hi).resize((tw - 6, 120)), (x + 3, y + 16))
+        img.paste(gray(sid[:, a:b], his).resize((tw - 6, 30)), (x + 3, y + 138))
+        dr.text((x + 3, y + 1), f"{c['t']:.2f}s b{c['bands']} hi{c['hi_share']}{' W' if c['at_word_start'] else ''}",
+                fill=(255, 220, 40), font=font)
+        mx = x + 3 + int((tw - 6) * 0.2 / 1.2)
+        dr.line([(mx, y + 16), (mx, y + 22)], fill=(255, 255, 255))
+    img.save(path, quality=82)
 
 
 def spec_img(mag: np.ndarray, freqs: np.ndarray, rows: int = 160, fmax: float = 16000):
