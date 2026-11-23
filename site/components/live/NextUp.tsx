@@ -1,170 +1,208 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { BUILT_AT, livePlans, planDaysLeft, planPhase, type Plan } from "@/content/plans";
-import { leadPlan, planBoard } from "@/lib/leadPlan";
-import { HOME, NO_PLAN_TITLE } from "@/content/voice";
-import Phrase from "@/components/ui/Phrase";
-import { loadState } from "@/lib/liveStats";
+import { BUILT_AT, daysUntil, planDaysLeft, planPhase, type Plan } from "@/content/plans";
+import { upNext, type StayCard, type UpNext } from "@/lib/leadPlan";
+import { guideOn, type GuideSpan } from "@/lib/guideDay";
 import Icon from "@/components/ui/IconCore";
-import { NoticeBell } from "./art";
 import Wrote from "@/components/ui/Wrote";
+import Phrase from "@/components/ui/Phrase";
+
+/** その国の案内の面。**面（サーバ側）で `guidesOf` から引いて渡す**（島の札と同じ表・同じ式） */
+export type GuideItem = GuideSpan & {
+  href: string;
+  name: string;
+  lead: string;
+  /** 国の絵。**面で描いて渡す**——`Icon.tsx` の 257 種を部品から名前で引くと、174KB がまるごと束に入る */
+  art: ReactNode;
+};
 
 /**
- * いま、いちばん近い企画。
+ * 表紙の「これから」。上から ［いまここ］→［つぎ］→ 日にちの決まった回（#1276）。
  *
- * 島に来た人がまっさきに知りたいのは「次に何をするのか」なので、
- * 島のすぐ下、どのコーナーよりも先に、いちばん大きく置く。
+ * ## 滞在の表から引く。企画の表から引かない
  *
- * ここは配信に来てくれている人がいちばん気にしているところでもあるので、
- * 「新しいものがある」と分かる合図（しらせのベルと赤い丸）を1つだけ付ける。
- * 合図を混ぜると、どれが合図でどれが飾りか分からなくなるので、これ1種類にする。
+ * 前は企画の表（`content/plans.ts`）のいちばん近い1件を出していた。国を移る日も企画の行
+ * （「ブルガリア・ソフィアへ移動」）だったので、**着いたあとも題が「へ移動」、印が「進行中」**で、
+ * 下に「企画を、ぜんぶ見る」が出ていた。あやと（2026-11-18）:「ソフィアに**いる**、は欲しい。
+ * **へ移動**は変。移動はもうしちゃってる」「企画をぜんぶ見る、は要らない」。
  *
- * 静的書き出しなので「いちばん近い」はビルド時の日付で焼き込まれてしまう。
- * 画面が出たあとに今日の日付で計算し直す。
+ * いまは居場所を滞在の表（`content/stays.ts`）から引く（`docs/spec/model.md` 6章「引きかた」・
+ * M-32）。移動の企画は読まない（`lib/leadPlan.ts` の `isMovePlan`）。
  *
- * **先の企画が0件の日は、ここに企画を出さない。** 長いあいだ
- * `content/plans.ts` の `nextPlan()` を読んでいて、あれは先が0件になると
- * `big` の付いた企画（＝もう行ってきた北欧旅）を返す。旅から帰った
- * 2026-09-28 から25日ぶん、この見出しの下に「行ってきた／ヒッチハイクで
- * 北欧へ」が出ていた（あやと 2026-10-07 / #673「行ってきたが出てるのはバグ」）。
- * 選ぶのは `lib/leadPlan.ts` で、**行ってきた企画には落ちない。**
+ * ## ［いまここ］は日付で消えない
+ *
+ * つぎの行が始まった日に入れ替わる（M-22）。だからこの段が0件になる日は無い。
+ *
+ * ## 日付の判定は、画面が出てから
+ *
+ * 静的書き出しなので、最初の1枚は**焼いた日**（`BUILT_AT`）で出す。ここで `new Date()` を
+ * 呼ぶと、焼いた HTML とブラウザの最初の描画が別の国を指して水あわせが落ちる。
+ * 画面が出たら今日で引き直し、1分ごとに数え直す（開いたまま0時をまたぐ人がいる）。
+ *
+ * ## 案内の面は、島の札と同じ式で選ぶ
+ *
+ * 行き先は `components/isle/spec.ts` の `guidesOf`（面で引いて渡す）から、
+ * `lib/guideDay.ts` の `guideOn` で選ぶ。島の札（`guideOf`）と同じ1本で、写しを持たない。
  */
-export default function NextUp() {
-  /* 最初の1枚は**焼いた日**で決める（`content/plans.ts` の `BUILT_AT`）。
-     ここで `new Date()` を呼ぶと、焼いた HTML とブラウザの最初の描画が
-     別の企画を指して、1フレームだけ違う札が出る。 */
-  const [plan, setPlan] = useState<Plan | undefined>(() => leadPlan(BUILT_AT));
-  const [days, setDays] = useState<number | null>(null);
+export default function NextUp({ guides, guideLabel }: { guides: GuideItem[]; guideLabel: string }) {
+  const [view, setView] = useState<UpNext>(() => upNext(BUILT_AT));
+  /** 今日。**画面が出るまでは `null`**——日数（「あと3日」）は、今日を知ってから出す */
   const [today, setToday] = useState<Date | null>(null);
-  /**
-   * 島から届く2つの日。**着いた日と、旅が終わった日は別**
-   * （`content/plans.ts` の `reached` と `doneFromState`）。
-   */
-  const [facts, setFacts] = useState<{ arrived: string | null; ended: string | null } | null>(null);
 
   useEffect(() => {
-    const now = new Date();
-    const p = leadPlan(now);
-    setToday(now);
-    setPlan(p);
-    setDays(p ? planDaysLeft(p, now) : null);
-  }, []);
-
-  /* 島から日が届いたら、企画の並びを組み直す。**届くまでは何もしない。**
-     読めなくても、旅の最中と同じ「進行中」のままで、嘘にはならない。 */
-  useEffect(() => {
-    let alive = true;
-    loadState().then((s) => {
-      const a = s?.nordic?.arrivedOn ?? null;
-      const e = s?.nordic?.endedOn ?? null;
-      if (!alive || (!a && !e)) return;
-      setFacts({ arrived: a, ended: e });
-      setPlan(leadPlan(new Date(), { arrived: a, ended: e }));
-    });
-    return () => {
-      alive = false;
+    const read = () => {
+      const now = new Date();
+      setToday(now);
+      setView(upNext(now));
     };
+    read();
+    const id = setInterval(read, 60_000);
+    return () => clearInterval(id);
   }, []);
 
-  const PL = livePlans(facts);
-  /* **先の企画が0件の日。** 0件は壊れているのではなく、ふつうの状態
-     （あやと 2026-10-07「とくになし」）。だからこの欄ごと黙って消すのではなく、
-     **何件見てそうなったのかと並べて置く**（`docs/island-standards.md` §10 §15）。
-     消すと「読めていない」と同じ絵になり、企画の面への口もここから失われる。 */
-  if (!plan) {
-    const done = planBoard(today ?? BUILT_AT, facts).after.length;
-    return (
-      <section className="nextup">
-        {/* **時制を名乗らない**（§16）。「いま、いちばん近い企画」は、その企画が
-            在る日の字。無い日に残すと、その札だけが嘘になる。
-            **ベルも出さない。** あれは「新しいことがある」の合図で、
-            何も無い日に鳴らすものではない（`content/voice.ts` の `HOME.nextUp` は
-            在る日の見出しなので、そのまま置いてある）。 */}
-        <p className="nextup-eyebrow">企画</p>
-        <div className="nextup-none">
-          {/* 字は `/next` の0件の段（`components/live/NextPlans.tsx`）と同じものを読む。
-              `Phrase` は折ってよい場所を1つに絞る——360px で「ん」1文字だけが
-              2行目に落ちていた。 */}
-          <b>
-            <Phrase parts={NO_PLAN_TITLE} />
-          </b>
-          {/* **島が止まったわけではない、と読める1行を置く。** 日にちの決まった
-              企画が無いのはふつうの状態で、配信はその晩も立つ。これが無いと
-              「ありません」だけが残って、島ごと止まって見える。
-              **時刻は書かない**（`content/nights.ts`。旅のあいだは言えない）。 */}
-          <i>配信は、いつもどおりあります</i>
-          {/* **0 を、何件見てそうなったかと並べる**（§15）。「ありません」だけだと、
-              読めていないのと同じ絵になる。 */}
-          <i>行ってきた企画が{done}つ</i>
-        </div>
-        {/* 字は、企画が在る日とまったく同じ（下の枝）。**札は日で変わらない。** */}
-        <Link prefetch={false} className="nextup-all" href="/next">
-          <span>
-            <b>企画を、ぜんぶ見る</b>
-            <i>付箋を貼って、行き先に口を出せます</i>
-          </span>
-        </Link>
-      </section>
-    );
-  }
-  // いちばん近い企画のあとに、まだ来ていない「大物」があれば、それも札ではなく札より大きく出す。
-  // 9/11 の北欧のように、日は先でもみんなが知りたい企画があるため。
-  /* 画面が出るまでは**焼いた日**で数える（`lib/nightly.ts` の `BUILT_AT`）。
-     `?? undefined` にすると既定引数の `new Date()` が走り、焼いた HTML は
-     焼いた日で、ブラウザの最初の描画は今日で数えることになる。日が変われば
-     残る企画が変わるので、字が食い違って水あわせが落ちる
-     （`Minified React error #418`。出発の時刻を過ぎた瞬間から実際に出ていた）。
-     数え直すのは `today` が入ってから。 */
-  const rest = PL.filter((p) => p.id !== plan.id && (planDaysLeft(p, today ?? BUILT_AT) ?? -1) >= 0);
-  const big = rest.find((p) => p.big);
-  const others = rest.filter((p) => p !== big);
-
+  const { here, next, plans } = view;
+  const [lead, ...rest] = plans;
   return (
     <section className="nextup">
-      {/* ベルの赤い丸は落としてある。すぐ下の札の角に「新しいことがある」の赤い印が
-          付いているので（app/css/plans.css）、同じ合図をこの狭い範囲に2つ置かない。
-          ここのベルは、しらせの見出しであることを示す絵として置く。 */}
-      {/* 件数はここには置かない。この見出しが指しているのは1つの企画で、
-          「ぜんぶで何件あるか」は下の「ぜんぶ見る」の側の話。 */}
-      <p className="nextup-eyebrow has-bell">
-        <NoticeBell size={21} quiet />
-        {HOME.nextUp}
-      </p>
-      <Card plan={PL.find((p) => p.id === plan.id) ?? plan} days={days} today={today} />
-      {big && (
+      {here && (
+        <StayBlock
+          stay={here}
+          role="here"
+          guide={guideOf(guides, here, today ?? BUILT_AT)}
+          label={guideLabel}
+          today={today}
+        />
+      )}
+      {next && (
         <>
-          <p className="nextup-eyebrow nextup-eyebrow2">そのあと、いちばん大きい企画</p>
-          <Card plan={big} days={today ? planDaysLeft(big, today) : null} today={today} small />
+          <p className="nextup-eyebrow nextup-eyebrow2">つぎ</p>
+          <StayBlock
+            stay={next}
+            role="next"
+            guide={guideOf(guides, next, noonOf(next.from))}
+            label={guideLabel}
+            today={today}
+            small
+          />
         </>
       )}
-      {others.length > 0 && (
-        <div className="nextup-rest">
-          <span>ほかにも</span>
-          {others.map((p) => (
-            <Link key={p.id} href={p.href ?? `/next#${p.id}`} prefetch={p.href ? false : undefined}>
-              {p.title}
-              <i>{p.when}</i>
-            </Link>
-          ))}
-        </div>
+      {lead && (
+        <>
+          <p className="nextup-eyebrow nextup-eyebrow2">日にちの決まった回</p>
+          <PlanBlock plan={lead} today={today} />
+          {rest.length > 0 && (
+            <div className="nextup-rest">
+              <span>ほかにも</span>
+              {rest.map((p) => (
+                <Link key={p.id} href={p.href ?? `/next#${p.id}`} prefetch={p.href ? false : undefined}>
+                  {p.title}
+                  <i>{p.when}</i>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
-      {/* 予定そのものを見にいく口。札を押すと1つの企画に入ってしまうので、
-          「ぜんぶ見る」は別に置く。付箋が貼れることも、ここで先に言っておく。
-
-          **時制も件数も名乗らない**（`docs/island-standards.md` 16章の決めごと1）。
-          0件の日にこの枝へ来ないことは合っていたが、合っているのは**開いた人の
-          画面だけ**で、焼いた HTML は出した日の字のまま配られ続ける。
-          10-12 に焼いた「これからの予定を、ぜんぶ見る／1件」が、企画の終わった
-          あとも出たままになった（#770）。**札は日で変わらない字にする。** */}
-      <Link prefetch={false} className="nextup-all" href="/next">
-        <span>
-          <b>企画を、ぜんぶ見る</b>
-          <i>付箋を貼って、行き先に口を出せます</i>
-        </span>
-      </Link>
     </section>
+  );
+}
+
+/**
+ * その滞在の案内。**選ぶのは `guideOn`**（島の札と同じ式）。選んだ案内が**その滞在の行のもの**
+ * （同じ日に着いた行）でなければ出さない——前の国の案内を、つぎの国の札に付けない。
+ *
+ * @param on ［いまここ］は今日（画面が出るまでは焼いた日）、［つぎ］は着く日
+ */
+function guideOf(guides: GuideItem[], stay: StayCard, on: Date): GuideItem | null {
+  const g = guideOn(guides, on);
+  return g && g.from === stay.from ? g : null;
+}
+
+/** 着く日の日本時間の正午。0時ちょうどだと、日の境目で前の日の行に当たることがある */
+const noonOf = (day: string) => new Date(`${day}T12:00:00+09:00`);
+
+/** 札の題を、折ってよい所で切ったもの。［つぎ］は「◯◯へ」 */
+function titleParts(stay: StayCard, role: "here" | "next"): string[] {
+  const parts = stay.place === stay.countryName ? [stay.place] : [`${stay.countryName}・`, stay.place.slice(stay.countryName.length + 1)];
+  if (role === "next") parts[parts.length - 1] += "へ";
+  return parts;
+}
+
+/** 「2026-11-21」→「11月21日」 */
+const md = (d: string) => `${Number(d.slice(5, 7))}月${Number(d.slice(8, 10))}日`;
+
+/**
+ * 滞在1行の札。［いまここ］は「ルーマニア／11月21日から」、［つぎ］は「ルーマニアへ／11月21日から」。
+ *
+ * 案内の面があれば、札ごとその面へ。**無ければ押せない板**にする（押した先の無い札を建てない）。
+ */
+function StayBlock({
+  stay,
+  role,
+  guide,
+  label,
+  today,
+  small,
+}: {
+  stay: StayCard;
+  role: "here" | "next";
+  guide: GuideItem | null;
+  label: string;
+  today: Date | null;
+  small?: boolean;
+}) {
+  const days = role === "next" && today ? daysUntil(stay.from, today) : null;
+  const inner = (
+    <>
+      <span className="nextup-count">
+        {role === "here" ? (
+          /* 「あと<b>3</b>日」と同じ組み。4文字を大きい字で並べると、札の幅（3文字ぶん）で折れる */
+          <>
+            いま<b>ここ</b>
+          </>
+        ) : days === null ? (
+          /* 今日を知るまでは日付だけ。いつ読んでも本当（`docs/island-misses.md` #143） */
+          <b>{shortDate(stay.from)}</b>
+        ) : days <= 0 ? (
+          <b>今日</b>
+        ) : (
+          <>
+            あと<b>{days}</b>日
+          </>
+        )}
+      </span>
+      <span className="nextup-body">
+        {/* 折ってよい所は「・」のあとだけ。ひと続きにすると 390px で「ソフ／ィア」と街の名前の中で折れた */}
+        <b className="nextup-title">
+          <Phrase parts={titleParts(stay, role)} />
+        </b>
+        <i className="nextup-when">{md(stay.from)}から</i>
+        {/* ひとことは滞在の行が持つ（`note`）。無ければ案内の面の1行 */}
+        <Wrote t={stay.note ?? guide?.lead} className="nextup-note" />
+      </span>
+      {guide && (
+        <span className="nextup-go" aria-hidden>
+          {guide.art}
+          {label}
+          <Icon name="right" size={14} />
+        </span>
+      )}
+    </>
+  );
+  const cls = `nextup-card nextup-stay is-${role}${small ? " is-small" : ""}${guide ? "" : " is-still"}`;
+  /* 国の案内の面は地図と写真を抱えているので、先読みしない（前の `Card` と同じ理由。
+     この札は島の1画面目に出るので、島に降りただけの人が払う） */
+  return guide ? (
+    <Link className={cls} href={guide.href} prefetch={false} data-stay={stay.country} data-role={role}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={cls} data-stay={stay.country} data-role={role}>
+      {inner}
+    </div>
   );
 }
 
@@ -176,54 +214,23 @@ function shortDate(date?: string) {
 }
 
 /**
- * 企画1つぶんの札。small はふたつ目以降に使う、ひとまわり小さいもの。
+ * 日にちの決まった回の札。
  *
- * **「進行中」を日数の正負で決めない。** 終わった企画も日数はマイナスなので、
- * それだけで決めると、旅から帰ってきたあとも「進行中」と出続ける
- * （`content/plans.ts` の `planPhase`）。
+ * **「進行中」と言わない**（あやと 2026-11-18）。何日かにまたがる回が始まっていれば「開催中」。
+ * 終わった回はここに来ない（`lib/leadPlan.ts` の `planBoard` は行ってきたものを返さない）。
  */
-function Card({
-  plan,
-  days,
-  today,
-  small,
-}: {
-  plan: Plan;
-  days: number | null;
-  today: Date | null;
-  small?: boolean;
-}) {
+function PlanBlock({ plan, today }: { plan: Plan; today: Date | null }) {
   const href = plan.href ?? `/next#${plan.id}`;
+  const days = today ? planDaysLeft(plan, today) : null;
   const phase = today ? planPhase(plan, today) : null;
   return (
-    /* 企画が国の面を指しているときは先読みしない。
-       **この札は島の1画面目に出るので、島に降りただけの人が払う。**
-       国の面は地図と写真を抱えていて、書き出した RSC は 100〜265KB
-       （実測 `/map/georgia.txt` 105KB・`/map/uk.txt` 265KB）。
-       トップの 2.3MB のうち、この1本だけで 4% を占めていた。
-       `/map` の中の Link も同じ理由で先読みを切ってある。 */
-    <Link
-      className={`nextup-card${small ? " is-small" : ""}`}
-      href={href}
-      prefetch={plan.href ? false : undefined}
-    >
+    <Link className="nextup-card is-small" href={href} prefetch={plan.href ? false : undefined} data-plan={plan.id}>
       <span className="nextup-count">
         {days === null || phase === null ? (
-          /* 画面が出るまでは**日付だけ**（`components/live/PlanCard.tsx` の `LeadClock` と同じ）。
-             ここは「今日」を知らない状態で、知らないまま言い切れることは1つも無い。
-             前は「まもなく」と書いてあった。出発の日を過ぎた 9/12 からは、
-             **今日焼いた HTML でも「まもなく」**で、旅の7日目に「まもなく出発」と
-             読める字が島の1画面目に出ていた。旅から帰ったあとも同じ。
-             日付は焼き込みではなく企画そのものが持っている値なので、
-             **いつ読んでも本当**（`docs/island-misses.md` #143）。 */
           <b>{shortDate(plan.date) || "未定"}</b>
-        ) : phase === "after" ? (
-          <b>行ってきた</b>
-        ) : /* その日1日で終わるものは、当日も「今日」のまま
-               （`components/live/PlanCard.tsx` と同じ決め方）。 */
-        phase === "during" && (plan.endsWhen || days < 0) ? (
-          <b>進行中</b>
-        ) : days === 0 ? (
+        ) : phase === "during" && (plan.endsWhen || plan.until || days < 0) ? (
+          <b>開催中</b>
+        ) : days <= 0 ? (
           <b>今日</b>
         ) : (
           <>
@@ -235,11 +242,6 @@ function Card({
         <b className="nextup-title">{plan.title}</b>
         <i className="nextup-when">{plan.when}</i>
         <Wrote t={plan.note} className="nextup-note" />
-        <span className="nextup-tags">
-          {plan.tags.map((t) => (
-            <em key={t}>{t}</em>
-          ))}
-        </span>
       </span>
       <span className="nextup-go" aria-hidden>
         くわしく見る

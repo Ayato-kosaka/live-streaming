@@ -7,10 +7,11 @@ import { RESIDENTS } from "@/content/residents";
 import { artOf } from "@/components/chain/shapes";
 import { PLACES } from "@/components/island/layout";
 import { travelHref } from "@/content/travelPath";
-/* 「あと◯日」の日を引くためだけ。**`content/plans.ts` の `nextPlan()` は
-   読まない**——あちらは先の予定が0件になると行ってきた企画を返すので、
-   島が過ぎた日からシールを数えることになる（`lib/leadPlan.ts` の注・#673）。 */
-import { leadPlan } from "@/lib/leadPlan";
+/* 「あと◯日」の日を引くためだけ。**表紙の「これから」の段と同じもの**（つぎの滞在の着く日と、
+   まだ来ていない回の日）から引く（`lib/leadPlan.ts` の `countdownDay`。#1276）。
+   移動の企画は読まない——読むと、段は「ルーマニア」なのにシールが「ルーマニアへ移動」の日から数える。
+   `content/plans.ts` の `nextPlan()` も読まない（先が0件になると行ってきた企画を返す。#673）。 */
+import { countdownDay } from "@/lib/leadPlan";
 import { pier } from "./pier";
 import { chapterCountries } from "@/content/walked";
 /* **値を2つだけ借りる。** どちらも `content/` しか読まない小さいもので、
@@ -71,7 +72,7 @@ const HOME_PLACES: IslePlaceSpec[] = PLACES.map((p) => ({
  * **出すものが無い日に空の欄を渡さない**ほうが、読む側の分岐が1つ減る。
  */
 function withCountdown(today: Date): IslePlaceSpec[] {
-  const day = leadPlan(today)?.date;
+  const day = countdownDay(today);
   if (!day) return HOME_PLACES;
   const at = `${day}T00:00:00+09:00`;
   return HOME_PLACES.map((p) =>

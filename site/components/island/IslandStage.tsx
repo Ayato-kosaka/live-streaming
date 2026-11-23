@@ -20,7 +20,7 @@ import Icon from "@/components/ui/IconCore";
 import HereFolks from "./HereFolks";
 import { here } from "@/lib/here";
 import { daysUntil } from "@/content/plans";
-import { leadPlan } from "@/lib/leadPlan";
+import { countdownDay } from "@/lib/leadPlan";
 import { NOW_FALLBACK } from "@/content/site";
 /* 「いまどこ」の判定と言い方は1か所（`lib/stay.ts`）。島だけ別の字を言わない。 */
 import { placeWord } from "@/lib/stay";
@@ -506,11 +506,12 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
        そこで島が変わらないと、島の絵は現実と同期していないことになる。 */
     const read = () => {
       const now = new Date();
-      /* 札に出す「あと何日」。**選ぶのは `lib/leadPlan.ts`。**
-         `content/plans.ts` の `nextPlan()` は先が0件になると行ってきた企画を
-         返すので、ここに渡すと過去の日付から数えることになる（#673）。
-         先が0件なら `null`——下の札は `days >= 0` でしか出さないので消える。 */
-      setDays(daysUntil(leadPlan(now)?.date, now));
+      /* 札に出す「あと何日」。**選ぶのは `lib/leadPlan.ts` の `countdownDay`**——表紙の
+         「これから」の段と同じもの（つぎの滞在の着く日と、まだ来ていない回の日）。
+         移動の企画は読まない（#1276）。`content/plans.ts` の `nextPlan()` も読まない
+         （先が0件になると行ってきた企画を返す。#673）。
+         先が無ければ `null`——下の札は `days >= 0` でしか出さないので消える。 */
+      setDays(daysUntil(countdownDay(now), now));
       const n = todayNews(now);
       setTodaySpot(spotOfHref(n.href) ?? TODAY_AT[n.kind] ?? null);
       setOnAir(readNight(now).onAir);

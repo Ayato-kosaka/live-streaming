@@ -27,7 +27,10 @@
  * 画面が出てから1回呼んで、あとは1分ごとに数え直す（`components/today/Today.tsx`）。
  */
 
-import { COUNTRIES } from "@/content/countries";
+import { COUNTRIES, countryNameBySlug } from "@/content/countries";
+import { STAYS } from "@/content/stays";
+/* 居場所は滞在の表から（`stayHere`）。移動の企画は読まない（`isMovePlan`）。表紙の「これから」と同じ口（#1276） */
+import { isMovePlan, stayHere } from "@/lib/leadPlan";
 import { countriesWalked } from "@/content/walked";
 import { PLANS } from "@/content/plans";
 import { RECIPES } from "@/content/recipes";
@@ -38,7 +41,7 @@ import { nights } from "@/content/nights";
 import { travelHref } from "@/content/travelPath";
 /* 「いまどこ」の言い方は1か所（`lib/stay.ts` の `placeWord`）。
    板がここだけ独自に場所を言うと、同じ表紙の中で名刺と食い違う。 */
-import { placeWord, stayNow } from "@/lib/stay";
+import { placeWord } from "@/lib/stay";
 import { atText, watchAt } from "@/lib/peak";
 
 /** 配信の行き先。島のやぐらの札も配信中はここへ送るので、出どころを1つにする。 */
@@ -101,20 +104,28 @@ function daysApart(from: string, to: string): number {
  * 毎日必ず何かが当たるようにすると、3日で背景になる（`docs/island-play.md` 1章 G）。
  */
 function milestone(today: string, now: Date): TodayNews | null {
-  // 新しい国に入った日。旅そのものが動いた日なので、いちばん強い
-  for (const c of COUNTRIES) {
-    for (const s of c.stays) {
-      if (s.from !== today) continue;
-      return {
-        kind: "milestone",
-        icon: "signpost",
-        line: `今日、${c.name}に入りました`,
-        title: `今日から ${c.name}`,
-        body: `${c.stays.length > 1 ? `${c.name}は2度目。` : ""}${c.summary}`,
-        href: travelHref(c.slug),
-        go: "地図で見る",
-      };
-    }
+  /* 新しい国に入った日。旅そのものが動いた日なので、いちばん強い。
+
+     **滞在の表（`content/stays.ts`）から引く。** 前は国の記録（`COUNTRIES[].stays`）から引いていて、
+     記録をまだ持たない国（歩き終わるまで記録を書かない決まり）に入った日は、何も言わなかった。
+     ルーマニアに着いた 2026-11-21 がそれで、同じ日の表紙は「ルーマニアへ移動」の企画を出していた（#1276）。
+     ひとことは国の記録の紹介。記録の無い国は、案内の面の1行。 */
+  for (const s of STAYS) {
+    if (s.from !== today) continue;
+    const c = COUNTRIES.find((x) => x.slug === s.country);
+    const name = c?.name ?? s.name ?? countryNameBySlug(s.country)?.name;
+    if (!name) continue;
+    const again = STAYS.some((x) => x.country === s.country && x.from < s.from);
+    return {
+      kind: "milestone",
+      icon: "signpost",
+      line: `今日、${name}に入りました`,
+      title: `今日から ${name}`,
+      body: `${again ? `${name}は2度目。` : ""}${c?.summary ?? s.note ?? s.guide?.lead ?? ""}`,
+      /* 行き先は案内の面があればそこ。無ければ国の面（記録のある国だけが持つ） */
+      href: s.guide?.href ?? (c ? travelHref(c.slug) : "/travel"),
+      go: s.guide ? "歩きかたを見る" : "地図で見る",
+    };
   }
 
   // 配信をはじめた日。1年に1度しか当たらない
@@ -140,26 +151,23 @@ function milestone(today: string, now: Date): TodayNews | null {
 
   /* いまいる国に、今日で何日いるか。100日ごとにだけ言う。
 
-     **「終わりの日が空いている滞在」を、自分で探さない。** ここは
-     `c.stays.some((s) => !s.to)` で開いた滞在を引いていた。`to` は旅に出た日に
-     あやとが手で入れる欄で、**その17日間あやとは画面を直せない。** だから北欧へ
-     出発しても止まらず、「ジョージアにいて、今日で◯日」「まだいる。」と言う。
-     閉じ方は `lib/stay.ts` の `stayNow()` が1つだけ持っている
-     （次の章が始まったら、そこで終わり）。**同じ判定を2か所に書かない**
-     （`docs/island-misses.md` #24）。旅に出ていれば `null` が返るので、
-     節目そのものが出ない。旅の日数は `/now` の札が言う。 */
-  const here = stayNow(now);
-  const c = here && COUNTRIES.find((x) => x.slug === here.slug);
-  const stay = c?.stays.find((s) => !s.to);
-  if (here && c && stay && here.days > 0 && here.days % STAY_STEP === 0) {
+     **「終わりの日が空いている滞在」を、自分で探さない。** 前は `c.stays.some((s) => !s.to)` で
+     開いた滞在を引いていて、北欧へ出発しても止まらず「ジョージアにいて、今日で◯日」と言った
+     （`docs/island-misses.md` #24）。そのあと章の閉じ方（`lib/stay.ts` の `stayNow()`）を読んだが、
+     いまは滞在の表が旅の国も1行ずつ持つ（#1275）。**表紙の［いまここ］と同じ1本**
+     （`lib/leadPlan.ts` の `stayHere`。つぎの行が始まった日に入れ替わる）を読む。 */
+  const here = stayHere(now);
+  const days = here ? daysApart(here.from, today) + 1 : 0;
+  if (here && days > 0 && days % STAY_STEP === 0) {
+    const c = COUNTRIES.find((x) => x.slug === here.country);
     return {
       kind: "milestone",
       icon: "signpost",
-      line: `${c.name}にいて、今日で${here.days}日`,
-      title: `${c.name} ${here.days}日目`,
-      body: `${stay.from.replace(/-/g, "/")} に入って、まだいる。${stay.cities.join("・")}。`,
-      href: travelHref(c.slug),
-      go: "地図で見る",
+      line: `${here.countryName}にいて、今日で${days}日`,
+      title: `${here.countryName} ${days}日目`,
+      body: `${here.from.replace(/-/g, "/")} に入って、まだいる。${here.cities.length ? `${here.cities.join("・")}。` : ""}`,
+      href: here.guide?.href ?? (c ? travelHref(c.slug) : "/travel"),
+      go: here.guide ? "歩きかたを見る" : "地図で見る",
     };
   }
   return null;
@@ -239,7 +247,8 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
   }
 
   // 2. 今日が企画の当日
-  const plan = PLANS.find((p) => p.date === j.date);
+  /* 移動の企画は読まない。国に入った日は、下の節目（滞在の表）が言う（#1276） */
+  const plan = PLANS.find((p) => p.date === j.date && !isMovePlan(p));
   if (plan) {
     out.push({
       kind: "plan",

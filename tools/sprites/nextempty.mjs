@@ -30,7 +30,8 @@
  *     `navtruth.mjs` の `tenseOf`。語の一覧を2か所に持たない）。
  *  3. **企画が在る日と、0件の日の両方を通る**（対照）。どちらかしか
  *     見ていないなら、1と2は何も言っていない。
- *  4. 0件の日に、**表紙と `/next` が「無い」と言っている**（空にしない）。
+ *  4. 0件の日に、**`/next` が「無い」と言っている**（空にしない）。表紙は「これから」の段に
+ *     **［いまここ］が立っている**（日にちの決まった回が0件でも、段は空にならない。#1276）。
  *     `docs/island-standards.md` §10 §15——黙って消えるのは、読めていない
  *     のと同じ絵になる。
  *  5. その字が、**どの幅でも読める行に折れている**（下の「行の折れ方」）。
@@ -53,12 +54,13 @@
  * 10. **焼いた HTML（`DIST` の `now.html`）に `M/D` が1つも無い。**
  *     焼いた字は動かないので、日付を焼いた時点で負け。
  *
- * ## 日付では終わらない企画（2026-11-18 に足した。#1282）
+ * ## 表紙の［いまここ］は日付で消えない（2026-11-18 に足し、11-23 に滞在の表へ付け替えた。#1282・#1276）
  *
- * 11. `endsWhen` だけを持つ企画は、**いちばん先の日でも表紙に札が立っている。**
- *     0件の側（3〜5）は、その企画を仮に終わらせてから見る（`OPEN` の頭）。
- * 12. 「つぎの国へ移ったら」の鎖の前の国は、**つぎの国の日に表紙から下がり、その前の日はまだ立つ**
- *     （2026-11-19。`HANDOFF` の頭）。日付で終わらないのは鎖のいちばん新しい1件だけで、それは 11 が見る。
+ * 11. **いちばん先の日でも、表紙に［いまここ］が立っている**——国は滞在の表のいちばん新しい行。
+ *     前は「`endsWhen` だけを持つ企画の札が立っている」を見ていたが、表紙はもう移動の企画を読まない
+ *     （`lib/leadPlan.ts` の `isMovePlan`）。守るもの（あやと「いる国は日付で消えない」）は同じ。
+ *     0件の側（3〜5）は、日付で終わらない企画を仮に終わらせてから見る（`OPEN` の頭。`/next` の札のため）。
+ * 12. 滞在の表のいちばん新しい2行で、**着いた日に［いまここ］が入れ替わり、その前の日は前の国**。
  *
  * 撮った絵は `OUT` に置く。**数が通っても、目で見る。**
  *
@@ -167,7 +169,13 @@ const LAST = [...PLANS_SRC.matchAll(/"(20\d\d-\d\d-\d\d)"/g)]
  */
 function daysFromPlans() {
   /* 企画の当日は、企画1件の**いちばん外側の `date`**（`tsread.mjs` の1本。#694）。 */
-  const starts = must(readArray(PLANS_SRC, "PLANS", { keys: ["date"], idKey: "id" }), "plans.ts の PLANS")
+  /* **表紙に札が立つのは、移動でない企画だけ**（`lib/leadPlan.ts` の `isMovePlan`。#1276）。
+     移動の企画の日を「企画の在る日」に選ぶと、表紙には札が無く、対照（3）の片側が空になる */
+  const starts = must(
+    readArray(PLANS_SRC, "PLANS", { keys: ["date", "endsWhen"], lists: ["tags"], idKey: "id" }),
+    "plans.ts の PLANS",
+  )
+    .filter((r) => r.endsWhen !== NEXT_MOVE && !(r.tags ?? []).includes("移動"))
     .map((r) => r.date)
     .filter(Boolean)
     .sort();
@@ -260,7 +268,7 @@ for (const iso of DAYS) {
   /** その日の `/next` を指す札（字 → 出てきた面） */
   const labels = new Map();
   let lead = null; // 表紙に企画の札が出たか
-  let none = null; // 表紙が「無い」と言ったか
+  let none = null; // 表紙に［いまここ］が立ったか（0件の日も段が空にならない）
   let nextNone = null; // `/next` が「無い」と言ったときの、その字
 
   for (const [name, url] of PAGES) {
@@ -280,8 +288,9 @@ for (const iso of DAYS) {
       labels.get(t).add(name);
     }
     if (name === "top") {
-      lead = (await p.$$(".nextup-card")).length > 0;
-      none = (await p.$$(".nextup-none")).length > 0;
+      /* 印は部品が持っている（`components/live/NextUp.tsx`。企画の札は `data-plan`、滞在の札は `data-role`） */
+      lead = (await p.$$(".nextup-card[data-plan]")).length > 0;
+      none = (await p.$$('.nextup-stay[data-role="here"]')).length > 0;
     }
     if (name === "next") {
       /* **字で探さない。** 言い回しを1語直した日に、見張りのほうが黙る。
@@ -306,16 +315,24 @@ for (const iso of DAYS) {
   await ctx.close();
 }
 
-// -------------------- 11. 日付では終わらない企画は、日が過ぎても表紙に立っている
+// -------------------- 11. 表紙の［いまここ］は、日が過ぎても立っている（滞在の表のいちばん新しい行）
 
-/* **仮の終わった日を入れない本物で**、いちばん先の日を1回だけ開く。
-   上の 0件の側は仮に終わらせて見ているので、ここが無いと「本物は日付で
-   消えない」をどこも見ていないことになる（あやと 2026-11-18。#1282）。 */
+/* **仮の終わった日を入れない本物で**、いちばん先の日を1回だけ開く。表紙の「これから」は
+   滞在の表から居場所を引く（`lib/leadPlan.ts` の `stayHere`。#1276）。日付で消えない、を
+   守る足（あやと 2026-11-18）。国は表から読む（字で探さない。札の `data-stay`）。 */
+const STAYS_ROWS = must(
+  readArray(readFileSync(repoPath("site/content/stays.ts"), "utf8"), "STAYS", {
+    keys: ["country", "from", "to"],
+    idKey: "country",
+  }),
+  "stays.ts の STAYS",
+).sort((a, b) => a.from.localeCompare(b.from));
+const [STAY_PREV, STAY_LAST] = STAYS_ROWS.slice(-2);
 const openBad = [];
 let openRead = 0;
-if (OPEN.length) {
-  const far = plus(LAST, 400);
-  console.log(`\n■ 日付では終わらない企画を、仮の終わりを入れずに ${far} に開く`);
+
+/** その日の表紙の［いまここ］と［つぎ］の国（`components/live/NextUp.tsx` の `data-stay`） */
+async function stayOn(day) {
   const ctx = await b.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2,
     locale: "ja-JP", timezoneId: "Asia/Tokyo", isMobile: true, hasTouch: true,
@@ -323,57 +340,49 @@ if (OPEN.length) {
   await offline(ctx);
   await ctx.route(/fonts\.googleapis\.com/, (r) =>
     r.fulfill({ status: 200, contentType: "text/css", body: "" }));
-  await ctx.addInitScript(clock(at(far)));
+  await ctx.addInitScript(clock(at(day)));
   const p = await ctx.newPage();
   const res = await p.goto(`${BASE}/index.html`, { waitUntil: "domcontentloaded" });
+  let got = null;
   if (res && res.status() < 400) {
     await p.waitForTimeout(1500);
-    openRead++;
-    /* 札が指す先で見分ける（字で探さない）。`NextUp.tsx` の `Card` は
-       `plan.href ?? /next#id` を指す */
-    const hrefs = await p.$$eval(".nextup-card", (as) => as.map((a) => a.getAttribute("href")));
-    for (const pl of OPEN) {
-      const ok = hrefs.includes(pl.href);
-      console.log(`  ${ok ? "○" : "×"} ${pl.id}（${pl.endsWhen}）表紙の札=${hrefs.join(" ") || "（無し）"}`);
-      if (!ok) openBad.push(`${far}: 日付では終わらない企画 ${pl.id} が表紙から消えた（${pl.endsWhen}まで出ているはず）`);
-    }
+    got = await p.evaluate(() => ({
+      here: document.querySelector('.nextup-stay[data-role="here"]')?.getAttribute("data-stay") ?? null,
+      next: document.querySelector('.nextup-stay[data-role="next"]')?.getAttribute("data-stay") ?? null,
+    }));
     const el = await p.$(".nextup");
-    await (el ?? p).screenshot({ path: `${OUT}/${far}-top-open.png` });
+    await (el ?? p).screenshot({ path: `${OUT}/${day}-top-stay.png` });
   }
   await ctx.close();
+  return got;
 }
 
-// -------------------- 12. 鎖の前の国は、つぎの国の日に表紙から下がる（その前の日は、まだ立っている）
+{
+  const far = plus(LAST > STAY_LAST.from ? LAST : STAY_LAST.from, 400);
+  console.log(`\n■ 表紙の［いまここ］を、${far} に開く`);
+  const got = await stayOn(far);
+  if (got) {
+    openRead++;
+    const ok = got.here === STAY_LAST.country;
+    console.log(`  ${ok ? "○" : "×"} ${far} ［いまここ］=${got.here ?? "（無し）"}（表のいちばん新しい行は ${STAY_LAST.country}）`);
+    if (!ok) openBad.push(`${far}: 表紙の［いまここ］が ${got.here ?? "無い"}（${STAY_LAST.country} のはず。日付で消えない）`);
+  }
+}
 
-/* 仮の終わりを入れない本物で、つぎの国の日とその前の日を開く。前の日に立っていないなら、移る前から
-   消えている。つぎの国の日に立っているなら、移ったのに表紙が前の国を指している（#1308 で直した形の逆戻り） */
+// -------------------- 12. 着いた日に［いまここ］が入れ替わる（その前の日は前の国で、［つぎ］に着く国）
+
 let handRead = 0;
-for (const h of HANDOFF) {
-  for (const [day, want] of [[plus(h.next.date, -1), true], [h.next.date, false]]) {
-    const ctx = await b.newContext({
-      viewport: { width: 390, height: 844 }, deviceScaleFactor: 2,
-      locale: "ja-JP", timezoneId: "Asia/Tokyo", isMobile: true, hasTouch: true,
-    });
-    await offline(ctx);
-    await ctx.route(/fonts\.googleapis\.com/, (r) =>
-      r.fulfill({ status: 200, contentType: "text/css", body: "" }));
-    await ctx.addInitScript(clock(at(day)));
-    const p = await ctx.newPage();
-    const res = await p.goto(`${BASE}/index.html`, { waitUntil: "domcontentloaded" });
-    if (res && res.status() < 400) {
-      await p.waitForTimeout(1500);
-      handRead++;
-      const hrefs = await p.$$eval(".nextup-card", (as) => as.map((a) => a.getAttribute("href")));
-      const has = hrefs.includes(h.href);
-      const ok = has === want && (want || hrefs.includes(h.next.href));
-      console.log(`  ${ok ? "○" : "×"} ${day} ${h.id}${want ? "はまだ立つ" : `は下がり、${h.next.id}が立つ`} 表紙の札=${hrefs.join(" ") || "（無し）"}`);
-      if (!ok) {
-        openBad.push(want
-          ? `${day}: つぎの国（${h.next.id}）の前の日なのに ${h.id} が表紙に無い`
-          : `${day}: ${h.next.id} に移った日なのに、表紙が ${h.id} を指しているか ${h.next.id} が無い`);
-      }
-    }
-    await ctx.close();
+for (const [day, wantHere, wantNext] of [
+  [plus(STAY_LAST.from, -1), STAY_PREV.country, STAY_LAST.country],
+  [STAY_LAST.from, STAY_LAST.country, null],
+]) {
+  const got = await stayOn(day);
+  if (!got) continue;
+  handRead++;
+  const ok = got.here === wantHere && got.next === wantNext;
+  console.log(`  ${ok ? "○" : "×"} ${day} ［いまここ］=${got.here ?? "（無し）"} ［つぎ］=${got.next ?? "（無し）"}`);
+  if (!ok) {
+    openBad.push(`${day}: ［いまここ］=${got.here ?? "無し"} ［つぎ］=${got.next ?? "無し"}（${wantHere} と ${wantNext ?? "無し"} のはず）`);
   }
 }
 // ------------------------------------------------- 5. 行の折れ方（幅を振る）
@@ -427,7 +436,6 @@ let wrapRead = 0;
   console.log(`\n■ 行の折れ方（0件の日 ${day0}）${BREAK ? ` ※対照 ${BREAK}` : ""}`);
   for (const [url, sel, name] of [
     ["/next.html", ".nx-none > h2", "/next の見出し"],
-    ["/index.html", ".nextup-none b", "表紙の見出し"],
   ]) {
     await p.goto(`${BASE}${url}`, { waitUntil: "domcontentloaded" });
     await p.waitForTimeout(1500);
@@ -644,13 +652,13 @@ if (OPEN.length) {
     console.error(`書き出しの JS に ${missed.map((p) => `endsWhen:"${p.endsWhen}"`).join(" ")} が見つからず、仮の終わった日を入れられませんでした。0件の日が来ないので数えません`);
     process.exit(2);
   }
-  if (!openRead) {
-    console.error("日付では終わらない企画を、本物のままで1度も開けませんでした");
-    process.exit(2);
-  }
 }
-if (CHAIN.length > 1 && handRead < HANDOFF.length * 2) {
-  console.error(`鎖の前の国を、つぎの国の日とその前の日で ${handRead}/${HANDOFF.length * 2} しか開けませんでした`);
+if (!openRead) {
+  console.error("表紙を、いちばん先の日で1度も開けませんでした（11）");
+  process.exit(2);
+}
+if (handRead < 2) {
+  console.error(`滞在の入れ替わりを、着いた日とその前の日で ${handRead}/2 しか開けませんでした（12）`);
   process.exit(2);
 }
 console.log(`\n見た島だより ${nowRead} / ${DAYS.length * 2}（${DAYS.length}日 × 2通り）`);
@@ -698,14 +706,14 @@ for (const [t, v] of all) {
 }
 
 // 4. 0件の日に、黙って消えていないか
-console.log(`\n■ 0件の日に「無い」と言っているか`);
+console.log(`\n■ 0件の日に黙って消えていないか（表紙は［いまここ］、/next は「無い」）`);
 for (const [day, v] of without) {
-  console.log(`  ${v.none && v.nextNone ? "○" : "×"} ${day}  表紙=${v.none ? "言った" : "黙った"} /next=${v.nextNone ?? "黙った"}`);
-  if (!v.none) bad.push(`${day}: 表紙が、企画の札も「無い」の字も出していない`);
+  console.log(`  ${v.none && v.nextNone ? "○" : "×"} ${day}  表紙=${v.none ? "いまここが立つ" : "空"} /next=${v.nextNone ?? "黙った"}`);
+  if (!v.none) bad.push(`${day}: 表紙の「これから」に、企画の札も［いまここ］も無い`);
   if (!v.nextNone) bad.push(`${day}: /next が、0件だと言っていない`);
 }
 for (const [day, v] of withLead) {
-  if (v.none) bad.push(`${day}: 企画が在るのに、表紙が「無い」とも言っている`);
+  if (!v.none) bad.push(`${day}: 企画が在る日に、表紙の［いまここ］が無い`);
 }
 
 writeFileSync(
