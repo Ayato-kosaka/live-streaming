@@ -128,7 +128,7 @@ UI = {
         "power_eur_kwh": "電気",
         "vat_pct": "付加価値税",
     },
-    "yen": "円に直す率",
+    "yen": "円の換算",
     "work": "ヨーロッパで働くための手続き",
     "permit": "食べ物を売る許可",
     "japan": "日本",
@@ -432,7 +432,7 @@ def build(b: dict, photos: list[dict]) -> dict:
                  "est": "value" in (v.get("est") or [])} for k, v in b["money"]["fixed"].items()}
     premise = [{"label": UI["fixed"][k], "text": value_text(v["value"], v["unit"]), "est": v["est"]} for k, v in fixed.items()]
     rt = b["rate"]
-    premise.append({"label": UI["yen"], "text": f"{num(rt['jpy_per_eur'], places_of(rt['jpy_per_eur']))}円/€（{jp_date(rt['date'])}）",
+    premise.append({"label": UI["yen"], "text": f"1€＝{num(rt['jpy_per_eur'], places_of(rt['jpy_per_eur']))}円（{jp_date(rt['date'])}）",
                     "est": False})
 
     iss = b["issues"]

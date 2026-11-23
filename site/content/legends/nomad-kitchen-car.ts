@@ -96,7 +96,7 @@ export const NOMAD_KITCHEN_CAR: KitchenCarBook = /* 焼いた中身 */
    "power_eur_kwh": "電気",
    "vat_pct": "付加価値税"
   },
-  "yen": "円に直す率",
+  "yen": "円の換算",
   "work": "ヨーロッパで働くための手続き",
   "permit": "食べ物を売る許可",
   "japan": "日本",
@@ -2050,8 +2050,8 @@ export const NOMAD_KITCHEN_CAR: KitchenCarBook = /* 焼いた中身 */
     "est": true
    },
    {
-    "label": "円に直す率",
-    "text": "174.35円/€（2026年11月20日）",
+    "label": "円の換算",
+    "text": "1€＝174.35円（2026年11月20日）",
     "est": false
    }
   ],
@@ -3838,6 +3838,6 @@ export const NOMAD_KITCHEN_CAR: KitchenCarBook = /* 焼いた中身 */
    ]
   }
  ],
- "hash": "b1056b6f208d"
+ "hash": "17a95892fd6f"
 }
 /* ここまで */;
