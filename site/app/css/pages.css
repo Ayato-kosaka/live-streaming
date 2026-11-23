@@ -1716,3 +1716,14 @@ a.chip:active, button.chip:active, .chip.link:active {
 /* 島の中の行き先は水色にしない（水色は「外へ出る」。docs/island-world.md 3.2）。
    紙に引いた下線で、押せることを言う */
 .ask p.fork-said a { color: var(--ink); font-weight: 900; text-decoration: underline; text-underline-offset: 3px; }
+
+/* -----------------------------------------------------------------------
+   札の段（`components/ui/Tags.tsx`。#1357）。国・街・旅・企画・料理・月の面の下に出る、
+   ほかの切り口へ1枚ずつ渡る板。**押せるチップそのまま**（48px・厚み）で、段の見出しは小さい字1行
+   ----------------------------------------------------------------------- */
+.ktags { display: grid; gap: var(--sp-3); }
+.ktags-row { display: grid; gap: var(--sp-1); }
+.ktags-h { margin: 0; font-size: var(--fs-min); font-weight: 900; color: var(--ink-2); letter-spacing: var(--ls-body); }
+.ktag-t { display: inline-flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.ktag-t i { font-style: normal; font-size: var(--fs-min); font-weight: 700; color: var(--ink-2); }
+.ktag.is-more { gap: var(--sp-1); }

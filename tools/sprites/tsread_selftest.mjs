@@ -129,7 +129,7 @@ const ARRAYS = [
   // 滞在の表（#1275）。`AHEAD_COUNTRIES` はここの `name` を持つ行から引いている
   ["site/content/stays.ts", "STAYS", "country", "walkedcount / countryart / islechapter_selftest"],
   ["site/content/nordic.ts", "ROUTE", "id", "walkedcount"],
-  ["site/content/travel.ts", "CITIES", "slug", "guidestop"],
+  ["site/content/cities.ts", "CITIES", "slug", "guidestop / sitemapgap"],
   ["site/content/recipes.ts", "RECIPES", "slug", "manifest / heroicon"],
   ["site/content/projects.ts", "PROJECTS", "slug", "manifest / heroicon / nextempty"],
   ["site/content/streamTypes.ts", "STREAM_TYPES", "slug", "manifest / heroicon"],

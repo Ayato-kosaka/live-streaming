@@ -103,7 +103,7 @@ const FAKE_HREF = "/travel/zz-island";
 /** 足す1行。**ほかのファイルは触らない** */
 const ROW =
   `  { country: "${FAKE}", name: "架空の国", cities: [], from: "${ON}", to: "",\n` +
-  `    guide: { name: "架空の国・みやこ", href: "${FAKE_HREF}", lead: "確かめのための国", icon: "mountain" } },`;
+  `    guide: { name: "架空の国・みやこ", lead: "確かめのための国", icon: "mountain" } },`; // 道は書かない。国から組まれる（M-6）
 /** 表の終わりの `]` の前に行を足す（いまの行を閉じた写しの上で） */
 const CLOSED = STAYS_SRC.slice(0, openRow.at) + closedSrc + STAYS_SRC.slice(openRow.end);
 const SHIFT = closedSrc.length - openSrc.length;

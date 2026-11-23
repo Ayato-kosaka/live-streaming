@@ -237,6 +237,9 @@ bring(join(CONTENT, "countries.ts"), "countries.ts");
 /* 国の表と章の国が引く滞在の表（#1275）。案内の面の絵の名前（`IconName`）は部品の側の型なので、
    ここでは字で受ける——数えるのは歩いた国で、絵の名前ではない */
 bring(join(CONTENT, "stayChapters.ts"), "stayChapters.ts");
+/* 滞在の表が読む2枚（街の名簿と種類の表。どちらも何も読まない。#1357） */
+bring(join(CONTENT, "cities.ts"), "cities.ts");
+bring(join(CONTENT, "kinds.ts"), "kinds.ts");
 writeFileSync(
   join(WORK, "stays.ts"),
   readFileSync(join(CONTENT, "stays.ts"), "utf8").replace(

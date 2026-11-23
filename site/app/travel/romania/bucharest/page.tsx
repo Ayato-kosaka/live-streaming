@@ -12,6 +12,7 @@ import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import Writer from "@/components/travel/article/Writer";
+import CityTags from "@/components/travel/CityTags";
 import StickyNotes from "@/components/live/Notes";
 import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
@@ -99,6 +100,9 @@ export default function BucharestPage() {
         <Writer by={went ? GUIDE_BY.after : GUIDE_BY.before} went={went ? { city: G.name, from: went } : undefined} />
         <Sources g={g} drawn={usedDrawn} />
       </article>
+
+      {/* いつ居たか・どの旅で・企画・料理の札（`components/travel/CityTags.tsx`。0件なら出ない） */}
+      <CityTags country={G.country} city={G.city} name={G.name} />
 
       {/* 付箋。ソフィアと同じ置き場所（面のいちばん下）。**宛先の id（`romania`）は Firestore に入るので変えない**（`content/themes.ts`） */}
       <StickyNotes theme="romania" title="ブカレストでこれやって" />

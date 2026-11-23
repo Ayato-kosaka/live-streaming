@@ -3,6 +3,8 @@ import { crumbOf } from "@/components/island/layout";
 import { share, type ShareKey } from "@/lib/share";
 import { AHEAD_COUNTRIES, COUNTRIES, type Country } from "./countries";
 import { TRAVEL, travelHref } from "./travelPath";
+import { CITIES } from "./cities";
+import { crumbsOf } from "@/lib/pages";
 
 export { TRAVEL, travelHref };
 
@@ -137,7 +139,7 @@ export function travelPage(slug: string): TravelPlace {
 export const TRAVEL_LABEL = crumbOf("map").label;
 
 /** パンくず。**道の階層と同じ**（島 › 歩いた国 › <国>）。名札（`BreadcrumbList`）もここから出る */
-export const travelCrumbs = (name: string) => [crumbOf("map"), { label: name }];
+export const travelCrumbs = (slug: string) => crumbsOf(travelHref(slug));
 
 /**
  * **`/travel/<国>/<街>` の名簿。** 実際に行った街のガイド（`docs/guide-design.md`）。
@@ -168,14 +170,7 @@ export type TravelCity = {
   draft?: true;
 };
 
-const CITIES: Omit<TravelCity, "href">[] = [
-  /* あやとが読んで OK（2026-11-19「いい感じ。結構綺麗」）。公開前の印を外した */
-  { country: "north-macedonia", slug: "skopje", name: "スコピエ" },
-  { country: "bulgaria", slug: "sofia", name: "ソフィア" },
-  /* あやとは 2026-11-21 に着いた（`content/countries.ts` の `AHEAD_COUNTRIES`）。国の面は着いた日に建てた（`GUIDE_ONLY`）。
-     あやと 2026-11-20「割といい感じ」「どんどん公開していいよ。あなたの裁量の範囲内」で公開前の印を外した */
-  { country: "romania", slug: "bucharest", name: "ブカレスト" },
-];
+/* 街の名簿そのものは `content/cities.ts`（滞在の表が slug で指すので、何も読まない1枚に分けた。#1357） */
 
 /**
  * **国の面（`/travel/<国>`）を持たず、街の面だけを持つ国。** パンくずは 島 › 歩いた国 › <街> で、国の段を飛ばす
@@ -222,9 +217,8 @@ export const publicCities = (country?: string) =>
 
 /** 街のパンくず。島 › 歩いた国 › <国> › <街> */
 export function travelCityCrumbs(country: string, slug: string) {
-  const { page } = cityCountry(country);
-  const c = travelCity(country, slug);
-  return page ? [crumbOf("map"), { label: page.name, href: page.href }, { label: c.name }] : [crumbOf("map"), { label: c.name }];
+  /* 入口と道の上の段から（`lib/pages.ts` の `crumbsOf`。国の面を持たない国は、国の段が出ない） */
+  return crumbsOf(travelCity(country, slug).href);
 }
 
 /** 街の面の、貼られたときの顔と居場所。**公開前は検索に出さない**（`robots` は印から） */
@@ -323,10 +317,7 @@ export const publicArticles = (country?: string) =>
 
 /** 記事のパンくず。島 › 歩いた国 › <国> › <街> › <記事> */
 export function travelArticleCrumbs(country: string, city: string, slug: string) {
-  const p = travelPage(country);
-  const c = travelCity(country, city);
-  const a = travelArticle(country, city, slug);
-  return [crumbOf("map"), { label: p.name, href: p.href }, { label: c.name, href: c.href }, { label: a.crumb }];
+  return crumbsOf(travelArticle(country, city, slug).href);
 }
 
 /**
