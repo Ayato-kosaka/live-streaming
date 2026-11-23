@@ -1,606 +1,3349 @@
 {
  "slug": "india-street-food",
  "updated": "2026-11-23",
+ "meta": {
+  "title": "インド屋台飯100食、食べるまで出られません【インド・スリランカ2027】",
+  "description": "2027年1月15日ごろムンバイから入り、インドとスリランカで100食を食べ終わるまで出られない旅の企画。ビリヤニやチャイが街でどう変わるかを毎晩の配信で食べ比べる。食べるべき100品の値段と店も載せた。",
+  "h1": "インド屋台飯100食、食べるまで出られません",
+  "sub": "100食目はどこで食べる？",
+  "start": "2027-01-15",
+  "from": "ムンバイ"
+ },
+ "rules": [
+  "2027年1月15日ごろムンバイから入る",
+  "屋台でも食堂でも1回の食事を1食と数える",
+  "ターリーやミールスの定食もまとめて1食",
+  "100食目を食べるまでインドとスリランカから出ない",
+  "ガイドの100品は全部食べなくてよい"
+ ],
+ "quote": {
+  "text": "カレーって言葉じゃ足りひんのよ。",
+  "date": "2026-08-02",
+  "at": "0:25:30",
+  "videoId": "v1PRwv1CWO0"
+ },
+ "words": [
+  {
+   "id": "dal",
+   "name": "ダル",
+   "lead": "ご飯にもロティにも付く挽き割り豆の煮もの",
+   "body": "ダルは挽き割りの豆と、それを煮た汁の両方を指す。主な豆はキマメ（トゥール）、赤レンズ豆（マスール）、黒いウラド豆、緑豆（ムング）、ひよこ豆（チャナ）。インドは世界でいちばん豆を作る国で、南インドではパルップと呼ぶ。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Dal",
+    "https://en.wikipedia.org/wiki/Indian_cuisine"
+   ]
+  },
+  {
+   "id": "biryani",
+   "name": "ビリヤニ",
+   "lead": "漬けた肉と長い米を重ねて鍋ごと蒸す",
+   "body": "ヨーグルトに漬けた肉と香辛料、長粒米を鍋に重ねて蒸す炊き込みご飯。ムガルの宮廷の台所で生まれたと考えられているが、南インドにもっと前からあったという説もある。生の肉から蒸すカッチーと、火を通してから重ねるパッキーの2つの作りかたがある。インドの宅配でいちばん頼まれる料理。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Biryani"
+   ]
+  },
+  {
+   "id": "mutton",
+   "name": "マトン",
+   "lead": "インドではたいていヤギの肉",
+   "body": "英語のマトンは成長した羊の肉のことだが、南アジアではマトンといえばヤギの肉を指すことが多い。マトンのカレーもビリヤニもケバブも、たいていヤギ。ヒンドゥー教徒の多くは牛を、ムスリムは豚を食べないので、インドの肉の主役は鶏とヤギになる。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Lamb_and_mutton",
+    "https://en.wikipedia.org/wiki/Indian_cuisine"
+   ]
+  },
+  {
+   "id": "masala",
+   "name": "マサラ",
+   "lead": "料理の名前に付けば香辛料で味付けした料理",
+   "body": "マサラは香辛料を混ぜたもの。料理の名前に付くと、香辛料で味を付けたという意味になる。マサラ・チャイは香辛料入りのチャイ、マサラ・ドーサはじゃがいもの香辛料炒めを包んだドーサ。北のガラムマサラや屋台のチャート・マサラのように、混ぜかたに名前の付いたものも多い。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Masala_chai",
+    "https://en.wikipedia.org/wiki/Udupi_cuisine",
+    "https://en.wikipedia.org/wiki/Garam_masala",
+    "https://en.wikipedia.org/wiki/Chaat"
+   ]
+  },
+  {
+   "id": "thali",
+   "name": "ターリー",
+   "lead": "丸い盆の縁に小鉢を並べる定食",
+   "body": "ターリーは皿や盆のこと。丸い盆の縁にカトーリーという小鉢を並べた定食もこう呼ぶ。中身は地方で違い、グジャラートのターリーは甘いものまで一度に並ぶ。南インドで同じように米を中心にした定食はミールスと呼ぶ。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Thali",
+    "https://en.wikipedia.org/wiki/Gujarati_cuisine",
+    "https://en.wikipedia.org/wiki/South_Indian_cuisine"
+   ]
+  },
+  {
+   "id": "roti-naan",
+   "name": "ロティとナン",
+   "lead": "北インドの毎日のパンはナンではなくロティ",
+   "body": "ロティは丸い平焼きパンの総称で、北インドの昼ごはんの主役。代表のチャパティは全粒粉を発酵させずに鉄板で焼く。ナンは発酵させた生地を窯（タンドール）で焼くふわふわのパンで、日本のインド料理店では主役だが、北インドの毎日の主食はロティのほう。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Roti",
+    "https://en.wikipedia.org/wiki/Chapati",
+    "https://en.wikipedia.org/wiki/Naan",
+    "https://en.wikipedia.org/wiki/Indian_cuisine"
+   ]
+  },
+  {
+   "id": "dosa",
+   "name": "ドーサ",
+   "lead": "米と豆の発酵生地を薄く焼く大きなクレープ",
+   "body": "米とウラド豆を挽いて発酵させた生地を、鉄板で薄くパリッと焼く。じゃがいもの香辛料炒めを包むとマサラ・ドーサ。チャツネとサンバルを付けて食べる。発祥はウドゥピという説とチェンナイという説がある。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Dosa_(food)",
+    "https://en.wikipedia.org/wiki/Udupi_cuisine",
+    "https://en.wikipedia.org/wiki/Tamil_cuisine"
+   ]
+  },
+  {
+   "id": "sambar",
+   "name": "サンバル",
+   "lead": "朝はイドリに昼はご飯にかける豆の汁",
+   "body": "キマメ（トゥール豆）とタマリンドの汁で野菜を煮た、南インドの毎日の汁もの。朝はイドリやドーサに付け、昼はご飯にかける。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Sambar_(dish)",
+    "https://en.wikipedia.org/wiki/Tamil_cuisine"
+   ]
+  },
+  {
+   "id": "paneer",
+   "name": "パニール",
+   "lead": "牛乳をレモン汁で固めた熟成させないチーズ",
+   "body": "牛乳か水牛の乳を、レモン汁などの酸で固めた熟成させないチーズ。北インドの菜食の料理によく入る（ほうれん草のパーラク・パニールなど）。東インドでは同じように固めたチェナから、ロショゴッラやションデシュを作る。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Paneer",
+    "https://en.wikipedia.org/wiki/Punjabi_cuisine",
+    "https://en.wikipedia.org/wiki/Bengali_cuisine"
+   ]
+  },
+  {
+   "id": "ghee",
+   "name": "ギー",
+   "lead": "バターを煮て澄ませた焦げにくい油",
+   "body": "牛か水牛のバターを煮て、水分と乳の固まりを取り除いた油。ナッツのような香りで焦げにくい。料理にも宗教の儀式にも使い、北インドの宮廷の料理でたっぷり使う。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Ghee",
+    "https://en.wikipedia.org/wiki/Rajasthani_cuisine"
+   ]
+  },
+  {
+   "id": "chai",
+   "name": "チャイ",
+   "lead": "紅茶を牛乳で煮出して砂糖で甘くする",
+   "body": "紅茶の葉を牛乳と水で煮出し、砂糖で甘くする。カルダモン、生姜、シナモンなどを入れるとマサラ・チャイ。道ばたの茶売り（チャイワーラー）は夜通し開けていることも多い。南インドではコーヒー、スリランカでは香辛料を入れない紅茶がよく飲まれる。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Masala_chai",
+    "https://en.wikipedia.org/wiki/Tamil_cuisine",
+    "https://www.hungrylankan.com/recipes/sri-lankan-milk-tea/"
+   ]
+  },
+  {
+   "id": "lassi",
+   "name": "ラッシー",
+   "lead": "ヨーグルトで作るとろりとした飲みもの",
+   "body": "ヨーグルトを混ぜて作る、とろりとした飲みもの。乳製品の多いパンジャーブの名物で、アムリトサルでは大きなコップに白いバターの塊をのせて出す。マンゴーを混ぜたマンゴー・ラッシーもある。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Lassi",
+    "https://en.wikipedia.org/wiki/Punjabi_cuisine",
+    "https://www.timeout.com/india/restaurants/amritsar-food-guide"
+   ]
+  }
+ ],
+ "regions": [
+  {
+   "id": "north",
+   "name": "北インド",
+   "staple": "小麦（ナン・ロティ。タンドールという窯で焼く）",
+   "oil": "ギー（バターを煮詰めた油）",
+   "dishes": [
+    "butter-chicken-moti-mahal",
+    "dal-makhani-kesar",
+    "lucknow-biryani",
+    "chole-bhature",
+    "galouti-kebab",
+    "dal-baati-churma"
+   ],
+   "body": "パンジャーブ、デリー、ラクナウ、ラージャスターンの料理。タンドールの窯はパンジャーブの道具で、1947年の分離のあとデリーに広まった。ラクナウは鍋に封をして弱火で蒸すダムの料理で知られる。ラージャスターンはインドでいちばん菜食の人が多い州（74.9%）。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Punjabi_cuisine",
+    "https://en.wikipedia.org/wiki/Awadhi_cuisine",
+    "https://en.wikipedia.org/wiki/Rajasthani_cuisine"
+   ]
+  },
+  {
+   "id": "west",
+   "name": "西インド",
+   "staple": "小麦のチャパティ。ムンバイは丸いパンのパオ",
+   "oil": "落花生油。ゴアはココナッツ油",
+   "dishes": [
+    "vada-pav",
+    "pav-bhaji",
+    "misal-pav",
+    "goan-fish-thali",
+    "pork-vindaloo"
+   ],
+   "body": "ムンバイの屋台の柱は揚げものとパオ。パオはポルトガルが持ち込んだパンで、ゴアから広まった。グジャラートは菜食の人が多く、ダルにも砂糖を入れる。ゴアのカトリックの料理はヤシの酢で酸っぱくし、豚も使う。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Maharashtrian_cuisine",
+    "https://en.wikipedia.org/wiki/Goan_cuisine",
+    "https://en.wikipedia.org/wiki/Gujarati_cuisine",
+    "https://en.wikipedia.org/wiki/Indian_cuisine"
+   ]
+  },
+  {
+   "id": "east",
+   "name": "東インド",
+   "staple": "米",
+   "oil": "からし油（マスタードオイル）",
+   "dishes": [
+    "kathi-roll",
+    "puchka",
+    "shorshe-maach",
+    "pice-hotel-thali",
+    "rosogolla",
+    "kolkata-biryani"
+   ],
+   "body": "コルカタの料理は米と川魚とからし。からしは油にも、種のままにも、辛いペーストにも使う。牛乳を固めたチェナの甘いものが多い。2014年の政府の調査では、西ベンガルの98.55%が肉か魚を食べる。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Bengali_cuisine",
+    "https://en.wikipedia.org/wiki/Indian_cuisine",
+    "https://www.millenniumpost.in/kolkata/over-95-bengal-residents-steer-clear-of-veg-food-survey-299739"
+   ]
+  },
+  {
+   "id": "south",
+   "name": "南インド",
+   "staple": "米。朝はドーサ・イドリ",
+   "oil": "ココナッツ油",
+   "dishes": [
+    "banana-leaf-meals",
+    "benne-masala-dosa",
+    "hyderabadi-biryani",
+    "appam-stew",
+    "murugan-idli"
+   ],
+   "body": "米を炊くだけでなく、発酵させて蒸したり焼いたりする（イドリ・ドーサ）。ココナッツとカレーリーフ、タマリンドの酸味をよく使う。寺の菜食の料理がある一方で、タミル・ナードゥの97.65%、ケーララの97%が肉か魚を食べる（2014年の政府の調査）。ハイデラバードはビリヤニで知られる街。",
+   "src": [
+    "https://en.wikipedia.org/wiki/South_Indian_cuisine",
+    "https://en.wikipedia.org/wiki/Indian_cuisine",
+    "https://en.wikipedia.org/wiki/Hyderabadi_cuisine",
+    "https://www.thenewsminute.com/news/food-thought-south-indians-love-their-meat-over-veggies-44751"
+   ]
+  },
+  {
+   "id": "srilanka",
+   "name": "スリランカ",
+   "staple": "米",
+   "oil": "ココナッツ油",
+   "dishes": [
+    "rice-and-curry",
+    "kottu-roti",
+    "egg-hopper",
+    "string-hoppers",
+    "lamprais"
+   ],
+   "body": "ご飯に魚か肉のカレーと、野菜や豆の小さなカレーを何品も添えるライス・アンド・カリーが中心。カレー粉を焙煎し、鰹節に似た干し魚（モルディブフィッシュ）でうま味を出すところが南インドと違う。オランダ系とマレー系の料理も残る。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Sri_Lankan_cuisine",
+    "https://www.sbs.com.au/food/recipe/sinhalese-curry-powder-thuna-paha/f6qwyafq4",
+    "https://ja.wikipedia.org/wiki/%E3%83%A2%E3%83%AB%E3%83%87%E3%82%A3%E3%83%96%E3%83%95%E3%82%A3%E3%83%83%E3%82%B7%E3%83%A5"
+   ]
+  }
+ ],
+ "compare": [
+  {
+   "id": "biryani",
+   "title": "ビリヤニ6都市食べ比べ",
+   "lead": "米の粒と蒸しかたが街ごとに違う",
+   "items": [
+    {
+     "dish": "thalassery-biryani",
+     "note": "バスマティではなく小粒のカイマ米。鶏が基本"
+    },
+    {
+     "dish": "ambur-biryani",
+     "note": "小粒のシーラガ・サンバ米で炊く"
+    },
+    {
+     "dish": "hyderabadi-biryani",
+     "note": "生の肉と米を重ねて蒸すカッチー。辛くて香りが強い"
+    },
+    {
+     "dish": "kolkata-biryani",
+     "note": "大きなじゃがいもとゆで卵が入る"
+    },
+    {
+     "dish": "lucknow-biryani",
+     "note": "米と肉を別に炊いてから重ねるパッキー。辛さは控えめ"
+    },
+    {
+     "dish": "srilanka-biryani",
+     "note": "ムスリムの祝いの料理。ローズウォーターの香り"
+    }
+   ],
+   "src": [
+    "https://en.wikipedia.org/wiki/Biryani",
+    "https://en.wikipedia.org/wiki/Hyderabadi_biryani",
+    "https://en.wikipedia.org/wiki/Awadhi_cuisine",
+    "https://en.wikipedia.org/wiki/Kolkata_biryani",
+    "https://en.wikipedia.org/wiki/Thalassery_cuisine",
+    "https://en.wikipedia.org/wiki/Tamil_cuisine",
+    "https://sailanmuslim.com/?p=8136"
+   ]
+  },
+  {
+   "id": "panipuri",
+   "title": "ゴルガッパとプチュカとパニプリ",
+   "lead": "同じ一口でも皮と具と水が街で違う",
+   "items": [
+    {
+     "dish": "pani-puri-mumbai",
+     "note": "白えんどう豆の煮込みを詰める。タマリンドとミントの水"
+    },
+    {
+     "dish": "puchka",
+     "note": "全粒粉の薄い皮。ゴンドラージ・レモンの香る酸っぱい水"
+    },
+    {
+     "dish": "golgappa",
+     "note": "厚くてカリカリの皮。ミントとコリアンダーの緑の水"
+    }
+   ],
+   "src": [
+    "https://en.wikipedia.org/wiki/Panipuri"
+   ]
+  },
+  {
+   "id": "winter-foam",
+   "title": "冬だけの牛乳の泡のお菓子めぐり",
+   "lead": "同じ菓子が3つの街で別の名前になる",
+   "items": [
+    {
+     "dish": "malaiyo",
+     "note": "バラナシの呼び名。素焼きの器で"
+    },
+    {
+     "dish": "makhan-malai",
+     "note": "ラクナウの呼び名。サフランとカルダモン"
+    },
+    {
+     "dish": "daulat-ki-chaat",
+     "note": "デリーの呼び名。銀箔をのせて葉の器で"
+    }
+   ],
+   "src": [
+    "https://www.outlooktraveller.com/explore/food-and-drink/the-snack-of-wealth",
+    "https://en.wikipedia.org/wiki/Makhan_malai",
+    "https://www.inkl.com/news/tis-the-season-for-malaiyo-the-cloud-like-sweet-that-melts-in-the-mouth"
+   ]
+  },
+  {
+   "id": "chai-coffee-tea",
+   "title": "チャイとコーヒーと紅茶を飲み比べ",
+   "lead": "器と淹れかたに街が出る毎日の一杯",
+   "items": [
+    {
+     "dish": "bun-maska-irani-chai",
+     "note": "イラニ・カフェの煮詰めた甘いチャイ"
+    },
+    {
+     "dish": "filter-coffee",
+     "note": "タミルはコーヒー。タンブラーと受け皿で冷ます"
+    },
+    {
+     "dish": "irani-chai-osmania",
+     "note": "チャイにオスマニア・ビスケットを浸す"
+    },
+    {
+     "dish": "bhaar-chai",
+     "note": "素焼きのカップで飲んで捨てる"
+    },
+    {
+     "dish": "ceylon-tea",
+     "note": "香辛料を入れない紅茶。ミルクティーは粉ミルクで"
+    }
+   ],
+   "src": [
+    "https://en.wikipedia.org/wiki/Masala_chai",
+    "https://en.wikipedia.org/wiki/Irani_caf%C3%A9",
+    "https://en.wikipedia.org/wiki/Tamil_cuisine",
+    "https://en.wikipedia.org/wiki/Kulhar",
+    "https://www.hungrylankan.com/recipes/sri-lankan-milk-tea/"
+   ]
+  },
+  {
+   "id": "appam-hopper",
+   "title": "アッパムとホッパーを味わおう",
+   "lead": "米粉とココナッツミルクの同じ生地",
+   "items": [
+    {
+     "dish": "appam-stew",
+     "note": "ケーララではアッパム。シチューをかける"
+    },
+    {
+     "dish": "egg-hopper",
+     "note": "スリランカではホッパー。卵を落としてルヌ・ミリスで"
+    }
+   ],
+   "src": [
+    "https://en.wikipedia.org/wiki/Appam",
+    "https://en.wikipedia.org/wiki/Sri_Lankan_cuisine",
+    "https://keralatourism.org/photo-gallery/appam-breakfast-dish/2887"
+   ]
+  }
+ ],
  "dishes": [
   {
    "id": "vada-pav",
    "name": "ヴァダパオ",
+   "local": "Vada pav / वडा पाव",
    "region": "west",
-   "city": "ムンバイ"
+   "city": "ムンバイ",
+   "kind": "屋台",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "まずは駅の屋台の揚げたてから",
+   "what": "香辛料で和えたじゃがいもの団子にひよこ豆の粉の衣を付けて揚げ、柔らかい丸パン（パオ）に挟む。緑のチャツネとにんにくの粉、揚げた青唐辛子を添える。立ったまま数口で食べる。",
+   "where": "ダーダル駅の近くの Ashok Vada Pav（Kirti College の前。1966年から。日曜休みとする案内がある）。駅の屋台は1個₹13、Ashok は₹25。",
+   "price": {
+    "cur": "INR",
+    "min": 13,
+    "max": 25,
+    "yen_min": 22,
+    "yen_max": 43,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.hostelworld.com/blog/?p=1328746"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Vada_pav"
   },
   {
    "id": "pav-bhaji",
    "name": "パオバジ",
+   "local": "Pav bhaji / पाव भाजी",
    "region": "west",
-   "city": "ムンバイ"
+   "city": "ムンバイ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "大きな鉄板の上でへらで潰しながら煮詰める",
+   "what": "じゃがいもとトマトと野菜を、大きな鉄板の上でへらで潰しながら煮詰め、バターをたっぷりのせる。バターで焼いたパオをちぎって浸けて食べる。生の玉ねぎとレモンが付く。",
+   "where": "タルデオの Sardar Refreshments（50年を超える老舗）、ジュフ・ビーチの Shri Krishna。Sardar は₹140〜200とする2024年5月の案内がある。",
+   "price": {
+    "cur": "INR",
+    "min": 140,
+    "max": 200,
+    "yen_min": 239,
+    "yen_max": 342,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.livetheworld.com/activities/india/sardar-refreshments-tardeo-mumbai"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Pav_bhaji"
   },
   {
    "id": "misal-pav",
    "name": "ミサル・パオ",
+   "local": "Misal pav / मिसळ पाव",
    "region": "west",
-   "city": "ムンバイ"
+   "city": "ムンバイ",
+   "kind": "朝ごはん",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "2015年にロンドンの料理の賞を取ったダーダルの店",
+   "what": "芽を出させた豆（マトキ）のカレーに赤くて辛い汁（タリ）をかけ、揚げ菓子のファルサンと生の玉ねぎをのせる。パオを浸して食べる。",
+   "where": "ダーダル西のガドカリ・チョウクの Aaswad（1986年から）。2015年にロンドンの Foodie Hub Awards で、この店のミサルが世界でいちばんおいしい菜食料理に選ばれた。ミサル（Chef Special）は₹98、壺で出すタンドリー・ミサルは₹105。",
+   "price": {
+    "cur": "INR",
+    "min": 98,
+    "max": 105,
+    "yen_min": 168,
+    "yen_max": 180,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://curlytales.com/this-misal-from-mumbai-was-declared-the-worlds-tastiest-vegetarian-dish/amp/",
+    "https://magicpin.in/Mumbai/Nakshatra-Mall/Restaurant/Aaswad/store/594aca"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Misal_pav"
   },
   {
    "id": "gujarati-thali",
    "name": "グジャラート・ターリー",
+   "local": "Gujarati thali",
    "region": "west",
-   "city": "ムンバイ"
+   "city": "ムンバイ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "銀の大皿にずらりと並ぶおかわり自由の定食",
+   "what": "銀の大皿の縁に小鉢を並べ、甘めのダル、ヨーグルトの汁（カディ）、野菜のおかず、蒸しパンのドクラ、揚げもの、ロティ、ご飯、甘いものまで一度に出す。グジャラートのダルには砂糖かジャガリーが入る。",
+   "where": "カルバデヴィのダディシェト・アギャリ通りの Shree Thaker Bhojanalay（1945年から。11:30〜15:30・19:00〜22:30）。2人で約₹1,300とする案内と、1人₹500とする古い案内がある。",
+   "price": {
+    "cur": "INR",
+    "min": 500,
+    "max": 650,
+    "yen_min": 855,
+    "yen_max": 1112,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://oteats.outlooktraveller.com/features/guides/where-to-find-the-best-gujarati-food-in-mumbai",
+    "https://www.district.in/dining/mumbai/shree-thaker-bhojanalay-kalbadevi",
+    "https://lbb.in/mumbai/shree-thaker-bhojanalay-mumbai",
+    "https://en.wikipedia.org/wiki/Gujarati_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Gujarati_cuisine"
   },
   {
    "id": "berry-pulao",
    "name": "ベリー・プラオ",
+   "local": "Berry pulao (Britannia & Co.)",
    "region": "west",
-   "city": "ムンバイ"
+   "city": "ムンバイ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "イランから取り寄せる酸っぱいベリーをのせる",
+   "what": "サフランで色を付けた米に、イランから取り寄せる酸っぱいバーベリー、揚げた玉ねぎ、カシューナッツを重ね、下に鶏か羊のカレーを敷く。パールシー（ゾロアスター教徒）の食堂の名物。",
+   "where": "バラード・エステートの Britannia & Co.（月〜土の11:30〜16:00。日曜休み。現金だけ）。₹550と₹600の皿の写真がある。1人₹500〜800とする案内もある。",
+   "price": {
+    "cur": "INR",
+    "min": 550,
+    "max": 600,
+    "yen_min": 940,
+    "yen_max": 1026,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://migrationology.com/britannia-co-parsi-restaurant-mumbai/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Parsi_cuisine"
   },
   {
    "id": "bhel-puri",
    "name": "ベルプリ",
+   "local": "Bhel puri / भेळपुरी",
    "region": "west",
-   "city": "ムンバイ"
+   "city": "ムンバイ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "浜の屋台で紙の皿に盛ってもらう",
+   "what": "ポン菓子（ムルムル）に細い揚げ麺のセヴ、刻んだ玉ねぎとトマト、甘いタマリンドと緑のチャツネを和える。湿る前に食べる。",
+   "where": "ジュフ・ビーチの Om Sai Sagar Chaat Centre、ギルガウム・チョウパティの屋台。浜の屋台で₹30〜50とする2025年7月の記事と、₹40〜80とする案内がある。",
+   "price": {
+    "cur": "INR",
+    "min": 30,
+    "max": 80,
+    "yen_min": 51,
+    "yen_max": 137,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://migrationology.com/mumbai-street-food",
+    "https://www.newsbytesapp.com/news/lifestyle/must-try-street-snacks-of-mumbai/story",
+    "https://ibis.accor.com/en/ibis-magazine/affordable-comfort/mumbai-street-food.html"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Bhelpuri"
   },
   {
    "id": "pani-puri-mumbai",
    "name": "パニプリ",
+   "local": "Pani puri / पाणीपुरी",
    "region": "west",
-   "city": "ムンバイ"
+   "city": "ムンバイ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "10個で50〜70ルピーが相場",
+   "what": "薄い揚げ玉に指で穴をあけ、白えんどう豆の煮込み（ラグダ）を詰めて、タマリンドとミントの冷たい水を注ぐ。屋台の人が1個ずつ手渡し、受け取ったらすぐ口に入れる。",
+   "where": "ギルガウム・チョウパティの Badshah Pani Puri。ムンバイは10個で₹50〜70（2025年9月の記事）。",
+   "price": {
+    "cur": "INR",
+    "min": 50,
+    "max": 70,
+    "yen_min": 86,
+    "yen_max": 120,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://migrationology.com/mumbai-street-food",
+    "https://www.thedailyjagran.com/trending/from-delhi-golgappa-to-kolkata-puchka-state-wise-prices-in-india-10268413"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Panipuri"
   },
   {
    "id": "bun-maska-irani-chai",
    "name": "ブンマスカとイラニ・チャイ",
+   "local": "Bun maska & Irani chai",
    "region": "west",
-   "city": "ムンバイ"
+   "city": "ムンバイ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "1925年から焼き続けるフォートのパン屋",
+   "what": "ふわふわの丸パンに厚くバターを挟んだブンマスカを、煮詰めた甘いミルクティーに浸して食べる。イランから来たゾロアスター教徒が開いたイラニ・カフェの朝の定番。",
+   "where": "マリン・ラインズの Kyani & Co、フォートの Yazdani Restaurant & Bakery（1925年から）。Kyani のチャイは₹15とする案内、Yazdani は2人で約₹100。",
+   "price": {
+    "cur": "INR",
+    "min": 15,
+    "max": 50,
+    "yen_min": 26,
+    "yen_max": 86,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.thebetterindia.com/321953/list-of-eight-iconic-irani-cafes-in-mumbai-britannia-kyani-yazdani-ideal-corner/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Irani_caf%C3%A9"
   },
   {
    "id": "keema-pav",
    "name": "キーマパオ",
+   "local": "Kheema pav / खीमा पाव",
    "region": "west",
-   "city": "ムンバイ"
+   "city": "ムンバイ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "大理石のテーブルで食べる1904年創業の店",
+   "what": "羊のひき肉を玉ねぎと香辛料で炒め煮にしたキーマを、バターで焼いたパオで食べる。目玉焼きをのせる店もある。",
+   "where": "マリン・ラインズの Kyani & Co（1904年から。ムンバイでいちばん古いイラニ・カフェとされる）、Cafe Military。Kyani は₹75とする記事がある。",
+   "price": {
+    "cur": "INR",
+    "min": 75,
+    "max": 75,
+    "yen_min": 128,
+    "yen_max": 128,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://curlytales.com/mumbais-oldest-parsi-cafe-kyani-co"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Keema"
   },
   {
    "id": "goan-fish-thali",
    "name": "フィッシュ・ターリー",
+   "local": "Goan fish thali",
    "region": "west",
-   "city": "ゴア"
+   "city": "ゴア",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "サバのラヴァ揚げと赤い米の昼ごはん",
+   "what": "サバ（バングダ）かキングフィッシュに細かいセモリナ（ラヴァ）をまぶして揚げ、ココナッツとコクムの酸っぱい魚カレー、赤い米、コクムのココナッツミルク（ソルカディ）と並べる。海辺の食堂の昼の定食。",
+   "where": "カラスワダの Tukaram（サバの定食）ほか。昼だけで売り切れが早い。2人で₹550〜1,000（Time Out の各店）。",
+   "price": {
+    "cur": "INR",
+    "min": 275,
+    "max": 500,
+    "yen_min": 470,
+    "yen_max": 855,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.timeout.com/india/goa/best-seafood-thalis-goa"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Goan_cuisine"
   },
   {
    "id": "pork-vindaloo",
    "name": "ポーク・ヴィンダルー",
+   "local": "Pork vindaloo",
    "region": "west",
-   "city": "ゴア"
+   "city": "ゴア",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [
+    "pork"
+   ],
+   "season": null,
+   "lead": "ヤシの酢と赤唐辛子で煮る豚のカレー",
+   "what": "豚肉をヤシの樹液の酢とにんにく、赤唐辛子に漬けてから煮込む。酸っぱくて辛い。ゴアのカトリックの家の料理で、ゴアの元の作りかたは豚しか使わない。英国のカレー店で同じ名前の鶏や羊の辛いカレーは別もの。",
+   "where": "パナジのパット・プラザの Ritz Classic。2人で₹500〜800（EazyDiner の2つの頁で₹600と₹800、旅行の案内で₹500）。",
+   "price": {
+    "cur": "INR",
+    "min": 250,
+    "max": 400,
+    "yen_min": 428,
+    "yen_max": 684,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.eazydiner.com/goa/ritz-classic-panaji-north-goa-639922",
+    "https://aliyaleekong.com/blog/ritz-classic",
+    "https://en.wikipedia.org/wiki/Goan_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Vindaloo"
   },
   {
    "id": "choris-pao",
    "name": "チョリス・パオ",
+   "local": "Choris pão",
    "region": "west",
-   "city": "ゴア"
+   "city": "ゴア",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [
+    "pork"
+   ],
+   "season": null,
+   "lead": "夕方6時から開く道ばたの屋台",
+   "what": "酢と香辛料に漬けた豚の腸詰め（チョリス）をほぐして玉ねぎと炒め、ゴアの丸いパンに挟む。ポルトガルが残した腸詰めとパンの組み合わせ。",
+   "where": "アガシャイムの St Lawrence ベーカリーの近くの屋台（18時から。₹60〜180）、カヴェロシムの教会の前の Ludo's Meals On Wheels（₹60）、パナジの Pinto's。",
+   "price": {
+    "cur": "INR",
+    "min": 60,
+    "max": 180,
+    "yen_min": 103,
+    "yen_max": 308,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.gomantaktimes.com/best-of-goa/food-drinks/4-must-try-street-foods-while-in-goa",
+    "https://slurrp.com/article/chorizo-trail-the-best-places-for-the-indo-portuguese-sausage-in-goa-1654615024779"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Goan_cuisine"
   },
   {
    "id": "ros-omelette",
    "name": "ロス・オムレツ",
+   "local": "Ros omelette",
    "region": "west",
-   "city": "ゴア"
+   "city": "ゴア",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "オムレツに鶏のカレーをたっぷりかける",
+   "what": "ふんわり焼いたオムレツに、鶏のシャクティ（ココナッツの濃いカレー）をかけ、ゴアのパン（ポイ）でぬぐって食べる。マルガオの夕方の屋台の名物。",
+   "where": "マルガオの Gopal Ros Omelette（16〜23時。売り切れで終わり）、Omkar Tea House。屋台の相場は₹40〜80、Gopal は2人で₹250。",
+   "price": {
+    "cur": "INR",
+    "min": 40,
+    "max": 125,
+    "yen_min": 68,
+    "yen_max": 214,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://slurrp.com/article/top-ros-omelette-places-in-goa-according-to-city-foodies-1688537186078"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Goan_cuisine"
   },
   {
    "id": "chicken-xacuti",
    "name": "チキン・シャクティ",
+   "local": "Chicken xacuti",
    "region": "west",
-   "city": "ゴア"
+   "city": "ゴア",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "ココナッツとケシの実を炒ってから挽く",
+   "what": "ココナッツとケシの実、20種近い香辛料を炒ってから挽き、鶏を煮込む。焦げ茶色で香ばしい。ゴアのパン（ポイ）かご飯で食べる。",
+   "where": "マルガオの Longuinhos（₹240）。北ゴアの店では₹351〜400（Swiggy）。",
+   "price": {
+    "cur": "INR",
+    "min": 240,
+    "max": 400,
+    "yen_min": 410,
+    "yen_max": 684,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://magicpin.in/Goa/Margao/Restaurant/Longuinhos/store/123208/menu",
+    "https://lbb.in/goa/must-visit-restaurants-in-goa"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Xacuti"
   },
   {
    "id": "bebinca",
    "name": "ベビンカ",
+   "local": "Bebinca",
    "region": "west",
-   "city": "ゴア"
+   "city": "ゴア",
+   "kind": "甘いもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "卵黄の生地を1層ずつ焼き重ねる菓子",
+   "what": "卵黄、ココナッツミルク、砂糖、ギーの生地を、上から1層ずつ焼いては重ねる。もっちりして濃い。ゴアのクリスマスの菓子で、年末年始は店に多く並ぶ。",
+   "where": "ポルヴォリムの Simonia's（ひと塊₹150）。量り売りは1kg₹400とする記事もある。",
+   "price": {
+    "cur": "INR",
+    "min": 150,
+    "max": 150,
+    "yen_min": 256,
+    "yen_max": 256,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.incredibleindia.gov.in/en/goa/goa/12-food-souvenirs-to-bring-back-from-panaji-goa",
+    "https://www.afar.com/magazine/5-things-you-must-eat-in-goa-india"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Bebinca"
   },
   {
    "id": "appam-stew",
    "name": "アッパムとシチュー",
+   "local": "Appam & stew / അപ്പം",
    "region": "south",
-   "city": "コーチ"
+   "city": "コーチ",
+   "kind": "朝ごはん",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "ココナッツの発酵生地を丸い鍋で焼く",
+   "what": "米とココナッツの発酵生地を丸い鍋で焼く。縁は薄くてパリパリ、真ん中は厚くてふわふわ。ココナッツミルクで煮た鶏か野菜のシチューをかける。ケーララのキリスト教徒の朝ごはん。",
+   "where": "フォート・コーチの Kashi Art Café・Dhe Puttu、Fort House。Fort House は2人で約₹1,000。",
+   "price": {
+    "cur": "INR",
+    "min": 500,
+    "max": 500,
+    "yen_min": 855,
+    "yen_max": 855,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.akbartravels.com/in/blogs/what-to-eat-in-kochi-a-culinary-guide-to-keralas-flavourful-coast/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Appam"
   },
   {
    "id": "karimeen-pollichathu",
    "name": "カリミーン・ポリチャトゥ",
+   "local": "Karimeen pollichathu / കരിമീൻ പൊള്ളിച്ചത്",
    "region": "south",
-   "city": "コーチ"
+   "city": "コーチ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "バナナの葉を開くと湯気の立つ州の魚",
+   "what": "ケーララの州の魚カリミーン（パールスポット）に香辛料を塗って焼き、玉ねぎとトマトのマサラごとバナナの葉で包んで蒸し焼きにする。葉を開いて食べる。",
+   "where": "フォート・コーチの Fort House・Kalan、Oceanos。州の観光局の家庭料理の店で1尾₹250、宅配の Chef Pillai で₹895と、店の格で大きく割れる。",
+   "price": {
+    "cur": "INR",
+    "min": 250,
+    "max": 895,
+    "yen_min": 428,
+    "yen_max": 1530,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.akbartravels.com/in/blogs/what-to-eat-in-kochi-a-culinary-guide-to-keralas-flavourful-coast/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Karimeen"
   },
   {
    "id": "beef-fry-parotta",
    "name": "ビーフ・フライとパロッタ",
+   "local": "Beef ularthiyathu & Kerala parotta",
    "region": "south",
-   "city": "コーチ"
+   "city": "コーチ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [
+    "beef"
+   ],
+   "season": null,
+   "lead": "牛肉を黒っぽくなるまで炒り上げる",
+   "what": "牛肉を薄切りのココナッツ、カレーリーフ、黒胡椒と一緒に、黒っぽくなるまで炒り上げる。層になったケーララ・パロッタをちぎって包んで食べる。牛肉の炒め煮はケーララのキリスト教徒の料理として知られる。",
+   "where": "マッタンチェリーの Hotel Rahmath と Kayees Rahmathulla Cafe で、パロッタと牛肉のカレー。Kayees のパラッリムックの店は2人で₹300。",
+   "price": {
+    "cur": "INR",
+    "min": 150,
+    "max": 150,
+    "yen_min": 256,
+    "yen_max": 256,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.akbartravels.com/in/blogs/what-to-eat-in-kochi-a-culinary-guide-to-keralas-flavourful-coast/",
+    "https://www.district.in/dining/kochi/kayees-hotel-pallimukku",
+    "https://en.wikipedia.org/wiki/Kerala_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kerala_cuisine"
   },
   {
    "id": "thalassery-biryani",
    "name": "タラッセリーのビリヤニ",
+   "local": "Thalassery biryani",
    "region": "south",
-   "city": "コーチ"
+   "city": "コーチ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "揚げ玉ねぎとレーズンをのせる鶏のビリヤニ",
+   "what": "ケーララ北部の海沿いの町タラッセリーの作りかた。バスマティではなく、小粒で香りの強いカイマ米を使う。ココナッツ油で揚げた玉ねぎとカシューナッツ、レーズンをのせ、鍋に封をして蒸す。鶏が基本。",
+   "where": "コーチではマッタンチェリーのグジャラーティ通りの Kayees Rahmathulla Cafe がカイマ米のビリヤニを出す（11〜15時。羊は売り切れが早い）。どのビリヤニも₹200未満、鶏は₹180とする客の報告がある。",
+   "price": {
+    "cur": "INR",
+    "min": 180,
+    "max": 200,
+    "yen_min": 308,
+    "yen_max": 342,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://yappe.in/kerala/kochi/kayees-rahmathulla-cafe/829379",
+    "https://en.wikipedia.org/wiki/Thalassery_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Thalassery_biryani"
   },
   {
    "id": "puttu-kadala",
    "name": "プットゥとカダラ・カレー",
+   "local": "Puttu & kadala curry / പുട്ട്",
    "region": "south",
-   "city": "コーチ"
+   "city": "コーチ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "筒で蒸した米粉を豆のカレーで崩す",
+   "what": "米粉とココナッツを交互に筒に詰めて蒸した円柱（プットゥ）を、黒いひよこ豆のカレーで崩して食べる。バナナやパパドを混ぜる人もいる。",
+   "where": "エダッパリの Dhe Puttu（プットゥの専門店）、街角の屋台。Dhe Puttu は2人で約₹1,000、3人でほとんど全部頼んで₹750とする2024年2月の記事がある。",
+   "price": {
+    "cur": "INR",
+    "min": 250,
+    "max": 500,
+    "yen_min": 428,
+    "yen_max": 855,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.eazydiner.com/kochi/dhe-puttu-edappally-kochi-693732",
+    "https://socialmaharaj.com/2024/02/17/dhe-puttu-kochi-review"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Puttu"
   },
   {
    "id": "kerala-sadya",
    "name": "サディヤ",
+   "local": "Kerala sadya / സദ്യ",
    "region": "south",
-   "city": "コーチ"
+   "city": "コーチ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "バナナの葉に20品以上を決まった場所に盛る",
+   "what": "バナナの葉に、アヴィヤル、トーラン、サンバル、ラッサム、漬けもの、バナナチップス、甘い粥のパヤサムまで、20品以上を決まった場所に盛る。結婚式とオーナム祭の菜食のごちそう。",
+   "where": "Dhe Puttu、エルナクラムの Grand Pavilion。ティルヴァナンタプラムの店で1人₹200〜350とする案内がある。",
+   "price": {
+    "cur": "INR",
+    "min": 200,
+    "max": 350,
+    "yen_min": 342,
+    "yen_max": 598,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.akbartravels.com/in/blogs/what-to-eat-in-kochi-a-culinary-guide-to-keralas-flavourful-coast/",
+    "https://en.wikipedia.org/wiki/Kerala_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Sadhya"
   },
   {
    "id": "kappa-meen-curry",
    "name": "カッパとミーン・カレー",
+   "local": "Kappa & meen curry",
    "region": "south",
-   "city": "コーチ"
+   "city": "コーチ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "道ばたの食堂タットゥカダの定番",
+   "what": "ゆでて潰したキャッサバ（カッパ）に、酸っぱい実のコダンプリと唐辛子で煮た赤い魚のカレーをかける。道ばたの食堂（タットゥカダ）の定番。",
+   "where": "パラリヴァットム、MG ロード、ブロードウェイ・マーケットの屋台。エダッパリの Kappa Kaapi で₹160（Swiggy）。",
+   "price": {
+    "cur": "INR",
+    "min": 160,
+    "max": 160,
+    "yen_min": 274,
+    "yen_max": 274,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.akbartravels.com/in/blogs/what-to-eat-in-kochi-a-culinary-guide-to-keralas-flavourful-coast/",
+    "https://www.swiggy.com/city/kochi/kappa-kaapi-edapally-kakkanad-rest1247486"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Cassava"
   },
   {
    "id": "pazham-pori",
    "name": "パザム・ポリ",
+   "local": "Pazham pori / പഴംപൊരി",
    "region": "south",
-   "city": "コーチ"
+   "city": "コーチ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "茶屋のガラスの棚に並ぶバナナの揚げもの",
+   "what": "大きな料理用バナナ（ネンドラン）を縦に切り、甘い衣を付けてココナッツ油で揚げる。午後に甘いチャイと食べる。",
+   "where": "街の茶屋とパン屋。1個₹15から。",
+   "price": {
+    "cur": "INR",
+    "min": 15,
+    "max": 15,
+    "yen_min": 26,
+    "yen_max": 26,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.keralakaumudi.com/en/news/more-froth-less-filling-is-golden-era-of-%E2%82%B910-chaya--pazhampori-fading-1741255"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Pazham_pori"
   },
   {
    "id": "kari-dosai",
    "name": "カリ・ドーサイ",
+   "local": "Kari dosai / கறி தோசை",
    "region": "south",
-   "city": "マドゥライ"
+   "city": "マドゥライ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "ドーサの生地に卵と羊のひき肉を重ねて焼く",
+   "what": "ドーサの生地に卵と羊のひき肉のカレーを重ね、厚く焼き固める。外はカリッと中はしっとり。マドゥライの夜の名物。",
+   "where": "シンマッカルの Konar Mess（12:30〜15:30・18:30〜23:30）。1枚₹215（2019年のブログ）、2人で₹200〜400。",
+   "price": {
+    "cur": "INR",
+    "min": 215,
+    "max": 215,
+    "yen_min": 368,
+    "yen_max": 368,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.slurrp.com/article/from-bun-parotta-to-kari-dosa-five-foods-to-try-when-youre-in-madurai-1651848688626"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Dosa_(food)"
   },
   {
    "id": "bun-parotta",
    "name": "ブン・パロッタ",
+   "local": "Bun parotta / பன் பரோட்டா",
    "region": "south",
-   "city": "マドゥライ"
+   "city": "マドゥライ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "手で叩いてほぐす丸く高いパロッタ",
+   "what": "層になった生地を丸く高く焼いたパロッタを手で叩いてほぐし、鶏か羊の汁（サルナ）をかけて食べる。マドゥライの夜の屋台の名物。",
+   "where": "アーヴィン交差点の近くの Madurai Bun Parotta Kadai、Sulthan Hotel。2人で₹200とする日付のない記事がある。",
+   "price": {
+    "cur": "INR",
+    "min": 100,
+    "max": 100,
+    "yen_min": 171,
+    "yen_max": 171,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.slurrp.com/article/from-bun-parotta-to-kari-dosa-five-foods-to-try-when-youre-in-madurai-1651848688626"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Parotta"
   },
   {
    "id": "kothu-parotta",
    "name": "コットゥ・パロッタ",
+   "local": "Kothu parotta / கொத்து பரோட்டா",
    "region": "south",
-   "city": "マドゥライ"
+   "city": "マドゥライ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "2本の金属のへらで刻むカンカンという音",
+   "what": "パロッタを鉄板の上で卵と玉ねぎ、サルナと一緒に、2本の金属のへらで細かく刻みながら炒める。スリランカのコットゥ・ロティと同じ作り。",
+   "where": "Madurai Kumar Mess、Thambi Vilas（どちらもチェンナイにも店がある）。チェンナイの店で2人₹350。",
+   "price": {
+    "cur": "INR",
+    "min": 175,
+    "max": 175,
+    "yen_min": 299,
+    "yen_max": 299,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.holidify.com/pages/street-food-in-chennai-150.html",
+    "https://en.wikipedia.org/wiki/Kottu"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kothu_parotta"
   },
   {
    "id": "jigarthanda",
    "name": "ジガルタンダ",
+   "local": "Jigarthanda / ஜிகர்தண்டா",
    "region": "south",
-   "city": "マドゥライ"
+   "city": "マドゥライ",
+   "kind": "飲みもの",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "1977年には1杯30パイサだった",
+   "what": "煮詰めた牛乳、根のシロップ（ナンナーリ）、海藻のゼリー（アーモンドガム）を混ぜ、上にアイスクリームをのせる冷たい飲みもの。",
+   "where": "イースト・マーレット通りの Famous Jigarthanda（1977年から）。ふつうの1杯₹30、アイスと乳の膜を増やした特製₹60。",
+   "price": {
+    "cur": "INR",
+    "min": 30,
+    "max": 60,
+    "yen_min": 51,
+    "yen_max": 103,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.thebetterindia.com/256197/sheik-meeran-madurai-famous-jigarthanda-summer-drink-iconic-eatery-food-history-gop94/",
+    "https://www.slurrp.com/article/from-bun-parotta-to-kari-dosa-five-foods-to-try-when-youre-in-madurai-1651848688626"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Jigarthanda_(drink)"
   },
   {
    "id": "murugan-idli",
    "name": "イドリ",
+   "local": "Idli (Murugan Idli Shop)",
    "region": "south",
-   "city": "マドゥライ"
+   "city": "マドゥライ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "4色のチャツネを何度でも注いでもらう",
+   "what": "柔らかい白いイドリに、ココナッツ、トマト、ミント、豆の4色のチャツネと、ごま油で溶く粉の薬味（ポディ）を何度でも足してくれる。道ばたの店から始まり、ほかの街にも支店を出した。",
+   "where": "ウェスト・マシ通りの Murugan Idli Shop の本店（チェンナイにも支店）。2人で₹100。",
+   "price": {
+    "cur": "INR",
+    "min": 50,
+    "max": 50,
+    "yen_min": 86,
+    "yen_max": 86,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.slurrp.com/article/from-bun-parotta-to-kari-dosa-five-foods-to-try-when-youre-in-madurai-1651848688626",
+    "https://www.holidify.com/pages/street-food-in-chennai-150.html"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Idli"
   },
   {
    "id": "banana-leaf-meals",
    "name": "ミールス",
+   "local": "South Indian meals / சாப்பாடு",
    "region": "south",
-   "city": "チェンナイ"
+   "city": "チェンナイ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "マイラポールの食堂でバナナの葉の昼ごはん",
+   "what": "バナナの葉にご飯を盛り、サンバル、ラッサム、野菜のおかず3〜4品、ヨーグルト、パパド、漬けもの、甘いパヤサムを順に足してもらう。右手で混ぜて食べる。",
+   "where": "マイラポールの食堂（メス）。Mylai Karpagambal Mess は1食₹70で、ヨーグルトとギーは別料金。トリプリケーンの Nair Mess は₹82〜100。",
+   "price": {
+    "cur": "INR",
+    "min": 70,
+    "max": 100,
+    "yen_min": 120,
+    "yen_max": 171,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://wanderlog.com/place/details/1183928/mylai-karpagambal-mess",
+    "https://lbb.in/delhi/nair-mess-south-indian-meals-chepauk-chennai"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/South_Indian_cuisine"
   },
   {
    "id": "idli-sambar-chennai",
    "name": "サンバル・イドリ",
+   "local": "Sambar idli / இட்லி சாம்பார்",
    "region": "south",
-   "city": "チェンナイ"
+   "city": "チェンナイ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "白いイドリが沈むほどのサンバル",
+   "what": "米と豆の発酵生地を蒸した白いイドリを、豆と野菜の汁（サンバル）にどっぷり浸けて出す。ココナッツのチャツネも付く。",
+   "where": "トリプリケーンの Ratna Cafe（1948年から）。2人で₹300〜350。",
+   "price": {
+    "cur": "INR",
+    "min": 150,
+    "max": 175,
+    "yen_min": 256,
+    "yen_max": 299,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.district.in/dining/chennai/ratna-cafe-triplicane"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Idli"
   },
   {
    "id": "filter-coffee",
    "name": "フィルター・コーヒー",
+   "local": "Filter kaapi / ஃபில்டர் காபி",
    "region": "south",
-   "city": "チェンナイ"
+   "city": "チェンナイ",
+   "kind": "飲みもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "金属のコップと受け皿を行き来させて冷ます",
+   "what": "金属のフィルターで落とした濃いコーヒー液に、煮立てた牛乳と砂糖を足す。金属のコップ（タンブラー）と受け皿（ダバラ）のあいだで何度も注ぎ替えて泡を立て、冷ましながら飲む。",
+   "where": "トリプリケーンの Ratna Cafe（特製₹75。Swiggy）、Madras Coffee House。",
+   "price": {
+    "cur": "INR",
+    "min": 75,
+    "max": 75,
+    "yen_min": 128,
+    "yen_max": 128,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.swiggy.com/restaurants/ratna-cafe-estd-1948-triplicane-royapettah-chennai-12615",
+    "https://www.lonelyplanet.com/articles/what-to-eat-and-drink-chennai"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Indian_filter_coffee"
   },
   {
    "id": "chicken-65",
    "name": "チキン65",
+   "local": "Chicken 65",
    "region": "south",
-   "city": "チェンナイ"
+   "city": "チェンナイ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "1965年にこの店で生まれたという説がある",
+   "what": "鶏をヨーグルト、赤唐辛子、カレーリーフに漬けて揚げる。赤くて辛い。名前の由来は諸説あり、Buhari Hotel が1965年に作ったという説が知られる。",
+   "where": "アンナー・サライの Buhari Hotel（1951年から）。ビリヤニ4分の1とチキン65（2個）の組で₹440（Swiggy）。",
+   "price": {
+    "cur": "INR",
+    "min": 440,
+    "max": 440,
+    "yen_min": 752,
+    "yen_max": 752,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://thebetterindia.com/409990/chicken-65-starter-india-chennai-buhari-hotel"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Chicken_65"
   },
   {
    "id": "atho",
    "name": "アト",
+   "local": "Atho / அத்தோ",
    "region": "south",
-   "city": "チェンナイ"
+   "city": "チェンナイ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "ビルマ・バザールの屋台で手でもむ冷たい麺",
+   "what": "冷たい麺にキャベツ、玉ねぎ、揚げにんにく、タマリンド、唐辛子を手でもみ混ぜる。バナナの茎のスープ（ベジョ）と一緒に飲む。ビルマから戻ったタミルの人たちが持ち込んだ屋台の味。",
+   "where": "ビルマ・バザールとビーチ通りの屋台（Atho Man、Atho Corner）。2人で₹200。",
+   "price": {
+    "cur": "INR",
+    "min": 100,
+    "max": 100,
+    "yen_min": 171,
+    "yen_max": 171,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.holidify.com/pages/street-food-in-chennai-150.html",
+    "https://en.wikipedia.org/wiki/Atho"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Atho"
   },
   {
    "id": "chettinad-chicken",
    "name": "チェティナード・チキン",
+   "local": "Chettinad chicken / செட்டிநாடு கோழி",
    "region": "south",
-   "city": "チェンナイ"
+   "city": "チェンナイ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "地衣類と黒胡椒を炒って挽く南タミルの味",
+   "what": "八角、地衣類のカルパシ、タマリンド、唐辛子、フェンネル、シナモンなどを挽きたてで使い、鶏を濃く煮る。南タミルのチェッティヤールの商人の家の料理。",
+   "where": "Kaaraikudi（エクスプレス・アベニューの店は2人で約₹700）。",
+   "price": {
+    "cur": "INR",
+    "min": 350,
+    "max": 350,
+    "yen_min": 598,
+    "yen_max": 598,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.eazydiner.com/chennai/karaikudi-express-avenue-mall-royapettah-688622",
+    "https://en.wikipedia.org/wiki/Chettinad_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Chettinad_cuisine"
   },
   {
    "id": "ambur-biryani",
    "name": "アンブールのビリヤニ",
+   "local": "Ambur biryani",
    "region": "south",
-   "city": "チェンナイ"
+   "city": "チェンナイ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "小粒のシーラガ・サンバ米で炊くタミルの作り",
+   "what": "タミル・ナードゥ北部の町アンブールの作りかた。小粒で香りのよいシーラガ・サンバ米で炊き、羊（ヤギ）か鶏を合わせる。玉ねぎのヨーグルト和えや、なすの辛い煮もの（トック）を添える店がある。",
+   "where": "Ambur Star Biryani、Rahamaniya Biryani Hotel、T ナガルの Thanjai Veeraswamy。チェンナイの店の一覧で₹200〜950（1皿か2人分かは書かれていない）。",
+   "price": {
+    "cur": "INR",
+    "min": 200,
+    "max": 550,
+    "yen_min": 342,
+    "yen_max": 940,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.slurrp.com/article/10-best-places-to-have-ambur-biryani-in-chennai-recommend-by-city-foodies-1700224268008",
+    "https://en.wikipedia.org/wiki/Tamil_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Biryani"
   },
   {
    "id": "hyderabadi-biryani",
    "name": "ハイデラバードのビリヤニ",
+   "local": "Hyderabadi biryani",
    "region": "south",
-   "city": "ハイデラバード"
+   "city": "ハイデラバード",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "1皿で2人分の量を出す旧市街の店",
+   "what": "一晩漬けた生のヤギ肉を鍋底に敷き、半分ゆでたバスマティ米を重ね、ふたを生地で封じて蒸す（カッチ）。辛くて香りが強い。青唐辛子の煮もの（ミルチ・カ・サーラン）とヨーグルトの和えものを添える。",
+   "where": "マディナ・サークルの Hotel Shadab（1皿で2人分。1人₹150〜300。2021年の記事）、セカンデラバードの Paradise（₹300〜500）、Choice Hotel。",
+   "price": {
+    "cur": "INR",
+    "min": 150,
+    "max": 500,
+    "yen_min": 256,
+    "yen_max": 855,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.lostwithpurpose.com/what-to-eat-hyderabad/",
+    "https://en.wikipedia.org/wiki/Hyderabadi_biryani"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Hyderabadi_biryani"
   },
   {
    "id": "haleem",
    "name": "ハリーム",
+   "local": "Haleem / حلیم",
    "region": "south",
-   "city": "ハイデラバード"
+   "city": "ハイデラバード",
+   "kind": "食堂",
+   "star": 1,
+   "flags": [],
+   "season": "ラマダンのあいだ",
+   "lead": "断食明けの夕方に食べる煮込み",
+   "what": "小麦、羊肉、豆、ギーを何時間も木の棒で叩きながら煮て、糸を引くほどねっとりさせる。揚げた玉ねぎ、レモン、ミントをのせる。アラブのハリースがもとで、ラマダンの断食明けの料理。地理的表示を持つ。",
+   "where": "トリチョウキほかの Shah Ghouse（ラマダンに₹250）、Pista House、Hotel Nayaab。ラマダンのほかは出す店が少なく、Paradise で₹300。",
+   "price": {
+    "cur": "INR",
+    "min": 250,
+    "max": 300,
+    "yen_min": 428,
+    "yen_max": 513,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.siasat.com/top-8-spots-to-have-off-season-haleem-in-hyderabad-in-2026-3470911/",
+    "https://en.wikipedia.org/wiki/Hyderabadi_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Hyderabadi_haleem"
   },
   {
    "id": "irani-chai-osmania",
    "name": "イラニ・チャイとオスマニア・ビスケット",
+   "local": "Irani chai & Osmania biscuit",
    "region": "south",
-   "city": "ハイデラバード"
+   "city": "ハイデラバード",
+   "kind": "飲みもの",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "チャールミナールの隣でチャイにビスケットを浸す",
+   "what": "濃く煮詰めた甘いミルクティーに、少し塩気のあるバタークッキー（オスマニア・ビスケット）を浸して食べる。イランから来た人たちが開いたイラニ・カフェの定番。",
+   "where": "ガンシ・バザールの Nimrah Cafe & Bakery（チャールミナールの隣）。1人₹20〜50（2021年の記事）。",
+   "price": {
+    "cur": "INR",
+    "min": 20,
+    "max": 50,
+    "yen_min": 34,
+    "yen_max": 86,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.lostwithpurpose.com/what-to-eat-hyderabad/",
+    "https://en.wikipedia.org/wiki/Irani_caf%C3%A9"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Irani_caf%C3%A9"
   },
   {
    "id": "nihari-paya-hyderabad",
    "name": "マライ・パヤ",
+   "local": "Malai paaya",
    "region": "south",
-   "city": "ハイデラバード"
+   "city": "ハイデラバード",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "朝4時に開く店の羊の足のスープ",
+   "what": "羊の足を一晩煮込んだとろとろのスープ（パヤ）にクリームを加える。焼きたてのナンを浸して食べる。",
+   "where": "ガンシ・バザールの Hotel Nayaab（朝4時から）。2人で₹400〜500。",
+   "price": {
+    "cur": "INR",
+    "min": 200,
+    "max": 250,
+    "yen_min": 342,
+    "yen_max": 428,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.outlooktraveller.com/experiences/food-and-drink/signature-hyderabadi-dishes-you-must-try",
+    "https://thefederal.com/category/states/south/telangana/hotel-nayaab-hyderabad-4-am-nonveg-breakfast-255787",
+    "https://www.eazydiner.com/hyderabad/hotel-nayaab-ghansi-bazaar-hyderabad-648949"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Paya_(food)"
   },
   {
    "id": "benne-masala-dosa",
    "name": "ベンネ・マサラ・ドーサ",
+   "local": "Benne masala dose / ಬೆಣ್ಣೆ ಮಸಾಲೆ ದೋಸೆ",
    "region": "south",
-   "city": "ベンガルール"
+   "city": "ベンガルール",
+   "kind": "朝ごはん",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "白いバターで焼く厚めのドーサ",
+   "what": "白いバター（ベンネ）をたっぷり使って厚めに焼いたドーサ。外はカリッと中はふわっとして、じゃがいもの香辛料炒めを包む。ココナッツのチャツネで食べる。",
+   "where": "マレシュワラムの CTR（シュリ・サーガル）、バサヴァナグディの Vidyarthi Bhavan（1943年から）。どちらも2人で₹100〜150。",
+   "price": {
+    "cur": "INR",
+    "min": 50,
+    "max": 75,
+    "yen_min": 86,
+    "yen_max": 128,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.holidify.com/pages/breakfast-places-in-bangalore-3011.html"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Masala_dosa"
   },
   {
    "id": "kathi-roll",
    "name": "カティ・ロール",
+   "local": "Kathi roll / কাঠি রোল",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "屋台",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "1932年創業のニザムズが元祖とされる",
+   "what": "パラータを鉄板で焼いて卵を1枚くっつけ、串焼きの鶏か羊と、玉ねぎ、青唐辛子、レモンを巻く。紙で包んで歩きながら食べる。",
+   "where": "ニュー・マーケットのホッグ・マーケットの Nizam's（1932年から。11:30〜23時）、パーク・ストリートの Kusum Rolls。Nizam's は2人で₹300、ロールは₹70〜110とする客の話がある。",
+   "price": {
+    "cur": "INR",
+    "min": 70,
+    "max": 110,
+    "yen_min": 120,
+    "yen_max": 188,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://oteats.outlooktraveller.com/features/guides/kolkatas-5-most-iconic-dishes-and-where-to-find-them",
+    "https://www.district.in/dining/kolkata/nizams-since-1932-taltala"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kati_roll"
   },
   {
    "id": "puchka",
    "name": "プチュカ",
+   "local": "Phuchka / ফুচকা",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "屋台",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "6個で20〜60ルピーの道ばたの一口",
+   "what": "全粒粉の薄い揚げ玉に、青唐辛子入りのじゃがいもを詰め、ゴンドラージ・レモンの香る酸っぱいタマリンドの水にくぐらせる。甘くない。名前は食べるときの音から来たとされる。",
+   "where": "サザン・アベニューの Maharaja Chaat Centre、ヴィヴェーカーナンダ公園の屋台。道ばたで6個₹20〜60（2025年9月の記事）。",
+   "price": {
+    "cur": "INR",
+    "min": 20,
+    "max": 60,
+    "yen_min": 34,
+    "yen_max": 103,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.holidify.com/blog/street-food-in-kolkata",
+    "https://www.thedailyjagran.com/trending/from-delhi-golgappa-to-kolkata-puchka-state-wise-prices-in-india-10268413",
+    "https://en.wikipedia.org/wiki/Panipuri"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Panipuri"
   },
   {
    "id": "jhalmuri",
    "name": "ジャルムリ",
+   "local": "Jhalmuri / ঝালমুড়ি",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "三角に折った紙の袋で受け取る",
+   "what": "ポン菓子に、刻んだ玉ねぎ、きゅうり、青唐辛子、ピーナッツ、豆を混ぜ、生のからし油をたらして缶の中で振る。",
+   "where": "ダルハウジー広場の裏のデッカーズ・レーン、駅や電車の中の売り子。1袋₹10〜30。",
+   "price": {
+    "cur": "INR",
+    "min": 10,
+    "max": 30,
+    "yen_min": 17,
+    "yen_max": 51,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.holidify.com/blog/street-food-in-kolkata",
+    "https://www.orangewayfarer.com/jhalmuri-and-more-eat-cheap-in-kolkata/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Jhal_muri"
   },
   {
    "id": "kochuri-alur-torkari",
    "name": "コチュリとアルール・トルカリ",
+   "local": "Kochuri & alur torkari",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "ヒングの香る揚げパンは1個9〜12ルピー",
+   "what": "豆を詰めた揚げパン（コチュリ）を、じゃがいもの甘辛いカレーで食べる。生地にヒング（アギ）を練り込んだヒング・コチュリも朝の定番。",
+   "where": "シャムバザールの Adi Haridas Modak。ヒング・コチュリは1個₹9〜12（Maharani Tea & Tiffin ₹12、Biswa Bandhu ₹9）。",
+   "price": {
+    "cur": "INR",
+    "min": 9,
+    "max": 12,
+    "yen_min": 15,
+    "yen_max": 21,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://outlooktraveller.com/explore/food-and-drink/what-to-eat-in-kolkata",
+    "https://obeta.ttef.in/my-kolkata/food/from-south-kolkata-to-north-kolkata-heres-where-to-find-the-best-kochuris-in-the-city/cid/1999149"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kachori"
   },
   {
    "id": "kolkata-biryani",
    "name": "コルカタのビリヤニ",
+   "local": "Kolkata biryani / কলকাতা বিরিয়ানি",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "大きなじゃがいもとゆで卵が入る",
+   "what": "ラクナウの流れをくむ香りの軽いビリヤニに、大きなじゃがいもとゆで卵が入る。1856年に英国に退位させられたアワドの太守ワージド・アリー・シャーが移り住んだ台所から広まったとされ、じゃがいもを入れた理由は説が割れている。",
+   "where": "Aminia（1929年から）、パーク・サーカスの Arsalan、パーク・ストリートの Shiraz Golden。Aminia の羊のビリヤニ（2切れ）は₹650（Swiggy）。",
+   "price": {
+    "cur": "INR",
+    "min": 250,
+    "max": 650,
+    "yen_min": 428,
+    "yen_max": 1112,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://eazydiner.com/food-trends/top-5-must-try-dishes-from-the-aminia-menu",
+    "https://www.livehistoryindia.com/story/living-culture/who-put-the-potato-in-the-kolkata-biryani"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kolkata_biryani"
   },
   {
    "id": "mutton-chaap",
    "name": "マトン・チャープ",
+   "local": "Mutton chaap / মাটন চাঁপ",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "ビリヤニと一緒に頼む羊のあばら肉",
+   "what": "羊のあばら肉を、ヨーグルト、ナッツ、ケウラ水の甘く濃いソースでじっくり煮る。油がたっぷり浮く。",
+   "where": "Aminia で₹375（Swiggy）、Shiraz Golden。",
+   "price": {
+    "cur": "INR",
+    "min": 375,
+    "max": 375,
+    "yen_min": 641,
+    "yen_max": 641,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://eazydiner.com/food-trends/top-5-must-try-dishes-from-the-aminia-menu"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Mughlai_cuisine"
   },
   {
    "id": "kosha-mangsho",
    "name": "コシャ・マンショ",
+   "local": "Kosha mangsho / কষা মাংস",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "ヤギ肉を汁気が無くなるまで炒り続ける",
+   "what": "ヤギ肉を、からし油と玉ねぎ、香辛料で、汁気がほとんど無くなるまで鍋で炒り続ける。黒っぽくて濃い。揚げパンのルチか薄いパラータで食べる。",
+   "where": "シャムバザールの Golbari（もとの名は New Punjabi Restaurant）。2人で₹350。",
+   "price": {
+    "cur": "INR",
+    "min": 175,
+    "max": 175,
+    "yen_min": 299,
+    "yen_max": 299,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://outlooktraveller.com/explore/food-and-drink/what-to-eat-in-kolkata",
+    "https://www.district.in/dining/kolkata/golbari-shyam-bazar",
+    "https://www.thenewsminute.com/article/savour-kosha-mangsho-kolkatas-92-year-old-golbari-eatery-26692"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kosha_mangsho"
   },
   {
    "id": "pice-hotel-thali",
    "name": "パイス・ホテルの魚定食",
+   "local": "Pice hotel maach-bhaat",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "米とダルと川魚を1品ずつ頼む大衆食堂",
+   "what": "100年ほど前からある大衆食堂（パイス・ホテル）で、ご飯、ダル、野菜の揚げもの、その日の川魚のカレー（ルイ・カトラ・パブダ）を1品ずつ頼む。葉や金属の皿で、手で食べる。",
+   "where": "カレッジ・ストリートの Swadhin Bharat Hindu Hotel（創業は1912年と1927年で割れる）。2人で₹300とする案内と₹800とする案内がある。",
+   "price": {
+    "cur": "INR",
+    "min": 150,
+    "max": 400,
+    "yen_min": 256,
+    "yen_max": 684,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://outlooktraveller.com/experiences/food-and-drink/kolkatas-pice-hotels-where-history-meets-authentic-bengali-food"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Bengali_cuisine"
   },
   {
    "id": "shorshe-maach",
    "name": "ショルシェ・マーチ",
+   "local": "Shorshe maach / সর্ষে মাছ",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "からしと青唐辛子で魚を蒸し煮にする",
+   "what": "魚を、挽きたてのからし（マスタード）と青唐辛子、からし油で蒸し煮にする。雨季はイリシュ（ヒルサ）が旬で、冬はベトキやパブダで作る店が多い。",
+   "where": "バリガンジの Kasturi、6 Ballygunge Place。Kasturi は店ごとに2人で₹500〜950。",
+   "price": {
+    "cur": "INR",
+    "min": 250,
+    "max": 475,
+    "yen_min": 428,
+    "yen_max": 812,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://oteats.outlooktraveller.com/features/guides/kolkatas-5-most-iconic-dishes-and-where-to-find-them",
+    "https://www.eazydiner.com/kolkata/kasturi-restaurant-ballygunge-kolkata-618258",
+    "https://magicpin.in/Kolkata/Wellesley/Restaurant/Kasturi-Restaurant/store/19c2a9/menu"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Shorshe_ilish"
   },
   {
    "id": "rosogolla",
    "name": "ロショゴッラ",
+   "local": "Rosogolla / রসগোল্লা",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "甘いもの",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "噛むとシロップがにじむ白い玉",
+   "what": "牛乳を酸で固めたチーズ（チェナ）を丸めてシロップで煮る。冬はナツメヤシの糖（ノレン・グル）で煮た茶色い版も出る。元祖は西ベンガルかオディシャかで争われ、地理的表示は両方に出た。",
+   "where": "エスプラネードの K.C. Das、Balaram Mullick & Radharaman Mullick。K.C. Das の缶詰は20個₹259、ノレン・グルの版は₹27。",
+   "price": {
+    "cur": "INR",
+    "min": 13,
+    "max": 27,
+    "yen_min": 22,
+    "yen_max": 46,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.slurrp.com/article/5-must-visit-shops-in-kolkata-for-authentic-nolen-gur-desserts-1763021418256",
+    "https://bigbasket.com/pd/40329728/k-c-das-rossogolla-900-g",
+    "https://threebestrated.in/kc-das-sweet-shops-kolkata-wb-Gfjsw",
+    "https://en.wikipedia.org/wiki/Rasgulla"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Rasgulla"
   },
   {
    "id": "nolen-gur-sandesh",
    "name": "ノレン・グルのションデシュ",
+   "local": "Nolen gurer sandesh / নলেন গুড়ের সন্দেশ",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "甘いもの",
+   "star": 3,
+   "flags": [],
+   "season": "冬だけ",
+   "lead": "冬だけ採れるナツメヤシの糖を練り込む",
+   "what": "冬だけ採れるナツメヤシの樹液の糖（ノレン・グル）を、牛乳のチーズ（チェナ）に練り込んだしっとりした菓子。中に溶けた糖を詰めたジョルボラもある。",
+   "where": "Balaram Mullick & Radharaman Mullick、K.C. Das、ヘドゥアの Girish Chandra Dey & Nakur Chandra Nandy。Tewari Brothers で2個₹74（Swiggy）。",
+   "price": {
+    "cur": "INR",
+    "min": 37,
+    "max": 37,
+    "yen_min": 63,
+    "yen_max": 63,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.slurrp.com/article/5-must-visit-shops-in-kolkata-for-authentic-nolen-gur-desserts-1763021418256"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Sandesh_(confectionery)"
   },
   {
    "id": "mishti-doi",
    "name": "ミシュティ・ドイ",
+   "local": "Mishti doi / মিষ্টি দই",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "甘いもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "素焼きの壺が水気を吸う甘いヨーグルト",
+   "what": "牛乳か水牛の乳を砂糖と一緒にゆっくり煮詰めてから発酵させる、甘くてキャラメル色のヨーグルト。素焼きの壺が水気を吸って、ねっとりする。",
+   "where": "Balaram Mullick（水牛の乳を約10時間煮る）。コルカタの菓子店の宅配で₹42、市販の100gで₹25。",
+   "price": {
+    "cur": "INR",
+    "min": 25,
+    "max": 42,
+    "yen_min": 43,
+    "yen_max": 72,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.slurrp.com/article/5-must-visit-shops-in-kolkata-for-authentic-nolen-gur-desserts-1763021418256",
+    "https://www.swiggy.com/city/kolkata/raksha-kali-mistanna-bhander-tn-chatterjee-street-baranagar-rest288495",
+    "https://bigbasket.com/pd/40277014/saboro-misti-doi-indian-dessert-bengali-classic-100-g"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Mishti_doi"
   },
   {
    "id": "tiretta-chinese-breakfast",
    "name": "チャイナタウンの朝ごはん",
+   "local": "Tiretta Bazaar Chinese breakfast",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "夜明けから8時ごろまでだけ開く路上",
+   "what": "コルカタの古い中華街の路上で、夜明けから8時ごろまで、魚団子のスープ、エビの餃子、魚のシュウマイ、蒸しパンを売る。華人の家族が代々続けている。豚の品が多いので、魚とエビを選ぶ。",
+   "where": "ボウ・バザールの近くのティレッタ・バザール（6〜8時）。1品₹70前後とする案内と、1人分₹160とする古いブログがある。",
+   "price": {
+    "cur": "INR",
+    "min": 70,
+    "max": 160,
+    "yen_min": 120,
+    "yen_max": 274,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://migrationology.com/terreti-market-bazar-chinese-street-food-breakfast-in-kolkata/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Tiretta_Bazaar"
   },
   {
    "id": "chilli-chicken-tangra",
    "name": "チリチキン",
+   "local": "Chilli chicken (Indian Chinese)",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "客家の人たちの街タングラで食べるインドの中華",
+   "what": "揚げた鶏を、醤油、青唐辛子、ピーマン、玉ねぎと炒め合わせる。インドで生まれた中華料理の定番で、ハッカ麺と一緒に頼む。",
+   "where": "タングラの Kim Fa（2人で₹950）、Ah Leung（2人で₹200）、Kafulok（2人で₹1,700）。",
+   "price": {
+    "cur": "INR",
+    "min": 100,
+    "max": 850,
+    "yen_min": 171,
+    "yen_max": 1454,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.district.in/blog/chinese-restaurants-kolkata",
+    "https://oteats.outlooktraveller.com/features/guides/kolkatas-5-most-iconic-dishes-and-where-to-find-them"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Chilli_chicken"
   },
   {
    "id": "bhaar-chai",
    "name": "素焼きのカップのチャイ",
+   "local": "Bhaar chai / ভাঁড়ের চা",
    "region": "east",
-   "city": "コルカタ"
+   "city": "コルカタ",
+   "kind": "飲みもの",
+   "star": 1,
+   "flags": [],
+   "season": null,
+   "lead": "飲み終えたら捨てる土のカップ",
+   "what": "うわぐすりの無い素焼きのカップ（バール）に、煮出したミルクティーを注ぐ。お茶が少し土にしみて、土の香りが付く。使ったカップは捨てる。",
+   "where": "ダルハウジー広場の裏のデッカーズ・レーンの Shyam Sundar Tea Stall ほか、街角の茶屋。1杯₹8とする古めの記事がある。",
+   "price": {
+    "cur": "INR",
+    "min": 8,
+    "max": 8,
+    "yen_min": 14,
+    "yen_max": 14,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://migrationology.com/kolkata-clay-cup-chai",
+    "https://en.wikipedia.org/wiki/Kulhar",
+    "https://www.aljazeera.com/gallery/2016/10/26/kolkatas-age-old-tradition-of-bhar-clay-cups-of-tea/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kulhar"
   },
   {
    "id": "tamatar-chaat",
    "name": "タマタル・チャート",
+   "local": "Tamatar chaat / टमाटर चाट",
    "region": "north",
-   "city": "バラナシ"
+   "city": "バラナシ",
+   "kind": "屋台",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "ほかの街で見ないトマトのチャート",
+   "what": "トマトとじゃがいもを香辛料と煮崩して素焼きの器に入れ、甘いシロップと揚げ菓子のくずをのせる。熱くて甘くて辛い。",
+   "where": "ゴドウリアの Kashi Chat Bhandar（70年を超える店）、Deena Chaat Bhandar。₹30、₹40（2020年の記事）、たいていのチャートは₹50と割れる。",
+   "price": {
+    "cur": "INR",
+    "min": 30,
+    "max": 50,
+    "yen_min": 51,
+    "yen_max": 86,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://taleof2backpackers.com/best-street-food-in-varanasi/",
+    "https://localsamosa.com/2020/08/14/all-you-need-to-know-about-banarasi-tamatar-chaat"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Chaat"
   },
   {
    "id": "kachori-sabzi-varanasi",
    "name": "カチョリ・サブジとジャレビ",
+   "local": "Kachori sabzi & jalebi",
    "region": "north",
-   "city": "バラナシ"
+   "city": "バラナシ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "沐浴帰りの人で混む朝の店",
+   "what": "豆を詰めた小さな揚げパン（カチョリ）を、かぼちゃやじゃがいもの辛いカレーで食べる。締めは熱いジャレビ（揚げてシロップに浸した菓子）。",
+   "where": "タテリ・バザールの Ram Bhandar（チョウクとする記事もある）。1皿₹30〜60。",
+   "price": {
+    "cur": "INR",
+    "min": 30,
+    "max": 60,
+    "yen_min": 51,
+    "yen_max": 103,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://taleof2backpackers.com/best-street-food-in-varanasi/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kachori"
   },
   {
    "id": "malaiyo",
    "name": "マライヨ",
+   "local": "Malaiyo / मलइयो",
    "region": "north",
-   "city": "バラナシ"
+   "city": "バラナシ",
+   "kind": "甘いもの",
+   "star": 2,
+   "flags": [],
+   "season": "冬だけ",
+   "lead": "朝11時ごろには消える冬の泡",
+   "what": "冬の夜に牛乳を外の露に当てて泡立てる。サフランで黄色くしてピスタチオをのせ、素焼きの器で出す。気温が上がると溶けるので朝のうちに食べる。",
+   "where": "ヴィシュワナート寺院の路地の近くの朝の屋台。1杯₹30〜60、Shreeji Sweets で₹60。",
+   "price": {
+    "cur": "INR",
+    "min": 30,
+    "max": 60,
+    "yen_min": 51,
+    "yen_max": 103,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://taleof2backpackers.com/best-street-food-in-varanasi/",
+    "https://www.trivenicabs.in/varanasi-food-tour",
+    "https://wanderlog.com/place/details/2128118/shreeji-sweets--milk"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Makhan_malai"
   },
   {
    "id": "banarasi-paan",
    "name": "バナラシ・パーン",
+   "local": "Meetha paan / बनारसी पान",
    "region": "north",
-   "city": "バラナシ"
+   "city": "バラナシ",
+   "kind": "甘いもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "甘い版はミーター・パーンと頼む",
+   "what": "キンマの葉で、ココナッツ、バラの花びらの砂糖漬け（ガルカンド）、フェンネルなどを三角に包む。口に入れて噛む食後のもの。たばこ入りもあるので甘い版を頼む。",
+   "where": "旧市街のゴドウリアのパーン屋、ランカの Keshav Paan Bhandar（2人で₹60）。",
+   "price": {
+    "cur": "INR",
+    "min": 30,
+    "max": 30,
+    "yen_min": 51,
+    "yen_max": 51,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.lonelyplanet.com/articles/what-to-eat-and-drink-in-varanasi-india",
+    "https://www.slurrp.com/article/top-10-spots-to-have-banarasi-paan-in-varanasi-as-recommended-by-city-foodies-1704446333123"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Paan"
   },
   {
    "id": "blue-lassi",
    "name": "ブルー・ラッシー",
+   "local": "Blue Lassi Shop",
    "region": "north",
-   "city": "バラナシ"
+   "city": "バラナシ",
+   "kind": "飲みもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "壁一面に旅人の写真が貼られた路地の店",
+   "what": "素焼きの器のラッシーに、乳の膜（マライ）を厚くのせる。バナナ、ザクロ、マンゴーなどを混ぜた味があり、ピスタチオを散らす。",
+   "where": "マニカルニカー・ガートの近く、カチャウリ・ガリの Blue Lassi Shop。1杯₹50〜120。",
+   "price": {
+    "cur": "INR",
+    "min": 50,
+    "max": 120,
+    "yen_min": 86,
+    "yen_max": 205,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://taleof2backpackers.com/best-street-food-in-varanasi/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Lassi"
   },
   {
    "id": "galouti-kebab",
    "name": "ガラウティ・カバブ",
+   "local": "Galouti kebab (Tunday Kababi)",
    "region": "north",
-   "city": "ラクナウ"
+   "city": "ラクナウ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "口の中でほどける1905年創業の店のカバブ",
+   "what": "細かく挽いた肉を青いパパイヤで柔らかくし、たくさんの香辛料と練って鉄板で焼く。口の中でほどける。小さなパラータにのせて食べる。",
+   "where": "Tunday Kababi（1905年から）。チョウクの本店は水牛だけで、羊はアミナバードの店にある。2人で₹300。",
+   "price": {
+    "cur": "INR",
+    "min": 150,
+    "max": 150,
+    "yen_min": 256,
+    "yen_max": 256,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://outlooktraveller.com/experiences/food-and-drink/planning-a-lucknow-trip-heres-where-to-enjoy-amazing-food"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Galouti_kebab"
   },
   {
    "id": "lucknow-biryani",
    "name": "ラクナウのビリヤニ",
+   "local": "Awadhi biryani",
    "region": "north",
-   "city": "ラクナウ"
+   "city": "ラクナウ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "米と肉を別々に炊いてから重ねて蒸す",
+   "what": "米をギーと香辛料で炊いてから、肉のカレーと重ねて鍋に封をし、弱火で仕上げる（パッキー）。香りが繊細で、辛さは控えめ。",
+   "where": "チョウクの Idrees Biryani（1皿₹150〜200。2人で₹300）、アミナバードの Wahid Biryani。",
+   "price": {
+    "cur": "INR",
+    "min": 150,
+    "max": 200,
+    "yen_min": 256,
+    "yen_max": 342,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://outlooktraveller.com/experiences/food-and-drink/planning-a-lucknow-trip-heres-where-to-enjoy-amazing-food",
+    "https://wanderlog.com/place/details/1521994/idrees-biryani",
+    "https://www.district.in/dining/lucknow/idrees-biryani-1-chowk",
+    "https://en.wikipedia.org/wiki/Awadhi_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Biryani"
   },
   {
    "id": "nihari-kulcha-lucknow",
    "name": "ニハリとクルチャ",
+   "local": "Nihari kulcha (Raheem's)",
    "region": "north",
-   "city": "ラクナウ"
+   "city": "ラクナウ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "とろとろの煮込みに甘めのパンを浸す朝",
+   "what": "肉をひと晩かけて煮込んだとろとろのニハリに、ふかふかで少し甘いパン（クルチャ）を浸して食べる。",
+   "where": "チョウクのアクバリ門の Raheem's（1890年から）。半皿₹50から、2人で₹200。水牛の版もあるので羊を頼む。",
+   "price": {
+    "cur": "INR",
+    "min": 50,
+    "max": 100,
+    "yen_min": 86,
+    "yen_max": 171,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://outlooktraveller.com/experiences/food-and-drink/planning-a-lucknow-trip-heres-where-to-enjoy-amazing-food",
+    "https://slurrp.com/article/city-foodies-recommend-7-best-places-to-have-kulcha-nihari-in-lucknow-1709736744014"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Nihari"
   },
   {
    "id": "makhan-malai",
    "name": "マッカン・マライ",
+   "local": "Makhan malai / मक्खन मलाई",
    "region": "north",
-   "city": "ラクナウ"
+   "city": "ラクナウ",
+   "kind": "甘いもの",
+   "star": 3,
+   "flags": [],
+   "season": "冬だけ",
+   "lead": "牛乳の泡は口に入れると消える",
+   "what": "冬の夜の露で泡立てた牛乳の泡に、サフランとカルダモン、砂糖、ピスタチオを合わせる。口に入れると消える。",
+   "where": "チョウクのゴール・ダルワザ（朝5時ごろから）。Jagdish Malai Makkhan（7〜15:30）で₹150。",
+   "price": {
+    "cur": "INR",
+    "min": 150,
+    "max": 150,
+    "yen_min": 256,
+    "yen_max": 256,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://curlytales.com/lucknows-jagdish-malai-makkan-is-a-70-yo-shop-serving-thick-creamy-yummy-malai-makhan-go-try"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Makhan_malai"
   },
   {
    "id": "basket-chaat",
    "name": "バスケット・チャート",
+   "local": "Basket chaat (Royal Cafe)",
    "region": "north",
-   "city": "ラクナウ"
+   "city": "ラクナウ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "揚げたじゃがいもで編んだ食べられる籠",
+   "what": "細切りのじゃがいもを揚げて作った籠に、じゃがいものコロッケ（アルー・ティッキ）、豆、ヨーグルト、チャツネ、ザクロ、セヴを山盛りにする。",
+   "where": "ハズラトガンジの Royal Cafe。₹250、₹260、₹295（Swiggy）と割れる。",
+   "price": {
+    "cur": "INR",
+    "min": 250,
+    "max": 295,
+    "yen_min": 428,
+    "yen_max": 504,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://curlytales.com/iconic-food-joint-created-lucknow-famous-basket-chaat-it-is-the-best-thing-youll-eat",
+    "https://www.swiggy.com/restaurants/royal-cafe-mg-marg-hazratganj-lucknow-59950"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Chaat"
   },
   {
    "id": "bedai-jalebi",
    "name": "ベダイとジャレビ",
+   "local": "Bedai & jalebi / बेड़ई",
    "region": "north",
-   "city": "アーグラ"
+   "city": "アーグラ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "タージ・マハルの街の人が朝に食べる",
+   "what": "豆の粉入りでふくらむ揚げパン（ベダイ）を、辛いじゃがいものカレーで食べる。仕上げに熱いジャレビ。",
+   "where": "プラタプ・プラの Deviram Sweets（ベダイは9〜14時）。セットで₹40〜100。",
+   "price": {
+    "cur": "INR",
+    "min": 40,
+    "max": 100,
+    "yen_min": 68,
+    "yen_max": 171,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.outlooktraveller.com/experiences/food-and-drink/foodies-delight-a-guide-to-eating-through-agra"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Puri_(food)"
   },
   {
    "id": "agra-petha",
    "name": "ペタ",
+   "local": "Petha / पेठा",
    "region": "north",
-   "city": "アーグラ"
+   "city": "アーグラ",
+   "kind": "甘いもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "冬瓜を砂糖で煮た半透明のおみやげ",
+   "what": "冬瓜を石灰水に浸けてから砂糖で煮た、しゃりっとした半透明の菓子。プレーン、サフラン、パーンの味、ココナッツ入りなどがある。",
+   "where": "Panchhi Petha（創業は1926年説と1857年説で割れる。市内に本物を名乗る店が多い）。量り売りで1kg₹300〜600。",
+   "price": {
+    "cur": "INR",
+    "min": 300,
+    "max": 600,
+    "yen_min": 513,
+    "yen_max": 1026,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://thebetterindia.com/357477/agra-list-of-iconic-eateries-to-try-chole-bhature-petha-bedhai-jaleebi-dosa-chaat-house"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Petha"
   },
   {
    "id": "chole-bhature",
    "name": "チョレ・バトゥレ",
+   "local": "Chole bhature / छोले भटूरे",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "朝ごはん",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "1947年から朝に行列ができる店",
+   "what": "揚げると風船のようにふくらむ大きなパン（バトゥレ）を、黒っぽく煮込んだ辛いひよこ豆のカレーにちぎって浸す。玉ねぎの酢漬けと青唐辛子が付く。",
+   "where": "パハールガンジの Sita Ram Diwan Chand（1947年から。昼すぎに売り切れる）。パン2枚の1皿₹90、宅配では₹149。",
+   "price": {
+    "cur": "INR",
+    "min": 90,
+    "max": 149,
+    "yen_min": 154,
+    "yen_max": 255,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.migrationology.com/sita-ram-chole-bhature-channa-bhatura/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Chole_bhature"
   },
   {
    "id": "paratha-old-delhi",
    "name": "パラータ",
+   "local": "Paratha (Paranthe Wali Gali)",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "1870年代から店が並ぶパラータの路地",
+   "what": "じゃがいも、カリフラワー、パニール、バナナ、ゴーヤなど20種以上の具を詰めたパラータを、ギーで揚げ焼きにする。3種のカレーとチャツネが付く。",
+   "where": "チャンドニー・チョークのパラーンテー・ワーリー・ガリー（Pt. Kanhaiyalal & Durga Prasad Dixit は9〜23時）。屋台で1皿₹40とする記事と、老舗で2人₹400とする記事がある。",
+   "price": {
+    "cur": "INR",
+    "min": 40,
+    "max": 200,
+    "yen_min": 68,
+    "yen_max": 342,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.magicpin.in/blog/india/delhi/food-and-beverage/old-delhi-snacks",
+    "https://en.wikipedia.org/wiki/Delhi#Cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Paratha"
   },
   {
    "id": "golgappa",
    "name": "ゴルガッパ",
+   "local": "Golgappa / गोलगप्पे",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "ミントとコリアンダーの緑の水を注ぐ",
+   "what": "厚くてカリカリの揚げ玉に、じゃがいもと黒いひよこ豆を詰め、ミントとコリアンダーの緑の水を注ぐ。デリーではパニプリをこの名で呼ぶ。",
+   "where": "シャージャハーン通りの Prabhu Chaat Bhandar（正午〜19時）。デリーは1皿5〜10個で₹50〜80（2025年9月の記事）。",
+   "price": {
+    "cur": "INR",
+    "min": 50,
+    "max": 80,
+    "yen_min": 86,
+    "yen_max": 137,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://lbb.in/delhi/the-best-chat-wala-on-mother-earth-on-shahjahan-road-delhi-next-to-upsc-d87a7c/",
+    "https://www.slurrp.com/article/the-best-golguppa-vendors-in-delhi-1645781723926",
+    "https://www.thedailyjagran.com/trending/from-delhi-golgappa-to-kolkata-puchka-state-wise-prices-in-india-10268413",
+    "https://en.wikipedia.org/wiki/Panipuri"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Panipuri"
   },
   {
    "id": "dahi-bhalla",
    "name": "ダヒ・バッラ",
+   "local": "Dahi bhalla (Natraj)",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "1940年から続く屋台の冷たいヨーグルトの団子",
+   "what": "豆の生地を揚げて水に浸したふわふわの団子に、冷たい甘いヨーグルト、タマリンドとミントのチャツネ、クミンをかける。",
+   "where": "チャンドニー・チョークの Central Bank の前の Natraj Dahi Bhalla Corner（1940年から）。₹50とする記事と₹60〜160とする記事がある。",
+   "price": {
+    "cur": "INR",
+    "min": 50,
+    "max": 160,
+    "yen_min": 86,
+    "yen_max": 274,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://chalbanjare.com/delhi/things-to-do/best-street-food-in-chandni-chowk"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Dahi_vada"
   },
   {
    "id": "daulat-ki-chaat",
    "name": "ダウラット・キ・チャート",
+   "local": "Daulat ki chaat / दौलत की चाट",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "甘いもの",
+   "star": 3,
+   "flags": [],
+   "season": "冬だけ",
+   "lead": "日が昇ると溶けるので朝のうちに",
+   "what": "牛乳とクリームを夜通し泡立て、冬の朝の空気で冷やした泡に、サフランと砂糖、ナッツ、銀箔をのせて葉の器で出す。",
+   "where": "チャンドニー・チョーク一帯の手押し車（ダリーバ・カランの Babu Ram ほか）。₹35、₹40、₹50からと割れる。",
+   "price": {
+    "cur": "INR",
+    "min": 35,
+    "max": 50,
+    "yen_min": 60,
+    "yen_max": 86,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://thenationalnews.com/news/asia/2025/01/10/postcard-from-delhi-the-snack-of-wealth-keeping-a-city-warm-in-winter"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Daulat_ki_chaat"
   },
   {
    "id": "nagori-halwa-bedmi",
    "name": "ナゴリ・ハルワとベドミ・プーリー",
+   "local": "Nagori halwa & bedmi puri",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "チャウリ・バザールの路地で食べる朝の揚げ皿",
+   "what": "サクサクの小さな揚げ皿（ナゴリ）に熱いセモリナのハルワを詰める。豆入りの揚げパン（ベドミ・プーリー）は辛いじゃがいものカレーで食べる。",
+   "where": "チャウリ・バザールの Shyam Sweets（8〜21:30）、シタラム・バザールの Ram Swaroop Halwai。1皿₹50〜150。",
+   "price": {
+    "cur": "INR",
+    "min": 50,
+    "max": 150,
+    "yen_min": 86,
+    "yen_max": 256,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://oteats.outlooktraveller.com/features/guides/check-out-these-6-top-breakfast-places-in-old-delhi",
+    "https://chalbanjare.com/delhi/things-to-do/best-street-food-in-chandni-chowk"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Halwa"
   },
   {
    "id": "kulfi-kuremal",
    "name": "クルフィ",
+   "local": "Kulfi (Kuremal Mohan Lal)",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "甘いもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "くり抜いたマンゴーに詰めて凍らせる",
+   "what": "煮詰めた牛乳のアイス（クルフィ）を、くり抜いたマンゴー、オレンジ、ザクロなどに詰めて凍らせ、輪切りで出す。ジャムンやタマリンドの味もある。",
+   "where": "チャウリ・バザールの Kuremal Mohan Lal Kulfi Wale（100年を超える店）。味によって₹70〜200。",
+   "price": {
+    "cur": "INR",
+    "min": 70,
+    "max": 200,
+    "yen_min": 120,
+    "yen_max": 342,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://chalbanjare.com/delhi/things-to-do/best-street-food-in-chandni-chowk"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kulfi"
   },
   {
    "id": "mutton-korma-karims",
    "name": "マトン・コルマ",
+   "local": "Mutton korma (Karim's)",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "ジャマー・マスジドの門の前の路地で",
+   "what": "羊（ヤギ）を、ヨーグルトと揚げた玉ねぎ、香辛料で煮込んだ濃い茶色のカレー。油がたっぷり浮く。焼きたてのナンか薄いルマリ・ロティで食べる。",
+   "where": "ジャマー・マスジドのゲート1の路地の Karim's（1913年から。ムガルの宮廷の料理人の子孫が開いたとされる）。2人で₹900とする案内と₹1,600とする案内がある。",
+   "price": {
+    "cur": "INR",
+    "min": 450,
+    "max": 800,
+    "yen_min": 770,
+    "yen_max": 1368,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.district.in/dining/ncr/karims-jama-masjid-jama-masjid-new-delhi"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Karim%27s"
   },
   {
    "id": "butter-chicken-moti-mahal",
    "name": "バターチキン",
+   "local": "Butter chicken (Moti Mahal)",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "焼いた鶏をトマトとバターのソースで煮る",
+   "what": "タンドールで焼いた鶏を、トマトとバターとクリームの甘いソースで煮る。1950年代にモティ・マハルの厨房で生まれたとされるが、元祖を名乗る店はほかにもあり割れている。",
+   "where": "ダリヤガンジの Moti Mahal。半皿₹370・1皿₹580とする記事と、半皿₹390・1皿₹600とする記事がある。",
+   "price": {
+    "cur": "INR",
+    "min": 370,
+    "max": 600,
+    "yen_min": 633,
+    "yen_max": 1026,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.dfordelhi.in/7-best-places-in-town-to-have-butter-chicken/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Butter_chicken"
   },
   {
    "id": "gajar-halwa",
    "name": "ガジャル・カ・ハルワ",
+   "local": "Gajar ka halwa / गाजर का हलवा",
    "region": "north",
-   "city": "デリー"
+   "city": "デリー",
+   "kind": "甘いもの",
+   "star": 2,
+   "flags": [],
+   "season": "冬だけ",
+   "lead": "冬の赤いにんじんを何時間も煮詰める",
+   "what": "冬に出回る赤いにんじんをすりおろし、牛乳とギーと砂糖で何時間も煮詰める温かい甘いもの。上に乾かした乳（コヤ）とナッツをのせる。",
+   "where": "チャウリ・バザールの Shyam Sweets、ファテープリの Meghraj Halwai。チトリ・カバルの Shereen Bhawan は白いにんじんの版を出し、100gで₹60（2022年の記事）。",
+   "price": {
+    "cur": "INR",
+    "min": 60,
+    "max": 60,
+    "yen_min": 103,
+    "yen_max": 103,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://oteats.outlooktraveller.com/features/guides/these-are-old-delhis-best-spots-for-some-piping-hot-halwa-this-winter",
+    "https://thedelhiwalla.blog/2022/01/20/city-food-white-carrot-halwa-sheeren-bhawan/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Gajar_ka_halwa"
   },
   {
    "id": "pyaaz-kachori",
    "name": "ピャーズ・カチョリ",
+   "local": "Pyaaz kachori / प्याज़ कचौरी",
    "region": "north",
-   "city": "ジャイプル"
+   "city": "ジャイプル",
+   "kind": "朝ごはん",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "1個25ルピーの玉ねぎ入りの揚げもの",
+   "what": "香辛料で炒めた玉ねぎを詰め、低い温度でじっくり揚げたサクサクの丸い揚げもの。甘いタマリンドのチャツネをかける。",
+   "where": "駅前通りの Rawat Mishthan Bhandar（青唐辛子の天ぷらのミルチ・バダも）。1個₹25。",
+   "price": {
+    "cur": "INR",
+    "min": 25,
+    "max": 25,
+    "yen_min": 43,
+    "yen_max": 43,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.holidify.com/blog/street-food-in-jaipur"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kachori"
   },
   {
    "id": "dal-baati-churma",
    "name": "ダール・バーティ・チュルマ",
+   "local": "Dal baati churma / दाल बाटी चूरमा",
    "region": "north",
-   "city": "ジャイプル"
+   "city": "ジャイプル",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "固い小麦の玉を割ってギーに浸す",
+   "what": "固く焼いた小麦の玉（バーティ）を割ってギーに浸し、5種の豆のダルと、砕いて砂糖とギーで和えた甘いチュルマを交互に食べる。ラージャスターンの料理。",
+   "where": "ジョハリ・バザールの LMB（Laxmi Mishthan Bhandar）、Rawat の定食。₹150〜300とする個人のブログがある。",
+   "price": {
+    "cur": "INR",
+    "min": 150,
+    "max": 300,
+    "yen_min": 256,
+    "yen_max": 513,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.eazydiner.com/food-trends/famous-foods-to-eat-in-jaipur-and-where-to-find-them",
+    "https://en.wikipedia.org/wiki/Rajasthani_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Dal_baati"
   },
   {
    "id": "amritsari-kulcha",
    "name": "アムリトサリ・クルチャ",
+   "local": "Amritsari kulcha / ਅੰਮ੍ਰਿਤਸਰੀ ਕੁਲਚਾ",
    "region": "north",
-   "city": "アムリトサル"
+   "city": "アムリトサル",
+   "kind": "朝ごはん",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "土窯の壁に張りつけて焼くじゃがいも入りのパン",
+   "what": "じゃがいもや玉ねぎを詰めた平たいパンを、土窯（タンドール）の壁に張りつけて焼き、上でバターを溶かす。外はパリッとして中はほくほく。ひよこ豆のカレーと食べる。",
+   "where": "ランジット・アベニューの Kulcha Land（9〜17時）、Bhai Kulwant Singh。Kulcha Land は2人で約₹200。",
+   "price": {
+    "cur": "INR",
+    "min": 100,
+    "max": 100,
+    "yen_min": 171,
+    "yen_max": 171,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.timeout.com/india/restaurants/amritsar-food-guide"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kulcha"
   },
   {
    "id": "golden-temple-langar",
    "name": "黄金寺院のランガル",
+   "local": "Langar, Harmandir Sahib",
    "region": "north",
-   "city": "アムリトサル"
+   "city": "アムリトサル",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "1日5万〜10万食を無料で出す寺の食堂",
+   "what": "床に並んで座ると、奉仕の人がロティ、ダル、野菜のカレー、甘いご飯を配る。宗教も国籍も問わず誰でも無料。皿洗いや野菜切りの奉仕にも加われる。頭を布で覆って入る。",
+   "where": "黄金寺院（ハルマンディル・サーヒブ）のグル・カ・ランガル。24時間。1日5万〜10万食で、数は出どころで割れる。",
+   "price": {
+    "cur": "INR",
+    "min": 0,
+    "max": 0,
+    "yen_min": 0,
+    "yen_max": 0,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.lonelyplanet.com/points-of-interest/guru-ka-langar/477922",
+    "https://www.sbs.com.au/food/article/the-24-7-kitchen-that-feeds-100-000-people-every-day/cyv65mxgd"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Langar_(Sikhism)"
   },
   {
    "id": "amritsari-fish",
    "name": "アムリトサリ・フィッシュ",
+   "local": "Amritsari fish",
    "region": "north",
-   "city": "アムリトサル"
+   "city": "アムリトサル",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "ひよこ豆の粉の衣で二度揚げする川魚",
+   "what": "川魚（シンガラ）に、ひよこ豆の粉と香りの種アジョワンの衣を付けて二度揚げする。チャート・マサラとレモンを振る。寒い季節が旬とされる。",
+   "where": "マジタ通りの Makhan Fish and Chicken Corner（1962年から）。1人₹250から。",
+   "price": {
+    "cur": "INR",
+    "min": 250,
+    "max": 250,
+    "yen_min": 428,
+    "yen_max": 428,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.timeout.com/india/restaurants/amritsar-food-guide"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Punjabi_cuisine"
   },
   {
    "id": "lassi-amritsar",
    "name": "ラッシー",
+   "local": "Lassi (Ahuja Milk Bhandar)",
    "region": "north",
-   "city": "アムリトサル"
+   "city": "アムリトサル",
+   "kind": "飲みもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "白いバターの塊が浮かぶ大きな一杯",
+   "what": "大きな金属のコップになみなみ注いだラッシーに、白いバター（マッカン）の塊をのせる。サフラン入りもある。",
+   "where": "ハティ・ゲートの Ahuja Milk Bhandar。2人で約₹100。",
+   "price": {
+    "cur": "INR",
+    "min": 50,
+    "max": 50,
+    "yen_min": 86,
+    "yen_max": 86,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.timeout.com/india/restaurants/amritsar-food-guide",
+    "https://en.wikipedia.org/wiki/Punjabi_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Lassi"
   },
   {
    "id": "dal-makhani-kesar",
    "name": "ダル・マカニ",
+   "local": "Dal makhani (Kesar Da Dhaba)",
    "region": "north",
-   "city": "アムリトサル"
+   "city": "アムリトサル",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "黄金寺院から歩いて15分の旧市街の路地で",
+   "what": "黒いウラド豆とキドニー豆を長く煮込み、バターとクリームで仕上げる。ギーたっぷりのパラータと、素焼きの器のフィルニ（米のプリン）で締める。",
+   "where": "チョーク・パシアンの Kesar Da Dhaba（旧市街の路地）。2人で₹450とする案内と₹500とする案内がある。",
+   "price": {
+    "cur": "INR",
+    "min": 225,
+    "max": 250,
+    "yen_min": 385,
+    "yen_max": 428,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.outlooktraveller.com/destinations/india/ot-travel-itinerary-a-2-day-foodie-itinerary-to-amritsar"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Dal_makhani"
   },
   {
    "id": "sarson-saag-makki-roti",
    "name": "サルソン・ダ・サーグとマッキ・ディ・ロティ",
+   "local": "Sarson da saag & makki di roti",
    "region": "north",
-   "city": "アムリトサル"
+   "city": "アムリトサル",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [],
+   "season": "冬だけ",
+   "lead": "からし菜の煮込みに白いバターをのせる",
+   "what": "からし菜を何時間も煮て潰した緑のサーグに白いバターをのせ、とうもろこしの粉の黄色いロティで食べる。パンジャーブの冬の家の味。",
+   "where": "黄金寺院のすぐそばの Bharawan Da Dhaba（1912年から）、Kesar Da Dhaba。Bharawan は2人で₹500〜600。",
+   "price": {
+    "cur": "INR",
+    "min": 250,
+    "max": 300,
+    "yen_min": 428,
+    "yen_max": 513,
+    "rate_date": "2026-11-23"
+   },
+   "src": [
+    "https://www.deccanherald.com/lifestyle/food-and-drink/amritsar-on-a-plate-a-vegetarian-odyssey-from-sarson-da-saag-to-golden-temple-langar-3672086",
+    "https://curlytales.com/from-sarson-ka-saag-to-kulcha-best-winter-food-trails-in-amritsar",
+    "https://www.district.in/dining/amritsar/bharawan-da-dhaba-town-hall"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Sarson_da_saag"
   },
   {
    "id": "kottu-roti",
    "name": "コットゥ・ロティ",
+   "local": "Kottu roti / කොත්තු රොටි",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "屋台",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "鉄板を叩く音が夜の通りに響く",
+   "what": "薄焼きのパン（ゴダンバ・ロティ）を、卵と野菜、鶏のカレーと一緒に、鉄板の上で2枚の鉄のへらで細かく刻みながら炒める。チーズ入りもある。",
+   "where": "ゴール通りの Hotel de Pilawoos（深夜まで）、アルト・カデの夜の屋台。LKR 700〜1,200（2026年5月の記事）、900〜1,800（2025年9月の記事）。",
+   "price": {
+    "cur": "LKR",
+    "min": 700,
+    "max": 1800,
+    "yen_min": 332,
+    "yen_max": 855,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.travelwithhello.com/blog/sri-lanka-food-dining-guide",
+    "https://www.elanka.com.au/sri-lankan-street-food-guide-25-must-try-dishes-where-to-find-them-in-colombo-kandy-galle/",
+    "https://en.wikipedia.org/wiki/Kottu"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Kottu"
   },
   {
    "id": "egg-hopper",
    "name": "エッグ・ホッパー",
+   "local": "Biththara appa / බිත්තර ආප්ප",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "屋台",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "真ん中に卵を1個落とした夕方の一枚",
+   "what": "米粉とココナッツミルクの発酵生地を小さな丸い鍋で回して焼き、真ん中に卵を落とす。唐辛子と玉ねぎの辛い薬味（ルヌ・ミリス）をのせて食べる。",
+   "where": "コロンボ、キャンディ、ゴールの夕方のホッパーの屋台。1枚 LKR 50〜150（2026年5月の記事）。",
+   "price": {
+    "cur": "LKR",
+    "min": 50,
+    "max": 150,
+    "yen_min": 24,
+    "yen_max": 71,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.travelwithhello.com/blog/sri-lanka-food-dining-guide",
+    "https://en.wikipedia.org/wiki/Sri_Lankan_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Appam"
   },
   {
    "id": "string-hoppers",
    "name": "ストリング・ホッパー",
+   "local": "Indiappa / ඉඳිආප්ප",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "米粉の細い麺を小さな巣の形に蒸す",
+   "what": "米粉の生地を細く押し出して小さな鳥の巣の形に蒸す。ココナッツミルクの汁（キリ・ホディ）と、ココナッツの辛い和えもの（ポル・サンボル）で食べる。",
+   "where": "市場の近くの朝の屋台、宿の朝ごはん。軽食は LKR 200〜800（2025年9月の記事）。",
+   "price": {
+    "cur": "LKR",
+    "min": 200,
+    "max": 800,
+    "yen_min": 95,
+    "yen_max": 380,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.elanka.com.au/sri-lankan-street-food-guide-25-must-try-dishes-where-to-find-them-in-colombo-kandy-galle/",
+    "https://en.wikipedia.org/wiki/Sri_Lankan_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Idiyappam"
   },
   {
    "id": "rice-and-curry",
    "name": "ライス・アンド・カリー",
+   "local": "Bath saha curry / බත් සහ කරි",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "1皿300〜600ルピーの昼の食堂",
+   "what": "ご飯を真ん中に、魚のカレー、豆のカレー（パリップ）、青菜の和えもの（マッルン）、なす、カシューナッツなど小さなおかずを何品も並べる。手で混ぜて食べる。",
+   "where": "街の食堂（ホテルと呼ばれる）の昼。LKR 300〜600（2026年5月の記事）。",
+   "price": {
+    "cur": "LKR",
+    "min": 300,
+    "max": 600,
+    "yen_min": 142,
+    "yen_max": 285,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.travelwithhello.com/blog/sri-lanka-food-dining-guide",
+    "https://srilanka.travel/culinary-tourism/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Rice_and_curry"
   },
   {
    "id": "isso-wade",
    "name": "イッソ・ワデー",
+   "local": "Isso wade / ඉස්සෝ වඩේ",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "夕暮れのゴール・フェイスで揚げたてを",
+   "what": "レンズ豆の生地に丸ごとのエビを2〜3尾のせて揚げる。屋台の人が半分に割り、玉ねぎと唐辛子のソースをかけてくれる。",
+   "where": "ゴール・フェイス・グリーンの屋台。1個 LKR 100〜150、100〜200、50〜100と記事で割れる。",
+   "price": {
+    "cur": "LKR",
+    "min": 50,
+    "max": 200,
+    "yen_min": 24,
+    "yen_max": 95,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.lonelyplanet.com/articles/what-to-eat-and-drink-in-sri-lanka",
+    "https://www.elanka.com.au/sri-lankan-street-food-guide-25-must-try-dishes-where-to-find-them-in-colombo-kandy-galle/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Vada_(food)"
   },
   {
    "id": "short-eats",
    "name": "ショート・イーツ",
+   "local": "Short eats (fish bun, patties, rolls)",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "屋台",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "食べた分だけ払う皿盛りの軽食",
+   "what": "魚のカレーを詰めた三角のパン（フィッシュ・バン）、パン粉で揚げたロール、パティ、カトレットなどを皿に盛って出し、食べた分だけ払う。",
+   "where": "ペター地区の軽食のカウンター、駅やバス停の近くのパン屋。1個 LKR 80〜250（2026年5月の記事）。",
+   "price": {
+    "cur": "LKR",
+    "min": 80,
+    "max": 250,
+    "yen_min": 38,
+    "yen_max": 119,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.travelwithhello.com/blog/sri-lanka-food-dining-guide",
+    "https://en.wikipedia.org/wiki/Short_eat"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Short_eat"
   },
   {
    "id": "lamprais",
    "name": "ランプライス",
+   "local": "Lamprais",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [
+    "pork",
+    "beef"
+   ],
+   "season": null,
+   "lead": "バナナの葉で包んで焼くオランダ系の料理",
+   "what": "肉の出汁で炊いたご飯、肉のカレー、ゆで卵、魚のカツ（フリカデル）、なすの甘い煮もの、エビのペーストをバナナの葉で包んで焼く。伝統の版は豚と牛が入るので、鶏だけの版を頼む。",
+   "where": "Dutch Burgher Union の VOC Café（鶏だけの版と混ぜた肉の版がある）。食事で LKR 2,000未満とする案内と、鶏の版の宅配で LKR 600 とする記事がある。",
+   "price": {
+    "cur": "LKR",
+    "min": 600,
+    "max": 2000,
+    "yen_min": 285,
+    "yen_max": 950,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.yamu.lk/blog/yamus-favourite-lamprais-in-colombo",
+    "https://en.wikipedia.org/wiki/Lamprais"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Lamprais"
   },
   {
    "id": "pol-roti",
    "name": "ポル・ロティ",
+   "local": "Pol roti / පොල් රොටි",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "朝ごはん",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "道ばたの鉄板で焼くココナッツ入りの平焼き",
+   "what": "小麦粉に削ったココナッツと青唐辛子、玉ねぎを混ぜて鉄板で焼く。赤唐辛子と玉ねぎとライムをすりつぶした辛い薬味（ルヌ・ミリス）をのせる。",
+   "where": "道ばたの鉄板の屋台。軽食は LKR 200〜800（2025年9月の記事）。",
+   "price": {
+    "cur": "LKR",
+    "min": 200,
+    "max": 800,
+    "yen_min": 95,
+    "yen_max": 380,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.elanka.com.au/sri-lankan-street-food-guide-25-must-try-dishes-where-to-find-them-in-colombo-kandy-galle/",
+    "https://en.wikipedia.org/wiki/Sri_Lankan_cuisine"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Roti"
   },
   {
    "id": "srilanka-biryani",
    "name": "スリランカのビリヤニ",
+   "local": "Buriyani",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "食堂",
+   "star": 2,
+   "flags": [
+    "beef"
+   ],
+   "season": null,
+   "lead": "ムスリムの祝いの席に出るローズウォーターの香り",
+   "what": "バスマティ米をギーで炊き、肉とじゃがいも、ゆで卵を合わせて、ローズウォーターで香りを付ける。肉は牛か鶏が多い。スリランカのムスリム（ムーア人）の料理で、結婚式や祭りに出る。",
+   "where": "コロンボ10のパンチクァッテ通りの Hotel De Buhari、コロンボ6の Chana's。コットゥやビリヤニの1皿は LKR 900〜1,800（2025年9月の記事）。",
+   "price": {
+    "cur": "LKR",
+    "min": 900,
+    "max": 1800,
+    "yen_min": 428,
+    "yen_max": 855,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://sailanmuslim.com/?p=8136",
+    "https://www.yamu.lk/trending/culinary-communities/",
+    "https://www.yamu.lk/blog/yamus-top-5-biriyanis",
+    "https://www.elanka.com.au/sri-lankan-street-food-guide-25-must-try-dishes-where-to-find-them-in-colombo-kandy-galle/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Biryani"
   },
   {
    "id": "watalappan",
    "name": "ワタラッパン",
+   "local": "Watalappan / වටලප්පන්",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "甘いもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "キトゥルの黒糖で蒸す黒いプリン",
+   "what": "ココナッツミルク、卵、キトゥル椰子の黒糖、カルダモン、ナツメグを合わせて蒸したプリン。カシューナッツをのせる。マレー系の人が持ち込み、ムスリムのイードの菓子になった。",
+   "where": "甘いものの屋台、小さなデザートのカウンター。軽食は LKR 200〜800（2025年9月の記事）。",
+   "price": {
+    "cur": "LKR",
+    "min": 200,
+    "max": 800,
+    "yen_min": 95,
+    "yen_max": 380,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.elanka.com.au/sri-lankan-street-food-guide-25-must-try-dishes-where-to-find-them-in-colombo-kandy-galle/",
+    "https://en.wikipedia.org/wiki/Watalappam"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Watalappam"
   },
   {
    "id": "ministry-of-crab",
    "name": "マッドクラブ",
+   "local": "Mud crab (Ministry of Crab)",
    "region": "srilanka",
-   "city": "コロンボ"
+   "city": "コロンボ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "重さで選ぶ旧オランダ病院の店の蟹",
+   "what": "スリランカのラグーンで獲れる大きなマッドクラブを、ガーリック・チリや黒胡椒などの味で丸ごと料理する。蟹は重さで選ぶ。",
+   "where": "旧オランダ病院の建物の Ministry of Crab（満月の祝日は休み。予約が要る。昼の営業は12月と1月だけとする案内がある）。夕食 LKR 4,500からとする古い案内と、1人約60米ドルとする案内がある。",
+   "price": {
+    "cur": "LKR",
+    "min": 4500,
+    "max": 18000,
+    "yen_min": 2138,
+    "yen_max": 8550,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.timeout.com/sri-lanka/restaurants-and-cafes/ministry-of-crab"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Dharshan_Munidasa"
   },
   {
    "id": "ceylon-tea",
    "name": "セイロン・ティー",
+   "local": "Ceylon tea / තේ",
    "region": "srilanka",
-   "city": "キャンディ"
+   "city": "キャンディ",
+   "kind": "飲みもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "丘の上の紅茶工場で淹れたての一杯",
+   "what": "キャンディのまわりの丘の紅茶工場を見学して、その場で淹れた紅茶を飲む。街では粉ミルクで作るミルクティー（キリ・テー）と、砂糖をたっぷり入れたプレーン・ティーが毎日の一杯。",
+   "where": "キャンディのまわりの紅茶工場と街の茶屋。茶屋のミルクティーは1杯 LKR 100。",
+   "price": {
+    "cur": "LKR",
+    "min": 100,
+    "max": 100,
+    "yen_min": 48,
+    "yen_max": 48,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.reddottours.com/sri-lanka-activities/food-and-drink-in-kandy",
+    "https://adaderana.lk/news/81313/price-of-cup-of-milk-tea-hits-rs-100",
+    "https://www.hungrylankan.com/recipes/sri-lankan-milk-tea/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Sri_Lankan_tea"
   },
   {
    "id": "ambul-thiyal",
    "name": "アンブル・ティヤル",
+   "local": "Ambul thiyal / ඇඹුල් තියල්",
    "region": "srilanka",
-   "city": "ゴール"
+   "city": "ゴール",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "ゴラカの酸味で煮詰めるマグロ",
+   "what": "マグロを、黒くて酸っぱい果実ゴラカと黒胡椒で、水気が無くなるまで煮詰める。日持ちするように作る南部の料理。",
+   "where": "ゴールとミリッサの海辺の食堂。魚とエビのカレーは中くらいの店で LKR 1,500〜3,000（2026年5月の記事）。",
+   "price": {
+    "cur": "LKR",
+    "min": 1500,
+    "max": 3000,
+    "yen_min": 712,
+    "yen_max": 1425,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.roughguides.com/sri-lanka/best-food/",
+    "https://www.travelwithhello.com/blog/sri-lanka-food-dining-guide"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Sri_Lankan_cuisine"
   },
   {
    "id": "jaffna-crab-curry",
    "name": "ジャフナ・クラブ・カレー",
+   "local": "Jaffna nandu kari / நண்டுக் கறி",
    "region": "srilanka",
-   "city": "ジャフナ"
+   "city": "ジャフナ",
+   "kind": "食堂",
+   "star": 3,
+   "flags": [],
+   "season": null,
+   "lead": "焙煎したジャフナのカレー粉で煮る真っ赤な蟹",
+   "what": "ラグーンの蟹を、焙煎したジャフナのカレー粉とモリンガの葉、タマリンドで煮る。真っ赤で辛い。殻ごと手で食べる。",
+   "where": "ジャフナの Green Grass Hotel、Cosy Restaurant。値段は蟹の大きさで変わり、コロンボの店で LKR 2,900から。",
+   "price": {
+    "cur": "LKR",
+    "min": 2900,
+    "max": 2900,
+    "yen_min": 1378,
+    "yen_max": 1378,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://www.nationalgeographic.com/travel/article/eat-in-jaffna-sri-lankas-crab-curry-capital-tamil-food",
+    "https://www.yamu.lk/trending/feasting-the-crawler-6-places-to-satisfy-your-crab-craving/"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Jaffna_crab_curry"
   },
   {
    "id": "rio-ice-cream",
    "name": "リオ・アイスクリーム",
+   "local": "Rio Ice Cream (Jaffna)",
    "region": "srilanka",
-   "city": "ジャフナ"
+   "city": "ジャフナ",
+   "kind": "甘いもの",
+   "star": 2,
+   "flags": [],
+   "season": null,
+   "lead": "ナルール寺院の近くの店の背の高いサンデー",
+   "what": "ウッドアップル、パルミラ、マンゴーなどの味のアイスを、ゼリーや果物と背の高いグラスに重ねる。とても甘い。",
+   "where": "ナルール・カンダスワミ寺院の近くのスタンリー通りの Rio Ice Cream。並びに Lingan もある。ヘーゼルナッツの1杯で LKR 350 とする旅行記がある。",
+   "price": {
+    "cur": "LKR",
+    "min": 350,
+    "max": 350,
+    "yen_min": 166,
+    "yen_max": 166,
+    "rate_date": "2026-11-09"
+   },
+   "src": [
+    "https://traveltriangle.com/blog/restaurants-in-jaffna"
+   ],
+   "wiki": "https://en.wikipedia.org/wiki/Jaffna"
+  }
+ ],
+ "route": [
+  {
+   "city": "ムンバイ",
+   "region": "west",
+   "lat": 19.054999,
+   "lon": 72.869203
+  },
+  {
+   "city": "ゴア",
+   "region": "west",
+   "lat": 15.498995,
+   "lon": 73.828214
+  },
+  {
+   "city": "コーチ",
+   "region": "south",
+   "lat": 9.967903,
+   "lon": 76.244438
+  },
+  {
+   "city": "マドゥライ",
+   "region": "south",
+   "lat": 9.926115,
+   "lon": 78.114098
+  },
+  {
+   "city": "チェンナイ",
+   "region": "south",
+   "lat": 13.080091,
+   "lon": 80.280798
+  },
+  {
+   "city": "ハイデラバード",
+   "region": "south",
+   "lat": 17.360589,
+   "lon": 78.474061
+  },
+  {
+   "city": "コルカタ",
+   "region": "east",
+   "lat": 22.572646,
+   "lon": 88.363895
+  },
+  {
+   "city": "バラナシ",
+   "region": "north",
+   "lat": 25.335649,
+   "lon": 83.007629
+  },
+  {
+   "city": "ラクナウ",
+   "region": "north",
+   "lat": 26.8381,
+   "lon": 80.9346
+  },
+  {
+   "city": "アーグラ",
+   "region": "north",
+   "lat": 27.175255,
+   "lon": 78.009816
+  },
+  {
+   "city": "デリー",
+   "region": "north",
+   "lat": 28.613895,
+   "lon": 77.209006
+  },
+  {
+   "city": "アムリトサル",
+   "region": "north",
+   "lat": 31.635666,
+   "lon": 74.87875
+  },
+  {
+   "city": "コロンボ",
+   "region": "srilanka",
+   "lat": 6.938861,
+   "lon": 79.854201
+  }
+ ],
+ "sights": [
+  {
+   "id": "dabbawala",
+   "name": "ムンバイのダッバーワーラー",
+   "lead": "1日20万個の弁当を運ぶ人たち",
+   "what": "約5,000人で、家で作った弁当を1日20万個、職場へ運ぶ。チャーチゲート駅の前の歩道で仕分けが慌ただしくなるのは、平日の11時から正午ごろ。",
+   "price": "見るだけなら無料。ツアーは平日の昼だけで、公認の協会を通す",
+   "lat": 18.93548,
+   "lon": 72.827174,
+   "src": [
+    "https://atlasobscura.com/articles/how-mumbais-dabbawalas-deliver-200000-meals",
+    "https://en.wikipedia.org/wiki/Dabbawala",
+    "https://www.openstreetmap.org/node/4260136290"
+   ]
+  },
+  {
+   "id": "varanasi-ghats",
+   "name": "バラナシのガート",
+   "lead": "夕方のダシャーシュワメード・ガートの火の儀式",
+   "what": "ガンジス川の岸に石段（ガート）が並ぶ。朝はボートから沐浴の人を見て、夕方はダシャーシュワメード・ガートの火の儀式（アールティ）を見る。裏の路地にチャイとラッシーの小さな店が並ぶ。",
+   "price": "アールティは無料。ボートは交渉で1人1時間₹50前後とする古い記述がある",
+   "lat": 25.306568,
+   "lon": 83.01027,
+   "src": [
+    "https://en.wikivoyage.org/wiki/Varanasi",
+    "https://www.openstreetmap.org/node/1538127118"
+   ]
+  },
+  {
+   "id": "taj-mahal",
+   "name": "タージ・マハル",
+   "lead": "日の出の30分前に門が開く",
+   "what": "ムガルの皇帝が妃のために建てた白い大理石の霊廟。日の出の30分前に開き、朝いちばんは人が少ない。西門がいちばん混み、東門と南門はすく。金曜は休み。",
+   "price": "外国人₹1,100（約1,900円）。霊廟の中に入るなら₹200を足す。金曜休み",
+   "lat": 27.175007,
+   "lon": 78.042101,
+   "src": [
+    "https://tajmahal.gov.in/visiting-hours.aspx",
+    "https://en.wikivoyage.org/wiki/Agra/Taj_Mahal",
+    "https://en.wikipedia.org/wiki/Taj_Mahal"
+   ]
+  },
+  {
+   "id": "golden-temple",
+   "name": "黄金寺院",
+   "lead": "24時間開いている無料の食堂",
+   "what": "シク教の聖地。境内のランガル（無料の食堂）は24時間開いていて、1日5万〜10万食を出す。チャパティを丸める奉仕や皿洗いに加われる。夜は金色の寺が明かりに照らされる。",
+   "price": "無料（寄付は任意）",
+   "lat": 31.619979,
+   "lon": 74.876528,
+   "src": [
+    "https://en.wikivoyage.org/wiki/Amritsar",
+    "https://www.sbs.com.au/food/article/the-24-7-kitchen-that-feeds-100-000-people-every-day/cyv65mxgd",
+    "https://en.wikipedia.org/wiki/Golden_Temple"
+   ]
+  },
+  {
+   "id": "sigiriya",
+   "name": "シーギリヤ",
+   "lead": "平地から突き出た岩の上の王宮の跡",
+   "what": "平地から突き出た大きな岩の上に残る、5世紀の王宮の跡。窓口は7時から17時。隣のピドゥランガラ岩から眺める人もいる。",
+   "price": "外国人36米ドル（約5,700円）とする案内が多く、30ドル・35ドルとする案内もあり割れる",
+   "lat": 7.956663,
+   "lon": 80.75993,
+   "src": [
+    "https://travelcostcalculator.org/unesco/ancient-city-of-sigiriya",
+    "https://ccf.gov.lk/vsl/tickets",
+    "https://wheretarawent.com/blog/sigiriya-or-pidurangala-hike-sri-lanka",
+    "https://en.wikipedia.org/wiki/Sigiriya"
+   ]
+  }
+ ],
+ "tips": [
+  {
+   "id": "hot",
+   "title": "目の前で揚げたものを熱いうちに",
+   "body": "目の前で火を通して、熱いまま出てくるものがいちばん安全とされる。作り置きで冷めた揚げものや菓子は後回しにする。",
+   "src": [
+    "https://cdc.gov/yellow-book/hcp/preparing-international-travelers/food-and-water-precautions-for-travelers.html",
+    "https://travelhealthpro.org.uk/factsheets/food-and-water-hygiene",
+    "https://en.wikivoyage.org/wiki/India"
+   ]
+  },
+  {
+   "id": "water-ice",
+   "title": "水と氷は封の切れていない瓶で",
+   "body": "インドの水道の水は飲む水に向かない。氷も、安全な水で作ったと分からなければ避ける。ボトルは封が切れていないかを見る。駅では鉄道の Rail Neer を買う。",
+   "src": [
+    "https://www.forth.go.jp/destinations/country/india.html",
+    "https://cdc.gov/yellow-book/hcp/preparing-international-travelers/food-and-water-precautions-for-travelers.html",
+    "https://en.wikivoyage.org/wiki/India"
+   ]
+  },
+  {
+   "id": "fruit",
+   "title": "切った果物と生のジュースは避けよう",
+   "body": "自分で洗ってむいた果物は安全とされる。屋台で切ってある果物や、火を通していないジュースは避ける。",
+   "src": [
+    "https://cdc.gov/yellow-book/hcp/preparing-international-travelers/food-and-water-precautions-for-travelers.html",
+    "https://www.forth.go.jp/destinations/country/india.html"
+   ]
+  },
+  {
+   "id": "panipuri-water",
+   "title": "パニプリの水は火を通していない水",
+   "body": "パニプリの中の水は火を通していない。2022年にテランガーナ州の保健の責任者は、腸チフスの広がりを受けて屋台に安全な水を使うよう求めた。旅行者向けの案内には、数日慣れてから食べるよう書いたものがある。",
+   "src": [
+    "https://weather.com/en-IN/india/health/news/2022-07-13-pani-puri-blamed-for-typhoid-outbreak-in-telangana",
+    "https://www.hostelworld.com/blog/?p=1328746"
+   ]
+  },
+  {
+   "id": "dairy",
+   "title": "火を通していない乳の菓子は少しずつ",
+   "body": "殺菌していない乳でできたものは傷みやすい。冬だけの牛乳の泡のお菓子は、火を通さない牛乳とクリームを泡立てて作る。",
+   "src": [
+    "https://cdc.gov/yellow-book/hcp/preparing-international-travelers/food-and-water-precautions-for-travelers.html",
+    "https://en.wikipedia.org/wiki/Daulat_ki_chaat"
+   ]
+  },
+  {
+   "id": "hands",
+   "title": "食べる前に手を洗う",
+   "body": "石けんが無ければ、アルコール60%以上の消毒液を使う。体調のことは厚生労働省検疫所（FORTH）のインドの頁を見る。",
+   "src": [
+    "https://wwwnc.cdc.gov/travel/destinations/traveler/none/india",
+    "https://www.forth.go.jp/destinations/country/india.html"
+   ]
+  }
+ ],
+ "faq": [
+  {
+   "q": "マトンとは何の肉？",
+   "a": "インドでマトンと書いてあれば、たいていヤギの肉。英語では成長した羊の肉のことだが、南アジアではヤギを指すことが多い。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Lamb_and_mutton"
+   ]
+  },
+  {
+   "q": "インドのカレーは地域でどう違う？",
+   "a": "北は小麦のロティとギー、西は落花生油とパオ、東は米とからし油、南は米とココナッツ油。スリランカは焙煎したカレー粉と干し魚でうま味を出す。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Indian_cuisine",
+    "https://en.wikipedia.org/wiki/Sri_Lankan_cuisine"
+   ]
+  },
+  {
+   "q": "ナンはインドで毎日食べる？",
+   "a": "北インドの毎日の主食は全粒粉のロティ。ナンは発酵させた生地を窯（タンドール）で焼くパン。南インドと東インドは米が主食。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Indian_cuisine",
+    "https://en.wikipedia.org/wiki/Naan"
+   ]
+  },
+  {
+   "q": "インドで豚肉や牛肉は食べられる？",
+   "a": "ヒンドゥー教徒の多くは牛を、ムスリムは豚を食べないので、インドの肉の主役は鶏とヤギ。ゴアのカトリックの料理には豚のヴィンダルーがあり、ケーララには牛肉の炒め煮がある。スリランカでは豚も牛も食べる。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Indian_cuisine",
+    "https://en.wikipedia.org/wiki/Goan_cuisine",
+    "https://en.wikipedia.org/wiki/Kerala_cuisine",
+    "https://en.wikipedia.org/wiki/Sri_Lankan_cuisine"
+   ]
+  },
+  {
+   "q": "ビリヤニとは？",
+   "a": "ヨーグルトに漬けた肉と長粒米を重ねて蒸す炊き込みご飯。街ごとに米の粒や作りかたが違い、ハイデラバード、ラクナウ、コルカタなど街の名前で呼ばれる。",
+   "src": [
+    "https://en.wikipedia.org/wiki/Biryani"
+   ]
   }
  ]
 }
