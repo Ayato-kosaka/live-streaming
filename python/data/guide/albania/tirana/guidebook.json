@@ -4889,35 +4889,7 @@
       }
      ]
     },
-    "stores": [
-     {
-      "key": "panorama",
-      "name": "パノラマ（クルヤ城のそばのレストラン）",
-      "local": "Panorama Krujë",
-      "area": "kruja",
-      "lat": 41.510002,
-      "lon": 19.794065,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap「Panorama」",
-        "url": "https://www.openstreetmap.org/way/505076738",
-        "seen": "2026-11-23"
-       }
-      ],
-      "why": {
-       "text": "クルヤ城のそばの店。村の鶏の料理と甘い米の菓子カブニを出し、セイヨウサンシュユとブラックベリーの地元のラキも飲める。",
-       "src": [
-        {
-         "name": "Wikivoyage「Krujë」",
-         "url": "https://en.wikivoyage.org/wiki/Kruj%C3%AB",
-         "seen": "2026-11-23"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=Panorama+Kruj%C3%AB+Tiran%C3%AB&hl=ja"
-     }
-    ],
+    "stores": [],
     "went": false,
     "note": {
      "text": "クルヤのパノラマでは、セイヨウサンシュユとブラックベリーの地元のラキが飲める。",
