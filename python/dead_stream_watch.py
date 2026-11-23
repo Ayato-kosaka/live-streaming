@@ -256,6 +256,8 @@ PAGES: dict[str, str] = {
     "skopje-oldtown.ts": "スコピエの旧市街を歩いてきたの記事（/travel/north-macedonia/skopje/oldtown）の、一言と場面のリンク",
     "skopje-kale.ts": "スコピエ城塞に行ってきたの記事（/travel/north-macedonia/skopje/kale）の、一言と場面のリンク",
     "skopje-vodno.ts": "ヴォドノ山に登ってきたの記事（/travel/north-macedonia/skopje/vodno）の、一言と場面のリンク",
+    "tirana-walk.ts": "ティラナの中心を歩いて回ってきたの記事（/travel/albania/tirana/walk）の、一言と場面のリンク",
+    "tirana-sufllaqe.ts": "ティラナでスフラキとケバブを食べ比べてきたの記事（/travel/albania/tirana/sufllaqe）の、一言と場面のリンク",
     "sofia-yogurt.ts": "ソフィアで本場のヨーグルトを探してきたの記事（/travel/bulgaria/sofia/yogurt）の、一言と場面のリンク",
     # 国の面の「この国であったこと」に添える1〜2行（焼くのは `python/stream_digest.py`）
     "streamDigest.ts": "配信1本の1〜2行（/travel/<国> の「この国であったこと」）",
@@ -275,7 +277,7 @@ FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
          "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "bulgaria-sofia-went.ts",
          "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts",
          "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts",
-         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts")
+         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts", "tirana-walk.ts", "tirana-sufllaqe.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、

@@ -295,6 +295,8 @@ SOLO = [
     "travel/north-macedonia/skopje/debar-maalo",
     "travel/romania/bucharest",
     "travel/albania/tirana",
+    "travel/albania/tirana/sufllaqe",
+    "travel/albania/tirana/walk",
 ]
 
 

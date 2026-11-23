@@ -15,6 +15,8 @@ import { ARTICLE as SKOPJE_KALE } from "./north-macedonia/skopje-kale";
 import { ARTICLE as SKOPJE_VODNO } from "./north-macedonia/skopje-vodno";
 import { ARTICLE as SOFIA_YOGURT } from "./bulgaria/sofia-yogurt";
 import { ARTICLE as SKOPJE_PRICES } from "./north-macedonia/skopje-prices";
+import { ARTICLE as TIRANA_WALK } from "./albania/tirana-walk";
+import { ARTICLE as TIRANA_SUFLLAQE } from "./albania/tirana-sufllaqe";
 
 /**
  * 記事（`/travel/<国>/<街>/<話>`）の中身（焼いたもの）の名簿。鍵は `<国>/<街>/<話>`。
@@ -40,6 +42,8 @@ const ARTICLES: Record<string, GuideArticle> = {
   "north-macedonia/skopje/vodno": SKOPJE_VODNO,
   "bulgaria/sofia/yogurt": SOFIA_YOGURT,
   "bulgaria/sofia/prices": SOFIA_PRICES,
+  "albania/tirana/walk": TIRANA_WALK,
+  "albania/tirana/sufllaqe": TIRANA_SUFLLAQE,
 };
 
 /** 記事の中身。**無ければ書き出しを止める**（名簿に在るのに中身の無い記事を黙って出さない） */

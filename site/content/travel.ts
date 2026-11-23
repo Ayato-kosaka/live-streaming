@@ -305,6 +305,10 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "bulgaria", city: "sofia", slug: "hotspring", crumb: "温泉の蛇口" },
   /* ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
   { country: "bulgaria", city: "sofia", slug: "nevsky", crumb: "ネフスキー大聖堂" },
+  /* ティラナの中心を歩いて回ってきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "albania", city: "tirana", slug: "walk", crumb: "中心を歩いた日", draft: true },
+  /* ティラナでスフラキとケバブを食べ比べてきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "albania", city: "tirana", slug: "sufllaqe", crumb: "スフラキ", draft: true },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */
