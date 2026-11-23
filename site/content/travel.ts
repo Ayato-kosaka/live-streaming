@@ -81,6 +81,8 @@ const RECORD_CARD: ShareKey = "map";
 const WALKED_FIXED: { slug: string; card: ShareKey }[] = [
   { slug: "north-macedonia", card: "northMacedonia" },
   { slug: "bulgaria", card: "bulgaria" },
+  /* ティラナのガイドが同じ段に入った（2026-11-23）。絵は `[slug]` のときと同じ地図の1枚 */
+  { slug: "albania", card: "map" },
 ];
 
 function build(): TravelPlace[] {
@@ -300,6 +302,18 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "bulgaria", city: "sofia", slug: "hotspring", crumb: "温泉の蛇口" },
   /* ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
   { country: "bulgaria", city: "sofia", slug: "nevsky", crumb: "ネフスキー大聖堂" },
+  /* ティラナの中心を歩いて回ってきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "albania", city: "tirana", slug: "walk", crumb: "中心を歩いた日", draft: true },
+  /* ティラナでスフラキとケバブを食べ比べてきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "albania", city: "tirana", slug: "sufllaqe", crumb: "スフラキ", draft: true },
+  /* ティラナの大きなモスクに入ってきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "albania", city: "tirana", slug: "mosque", crumb: "大きなモスク", draft: true },
+  /* ティラナの大衆食堂でミートボールのスープを食べてきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "albania", city: "tirana", slug: "gjelltore", crumb: "大衆食堂ジェルトレ", draft: true },
+  /* ティラナ空港からバスで市街へ出てきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "albania", city: "tirana", slug: "airport", crumb: "空港から市街へ", draft: true },
+  /* ティラナのホステルで2回盗まれた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "albania", city: "tirana", slug: "hostel", crumb: "ホステルの盗難", draft: true },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */

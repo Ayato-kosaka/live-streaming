@@ -172,7 +172,7 @@ export const STAYS: Stay[] = [
      アルバニアに着いたのは 2026-09-28（配信「アルバニアつきましたー」。ストックホルムからの便で、
      空港の床で夜を明かした朝）。出たのは 10-12 の朝のバスで、その日は北マケドニアの1日。
      アルバニアに案内が無いのは、`/albania` という面が無いから */
-  { country: "albania", cities: ["ティラナ"], from: "2026-09-28", to: "2026-10-11" },
+  { country: "albania", cities: ["tirana"], from: "2026-09-28", to: "2026-10-11" },
   {
     country: "north-macedonia",
     cities: ["skopje"],

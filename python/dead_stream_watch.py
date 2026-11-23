@@ -238,6 +238,7 @@ PAGES: dict[str, str] = {
     "months.ts": "月ごとのふりかえりの、その月の配信ぜんぶ（/months/<年-月>）",
     # 街のガイドブック（`content/guidebook/<国>-<街>.ts`。焼くのは `python/guidebook_bake.py`。#1228）
     "north-macedonia-skopje.ts": "スコピエのガイドブック（/travel/north-macedonia/skopje）の、行った所の場面・一言・あやとの1日の額のリンク",
+    "albania-tirana.ts": "ティラナのガイドブック（/travel/albania/tirana）の、行った所の場面・一言のリンク",
     # 手で組んだ街のガイドブックの「行った」だけ（焼くのは `python/guidebook_went.py`）
     "bulgaria-sofia-went.ts": "ソフィアのガイドブック（/travel/bulgaria/sofia）の、行った所の場面・一言のリンク",
     # 旅のガイドの記事（`content/travel/<国>/<街>-<話>.ts`。焼くのは `python/guide_article.py`）
@@ -256,6 +257,12 @@ PAGES: dict[str, str] = {
     "skopje-oldtown.ts": "スコピエの旧市街を歩いてきたの記事（/travel/north-macedonia/skopje/oldtown）の、一言と場面のリンク",
     "skopje-kale.ts": "スコピエ城塞に行ってきたの記事（/travel/north-macedonia/skopje/kale）の、一言と場面のリンク",
     "skopje-vodno.ts": "ヴォドノ山に登ってきたの記事（/travel/north-macedonia/skopje/vodno）の、一言と場面のリンク",
+    "tirana-walk.ts": "ティラナの中心を歩いて回ってきたの記事（/travel/albania/tirana/walk）の、一言と場面のリンク",
+    "tirana-sufllaqe.ts": "ティラナでスフラキとケバブを食べ比べてきたの記事（/travel/albania/tirana/sufllaqe）の、一言と場面のリンク",
+    "tirana-mosque.ts": "ティラナの大きなモスクに入ってきたの記事（/travel/albania/tirana/mosque）の、一言と場面のリンク",
+    "tirana-gjelltore.ts": "ティラナの大衆食堂でミートボールのスープを食べてきたの記事（/travel/albania/tirana/gjelltore）の、一言と場面のリンク",
+    "tirana-airport.ts": "ティラナ空港からバスで市街へ出てきたの記事（/travel/albania/tirana/airport）の、一言と場面のリンク",
+    "tirana-hostel.ts": "ティラナのホステルで2回盗まれたの記事（/travel/albania/tirana/hostel）の、一言と場面のリンク",
     "sofia-yogurt.ts": "ソフィアで本場のヨーグルトを探してきたの記事（/travel/bulgaria/sofia/yogurt）の、一言と場面のリンク",
     # 国の面の「この国であったこと」に添える1〜2行（焼くのは `python/stream_digest.py`）
     "streamDigest.ts": "配信1本の1〜2行（/travel/<国> の「この国であったこと」）",
@@ -272,10 +279,10 @@ PAGES: dict[str, str] = {
 # 街のガイドも押し出す側。一言も額も「押せば、その場面で本人がそう言っている」が証拠で、
 # 行き先はその1本しかない
 FRONT = ("projects.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
-         "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "bulgaria-sofia-went.ts",
+         "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "albania-tirana.ts", "bulgaria-sofia-went.ts",
          "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts",
          "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts",
-         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts")
+         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts", "tirana-walk.ts", "tirana-sufllaqe.ts", "tirana-mosque.ts", "tirana-gjelltore.ts", "tirana-airport.ts", "tirana-hostel.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、

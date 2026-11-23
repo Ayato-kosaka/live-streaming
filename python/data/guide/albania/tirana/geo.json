@@ -1,0 +1,389 @@
+{
+ "skanderbeg": {
+  "q": "Sheshi Skënderbej, Tiranë",
+  "lat": 41.328144,
+  "lon": 19.818434,
+  "name": "Sheshi Skënderbej",
+  "osm": "https://www.openstreetmap.org/relation/21803823",
+  "type": "square",
+  "addr": "Sheshi Skënderbej, Tregu Çam, Njësia Bashkiake Nr. 10, Tirana, Bashkia Tiranë, Regiunea Tirana, 1002, Albania"
+ },
+ "ethem": {
+  "q": "Xhamia e Et'hem Beut",
+  "lat": 41.327802,
+  "lon": 19.819326,
+  "name": "Xhamia e Et'hem Beut",
+  "osm": "https://www.openstreetmap.org/way/175108083",
+  "type": "place_of_worship",
+  "addr": "Xhamia e Et'hem Beut, 1, Sheshi Skënderbej, Tregu Çam, Njësia Bashkiake Nr. 10, Tirana, Bashkia Tiranë, Regiunea Tirana,"
+ },
+ "clock": {
+  "q": "Kulla e Sahatit, Tiranë",
+  "lat": 41.327703,
+  "lon": 19.819683,
+  "name": "Kulla e Sahatit",
+  "osm": "https://www.openstreetmap.org/way/233519333",
+  "type": "clock",
+  "addr": "Kulla e Sahatit, Rruga 28 Nëntori, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tirana, 1002, Albania"
+ },
+ "bunkart2": {
+  "q": "Bunk'Art 2",
+  "lat": 41.327022,
+  "lon": 19.819551,
+  "name": "Bunk'Art 2",
+  "osm": "https://www.openstreetmap.org/node/4512200081",
+  "type": "museum",
+  "addr": "Bunk'Art 2, Rruga Abdi Toptani, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tirana, 1002, Albania"
+ },
+ "bunkart1": {
+  "q": "Bunk'Art 1",
+  "lat": 41.35314,
+  "lon": 19.861207,
+  "name": "Bunk'Art",
+  "osm": "https://www.openstreetmap.org/node/4306447779",
+  "type": "museum",
+  "addr": "Bunk'Art, Rruga Fadil Deliu, Fresku, Qesarak (Linsa), Shtish-Tufinë, Dajt, Bashkia Tiranë, Regiunea Tirana, 1040, Albani"
+ },
+ "pyramid": {
+  "q": "Piramida e Tiranës",
+  "lat": 41.323019,
+  "lon": 19.821589,
+  "name": "Piramida e Tiranës",
+  "osm": "https://www.openstreetmap.org/way/174510408",
+  "type": "attraction",
+  "addr": "Piramida e Tiranës, 5, Bulevardi Bajram Curri, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tirana, 1001, Al"
+ },
+ "leaves": {
+  "q": "Shtëpia me Gjethe",
+  "lat": 41.326467,
+  "lon": 19.816327,
+  "name": "Shtëpia me Gjethe - Muzeu i Përgjimeve të Sigurimit të Shtetit",
+  "osm": "https://www.openstreetmap.org/way/418943098",
+  "type": "museum",
+  "addr": "Shtëpia me Gjethe - Muzeu i Përgjimeve të Sigurimit të Shtetit, Rruga Dëshmorët e 4 Shkurtit, Tregu Çam, Njësia Bashkiak"
+ },
+ "cathedral": {
+  "q": "Katedralja Ngjallja e Krishtit",
+  "lat": 41.326495,
+  "lon": 19.817412,
+  "name": "Katedralja Ngjallja e Krishtit",
+  "osm": "https://www.openstreetmap.org/relation/7753718",
+  "type": "place_of_worship",
+  "addr": "Katedralja Ngjallja e Krishtit, 5, Rruga Dëshmorët e 4 Shkurtit, Tregu Çam, Njësia Bashkiake Nr. 10, Tirana, Bashkia Tir"
+ },
+ "namazgah": {
+  "q": "Xhamia e Namazgjasë",
+  "lat": 41.325722,
+  "lon": 19.824243,
+  "name": "Xhamia e Namazgjasë",
+  "osm": "https://www.openstreetmap.org/way/461375120",
+  "type": "place_of_worship",
+  "addr": "Xhamia e Namazgjasë, Rruga Xhorxh W. Bush, Qyteti Studenti, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tir"
+ },
+ "blloku": {
+  "q": "Blloku, Tiranë",
+  "lat": 41.321333,
+  "lon": 19.816066,
+  "name": "Blloku",
+  "osm": "https://www.openstreetmap.org/node/6298022013",
+  "type": "quarter",
+  "addr": "Blloku, Njësia Bashkiake Nr. 5, Tirana, Bashkia Tiranë, Regiunea Tirana, 1111, Albania"
+ },
+ "dajti": {
+  "q": "Dajti Ekspres",
+  "lat": 41.350831,
+  "lon": 19.861161,
+  "name": "Dajti Ekspres",
+  "osm": "https://www.openstreetmap.org/way/1562005169",
+  "type": "gondola",
+  "addr": "Dajti Ekspres, Rruga Fadil Deliu, Fresku, Qesarak (Linsa), Shtish-Tufinë, Dajt, Bashkia Tiranë, Regiunea Tirana, 1040, A"
+ },
+ "pazari": {
+  "q": "Pazari i Ri, Tiranë",
+  "lat": 41.330246,
+  "lon": 19.82435,
+  "name": "Pazari i Ri",
+  "osm": "https://www.openstreetmap.org/way/480510821",
+  "type": "marketplace",
+  "addr": "Pazari i Ri, Rruga Shenasi Dishnica, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tirana, 1017, Albania"
+ },
+ "tanners": {
+  "q": "Ura e Tabakëve",
+  "lat": 41.326424,
+  "lon": 19.82605,
+  "name": "Ura e Tabakëve",
+  "osm": "https://www.openstreetmap.org/way/627129048",
+  "type": "footway",
+  "addr": "Ura e Tabakëve, Qyteti Studenti, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tirana, 1011, Albania"
+ },
+ "castle": {
+  "q": "Kalaja e Tiranës",
+  "lat": 41.325912,
+  "lon": 19.822553,
+  "name": "Kalaja e Tiranës",
+  "osm": "https://www.openstreetmap.org/way/1007046985",
+  "type": "retail",
+  "addr": "Kalaja e Tiranës, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tirana, Albania"
+ },
+ "postbllok": {
+  "q": "Postbllok",
+  "lat": 41.320962,
+  "lon": 19.820149,
+  "name": "Bunkeri i Memorialit \"Postbllok\"",
+  "osm": "https://www.openstreetmap.org/node/5179401322",
+  "type": "attraction",
+  "addr": "Bunkeri i Memorialit \"Postbllok\", Rruga Ismail Qemali, Ish Merkata, Libri Universitar, Njësia Bashkiake Nr. 5, Tirana, B"
+ },
+ "mosaic": {
+  "q": "Mozaiku i Tiranës",
+  "lat": 41.330064,
+  "lon": 19.804249,
+  "name": "Mozaiku i Tiranës",
+  "osm": "https://www.openstreetmap.org/way/471372812",
+  "type": "attraction",
+  "addr": "Mozaiku i Tiranës, Rruga Sandër Prosi, 21 Dhjetori, Njësia Bashkiake Nr. 7, Tirana, Bashkia Tiranë, Regiunea Tirana, 102"
+ },
+ "petrela": {
+  "q": "Kalaja e Petrelës",
+  "lat": 41.254849,
+  "lon": 19.854581,
+  "name": "Kalaja e Petrelës",
+  "osm": "https://www.openstreetmap.org/way/246873424",
+  "type": "attraction",
+  "addr": "Kalaja e Petrelës, Petrelë, Hukati (Mulleti), Stërmas, Petrelë, Bashkia Tiranë, Regiunea Tirana, 1034, Albania"
+ },
+ "teresa": {
+  "q": "Sheshi Nënë Tereza",
+  "lat": 41.31788,
+  "lon": 19.821294,
+  "name": "Sheshi Nënë Tereza",
+  "osm": "https://www.openstreetmap.org/way/1292145197",
+  "type": "square",
+  "addr": "Sheshi Nënë Tereza, Libri Universitar, Njësia Bashkiake Nr. 5, Tirana, Bashkia Tiranë, Regiunea Tirana, Albania"
+ },
+ "kruja": {
+  "q": "Kalaja e Krujës",
+  "lat": 41.506891,
+  "lon": 19.793933,
+  "name": "Kalaja e Krujës",
+  "osm": "https://www.openstreetmap.org/way/226764511",
+  "type": "attraction",
+  "addr": "Kalaja e Krujës, Albanopolis, Krujë, Bashkia Krujë, Regiunea Durrës, 1501, Albania"
+ },
+ "krujabazaar": {
+  "q": "Pazari i Vjetër, Krujë",
+  "lat": 41.509793,
+  "lon": 19.794221,
+  "name": "Pazari i Krujës",
+  "osm": "https://www.openstreetmap.org/relation/15950028",
+  "type": "marketplace",
+  "addr": "Pazari i Krujës, Pazari Vjeter, Krujë, Bashkia Krujë, Regiunea Durrës, 1501, Albania"
+ },
+ "berat": {
+  "q": "Kalaja e Beratit",
+  "lat": 40.708073,
+  "lon": 19.945532,
+  "name": "Kalaja e Beratit",
+  "osm": "https://www.openstreetmap.org/way/426996540",
+  "type": "archaeological_site",
+  "addr": "Kalaja e Beratit, Berat, Bashkia Berat, Regiunea Berat, 5001, Albania"
+ },
+ "mangalem": {
+  "q": "Mangalem, Berat",
+  "lat": 40.705387,
+  "lon": 19.949939,
+  "name": "Mangalem",
+  "osm": "https://www.openstreetmap.org/node/9531940558",
+  "type": "neighbourhood",
+  "addr": "Mangalem, Berat, Bashkia Berat, Regiunea Berat, 5001, Albania"
+ },
+ "durres": {
+  "q": "Amfiteatri i Durrësit",
+  "lat": 41.312123,
+  "lon": 19.445002,
+  "name": "Amfiteatri i Durrësit",
+  "osm": "https://www.openstreetmap.org/way/307287831",
+  "type": "attraction",
+  "addr": "Amfiteatri i Durrësit, Rruga Sotir Noka, Durrës, Bashkia Durrës, Regiunea Durrës, 2001, Albania"
+ },
+ "motheralbania": {
+  "q": "Nëna Shqipëri",
+  "lat": 41.30854,
+  "lon": 19.840069,
+  "name": "Nëna Shqipëri",
+  "osm": "https://www.openstreetmap.org/node/4631971351",
+  "type": "monument",
+  "addr": "Nëna Shqipëri, Rruga e Elbasanit, Sauk, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tirana, 1044, Albania"
+ },
+ "lake": {
+  "q": "Parku i Madh, Tiranë",
+  "lat": 41.311489,
+  "lon": 19.829455,
+  "name": "Parku i Madh i Tiranës",
+  "osm": "https://www.openstreetmap.org/relation/3351946",
+  "type": "park",
+  "addr": "Parku i Madh i Tiranës, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tirana, Albania"
+ },
+ "skmuseum": {
+  "q": "Muzeu Skënderbeu, Krujë",
+  "lat": 41.507457,
+  "lon": 19.794066,
+  "name": "Muzeu Historik Kombëtar \"Gjergj Kastriot Skëndërbeu\"",
+  "osm": "https://www.openstreetmap.org/way/226764514",
+  "type": "museum",
+  "addr": "Muzeu Historik Kombëtar \"Gjergj Kastriot Skëndërbeu\", Kalasë, Krujë, Bashkia Krujë, Regiunea Durrës, 1501, Albania"
+ },
+ "zgara": {
+  "q": "Zgara e Tironës",
+  "lat": 41.328136,
+  "lon": 19.810564,
+  "name": "Tek Zgara e Tironës 2",
+  "osm": "https://www.openstreetmap.org/node/6410407609",
+  "type": "restaurant",
+  "addr": "Tek Zgara e Tironës 2, Rruga e Kavajës, Tregu Çam, Njësia Bashkiake Nr. 10, Tirana, Bashkia Tiranë, Regiunea Tirana, 101"
+ },
+ "tymi": {
+  "q": "Tymi, Tiranë",
+  "lat": 41.328563,
+  "lon": 19.812475,
+  "name": "Tymi V. Reçi",
+  "osm": "https://www.openstreetmap.org/node/5629373824",
+  "type": "restaurant",
+  "addr": "Tymi V. Reçi, Rruga e Kavajës, Tregu Çam, Njësia Bashkiake Nr. 10, Tirana, Bashkia Tiranë, Regiunea Tirana, 1014, Albani"
+ },
+ "mrchicken": {
+  "q": "Mr. Chicken, Tiranë",
+  "lat": 41.319101,
+  "lon": 19.818491,
+  "name": "Mr. Chicken",
+  "osm": "https://www.openstreetmap.org/node/4631490290",
+  "type": "fast_food",
+  "addr": "Mr. Chicken, Rruga Abdyl Frashëri, Ish Merkata, Libri Universitar, Njësia Bashkiake Nr. 5, Tirana, Bashkia Tiranë, Regiu"
+ },
+ "someg": {
+  "q": "Someg, Tiranë",
+  "lat": 41.32076,
+  "lon": 19.802922,
+  "name": "Someg",
+  "osm": "https://www.openstreetmap.org/node/11548247469",
+  "type": "bakery",
+  "addr": "Someg, Rruga Viktor Eftimiu, Ish Zdruktharia, Vasil Shanto, Njësia Bashkiake Nr. 5, Tirana, Bashkia Tiranë, Regiunea Tir"
+ },
+ "mulliri": {
+  "q": "Mulliri i Vjetër, Tiranë",
+  "lat": 41.330795,
+  "lon": 19.820534,
+  "name": "Mulliri i Vjetër",
+  "osm": "https://www.openstreetmap.org/way/344257175",
+  "type": "cafe",
+  "addr": "Mulliri i Vjetër, Rruga e Barrikadave, Ish Stacioni i Trenit, Njësia Bashkiake Nr. 9, Tirana, Bashkia Tiranë, Regiunea T"
+ },
+ "bigmarket": {
+  "q": "Big Market, Tiranë",
+  "lat": 41.347604,
+  "lon": 19.859341,
+  "name": "Big Market",
+  "osm": "https://www.openstreetmap.org/node/6806133927",
+  "type": "supermarket",
+  "addr": "Big Market, Rruga Muhamed Deliu, Fresku, Qesarak (Linsa), Linzë, Dajt, Bashkia Tiranë, Regiunea Tirana, 1040, Albania"
+ },
+ "spar": {
+  "q": "SPAR, Tiranë",
+  "lat": 41.331955,
+  "lon": 19.792932,
+  "name": "Spar",
+  "osm": "https://www.openstreetmap.org/node/12052133534",
+  "type": "supermarket",
+  "addr": "Spar, Rruga Esat Mekuli, Ish Fusha e Aviacionit, Njësia Bashkiake Nr. 7, Tirana, Bashkia Tiranë, Regiunea Tirana, 1064, "
+ },
+ "embassy": {
+  "q": "Ambasada e Japonisë, Tiranë",
+  "lat": 41.327387,
+  "lon": 19.807954,
+  "name": "Ambasada e Japonisë",
+  "osm": "https://www.openstreetmap.org/node/5974456407",
+  "type": "diplomatic",
+  "addr": "Ambasada e Japonisë, 116, Rruga e Kavajës, 21 Dhjetori, Njësia Bashkiake Nr. 7, Tirana, Bashkia Tiranë, Regiunea Tirana,"
+ },
+ "airport": {
+  "q": "Aeroporti Ndërkombëtar i Tiranës Nënë Tereza",
+  "lat": 41.414025,
+  "lon": 19.719649,
+  "name": "Aeroporti Ndërkombëtar i Tiranës Nënë Tereza",
+  "osm": "https://www.openstreetmap.org/relation/20771162",
+  "type": "aerodrome",
+  "addr": "Aeroporti Ndërkombëtar i Tiranës Nënë Tereza, Rruga Regjimentit, Nikël, Bashkia Krujë, Regiunea Durrës, 1504, Albania"
+ },
+ "teg": {
+  "q": "Tirana East Gate",
+  "lat": 41.283132,
+  "lon": 19.857086,
+  "name": "TEG - Tirana East Gate",
+  "osm": "https://www.openstreetmap.org/way/293898197",
+  "type": "mall",
+  "addr": "TEG - Tirana East Gate, 7, Rruga Kabet, Lundër, Farkë, Bashkia Tiranë, Regiunea Tirana, 1045, Albania"
+ },
+ "tymikp": {
+  "q": "Tymi King Pils",
+  "lat": 41.328371,
+  "lon": 19.811339,
+  "name": "Tymi king pils",
+  "osm": "https://www.openstreetmap.org/node/6837133288",
+  "type": "restaurant",
+  "addr": "Tymi king pils, Rruga e Kavajës, Tregu Çam, Njësia Bashkiake Nr. 10, Tirana, Bashkia Tiranë, Regiunea Tirana, 1014, Alba"
+ },
+ "tradicional": {
+  "q": "Restorant Tradicional Tiranë",
+  "lat": 41.360386,
+  "lon": 19.771894,
+  "name": "Restorant Tradicional",
+  "osm": "https://www.openstreetmap.org/node/12085264947",
+  "type": "restaurant",
+  "addr": "Restorant Tradicional, Rruga Kastriotët, Njësia Bashkiake Nr. 11, Tirana, Bashkia Tiranë, Regiunea Tirana, 1024, Albania"
+ },
+ "someg2": {
+  "q": "Someg, Rruga Don Bosko",
+  "lat": 41.337606,
+  "lon": 19.80366,
+  "name": "Someg",
+  "osm": "https://www.openstreetmap.org/node/4603925344",
+  "type": "bakery",
+  "addr": "Someg, Rruga Don Bosko, Kompleksi Vizion, Don Bosko, Njësia Bashkiake Nr. 11, Tirana, Bashkia Tiranë, Regiunea Tirana, 1"
+ },
+ "quickbite": {
+  "q": "Quick Bite, Tiranë",
+  "lat": 41.335155,
+  "lon": 19.799012,
+  "name": "Quick Bite",
+  "osm": "https://www.openstreetmap.org/way/1173649307",
+  "type": "cafe",
+  "addr": "Quick Bite, Rruga Dritan Hoxha, Kompleksi Vizion, Zogu i Zi, Njësia Bashkiake Nr. 11, Tirana, Bashkia Tiranë, Regiunea T"
+ },
+ "artisti": {
+  "q": "Artisti, Tiranë",
+  "lat": 41.32354,
+  "lon": 19.824583,
+  "name": "Artisti",
+  "osm": "https://www.openstreetmap.org/node/4568794865",
+  "type": "cafe",
+  "addr": "Artisti, Rruga e Elbasanit, Qyteti Studenti, Njësia Bashkiake Nr. 2, Tirana, Bashkia Tiranë, Regiunea Tirana, 1010, Alba"
+ },
+ "panorama": {
+  "q": "Panorama, Krujë",
+  "lat": 41.510002,
+  "lon": 19.794065,
+  "name": "Panorama",
+  "osm": "https://www.openstreetmap.org/way/505076738",
+  "type": "hotel",
+  "addr": "Panorama, Kalasë, Krujë, Bashkia Krujë, Regiunea Durrës, 1501, Albania"
+ },
+ "kroi": {
+  "q": "Kroi, Krujë",
+  "lat": 41.510103,
+  "lon": 19.786744,
+  "name": "Kroi Subash",
+  "osm": "https://www.openstreetmap.org/way/173867193",
+  "type": "residential",
+  "addr": "Kroi Subash, Krujë, Bashkia Krujë, Regiunea Durrës, 1501, Albania"
+ }
+}
