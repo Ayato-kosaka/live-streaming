@@ -239,6 +239,7 @@ PAGES: dict[str, str] = {
     # 街のガイドブック（`content/guidebook/<国>-<街>.ts`。焼くのは `python/guidebook_bake.py`。#1228）
     "north-macedonia-skopje.ts": "スコピエのガイドブック（/travel/north-macedonia/skopje）の、行った所の場面・一言・あやとの1日の額のリンク",
     "albania-tirana.ts": "ティラナのガイドブック（/travel/albania/tirana）の、行った所の場面・一言のリンク",
+    "armenia-yerevan.ts": "エレバンのガイドブック（/travel/armenia/yerevan）の、行った所の場面・一言のリンク",
     # 手で組んだ街のガイドブックの「行った」だけ（焼くのは `python/guidebook_went.py`）
     "bulgaria-sofia-went.ts": "ソフィアのガイドブック（/travel/bulgaria/sofia）の、行った所の場面・一言のリンク",
     # 旅のガイドの記事（`content/travel/<国>/<街>-<話>.ts`。焼くのは `python/guide_article.py`）
@@ -282,10 +283,10 @@ PAGES: dict[str, str] = {
 # 街のガイドも押し出す側。一言も額も「押せば、その場面で本人がそう言っている」が証拠で、
 # 行き先はその1本しかない
 FRONT = ("projects.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
-         "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "albania-tirana.ts", "bulgaria-sofia-went.ts",
+         "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "albania-tirana.ts", "armenia-yerevan.ts", "bulgaria-sofia-went.ts",
          "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts",
          "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts",
-         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts", "tirana-walk.ts", "tirana-sufllaqe.ts", "tirana-mosque.ts", "tirana-gjelltore.ts", "tirana-airport.ts", "tirana-hostel.ts", "yerevan-sevan.ts")
+         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts", "tirana-walk.ts", "tirana-sufllaqe.ts", "tirana-mosque.ts", "tirana-gjelltore.ts", "tirana-airport.ts", "tirana-hostel.ts", "yerevan-sevan.ts", "yerevan-bus.ts", "yerevan-lake.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、
