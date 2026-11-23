@@ -79,11 +79,11 @@ export type VanInternals = {
 const DEG = Math.PI / 180;
 /** 撮る向き: [方位°, 仰角°, 収まりの余白]。方位 0 が真正面、90 が窓口の横 */
 export const VIEWS: Record<string, [number, number, number]> = {
-  day: [38, 14, 0.8],
-  open: [56, 12, 0.86],
-  dusk: [50, 12, 0.86],
-  peek: [-90, 54, 0.86],
-  front: [38, 14, 0.8],
+  day: [38, 14, 0.88],
+  open: [56, 12, 0.9],
+  dusk: [50, 12, 0.9],
+  peek: [-90, 54, 0.9],
+  front: [38, 14, 0.86],
   side: [90, 4, 0.86],
 };
 

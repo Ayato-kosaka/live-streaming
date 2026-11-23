@@ -12,6 +12,7 @@
  *   撮るための字は出さない
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { DEFAULT_ORDER, moved } from "./van3d/layout";
 import type { VanHandle, VanLook, VanState } from "./van3d/scene";
 import "./van3d/stage.css";
@@ -65,7 +66,7 @@ export default function VanStage({ looks, labels, first }: { looks: VanStageLook
   const [order, setOrder] = useState<string[]>(DEFAULT_ORDER);
   const [mode, setMode] = useState<Mode>("still");
   const [noGl, setNoGl] = useState(false);
-  const [still, setStill] = useState<null | { w: number; h: number }>(null);
+  const [still, setStill] = useState<null | { w: number; h: number; view: string }>(null);
   const box = useRef<HTMLDivElement>(null);
   const holder = useRef<HTMLDivElement>(null);
   const handle = useRef<VanHandle | null>(null);
@@ -167,10 +168,13 @@ export default function VanStage({ looks, labels, first }: { looks: VanStageLook
     setOpen(s === "open" || s === "dusk");
     setDusk(s === "dusk");
     setPeek(s === "peek");
-    setStill({ w: Number(q.get("w")) || 800, h: Number(q.get("h")) || 600 });
-    state.current = { look: looks.some((l) => l.id === id) ? id : state.current.look, open: s === "open" || s === "dusk", dusk: s === "dusk", peek: s === "peek", order: DEFAULT_ORDER };
-    requestAnimationFrame(() => void activate({ view: q.get("view") ?? s }));
-  }, [looks, activate]);
+    setStill({ w: Number(q.get("w")) || 800, h: Number(q.get("h")) || 600, view: q.get("view") ?? s });
+  }, [looks]);
+
+  // 撮るときは、舞台を body の直下へ出してから読む（祖先の content-visibility や contain に巻き込まれない）
+  useEffect(() => {
+    if (still) void activate({ view: still.view });
+  }, [still, activate]);
 
   // 近づいたら読む・離れたら捨てる
   useEffect(() => {
@@ -213,7 +217,7 @@ export default function VanStage({ looks, labels, first }: { looks: VanStageLook
   if (noGl && !anyStill) return null;
 
   const live = mode === "live";
-  return (
+  const stage = (
     <div
       className={`kc-van${still ? " is-shot" : ""}`}
       data-mode={mode}
@@ -279,4 +283,5 @@ export default function VanStage({ looks, labels, first }: { looks: VanStageLook
       )}
     </div>
   );
+  return still ? createPortal(stage, document.body) : stage;
 }
