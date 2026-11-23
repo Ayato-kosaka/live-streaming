@@ -579,8 +579,9 @@ def extract_cases() -> dict[str, bool]:
                           {"kind": "price", "place": {"name": country_n, "heard": []}},
                           {"kind": "place", "place": {"name": city_n, "heard": []}},
                           {"kind": "food", "place": {"name": "広場の屋台", "heard": []}},
-                          {"kind": "quote", "about": "place", "place": {"name": city_n, "heard": []}}])
-        got[CITYPLACE] = ([("place" in x) for x in back] == [False, False, True, True, False]
+                          {"kind": "quote", "about": "place", "place": {"name": city_n, "heard": []}},
+                          {"kind": "move", "place": {"name": f"{country_n}・{city_n}", "heard": []}}])
+        got[CITYPLACE] = ([("place" in x) for x in back] == [False, False, True, True, False, False]
                           and back[4].get("about") == "fact")
         masked = ge.mask_text("マイキー・歌（UTA）・まこ", (set(), {"uta"}))
         got[BRACKET] = "歌(〇〇)" in masked and "uta" not in masked.casefold()
