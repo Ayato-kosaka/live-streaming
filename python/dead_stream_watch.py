@@ -267,6 +267,10 @@ PAGES: dict[str, str] = {
     "yerevan-sevan.ts": "セヴァン湖に行ってきたの記事（/travel/armenia/yerevan/sevan）の、一言と場面のリンク",
     "yerevan-bus.ts": "エレバンの市バスに乗ってきたの記事（/travel/armenia/yerevan/bus）の、一言と場面のリンク",
     "yerevan-lake.ts": "エレバン湖まで歩いてきたの記事（/travel/armenia/yerevan/lake）の、一言と場面のリンク",
+    "yerevan-cascade.ts": "カスケードの大階段を上ってきたの記事（/travel/armenia/yerevan/cascade）の、一言と場面のリンク",
+    "yerevan-memorial.ts": "ジェノサイド記念碑まで歩いてきたの記事（/travel/armenia/yerevan/memorial）の、一言と場面のリンク",
+    "yerevan-bakery.ts": "エレバンのパン屋でガタを食べてきたの記事（/travel/armenia/yerevan/bakery）の、一言と場面のリンク",
+    "yerevan-market.ts": "エレバンの市場を歩いてきたの記事（/travel/armenia/yerevan/market）の、一言と場面のリンク",
     "sofia-yogurt.ts": "ソフィアで本場のヨーグルトを探してきたの記事（/travel/bulgaria/sofia/yogurt）の、一言と場面のリンク",
     # 国の面の「この国であったこと」に添える1〜2行（焼くのは `python/stream_digest.py`）
     "streamDigest.ts": "配信1本の1〜2行（/travel/<国> の「この国であったこと」）",
@@ -286,7 +290,8 @@ FRONT = ("projects.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
          "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "albania-tirana.ts", "armenia-yerevan.ts", "bulgaria-sofia-went.ts",
          "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts",
          "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts",
-         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts", "tirana-walk.ts", "tirana-sufllaqe.ts", "tirana-mosque.ts", "tirana-gjelltore.ts", "tirana-airport.ts", "tirana-hostel.ts", "yerevan-sevan.ts", "yerevan-bus.ts", "yerevan-lake.ts")
+         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts", "tirana-walk.ts", "tirana-sufllaqe.ts", "tirana-mosque.ts", "tirana-gjelltore.ts", "tirana-airport.ts", "tirana-hostel.ts", "yerevan-sevan.ts", "yerevan-bus.ts", "yerevan-lake.ts",
+         "yerevan-cascade.ts", "yerevan-memorial.ts", "yerevan-bakery.ts", "yerevan-market.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、

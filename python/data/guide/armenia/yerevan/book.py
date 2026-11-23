@@ -557,8 +557,9 @@ unknown = [
 # 結ばなかったもの: 緑のハーブのピザ（04-22・04-26。ジンガロフ・ハツらしいが名前を言っていない）・串のバーベキュー（04-26。
 # ホロヴァツかキャバブか言っていない）・シャウルマの品書き（04-22 のカード。食べたかを言っていない）・
 # 広場の警察（05-19。どの広場かを言っていない）・中心地のカジノ（05-17。うろ覚えと言った）
-# 配信の一覧（cityStreams.ts）に在るエレバンの回は8本だけ（滞在の街が6つあるので、題名に街の名前がある回だけが寄る）。
-# 窓の場面は YouTube へ直に繋ぐので一覧に無い回でもよいが、記事の一言と場面は一覧に在る回からしか引けない
+# 配信の一覧（cityStreams.ts）のエレバンの回は、#1402 で題名だけでなく滞在の回が寄るようになり、5本から28本になった。
+# 記事の一言と場面は一覧に在る回からしか引けないので、それまで書けなかったカスケード・記念碑・パン屋・市場を記事にした
+# （ラフマジョは配信1本で話が窓に収まるので、窓の肉付けだけ）
 
 import json as _json
 
@@ -620,7 +621,7 @@ went(eat_items, "kebab", ["o7OIStvxT0Q@4440#fact", "o7OIStvxT0Q@4530#food", "o7O
                           "o7OIStvxT0Q@5130#food", "o7OIStvxT0Q@5170#food"], "o7OIStvxT0Q@4870#quote")
 went(eat_items, "lavash", ["k-3fN6Ynsok@5200#food", "gHTWAMKCITo@2100#food", f"{LAST}@3300#quote", "1KWNenbPR5A@2820#fact"],
      f"{LAST}@3300#quote")
-went(eat_items, "lahmajo", ["j_yInDStbKg@1000#food", "j_yInDStbKg@3180#place", "j_yInDStbKg@3330#food", "j_yInDStbKg@3450#food",
+went(eat_items, "lahmajo", ["j_yInDStbKg@1000#food", "j_yInDStbKg@1020#caution", "j_yInDStbKg@3100#caution", "j_yInDStbKg@3180#place", "j_yInDStbKg@3330#food", "j_yInDStbKg@3450#food",
                             "j_yInDStbKg@6030#caution", "j_yInDStbKg@6090#food"], "j_yInDStbKg@3450#food")
 went(eat_items, "khachapuri", ["k-3fN6Ynsok@3365#place", "k-3fN6Ynsok@3695#price"], "k-3fN6Ynsok@3695#price")
 went(eat_items, "gata", ["7R7xote6efA@6750#place", "7R7xote6efA@7020#price", "7R7xote6efA@7110#food", "XE0lZY5fzEQ@4380#food",
@@ -706,17 +707,16 @@ compose = {
     },
     "say": {"see": "cascade", "todo": "sevan", "eat": "kebab"},
     "items": {
-        "see/cascade": {"story": {"text": "夕日まで20分しかなく、大階段を爆速で登りました。階段に座る人たちは、まるで無限映画館。"
-                                          "でも、みんなが見ている方向は、夕日の沈む方向ではありませんでした。"
-                                          "最後の日にもう一度行くと、エスカレーターはメンテナンスで止まっていました。",
-                                  "facts": ["5cWmE-KqHLA@19830#move", "5cWmE-KqHLA@19950#quote", "5cWmE-KqHLA@20010#caution",
-                                            "YFxoJhKOasQ@7170#caution"]}},
+        "see/cascade": {"story": {"text": "夕日まで20分しかなく、大階段を爆速で登りました。階段に座る人たちが見ていたのは、夕日の沈む方向ではありませんでした。"
+                                          "最後にもう一度行った日は、エスカレーターで上へ。",
+                                  "facts": ["5cWmE-KqHLA@19830#move", "5cWmE-KqHLA@20010#caution", "YFxoJhKOasQ@5220#move",
+                                            "YFxoJhKOasQ@6420#move"]},
+                        "article": "cascade"},
         "see/genocide": {"card": "hill",
-                         "story": {"text": "記念碑の44mの塔は民族の復活、12の石板は失われた土地を表すそうです。"
-                                           "犠牲者は100万〜150万人とされると聞いて、えげつないと感じました。"
-                                           "丘の上からは、街の建物の向こうにアララト山が見えました。別の日の夜中にも、散歩で夜景を見に行きました。",
-                                   "facts": ["2y4IbYu-ZeI@8960#fact", "2y4IbYu-ZeI@9060#fact", "2y4IbYu-ZeI@9120#quote", "2y4IbYu-ZeI@9360#place",
-                                             "2u4HfAvQdsI@1290#place"]}},
+                         "story": {"text": "街から坂道や階段を登って歩きました。記念碑の44mの塔は民族の復活、12の石板は失われた土地を表すそうです。"
+                                           "犠牲者は100万〜150万人とされると聞いて、えげつないと感じました。",
+                                   "facts": ["2y4IbYu-ZeI@2160#move", "2y4IbYu-ZeI@8960#fact", "2y4IbYu-ZeI@9060#fact", "2y4IbYu-ZeI@9120#quote"]},
+                         "article": "memorial"},
         "see/opera": {"story": {"text": "オペラ座の前の広場では、スティッチのダーツに当てると景品がもらえる遊びをやっていました。"
                                         "遠くから投げたダーツが外れて飛んでくるのが怖くて、ベンチの端でサングラスをして備えていました。",
                                 "facts": ["2u4HfAvQdsI@200#place", "2u4HfAvQdsI@270#caution"]}},
@@ -730,32 +730,38 @@ compose = {
                                              "ふもとは、お祭りみたいなにぎわいでした。",
                                      "facts": ["haHAczqMooM@15780#place", "JJdPN0ozwZI@1110#place", "JJdPN0ozwZI@1230#fact", "haHAczqMooM@14880#fact"]},
                            "article": "sevan"},
-        "todo/cascade": {"story": {"text": "上の段からは、富士山のような山が見えました。最後の日は、次の日の大事な移動に備えて、エスカレーターで上へ。"
+        "todo/cascade": {"story": {"text": "上の段からは、富士山のような山が見えました。もう一度行った日は、次の日の大事な移動に備えて、エスカレーターで上へ。"
                                            "エスカレーターでも、上まで結構長かったです。",
-                                   "facts": ["5cWmE-KqHLA@19980#fact", "YFxoJhKOasQ@6420#move", "YFxoJhKOasQ@7860#caution"]}},
+                                   "facts": ["5cWmE-KqHLA@19980#fact", "YFxoJhKOasQ@6420#move", "YFxoJhKOasQ@7860#caution"]},
+                         "article": "cascade"},
         "todo/sevan": {"story": {"text": "市バスとミニバスを乗り継ぎ、最後はヒッチハイクで湖へ。対岸が見えないほど大きな湖で、ほとりの店で1,200円の魚料理を食べました。",
                                  "facts": ["haHAczqMooM@1800#move", "haHAczqMooM@3540#price", "haHAczqMooM@8880#move", "haHAczqMooM@9870#fact",
                                            "JJdPN0ozwZI@6480#price"]},
                        "article": "sevan"},
         "eat/kebab": {"story": {"text": "マーケット街の串焼き屋で、チキンの串を温めてもらいました。中身はつくね・ネギ・コリアンダーで、"
                                         "トルティーヤの上につくね串を敷いたような味。串焼きとトルティーヤで200円ぐらいでした。",
-                                "facts": ["o7OIStvxT0Q@4530#food", "o7OIStvxT0Q@5130#food", "o7OIStvxT0Q@5170#food", "o7OIStvxT0Q@4890#price"]}},
+                                "facts": ["o7OIStvxT0Q@4530#food", "o7OIStvxT0Q@5130#food", "o7OIStvxT0Q@5170#food", "o7OIStvxT0Q@4890#price"]},
+                      "article": "market"},
         "eat/lavash": {"story": {"text": "スーパーでは、ラヴァシュを1枚ずつ量り売りで買えます。パンがおいしくて、毎日のようにスーパーで買って食べていました。"
-                                         "街のパン屋では、ラヴァシュを機械で伸ばして焼いていました。",
-                                 "facts": ["k-3fN6Ynsok@5200#food", "YFxoJhKOasQ@3300#quote", "gHTWAMKCITo@2100#food"]}},
-        "eat/lahmajo": {"story": {"text": "ラフマジュンは、アルメニアのソウルフード。裏路地の奥の専門店で、まずザクロのソースを使ったアラビックを頼みました。"
+                                         "街のパン屋では、ラヴァシュを機械を使って伸ばして焼いていました。",
+                                 "facts": ["k-3fN6Ynsok@5200#food", "YFxoJhKOasQ@3300#quote", "gHTWAMKCITo@2100#food"]},
+                       "article": "bakery"},
+        "eat/lahmajo": {"story": {"text": "ラフマジュンは、アルメニアのソウルフード。前に食べようとしたときは、売り切れでした。"
+                                          "裏路地の奥の専門店は、探すのに迷いましたが、まずザクロのソースを使ったアラビックを頼みました。"
                                           "2枚でお腹いっぱいになり、閉店時間を過ぎて店から追い出されました。",
-                                  "facts": ["j_yInDStbKg@1000#food", "j_yInDStbKg@3180#place", "j_yInDStbKg@3330#food", "j_yInDStbKg@3450#food",
-                                            "j_yInDStbKg@6090#food", "j_yInDStbKg@6030#caution"]}},
+                                  "facts": ["j_yInDStbKg@1000#food", "j_yInDStbKg@1020#caution", "j_yInDStbKg@3100#caution", "j_yInDStbKg@3180#place",
+                                            "j_yInDStbKg@3330#food", "j_yInDStbKg@3450#food", "j_yInDStbKg@6090#food", "j_yInDStbKg@6030#caution"]}},
         "eat/khachapuri": {"story": {"text": "中東寄りの店ザ・ピザでは、品書きのアジャリ・ハチャプリが480円。ジョージアより安かったです。",
                                      "facts": ["k-3fN6Ynsok@3365#place", "k-3fN6Ynsok@3695#price"]}},
         "eat/gata": {"story": {"text": "フードマーケットのパン屋で買ったガタは100円。パイ生地に、カスタードのような中身が入っていました。"
                                        "お気に入りのパン屋のガタは、固くてずっしり重く、中に砂糖菓子のようなものが入っていて、おいしかったです。",
-                               "facts": ["7R7xote6efA@6750#place", "7R7xote6efA@7020#price", "7R7xote6efA@7110#food", "XE0lZY5fzEQ@4950#food"]}},
+                               "facts": ["7R7xote6efA@6750#place", "7R7xote6efA@7020#price", "7R7xote6efA@7110#food", "XE0lZY5fzEQ@4950#food"]},
+                     "article": "bakery"},
         "eat/apricot": {"story": {"text": "あんずを初めて食べました。うまかったです。", "facts": ["74c2AutI7PY@4950#food"]}},
         "buy/driedfruit": {"story": {"text": "エレバンマーケットで干し柿を買おうとしたら、果物をどんどん詰められて、所持金を全部持っていかれました。"
                                              "干し柿は3つで200円。硬めで、思ったより悪くなかったです。",
-                                     "facts": ["74c2AutI7PY@3960#place", "74c2AutI7PY@4530#caution", "74c2AutI7PY@4650#price", "74c2AutI7PY@4680#food"]}},
+                                     "facts": ["74c2AutI7PY@3960#place", "74c2AutI7PY@4530#caution", "74c2AutI7PY@4650#price", "74c2AutI7PY@4680#food"]},
+                           "article": "market"},
         "guide/transit": {"story": {"text": "切符は券売機テルセルで買う形で、バスでは現金もカードも使えませんでした。待っていた49番はなかなか来ず、降りる場所にも迷いました。",
                                     "facts": ["ey_pIoeVo_8@600#place", "ey_pIoeVo_8@690#move", "ey_pIoeVo_8@2310#caution", "ey_pIoeVo_8@4050#caution"]},
                           "article": "bus"},

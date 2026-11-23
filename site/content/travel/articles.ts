@@ -24,6 +24,10 @@ import { ARTICLE as TIRANA_HOSTEL } from "./albania/tirana-hostel";
 import { ARTICLE as YEREVAN_SEVAN } from "./armenia/yerevan-sevan";
 import { ARTICLE as YEREVAN_BUS } from "./armenia/yerevan-bus";
 import { ARTICLE as YEREVAN_LAKE } from "./armenia/yerevan-lake";
+import { ARTICLE as YEREVAN_CASCADE } from "./armenia/yerevan-cascade";
+import { ARTICLE as YEREVAN_MEMORIAL } from "./armenia/yerevan-memorial";
+import { ARTICLE as YEREVAN_BAKERY } from "./armenia/yerevan-bakery";
+import { ARTICLE as YEREVAN_MARKET } from "./armenia/yerevan-market";
 
 /**
  * 記事（`/travel/<国>/<街>/<話>`）の中身（焼いたもの）の名簿。鍵は `<国>/<街>/<話>`。
@@ -58,6 +62,10 @@ const ARTICLES: Record<string, GuideArticle> = {
   "armenia/yerevan/sevan": YEREVAN_SEVAN,
   "armenia/yerevan/bus": YEREVAN_BUS,
   "armenia/yerevan/lake": YEREVAN_LAKE,
+  "armenia/yerevan/cascade": YEREVAN_CASCADE,
+  "armenia/yerevan/memorial": YEREVAN_MEMORIAL,
+  "armenia/yerevan/bakery": YEREVAN_BAKERY,
+  "armenia/yerevan/market": YEREVAN_MARKET,
 };
 
 /** 記事の中身。**無ければ書き出しを止める**（名簿に在るのに中身の無い記事を黙って出さない） */
