@@ -264,7 +264,8 @@ REPO_CASES: list[dict] = [
     # 比較をひっくり返す `py` の当てかたでは「飛ばしかたを広げすぎた」形を当てていない（こちらを書くと `py` の代わりにこれが当たる）。
     # 外の事実の箱（`data-src`）ごと飛ばすと、同じ箱の中の案内鳥の地の文の「おすすめ」が素通りする。その形そのものを置く
     # 札が自分で期間を言う「いま」（表紙の［いまここ］。#1368）は、行き先ではなく札の期間で決める（2026-11-23）。
-    # 期間の読みを甘くする形（着く前の日にも「いま」と言える）と、期間のある札の判定を素通しにする形を置く。
+    # 期間の始まりを見なくする形（着く前の日にも「いま」と言える）を置く。**1本の見張りに当てられるのは1件**
+    # （`plan` は `watch` で引く）なので、終わりの側（`span.to < today`）は対照「終わった期間の「いま」→ 嘘」が持つ。
     # 引数を渡せないので `FIXONLY=1` で対照だけを回す（本番へは見に行かない）
     {"watch": "tools/sprites/navtruth.mjs",
      "env": {"FIXONLY": "1"},
@@ -272,12 +273,6 @@ REPO_CASES: list[dict] = [
      "old": "  if (span.from && span.from > today) return false;",
      "new": "  if (span.from && span.from > today) return true;",
      "why": "札の期間の始まりを見なくする（着く前の日の［いまここ］を本当と言う）"},
-    {"watch": "tools/sprites/navtruth.mjs",
-     "env": {"FIXONLY": "1"},
-     "file": "tools/sprites/navtruth.mjs",
-     "old": "  if (span.to && span.to < today) return false;",
-     "new": "  if (span.to && span.to < today) return true;",
-     "why": "札の期間の終わりを見なくする（終わった期間の「いま」を本当と言う）"},
     {"watch": "python/guide_watch_selftest.py",
      "file": "python/guide_watch.py",
      "old": '        return ext_title(n) and "srctitle" not in BREAK',
