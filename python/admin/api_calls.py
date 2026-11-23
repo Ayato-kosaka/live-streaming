@@ -48,8 +48,12 @@ KNOWN = {"themes", "heart", "status", "videos", "archive", "pic", "reply"}
 
 
 def shape(path: str) -> str:
-    """id を `:id` に畳んだ口の形。`/island-api` は落とす。"""
-    p = re.sub(r"^/island-api", "", path) or "/"
+    """id を `:id` に畳んだ口の形。頭の `/islandApi` と `/island-api` は落とす。
+
+    Hosting から回ってきた要求は、Cloud Run には `/islandApi/island-api/…` で
+    届く（2026-11-23 の下見で確かめた）。落とさないと口の頭が `islandApi` に
+    なって、数える口に1件も当たらない（はじめの1回はそれで「0通り」と出た）。"""
+    p = re.sub(r"^(/islandApi)?(/island-api)?", "", path) or "/"
     segs = []
     for i, s in enumerate(p.split("/")):
         if i >= 2 and s not in KNOWN and ID_SEG.match(s):
