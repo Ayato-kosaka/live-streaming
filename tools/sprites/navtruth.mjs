@@ -47,6 +47,20 @@
  * 1件あるだけで「もう行ってきた」の棚を赤くすると、終わったものを並べた面が
  * 毎回落ちる。**今日は、どちらの言い方でも嘘にしない。**
  *
+ * ## 札が自分で期間を言うとき（「いま ここ ルーマニア 11月21日から」）
+ *
+ * 表紙の［いまここ］（`components/live/NextUp.tsx`。#1368）は、滞在の行から
+ * **札の字と期間を作り**、押した先は**その街の案内の面**（`/travel/romania/bucharest`）。
+ * 案内の面は時制を持たない本なので、そこに今日の日付が無いのは嘘ではない
+ * （拾える日付は「確かめた日」ばかりで、今日が載るかは偶然。11-22 は通り、11-23 に落ちた）。
+ * **「いま」が本当かは、札が言っている期間そのもので決まる。**
+ *
+ * だから「いま」の札が `M月D日から`（`まで` があればその日まで）を持つときは、
+ * **その期間に今日が入っているか**で判定し、行き先の日付は見ない。
+ * 始まりが今日より後・終わりが今日より前なら嘘。期間を持たない「いま」の札は、
+ * いままでどおり行き先で見る。［いまここ］が**その日に居るはずの国か**は
+ * `upnext.mjs` が時計を動かして見ている。
+ *
  * 日付は行き先の面から拾う（`YYYY-MM-DD` と `M/D` と `YYYY年M月D日`）。
  * **拾えなかった面は「嘘」と言わない。** 判定できないものを赤にすると、
  * 道具を信じなくなる（`docs/island-misses.md` #72）。`判定できず` に出す。
@@ -64,7 +78,8 @@ import { fileURLToPath } from "node:url";
 import { SITE_ORIGIN } from "./origin.mjs";
 
 const BASE = process.env.BASE || SITE_ORIGIN;
-const SELFTEST = process.argv.includes("--selftest");
+/* `FIXONLY=1` でも対照だけ（`python/mutation_drill.py` は引数を渡せない。`reachwatch.mjs` と同じ口） */
+const SELFTEST = process.argv.includes("--selftest") || process.env.FIXONLY === "1";
 /**
  * 今日（JST）。行き先の日付と見比べる基準。
  *
@@ -133,6 +148,35 @@ export function datesIn(text, today = TODAY) {
     out.add(`${year}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`);
   }
   return [...out].sort();
+}
+
+/**
+ * 札が自分で言っている期間（「11月21日から」「11月21日から 11月30日まで」）。無ければ null。
+ *
+ * **`datesIn` に「M月D日」を足さない。** 行き先の面の読みかたが変わると、ほかの札の判定が
+ * 黙って動く。ここは「いま」の札の字だけを読む。年の無い日は今年として読み、
+ * 半年より先になるなら去年にする（年をまたいだ滞在の「12月28日から」を1月に読むため）。
+ */
+export function spanOf(label, today = TODAY) {
+  const ymd = (y, m, d) => `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  const at = (m) => {
+    if (m[1]) return ymd(m[1], m[2], m[3]);
+    let y = Number(today.slice(0, 4));
+    if (Date.parse(ymd(y, m[2], m[3])) - Date.parse(today) > 183 * 86400_000) y -= 1;
+    return ymd(y, m[2], m[3]);
+  };
+  const DAY = String.raw`(?:(20\d\d)年\s*)?(\d{1,2})月\s*(\d{1,2})日\s*`;
+  const from = label.match(new RegExp(DAY + "から"));
+  const to = label.match(new RegExp(DAY + "まで"));
+  if (!from && !to) return null;
+  return { from: from ? at(from) : "", to: to ? at(to) : "" };
+}
+
+/** 期間を言う「いま」の札が、今日に対して本当か */
+export function judgeSpan(span, today = TODAY) {
+  if (span.from && span.from > today) return false;
+  if (span.to && span.to < today) return false;
+  return true;
 }
 
 /** その札が、拾った日付たちに対して正しいか。判定できなければ null。 */
@@ -235,6 +279,20 @@ function selftest() {
   ck("行ってきた＋今日だけ → 赤くしない", judge("past", [T], T), true);
   ck("日付が無ければ判定しない", judge("future", [], T), null);
 
+  /* **札が自分で期間を言う「いま」**（表紙の［いまここ］。#1368）。行き先（街の案内）ではなく
+     札の期間で決める。両側から当てる——今日が入れば通り、入らなければ落ちる */
+  const HERE = "いま ここ ルーマニア 11月21日 から 「東欧のパリ」と称えられた街。";
+  ck("［いまここ］の期間を読む", spanOf(HERE, "2026-11-23"), { from: "2026-11-21", to: "" });
+  ck("期間を言わない「いま」は null（行き先で見る）", spanOf("いまどこ", T), null);
+  ck("着いた日の［いまここ］→ 正", judgeSpan(spanOf(HERE, "2026-11-21"), "2026-11-21"), true);
+  ck("着いて2日の［いまここ］→ 正", judgeSpan(spanOf(HERE, "2026-11-23"), "2026-11-23"), true);
+  ck("着く前の日の［いまここ］→ 嘘", judgeSpan(spanOf(HERE, "2026-11-20"), "2026-11-20"), false);
+  ck("終わった期間の「いま」→ 嘘",
+    judgeSpan(spanOf("いま 9月1日から 9月10日まで", "2026-09-15"), "2026-09-15"), false);
+  ck("年をまたいだ［いまここ］→ 去年の12月として読む", spanOf("いま ここ 12月28日から", "2027-01-05"),
+    { from: "2026-12-28", to: "" });
+  ck("年つきの期間も読む", spanOf("いま 2026年11月21日から", "2026-11-23"), { from: "2026-11-21", to: "" });
+
   for (const l of ok) console.log("  ○", l);
   for (const l of ng) console.log("  ×", l);
   console.log(`対照 ${ok.length + ng.length}件中 ${ok.length}件通った`);
@@ -327,6 +385,13 @@ async function main() {
       const want = tenseOf(label);
       if (!want) continue;
       checked++;
+      const span = want === "now" ? spanOf(label) : null;
+      if (span) {
+        if (!judgeSpan(span)) {
+          lies.push(`「${label}」→ ${href}  要る: 札の期間（${span.from || "…"}〜${span.to || "…"}）に今日 ${TODAY} が入ること`);
+        }
+        continue;
+      }
       if (text == null) { unknown.push(`${label} → ${href}（面を見ていない）`); continue; }
       const dates = datesIn(text);
       const v = judge(want, dates);

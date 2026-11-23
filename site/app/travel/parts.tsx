@@ -249,6 +249,8 @@ export type TripRow = {
   en?: string;
   /** その旅の中の滞在（着いた順）。先の日付の滞在も入っている（出すかどうかは今日と見比べて決める） */
   stays: { from: string; to: string }[];
+  /** 歩き終わった国（国の表 `COUNTRIES` に居る）。`content/walked.ts` の `known` と同じ集合 */
+  done: boolean;
   /** 行った街。分からない国では空 */
   towns: string[];
   /** その国の面。**持たない国もある**ので、無ければ空（押せない札にする） */
@@ -303,10 +305,13 @@ export function TripList({ trips }: { trips: TripGroup[] }) {
     setNow(chapterNow(t).slug);
   }, []);
 
-  /** 今日までに入った滞在だけを残した国。1つも残らない国は出さない */
+  /** 今日までに入った滞在だけを残した国。1つも残らない国は出さない。
+      **今日で切るのは、歩いている最中の国だけ。** 歩き終わった国は事実なので、日付で消さない——
+      数の式（`countriesWalked`）も島の札（`chapterCountries`）もそう数えている。ここだけ全部の国を今日で
+      切っていたので、時計を戻すと年表の合計だけが 18〜25 に割れた（`docs/island-misses.md` #137 の決めごと2） */
   const seen = (rows: TripRow[]) =>
     rows.flatMap((r) => {
-      const stays = r.stays.filter((s) => s.from <= day);
+      const stays = r.done ? r.stays : r.stays.filter((s) => s.from <= day);
       return stays.length ? [{ ...r, stays }] : [];
     });
   const groups = trips
