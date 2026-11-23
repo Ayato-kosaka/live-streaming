@@ -667,8 +667,8 @@ def check_page(key: str, page: str, rows: list[dict], units: dict, outside: set[
 # ---------------------------------------------------------------- 回す
 
 def keys(scripts: Path = SCRIPTS) -> list[str]:
-    """材料（`<国>/<街>/guidebook.json`）のある街。**前のハブの台本（`<国>/<街>.json`）では探さない**——面はもう焼いていない"""
-    return sorted(f"{p.parent.parent.name}/{p.parent.name}" for p in scripts.glob("*/*/guidebook.json"))
+    """材料（`<国>/<街>/guidebook.json`）のある街と、手で組んだ街（`HAND`。名指ししないと見張られなかった）。**前のハブの台本（`<国>/<街>.json`）では探さない**——面はもう焼いていない"""
+    return sorted({f"{p.parent.parent.name}/{p.parent.name}" for p in scripts.glob("*/*/guidebook.json")} | set(HAND))
 
 
 #: 手で組んだ街（guidebook.json を持たない街）の、出どころつきの材料。ソフィアは焼く道（guidebook.json）に乗る前に

@@ -779,10 +779,10 @@
    "roman": "varena tsarevitsa",
    "kana": "ヴァレナ・ツァレヴィツァ",
    "rank": 3,
-   "what": "ゆでたとうもろこし（ヴァレナ＝ゆでた）を紙コップに入れて売る屋台。ソフィアの街角に出ていて、いつも熱い。秋から春はこれと、焼きかぼちゃ（печена тиква）が街の風物。",
-   "where": "市内の通りの屋台。焼きかぼちゃは、聖セドモチスレニツィ教会脇のグラフ・イグナティエフ通りの小さな市場が定番とされる。",
-   "price": "1〜2ユーロ（約180〜350円）",
-   "src": "https://www.theculturetrip.com/europe/bulgaria/articles/street-foods-you-should-try-in-sofia"
+   "what": "とうもろこしを1本まるごとゆでるか焼いて、バターと塩で食べる（ヴァレナ＝ゆでた）。小さな屋台車で売る、ソフィアの夏の通りの食べもの。",
+   "where": "6〜9月に通りに出る屋台車。秋になると、すっかり見かけなくなる。",
+   "price": "1本1〜2ユーロ（約180〜350円）",
+   "src": "https://www.sofia-escape.com/guides/banitsa-and-street-food/"
   }
  ],
  "buy": [
@@ -1028,6 +1028,7 @@
  "seen": {
   "https://3seaseurope.com/bulgarians-shake-nod-heads/": "2026-11-23",
   "https://allinmap.app/en/city-guides/free-attractions-sofia": "2026-11-23",
+  "https://allinmap.app/en/city-guides/free-things-sofia": "2026-11-23",
   "https://bg.wikipedia.org/wiki/%D0%90%D0%B9%D1%80%D1%8F%D0%BD": "2026-11-23",
   "https://bg.wikipedia.org/wiki/%D0%91%D0%B0%D0%BD%D0%B8%D1%86%D0%B0": "2026-11-23",
   "https://bg.wikipedia.org/wiki/%D0%91%D0%BE%D0%B1_%D1%87%D0%BE%D1%80%D0%B1%D0%B0": "2026-11-23",
@@ -1100,6 +1101,7 @@
   "https://www.openstreetmap.org/?mlat=42.696398&mlon=23.324578": "2026-11-23",
   "https://www.openstreetmap.org/?mlat=42.698457&mlon=23.322083": "2026-11-23",
   "https://www.rexby.com/planinkabg/t/things-to-know-before-visiting-bulgaria-1": "2026-11-23",
+  "https://www.sofia-escape.com/guides/banitsa-and-street-food/": "2026-11-23",
   "https://www.sofiasynagogue.com/en/events/a-new-cultural-experience-in-the-heart-of-sofia-interactive-audio-guide-at-the-sofia-synagogue/": "2026-11-23",
   "https://www.wikidata.org/wiki/Q1766560": "2026-11-23",
   "https://www.wikidata.org/wiki/Q207945": "2026-11-23",
