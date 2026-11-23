@@ -11,7 +11,7 @@
 
 | 足 | 確かめること |
 | --- | --- |
-| `shape` | 決まりの形の JSON は通り、鍵が無い・enum に無い字・決まりに無い鍵は崩れとして出す |
+| `shape` | 決まりの形の JSON は通り、鍵が無い（tsunagi・(m) の after）・enum に無い字・決まりに無い鍵は崩れとして出す |
 | `count` | つなぎの数が原稿の行数と違えば、崩れとして出す |
 | `jump` | 跳の行を ✕。最後の行がアーカイブの1行なら、その行の跳は数えない |
 | `question` | 答えない問い・答える前に移る問いを ✕。終わりの問い（アーカイブの前の問いも）は数えない |
@@ -27,6 +27,7 @@
 | `i_side` | (h) の F-039・F-040 は、同じ行に (i)(j)(k) の当たりがあれば ✕、無ければ △（批評役自身の見かたでは渡れている） |
 | `pending` | (h) F-014 が、画の「確認中」の行（1次の原稿。spec の visual に「確認中」）に当たったら △。why が「回に無い:」で始まれば（その回に無い画を当てにしている）✕ のまま。確認中でない行の F-014 は ✕（2026-11-04） |
 | `cli` | 終了コード: 通る 0・落ちる 1・形が違う 2 |
+| `after` | (m) 題の答え（15行目）の次が反応・味・説明・数・前置きなら、次の行（16行目）を △（✕ にはしない）。出来事・引っ張り・問い・締めなら出さない。答えのすぐあとが締め（20行の控えは 19行目の問い → アーカイブ）なら出さない。答えが無い（0）なら見ない。範囲の外の行は崩れ（#1403） |
 | `focaccia` | フォカッチャの下書き（あやと「台本の品質が悪い」#1014）は、添削の時点（2026-10-23:6354242835）の決まりでも、批評役が何も挙げなくても lint の T-READ（1行目）・L-NEXT（21行目）で落ちる。あやとの添削版は同じ時点で lint の ✕ 0（日付だけにすると夕方の規則まで当たる）。批評役の (h) F-047 は ✕ |
 """
 from __future__ import annotations
@@ -91,6 +92,16 @@ CUTS = {
                 "    return []\n", {"focaccia"}, "lint の ✕ を関所の合否に入れない"),
     "as_of_id": ("critic_gate.py", "        if d < day or (d == day and (cid is None or not ids or min(ids) <= cid)):\n",
                  "        if d < day or d == day:\n", {"as_of"}, "同じ日の決まりの前後をコメントID で分けない"),
+    # ---- 2026-11-23（#1403）: (m) 題の答えの直後の行 ----
+    "after_off": ("critic_gate.py", '    elif al and al + 1 < lint_mod.closing_index(c.lines) and af.get("next") not in AFTER_OPENS:\n',
+                  "    elif False:\n", {"after"}, "題の答えの次が開かなくても挙げない"),
+    "after_close": ("critic_gate.py", "    elif al and al + 1 < lint_mod.closing_index(c.lines) and", "    elif al and", {"after"},
+                    "答えのすぐあとが締めでも挙げる"),
+    "after_opens": ("critic_gate.py", 'AFTER_OPENS = ("出来事", "引っ張り", "問い", "締め")', 'AFTER_OPENS = ("出来事", "締め")', {"after"},
+                    "引っ張り・問いを、開く行に数えない"),
+    "after_fail": ("critic_gate.py", '        look.append((al + 1, "(m) 答えのあと"', '        fail.append((al + 1, "(m) 答えのあと"', {"after"},
+                   "題の答えのあとを ✕ にする（F-037 の答えを待たずに落とす）"),
+    "after_range": ("critic_gate.py", "    if al and not in_range(al):\n", "    if False:\n", {"after"}, "範囲の外の答えの行を崩れにしない"),
 }
 
 
@@ -111,7 +122,7 @@ def base(n=20) -> dict:
     return {"scores": dict.fromkeys("abcdef", 4), "score_why": dict.fromkeys("abcdef", ""), "checked": list(CARD_IDS),
             "alone": [{"line": i, "ok": True, "why": ""} for i in range(1, n + 1)], "outsider": [],
             "tsunagi": ["題"] + ["足"] * (n - 3) + ["締", "締"], "questions": [], "turns": [],
-            "numbers": [], "ledger": [], "leave": [], "fixes": [], "verdict": "通る"}
+            "numbers": [], "after": {"line": 0, "next": "無し", "why": ""}, "ledger": [], "leave": [], "fixes": [], "verdict": "通る"}
 
 
 def run(G, d, rows=None):
@@ -136,10 +147,13 @@ def leg_shape(G):
     ok = not G.check_shape(base(), schema)
     miss = base()
     del miss["tsunagi"]
+    no_after = base()
+    del no_after["after"]
     bad_enum = with_(tsunagi=["題", "飛"] + ["足"] * 18)
     extra = with_(note="長い説明")
     return [("決まりの形の JSON は通る", ok),
             ("tsunagi が無ければ崩れ", bool(G.check_shape(miss, schema))),
+            ("after（(m) 題の答えの直後の行。#1403）が無ければ崩れ", bool(G.check_shape(no_after, schema))),
             ("つなぎに「飛」（enum に無い字）があれば崩れ", bool(G.check_shape(bad_enum, schema))),
             ("決まりに無い鍵（note）があれば崩れ", bool(G.check_shape(extra, schema)))]
 
@@ -313,6 +327,21 @@ def leg_cli(G):
             ("形の違う JSON は 2", rc({"scores": {}}) == 2), ("JSON でなければ 2", rc("通る") == 2)]
 
 
+def leg_after(G):
+    def got(line, nxt):
+        r = run(G, with_(after={"line": line, "next": nxt, "why": "40字まで"}))
+        return [(x[0], x[1]) for x in r["look"]], [x[0] for x in r["fail"]], r["bad"]
+    shut = {k: got(15, k) for k in ("反応", "味", "説明", "数", "前置き")}
+    opens = {k: got(15, k) for k in ("出来事", "引っ張り", "問い", "締め")}
+    near = got(18, "反応")
+    return [("題の答え（15行目）の次が反応・味・説明・数・前置きなら、16行目を △（✕ にしない）",
+             all(v == ([(16, "(m) 答えのあと")], [], []) for v in shut.values())),
+            ("出来事・引っ張り・問い・締めなら出さない", all(v == ([], [], []) for v in opens.values())),
+            ("答えのすぐあとが締め（18行目の次は19行目の問い → アーカイブ）なら出さない", near == ([], [], [])),
+            ("答えが無い（0）なら見ない", got(0, "無し") == ([], [], [])),
+            ("範囲の外の答えの行（99）は崩れ", bool(got(99, "反応")[2]))]
+
+
 def leg_focaccia(G):
     ng, ok = FIX / "rejected/VusdZVyjgjQ_p1/script.txt", FIX / "approved/VusdZVyjgjQ_p1/script.txt"
     c_ng, rows_ng = G.brief.rows_of(ng, None)
@@ -330,6 +359,7 @@ LEGS = {
     "shape": leg_shape, "count": leg_count, "jump": leg_jump, "question": leg_question, "cancel": leg_cancel,
     "outsider": leg_outsider, "alone": leg_alone, "checked": leg_checked, "numbers": leg_numbers, "ledger": leg_ledger, "scores": leg_scores, "ayato": leg_ayato,
     "i_side": leg_i_side, "pending": leg_pending, "as_of": leg_as_of, "cli": leg_cli, "focaccia": leg_focaccia,
+    "after": leg_after,
 }
 
 if __name__ == "__main__":

@@ -1,9 +1,9 @@
 {
-  "$comment": "批評役の返す形（references/critic_prompt.md の「返す形」）。critic.py が claude -p の --json-schema に渡し、critic_gate.py が読む前に同じ形かを確かめる。checked（当てた約束の ID）・alone（その行だけで通るか）・outsider（画に居ない人の言葉）は 2026-10-23（#1019、帳面 F-048〜F-050）から。前の hearsay（人の話の印）は外した",
+  "$comment": "批評役の返す形（references/critic_prompt.md の「返す形」）。critic.py が claude -p の --json-schema に渡し、critic_gate.py が読む前に同じ形かを確かめる。checked（当てた約束の ID）・alone（その行だけで通るか）・outsider（画に居ない人の言葉）は 2026-10-23（#1019、帳面 F-048〜F-050）から。前の hearsay（人の話の印）は外した。after（題の答えの直後の行の種類。(m)）は 2026-11-23（#1403）から",
   "type": "object",
   "additionalProperties": false,
   "required": ["scores", "score_why", "checked", "alone", "outsider", "tsunagi", "questions", "turns", "numbers",
-               "ledger", "leave", "fixes", "verdict"],
+               "after", "ledger", "leave", "fixes", "verdict"],
   "properties": {
     "scores": {
       "type": "object",
@@ -69,6 +69,14 @@
       "items": {
         "type": "object", "additionalProperties": false, "required": ["line", "said_before"],
         "properties": {"line": {"type": "integer"}, "said_before": {"type": "boolean"}}
+      }
+    },
+    "after": {
+      "type": "object", "additionalProperties": false, "required": ["line", "next", "why"],
+      "properties": {
+        "line": {"type": "integer"},
+        "next": {"type": "string", "enum": ["出来事", "引っ張り", "問い", "数", "前置き", "説明", "反応", "味", "締め", "無し"]},
+        "why": {"type": "string"}
       }
     },
     "ledger": {
