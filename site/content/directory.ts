@@ -12,6 +12,7 @@ import { DAY_PAGES, NORDIC_COUNTRIES, NORDIC_GUIDE_HREF, NORDIC_HREF, cityName, 
 import { RECIPES, kindLabel } from "@/content/recipes";
 import { STREAM_TYPES } from "@/content/streamTypes";
 import { say } from "@/content/nights";
+import { listedPages, pageAt } from "@/lib/pages";
 
 /**
  * 島にある紙、ぜんぶ。
@@ -398,6 +399,13 @@ export const SHELVES: Shelf[] = [
         note: "どこが変わったか。こうしてほしいも、ここから",
         q: q("島をなおしたところ updates 変わった 直した 要望 改良 お知らせ"),
       },
+      /* 索引に出している面は、ここにも並べる（種類の表と同じ行き先。下の確かめ） */
+      {
+        href: "/privacy",
+        name: "プライバシーポリシー",
+        note: "島で預かるものと、その使いかた",
+        q: q("プライバシーポリシー privacy 個人情報 決まりごと"),
+      },
       {
         href: "/design",
         name: "デザインの見本",
@@ -421,10 +429,15 @@ export const SHELVES: Shelf[] = [
  */
 const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
 
-/* **国の面は、ここに並んでいないと書き出しを止める。** 歩いた国は名簿から棚に並ぶが、
-   行く前の案内だけの国（`content/travel.ts` の `GUIDE_ONLY`）は棚を手で立てる（探し言葉は人が書く）。
-   立て忘れると、索引には在るのに `/all` から行けない面になる——前は配ったあとの
-   `prodsweep.mjs` で初めて分かった（#1201） */
-const offShelf = [...TRAVEL_PLACES, ...publicCities(), ...publicArticles()].filter((p) => !DEST_HREFS.has(p.href)).map((p) => p.href);
-if (offShelf.length) throw new Error(`content/directory.ts: 国の面が /all の棚に無い（${offShelf.join(", ")}）`);
+/* **棚の行き先と、索引に出す面（種類の表。`lib/pages.ts`）を突き合わせる**（R-22。#1357）。
+   - 索引に出す面が、どの棚にも無い → 止める。立て忘れると、索引には在るのに `/all` から行けない面になる
+     （前は配ったあとの `prodsweep.mjs` で初めて分かった。#1201）
+   - 棚の行き先が、面の一覧に無い → 止める。押した先が無い行を並べない
+   棚の添え書き（1行・探し言葉）は人が書く字なのでここが持つが、**行き先の集まりは種類の表と同じ**になる */
+const LISTED = listedPages().map((p) => p.path);
+/* この面（`/all`）そのものは、棚に並べない（自分の中に自分への行を置かない） */
+const offShelf = LISTED.filter((h) => h !== "/all" && !DEST_HREFS.has(h));
+if (offShelf.length) throw new Error(`content/directory.ts: 索引に出す面が /all の棚に無い（${offShelf.join(", ")}）`);
+const ghost = [...DEST_HREFS].filter((h) => !pageAt(h));
+if (ghost.length) throw new Error(`content/directory.ts: /all の棚の行き先が、面の一覧（lib/pages.ts）に無い（${ghost.join(", ")}）`);
 export const DEST_COUNT = DEST_HREFS.size;

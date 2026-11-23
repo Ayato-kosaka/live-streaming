@@ -17,6 +17,9 @@ import { kitchenTalk } from "@/content/kitchenTalk";
 import VoiceBubble from "@/components/ui/Voice";
 import KitchenDay from "@/components/streams/KitchenDay";
 import { isoDay } from "@/lib/isoDay";
+import { crumbsOf } from "@/lib/pages";
+import { tagsOfDish } from "@/lib/tags";
+import Tags from "@/components/ui/Tags";
 
 export function generateStaticParams() {
   return RECIPES.map((r) => ({ slug: r.slug }));
@@ -80,13 +83,11 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const day = kitchenTalk(r.slug);
   /** 引用が「どの日の言葉か」。買い出しの日の助言と、作った日の助言は別のもの。 */
   const stepOf = new Map(r.streams.map((s) => [s.videoId, s.label]));
+  const tags = tagsOfDish(r.slug);
 
   return (
     <PageShell
-      crumbs={[
-        { label: "作った料理", href: "/kitchen" },
-        { label: r.name },
-      ]}
+      crumbs={crumbsOf(`/kitchen/${r.slug}`)}
     >
       <Sheet>
         {/* 図鑑の1ページ。本物（`/tmp/acref/ref_NH_Critterpedia_Coelacanth.jpg`）と
@@ -220,6 +221,13 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
               </div>
             </Zone>
           </>
+        )}
+        {/* 作った国と街・その旅。札は `lib/tags.ts` から（0件の段は来ない） */}
+        {tags.length > 0 && (
+          <Zone>
+            <H art={<ArtShelf size={32} />}>この1品が生まれたところ</H>
+            <Tags rows={tags} />
+          </Zone>
         )}
       </Sheet>
 

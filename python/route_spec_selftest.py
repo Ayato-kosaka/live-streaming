@@ -23,6 +23,10 @@
 
 片側だけだと、表を空にしても・表に何でも当たる行を足しても通る。
 
+4. **種類の表（`site/content/kinds.ts` の `KINDS`）が、仕様の表と同じ行を同じ並びで持つ**（#1357）。
+   sitemap・`/all`・パンくずはあちらから出るので、仕様だけ直して種類の表を直さないと、
+   仕様の上で畳んだ道が索引に残る（逆も）
+
 ## 型の当てかた
 
 仕様の `<…>` は「名前が1つ入る段」。置き場の `[slug]` にも、名指しの段
@@ -33,7 +37,7 @@
 
 本物を見る前に、こしらえた道と表で `judge()` を当てる。**対照が1本でも外れたら、
 本物の数を1つも出さずに 2 で止まる**（`docs/island-standards.md` §15）。
-`BREAK=cover|ghost|state` で、守りを1つずつ外した判定に差し替えられる。
+`BREAK=cover|ghost|state|kinds` で、守りを1つずつ外した判定に差し替えられる。
 外した足だけが落ちる。
 """
 from __future__ import annotations
@@ -46,6 +50,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SPEC = ROOT / "docs" / "spec" / "routes.md"
 APP = ROOT / "site" / "app"
+KINDS = ROOT / "site" / "content" / "kinds.ts"
 STATES = ("現行", "廃止予定")
 BREAK = os.environ.get("BREAK", "")
 
@@ -62,6 +67,29 @@ def spec_rows(text: str) -> list:
             continue
         rows.append((cells[0].strip("`"), cells[1], cells[2], cells[3]))
     return rows
+
+
+def kind_rows(text: str) -> list:
+    """種類の表（`kinds.ts` の `KINDS`）を、(型, 種類, 入口, 状態) の並びで返す。"""
+    pat = r'\{ route: "([^"]*)", kind: "([^"]*)", entrance: "([^"]*)", state: "([^"]*)" \}'
+    m = re.search(r"export const KINDS = \[(.*?)\] as const", text, re.S)
+    return [tuple(x) for x in re.findall(pat, m.group(1))] if m else []
+
+
+def kinds_judge(spec: list, kinds: list) -> list:
+    """仕様の表と種類の表の食い違いを、1行ずつ。"""
+    if BREAK == "kinds":
+        return []
+    bad = []
+    for r in spec:
+        if r not in kinds:
+            bad.append(f"仕様の行が、種類の表（kinds.ts）に無い（か字が違う）: {r[0]}")
+    for r in kinds:
+        if r not in spec:
+            bad.append(f"種類の表（kinds.ts）の行が、仕様に無い（か字が違う）: {r[0]}")
+    if not bad and spec != kinds:
+        bad.append("種類の表（kinds.ts）の並びが、仕様の表と違う")
+    return bad
 
 
 def app_routes(app: Path) -> list:
@@ -151,6 +179,13 @@ def drill() -> None:
                  "| `/a/<x>` | 国 | 歩いた国 | 現行 |\n<!-- routes:end -->") == [("/a/<x>", "国", "歩いた国", "現行")],
        "表の読みかた: 見出しと罫線を飛ばして、行だけを拾う")
     ok(spec_rows("表が無い") == [], "印が無ければ、行は0")
+    ok(kinds_judge(rows, list(rows)) == [], "仕様と同じ種類の表は、違反0")
+    ok(any("/now" in b for b in kinds_judge(rows, rows[:-1])), "種類の表から行が抜けると、名指しで落ちる（kinds）")
+    ok(any("/india" in b for b in kinds_judge(rows, rows + [("/india", "国", "歩いた国", "現行")])),
+       "種類の表にだけ在る行は、名指しで落ちる（kinds）")
+    ok(bool(kinds_judge(rows, rows[1:] + rows[:1])), "並びが違えば落ちる（kinds）")
+    ok(kind_rows('export const KINDS = [\n  { route: "/a", kind: "国", entrance: "歩いた国", state: "現行" },\n] as const')
+       == [("/a", "国", "歩いた国", "現行")], "種類の表の読みかた")
 
 
 def main() -> int:
@@ -167,7 +202,12 @@ def main() -> int:
     if not rows or not routes:
         print("✕ 数えるものが無い（仕様の表か、置き場の道が0）")
         return 2
-    bad = judge(rows, routes)
+    kinds = kind_rows(KINDS.read_text(encoding="utf-8")) if KINDS.exists() else []
+    print(f"       種類の表（kinds.ts） {len(kinds)}行")
+    if not kinds:
+        print("✕ 種類の表が読めない（site/content/kinds.ts の KINDS）")
+        return 2
+    bad = judge(rows, routes) + kinds_judge(rows, kinds)
     for b in bad:
         print(f"  NG  {b}")
     if bad:

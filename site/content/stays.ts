@@ -50,12 +50,19 @@
  */
 
 import type { IconName } from "@/components/ui/icons";
+import { CITIES } from "./cities";
+import { hrefOf } from "./kinds";
 
 /** その国の案内の面。表紙の「この国の歩きかた」と島の札に出る */
 export type StayGuide = {
   /** 札の字（「ブルガリア・ソフィア」） */
   name: string;
-  /** 行き先の面 */
+  /**
+   * 行き先が街の面なら、その街（`content/cities.ts` の slug）。**無ければ国の面**。
+   * 道（`href`）は表に書かない（M-6）——下の `openKeys` が、この鍵から組む
+   */
+  city?: string;
+  /** 行き先の面。**表に書かない**（読み込んだときに `city` と国から組む。表の行の型 `StayRow` は持たない） */
   href: string;
   /** 島の下の紙に出る1行。**時制も数も書かない**（`docs/island-standards.md` 16章） */
   lead: string;
@@ -63,13 +70,24 @@ export type StayGuide = {
   icon: IconName;
 };
 
+/** 行った街1つ。`city` は街の名簿の slug（名簿に載っている街だけ） */
+export type Town = { name: string; city?: string };
+
 export type Stay = {
   /** 国（slug）。国の記録（`content/countries.ts`）があれば、その `slug` */
   country: string;
   /** 国の名前。**国の記録をまだ持たない国だけ**（持つ国は記録の `name` が持ち主） */
   name?: string;
-  /** 行った街。分からなければ空 */
+  /**
+   * 行った街。分からなければ空。
+   *
+   * **街の名簿（`content/cities.ts`）に載っている街は、名前ではなく slug で書く**（M-6。#1357）。
+   * 名簿に無い街（ガイドを書いていない街）は名前のまま。読み込んだときに、slug は名簿の名前に開く
+   * （下の `openKeys`）ので、読む側にはどちらも名前で届く。どの街が名簿のどの街かは `towns` の `city`
+   */
   cities: string[];
+  /** 行った街を、名簿の鍵つきで（読み込んだときに組む。表に書かない） */
+  towns?: Town[];
   /** 着いた日（`YYYY-MM-DD`、旅の土地の暦） */
   from: string;
   /** 出た日。**空＝いまここ**（決まっていない日を見立てで書かない） */
@@ -79,6 +97,9 @@ export type Stay = {
   /** その国の案内の面 */
   guide?: StayGuide;
 };
+
+/** 表に人が書く行の形。道（`guide.href`）と鍵つきの街（`towns`）は持たない——読み込んだときに組む */
+type StayRow = Omit<Stay, "guide" | "towns"> & { guide?: Omit<StayGuide, "href"> };
 
 export const STAYS: Stay[] = [
   // ヨーロッパ周遊
@@ -154,26 +175,25 @@ export const STAYS: Stay[] = [
   { country: "albania", cities: ["ティラナ"], from: "2026-09-28", to: "2026-10-11" },
   {
     country: "north-macedonia",
-    cities: ["スコピエ"],
+    cities: ["skopje"],
     from: "2026-10-12",
     to: "2026-11-11",
     guide: {
       name: "北マケドニア",
-      href: "/travel/north-macedonia",
       lead: "海に出ない、山と湖の国。首都の歩きかたと、見どころと、食べもの",
       icon: "mountain",
     },
   },
   {
     country: "bulgaria",
-    cities: ["ソフィア"],
+    cities: ["sofia"],
     from: "2026-11-12",
     to: "2026-11-20",
     guide: {
       name: "ブルガリア・ソフィア",
       /* 街の面（前の `/bulgaria`。#1228）。国の案内はソフィアの面が兼ねる（国の面 `/travel/bulgaria` は
          ほかの国と同じ旅の記録で、「行った街」からここへ来る） */
-      href: "/travel/bulgaria/sofia",
+      city: "sofia",
       /* 頭はソフィアの面の表紙と同じキャッチ（`content/guidebook/bulgaria-sofia.ts` の `lead`）。
          後ろは面の題と同じ「観光ガイド」 */
       lead: "二千年の歴史が足もとに眠る街。観光ガイドと見どころマップ",
@@ -200,11 +220,54 @@ export const STAYS: Stay[] = [
     to: "",
     guide: {
       name: "ルーマニア・ブカレスト",
-      href: "/travel/romania/bucharest",
+      city: "bucharest",
       /* 頭はブカレストの面の表紙と同じキャッチ（`content/guidebook/romania-bucharest.ts` の `lead`）。後ろは面の題と同じ
          （ソフィアの行と同じ形）。絵は表紙の写真のアテネ音楽堂 */
       lead: "「東欧のパリ」と称えられた街。観光ガイドと見どころマップ",
       icon: "theater",
     },
   },
-];
+] satisfies StayRow[] as Stay[];
+
+/** 街の slug の形。名簿の街は slug で、ほかの街は日本語の名前で書くので、字の形で見分けがつく */
+const KEY = /^[a-z0-9-]+$/;
+
+/**
+ * 表の鍵を開く。**表は人が書いた字のまま残し、読む側に名前と道を渡す**（`python/ts_read.py` の `read_stays` も同じ開きかた）。
+ *
+ * - `cities` の slug は、街の名簿の名前に。`towns` に鍵つきで
+ * - 案内の `href` は、国の道か、街の道（`/travel/<国>/<街>`。`docs/spec/routes.md` 2章の型）
+ *
+ * 外れていれば理由を並べて止める（M-15「名前の鍵の指す先が在る」）:
+ * - slug の指す街が名簿に無い（その国に無い）
+ * - **名簿に載っている街を、名前のまま書いている**（字が一致するかどうかで結ぶ形に戻さない。M-6）
+ *
+ * 表を引数で受けるのは、見張り（`site/selftest/tags_selftest.mjs`）が壊した表を当てるため。
+ */
+export function stayKeyProblems(stays: Stay[], cities = CITIES): string[] {
+  const out: string[] = [];
+  for (const s of stays) {
+    const mine = cities.filter((c) => c.country === s.country);
+    for (const t of s.cities) {
+      if (KEY.test(t) && !mine.some((c) => c.slug === t)) out.push(`M-15: ${s.country}（${s.from}）の街 ${t} が街の名簿（content/cities.ts）に無い`);
+      const named = mine.find((c) => c.name === t);
+      if (named) out.push(`M-6: ${s.country}（${s.from}）の街「${t}」は名簿に在るので、名前ではなく slug（${named.slug}）で書く`);
+    }
+    const g = s.guide?.city;
+    if (g && !mine.some((c) => c.slug === g)) out.push(`M-15: ${s.country}（${s.from}）の案内の街 ${g} が街の名簿に無い`);
+  }
+  return out;
+}
+
+const KEY_PROBLEMS = stayKeyProblems(STAYS);
+if (KEY_PROBLEMS.length) throw new Error(`content/stays.ts: 滞在の鍵が外れている\n${KEY_PROBLEMS.join("\n")}`);
+
+/* 開く。**1度だけ**（2回目は名前を slug と読まない。名前は日本語なので `KEY` に当たらない） */
+for (const s of STAYS) {
+  s.towns = s.cities.map((t) => {
+    const c = KEY.test(t) ? CITIES.find((x) => x.country === s.country && x.slug === t) : undefined;
+    return c ? { name: c.name, city: c.slug } : { name: t };
+  });
+  s.cities = s.towns.map((t) => t.name);
+  if (s.guide) s.guide.href = s.guide.city ? hrefOf("/travel/<国>/<街>", s.country, s.guide.city) : hrefOf("/travel/<国>", s.country);
+}

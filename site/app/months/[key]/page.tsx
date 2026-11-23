@@ -9,6 +9,9 @@ import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import Phrase from "@/components/ui/Phrase";
 import { MONTHS } from "@/content/months";
+import { crumbsOf } from "@/lib/pages";
+import { tagsOfMonth } from "@/lib/tags";
+import Tags from "@/components/ui/Tags";
 import { Attend, Flow, MonthNav, Perfect, Taps, Tips, md, monthLabel, yen } from "@/components/months/parts";
 
 /** 出席日数リストを、開いたまま出す人数。ここから下は畳む。 */
@@ -66,9 +69,10 @@ export default async function MonthPage({ params }: { params: Promise<{ key: str
   /** いちばん人が集まった枠。その月の山がどこだったかを1枚で見せる */
   const peak = m.streams.reduce((a, b) => (b.p > a.p ? b : a), m.streams[0]);
   const perfect = m.attend.filter((a) => a.d >= m.denom).length;
+  const tags = tagsOfMonth(m.key);
 
   return (
-    <PageShell crumbs={[{ label: "ふりかえり", href: "/months" }, { label: monthLabel(m) }]}>
+    <PageShell crumbs={crumbsOf(`/months/${m.key}`)}>
       <PageHead
         icon="stage-award"
         /* 390px で「2026年9月のふりかえ／り」と、1文字だけ2行目に落ちていた。
@@ -150,6 +154,14 @@ export default async function MonthPage({ params }: { params: Promise<{ key: str
         <Zone>
           <Flow m={m} />
         </Zone>
+
+        {/* その月に居た国・旅・企画。札は `lib/tags.ts` から（0件の段は来ない） */}
+        {tags.length > 0 && (
+          <Zone>
+            <H art={<ArtMeeting size={32} />}>この月に居たところ</H>
+            <Tags rows={tags} />
+          </Zone>
+        )}
 
         {m.review && (
           <Zone>

@@ -90,6 +90,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 # 鍵の形（`slug: "…"` の `slug:`）。**語の途中を鍵と読まない**ように、
 # 呼ぶ側で前の1字を見てから当てる（`plannedDays` の `l` から読み始めない）
@@ -758,10 +759,34 @@ def read_map(src: str, name: str) -> list[tuple[str, str]]:
 # 増やしたくなったらここに足す（`stays.ts` の `Stay` 型と見比べる）
 STAY_KEYS = ("country", "name", "from", "to", "note")
 # 案内の面（`guide: { … }`）の欄。無い行は空の字で埋めた `{}` ではなく `None`
-STAY_GUIDE_KEYS = ("name", "href", "lead", "icon")
+STAY_GUIDE_KEYS = ("name", "city", "lead", "icon")
+# 街の slug の形（`site/content/stays.ts` の `KEY`）。名簿の街は slug で、ほかの街は日本語の名前で書く
+CITY_KEY = re.compile(r"^[a-z0-9-]+$")
 
 
-def read_stays(src: str) -> ArrayRead:
+def read_city_names(src: str | None = None) -> dict:
+    """街の名簿（`site/content/cities.ts` の `CITIES`）を `{(国, slug): 名前}` で。
+
+    滞在の表は、名簿に載っている街を**名前ではなく slug で**書く（`docs/spec/model.md` M-6。#1357）。
+    読む側（毎晩の焼き直し・配信の欄の名前）は名前で数えるので、`read_stays` がここで開く。
+
+    Args:
+        src: `cities.ts` の中身。省けば置き場の本物を読む
+    """
+    if src is None:
+        src = (Path(__file__).resolve().parent.parent / "site" / "content" / "cities.ts").read_text(encoding="utf-8")
+    code = code_only(src)
+    if array_span(code, "CITIES")[0] < 0:
+        raise ValueError("CITIES の並びが無い（`site/content/cities.ts` を渡す）")
+    out = {}
+    for obj in objects(array_body(code, "CITIES")):
+        f = fields(obj)
+        if f.get("country") and f.get("slug"):
+            out[(f["country"], f["slug"])] = f.get("name", "")
+    return out
+
+
+def read_stays(src: str, cities_src: str | None = None) -> ArrayRead:
     """`stays.ts` の `STAYS`（滞在の表）を、行ごとに。**並びはファイルのまま。**
 
     返す欄は `STAY_KEYS`（無い欄は空の字）と `cities`（字の並び）と
@@ -783,13 +808,21 @@ def read_stays(src: str) -> ArrayRead:
     if array_span(code, "STAYS")[0] < 0:
         raise ValueError("STAYS の並びが無い（`site/content/stays.ts` を渡す）")
     body = array_body(code, "STAYS")
+    names = None
     rows = []
     for obj in objects(body):
         f = fields(obj)
         if not f.get("country"):
             continue
         row: dict = {k: f.get(k, "") for k in STAY_KEYS}
-        row["cities"] = list_field(obj, "cities")
+        raw = list_field(obj, "cities")
+        if any(CITY_KEY.match(c) for c in raw):
+            names = names if names is not None else read_city_names(cities_src)
+            missing = [c for c in raw if CITY_KEY.match(c) and (row["country"], c) not in names]
+            if missing:
+                raise ValueError(f"stays.ts の {row['country']}（{row['from']}）の街 {missing} が街の名簿（cities.ts）に無い")
+        # slug は名簿の名前に開く（`stays.ts` の `openKeys` と同じ。読む側は名前で数える）
+        row["cities"] = [names[(row["country"], c)] if CITY_KEY.match(c) else c for c in raw]
         g = nested_body(obj, "guide")
         row["guide"] = {k: fields(g).get(k, "") for k in STAY_GUIDE_KEYS} if g.strip() else None
         rows.append(row)

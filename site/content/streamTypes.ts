@@ -1,3 +1,4 @@
+import type { Route } from "./kinds";
 
 /** 配信の5つの型。押すとそれぞれの深掘りページに行く。 */
 export type StreamType = {
@@ -29,7 +30,8 @@ export type StreamType = {
   /** その型の代表的な配信 */
   samples: { date: string; videoId: string; title: string }[];
   /** さらに深く見るリンク */
-  deeper?: { label: string; href: string };
+  /** 「もっと見る」の行き先。**道の型（`content/kinds.ts`）で書く**——道の字を表に書かない（M-6。#1357） */
+  deeper?: { label: string; to: Route };
 };
 
 export const STREAM_TYPES: StreamType[] = [
@@ -55,7 +57,7 @@ export const STREAM_TYPES: StreamType[] = [
       { date: "2026-10-09", videoId: "yGEacTlskmY", title: "アルバニアでチーズケーキつくろか！" },
       { date: "2026-10-06", videoId: "GRd0d7d7Ngg", title: "遂に遂に…暗殺者のパスタ" },
     ],
-    deeper: { label: "作ってきた料理を全部見る", href: "/kitchen" },
+    deeper: { label: "作ってきた料理を全部見る", to: "/kitchen" },
   },
   {
     slug: "walk",
@@ -85,7 +87,7 @@ export const STREAM_TYPES: StreamType[] = [
        この字はデータなので画面が出てから数え直せない。国境を越えた日の朝、
        表紙と `/map` だけが増えて、この札だけ前の日の数を出す。
        行き先の面が数を出しているので、札は行き先だけ言う。 */
-    deeper: { label: "歩いてきた国を見る", href: "/travel" },
+    deeper: { label: "歩いてきた国を見る", to: "/travel" },
   },
   {
     slug: "making",
@@ -109,7 +111,7 @@ export const STREAM_TYPES: StreamType[] = [
       { date: "2026-08-22", videoId: "rzPoxwfm5lI", title: "アプリ作り配信や！アプリの第一印象をめっちゃよくする！" },
       { date: "2026-07-25", videoId: "iOSWFRFuAQ4", title: "チュートリアル機能と機能改善４０件出来るまで終われません！" },
     ],
-    deeper: { label: "アプリの歴史を見る", href: "/apps" },
+    deeper: { label: "アプリの歴史を見る", to: "/apps" },
   },
   {
     slug: "meeting",
@@ -133,7 +135,7 @@ export const STREAM_TYPES: StreamType[] = [
       { date: "2026-10-07", videoId: "3zGkoi8FuwM", title: "アルバニアで今週の企画会議や！" },
       { date: "2026-09-29", videoId: "-XSFRIeEpSw", title: "アルバニアでルーティン立て直すぞ！今週の作戦会議や！！" },
     ],
-    deeper: { label: "企画を提案する", href: "/board" },
+    deeper: { label: "企画を提案する", to: "/board" },
   },
   {
     slug: "monthly",
@@ -161,7 +163,7 @@ export const STREAM_TYPES: StreamType[] = [
     ],
     /* 授賞式そのものは配信の中で終わるが、そこで数えたものは島に残してある。
        この型だけ、中身が月ごとの面としてまるごと置いてある（#809）。 */
-    deeper: { label: "月ごとのふりかえりを見る", href: "/months" },
+    deeper: { label: "月ごとのふりかえりを見る", to: "/months" },
   },
 ];
 

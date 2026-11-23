@@ -13,7 +13,10 @@ import ChapDays from "./ChapDays";
 import IsleSpan from "./IsleSpan";
 import { MarkList, ShortGrid } from "./IsleLists";
 import { isleSpanNote } from "./span";
-import { appsOf, legendsOf } from "./spec";
+import { appsOf } from "./spec";
+import { LEGENDS } from "@/content/legends";
+import { tagsOfTrip } from "@/lib/tags";
+import Tags from "@/components/ui/Tags";
 import { stayClosedOn } from "@/lib/stay";
 import { charImg } from "@/lib/charImg";
 
@@ -69,7 +72,12 @@ export default function IsleReview({
      章の `countries` は歩き終わってからしか埋まらないので、ここだけ見ていると
      歩いている島が「0カ国 歩いた」と言う。 */
   const countries = chapterCountries(c);
-  const legends = legendsOf(c);
+  /* 札（回った国・この旅の企画・この旅で作った料理・月）は `lib/tags.ts` の1か所から。
+     企画は図鑑の札（数字つき）で出すので、どの企画かだけを札から引く。料理と月はそのまま札の段で */
+  const tags = tagsOfTrip(c.slug);
+  const legendKeys = new Set(tags.find((r) => r.kind === "project")?.tags.map((t) => t.key));
+  const legends = LEGENDS.filter((l) => legendKeys.has(l.slug));
+  const more = tags.filter((r) => r.kind === "dish" || r.kind === "month");
   const apps = appsOf(c);
   /* 配信。**人の集まった順**に出す。新しい順にすると、440本のうち
      いちばん上に来るのが「移動します」のような短い1本になる */
@@ -152,6 +160,13 @@ export default function IsleReview({
               </li>
             ))}
           </ul>
+        </Zone>
+      )}
+
+      {more.length > 0 && (
+        <Zone>
+          <H>この島で作った料理と、その月</H>
+          <Tags rows={more} />
         </Zone>
       )}
 

@@ -130,7 +130,7 @@ const ARRAYS = [
   ["site/content/stays.ts", "STAYS", "country", "walkedcount / countryart / islechapter_selftest"],
   ["site/content/nordic.ts", "ROUTE", "id", "walkedcount"],
   ["site/content/plans.ts", "PLANS", "id", "nextempty"],
-  ["site/content/travel.ts", "CITIES", "slug", "guidestop"],
+  ["site/content/cities.ts", "CITIES", "slug", "guidestop / sitemapgap"],
   ["site/content/recipes.ts", "RECIPES", "slug", "manifest / heroicon"],
   ["site/content/projects.ts", "PROJECTS", "slug", "manifest / heroicon"],
   ["site/content/streamTypes.ts", "STREAM_TYPES", "slug", "manifest / heroicon"],
