@@ -169,12 +169,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A site/public/sprites site/content/sprites.json site/content/heroWide.json
+          git add -A site/public/sprites site/content/sprites.json site/content/heroWide.json site/content/spriteMini.json
 
-          # 頼まれた絵とその hero/・寸法表のほかが書き換わっていたら、コミットしない
-          allowed="site/content/sprites.json site/content/heroWide.json"
+          # 頼まれた絵とその hero/・mini/（札の小さい版。meta.py が料理と伝説だけ焼く）・寸法表のほかが書き換わっていたら、コミットしない
+          allowed="site/content/sprites.json site/content/heroWide.json site/content/spriteMini.json"
           for n in ${NAMES//,/ }; do
-            allowed="$allowed site/public/sprites/$n.webp site/public/sprites/hero/$n.webp site/public/sprites/hero/$n@2x.webp"
+            allowed="$allowed site/public/sprites/$n.webp site/public/sprites/hero/$n.webp site/public/sprites/hero/$n@2x.webp site/public/sprites/mini/$n.webp"
           done
           extra=""
           for f in $(git diff --cached --name-only); do
