@@ -496,8 +496,9 @@
         "alt": "赤ピーマンのペースト、アイバルの瓶詰め"
       },
       "plazma": {
-        "desc": "Serbian Plazma biscuits: a neat stack of light, pale golden rectangular biscuits with a fine embossed pattern of tiny dots (no letters), half sliding out of an opened plain dark blue paper wrapper with NO writing or logo.",
-        "alt": "包みから出した四角いビスケット、プラズマ"
+        "desc": "Serbian Plazma biscuits: a neat stack of flat, rectangular, pale golden-brown biscuits (each about 6 x 4 cm, with straight sides and slightly rounded corners, NOT long oval finger biscuits), the top one showing a fine embossed pattern of tiny dots (no letters), half sliding out of an opened plain dark blue paper wrapper with NO writing or logo.",
+        "alt": "包みから出した四角いビスケット、プラズマ",
+        "v": 2
       },
       "eurocrem": {
         "desc": "Serbian Eurocrem spread: an open plain glass jar showing thick two-color cream, dark brown chocolate-hazelnut and creamy white milk cream in wide swirling stripes, its plain lid beside it and a small spoon holding a swirl of both colors.",
@@ -508,8 +509,9 @@
         "alt": "袋からこぼれたピーナッツ味のスナック、スモキ"
       },
       "opanci": {
-        "desc": "Serbian opanci: one pair of traditional handmade brown leather peasant shoes, the toes curling up into a pointed hook like a little horn, with woven leather strips across the top and simple stitching, standing side by side.",
-        "alt": "つま先が角のように反った革の伝統の靴、オパンツィ"
+        "desc": "Serbian opanci: one pair of traditional handmade brown leather peasant moccasins, low and soft like slippers, the very tip of each toe ending in a distinct upturned pointed leather hook that curls up and back like a little ram's horn (the most characteristic detail, clearly visible from the side), with woven leather strips across the top, standing side by side, seen from the side at an angle.",
+        "alt": "つま先が角のように反った革の伝統の靴、オパンツィ",
+        "v": 2
       },
       "pirot": {
         "desc": "A Pirot kilim from Serbia: a flat-woven wool rug, rolled up at one end and partly unrolled across the table, showing bold geometric motifs (red background with black, white and dark blue diamonds and stepped shapes) and a short fringe at the end.",
@@ -550,7 +552,9 @@
       "sava": {
         "ja": "聖サヴァ大聖堂の金のモザイク",
         "desc": "inside the Church of Saint Sava in Belgrade, one of the largest Orthodox churches in the world; the golden dome is the hero. Composition: a dramatic low view straight up into the vast central dome, which fills most of the picture: its inner surface is entirely covered in shimmering golden mosaic with large, simple, softly suggested figures in deep blue and red robes (no faces in detail, no writing), ringed by a band of small arched windows; four huge white marble arches and pillars frame it at the edges. At the very bottom of the picture, a few tiny visitors seen from behind stand on the polished marble floor, looking up. Light: cool daylight pours in through the ring of windows in soft shafts and makes the gold glitter. Palette: shimmering gold and white marble, with deep lapis blue and touches of dark red.",
-        "alt": "聖サヴァ大聖堂の丸屋根の内側いっぱいの金色のモザイクを、下から見上げる小さな人影の絵"
+        "alt": "聖サヴァ大聖堂の丸屋根の内側いっぱいの金色のモザイクを、下から見上げる小さな人影の絵",
+        "fix": "The air inside is perfectly clear: no white streaks, veils, smoke, light beams drawn as stripes or ghostly shapes anywhere in the picture. ",
+        "v": 2
       },
       "tesla": {
         "ja": "テスラ博物館の放電",
