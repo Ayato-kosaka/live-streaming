@@ -737,6 +737,8 @@ BOOKS: dict[str, Book] = {
         "国の面（`/travel/<国>`）の名簿。`countries.ts` から組む。**自分では日付を持たない**（#1201）",
     ),
     "travelPath.ts": Book(DERIVED, SKIP, 0, "旅のガイドの区画の道（`/travel`）の字だけ。日付を持たない（#1201）"),
+    "cities.ts": Book(DERIVED, SKIP, 0, "街の名簿（slug と名前）だけ。滞在の表が slug で指す（#1357）。日付を持たない"),
+    "kinds.ts": Book(DERIVED, SKIP, 0, "種類の表（道の型・種類・入口）。仕様の道の表の写しで、日付を持たない（#1357）"),
     "walked.ts": Book(
         DERIVED, SKIP, 0,
         "歩いた国の数。`countries.ts` から画面が出てから数える。**自分では日付を持たない**"

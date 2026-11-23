@@ -5,10 +5,10 @@ import { Panel, StreamCard } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import { COUNTRIES, countryBySlug, type Country } from "@/content/countries";
 import { WALKED_DONE, chapterCountries, walkingCountries } from "@/content/walked";
-import { chapterHref, chapterNow } from "@/content/chapters";
+import { chapterNow } from "@/content/chapters";
 import { tripsOfCountry } from "@/content/stayChapters";
-import { legendsOfCountry } from "@/lib/projectsOf";
-import { RECIPES } from "@/content/recipes";
+import { STAYS, type Town as StayTown } from "@/content/stays";
+import { tagsOfCountry, type Tag, type TagRow } from "@/lib/tags";
 import { streamsOfCity, type CityStream } from "@/content/cityStreams";
 import { STREAM_DIGEST } from "@/content/streamDigest";
 import { countryStat } from "@/content/countryStats";
@@ -87,17 +87,10 @@ type CountryRecord = {
   /** 英字の国名。**歩いている最中の国は持たない**（無いものを埋めない） */
   en?: string;
   /**
-   * その国に行った旅（本線も枝も。始まった順）。パスポートの下に札で出て、押すと旅の島へ。
-   * **滞在から引く**（`content/stayChapters.ts` の `tripsOfCountry`）。前は国の地域（`region`）を字で出していて、
-   * 旅の島へ行けるのは北欧の6か国（旅のしおりの部品）だけだった（#1355）
+   * その国の札（いつ居たか・どの旅で・ここでやった企画・ここで作った料理）。**引くのは `lib/tags.ts` の1か所**（#1357）。
+   * 月・旅・企画はパスポートの下に、料理は「この国で作ったごはん」に出る。0件の段は来ない
    */
-  trips: { slug: string; name: string; href: string }[];
-  /**
-   * その国でやった伝説の企画。旅の札のとなりに札で出て、押すと企画の面へ。
-   * 国の一言（`summary`）は場所の事実だけにしたので（M-20・M-21）、企画の話へはここから辿る
-   * （`lib/projectsOf.ts`。札の段ぜんぶは W10 #1357）
-   */
-  projects: { slug: string; title: string; href: string }[];
+  tags: TagRow[];
   /** 面の一言の、字だけの形（題の下・検索の一文・名札） */
   summary: string;
   /** 面の一言。まだ続いている滞在は、長さを画面が出てから数え直す */
@@ -124,12 +117,24 @@ type CountryRecord = {
   trip?: string;
 };
 
-/** 街の行。その国の公開してあるガイドと名前が合えば、ガイドへのカードになる */
-const town = (country: string, name: string, streams: CityStream[]): Town => ({
-  name,
+/**
+ * 街の行。滞在の表がその街を**街の名簿の slug で**指していて（`content/stays.ts` の `towns`）、ガイドが公開してあれば、
+ * ガイドへのカードになる。**名前の字が一致するかでは結ばない**（M-6。前はここが名前で結んでいた。#1357）
+ */
+const town = (country: string, t: StayTown, streams: CityStream[]): Town => ({
+  name: t.name,
   streams,
-  guide: publicCities(country).find((t) => t.name === name),
+  guide: t.city ? publicCities(country).find((g) => g.slug === t.city) : undefined,
 });
+
+/** その国の滞在の街（着いた順・重ねない）。鍵つき */
+const townsOfCountry = (slug: string): StayTown[] => {
+  const seen = new Set<string>();
+  return STAYS.filter((s) => s.country === slug)
+    .sort((a, b) => a.from.localeCompare(b.from))
+    .flatMap((s) => s.towns ?? [])
+    .filter((t) => !seen.has(t.name) && !!seen.add(t.name));
+};
 
 /** 「11月12日」 */
 const md = (d: string) => `${Number(d.slice(5, 7))}月${Number(d.slice(8, 10))}日`;
@@ -137,12 +142,6 @@ const ymdJa = (d: string) => `${d.slice(0, 4)}年${md(d)}`;
 /** 終わった滞在の日数。`StayLen` と同じく、入った日は0日目 */
 const daysBetween = (from: string, to: string) =>
   Math.max(0, Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000));
-
-/** その国に行った旅の札。島の道は `chapterHref` から（手で組まない） */
-const tripTags = (slug: string) => tripsOfCountry(slug).map((t) => ({ slug: t.slug, name: t.name, href: chapterHref(t) }));
-
-/** その国でやった伝説の企画の札 */
-const projectTags = (slug: string) => legendsOfCountry(slug).map((l) => ({ slug: l.slug, title: l.title, href: `/legends/${l.slug}` }));
 
 /** 題に入れる旅の名前。**本線の旅**（枝の旅「イランまで歩く」は題の「〜で〈長さ〉」に続かない）。2回入っていれば、あとの旅 */
 const mainTrip = (slug: string) => tripsOfCountry(slug).filter((t) => !t.branchOf).at(-1)?.name;
@@ -155,7 +154,7 @@ function walkedRecord(c: Country): CountryRecord {
    * 国の表には国だけが居るので（M-17）、表の並び（`order`）の順番そのもの
    */
   const walkedNo = ordered.findIndex((x) => x.slug === c.slug) + 1;
-  const towns = [...new Set(c.stays.flatMap((s) => s.cities))].map((name) => town(c.slug, name, streamsOfCity(c.slug, name)));
+  const towns = townsOfCountry(c.slug).map((t) => town(c.slug, t, streamsOfCity(c.slug, t.name)));
   /* **ガイドのカードになった街の配信は、見どころのあとに並べる。** 街の行がカードになると、その街の配信は
      街の畳みに出ない（`Town` の注）。歩いているあいだは「この国であったこと」に全部並んでいたので
      （あやと 2026-11-18「配信へ飛ばすやつも残して」）、歩き終わって見どころを書いた日に消すと、
@@ -166,8 +165,7 @@ function walkedRecord(c: Country): CountryRecord {
     slug: c.slug,
     name: c.name,
     en: c.en,
-    trips: tripTags(c.slug),
-    projects: projectTags(c.slug),
+    tags: tagsOfCountry(c.slug),
     summary: c.summary,
     headLead: c.summary,
     stays: c.stays,
@@ -188,7 +186,7 @@ function walkingRecord(slug: string): CountryRecord | undefined {
   if (i < 0) return undefined;
   const k = rows[i];
   /* 街は、街のガイドの名簿に載っている街（実際に行った街だけが載る）。公開前の街も、行ったことは事実なので並べる */
-  const names = TRAVEL_CITIES.filter((t) => t.country === slug).map((t) => t.name);
+  const names: StayTown[] = TRAVEL_CITIES.filter((t) => t.country === slug).map((t) => ({ name: t.name, city: t.slug }));
   /* 配信は、滞在ひとつぶんが国の名前の欄に焼かれている（`python/stays.py` の `chapter_stays()`）。
      **街が1つのときだけ、その街に付ける**——「街が1つの滞在は、その期間の配信ぜんぶ」は
      `python/build_city_streams.py` が歩き終わった国にも使っている決まり。街が2つ以上なら、どちらの配信か言えない */
@@ -206,7 +204,7 @@ function walkingRecord(slug: string): CountryRecord | undefined {
      ここは旅の名前を頭に付けて、どちらの数かを字で分ける */
   const nth = chapterCountries(chapter).findIndex((x) => x.slug === slug) + 1;
   const order = nth > 0 ? `${trip}の${nth}カ国目。` : `${trip}のとちゅうに${k.left ? "回った" : "回っている"}国。`;
-  const where = names.length === 1 ? `${names[0]}に` : "";
+  const where = names.length === 1 ? `${names[0].name}に` : "";
   const summary = k.left
     ? `${order}${where}${stayWord(daysBetween(k.entered, k.left))}いた。`
     : `${order}${ymdJa(k.entered)}に入った。`;
@@ -222,8 +220,7 @@ function walkingRecord(slug: string): CountryRecord | undefined {
   return {
     slug,
     name: k.name,
-    trips: tripTags(slug),
-    projects: projectTags(slug),
+    tags: tagsOfCountry(slug),
     summary,
     headLead,
     stays: [{ from: k.entered, to: k.left }],
@@ -396,7 +393,9 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
   const idx = seq.findIndex((x) => x.slug === r.slug);
   const prev = seq[idx - 1];
   const next = seq[idx + 1];
-  const cooked = RECIPES.filter((x) => x.country === r.slug);
+  /* 札は `lib/tags.ts` から。料理だけ自分の段（「この国で作ったごはん」）に、残りはパスポートの下に */
+  const dishes = r.tags.find((x) => x.kind === "dish");
+  const passTags: Tag[] = r.tags.filter((x) => x.kind !== "dish").flatMap((x) => x.tags);
   /* 行った街の記事（`/travel/<国>/<街>/<話>`）。題の頭（「ソフィアの物価【…】」）を札の字に、残りを添え書きに */
   const articles = publicArticles(r.slug).map((a) => {
     const x = articleOf(a.country, a.city, a.slug);
@@ -456,7 +455,7 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
   };
 
   return (
-    <PageShell crumbs={travelCrumbs(r.name)}>
+    <PageShell crumbs={travelCrumbs(r.slug)}>
       {/* 歩いた記録の名札（#1262）。日付は面に並ぶ滞在のはじまりと、面に出る配信のいちばん新しい日（sitemap と同じ） */}
       {r.stays[0] && (
         <JsonLd
@@ -531,23 +530,19 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
           {r.en && <em>{r.en}</em>}
         </p>
 
-        {/* どの旅で行ったか。押すと、その旅の島へ（2つの旅に入った国は2枚）。
-            字は旅の名前だけ（「〈旅〉で行った」と説明を足さない。札の並びで読める） */}
-        {(r.trips.length > 0 || r.projects.length > 0) && (
+        {/* いつ居たか（月のふりかえりへ）・どの旅で（旅の島へ）・ここでやった企画（伝説の面へ）。
+            札は `lib/tags.ts` から（字は種類で見分けがつく形で返る。企画は「伝説「…」」）。
+            パスポートの中なので、1行の添え書きは出さずに題だけ */}
+        {passTags.length > 0 && (
           <p className="apass-trips">
-            {r.trips.map((t) => (
-              <Link key={t.slug} className="chip" href={t.href} prefetch={false}>
-                <Icon name="island" size={20} />
-                {t.name}
-              </Link>
-            ))}
-            {/* ここでやった伝説の企画。絵は丘（伝説の企画の建物）の印。
-                **字に種類を添える。** 旅と企画は別の種類で、名前が同じこと（イランまで歩く）も、
-                同じ面に旅の島へ送る同じ字（北欧の旅のしおり）が在ることもある。字だけで行き先が分かるように */}
-            {r.projects.map((pj) => (
-              <Link key={pj.slug} className="chip" href={pj.href} prefetch={false}>
-                <Icon name="hill" size={20} />
-                伝説「{pj.title}」
+            {passTags.map((t) => (
+              <Link key={t.href} className="chip" href={t.href} prefetch={false}>
+                {"sprite" in t.art ? (
+                  <img className="mini-icon" src={`/sprites/${t.art.sprite}.webp`} alt="" />
+                ) : "icon" in t.art ? (
+                  <Icon name={t.art.icon} size={20} />
+                ) : null}
+                {t.label}
               </Link>
             ))}
           </p>
@@ -759,27 +754,27 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
         </Panel>
       )}
 
-      {cooked.length > 0 && (
+      {dishes && (
         <Panel>
           <h2>この国で作ったごはん</h2>
           {/* 押せる札は 48px＋厚み6px なので、1品で1行 48px 使う。
               ジョージアは25品あって、これだけで 1,224px（1.5画面）あった。
               ここは料理の本体ではなく「この国で何を作ったか」を言う場所なので、
-              8品まで出して、その先は「作った料理」に渡す。 */}
+              頭の数品まで出して（`lib/tags.ts` が切る）、その先は「作った料理」に渡す。 */}
           <div className="chips">
-            {cooked.slice(0, DISHES).map((x) => (
-              <Link key={x.slug} className="chip" href={`/kitchen/${x.slug}`} prefetch={false}>
-                <img className="mini-icon" src={`/sprites/${x.icon}.webp`} alt="" />
-                {x.name}
+            {dishes.tags.map((x) => (
+              <Link key={x.key} className="chip" href={x.href} prefetch={false}>
+                {"sprite" in x.art && <img className="mini-icon" src={`/sprites/${x.art.sprite}.webp`} alt="" />}
+                {x.label}
               </Link>
             ))}
           </div>
-          {cooked.length > DISHES && (
-            <Link prefetch={false} className="tile" href="/kitchen" style={{ marginTop: 12 }}>
+          {dishes.more && (
+            <Link prefetch={false} className="tile" href={dishes.more.href} style={{ marginTop: 12 }}>
               <ArtStamp size={44} className="tile-icon" />
               <span className="tile-text">
-                <b>のこりの{cooked.length - DISHES}品も見る</b>
-                <i>作った料理のスタンプ帳に、{r.name}の{cooked.length}品ぜんぶ</i>
+                <b>{dishes.more.label}</b>
+                <i>作った料理のスタンプ帳に、{r.name}の料理ぜんぶ</i>
               </span>
               <Icon name="right" size={16} className="tile-go" />
             </Link>

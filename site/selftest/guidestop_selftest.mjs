@@ -88,14 +88,18 @@ function give(code, why) {
 
 /* ------------------------------------------------------------------ 組み立て */
 
-/** 1枚だけ字を落として読む。**import の無い（型しか import しない）本だけ**に使う */
+/**
+ * 1枚だけ字を落として読む。**隣の本（`./…`）しか import しない本だけ**に使う。
+ * 隣の本は同じやりかたで読む（滞在の表は街の名簿と種類の表を読む。どちらも何も読まない。#1357）
+ */
 function loadGuide(src) {
   const ts = req(join(SITE, "node_modules", "typescript"));
   const code = ts.transpileModule(readFileSync(src, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   }).outputText;
   const mod = { exports: {} };
-  new Function("exports", "require", "module", code)(mod.exports, req, mod);
+  const near = (spec) => (spec.startsWith("./") ? loadGuide(join(dirname(src), `${spec.slice(2)}.ts`)) : req(spec));
+  new Function("exports", "require", "module", code)(mod.exports, near, mod);
   return mod.exports;
 }
 
@@ -103,18 +107,18 @@ function loadGuide(src) {
 const { STAYS } = loadGuide(join(CONTENT, "stays.ts"));
 
 /**
- * 街の名簿（`content/travel.ts` の `CITIES`）を字で読む。**本体は組み立てない**——
+ * 街の名簿（`content/cities.ts` の `CITIES`）を字で読む。**本体は組み立てない**——
  * あちらは面の部品（パンくず・貼られたときの顔）まで連れてくる。読み方は
  * `tools/sprites/tsread.mjs` の1本（読み落としが在れば `must` が 2 で止める）。
  * 道は本物の組み立てかた（`content/travelPath.ts` の `travelHref` ＋ `/<街>`。`TRAVEL_CITIES` と同じ）
  */
 function readCities() {
   const { travelHref } = loadGuide(join(CONTENT, "travelPath.ts"));
-  const got = readArray(readFileSync(join(CONTENT, "travel.ts"), "utf8"), "CITIES", {
+  const got = readArray(readFileSync(join(CONTENT, "cities.ts"), "utf8"), "CITIES", {
     keys: ["country", "slug", "name"],
     idKey: "slug",
   });
-  return must(got, "content/travel.ts の CITIES").map((c) => ({
+  return must(got, "content/cities.ts の CITIES").map((c) => ({
     href: `${travelHref(c.country)}/${c.slug}`,
     name: c.name,
   }));
@@ -229,7 +233,7 @@ console.log("\n# 3. 本物の滞在の表で、1日ずつ選ぶ");
   const stays = [...STAYS].sort((a, b) => a.from.localeCompare(b.from));
   const stops = guideStops(stays, cities);
   console.log(`  （街の名簿 ${cities.length} / 滞在 ${stays.length} / ガイドのある滞在 ${stops.map((s) => s.name).join("・") || "0"}）`);
-  if (!cities.length) give(2, "街の名簿（content/travel.ts の CITIES）が読めない");
+  if (!cities.length) give(2, "街の名簿（content/cities.ts の CITIES）が読めない");
   if (!stays.length) give(2, "滞在の表（content/stays.ts の STAYS）が読めない");
   if (!stops.length) give(2, "街のガイドのある滞在が1つも無い（数えるものが無い）");
   /* 街のガイドのある最初の滞在の前の週から数える（2024 年からの全部の日を回しても、ガイドが無いので何も言わない） */

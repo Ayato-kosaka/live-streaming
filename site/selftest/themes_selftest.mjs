@@ -129,6 +129,9 @@ bring(join(CONTENT, "countries.ts"), "countries.ts");
 /* 滞在の表（国の表と章が引く。#1275）。案内の面の絵の名前（`IconName`）は部品の側の型なので、
    ここでは字で受ける——確かめるのは宛先で、絵の名前ではない */
 bring(join(CONTENT, "stays.ts"), "stays.ts");
+/* 滞在の表が読む2枚（街の名簿と種類の表。どちらも何も読まない。#1357） */
+bring(join(CONTENT, "cities.ts"), "cities.ts");
+bring(join(CONTENT, "kinds.ts"), "kinds.ts");
 writeFileSync(
   join(WORK, "stays.ts"),
   readFileSync(join(WORK, "stays.ts"), "utf8").replace(

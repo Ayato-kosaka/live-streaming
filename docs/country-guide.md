@@ -327,7 +327,12 @@ if miss: raise SystemExit("材料の名前が合いません: %s" % miss[:5])
 貼られたときの絵は区画の1枚（`map`）を使うので、国ごとには焼かない。自前の絵を持たせるときだけ
 `site/lib/ogCards.json` ＋ `tools/sprites/ogcards.mjs` の物3つと、名簿の `card` を足す（北マケドニアがそれ）。
 
-もう手で書かなくてよくなったもの: `site/app/sitemap.ts`（名簿から並ぶ。字で書くと2回載って書き出しが止まる）・
+**街の面（`/travel/<国>/<街>`）を足すとき**は、街の名簿 `site/content/cities.ts` に1行（`country` `slug` `name`）と、
+滞在の表 `site/content/stays.ts` のその国の行の `cities` に、**街の名前ではなく slug** を書く（#1357。名前のまま残すと
+書き出しが止まる）。国の面の「行った街」のカード・街の面の札（いつ居たか・旅・企画・料理）は、この slug で結ばれる。
+記事（`/travel/<国>/<街>/<話>`）は今までどおり `site/content/travel.ts` の `ARTICLES` に1行。
+
+もう手で書かなくてよくなったもの: `site/app/sitemap.ts`（種類の表 `site/lib/pages.ts` から並ぶ。字で書くと2回載って書き出しが止まる）・
 `site/components/island/layout.ts` の `under`（`/travel` の下は「歩いた国」の軒にひとりでに入る）。
 
 **道を動かしたら、前の道を 301 で新しい道へ送る**（`firebase.json` の `redirects`）。送り忘れは

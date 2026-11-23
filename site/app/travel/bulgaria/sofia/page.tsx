@@ -13,6 +13,7 @@ import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import StickyNotes from "@/components/live/Notes";
 import Writer from "@/components/travel/article/Writer";
+import CityTags from "@/components/travel/CityTags";
 import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { SOFIA } from "@/content/guidebook/bulgaria-sofia";
@@ -109,6 +110,9 @@ export default function SofiaPage() {
         <Writer by={went ? GUIDE_BY.after : GUIDE_BY.before} went={went ? { city: G.name, from: went } : undefined} />
         <Sources g={g} drawn={usedDrawn} />
       </article>
+
+      {/* いつ居たか・どの旅で・企画・料理の札（`components/travel/CityTags.tsx`。0件なら出ない） */}
+      <CityTags country={G.country} city={G.city} name={G.name} />
 
       {/* 付箋。**宛先の id（`bulgaria`）は Firestore に入っているので変えない**（`content/themes.ts`） */}
       <StickyNotes theme="bulgaria" title="ソフィアでこれやって" />

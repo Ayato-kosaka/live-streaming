@@ -39,6 +39,19 @@ const STAY_SPANS = [...STAYS]
     return { stay: s, from: s.from, to };
   });
 
+/**
+ * 滞在の、事実上の期間（上の `STAY_SPANS`）。終わりの空いた滞在は `9999-12-31` まで。
+ * **札（`lib/tags.ts`）が期間の重なりで結ぶときは、ここから引く**（境目の日を2つの国に数えない）
+ */
+export function spanOfStay(s: Stay): { from: string; to: string } {
+  const x = STAY_SPANS.find((y) => y.stay === s);
+  if (!x) throw new Error(`content/stayChapters.ts: 滞在の表に無い行（${s.country} ${s.from}）`);
+  return { from: x.from, to: x.to };
+}
+
+/** 滞在の、事実上の期間ぜんぶ（着いた順） */
+export const staySpans = () => STAY_SPANS.map((x) => ({ stay: x.stay, from: x.from, to: x.to }));
+
 const overlaps = (x: { from: string; to: string }, ch: Chapter) =>
   !!ch.from && x.from <= (ch.to || OPEN) && ch.from <= x.to;
 

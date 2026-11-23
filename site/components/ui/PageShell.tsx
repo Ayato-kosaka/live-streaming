@@ -10,7 +10,10 @@ import { SayRoom } from "./Say";
 import { JsonLd, SITE_ROOT_LABEL, breadcrumbLd } from "@/lib/jsonld";
 import { LINKS } from "@/content/site";
 import { STAYS } from "@/content/stays";
-import { TRAVEL_CITIES } from "@/content/travel";
+/* 街の名簿は軽い1枚（`content/cities.ts`）から。`content/travel.ts` は面の一覧（`lib/pages.ts`）まで連れてくるので、
+   画面の部品（client）から読まない */
+import { CITIES } from "@/content/cities";
+import { hrefOf } from "@/content/kinds";
 import { guideStops } from "@/lib/guideStop";
 import FootGuide from "./FootGuide";
 
@@ -27,7 +30,10 @@ const YOUTUBE = LINKS.find((l) => l.id === "youtube")?.href;
  * 表紙の［つぎ］の札が指している（滞在の行の `guide`）。検索・索引・`/all` に
  * 出さないのは面の側の印が受け持つ（`content/travel.ts` の `TravelCity`）。
  */
-const GUIDE_STOPS = guideStops(STAYS, TRAVEL_CITIES);
+const GUIDE_STOPS = guideStops(
+  STAYS,
+  CITIES.map((c) => ({ name: c.name, href: hrefOf("/travel/<国>/<街>", c.country, c.slug) })),
+);
 
 export { ALL_HREF, ALL_LABEL };
 
