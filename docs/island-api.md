@@ -957,6 +957,12 @@ node functions/selftest/api_trust_selftest.mjs
 アラート画面は `islandAlertFeed/{合言葉}` を Firestore のリアルタイム購読で直に読む（約1秒）。
 口を何秒かおきに読む形にしないのは、あやとが「12秒では遅い」と退けたから（決定の記録 0017）。
 
+### 本番で通して確かめる
+
+テストの Stripe で払ってから、テスト用の合言葉のアラートに出るまでを、本番の面と口で通すのは
+`.github/workflows/tip_e2e.yml`（手で押す。中身と、本番に何を書いて何を消すかは `tools/tip/tip_e2e.mjs` の頭）。
+表は job summary、録画は枝 `review-media/tip-e2e`。
+
 ---
 
 ## 確かめかた
