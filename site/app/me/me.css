@@ -136,6 +136,47 @@
 }
 
 
+/* --- 島の管理の札（`/me/desk`） ---------------------------------------
+   用事ごとの束を2列に置き、束の中で札を縦に積む（#1280）。
+
+   **札は横向き。** 共通の札（`.mp-tab`）は印の下に字を置く縦向きで、
+   3列に並べる前提の形。束を2列にすると札は 390px で1枚 150px ほどになり、
+   縦向きのままだと字の横が空いて背だけ 56px 取る。横向きなら 48px で
+   「名前をつなぐ」（6文字）も1行に収まる（`island-design.md` 3-2 の 48px は割らない）。 */
+.dk-shelves {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4) var(--sp-3);
+}
+/* 用事の見出し。**札より小さく、札より薄く。** 押すのは札で、ここは
+   どの束かを言うだけ。紙の見出し（`.panel > h2`）とは別の顔にする。 */
+.dk-shelf-h {
+  margin: 0 0 var(--sp-2);
+  font-size: var(--fs-note);
+  font-weight: 900;
+  letter-spacing: var(--ls-body);
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+.dk-tabs {
+  display: grid;
+  gap: var(--sp-2);
+}
+.mp-tab.dk-tab {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--sp-2);
+  min-height: 48px;
+  padding: 0 var(--sp-3);
+  font-size: var(--fs-note);
+  /* 札の字は折らない。収まらない名前は、名前のほうを短くする（#1280） */
+  white-space: nowrap;
+}
+.mp-tab.dk-tab svg { flex: none; }
+/* 畳んだ用事の中は、2枚を横に並べる。縦に積むと畳みを開いたぶん背が伸びる。 */
+.fold .dk-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dk-shelves + .fold { margin-top: var(--sp-4); }
+
 .mp-tool, .mp-tool-body, .mp-stuff { margin-top: var(--sp-3); }
 /* 道具の紙（`.panel`）の見出しは、紙の上辺に吊るしてある（`h2` の負の余白）。
    そのぶん札の2段目に乗って、**選んでいる札が押せなくなっていた**
@@ -351,7 +392,7 @@
 }
 .mp-go:active { transform: translateY(4px); box-shadow: none; }
 
-/* --- 島の手入れ（あやとだけ） ----------------------------------------- */
+/* --- 島の管理（あやとだけ） ------------------------------------------- */
 .mp-care-acts {
   display: flex;
   flex-wrap: wrap;
@@ -410,10 +451,10 @@
 }
 .mp-outbtn:active { transform: translateY(6px); box-shadow: none; }
 
-/* --- 旅の道具の下の、行き先の札 ---------------------------------------
-   ルーレット（#164）。**3つの札の並び（`.mp-tabs`）には入れない。**
-   あちらは「その日のうちに入れる」3つで、こちらは配信中に開く別の面。
-   行き先なので板（厚み）。並びの外にあるので、厚みを付けてよい。 */
+/* --- 行き先の札 -------------------------------------------------------
+   `/me` の入口（島の管理へ）と、机の「ルーレット」を押したときの1枚
+   （`/me/roulette` へ）。**札の並びには入れない。** 札は机の中で切り替える
+   もので、こちらは別の面へ行く道。行き先なので板（厚み）。 */
 .mp-goto {
   display: flex;
   align-items: center;

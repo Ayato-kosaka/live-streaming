@@ -26,11 +26,11 @@ export const metadata: Metadata = share({
 export default function RoulettePage() {
   return (
     <PageShell
-      /* 入口はあやとの机の1本だけ（#242）。戻り道もそこへ返す。
+      /* 入口は島の管理の「ルーレット」の札だけ（#242・#1280）。戻り道もそこへ返す。
          `/me` に返すと、来た道と違うところへ置き去りになる。 */
       crumbs={[
         { label: "じぶんのこと", href: "/me" },
-        { label: "島の手入れ", href: "/me/desk" },
+        { label: "島の管理", href: "/me/desk" },
         { label: "ルーレット" },
       ]}
     >

@@ -19,6 +19,7 @@
 import { chromium } from "playwright-core";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { offline } from "./route.mjs";
+import { deskTab, pressTab } from "./desktools.mjs";
 import { apply } from "./asme.mjs";
 
 const PORT = process.env.SPORT || "4800";
@@ -37,11 +38,11 @@ const SEL = [
 
 /** 測る場面。`/me/desk` の道具は札を押さないと作られない（`mesweep.mjs` と同じ）。 */
 const SCENES = [
-  { id: "desk-place", page: "/me/desk.html", tab: "いまどこ", seed: true },
-  { id: "desk-video", page: "/me/desk.html", tab: "配信", seed: true },
-  { id: "desk-plan", page: "/me/desk.html", tab: "企画", seed: true },
+  /* 札の字は `id` から引く（`desktools.mjs`。#1280）。手で書くと、名前が変わった日に
+     押せない札を黙って飛ばして机の1枚目を測る */
+  { id: "desk-video", page: "/me/desk.html", tab: deskTab("video"), seed: true },
   {
-    id: "desk-donor", page: "/me/desk.html", tab: "投げ銭", seed: true,
+    id: "desk-donor", page: "/me/desk.html", tab: deskTab("donor"), seed: true,
     /* 「近い名前の人」（`.mp-donor-hint`）は、名前を打つまで1件も出ない。
        打たずに撮ると、その規則だけ**測れていないのに0件で通る。** */
     /* 「近い名前の人」は `/donors` が返す `hints` から出る（`functions/src/donors.ts`
@@ -67,11 +68,10 @@ const SCENES = [
       });
     },
   },
-  { id: "desk-chara", page: "/me/desk.html", tab: "キャラ", seed: true },
-  { id: "desk-fund", page: "/me/desk.html", tab: "スパチャ", seed: true },
-  { id: "desk-photo", page: "/me/desk.html", tab: "写真", seed: true },
-  { id: "desk-sticky", page: "/me/desk.html", tab: "付箋", seed: true },
-  { id: "me-plan", page: "/me.html", tab: "企画", seed: true, admin: false },
+  { id: "desk-chara", page: "/me/desk.html", tab: deskTab("chara"), seed: true },
+  { id: "desk-fund", page: "/me/desk.html", tab: deskTab("fund"), seed: true },
+  { id: "desk-photo", page: "/me/desk.html", tab: deskTab("photo"), seed: true },
+  { id: "desk-sticky", page: "/me/desk.html", tab: deskTab("sticky"), seed: true },
   { id: "nordic-photos", page: "/nordic/photos.html", seed: true },
   { id: "nordic-day2", page: "/nordic/day/2.html", seed: true },
   { id: "nordic", page: "/nordic.html", seed: true },
@@ -111,7 +111,7 @@ for (const sc of SCENES) {
   await p.goto(`http://localhost:${PORT}${sc.page}`, { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
   await p.waitForTimeout(1500);
   if (sc.tab) {
-    await p.locator(".mp-tab", { hasText: new RegExp(`^${sc.tab}`) }).first().click({ timeout: 5000 }).catch(() => {});
+    await pressTab(p, sc.tab);
     await p.waitForTimeout(1600);
   }
   if (sc.open) await sc.open(p);

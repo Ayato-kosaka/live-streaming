@@ -3,7 +3,7 @@
  *
  * `/me` はログインした人にしか中身が出ないので、本番をそのまま開けない。
  * そこで **書き出した `me.html` の器をそのまま使い**、中の `panel` だけを
- * 足元を持つ3つの部品（投げ銭・島の手入れ・じぶんのもの）に差し替える。
+ * 足元を持つ3つの部品（投げ銭・島の管理・じぶんのもの）に差し替える。
  * 頭の `<link rel=stylesheet>` は触らないので、**本番と同じ CSS が同じ順で当たる。**
  *
  *   tools/build.sh 3200
@@ -163,7 +163,7 @@ ${donorRow("たいpi", donorFoot("紐付け待ち", "@taipi-3kd", false, ""), ""
 </section>
 
 <section class="panel paper" id="s-care">
-<h2>島の手入れ</h2>
+<h2>島の管理</h2>
 <ul class="mp-care" id="u-carenote">
 ${careNote("北欧のごはん、現地のスーパーで買ったものが見たいです", careNoteFoot("リトアニア", "9月13日", "ひめひめ"))}
 ${careNote("バスの中の景色をもっと流してほしい", careNoteFoot("北欧旅ぜんぶ", "9月12日", "ゆずたつ"))}

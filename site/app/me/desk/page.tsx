@@ -6,15 +6,15 @@ import "../me.css";
 
 export const metadata: Metadata = share({
   key: "home",
-  title: "島の手入れ",
-  description: "島を手入れする道具を、1つずつ出す机。",
+  title: "島の管理",
+  description: "島を管理する道具を、用事ごとに出す机。",
   /* あやとしか開けない面。索引に載せない（`app/sitemap.ts` にも入れていない）。 */
   robots: { index: false, follow: false },
   path: "/me/desk",
 });
 
 /**
- * 島の手入れ（机）。**あやとだけ。**
+ * 島の管理（机）。**あやとだけ。**
  *
  * 旅の道具・付箋への返事・企画の段・投げ銭の紐付け・アラートボックスを
  * ここへ集めた。前は全部が `/me` に縦に積んであって、あやとの画面は
@@ -26,8 +26,8 @@ export const metadata: Metadata = share({
  */
 export default function DeskPage() {
   return (
-    <PageShell crumbs={[{ label: "じぶんのこと", href: "/me" }, { label: "島の手入れ" }]}>
-      <PageHead icon="hut-home" title="島の手入れ" lead="道具を1つ出して、使う。" />
+    <PageShell crumbs={[{ label: "じぶんのこと", href: "/me" }, { label: "島の管理" }]}>
+      <PageHead icon="hut-home" title="島の管理" lead="道具を1つ出して、使う。" />
       <Desk />
     </PageShell>
   );

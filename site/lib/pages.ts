@@ -153,7 +153,7 @@ const MEMBERS: Record<Route, Member> = {
   /* ここから下の道具は、索引に出さない（R-25。面も自分で `robots: index: false` を言っている） */
   "/design": { listed: false, pages: () => one("/design", "デザインの見本") },
   "/me": { listed: false, pages: () => one("/me", "じぶんのこと") },
-  "/me/desk": { listed: false, pages: () => one("/me/desk", "島の手入れ") },
+  "/me/desk": { listed: false, pages: () => one("/me/desk", "島の管理") },
   "/me/roulette": { listed: false, pages: () => one("/me/roulette", "ルーレットの操作") },
   "/cards/import": { listed: false, pages: () => one("/cards/import", "写真をまとめて登録") },
   "/roulette": { listed: false, pages: () => one("/roulette", "ルーレット") },
