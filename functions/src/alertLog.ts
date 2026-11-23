@@ -67,6 +67,8 @@ export const ALERT_LOG_EVENTS: readonly string[] = [
   "doneruConnectorStarted",
   "doneruWssError",
   "youtubeConnectorStarted",
+  "islandConnectorStarted",
+  "islandFeedError",
   // 投げ銭の道
   "notificationReceived",
   "notificationDisplayed",
