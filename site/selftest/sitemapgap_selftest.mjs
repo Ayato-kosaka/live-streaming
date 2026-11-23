@@ -43,7 +43,9 @@ import { fileURLToPath } from "node:url";
    最初は `/robots:\s*\{[^}]*index:\s*false/` と書いて、そこで止められた。 */
 import { closeAt, fields, nestedBody, readMap } from "../../tools/sprites/tsread.mjs";
 import {
+  legendBooks,
   sitemapReadsArticles,
+  sitemapReadsBooks,
   sitemapReadsCities,
   sitemapReadsTravel,
   travelArticles,
@@ -148,8 +150,10 @@ function metaBody(src) {
 const CITIES = travelCities(join(here, ".."));
 /* 街の記事も同じ（`travelArticleShare`）。**出すときは名簿の印を1つ外すだけ**で、面は触らない */
 const ARTICLES = travelArticles(join(here, ".."));
+/* 面の印の付いた企画の面も同じ（`bookRobots`。下書きの印から決まる。M-33） */
+const BOOKS = legendBooks(join(here, ".."));
 const hidden = (r) => {
-  if ([...CITIES, ...ARTICLES].some((c) => c.route === r && c.draft)) return true;
+  if ([...CITIES, ...ARTICLES, ...BOOKS].some((c) => c.route === r && c.draft)) return true;
   let src;
   try {
     src = readFileSync(join(APP, r.slice(1), "page.tsx"), "utf8");
@@ -172,6 +176,8 @@ const viaTravel = [
   ...(sitemapReadsCities(src) ? CITIES.filter((c) => !c.draft).map((c) => c.route) : []),
   /* 記事の面も、索引が `publicArticles` を読んでいれば、印の無い記事だけが索引に在る */
   ...(sitemapReadsArticles(src) ? ARTICLES.filter((c) => !c.draft).map((c) => c.route) : []),
+  /* 面の印の付いた企画の面も、面の名簿が `BOOK_PROJECTS` を読んでいれば、下書きでない面だけが索引に在る */
+  ...(sitemapReadsBooks(src) ? BOOKS.filter((c) => !c.draft).map((c) => c.route) : []),
 ];
 const listed = (r) => LISTED.has(r) || viaTravel.includes(r);
 

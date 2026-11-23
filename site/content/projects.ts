@@ -92,6 +92,25 @@ type Base = {
    * 企画の期間（`range`）と旅の期間は別の事実なので、違っていてよい。違う理由は行の注に書く。
    */
   trip?: string;
+  /**
+   * **面の印**（M-8・`docs/adr/0018-upcoming-project-page.md`）。付いた企画は、始まる前から `/legends/<企画>` に面を持つ
+   * （決まりと、その企画のためのガイド。M-21）。面の中身は材料（`python/data/legends/<企画>/book.json`）を
+   * `python/legend_book_bake.py` が焼いたもの（`content/legends/<企画>.ts`）で、面は `app/legends/<企画>/page.tsx`。
+   * **伝説の丘（`/legends`）に並ぶのは伝説の印の付いた企画だけ**——面の印では並ばない。
+   */
+  book?: true;
+  /**
+   * **下書きの印**（M-33・ADR 0018。街の `draft` と同じ意味）。付いているあいだ、その企画は——
+   *
+   * - 面は在るが、検索に出さない（面の `robots` が `index: false`。`content/legends/index.ts` の `bookShare`）
+   * - **どの面からも引かない**: 表紙の「これから」・便り・掲示板・伝説の丘・索引・サイトマップ・llms.txt・島の上
+   *
+   * **外すのは `draft: true` を消すだけ。** 島じゅうが読む `PROJECTS` に下書きの行は入らない（表の下）ので、
+   * 引く所ごとに印を見なくていい。下書きの行まで読むのは、面の名簿（`lib/pages.ts`）と面だけ（`PROJECT_ROWS`・`BOOK_PROJECTS`）。
+   * 結ぶ旅・滞在・お題の行は、印を外す日に足す（旅・滞在・お題には印を持たせない）。
+   * 見張りは `site/selftest/draftproject_selftest.mjs`（印を外すと出ることまで対照で見る）
+   */
+  draft?: true;
 };
 
 /** 伝説の印が付いた企画。`/legends` に並ぶ中身を持つ */
@@ -167,11 +186,25 @@ export type Project = LegendProject | EventProject;
  */
 const IRAN_WALK: Course = { from: "エレバン", to: "メグリ", km: 380, days: 12, arriveDay: 10 };
 
-export const PROJECTS: Project[] = [
+/**
+ * 企画の表の行ぜんぶ（**下書きの行も入る**）。読むのは面の名簿（`lib/pages.ts`）と、面の印の付いた企画の面だけ。
+ * 島じゅうは下の `PROJECTS` を読む（M-33）。
+ */
+export const PROJECT_ROWS: Project[] = [
   {
     slug: "food-wine-fest",
     title: "Food & Wine Fest @ ムタツミンダ公園",
     date: "2026-09-06",
+  },
+  /* インド屋台飯100食（#1404。企画書は本文・2026-11-23 にあやとが承認）。**始まる前から面を持つ**（面の印。M-8）。
+     「まだ動線をつなげるのは待ってほしい」（あやと 2026-11-23）ので下書き（M-33）。日付はムンバイに入る日の見立て（「ごろ」）。
+     旅（インド・スリランカ）と滞在の行・付箋の宛先（お題）は、あやとの「繋いでいい」で印を外す日に足す */
+  {
+    slug: "india-street-food",
+    title: "インド屋台飯100食、食べるまで出られません",
+    date: "2027-01-15",
+    book: true,
+    draft: true,
   },
   {
     slug: "georgia-bye",
@@ -440,6 +473,25 @@ export const PROJECTS: Project[] = [
     ],
   },
 ];
+
+/**
+ * **島じゅうが読む企画。下書きの印の付いた行は入らない**（M-33）。表紙の「これから」・便り（`lib/leadPlan.ts`）・
+ * 掲示板（`components/live/Board.tsx`）・伝説の丘と島の上（`content/legends.ts`）・カードの日（`lib/cardDays.ts`）・札（`lib/tags.ts`）・
+ * お題の結び先（`content/themes.ts`）は、どれもここから引く。だから印1つで、引く所ぜんぶから外れる
+ */
+export const PROJECTS: Project[] = PROJECT_ROWS.filter((p) => !p.draft);
+
+/** 面の印の付いた企画（**下書きも入る**）。`/legends/<企画>` に面が建つ（M-8） */
+export const BOOK_PROJECTS: Project[] = PROJECT_ROWS.filter((p) => p.book);
+
+/* 印の組み合わせを確かめる。読み込んだときに1回 */
+for (const p of PROJECT_ROWS) {
+  /* 下書きは「面は在るが引かない」の意味（M-33）。面の無い企画に付けると、ただ消えるだけになる */
+  if (p.draft && !p.book) throw new Error(`content/projects.ts: 企画 "${p.slug}" は下書きの印を持つのに、面の印（book）が無い`);
+  /* 伝説の面（`app/legends/[slug]`）と、面の印の面（`app/legends/<企画>/page.tsx`）が同じ道を作る。
+     伝説の印を付ける日に、面の側（`app/legends/<企画>/page.tsx` に伝説の節を足すか、[slug] から外す）を直す */
+  if (p.book && p.legend) throw new Error(`content/projects.ts: 企画 "${p.slug}" は伝説の印と面の印を両方持つ（同じ道に面が2つ建つ）`);
+}
 
 /** 伝説の印が付いているか */
 export const isLegend = (p: Project): p is LegendProject => p.legend === true;

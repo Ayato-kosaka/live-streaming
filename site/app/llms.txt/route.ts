@@ -2,6 +2,8 @@ import { APPS, PAST_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
 import { guidebookOf } from "@/content/guidebook";
 import { LEGENDS } from "@/content/legends";
+import { bookOf } from "@/content/legends/index";
+import { PROJECTS } from "@/content/projects";
 import { RECIPES } from "@/content/recipes";
 import { LINKS, SITE } from "@/content/site";
 import { STREAM_TYPES } from "@/content/streamTypes";
@@ -20,7 +22,7 @@ import { abs } from "@/lib/jsonld";
  * - **手で並べない。** 面の名簿（sitemap と同じ `content/*`）から毎回作る。面が増えれば、ここも増える
  *   （手で書いた一覧は、書いた日から古くなる。`docs/island-standards.md` 8章）
  * - 一行の説明は、面に見えている一文（`summary` `note` `lead` `description`）。ここで言い換えない
- * - 公開前の面（`draft`）は載せない（sitemap と同じ `publicCities` `publicArticles`）
+ * - 公開前の面（`draft`）は載せない（sitemap と同じ `publicCities` `publicArticles`。下書きの企画は `PROJECTS` に入らない）
  * - 数（何本・何カ国）は書かない。読んだ日によって変わる数は、面のほうが持つ
  */
 export const dynamic = "force-static";
@@ -71,6 +73,8 @@ export function GET() {
     "## 伝説の企画",
     "",
     ...LEGENDS.map((l) => line(l.title, `/legends/${l.slug}`, l.lead)),
+    /* 面の印の付いた企画（始まる前から面を持つ。M-8）。**下書きの企画は `PROJECTS` に入らないので載らない**（M-33） */
+    ...PROJECTS.filter((p) => p.book).map((p) => line(p.title, `/legends/${p.slug}`, bookOf(p.slug).book.meta.description)),
     "",
     "## 配信の型",
     "",

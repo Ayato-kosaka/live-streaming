@@ -1,0 +1,233 @@
+/*
+ * 企画の面（`/legends/<企画>`。面の印の付いた企画。M-8）。部品は `components/legends/Book.tsx`。
+ *
+ * **地と部品は街のガイドのまま**（`components/guidebook/guidebook.css` の `.gb` の下）。ここで足すのは、
+ * 表紙の「◯/100食」・スタンプラリーの台紙・地域の色・用語の札・食べ比べの並び・回りかたの図だけ。
+ *
+ * ## 色
+ *
+ * 差し色は街のガイドと同じ1つ（`--gb-c`）。**地域ごとに1色**（`--lb-<地域>`）を足し、地域のカード・
+ * 食べ比べの札・回りかたの点・絵の無い札の地に使う。どれも濃い字（`--ink`）を乗せるので明るい色。
+ * 白い字を乗せる所（回りかたの点・食べた丸）は、同じ色を `color-mix` で暗くして 4.5 以上にする。
+ */
+
+.gb {
+  --lb-north: #f2c98a;
+  --lb-west: #f4b3a0;
+  --lb-east: #b8d8a8;
+  --lb-south: #f6dd8c;
+  --lb-srilanka: #a9d3d9;
+  /* 牛肉の札（窓の中だけ。豚・酒と同じ大きさ） */
+  --gb-beef: #8a4b2a;
+}
+
+.gb-flag.is-beef > b { background: var(--gb-beef); }
+
+/* ---- 0 表紙 ------------------------------------------------------------ */
+
+.lb-cover {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-4) var(--sp-3) var(--sp-3);
+  border-radius: var(--r-2);
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  text-align: center;
+}
+
+.lb-cover-art { margin: calc(-1 * var(--sp-4)) calc(-1 * var(--sp-3)) var(--sp-3); overflow: hidden; border-radius: var(--r-2) var(--r-2) 0 0; }
+
+.lb-h1 {
+  margin: 0;
+  font-size: clamp(24px, 6.4vw, 36px);
+  font-weight: 900;
+  line-height: 1.3;
+  word-break: auto-phrase;
+  text-wrap: balance;
+}
+
+.lb-sub { margin: var(--sp-2) 0 0; font-size: 17px; font-weight: 800; color: var(--gb-c); }
+
+.lb-count {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 6px;
+  margin: var(--sp-3) 0 0;
+  font-weight: 900;
+}
+
+.lb-count b { font-size: 56px; line-height: 1; color: var(--gb-c); font-variant-numeric: tabular-nums; }
+.lb-count span { font-size: 22px; }
+.lb-count i { margin-left: var(--sp-2); font-style: normal; font-size: 15px; color: var(--ink-2); }
+.lb-count.is-sec { justify-content: flex-start; margin: 0 0 var(--sp-2); }
+.lb-count.is-sec b { font-size: 40px; }
+
+.lb-start { margin: var(--sp-2) 0 0; font-size: 16px; font-weight: 800; }
+.lb-updated { margin: var(--sp-2) 0 0; font-size: var(--fs-min); color: var(--ink-2); }
+
+/* ---- 1 決まり ---------------------------------------------------------- */
+
+.lb-rules { display: grid; gap: var(--sp-2); margin: 0 0 var(--sp-3); padding: 0 0 0 1.6em; font-size: 15px; line-height: 1.7; }
+.lb-rules li::marker { color: var(--gb-c); font-weight: 900; }
+
+.lb-quote { margin: 0; padding: var(--sp-3); border-radius: var(--r-1); background: var(--gb-c-lo); }
+.lb-quote blockquote { margin: 0; font-size: 18px; font-weight: 900; line-height: 1.5; }
+.lb-quote figcaption { margin-top: 6px; font-size: 13px; }
+.lb-quote a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; color: var(--ink); }
+
+/* ---- 2 食べた100食（台紙） -------------------------------------------- */
+
+/* 丸を10個ずつ。**押せない丸は平ら**（食べた丸だけが場面へのリンク） */
+.lb-card {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 5px;
+  margin: 0;
+  padding: var(--sp-2);
+  list-style: none;
+  border-radius: var(--r-1);
+  background: var(--gb-card);
+  border: 1px dashed var(--gb-line);
+}
+
+.lb-card > li {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 2px dashed color-mix(in srgb, var(--ink) 22%, transparent);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--ink) 45%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-card > li.is-done { border: 0; background: color-mix(in srgb, var(--lb-tone, var(--gb-c)) 100%, transparent); color: var(--ink); overflow: hidden; }
+.lb-card > li.is-done > a,
+.lb-card > li.is-done > span { display: grid; place-items: center; width: 100%; height: 100%; color: inherit; text-decoration: none; }
+.lb-card > li.is-done .gb-pic { width: 100%; height: 100%; border-radius: 50%; }
+.lb-stamp-b { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+@media (min-width: 720px) { .lb-card { gap: 8px; padding: var(--sp-3); } .lb-card > li { font-size: 12px; } }
+
+/* ---- 3 用語・見ておきたい所の札 --------------------------------------- */
+
+.lb-words {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) { .lb-words { grid-template-columns: repeat(4, 1fr); } .lb-words.is-sights { grid-template-columns: repeat(3, 1fr); } }
+
+.lb-words a {
+  display: grid;
+  gap: 2px;
+  min-height: 72px;
+  height: 100%;
+  padding: 10px 12px;
+  border-radius: var(--r-1);
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  border-left: 5px solid var(--gb-c);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.lb-words b { font-size: 16px; font-weight: 900; line-height: 1.35; }
+.lb-words i { font-style: normal; font-size: 12.5px; line-height: 1.5; color: var(--ink-2); }
+.lb-lead { font-weight: 800; }
+
+/* ---- 4 地域ごとの料理の違い -------------------------------------------- */
+
+.lb-map { margin: 0 0 var(--sp-3); border-radius: var(--r-1); overflow: hidden; }
+
+.lb-regions { display: grid; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+
+@media (min-width: 720px) { .lb-regions { grid-template-columns: 1fr 1fr; } }
+
+.lb-regions > li {
+  padding: 0 var(--sp-3) var(--sp-2);
+  border-radius: var(--r-1);
+  background: var(--gb-card);
+  border: 1px solid var(--gb-line);
+  overflow: hidden;
+}
+
+.lb-regions h3 {
+  margin: 0 calc(-1 * var(--sp-3)) var(--sp-2);
+  padding: 8px var(--sp-3);
+  background: var(--lb-tone);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.lb-regions p { margin: var(--sp-2) 0 0; font-size: 14.5px; line-height: 1.7; }
+
+.lb-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.lb-chips > span { font-size: var(--fs-min); font-weight: 800; color: var(--ink-2); }
+
+.lb-chip {
+  display: inline-grid;
+  min-height: 44px;
+  align-content: center;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--lb-tone) 55%, var(--gb-card));
+  color: var(--ink);
+  text-decoration: none;
+  line-height: 1.3;
+}
+
+.lb-chip b { font-size: 13.5px; font-weight: 800; }
+.lb-chip i { font-style: normal; font-size: var(--fs-min); color: var(--ink-2); }
+
+/* ---- 5 街ごとの食べ比べ ------------------------------------------------ */
+
+.lb-compare { display: grid; gap: var(--sp-3); }
+.lb-compare h3 { margin: 0 0 4px; font-size: 17.5px; font-weight: 900; }
+.lb-compare p { margin: 0 0 var(--sp-2); font-size: 14.5px; line-height: 1.7; }
+
+/* 同じ料理の街違いを横に並べる。狭い画面は横に送る（ページは横に溢れさせない） */
+.lb-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(104px, 1fr);
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  padding: 0 0 6px;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.lb-row a { display: grid; gap: 2px; color: var(--ink); text-decoration: none; }
+.lb-row .gb-pic { border-radius: var(--r-1); }
+.lb-row b { font-size: 13.5px; font-weight: 900; }
+.lb-row i { font-style: normal; font-size: 12px; line-height: 1.45; color: var(--ink-2); }
+
+/* 絵の無い札の地は、その品の地域の色（下書きのあいだだけ。`content/legends/drawn.ts` の `mustBeDrawn`） */
+.lb-row li .gb-pic.is-none { background: var(--lb-tone); }
+.lb-dishes .gb-tiles > li[data-kinds~="north"] .gb-pic.is-none { background: var(--lb-north); }
+.lb-dishes .gb-tiles > li[data-kinds~="west"] .gb-pic.is-none { background: var(--lb-west); }
+.lb-dishes .gb-tiles > li[data-kinds~="east"] .gb-pic.is-none { background: var(--lb-east); }
+.lb-dishes .gb-tiles > li[data-kinds~="south"] .gb-pic.is-none { background: var(--lb-south); }
+.lb-dishes .gb-tiles > li[data-kinds~="srilanka"] .gb-pic.is-none { background: var(--lb-srilanka); }
+
+/* ---- 7 回りかた -------------------------------------------------------- */
+
+.lb-route { display: grid; gap: var(--sp-3); margin: 0 0 var(--sp-3); }
+
+@media (min-width: 720px) { .lb-route { grid-template-columns: 300px 1fr; align-items: start; } }
+
+.lb-route svg { width: 100%; max-width: 300px; margin: 0 auto; display: block; }
+.lb-route polyline { fill: none; stroke: color-mix(in srgb, var(--ink) 45%, transparent); stroke-width: 2.5; stroke-dasharray: 6 5; stroke-linejoin: round; }
+.lb-route circle { fill: color-mix(in srgb, var(--lb-tone) 40%, #3b2a20); stroke: #fff; stroke-width: 2; }
+.lb-route text { fill: #fff; font-size: 10px; font-weight: 900; text-anchor: middle; }
+
+.lb-stops { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.lb-stops li { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 2px 10px 2px 4px; border-radius: 999px; background: color-mix(in srgb, var(--lb-tone) 45%, var(--gb-card)); font-size: 15px; font-weight: 800; }
+.lb-stops b { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: color-mix(in srgb, var(--lb-tone) 40%, #3b2a20); color: #fff; font-size: 13px; }

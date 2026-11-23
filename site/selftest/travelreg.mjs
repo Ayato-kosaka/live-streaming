@@ -69,3 +69,19 @@ export function travelArticles(site) {
 
 /** 索引が記事の名簿（公開してよい記事だけ）を読んでいるか */
 export const sitemapReadsArticles = (sitemapSrc) => /\bpublicArticles\(|\bTRAVEL_ARTICLES\b/.test(sitemapSrc);
+
+/**
+ * 面の印の付いた企画（`content/projects.ts` の `PROJECT_ROWS` の `book`。M-8）。`draft` は下書きの印（M-33）。
+ *
+ * 面は道が固定（`app/legends/<企画>/page.tsx`）だが、`robots` は面に字で書かず、表の印から決まる
+ * （`content/legends/index.ts` の `bookRobots`）。だから「検索に出さないと自分で言っている面か」は表の印で読む。
+ * 出すときは印を1つ外すだけで、面の名簿（`lib/pages.ts`）が `BOOK_PROJECTS` を読んでいれば索引に在る（`sitemapReadsBooks`）。
+ */
+export function legendBooks(site) {
+  const src = readFileSync(join(site, "content", "projects.ts"), "utf8");
+  const rows = must(readArray(src, "PROJECT_ROWS", { keys: ["slug", "book", "draft"] }), "content/projects.ts の PROJECT_ROWS");
+  return rows.filter((r) => r.book === "true").map((r) => ({ route: `/legends/${r.slug}`, draft: r.draft === "true" }));
+}
+
+/** 面の名簿が、面の印の付いた企画を読んでいるか */
+export const sitemapReadsBooks = (sitemapSrc) => /\bBOOK_PROJECTS\b/.test(sitemapSrc);
