@@ -20,6 +20,8 @@
 | `anim_probe.py` | 字が出る・いる・消えるコマ（元の fps のまま）と連続画像 | `grab_<id>.npy`・`anim_measure.json`・`anim_<id>.png` |
 | `anim_curve.py` | 出かたの曲線（倍率・濃さ・くっきり度・位置） | `curve_<id>.json` |
 | `bgm_gap_selftest.py` | `bgm_gap.py` の物差しが狂っていないか（下の「見張り」） | — |
+| `telop_scan.py` | 何本もの参考を並べて比べるときの字の数（#1403 の F）。取り込みの reference の1秒1コマから、焼き込みの字の帯（縦の位置・字の高さ・幅・色）・動かない帯・字が出ている秒の割合・大きい字の秒とそのときの語 | `telop.json`・`telop_summary.json`・`telop_pick.jpg`（人が見る10コマ）・`telop.jpg` |
+| `sfx_scan.py` | 何本もの参考の効果音と BGM（#1403 の F）。reference を `audio: true` で頼んだ元の音の束から、効果音の候補・同じ音の繰り返し・BGM の落ち・カットが拍に乗るか。**候補は効果音そのものではない**（決めるのは人が音の絵で） | `scan.json`・`overview.jpg` |
 | `fonts.txt` | 書体を当てる候補の43本（google/fonts の中の道） | — |
 
 要るのは **numpy・OpenCV・Pillow・ffmpeg だけ**（この箱から huggingface などには届かない）。
