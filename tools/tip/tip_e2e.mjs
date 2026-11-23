@@ -502,6 +502,16 @@ async function formShape(page) {
     .catch(() => []);
 }
 
+/** 払い終わって `/tip?done=1` に戻ったか */
+const backOnTip = (u) => {
+  try {
+    const x = new URL(u);
+    return !x.hostname.endsWith("stripe.com") && x.pathname.replace(/\/+$/, "") === "/tip" && x.searchParams.get("done") === "1";
+  } catch {
+    return false;
+  }
+};
+
 const typeIn = async (l, text) => {
   await l.click();
   await l.pressSequentially(text, { delay: 25 });
@@ -556,8 +566,8 @@ async function payOnStripe(page, email, shotBase) {
   const t0 = Date.now();
   await submit.click();
   while (Date.now() - t0 < 90000) {
-    const u = page.url();
-    if (u.startsWith(`${SITE}/tip`) && u.includes("done=1")) return { outcome: "done", t0, back: Date.now() };
+    /* 戻り先のホストは口が決める（`tip.ts` の `originOf`）。面の入口と違うホストに戻っても「戻った」と読む */
+    if (backOnTip(page.url())) return { outcome: "done", t0, back: Date.now() };
     if (await captchaShown(page)) {
       await page.screenshot({ path: `${shotBase}-captcha.png` }).catch(() => null);
       return { outcome: "captcha", t0 };
