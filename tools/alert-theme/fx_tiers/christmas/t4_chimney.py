@@ -1,12 +1,17 @@
 """段4（1,000〜1,999円・黄）: 雪の屋根の煙突から、サンタのあやとがすぽんと飛び出して手を振る（#1034）。
 
 流れ（秒は登場の動画の時刻）:
-- 前兆 0〜0.9: 夜空が降りてきて星が瞬き、満月が金の光の筋を落とす。雪が舞い始める
+- 前兆 0〜0.9: 夜空が降りてきて星が瞬き、満月が金の光の筋を落とす。箱ぜんぶに雪が降り始める（奥・中・手前の3段）
 - 登場 0.5〜1.45: 画面の真ん中に雪の屋根と煙突。軒の電球が左から点き、煙突がかたかた揺れて雪をふく（1.0・1.25）
-- 山場 1.45〜2.6: すぽん！とあやとが飛び出し（ばんざい）、雪がはじけて金の輪が閃く。金の光の筋が2本、
-  あやとのまわりを回りながら昇る。あやとは手を振る。1.95〜2.55 にカメラが引いて、屋根と煙突が上の帯へ
+- 山場 1.45〜2.6: すぽん！と口から雪と金の粉が噴き出し、あやとが体ごと宙へ飛び出して（ばんざい）、口に落ちて2回弾む。
+  金の光の筋が3本、口から渦を巻いて夜空いっぱいに走り、夜空の星が順にきらめく。あやとは手を振り、煙突から煙が昇る。
+  1.95〜2.55 にカメラが引いて、屋根と煙突が上の帯へ
 - キャラ絵が出たら（2.6〜3.3）: 金の輪がはじけ、景色がすっと引いて、縁（上の帯の煙突と満月・下の隅の町）だけが残る
-- 滞在（3秒の輪）: あやとは手を振り続け、金の光の筋が2本、まわりを回る。月が瞬き、雪が降る
+- 滞在（3秒の輪）: あやとは手を振り続け、金の光の筋があやとのまわりに2本・月のまわりに細く1本回る。煙突の煙が
+  ゆっくり昇り、上の帯の星が瞬き、雪が箱ぜんぶに降り続ける
+
+2026-11-23 の見直し: 1回目は動きの量が城の段4 の約0.3倍で、景色が平たかった。一次確認の絵の「金の光の筋」と
+「煙突からすぽん」を立て、雪を3段にして箱ぜんぶに降らせた（手前の大きな雪は front。光と粒だけの決まりの内）。
 - 締め 1.0秒: あやとが煙突にすぽっと戻り、雪がふいて、景色が消える
 
 あやとが決めた中身（#1034）: サンタあやとが煙突からすぽんと飛び出して手を振る。雪の屋根、満月と金の光の筋。
@@ -39,6 +44,7 @@ RX, R_TOP, W_ROOF = 326.0, 272.0, 470.0    # 屋根（真ん中の x・絵の上
 MOON = (560.0, 170.0, 170.0)      # 満月（x・y・直径）
 VW, VBOT = 900.0, 1278.0          # 町（幅・下の端）
 POP = 1.45                        # すぽん！
+POP_TOP, POP_LAND = 1.62, 1.80    # 宙の頂と、口に戻って着地する秒
 SETTLE = (1.95, 2.55)             # カメラが引いて、屋根と煙突が上の帯へ
 START_DY, START_ZOOM = 290.0, 1.22
 WAVE = 0.1875                     # 手を振る絵を切り替える間（滞在 3秒で 16回＝偶数回なので、継ぎ目でつながる）
@@ -78,12 +84,23 @@ class Scene(Stage):
         n = 150
         self.stars = np.stack([R.random(n) * W, R.random(n) ** 1.3 * 1000, R.random(n), R.random(n), R.random(n)], -1)
         self.keep = self.thin_keep()
-        self.snow = Loop(220, 4102, cycles=(1, 2))
-        self.near = Loop(40, 4103, cycles=(1, 1))
+        # 雪は奥・中・手前の3段（大きさと速さを変える。手前は front。滞在 3秒で 1・2・3 回めぐる）
+        self.snow_far = Loop(170, 4102, cycles=(1, 1))
+        self.snow_mid = Loop(90, 4108, cycles=(2, 2))
+        self.near = Loop(34, 4103, cycles=(3, 3))
+        self.flake = {r: self.soft_dot(r) for r in (1.3, 2.3, 5.5)}
         self.dust = Loop(60, 4104, cycles=(1, 2))
+        # 夜空のきらめく星（大きな十字の星。夜空の上の 2/3 に）
+        R = np.random.default_rng(4109)
+        self.sparkles = np.stack([40 + R.random(26) * 640, 30 + R.random(26) ** 1.2 * 820, R.random(26), R.random(26)], -1)
+        # 煙突の煙（滞在の輪で、口の右からゆっくり昇る）
+        self.smoke = Loop(7, 4110, cycles=(1, 1))
         R = np.random.default_rng(4105)
         m = 90
         self.burst_v = np.stack([(R.random(m) - 0.5) * 520, -(180 + R.random(m) * 420), R.random(m)], -1)
+        # すぽん！の金の粉（口から噴水のように）
+        m = 110
+        self.gold_v = np.stack([(R.random(m) - 0.5) * 380, -(260 + R.random(m) * 520), R.random(m), R.random(m)], -1)
         R = np.random.default_rng(4106)
         self.edge_pts = []
         while len(self.edge_pts) < 18:
@@ -129,16 +146,24 @@ class Scene(Stage):
         if c.clip == "intro" and T < POP:
             return None
         if c.clip == "intro":
-            r = back_out(ramp(T, POP, 1.72), 2.2)
-            st = math.exp(-((T - 1.56) / 0.09) ** 2)
-            sq = math.exp(-((T - 1.8) / 0.06) ** 2)
-            sx, sy = 1 - 0.08 * st + 0.06 * sq, 1 + 0.12 * st - 0.08 * sq
+            # すぽん！: 口から体ごと宙へ飛び出し（1.62 で頂）、落ちてきて口に腰まで収まり、2回弾んで止まる
+            if T < POP_TOP:
+                r = lerp(0.0, 1.75, ease_out(ramp(T, POP, POP_TOP)))
+            elif T < POP_LAND:
+                r = lerp(1.75, 1.0, ease_in(ramp(T, POP_TOP, POP_LAND)))
+            else:
+                q = T - POP_LAND
+                r = 1.0 + 0.16 * abs(math.sin(math.pi * clamp01(q / 0.16))) * (q < 0.16) \
+                    + 0.06 * abs(math.sin(math.pi * clamp01((q - 0.16) / 0.12))) * (0.16 <= q < 0.28)
+            st = math.exp(-((T - 1.53) / 0.07) ** 2)
+            sq = math.exp(-((T - POP_LAND - 0.01) / 0.045) ** 2) + 0.5 * math.exp(-((T - POP_LAND - 0.17) / 0.04) ** 2)
+            sx, sy = 1 - 0.08 * st + 0.08 * sq, 1 + 0.14 * st - 0.11 * sq
         else:
             r, sx, sy = 1.0, 1.0, 1.0
         if c.clip == "outro":
             # すぽっと戻る（少し伸び上がってから）
             r = 1.0 + 0.06 * math.sin(math.pi * clamp01(u / 0.12)) * (u < 0.12) - ease_in(ramp(u, 0.1, 0.38)) * 1.05
-        if c.clip == "intro" and T < 1.88:
+        if c.clip == "intro" and T < POP_LAND + 0.2:
             art = self.pop
         else:
             # 切り替わりを滞在の頭（継ぎ目）から半拍ずらす。継ぎ目で絵が替わると、キーフレームの質の段と重なって
@@ -213,6 +238,15 @@ class Scene(Stage):
             # 月のまわりの光は、形で残した月の外にも少し（光だけ）
             glow(back, mx, my, MOON[2] * 0.62, GOLD * 0.55 + WHITE * 0.25, 0.3 * mg * thin)
 
+        # ---- 夜空のきらめく星（大きな十字の星）。すぽん！のあと順にきらめき、滞在は上の帯の星だけが瞬き続ける
+        for j, (x, y, r0, r1) in enumerate(self.sparkles):
+            tw = max(0.0, math.sin(6.283 * (c.ph * (1 + int(r0 * 2)) + r1))) ** 3
+            wave = math.exp(-((T - 2.05 - (x / W) * 0.45) / 0.09) ** 2) * intro
+            keep_ = 1 - thin * (1 - float(np.clip((280 - y) / 120, 0, 1)))
+            kk = (0.25 + 0.55 * tw) * sky_k * keep_ + 0.9 * wave
+            if kk > 0.02:
+                fxv.stamp(back.L, self.kit.star["white" if j % 3 else "gold"], x, y, kk)
+
         # ---- 煙突が雪をふく（すぽん！の前に2回）
         for t0, nn in ((1.0, 14), (1.25, 18)):
             self.puff(c, sp_b, hx, hy, hs, T - t0, nn, seed=int(t0 * 100), k=rk * intro)
@@ -234,17 +268,16 @@ class Scene(Stage):
         # ---- すぽん！: 雪がはじけ、金の輪が閃く
         self.pop_burst(c, back, sp_b, sp_f, front, hx, hy, hs)
 
-        # ---- 金の光の筋（2本。あやとのまわりを回りながら昇る）
-        self.streaks(c, back, front, sp_b, sp_f, hx, hy, hs, out_k)
+        # ---- 金の光の筋: すぽん！のあと3本が渦を巻いて夜空を走り、滞在はあやとのまわりに2本・月のまわりに1本
+        self.swirl(c, back, sp_b, hx, hy, hs)
+        self.streaks(c, back, front, sp_b, sp_f, hx, hy, hs, mx, my, out_k)
 
-        # ---- 雪（前兆から。滞在の輪で降り続ける）
+        # ---- 煙突の煙（着地のあとから。滞在の輪でゆっくり昇り続ける）
+        self.smoke_wisps(c, back, hx, hy, hs, ease(ramp(Ti, 1.95, 2.6)) * out_k)
+
+        # ---- 雪（前兆から、箱ぜんぶに。奥・中・手前の3段。滞在の輪で降り続ける）
         amb = ease(ramp(Ti, 0.2, 1.0)) * out_k
-        g = self.snow
-        a1 = g.age(c)
-        x = g.r[:, 0] * W + 26 * np.sin(6.283 * (a1 * 2 + g.r[:, 1]))
-        y = -20 + a1 * 1320
-        kd = np.sin(np.pi * a1) ** 0.5 * (0.25 + 0.35 * (g.r[:, 2] < 0.3)) * amb * (1 - 0.3 * thin)
-        sp_b.add_screen(x, y, (WHITE * 1.3)[None] * kd[:, None], coc=np.where(g.r[:, 2] < 0.3, 2.0, 0.0))
+        self.snowfall(c, back, front, amb, thin)
         sp_b.into(back)
 
         if m is not None:
@@ -271,14 +304,8 @@ class Scene(Stage):
         out_b = over_rgba(self.finish_hero(hero, bloom=0.45), out_b)
         out_b = over_rgba(lipc.finish(bloom=0.0, edge=self.edge), out_b)
 
-        # ---- front（光と粒だけ）: 手前の大きな雪・金の粉・キャラ絵のふちの星
+        # ---- front（光と粒だけ）: 手前の大きな雪（snowfall で足した）・金の粉・キャラ絵のふちの星
         calm = 1 - 0.55 * thin
-        n = self.near
-        a2 = n.age(c)
-        x = n.r[:, 0] * W + 40 * np.sin(6.283 * (a2 + n.r[:, 1]))
-        y = -40 + a2 * 1380
-        kd = np.sin(np.pi * a2) ** 1.5 * (0.18 + 0.25 * n.r[:, 2]) * amb * calm
-        sp_f.add_screen(x, y, (WHITE * 1.2)[None] * kd[:, None], coc=4.0 + 4.0 * n.r[:, 3])
         dd = self.dust
         a3 = dd.age(c)
         x = 60 + dd.r[:, 0] * 600 + 30 * np.sin(6.283 * (a3 + dd.r[:, 1]))
@@ -297,6 +324,85 @@ class Scene(Stage):
                     fxv.stamp(front.L, self.kit.star["gold" if k % 3 else "white"], 360 + math.cos(ang) * dist * 0.9,
                               760 + math.sin(ang) * dist * 1.05, 0.85 * (1 - rv / 0.9) ** 1.5 * (0.5 + 0.5 * R.random()))
         return out_b, self.finish_front(front, bloom=0.7)
+
+    @staticmethod
+    def soft_dot(r):
+        """雪の粒（やわらかい丸。真ん中が 1 の光の絵）"""
+        n = int(r * 6) + 3
+        yy, xx = np.mgrid[0:n, 0:n].astype(np.float32) - (n - 1) / 2
+        g = np.exp(-(xx * xx + yy * yy) / (r * r))
+        return (g[..., None] * WHITE * np.float32([0.95, 0.98, 1.05])).astype(np.float32)
+
+    def snowfall(self, c, back, front, amb, thin):
+        """箱ぜんぶに降る雪（奥・中は back、手前は front）。全部 Loop の周期で書くので、滞在の継ぎ目でつながる"""
+        for g, r, k_, fall, sway, cv in ((self.snow_far, 1.3, 0.5, 1300, 14, back), (self.snow_mid, 2.3, 0.68, 1340, 24, back),
+                                          (self.near, 5.5, 0.42, 1420, 40, front)):
+            a = g.age(c)
+            x = g.r[:, 0] * W + sway * np.sin(6.283 * (a * 2 + g.r[:, 1]))
+            y = -30 + a * fall
+            kd = np.sin(np.pi * a) ** 0.4 * (0.6 + 0.4 * g.r[:, 2]) * k_ * amb * (1 - 0.25 * thin)
+            spr = self.flake[r]
+            for j in range(g.n):
+                if kd[j] > 0.01:
+                    fxv.stamp(cv.L, spr, float(x[j]), float(y[j]), float(kd[j]))
+
+    def smoke_wisps(self, c, back, hx, hy, hs, k):
+        """煙突の煙（口の右から、ゆっくり昇って右へ流れる。物の層なので、あやとの後ろに隠れる）"""
+        if k <= 0.003:
+            return
+        g = self.smoke
+        a = g.age(c)
+        for j in range(g.n):
+            aj = a[j]
+            x = hx + (40 + 34 * aj) * hs + 10 * math.sin(6.283 * (aj * 1.3 + g.r[j, 0]))
+            y = hy - 8 * hs - aj * 230 * hs
+            rad = (9 + 26 * aj) * hs
+            al = 0.3 * math.sin(math.pi * aj) ** 1.2 * (1 - 0.4 * aj) * k
+            if al <= 0.004 or y < -40:
+                continue
+            x0, x1 = max(0, int(x - 3 * rad)), min(W, int(x + 3 * rad))
+            y0, y1 = max(0, int(y - 3 * rad)), min(H, int(y + 3 * rad))
+            if x1 <= x0 or y1 <= y0:
+                continue
+            yy, xx = np.mgrid[y0:y1, x0:x1].astype(np.float32)
+            d = np.exp(-((xx - x) ** 2 + (yy - y) ** 2) / (rad * rad))
+            aa = (d * al).astype(np.float32)
+            back.over((aa[..., None] * np.float32([0.86, 0.88, 0.96])).astype(np.float32), aa, x0, y0)
+
+    def comet(self, back, front, sp_b, sp_f, x, y, far, k, head=0.9, w=None):
+        """光の筋1本（x, y は頭から尾へ）。far の所は back、ほかは front。w は点ごとの濃さ（物の後ろに隠す所を 0 に）"""
+        n = len(x)
+        fade = (1 - np.arange(n) / n) ** 1.6 * (1.0 if w is None else w)
+        col = (GOLD * 1.3 + WHITE * 0.5)[None] * (fade * 0.5 * k)[:, None]
+        sp_b.add_screen(x[far], y[far], col[far], coc=np.full(far.sum(), 1.2))
+        sp_f.add_screen(x[~far], y[~far], col[~far] * 0.8, coc=np.full((~far).sum(), 1.2))
+        fxv.stamp((back if far[0] else front).L, self.kit.star["gold"], float(x[0]), float(y[0]), head * k * float(fade[0]))
+
+    def swirl(self, c, back, sp_b, hx, hy, hs):
+        """すぽん！のあと、金の光の筋が3本、口から渦を巻いて夜空いっぱいに走る（1.55〜2.75。全面のあいだだけ）"""
+        if c.clip != "intro":
+            return
+        T = c.T
+        env_ = ease(ramp(T, 1.55, 1.65)) * (1 - ease(ramp(T, 2.3, 2.75)))
+        if env_ <= 0.003:
+            return
+        for j in range(3):
+            tau = np.linspace(0, 0.32, 600)
+            t = T - tau
+            p = np.clip((t - 1.55) / 1.15, 0, 1)
+            ang = 2 * math.pi * (j / 3 + 1.25 * p) + 0.6
+            rad = (30 + 470 * (1 - (1 - p) ** 2)) * hs
+            x = hx + np.cos(ang) * rad
+            y = hy - 50 * hs + np.sin(ang) * rad * 0.82
+            ok = t >= 1.55
+            if not ok.any():
+                continue
+            fade = (1 - tau / 0.32) ** 1.4 * ok
+            sp_b.add_screen(x[ok], y[ok], (GOLD * 1.4 + WHITE * 0.6)[None] * (fade[ok] * 1.0 * env_)[:, None],
+                            coc=np.full(ok.sum(), 1.2))
+            sp_b.add_screen(x[ok][::3], y[ok][::3], (GOLD * 1.2)[None] * (fade[ok][::3] * 2.2 * env_)[:, None],
+                            coc=np.full(len(x[ok][::3]), 2.6))
+            fxv.stamp(back.L, self.kit.star_big["gold" if j else "white"], float(x[0]), float(y[0]), 0.9 * env_)
 
     # ---------------- 描かれた灯り（窓・電球）を、on(yy, xx) の濃さで光らせる
     def emit_on(self, cv, win, dst, on, k):
@@ -336,6 +442,21 @@ class Scene(Stage):
             near = v[:, 2] > 0.7
             sp_b.add_screen(x[~near], y[~near], (WHITE * 1.3)[None] * kd[~near, None], coc=2.0 + 2.0 * v[~near, 2])
             sp_f.add_screen(x[near], y[near], (WHITE * 1.1)[None] * kd[near, None] * 0.6, coc=4.0)
+            for j in range(0, len(x), 3):
+                if kd[j] > 0.05:
+                    fxv.stamp(back.L, self.flake[2.3 if j % 2 else 5.5], float(x[j]), float(y[j]), float(kd[j]) * 0.7)
+        # 金の粉が口から噴水のように噴き出して、きらめきながら落ちる
+        if 0 <= age < 1.3:
+            g = self.gold_v
+            x = hx + g[:, 0] * age * hs
+            y = hy - 10 + g[:, 1] * age * hs + 520 * age * age
+            tw = (0.55 + 0.45 * np.sin(6.283 * (age * (4 + 4 * g[:, 2]) + g[:, 3]))) ** 2
+            kd = (1 - age / 1.3) ** 1.2 * tw * (0.8 + 0.8 * g[:, 2])
+            near = g[:, 3] > 0.75
+            sp_b.add_screen(x[~near], y[~near], (GOLD * 1.5 + WHITE * 0.4)[None] * kd[~near, None])
+            sp_f.add_screen(x[near], y[near], (GOLD * 1.3 + WHITE * 0.3)[None] * kd[near, None] * 0.7)
+            for j in range(0, len(x), 6):
+                fxv.stamp(back.L, self.kit.star["gold"], float(x[j]), float(y[j]), float(kd[j]) * 0.6)
         if 0 <= age < 0.6:
             fl = math.exp(-((age - 0.04) / 0.07) ** 2)
             fxv.stamp(back.L, self.kit.flare, hx, hy - 30 * hs, 0.9 * fl)
@@ -348,17 +469,17 @@ class Scene(Stage):
                 fxv.stamp(back.L, self.kit.star["gold" if j % 3 else "white"], hx + math.cos(ang) * d,
                           hy - 40 * hs + math.sin(ang) * d * 0.55, 0.9 * (1 - q) ** 1.3)
 
-    def streaks(self, c, back, front, sp_b, sp_f, hx, hy, hs, out_k):
-        """金の光の筋（彗星のような頭と尾）。すぽん！のあと口から渦を巻いて昇り、滞在では 1.5秒で1周（3秒で2周）"""
+    def streaks(self, c, back, front, sp_b, sp_f, hx, hy, hs, mx, my, out_k):
+        """金の光の筋（彗星のような頭と尾）。あやとのまわりに2本、月のまわりに細く1本。
+        すぽん！のあと渦（swirl）が夜空を走るあいだに育ち、滞在では 1.5秒で1周（3秒で2周）"""
         T = c.T
-        grow = ease_out(ramp(c.Ti, POP + 0.05, 2.3))
+        grow = ease_out(ramp(c.Ti, 1.9, 2.6))
         if grow <= 0.002:
             return
         k = grow * out_k
         cy = hy - 110 * hs
+        tt = np.linspace(0, 0.42, 420)
         for j in range(2):
-            n = 260
-            tt = np.linspace(0, 0.42, n)
             ang = 2 * math.pi * ((T - self.INTRO) / 1.5 + j * 0.5) - 2 * math.pi * tt
             rad = lerp(0.2, 1.0, grow)
             ex, ey = 150 * hs * rad, 52 * hs * rad
@@ -366,9 +487,15 @@ class Scene(Stage):
             lx, ly = np.cos(ang) * ex, np.sin(ang) * ey
             x = hx + lx * math.cos(tilt) - ly * math.sin(tilt)
             y = cy + lx * math.sin(tilt) + ly * math.cos(tilt) - (1 - grow) * 60 * hs
-            fade = (1 - tt / 0.42) ** 1.6
-            col = (GOLD * 1.3 + WHITE * 0.5)[None] * (fade * 0.5 * k)[:, None]
-            far = np.sin(ang) < 0   # 奥（あやとの後ろ）は back、手前は front
-            sp_b.add_screen(x[far], y[far], col[far], coc=np.full(far.sum(), 1.2))
-            sp_f.add_screen(x[~far], y[~far], col[~far] * 0.8, coc=np.full((~far).sum(), 1.2))
-            fxv.stamp((back if far[0] else front).L, self.kit.star["gold"], float(x[0]), float(y[0]), 0.9 * k)
+            self.comet(back, front, sp_b, sp_f, x, y, np.sin(ang) < 0, k * 0.8)   # 奥（あやとの後ろ）は back
+        # 月のまわりを細く回る1本（向きは逆回り。3秒で2周）
+        ang = -2 * math.pi * ((T - self.INTRO) / 1.5 + 0.25) + 2 * math.pi * tt
+        rr = MOON[2] * 0.5 + 26
+        lx, ly = np.cos(ang) * rr * 1.18, np.sin(ang) * rr * 0.36
+        tilt = math.radians(-10)
+        x = mx + lx * math.cos(tilt) - ly * math.sin(tilt)
+        y = my + lx * math.sin(tilt) + ly * math.cos(tilt)
+        far = np.sin(ang) < 0
+        # 月の後ろを通る所は、月の丸の中で消す（光は月の板より後に足すので、そのままだと月の上に乗る）
+        hid = far & (np.hypot(x - mx, y - my) < MOON[2] * 0.5)
+        self.comet(back, front, sp_b, sp_f, x, y, far, k * 0.7, head=0.7, w=(~hid).astype(np.float32))

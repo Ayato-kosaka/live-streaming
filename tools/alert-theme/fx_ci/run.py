@@ -402,13 +402,13 @@ def cmd_tier(o):
         r["reasons"] += ["fx_check: " + b for b in ct.get("bad", [])] or ["fx_check: " + (c.get("unchecked") or " / ".join(tail(txt_c, 2)))]
 
     old_has = str(tier) in ((load(os.path.join(pub, "manifest.json")) or {}).get("tiers") or {})
-    # 新しいテーマの段は、まだ public に前の版が無い。動きの量は、いま出ている城の同じ段と比べる
-    # （「前の月の同じ段より動いているか」。比べないと表の動きの欄が空のまま）
-    old = pub if old_has else os.path.join(ROOT, "public/alert/themes/castle/fx")
-    if not old_has and str(tier) not in ((load(os.path.join(old, "manifest.json")) or {}).get("tiers") or {}):
-        old = None
+    # 城（11月）でないテーマの段は、動きの量をいつも城の同じ段と比べる（「前の月の同じ段に見劣りしないか」）。
+    # 自分の前の版と比べると、動きの少ない版を基準に 1倍を超えて見える（12月の段4 が城の 0.27倍のまま「1.00×」と出た）
+    castle = os.path.join(ROOT, "public/alert/themes/castle/fx")
+    castle_has = str(tier) in ((load(os.path.join(castle, "manifest.json")) or {}).get("tiers") or {})
+    old = castle if (o.theme != "castle" and castle_has) else (pub if old_has else None)
     if old:
-        r["motion_vs"] = o.theme if old_has else "castle"
+        r["motion_vs"] = "castle" if old == castle else o.theme
         mot = [py, tools("fx_motion.py"), stage, "--old", old, "--tiers", str(tier), "--min", "0", "--json", os.path.join(res, "motion.json")]
         run_tool(mot, os.path.join(logs, "motion.txt"))
         m = load(os.path.join(res, "motion.json")) or {}
