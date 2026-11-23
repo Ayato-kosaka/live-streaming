@@ -85,8 +85,7 @@ from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 from doneru.dedup import dedup_sql  # noqa: E402
 from logsafe import detail_lines, mask  # noqa: E402
 from monthly_tips import (  # noqa: E402
-    Roster, fx_detail, fx_stuck, fx_superchats, island_rows, merge, rank,
-    read_ledger, total,
+    Roster, read_ledger, standings, total,
 )
 
 # **円の行だけ拾う。** 外貨が数件混ざっていて、豚も GAS も円しか
@@ -186,33 +185,54 @@ def roster(client) -> Roster:
     return Roster(out)
 
 
+def standing(ro, r: Roster, d0: str, d1: str) -> dict:
+    """1つの期間の順位を、本番の値で組む。**月末と卓上カレンダーが同じ1本を通す。**
+
+    材料（BigQuery の3本と台帳）を読んで、`monthly_tips.standings()` に渡すだけ。
+    卓上カレンダー（`admin/calendar_top.py`）は暦の月ごとにここを呼ぶ。
+    **問い合わせも組み方も、ここ以外に写さない**（前は卓上カレンダーが
+    BigQuery の中に式ごと写していて、島の投げ銭が抜けた。#1405）。
+
+    Args:
+        ro: 読み専用のクライアント（`_fs.readonly(db())`）
+        r: 図鑑（`roster()`）
+        d0: 始まりの日（この日を含む。日本時間）
+        d1: 終わりの日（この日を含む）
+
+    Returns:
+        `monthly_tips.standings()` の返り値に、材料の `superchats`（円のスパチャ）と
+        `doneru` を足したもの
+    """
+    sc = [{"channelId": x["cid"], "handle": x["handle"] or "",
+           "yen": int(x["yen"] or 0)} for x in bq(SQL_SC, d0, d1)]
+    dn = [{"name": x["name"] or "", "yen": int(x["yen"] or 0)}
+          for x in bq(SQL_DN, d0, d1)]
+    # 台帳は1回だけ読む。円以外のスパチャの換算と、島の投げ銭の両方がここにある
+    led = read_ledger(ro, d0, d1)
+    # **円に直せたぶんを、円のスパチャと同じ土俵に足す**のは `standings()` の中。
+    # ÷2 は `rank()` の `viewer_yen()` が合計にかける（1件ずつ半分にしない）
+    st = standings(sc, dn, bq(SQL_FX, d0, d1), led, r)
+    return {**st, "superchats": sc, "doneru": dn}
+
+
 def main() -> None:
     a = args()
     d0, d1 = need(a, "from", "to")
     log.info("期間: %s 〜 %s（日本時間）", d0, d1)
 
-    sc = [{"channelId": r["cid"], "handle": r["handle"] or "",
-           "yen": int(r["yen"] or 0)} for r in bq(SQL_SC, d0, d1)]
-    dn = [{"name": r["name"] or "", "yen": int(r["yen"] or 0)}
-          for r in bq(SQL_DN, d0, d1)]
-
     # **Firestore は1回だけ開く。** 台帳（円に直した額）と図鑑（名寄せ）を
     # 同じ読み専用のクライアントから引く
     ro = readonly(db())
-    # 台帳は1回だけ読む。円以外のスパチャの換算と、島の投げ銭の両方がここにある
-    led = read_ledger(ro, d0, d1)
-    fx = fx_detail(bq(SQL_FX, d0, d1), sc, led)
-    stuck = fx_stuck(fx)
-    add = fx_superchats(fx)
-    # **円に直せたぶんを、円のスパチャと同じ土俵に足す。**
-    # ÷2 は `rank()` の `viewer_yen()` が合計にかける（1件ずつ半分にしない）
-    sc += add
+    r = roster(ro)
+    st = standing(ro, r, d0, d1)
+    sc, dn = st["superchats"], st["doneru"]
+    fx, stuck, add = st["fx"], st["fx_stuck"], st["fx_added"]
     log.info("スパチャ %d 人 / Doneru の名乗り %d 通り / 円以外 %d件"
              "（円に直して足した %d件 / 直っていない %d件）",
-             len(sc) - len(add), len(dn), len(fx), len(add), len(stuck))
+             len(sc), len(dn), len(fx), len(add), len(stuck))
 
     # 島の投げ銭（#1405）。**足せない行は 0 にしない**——件数だけ出す
-    isl, isl_stuck = island_rows(led)
+    isl, isl_stuck = st["island"], st["island_stuck"]
     log.info("島の投げ銭 %d件（チャンネル %d通り）",
              len(isl), len({x["channelId"] for x in isl}))
     if isl_stuck:
@@ -229,22 +249,22 @@ def main() -> None:
     if stuck:
         log.warning("--- 円に直せていないスパチャ "
                     "（**ランキングに入っていない**。足りないぶんがある） ---")
-        for r in stuck:
-            log.warning("  %s  %-4s  %s  %s  %s", r["day"], r["currency"],
-                        mask(r["cid"]), fx_rate.WHY.get(r["why"], r["why"]),
+        # 回す名前は `r` にしない（上で図鑑を `r` に入れてある）
+        for x in stuck:
+            log.warning("  %s  %-4s  %s  %s  %s", x["day"], x["currency"],
+                        mask(x["cid"]), fx_rate.WHY.get(x["why"], x["why"]),
                         "円のスパチャもある（順位には載る。外貨のぶんが足りない）"
-                        if r["yen_too"] else
+                        if x["yen_too"] else
                         "**この期間は外貨だけ**（順位に1行も無い）")
         log.warning("  直すには python/admin/fx_backfill.py を "
                     "{\"apply\": true} で流してから、ここをもう一度回す")
-        for line in detail_lines([(r["day"], r["cid"], r["amt"]) for r in stuck]):
+        for line in detail_lines([(x["day"], x["cid"], x["amt"]) for x in stuck]):
             log.info("%s", line)
 
-    r = roster(ro)
     log.info("図鑑 %d 人（チャンネルIDの入っている人 %d）",
              len(r.by_id), sum(1 for c in r.by_id.values() if c["channelId"]))
 
-    rows = rank(merge(sc, dn, r, island=isl))
+    rows = st["rows"]
     hit = sum(1 for x in rows if x["char"])
     log.info("ランキング %d 行（図鑑に当たった %d / 当たらなかった %d）",
              len(rows), hit, len(rows) - hit)
@@ -278,4 +298,8 @@ def main() -> None:
         print("::notice::" + line)
 
 
-main()
+# **読み込んだだけでは走らない。** 卓上カレンダー（`calendar_top.py`）が
+# `standing()` と問い合わせを借りるため（前は読み込むと main() が走ったので、
+# 借りる側が問い合わせを写していた）
+if __name__ == "__main__":
+    main()

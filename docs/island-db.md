@@ -383,7 +383,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | その日の出来事 | Firestore `islandStreamEvent` | あやと（種入れ・動画を結ぶ口） | 机の「配信」・写真を貼る先・カード | 種は Git の企画から入れ直せる。**結んだ動画は戻らない**。採らなかった視聴者さんの提案が `hidden` のまま3件入っている（人の字） |
 | 島の見え方の設定 | Firestore `islandUsers` | 本人（島での見え方を保存する口） | 島の状態が返す `residents` | 本人が入れ直せる |
 | どねID とチャンネルの対応 | Firestore `islandDonors` | 毎朝の種＋あやとが手で結ぶ | 投げ銭台帳の `channelId` | **手で結んだぶんは戻らない** |
-| 島で受けた投げ銭 | Firestore `islandSiteTips`（決定の記録 0017・#1405） | Stripe の知らせを受ける口だけ（`functions/src/islandApi.ts`） | 投げ銭台帳・アラートの1枚・貯金箱 | 額と時刻は Stripe に残る。**メッセージは Stripe の `metadata` にも写すので戻る** |
+| 島で受けた投げ銭 | Firestore `islandSiteTips`（決定の記録 0017・#1405） | Stripe の知らせを受ける口だけ（`functions/src/islandApi.ts`） | 投げ銭台帳・アラートの1枚・貯金箱・机の履歴と内訳（`GET /fund/feed`・`/fund/desk`）・キャラクターの洗い出しの今日のぶん（`python/admin/characters_gap.py`） | 額と時刻は Stripe に残る。**メッセージは Stripe の `metadata` にも写すので戻る** |
 | 手で書くコンテンツ | Git `site/content/*.ts` | 人（レビューあり） | 島の全ページ | Git に履歴がある |
 | **スタンプに乗せることば** | Firestore `islandStampLine.lines` | 本人（`POST /stampline/mine`）だった。**2026-10-14 に口を閉じた**（#860）。いまは管理の道具（`python/admin/stamp_line_*.py`）だけ | LINE スタンプを作るとき（2026-10-13 に申請済み。公開の面には出さない） | **戻らない。** 人の字。**閉じたあとも記録として残す** |
 | ~~いまいる場所・書き置き~~ | ~~Firestore `island/state.current`~~ | — | — | **読む面も書く口も無い**（#1278・#1281）。居場所は滞在の表（`site/content/stays.ts`）。書類には古い字が残っている。書く道も #1389 で無くなる |
@@ -1228,6 +1228,13 @@ Stripe の Checkout Session の ID なので、**同じ知らせが2回届いて
 | `createdAt` / `updatedAt` | string | ISO8601 |
 
 **ルール: 読みも書きも閉じる**（`islandTips` と同じ）。書くのは Admin SDK だけ。
+
+**読む側は、本番で、いまも `paid` のものだけを数える。** 判定は
+`python/fund_box.py` の `island_counts()` 1本（台帳・貯金箱・キャラクターの洗い出し）と、
+その写しの `functions/src/fundDesk.ts` の `islandTipYen`（机の履歴・もう一度出す・内訳。
+`functions/selftest/fund_docid_selftest.mjs` が同じ入力で突き合わせる）。
+**`livemode` や `status` で絞りながら `paidAt` で並べない**（複合索引が要る。#168）。
+`paidAt` の単一フィールドで並べ・切って読み、手元で絞る。
 
 **`islandAlertFeed/{合言葉}`** — アラート画面がリアルタイムで購読する1枚（決定の記録 0017）
 

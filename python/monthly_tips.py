@@ -283,7 +283,9 @@ def island_rows(ledger) -> tuple:
         ledger: `read_ledger()` が返した台帳の行
 
     Returns:
-        (`{"channelId", "handle", "yen"}` の並び, 足せなかった件数)
+        (`{"channelId", "handle", "yen", "day"}` の並び, 足せなかった件数)。
+        `day` は投げた日（日本時間）。`merge()` は見ない。キャラクターの
+        洗い出し（`admin/characters_gap.py`）が「最後に投げた日」に使う
     """
     import fx_rate
 
@@ -300,8 +302,44 @@ def island_rows(ledger) -> tuple:
             continue
         out.append({"channelId": cid,
                     "handle": str(d.get("displayNameSnapshot") or ""),
-                    "yen": int(yen)})
+                    "yen": int(yen),
+                    "day": str(d.get("day") or "")})
     return out, stuck
+
+
+def standings(superchats, doneru, fx, ledger, roster) -> dict:
+    """1つの期間の順位を、**出どころ3つ**から組む。**月末も卓上カレンダーもこの1本。**
+
+    組み方は月末（`admin/monthly_tips_run.py`）が決めたものそのまま:
+
+    1. 円以外のスパチャを台帳の換算に当てる（`fx_detail()`）。直せた行だけ
+       円のスパチャと同じ土俵に足す（`fx_superchats()`）。÷2 は `rank()` の
+       `viewer_yen()` が**足したあとの合計**にかける
+    2. 台帳から島の投げ銭を拾う（`island_rows()`）
+    3. 図鑑で名寄せして（`merge()`）、貢献額で並べる（`rank()`）
+
+    **ここ以外で、この順番を組まない。** 卓上カレンダーの上位7人は、前は
+    BigQuery の中に式（`DIV(sc, 2) + dn`）ごと写した SQL で数えていて、
+    島の投げ銭・円以外のスパチャが入った日にそこだけ抜けた（#1405）。
+
+    Args:
+        superchats: 円のスパチャ。`{"channelId", "handle", "yen"}` の並び
+        doneru: `{"name", "yen"}` の並び
+        fx: 円で始まらないスパチャの行（`fx_detail()` の `fx` と同じ形）
+        ledger: 同じ期間の台帳（`read_ledger()` が返した行）
+        roster: `Roster`
+
+    Returns:
+        `rows`（`rank()` の返り値）・`fx`（`fx_detail()` の返り値）・
+        `fx_added`（足した円以外の行）・`fx_stuck`（直っていない行）・
+        `island`（足した島の行）・`island_stuck`（足せなかった島の件数）
+    """
+    fxd = fx_detail(fx, superchats, ledger)
+    add = fx_superchats(fxd)
+    isl, isl_stuck = island_rows(ledger)
+    rows = rank(merge(list(superchats) + add, doneru, roster, island=isl))
+    return {"rows": rows, "fx": fxd, "fx_added": add, "fx_stuck": fx_stuck(fxd),
+            "island": isl, "island_stuck": isl_stuck}
 
 
 def currency_of(text) -> str:

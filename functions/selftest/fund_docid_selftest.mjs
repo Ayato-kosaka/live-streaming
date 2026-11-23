@@ -102,6 +102,33 @@ const CHATS = [
   ["2026-11-03", 3, "a|b"],
 ];
 
+/**
+ * 島の投げ銭1件（`islandSiteTips` の中身）。**机に出してよいか・足す円**を
+ * 両方に食わせる（#1405）。出してはいけない形を混ぜる——テストの支払い・
+ * 返金・払い戻しの請求・`livemode` が字や 1・額が字や小数や 0・円でない
+ */
+const SITE = [
+  {livemode: true, status: "paid", amount: 1200, currency: "JPY"},
+  {livemode: true, status: "paid", amount: 100},
+  {livemode: true, status: "paid", amount: 500, currency: "jpy"},
+  {livemode: true, status: "paid", amount: 500, currency: ""},
+  {livemode: false, status: "paid", amount: 1200, currency: "JPY"},
+  {status: "paid", amount: 1200, currency: "JPY"},
+  {livemode: "true", status: "paid", amount: 1200, currency: "JPY"},
+  {livemode: 1, status: "paid", amount: 1200, currency: "JPY"},
+  {livemode: true, status: "refunded", amount: 1200, currency: "JPY"},
+  {livemode: true, status: "disputed", amount: 1200, currency: "JPY"},
+  {livemode: true, amount: 1200, currency: "JPY"},
+  {livemode: true, status: "paid", amount: "1200", currency: "JPY"},
+  {livemode: true, status: "paid", amount: 12.5, currency: "JPY"},
+  {livemode: true, status: "paid", amount: 0, currency: "JPY"},
+  {livemode: true, status: "paid", amount: -100, currency: "JPY"},
+  {livemode: true, status: "paid", amount: true, currency: "JPY"},
+  {livemode: true, status: "paid", amount: null, currency: "JPY"},
+  {livemode: true, status: "paid", amount: 1200, currency: "USD"},
+  {livemode: true, status: "paid", amount: 1200.0, currency: "JPY"},
+];
+
 /* ---------------- TypeScript 側 ---------------- */
 
 const nodeRequire = createRequire(import.meta.url);
@@ -144,7 +171,7 @@ function loadTs(name = "fundDesk") {
 }
 
 const ts = loadTs();
-for (const f of ["spendId", "manualId", "claimKey"]) {
+for (const f of ["spendId", "manualId", "claimKey", "islandTipYen"]) {
   if (typeof ts[f] !== "function") {
     console.error(`lib/fundDesk.js から ${f} を取り出せなかった`);
     process.exit(2);
@@ -166,6 +193,8 @@ print(json.dumps({
   "rate": fb.SUPERCHAT_RATE,
   "box": [fb.box(f, 0, s, island_yen=0) for f, s in args["box"]],
   "start": [fb.start_amount(s) for s in args["start"]],
+  "site": [fb.island_yen_of(v) if fb.island_counts(v) else None
+           for v in args["site"]],
 }, ensure_ascii=False))
 `;
 
@@ -174,7 +203,9 @@ const BOX = [[1501, 4400], [0, 0], [3, 0], [341916, 255406]];
 const START = [0, 1, 255406];
 
 const py = spawnSync("python3", ["-c", PY], {
-  input: JSON.stringify({spends: SPENDS, chats: CHATS, box: BOX, start: START}),
+  input: JSON.stringify({
+    spends: SPENDS, chats: CHATS, box: BOX, start: START, site: SITE,
+  }),
   encoding: "utf8",
 });
 if (py.status !== 0) {
@@ -239,6 +270,24 @@ console.log("\n# 貯金箱の式（`fund_box.box` ⇄ 焼き直し）");
   check("起点の符号も同じ（0 を含む）", ngs.length === 0, ngs.join(" / "));
 }
 
+console.log("\n# 島の投げ銭を机に出すか（`island_counts`＋`island_yen_of` ⇄ `islandTipYen`）");
+{
+  /* **豚の焼き直し（`python/fund_daily.py`）と台帳が通す1本と、机が通す1本が
+     同じ答えを出すこと。** 違うと、内訳の5行目と豚が別の額を言う */
+  let ng = [];
+  SITE.forEach((v, i) => {
+    const got = ts.islandTipYen(v);
+    if (got !== want.site[i]) {
+      ng.push(`${JSON.stringify(v)}: ${got} ≠ ${want.site[i]}`);
+    }
+  });
+  check(`${SITE.length}とおりとも同じ答え（出さないものは両方とも出さない）`,
+    ng.length === 0, ng.join(" / "));
+  check("出すものと出さないものが両方とも入っている（分母が片寄っていない）",
+    want.site.some((x) => x !== null) && want.site.some((x) => x === null),
+    JSON.stringify(want.site));
+}
+
 /* ---------------- 対照 ---------------- */
 
 /** [名前, 探す字, 置き換える字, 落ちてほしい確かめ] */
@@ -260,6 +309,12 @@ const BREAKS = [
     "day ? `${day}|${yen}` : \"\"",
     "day ? `${day}-${yen}` : \"\"",
     `${CHATS.length}件とも同じ札`,
+  ],
+  [
+    "島の投げ銭の返金ぶんも机に出す",
+    "if (v.livemode !== true || v.status !== \"paid\")",
+    "if (v.livemode !== true)",
+    `${SITE.length}とおりとも同じ答え（出さないものは両方とも出さない）`,
   ],
   [
     "「÷ いくつ」を変える",

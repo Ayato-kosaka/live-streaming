@@ -34,9 +34,14 @@ import ReadAgain, { sayable } from "./ReadAgain";
  * > あとは、目標・出費管理タブですね。今の目標に対する総金額（豚にでてる
  * > やつ）も内訳付きで出したい。
  *
- * **札は2つ。** 配信中に開くほう（スパチャ・ドネ）と、配信の前後に開くほう
+ * **札は2つ。** 配信中に開くほう（投げ銭）と、配信の前後に開くほう
  * （目標・出費）。用事の違うものを1枚に積まない
  * （`docs/island-standards.md` 7章）。
+ *
+ * 投げ銭の札には、スパチャ・ドネ・島の投げ銭（#1405。島の `/tip` で受ける
+ * Stripe の投げ銭）の3つが1本の並びで来る。札の名前を「スパチャ・ドネ」の
+ * ままにすると、札の言葉に当てはまらない行が並ぶ（`docs/island-standards.md` 33.5）
+ * ので、3つをまとめて呼ぶ「投げ銭」にした。
  *
  * ## リアルタイムは、聞きにいく形
  *
@@ -63,7 +68,7 @@ import ReadAgain, { sayable } from "./ReadAgain";
 type Pane = "got" | "money";
 
 const PANES: { id: Pane; label: string }[] = [
-  { id: "got", label: "スパチャ・ドネ" },
+  { id: "got", label: "投げ銭" },
   { id: "money", label: "目標・出費" },
 ];
 
@@ -185,7 +190,7 @@ export default function FundDesk() {
       const v = localStorage.getItem(LAST);
       if (v && PANES.some((p) => p.id === v)) setPane(v as Pane);
     } catch {
-      /* 控えられない端末では、スパチャ・ドネから始まるだけ */
+      /* 控えられない端末では、投げ銭の札から始まるだけ */
     }
   }, []);
 
@@ -369,7 +374,7 @@ export default function FundDesk() {
   );
 }
 
-/* ------------------------------------------------ スパチャ・ドネ（履歴） */
+/* ------------------------------------------------ 投げ銭（履歴） */
 
 function GotPane({
   thisYear,
@@ -534,7 +539,7 @@ function GotPane({
       {got.length === 0 ? (
         <div className="blank">
           <b>まだ1件も来ていない</b>
-          <p>配信でスパチャかドネが来たら、いちばん上に出る。</p>
+          <p>配信で投げ銭が来たら、いちばん上に出る。</p>
         </div>
       ) : (
         <ul className="fd-got">
@@ -563,6 +568,16 @@ function GotPane({
     </>
   );
 }
+
+/**
+ * どこから来たか。**字で出す**（色だけに頼らない）。並びの左の帯は
+ * 字の補い（`me.css` の `.fd-got`）。島の投げ銭は内訳の5行目と同じ言葉
+ */
+const GOT_KIND: Record<FundGot["kind"], { label: string; row?: string }> = {
+  superchat: { label: "スパチャ" },
+  donation: { label: "ドネ", row: "is-doneru" },
+  island: { label: "島の投げ銭", row: "is-island" },
+};
 
 /** もらった1件。**押すと、配信にもう一度出せる。** */
 function GotRow({ got, thisYear }: { got: FundGot; thisYear: number }) {
@@ -596,14 +611,12 @@ function GotRow({ got, thisYear }: { got: FundGot; thisYear: number }) {
   };
 
   return (
-    <li className={got.kind === "donation" ? "is-doneru" : undefined}>
+    <li className={GOT_KIND[got.kind].row}>
       <p className="fd-gothead">
         <span className="fd-gotwhen">
           {dayLabel(got.day, thisYear)} {timeLabel(got.at)}
         </span>
-        <span className="fd-gotkind">
-          {got.kind === "donation" ? "ドネ" : "スパチャ"}
-        </span>
+        <span className="fd-gotkind">{GOT_KIND[got.kind].label}</span>
         <span className="fd-gotyen">{yen(got.yen)}</span>
       </p>
       <p className="fd-gotwho">{got.who || "（名前なし）"}</p>
@@ -798,6 +811,10 @@ function MoneyPane({
             <div>
               <dt>ドネ</dt>
               <dd>{yen(split.doneru)}</dd>
+            </div>
+            <div>
+              <dt>島の投げ銭</dt>
+              <dd>{yen(split.island)}</dd>
             </div>
             <div>
               <dt>出費</dt>

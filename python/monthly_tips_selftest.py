@@ -373,7 +373,8 @@ def case_island():
     ]
     got, stuck = island_rows(led)
     ok("台帳から拾うのは島の行だけ（スパチャと Doneru は拾わない）",
-       got, [{"channelId": "UC_sky", "handle": "スカイライン", "yen": 1000}])
+       [{k: g[k] for k in ("channelId", "handle", "yen")} for g in got],
+       [{"channelId": "UC_sky", "handle": "スカイライン", "yen": 1000}])
     ok("足せない島の行は件数で返る", stuck, 2)
 
 
