@@ -541,11 +541,13 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
                 {t.name}
               </Link>
             ))}
-            {/* ここでやった伝説の企画。絵は丘（伝説の企画の建物）の印 */}
+            {/* ここでやった伝説の企画。絵は丘（伝説の企画の建物）の印。
+                **字に種類を添える。** 旅と企画は別の種類で、名前が同じこと（イランまで歩く）も、
+                同じ面に旅の島へ送る同じ字（北欧の旅のしおり）が在ることもある。字だけで行き先が分かるように */}
             {r.projects.map((pj) => (
               <Link key={pj.slug} className="chip" href={pj.href} prefetch={false}>
                 <Icon name="hill" size={20} />
-                {pj.title}
+                伝説「{pj.title}」
               </Link>
             ))}
           </p>
