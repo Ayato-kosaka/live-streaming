@@ -1,0 +1,150 @@
+{
+ "slug": "india-street-food",
+ "page": "/legends/india-street-food",
+ "sha": "631dcaff2bb974e3bd4c0e745f0a741d4e2c4e80",
+ "ref": "claude/bold-hamilton-5vaw10",
+ "run": "45266331684",
+ "at": "2026-11-23T21:23:55.425Z",
+ "width": 390,
+ "dpr": 2,
+ "html": {
+  "chars": 1775779,
+  "norm": 693110,
+  "compare": "前の回（claude/bold-hamilton-5vaw10 f66ad31）と同じ",
+  "same": true
+ },
+ "first": "00-first.png",
+ "sections": [
+  {
+   "n": 1,
+   "id": "cover",
+   "h": 330,
+   "files": [
+    "01-cover.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 2,
+   "id": "toc",
+   "h": 338,
+   "files": [
+    "02-toc.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 3,
+   "id": "rules",
+   "h": 419,
+   "files": [
+    "03-rules.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 4,
+   "id": "stamps",
+   "h": 538,
+   "files": [
+    "04-stamps.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 5,
+   "id": "words",
+   "h": 656,
+   "files": [
+    "05-words.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 6,
+   "id": "regions",
+   "h": 3332,
+   "files": [
+    "06-regions-1.png",
+    "06-regions-2.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 7,
+   "id": "compare",
+   "h": 2322,
+   "files": [
+    "07-compare.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 8,
+   "id": "dishes",
+   "h": 6513,
+   "files": [
+    "08-dishes-1.png",
+    "08-dishes-2.png",
+    "08-dishes-3.png",
+    "08-dishes-4.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 9,
+   "id": "route",
+   "h": 1345,
+   "files": [
+    "09-route.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 10,
+   "id": "tips",
+   "h": 1260,
+   "files": [
+    "10-tips.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 11,
+   "id": "faq",
+   "h": 1259,
+   "files": [
+    "11-faq.png"
+   ],
+   "cut": 0
+  },
+  {
+   "n": 12,
+   "id": "sources",
+   "h": 14799,
+   "files": [
+    "12-sources-1.png",
+    "12-sources-2.png",
+    "12-sources-3.png",
+    "12-sources-4.png",
+    "12-sources-5.png",
+    "12-sources-6.png",
+    "12-sources-7.png",
+    "12-sources-8.png"
+   ],
+   "cut": 399
+  }
+ ],
+ "sims": [],
+ "thumbs": [],
+ "folds": {
+  "opened": 1,
+  "stillClosed": 0
+ },
+ "images": {
+  "all": 9,
+  "broken": 0
+ },
+ "errors": 0,
+ "stopped": {}
+}
