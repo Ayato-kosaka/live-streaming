@@ -212,16 +212,13 @@ export type CastleBankDef = {
 };
 
 /**
- * 12月のクリスマスの貯金箱（#1034）。描くのは `season/bank/XmasBank.tsx`、部品の約束は `<dir>/<variant>.json`。
- * 案3（`sleigh` ソリのプレゼント袋）と案4（`globe` スノードーム）の2つを、試し表示の `?bank=` で切り替える
- * （あやと 2026-11-23「案3か案4で迷っている。出来上がったものを見せてほしい」）。選ばれたほうを `variant` にする
+ * 12月のクリスマスの貯金箱（スノードーム。#1034、あやとが案4 を選んだ 2026-11-23）。描くのは `season/bank/XmasBank.tsx`、
+ * 部品の約束は `<dir>/globe.json`。ピポの動きは11月の城と同じ決まり（`castleBrain.ts`）
  */
 export type XmasBankDef = {
   kind: "xmas";
-  /** 部品と `<variant>.json` の置き場（公開側のパス） */
+  /** 部品と `globe.json` の置き場（公開側のパス） */
   dir: string;
-  /** `?bank=` が無いときの案 */
-  variant: "sleigh" | "globe";
 };
 
 /**
@@ -278,7 +275,7 @@ export type SeasonTheme = {
    */
   castleBank?: CastleBankDef;
   /**
-   * 12月の貯金箱（案を切り替えられる）。部品が読めなければ、下の `bank`（コマ送り）に落ちる。それも読めなければ豚
+   * 12月の貯金箱（スノードーム）。部品が読めなければ、下の `bank`（コマ送り）に落ちる。それも読めなければ豚
    */
   xmasBank?: XmasBankDef;
   /** 投げ銭の演出を動画で流す段の組。無ければ `tiers` だけ */
@@ -876,13 +873,13 @@ export const THEMES: SeasonTheme[] = [
   {
     id: "christmas",
     /* 12月。クリスマス（#1034）。**まだ配信に出さない**（`live: false`。`?theme=christmas` の試し表示だけ）。
-       貯金箱は案3（ソリのプレゼント袋）と案4（スノードーム）を `?bank=sleigh|globe` で見比べる（あやとが選ぶまで）。
+       貯金箱はスノードーム（あやとが案4 を選んだ 2026-11-23）。0% は町の灯りが全部消えていて、貯まるほど下から灯る。
        投げ銭の演出7段は動画（`public/alert/themes/christmas/fx/`。11月の城と同じ形）。`tiers` の1段は旗 `?fx=off` のときだけ */
     from: "2026-12-01T00:00",
     until: "2027-01-01T00:00",
     live: false,
     dir: "/alert/themes/christmas",
-    xmasBank: { kind: "xmas", dir: "/alert/themes/christmas/bank", variant: "sleigh" },
+    xmasBank: { kind: "xmas", dir: "/alert/themes/christmas/bank" },
     bank: {
       /* 部品が読めなかった日のコマ送り。スノードームの 0%（町が暗い）に 100%（全部灯る）を下から溜める。1枚なので送らない */
       dir: "/alert/themes/christmas/bank",

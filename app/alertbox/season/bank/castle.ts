@@ -73,6 +73,12 @@ export type PipoSprite = {
   face: [number, number, number, number];
 };
 
+/**
+ * ピポの絵の組（顔の幅とポーズの絵）。ピポの大きさ・張り出し・場面に収める関数はこれだけを読む
+ * （12月のスノードーム `XmasBank.tsx` も、同じ関数で同じ決まりのまま使う）
+ */
+export type PipoSet = { pipo: { face: number; poses: Record<PipoPose, PipoSprite> } };
+
 /** 屋根ごしに顔を出す所（城の絵の px）。`x` は顔の真ん中、`y` は屋根の線（ここより下は城の後ろに隠れる） */
 export type PeekSpot = { x: number; y: number };
 
@@ -265,21 +271,21 @@ export function castleLayout(box: { width: number; height: number }, def: Castle
 }
 
 /** ピポの絵1枚を場面に描く大きさ（場面の px） */
-export function pipoSize(def: CastleDef, box: { width: number }, pose: PipoPose): { w: number; h: number; k: number } {
+export function pipoSize(def: PipoSet, box: { width: number }, pose: PipoPose): { w: number; h: number; k: number } {
   const sp = def.pipo.poses[pose];
   const k = (def.pipo.face * box.width) / (sp.face[2] - sp.face[0]);
   return { w: sp.size[0] * k, h: sp.size[1] * k, k };
 }
 
 /** 足もとを (x, y) に置いたときの、絵の四角（場面の px） */
-export function pipoRect(def: CastleDef, box: { width: number }, pose: PipoPose, x: number, y: number): Rect {
+export function pipoRect(def: PipoSet, box: { width: number }, pose: PipoPose, x: number, y: number): Rect {
   const sp = def.pipo.poses[pose];
   const { w, h } = pipoSize(def, box, pose);
   return { x: x - w * sp.foot[0], y: y - h * sp.foot[1], w, h };
 }
 
 /** 足もとを (x, y) に置いたときの、顔の四角（場面の px） */
-export function pipoFace(def: CastleDef, box: { width: number }, pose: PipoPose, x: number, y: number): Rect {
+export function pipoFace(def: PipoSet, box: { width: number }, pose: PipoPose, x: number, y: number): Rect {
   const sp = def.pipo.poses[pose];
   const r = pipoRect(def, box, pose, x, y);
   const k = r.w / sp.size[0];
@@ -348,7 +354,7 @@ export const BREATH = 1.012;
  * ポーズ `pose` の絵が、足もとから左・右へどこまで張り出すか（場面の px。右向き）。
  * 足もとを軸に ±`sway` 度傾け、`scale` 倍に広げても収まる幅（旗を振る・首をかしげる・着地の「ぽよん」）
  */
-export function pipoReach(def: CastleDef, box: { width: number }, pose: PipoPose, sway = 0, scale = BREATH): { l: number; r: number } {
+export function pipoReach(def: PipoSet, box: { width: number }, pose: PipoPose, sway = 0, scale = BREATH): { l: number; r: number } {
   const sp = def.pipo.poses[pose];
   const { w, h } = pipoSize(def, box, pose);
   const xs = [-w * sp.foot[0] * scale, w * (1 - sp.foot[0]) * scale];
@@ -373,7 +379,7 @@ export function pipoReach(def: CastleDef, box: { width: number }, pose: PipoPose
  * `dir` は向き（-1 なら左右を返して描く。足もとを軸に鏡写し）。`sway`・`scale` はそのポーズで掛ける傾き（度）と広がり
  */
 export function fitPipoX(
-  def: CastleDef,
+  def: PipoSet,
   box: { width: number; height: number },
   pose: PipoPose,
   x: number,

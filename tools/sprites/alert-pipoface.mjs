@@ -23,13 +23,13 @@
  * - 出す数: 溜まり具合ごとに、時間で均した顔の幅（ピポが見えているコマだけ）・ポーズごとの幅・見えていた割合と、
  *   今 ÷ 前 の比
  *
- * ## 12月から（`--theme christmas --query bank=sleigh`）
+ * ## 12月から（`--theme christmas`）
  *
  * 12月の貯金箱（`season/bank/XmasBank.tsx`）は、ピポの絵に `data-pipo-face`（顔の幅 ÷ 絵の幅）を持たせてあるので、
  * それを読んで数える（城の castle.json も前の版も要らない）。前の版が無いので比ではなく、**顔の幅 ÷ 場面の幅**
  * （場面＝豚の 1.6 倍の四角）を出し、`--face-min`（例 0.13。決まりは 13.5%）を下回れば 1
  *
- *   node alert-pipoface.mjs --base ... --theme christmas --query bank=globe --fills 0,60,120 --seconds 30 --face-min 0.13
+ *   node alert-pipoface.mjs --base ... --theme christmas --fills 0,60,120 --seconds 30 --face-min 0.13
  *
  * 終了コード: 0 = どの溜まり具合でも 今 ÷ 前 が `--min`（既定 1.5）以上（`--face-min` を渡したら、顔 ÷ 場面がそれ以上） /
  * 1 = 下回った / 2 = 測れなかった
