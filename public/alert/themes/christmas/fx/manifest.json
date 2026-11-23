@@ -70,6 +70,26 @@
       "introDur": 3.4,
       "stayDur": 3.0,
       "outroDur": 1.0
+    },
+    "6": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t6-full-back-intro.webm",
+            "stay": "t6-full-back-stay.webm",
+            "outro": "t6-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t6-full-front-intro.webm",
+            "stay": "t6-full-front-stay.webm",
+            "outro": "t6-full-front-outro.webm"
+          }
+        }
+      },
+      "revealAt": 3.2,
+      "introDur": 4.0,
+      "stayDur": 3.0,
+      "outroDur": 1.2
     }
   }
 }
