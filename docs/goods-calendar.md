@@ -32,7 +32,7 @@
 | --- | --- | --- |
 | 1 | **月ごとの思い出を掘る。** 配信の一覧・チャットの山・料理・行事から、月ごとにテーマ案を3つ | BigQuery（`youtube_chat.videos` / `chat_messages`）、`site/content/` の焼き込み。`/clip-cut` の山の数え方が使える |
 | 2 | **テーマ案を issue であやとに見せる。** 絵を作る前に（作ってから直すと手戻りが大きい） | `/ask-ayato` |
-| 3 | **月ごとの上位7人を数える** | `tools/goods/calcast/rank.sql`（`periods` を変える） |
+| 3 | **月ごとの上位7人を数える**（貢献額は月末と同じ1本。島の投げ銭も入る） | `python/admin/calendar_top.py`（Actions。`{"from": "2026-01", "to": "2026-12"}`）。使いかたは `tools/goods/calcast/README.md` 1 |
 | 4 | **住人の見本を作る**（番号だけ・名前なし） | `tools/goods/calcast/sheet.py` |
 | 5 | **ChatGPT で描く。** 見本の絵（タッチ）と住人の見本を毎回添付。1枚ずつ頼む。候補は月3枚 | `/chatgpt-image`、頼みの文の形は `tools/goods/calcast/swap-prompt.txt` |
 | 6 | **1枚ずつ自分の目で見る**（下の 3） | |

@@ -113,6 +113,7 @@ const look = (p) =>
       もらった行: document.querySelectorAll(".fd-got > li").length,
       本文: document.querySelectorAll(".fd-gottext").length,
       ドネの行: document.querySelectorAll(".fd-got > li.is-doneru").length,
+      島の行: document.querySelectorAll(".fd-got > li.is-island").length,
       見ている間隔: txt(".fd-live"),
       配信に出すもの: txt(".fd-replaybody"),
       もう一度: txt(".fd-again").slice(0, 2),
@@ -127,15 +128,21 @@ const look = (p) =>
             .replace(/[^\d-]/g, "").replace(/^-/, "-")) *
           ((rows[i]?.querySelector("dd")?.textContent ?? "").startsWith("−") ?
             -1 : 1);
-        const [start, sc, dn, sp, sum] = [0, 1, 2, 3, 4].map(n);
+        /* 行の数で決め打ちしない（島の投げ銭で5行目が増えた。#1405）。
+           **いちばん下が「いま」、その上が全部足し引きの行。** */
+        const vals = rows.map((_, i) => n(i));
+        const sum = vals[vals.length - 1];
+        const parts = vals.slice(0, -1);
+        const labels = rows.map((r) => r.querySelector("dt")?.textContent?.trim() ?? "");
         const head = Number(
           (document.querySelector(".fd-total b")?.textContent ?? "")
             .replace(/[^\d]/g, ""));
+        const add = parts.reduce((a, x) => a + x, 0);
         return {
-          start, sc, dn, sp, sum,
-          足し引き: start + sc + dn + sp,
+          行: labels.map((l, i) => `${l} ${vals[i]}`),
+          足し引き: add,
           頭の額: head,
-          合う: start + sc + dn + sp === sum && sum === head,
+          合う: add === sum && sum === head,
         };
       })(),
       けす: document.querySelectorAll(".fd-x").length,
@@ -220,9 +227,19 @@ const type = async (p, i, v) => {
   await el.fill(v);
 };
 
-/** `ONLY=live` を渡すと、測るところだけ回す（絵は撮り直さない）。 */
+/** `ONLY=live` を渡すと、測るところだけ回す（絵は撮り直さない）。
+    `ONLY=island` は島の投げ銭（#1405）の行がある日だけ撮る（`asme.mjs` の `FUNDISLAND`）。 */
 const ONLY = process.env.ONLY || "";
-if (ONLY !== "live") {
+if (ONLY === "island") {
+  await shot("i1-投げ銭-島あり", { fundisland: true });
+  await shot("i2-もう一度出す-島", { fundisland: true }, async (p) => {
+    await p.click(".fd-got > li.is-island .fd-again");
+    await p.waitForTimeout(400);
+  });
+  await shot("i3-目標出費-内訳-島あり", { pane: "money", fundisland: true });
+  await shot("i4-内訳-島なし", { pane: "money" });
+}
+if (ONLY !== "live" && ONLY !== "island") {
 await shot("1-スパチャドネ");
 await shot("2-もう一度出す-押す前", {}, async (p) => {
   await p.click(".fd-got > li .fd-again");
@@ -273,7 +290,7 @@ await shot("15-PC幅-目標出費", { wide: true, pane: "money" });
    **「たぶん1秒」は答えにならない。** 差し込みに「N ミリ秒たったら1件
    届く」を仕込んで、**画面の上で新しい行が増えるまで**を測る。
    測っているのは口の遅れではなく、**この画面が聞きにいく間隔ぶんの遅れ**。 */
-{
+if (ONLY !== "island") {
   /* 差し込みは「前に足してから 1秒たったあとの最初の問い合わせ」で1件足す。
      **静かなとき（20秒の窓）と配信中（2秒の窓）は別の数**なので、
      1件目と、そのあとの3件を分けて測る。 */

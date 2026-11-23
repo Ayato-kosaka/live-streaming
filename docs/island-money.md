@@ -264,6 +264,8 @@ Doneru 側が `lookupKeys` なのは、**配信中のカードとアラートボ
 | 月末ランキングの決め方（外に出ない） | `python/monthly_tips.py` | 手元 |
 | その見張り | `python/monthly_tips_selftest.py` | 毎 PR |
 | 本番の値を作る | `python/admin/monthly_tips_run.py` | Actions（`run_admin_script`） |
+| 卓上カレンダーの上位7人（**月末と同じ `standing()` を暦の月ごとに呼ぶ。額は出さない**） | `python/admin/calendar_top.py` | Actions（`run_admin_script`） |
+| その見張り | `python/admin/calendar_top_selftest.py` | 毎 PR |
 | 月ごとの面へ焼く | `python/build_monthly.py` | 手元（上の出力を読む） |
 | 貯金箱の見張り | `python/admin/fund_check.py` ほか | Actions |
 
