@@ -103,15 +103,5 @@ export function upNext(today: Date, rows: readonly Stay[] = STAYS, ahead: readon
 /** 3段目の先頭の1件。**先が0件なら `undefined`**——行ってきた企画に落ちない（#673） */
 export const leadPlan = (today: Date): Ahead | undefined => upNext(today).plans[0];
 
-/**
- * 島の「これから」のテントに貼る「あと◯日」の日（`YYYY-MM-DD`）。**無ければ `undefined`。**
- *
- * つぎの滞在の着く日と、まだ来ていない回の日のうち、**今日から数えていちばん近い日。**
- * 表紙の段と同じもの（`upNext`）から引く。今日の日は入る（「今日」と出る）。過ぎた日は入らない。
- */
-export function countdownDay(today: Date, rows: readonly Stay[] = STAYS, ahead: readonly Ahead[] = AHEAD): string | undefined {
-  const u = upNext(today, rows, ahead);
-  return [u.next?.from, ...u.plans.map((p) => p.date)]
-    .filter((d): d is string => !!d && (daysUntil(d, today) ?? -1) >= 0)
-    .sort()[0];
-}
+/* 島の軒に貼る「あと◯日」の日（前の `countdownDay`）は #1279 で外した。常設の軒には状態を貼らない
+   （R-24。`components/isle/cover.ts` の注）。つぎまでの日数は表紙の「これから」の段（`upNext`）が言う */

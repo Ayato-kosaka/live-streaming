@@ -7,6 +7,7 @@ import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Notes from "@/components/live/Notes";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import Phrase from "@/components/ui/Phrase";
 import {
   LINE_AYATO,
@@ -164,7 +165,7 @@ const PEEK = 4;
 
 export default function GoodsPage() {
   return (
-    <PageShell crumbs={[{ label: "あやとグッズ" }]}>
+    <PageShell crumbs={crumbsOf("/goods")}>
       <PageHead
         mark={<Icon name="gift" size={44} />}
         title="あやとグッズ"

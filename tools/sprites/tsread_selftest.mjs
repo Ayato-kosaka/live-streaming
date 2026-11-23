@@ -123,7 +123,7 @@ if (BREAK === "drop") {
 /** 並びの本。`[ファイル, 並びの名前, 1件を名乗る欄, 誰が読むか]` */
 const ARRAYS = [
   ["site/content/residents.ts", "RESIDENTS", "icon", "charfit / asme / asme202 / clutter"],
-  ["site/content/themes.ts", "THEMES", "id", "asme / boardseed"],
+  ["site/content/themes.ts", "THEME_ROWS", "id", "asme / boardseed"],
   ["site/content/chapters.ts", "CHAPTERS", "slug", "orphanpage / chapterkey / isleart"],
   ["site/content/countries.ts", "COUNTRY_RECORDS", "slug", "walkedcount / countryart"],
   // 滞在の表（#1275）。`AHEAD_COUNTRIES` はここの `name` を持つ行から引いている
@@ -134,7 +134,7 @@ const ARRAYS = [
   ["site/content/projects.ts", "PROJECTS", "slug", "manifest / heroicon / nextempty"],
   ["site/content/streamTypes.ts", "STREAM_TYPES", "slug", "manifest / heroicon"],
   // 焼き込みではないが、**同じ形の危うさ**を持っていたので一緒に寄せた
-  ["site/components/island/layout.ts", "PLACES", "id", "here_selftest"],
+  ["site/components/island/layout.ts", "PLACES", "id", "here_selftest / navband"],
 ];
 
 /** 表の本（`Record<string, X>`）。鍵の数だけ見る */
@@ -180,12 +180,12 @@ const LEGACY = {
   },
   // ここだけ**数ではなく答え**で見る。昔の読み方は「`export const THEMES` から
   // 先で最初に当たった `id:`」なので、件数は変わらないまま**別の宛先**を返す
-  "site/content/themes.ts|THEMES": {
+  "site/content/themes.ts|THEME_ROWS": {
     who: "asme:143 / boardseed:47",
     re: /id:\s*"([a-z][a-z0-9-]*)"/g,
     how: "gapwrong",
     pick: (s) =>
-      s.slice(s.indexOf("export const THEMES")).match(/id:\s*"([a-z][a-z0-9-]*)"/)?.[1] ?? "",
+      s.slice(s.indexOf("const THEME_ROWS")).match(/id:\s*"([a-z][a-z0-9-]*)"/)?.[1] ?? "",
   },
   "site/content/chapters.ts|CHAPTERS": {
     who: "chapterkey_selftest:168 / isleart_selftest:128",

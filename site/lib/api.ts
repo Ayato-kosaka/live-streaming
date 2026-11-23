@@ -78,14 +78,10 @@ export type NordicFacts = {
   endedOn?: string;
 };
 
-/** `/state` が返す、企画に貼った古い付箋（`islandNotes` の `planId` 付き）。画面はもう読まない */
-export type NextNote = { id: string; planId: string; text: string; createdAt: string };
-
 export type IslandState = {
   /* `current`（いまどこ・島だより・島の景色）は口が返しても読まない（#1278）。居場所は滞在の表
      （`content/stays.ts`）が持つ。型に置くと、また誰かが読みはじめる */
   stats?: Partial<IslandStats>;
-  notes?: NextNote[];
   residents?: ResidentShow[];
   /**
    * 「一緒にいた日数」（#91）。**キャラクターの書類ID -> 日数。**
@@ -127,8 +123,6 @@ export type IslandLimits = {
   name: number;
   /** 付箋に貼るリンク */
   link: number;
-  /** 企画の題 */
-  planTitle: number;
 };
 
 /** 端末ごとの ID。1人1票と連投制限のために使う（ログインはしない）。 */
@@ -173,10 +167,9 @@ export type MeSettings = {
   showPhoto?: boolean;
 };
 
-/* ---------------- 企画（#161 → #1277） ----------------
-   視聴者さんが企画を出す・育てる・ハートを押す道（`POST /nextplans` ほか）と、あやとが段を動かす道具は
-   画面から外した（#1277。出す道は 2026-10-01 に畳んであり、声は付箋1つで受ける）。口そのものの片づけは
-   Functions の側（#1281）。**画面に残っているのは、机の「配信」（`components/me/PlanVideos.tsx`）だけ**——
+/* ---------------- その日の出来事（#202） ----------------
+   視聴者さんが企画を出す・育てる・ハートを押す道と、あやとが段を動かす道は、画面（#1277）と口（#1281）の
+   両方で畳んだ。**残っているのは机の「配信」（`components/me/PlanVideos.tsx`）だけ**——
    配信を日に結ぶ入れ物（Firestore `islandStreamEvent`）の行を読むのと、動画を結ぶのと。 */
 
 /** 入れ物の1行（机の「配信」が読む形）。**題以外はぜんぶ空でもよい。** */
@@ -192,10 +185,6 @@ export type NextPlan = {
   links: { label: string; href: string }[];
   photos: { src: string; alt: string; credit: string; creditHref: string }[];
   embeds: { kind: "instagram" | "youtube"; id: string; note: string }[];
-  by?: string;
-  byLogin?: true;
-  hearts: number;
-  status: "proposed" | "next" | "done";
   /** ページとして立ったときの、Git 側の企画の id（`content/projects.ts` の slug） */
   planId?: string;
   /**
@@ -266,9 +255,8 @@ export const saveMe = (s: MeSettings, token: string) =>
    宛先（テーマ）を持つ付箋。ハートが押せて、あやとが1つだけ返信できて、
    あやとがしまえる（消えない・戻せる）。
 
-   **旧来の `/notes`（企画に貼る付箋）とは口が別。** 入れ物は同じだが、
-   あちらは `planId`、こちらは `theme` を持つ。画面を切り替えている
-   途中の日に、両方が混ざったものが両方の画面に出るのを止めるため。 */
+   企画に貼る旧来の付箋の口（`/notes`）は畳んだ（#1281）。入れ物には
+   あちらの `planId` を持つ古い行が残っていて、口が読むのは `theme` を持つ行だけ。 */
 
 /**
  * 付箋に貼られた絵1枚（2026-10-08）。
@@ -763,8 +751,7 @@ export const amIOwner = async (token: string): Promise<boolean> => {
   }
 };
 
-/* 「いまどこ」を書く口（`POST /current`）を叩く関数は外した（#1278）。机の「いまどこ」道具ごと畳んだ。
-   口そのものを縮めるのは Functions の側（#1281） */
+/* 「いまどこ」を書く口（`POST /current`）は、机の道具（#1278）と口（#1281）の両方で畳んだ。 */
 
 export const getNordicPhotos = () =>
   req<{ days: NordicPhotoDay[] }>("/nordic/photos");

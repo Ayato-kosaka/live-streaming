@@ -110,6 +110,29 @@
         }
       }
     },
+    "serbia": {
+      "name": "セルビア",
+      "flag": "🇷🇸",
+      "tz": "Europe/Belgrade",
+      "heads": ["セルビア"],
+      "money": {
+        "ディナール": ["ディナ", "dinar", "dinara", "rsd"]
+      },
+      "base": "belgrade",
+      "no_city": ["滞在中の宿", "ホステル", "宿"],
+      "cities": {
+        "belgrade": {
+          "name": "ベオグラード",
+          "bbox": [44.65, 44.95, 20.25, 20.65],
+          "heads": ["ベオグラード"],
+          "places": {},
+          "trips": {
+            "novi-sad": {"name": "ノヴィ・サド", "bbox": [45.20, 45.30, 19.75, 19.95]},
+            "sremski-karlovci": {"name": "スレムスキ・カルロヴツィ", "bbox": [45.17, 45.22, 19.90, 19.98]}
+          }
+        }
+      }
+    },
     "romania": {
       "name": "ルーマニア",
       "flag": "🇷🇴",

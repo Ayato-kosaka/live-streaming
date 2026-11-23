@@ -12,7 +12,8 @@ import IsleStage from "@/components/isle/IsleStage";
 import { isleLead } from "@/components/isle/span";
 import { chapterIsle, type Neighbour } from "@/components/isle/spec";
 import { chapterHref, ISLE_CHAPTERS } from "@/components/chain/route";
-import { ISLAND_PATH, chapterCrumbs, chapterNeighbours, type Chapter } from "@/content/chapters";
+import { ISLAND_PATH, chapterNeighbours, type Chapter } from "@/content/chapters";
+import { crumbsOf } from "@/lib/pages";
 import { chapterCountrySlugs } from "@/content/stayChapters";
 import NordicTrip from "./nordic";
 
@@ -154,7 +155,7 @@ export default async function ChapterIsland({
 
       <main className="page isle-page">
         <div className="wayrow">
-          <Crumbs items={chapterCrumbs(c)} />
+          <Crumbs items={crumbsOf(chapterHref(c))} />
         </div>
 
         {/* **「〜いままで」を焼かない。** ここは `c.to` を直に見ていたので、
