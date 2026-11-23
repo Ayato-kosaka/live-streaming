@@ -134,7 +134,7 @@
      "https://en.wikipedia.org/wiki/Amphitheatre_of_Durr%C3%ABs"
     ],
     "x": 0.07,
-    "y": 0.5,
+    "y": 0.56,
     "dir": "w"
    },
    {
@@ -148,7 +148,7 @@
      "https://dajtiekspres.com/rates-and-opening-hours/"
     ],
     "x": 0.93,
-    "y": 0.42,
+    "y": 0.6,
     "dir": "e"
    },
    {
@@ -160,8 +160,8 @@
     "source": [
      "https://en.wikipedia.org/wiki/Grand_Park_of_Tirana"
     ],
-    "x": 0.66,
-    "y": 0.95,
+    "x": 0.7,
+    "y": 0.86,
     "dir": "s"
    },
    {
@@ -221,7 +221,7 @@
    },
    {
     "name": "ピラミッド",
-    "x": 0.57,
+    "x": 0.55,
     "y": 0.635,
     "w": 0.1633,
     "h": 0.0407
