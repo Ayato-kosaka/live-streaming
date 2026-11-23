@@ -40,6 +40,11 @@
 | `extscene` | 場面: 外の事実（`data-src`）の中に配信の場面を置かない | 出どころの事実に場面の札 |
 | `nosrc` | 出どころ: 外の事実が、出どころのリンクと見た日を持つ | 出どころの無い外の事実 |
 | `sum` | 額: 合計の額を、同じ表に並んだ額の足し算のときだけ通す（ガイドブックの「あやとの1日」） | 内訳の足し算の合計が落ちる |
+| `material` | 落ちすぎ: 材料の出どころつきの入れ物の字の欄を全部読む（facts.json の料理の `price`・数の札の `n` と `unit`。2026-11-24 ソフィア） | 料理の値段の「4〜6ユーロ」 |
+| `hand` | 落ちすぎ: 手で組んだ街（`HAND`）の材料を読み、行った街でも材料の額を通す | ソフィアの面の「8〜13ユーロ」 |
+| `budget` | 落ちすぎ: 列の見出しに単位を書いた表の合計の行を、内訳の足し算（円の列は換算の比で直したもの）のときに通す | まとめの札の「約36ユーロ〜」「約6,400円〜」 |
+| `rate` | 落ちすぎ: 換算の比（「1ユーロ＝177円」「1デナールは約2.7円」）を額と読まない | 表の注記の「177円」 |
+| `nil` | 落ちすぎ: 「1円もかからない」を額と読まない | 「1円」 |
 | `floor` | 数: 窓の数がソフィアの面の数（やりたいこと8・見たいもの22・食べたいもの23）以上 | どれか1つが下限より1少ない |
 | `drawn` | 数: やりたいことの札の絵が全部、その街のその札の描いた絵（`do-<id>`） | 借りた写真の札・別の札の絵・数えられない札 |
 
@@ -49,6 +54,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import subprocess
@@ -69,9 +76,10 @@ if BREAK:
 ROOT = Path(__file__).resolve().parents[1]
 # 抜いたときに赤くなってよい足。落ちすぎの守り（sep・scope）を抜くと、きれいな面（clean）も一緒に赤くなる。
 # 合計の通る面（sum）も、境目の字をくっつけて読むと内訳の額が読めなくなるので、sep を抜くと一緒に赤くなる
-EXPECT = {"sep": {"sep", "clean", "sum"}, "scope": {"scope", "clean"}}
+# 材料の欄を `text` だけに戻すと、`text` の欄を持たない手で組んだ街（ソフィアの facts.json）の額も一緒に落ちる
+EXPECT = {"sep": {"sep", "clean", "sum"}, "scope": {"scope", "clean"}, "material": {"material", "hand"}}
 LEGS = ["verify", "unbacked", "row", "nolink", "sec", "chat", "bare", "tone", "mech", "sep", "scope", "srctitle", "srcamount", "blind",
-        "many", "perline", "wentlink", "extscene", "nosrc", "sum", "floor", "drawn"]
+        "many", "perline", "wentlink", "extscene", "nosrc", "sum", "material", "hand", "budget", "rate", "nil", "floor", "drawn"]
 FAILED: list[tuple[str, str]] = []   # (足, 確かめの名前)
 CHECKED = 0
 
@@ -170,6 +178,19 @@ def legs_of(errors: list[str] | None, leg: str) -> list[str]:
     return [e for e in errors or [] if e.startswith(f"[{leg}]")]
 
 
+def money_errs(errors: list[str] | None, *amounts: str) -> list[str]:
+    """額の赤のうち、その額（「36ユーロ」「6400円」。`money_in` の書きかた）のもの"""
+    return [e for e in errors or [] if any(e.startswith(f"[額] {a} ") for a in amounts)]
+
+
+def main_quiet(*argv: str) -> tuple[int, str]:
+    """見張りの入口（`main`）を、このプロセスの中で回す。子のプロセスにすると、抜いた足（`BREAK`）が渡らない"""
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        code = gw.main(list(argv))
+    return code, buf.getvalue()
+
+
 # ---------------------------------------------------------------- 1. きれいな面は0件
 
 print("[1] きれいな面（一言の中の「できます」・配信の題の額と「おすすめ」・外の出どころの額・島の枠）は0件")
@@ -224,6 +245,68 @@ e = run(page(extra=SRC_LIST))
 ok("srcamount", "出どころの題（リンクの字）の中の「46,20 MKD」→ 落ちない", legs_of(e, "額"), legs_of(run(page()), "額"))
 e = run(page(extra=SRC_LIST + "<p>市バスは1回46,20 MKD。</p>"))
 ok("unbacked", "同じ額を出どころの題の外（地の文）に書く → 落ちる", any("20デナール が facts のどの行にも無い" in x for x in legs_of(e, "額")), True)
+
+
+# ---------------------------------------------------------------- 2b. 最初に手で組んだ街（ソフィア）の形（2026-11-24）
+
+print("[2b] 手で組んだ街の形（材料の欄・予算の合計・換算の比・「1円も」）")
+
+# 手で組んだソフィアの材料（facts.json）の形。欄の名前が品ごとに違い、`text` の欄が無い
+MAT = {
+    "lead": "宿は1泊45ユーロ。",   # 出どころの無い字
+    "food": [{"jp": "サラダ", "price": "4〜6ユーロ（約700〜1,100円）前後", "src": "https://example.org/food"}],
+    "facts": [{"n": "0.80", "unit": "ユーロ", "cap": "1回券。乗り換えもこれ1枚", "src": "https://example.org/metro"}],
+}
+
+
+def run_mat(p: str) -> list[str]:
+    """行った街（facts の行がある）に、材料の出どころつきの額を添えて当てる"""
+    return gw.check_page("xx/test", p, ROWS, UNITS, gw.material_amounts(MAT, UNITS)).errors
+
+
+e = run_mat(page(answer="サラダは4〜6ユーロ（約700〜1,100円）。地下鉄は1回0.80ユーロ。"))
+ok("material", "材料の出どころつきの欄（料理の price・数の札の n と unit）の額 → 通る（行った街でも）",
+   money_errs(e, "6ユーロ", "700円", "1100円", "0.8ユーロ"), [])
+e = run_mat(page(answer="宿は1泊45ユーロ。"))
+ok("unbacked", "材料の、出どころの無い字（lead）にしか無い額 → 落ちる", len(money_errs(e, "45ユーロ")), 1)
+
+
+def budget(card: str = "約36ユーロ〜", yen: str = "約6,400円〜", foot: tuple[str, str] = ("約36〜47", "約6,400〜8,300"),
+           note: str = "円は1ユーロ＝177円（2026年11月6日）で計算") -> str:
+    """ソフィアの「1日の予算」の形（本番の数のまま）。列の見出しが単位で、マスに単位が無い。円のマスは丸めてあり（足すと 6,600）、
+    合計の行の円は、ユーロの足し算（36.13）を換算の比で直したもの。合計は別の入れ物（まとめの札）にも出る"""
+    rows = [("朝", "1〜2", "約200〜400"), ("昼", "15", "約2,700"), ("夜", "15", "約2,700"),
+            ("お茶", "3.13", "約600"), ("移動", "2", "約400"), ("見る", "0〜10", "約0〜1,800")]
+    trs = "".join(f"<tr><th><b>{w}</b></th><td>{a}</td><td>{b}</td></tr>" for w, a, b in rows)
+    return (f'<ul class="gb-sum"><li><a href="#budget"><span class="gb-sum-l">1日の予算</span><b>{card}</b><i>宿代は別。{yen}</i></a></li></ul>'
+            f'<div class="gb-budget" id="budget"><table class="gb-table"><caption>宿代は別。{note}</caption>'
+            f"<thead><tr><th>何に</th><th>ユーロ</th><th>円</th></tr></thead><tbody>{trs}</tbody>"
+            f"<tfoot><tr><th>1日</th><td>{foot[0]}</td><td>{foot[1]}</td></tr></tfoot></table></div>")
+
+
+TOTALS = ("36ユーロ", "47ユーロ", "6400円", "8300円")
+e = run(page(extra=budget()))
+ok("budget", "まとめの札の合計（約36ユーロ〜・約6,400円〜）が、表の内訳の足し算（円は換算の比で直したもの）→ 通る", money_errs(e, *TOTALS), [])
+e = run(page(extra=budget(card="約37ユーロ〜")))
+ok("unbacked", "まとめの札の額が、表の合計と違う（37ユーロ）→ 落ちる", len(money_errs(e, "37ユーロ")), 1)
+e = run(page(extra=budget(card="約38ユーロ〜", foot=("約38〜47", "約6,400〜8,300"))))
+ok("unbacked", "表の合計の行が、内訳の足し算に当たらない（38ユーロ）→ 落ちる", len(money_errs(e, "38ユーロ")), 1)
+# 丸めた円のマスを足すと 6,600。足し算の形は合うが、ユーロの足し算を直したもの（6,395）ではない
+e = run(page(extra=budget(yen="約6,600円〜", foot=("約36〜47", "約6,600〜8,600"))))
+ok("unbacked", "円の合計が、丸めた円のマスの足し算（6,600）→ 落ちる（ユーロの足し算を比で直したものではない）", len(money_errs(e, "6600円")), 1)
+e = run(page(extra=budget(note="円はその日の相場で計算")))
+ok("unbacked", "表に換算の比が無いと、円の合計（6,400）→ 落ちる", len(money_errs(e, "6400円")), 1)
+ok("budget", "表に換算の比が無くても、ユーロの合計（内訳の足し算）は通る", money_errs(e, "36ユーロ"), [])
+
+e = run(page(answer="円は1ユーロ＝177円、1デナールは約2.7円で直した。"))
+ok("rate", "換算の比（1ユーロ＝177円・1デナールは約2.7円）→ 額として読まない", money_errs(e, "1ユーロ", "177円", "1デナール", "2.7円"), [])
+e = run(page(answer="両替の手数料は177円だった。"))
+ok("unbacked", "比ではない所の 177円 → 落ちる", len(money_errs(e, "177円")), 1)
+
+e = run(page(answer="温泉の蛇口は、1円もかからない。"))
+ok("nil", "「1円もかからない」→ 額として読まない", money_errs(e, "1円"), [])
+e = run(page(answer="温泉の蛇口は1円。"))
+ok("unbacked", "「1円」と言い切る → 落ちる", len(money_errs(e, "1円")), 1)
 
 
 # ---------------------------------------------------------------- 3. 一言
@@ -345,6 +428,39 @@ e = floor_of(floor_html("other/city"), key="xx/test")
 ok("drawn", "ほかの街の描いた絵を入れた札 → 落ちる", any("描いた絵ではない" in x for x in e), True)
 
 
+# ---------------------------------------------------------------- 5c. 手で組んだ街（ソフィア）を入口から回す（2026-11-24）
+
+print("[5c] 手で組んだ街（ソフィア）の材料を、見張りの入口から読む")
+# 手で組んだ街の材料（`HAND`）は、名指しした街の見張り（`main`）でだけ読む。ソフィアは行った街なので、
+# 配信の facts の行と材料の両方で突き合わせる。本物の facts と本物の材料を読む
+SOFIA = gw.rows_of("bulgaria", "sofia", ROOT / "streams")
+BG = gf.money_units(gf.load_table(ROOT / "python/data/guide/cities.json"), "bulgaria")
+sq = next((x for x in SOFIA if x["it"].get("quote") and not x["hold"]
+           and not gw.TONE.search(x["it"]["quote"]) and not gw.MECH.search(x["it"]["quote"])), None)
+ok("-", "ソフィアの facts が読めて、置ける一言がある（無ければ下は何も見ていない）", sq is not None, True)
+ok("-", "13ユーロはソフィアの配信の facts に無い（在れば下は材料を見ていない）",
+   ("13", "ユーロ") in set().union(set(), *(gw.amounts_of(x, BG) for x in SOFIA)), False)
+if sq:
+    with tempfile.TemporaryDirectory() as d:
+        (Path(d) / "travel/bulgaria").mkdir(parents=True)
+
+        def sofia(amt: str) -> int:
+            (Path(d) / "travel/bulgaria/sofia.html").write_text(
+                f'<html><head><title>x</title></head><body><article class="gb"><p>主菜は{amt}。</p>'
+                f'{say(sq["it"]["quote"], sq["v"], sq["t"])}{floor_html("bulgaria/sofia")}</article></body></html>', encoding="utf-8")
+            return main_quiet("bulgaria/sofia", "--dist", d)[0]
+
+        ok("hand", "ソフィアの面の「8〜13ユーロ」は、材料（facts.json の料理の price）に在るので 0", sofia("8〜13ユーロ"), 0)
+        ok("unbacked", "ソフィアの面の「8〜999ユーロ」は、どこにも無いので 1", sofia("8〜999ユーロ"), 1)
+        if not BREAK:
+            saved = {k: list(v) for k, v in gw.HAND.items()}
+            try:
+                gw.HAND["bulgaria/sofia"] = ["python/data/bulgaria/nowhere.json"]
+                ok("-", "手で組んだ街の材料が置き場に無い → 2（見失ったまま額を落とさない）", sofia("8〜13ユーロ"), 2)
+            finally:
+                gw.HAND.clear()
+                gw.HAND.update(saved)
+
 
 # ---------------------------------------------------------------- 6. 本物の facts を読む
 
@@ -356,7 +472,8 @@ if not BREAK:
     # 面は焼いたものから書き出す。材料か facts を直して焼き直し忘れると、この見張りは古い面を見て緑になる
     ks = gw.keys()
     ok("-", "材料（guidebook.json）のある街が見つかる（0なら置き場を見失っている）", len(ks) > 0, True)
-    for key in ks:
+    # 手で組んだ街（`HAND`）は焼く道に乗っていない（guidebook_bake.py の材料が無い）ので、焼き直しを見ない
+    for key in (k for k in ks if k not in gw.HAND):
         r = subprocess.run([sys.executable, str(ROOT / "python/guidebook_bake.py"), key, "--check"],
                            capture_output=True, text=True, timeout=300)
         ok("-", f"{key} の焼いたものが、いまの材料と組み立てと facts と同じ（guidebook_bake.py --check）", r.returncode, 0)
