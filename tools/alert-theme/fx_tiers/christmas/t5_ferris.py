@@ -104,8 +104,15 @@ class Scene(Stage):
 
     # ---------------- カメラ（2D）: 登場はゴンドラを箱の真ん中に 2.45 倍。観覧車・ゴンドラは p=1、空・屋台は動かない
     def cam(self, c):
+        """落ち着いたあとも、滞在の輪でゆっくり漂う（左右 6px・上下 3px）。11月の段5 のカメラの漂いと同じ考えで、
+        描いた景色ぜんぶが少しずつ動く（動かさないと、灯りと粒だけが動く平たい板に見え、動きの量も 11月の 0.86倍だった）。
+        漂いは滞在の位相の周期（bump は滞在の頭で 0・速さも 0）なので、登場の終わりから滞在へ跳ねずにつながる"""
         k = ease(ramp(c.Ti, *SETTLE))
-        return lerp(START_ZOOM, 1.0, k), lerp(START_X, HX, k), lerp(START_Y, HY, k)
+        d = ease(ramp(c.Ti, SETTLE[1], self.INTRO)) if c.clip == "intro" else 1.0
+        dz = 0.0  # 寄り引きは焼くと重い（VP8 は平行移動のほうが得意）。左右と上下だけ漂う
+        dx = 6.0 * (c.bump(1, 0.25) - 0.5) * d
+        dy = 3.0 * c.bump(2) * d
+        return lerp(START_ZOOM, 1.0, k) + dz, lerp(START_X, HX, k) + dx, lerp(START_Y, HY, k) + dy
 
     def at(self, c, x, y, p=1.0):
         z, sx, sy = self.cam(c)
@@ -321,8 +328,8 @@ class Scene(Stage):
             across = dx * math.cos(ang) - dy * math.sin(ang)
             wdt = 22 + 0.2 * np.clip(along, 0, None)
             beam = np.exp(-(across / wdt) ** 2) * np.clip(along / 120, 0, 1) * np.exp(-np.clip(along, 0, None) / 900)
-            # 板（不透明の絵）の上に足すので弱く（前は空と観覧車のあいだに挟まって半分隠れていた。0.58 のままだと真ん中が白く飛んだ）
-            out += beam[..., None] * col * 0.2
+            # 板（不透明の絵）の上に足すので弱く（前は空と観覧車のあいだに挟まって半分隠れていた。0.58 のままだと真ん中が白く飛んだ。0.2 だと動きが 11月の 0.86倍）
+            out += beam[..., None] * col * 0.3
         up = cv2.resize(out, (W, H), interpolation=cv2.INTER_CUBIC)
         cv.emit((np.clip(up, 0, None) * k).astype(np.float32))
 
