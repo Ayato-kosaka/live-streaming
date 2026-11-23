@@ -82,6 +82,8 @@
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {createHash} from "crypto";
+/* 島の投げ銭（#1405）。「いま」の額を `GET /fund` と同じ1本で出すために借りる。 */
+import {islandYenOf} from "./tip";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -105,6 +107,12 @@ const USERS = db.collection("islandUsers");
 const SPENDS = db.collection("islandFundSpends");
 /** 目標。開始日が書類ID。`to` が空いている1件が「いまの目標」。 */
 const GOALS = db.collection("islandFundGoals");
+/* 島で受けた投げ銭（Stripe。決定の記録 0017・#1405）。**書くのは Stripe の
+   知らせを受ける口（`tip.ts`）だけで、ここは読むだけ。** 書類IDは Checkout
+   Session の ID。机の履歴・もう一度出す・内訳の5行目がここを読む。
+   **テストの支払い（`livemode` が偽）と、返金・払い戻しの請求になったものは
+   どこにも出さない**（`islandTipYen`）。 */
+const SITE_TIPS = db.collection("islandSiteTips");
 /** 焼き直しの置き場。`island/state.fund.box`。 */
 const STATE = db.collection("island").doc("state");
 /** Doneru の写しが、いつまで入っているか（`python/doneru_ledger.py` が書く）。 */
@@ -138,7 +146,7 @@ const GOALS_MAX = 60;
  * ドネは期間内 88行（2026-09-25 の実測）。
  *
  * **超えたら内訳を出さない。** 足りない数で組むと、差は「開始時点」が
- * 黙って飲み込んで、**4行は足し引きが合ったまま嘘をつく。**
+ * 黙って飲み込んで、**5行は足し引きが合ったまま嘘をつく。**
  * この数に届くころには、焼き直し側に持たせるほうが正しい。
  */
 const SPLIT_CAP = 20000;
@@ -307,6 +315,73 @@ export const manualId = (day: string, yen: number, who: string): string =>
 export const claimKey = (day: string, yen: number): string =>
   day ? `${day}|${yen}` : "";
 
+/* ---------------------------------------------------------------- 島の投げ銭 */
+
+/**
+ * 島の投げ銭1件（`islandSiteTips` の中身）から、**机に出してよい円**を取り出す。
+ *
+ * `python/fund_box.py` の `island_counts()`（数に入れてよいか）と
+ * `island_yen_of()`（足す円）を**続けて通したものの写し。** 豚の焼き直し
+ * （`python/fund_daily.py`）と台帳（`python/island_tips.py`）が通す1本と
+ * 同じ条件にしないと、机の内訳と豚が別の額を言う。写しであることを黙って
+ * 持たない——`functions/selftest/fund_docid_selftest.mjs` が同じ入力を両方に
+ * 食わせて、**1件でも違えば落ちる。**
+ *
+ * - `livemode` が**真そのもの**（本番の支払い）で、`status` が `paid` のものだけ。
+ *   テストの支払い・返金・払い戻しの請求は出さない（決定の記録 0017 の7）
+ * - 額が読めないものは **0 にしない。** null を返して、出さない
+ * @param {Json} v `islandSiteTips/{checkoutSessionId}` の中身
+ * @return {number | null} 円。出さないもの・額が読めないものは null
+ */
+export const islandTipYen = (v: Json): number | null => {
+  if (v.livemode !== true || v.status !== "paid") return null;
+  const amount = v.amount;
+  if (typeof amount !== "number" || !Number.isFinite(amount)) return null;
+  if (String(v.currency || "JPY").toUpperCase() !== "JPY") return null;
+  if (amount <= 0 || amount !== Math.trunc(amount)) return null;
+  return amount;
+};
+
+/**
+ * ミリ秒を、台帳の `at` と同じ形（`2026-09-23T20:05:03+09:00`）にする。
+ *
+ * **履歴は `at` の字で並べる**（`listFeed`）。スパチャとドネの `at` は
+ * この形で入っている（`islandApi.ts` の `fundJst`・`python/fund_box.py` の
+ * `FORMAT_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez')`）。島の投げ銭は時刻を
+ * ミリ秒（`paidAt`）で持つので、ここで同じ形に直す。形が違うと、
+ * 同じ晩の3つの並びが字の比べ方で崩れる。
+ * @param {number} ms ミリ秒
+ * @return {string} 日本時間の ISO8601
+ */
+const jstAt = (ms: number): string =>
+  `${new Date(ms + 9 * 3600 * 1000).toISOString().slice(0, 19)}+09:00`;
+
+/** 島の投げ銭1件を、ほかの2つの台帳と同じ欄に読み替えたもの。 */
+type IslandGot = {yen: number; who: string; text: string; at: string};
+
+/**
+ * 島の投げ銭1件を、スパチャ・ドネの控えと同じ欄（`yen` / `who` / `text` /
+ * `at`）に読み替える。**机に出さないものは null。**
+ *
+ * 履歴（`listFeed`）ともう一度出す（`POST /fund/replay`）が**同じ1本を通す。**
+ * 片方だけ直すと、履歴で見た名前・額と、配信に出る名前・額が割れる。
+ * 名前はアラートに出した名前（`displayNameSnapshot`）、本文は
+ * 払った人が書いたメッセージ（`message`）。
+ * @param {Json} v `islandSiteTips/{checkoutSessionId}` の中身
+ * @return {IslandGot | null} 読み替えたもの。出さないものは null
+ */
+const islandGot = (v: Json): IslandGot | null => {
+  const yen = islandTipYen(v);
+  const paidAt = Number(v.paidAt);
+  if (yen === null || !Number.isFinite(paidAt) || paidAt <= 0) return null;
+  return {
+    yen,
+    who: typeof v.displayNameSnapshot === "string" ? v.displayNameSnapshot : "",
+    text: typeof v.message === "string" ? v.message : "",
+    at: jstAt(paidAt),
+  };
+};
+
 /* ---------------------------------------------------------------- 入力の検め */
 
 /**
@@ -447,9 +522,10 @@ async function rebake(): Promise<Box | null> {
  * 財布は1つで、日付では切らない（#639。あやとの決め）。**切るのは表示だけ。**
  * `GET /fund` の計算には1バイトも触らない。
  *
- *     開始時点 ＝ いま − スパチャ（期間内） − ドネ（期間内） ＋ 出費（期間内）
+ *     開始時点 ＝ いま − スパチャ（期間内） − ドネ（期間内）
+ *                     − 島の投げ銭（期間内） ＋ 出費（期間内）
  *
- * こう組むと、4行の足し引きは**必ず**「いま」に戻る。
+ * こう組むと、5行の足し引きは**必ず**「いま」に戻る。
  * **合わない内訳を出さないための作り**で、数字を合わせにいったのではない。
  * 意味のほうも正しい——目標が始まった時点で財布に入っていた額そのもの。
  *
@@ -459,11 +535,19 @@ async function rebake(): Promise<Box | null> {
  * 期間ごとに半分にすると、両方が奇数の月に1円ずれる。だから
  * **全体の半分から、始まる前のぶんの半分を引く。** これなら必ず足して戻る。
  *
+ * ## 島の投げ銭は5行目（#1405）
+ *
+ * 3つ目の出どころ（決定の記録 0017）。**行を分けないと、期間内に島で受けた
+ * ぶんが「開始時点」（残差）に入って、目標が始まる前からあったお金に見える。**
+ * 足し引きは合ったまま意味だけがずれる、いちばん見つけにくい形なので、
+ * 行を持たせる。期間内はスパチャと同じく**全体（焼き直し）から始まる前のぶん
+ * （いま読む）を引く。** 払った額のまま足す（割らない。`docs/island-money.md` 1章）。
+ *
  * ## 写しが読めないときは、**内訳を出さない**
  *
  * ドネの1件ずつは Firestore の写し（`python/doneru_ledger.py`）から数える。
  * 写しが無い・止まっているときに 0 と読むと、その日の「ドネ 0円」が
- * まるごと「開始時点」へ流れ込んで、**4行は足し引きが合ったまま嘘をつく。**
+ * まるごと「開始時点」へ流れ込んで、**5行は足し引きが合ったまま嘘をつく。**
  * 読めないときは `null` を返して、画面は内訳を1行も出さない
  * （`docs/island-standards.md` 10章）。
  */
@@ -474,9 +558,11 @@ type FundSplit = {
   superchat: number;
   /** 期間内の Doneru */
   doneru: number;
+  /** 期間内の島の投げ銭（**払った額のまま。割らない**） */
+  island: number;
   /** 期間内の出費（**引く額。正の数で返す**） */
   spend: number;
-  /** 4行の足し引き。**`GET /fund` の `total` と1円まで同じ** */
+  /** 5行の足し引き。**`GET /fund` の `total` と1円まで同じ** */
   total: number;
   /** ドネの写しが、いつまで入っているか（`YYYY-MM-DD`） */
   donationsAsOf: string;
@@ -526,7 +612,7 @@ type SplitOut = {split: FundSplit | null; why: SplitWhy | null};
  * `python/admin/fund_split_probe.py`）。
  *
  * **数えきれない数が返ったら、投げる。** 足りない数で内訳を作ると、
- * 差は「開始時点」が黙って飲み込んで、**4行は足し引きが合ったまま嘘をつく。**
+ * 差は「開始時点」が黙って飲み込んで、**5行は足し引きが合ったまま嘘をつく。**
  * @param {FirebaseFirestore.CollectionReference} col 入れ物
  * @param {"<" | ">="} op 境目の向き
  * @param {string} day 境目の日
@@ -549,6 +635,34 @@ async function yenWhere(
 }
 
 /**
+ * 目標が始まる前に島で受けた投げ銭の合計（`islandSiteTips`。#1405）。
+ *
+ * 島の投げ銭は `day` を持たない（時刻はミリ秒の `paidAt`）。境目は
+ * **目標の始まった日の日本時間の0時**——スパチャの `day`（日本時間の日）で
+ * `< from` と切るのと同じ線になる。
+ *
+ * 読み方は `yenWhere` と同じ（**`paidAt` の単一フィールドだけ**で絞って、
+ * 足すのはこちら）。数に入れてよいか・足す円は `islandTipYen` の1本
+ * （テストの支払い・返金・払い戻しの請求は足さない）。
+ * @param {string} from 目標の始まった日（`2026-07-27`）
+ * @return {Promise<number>} 円の合計
+ */
+async function islandBeforeOf(from: string): Promise<number> {
+  const edge = Date.parse(`${from}T00:00:00+09:00`);
+  if (!Number.isFinite(edge)) throw new Error("bad goal day");
+  const snap = await SITE_TIPS.where("paidAt", "<", edge)
+    .select("livemode", "status", "amount", "currency")
+    .limit(SPLIT_CAP + 1).get();
+  if (snap.size > SPLIT_CAP) throw new Error("too many rows to add up");
+  let yen = 0;
+  snap.forEach((d) => {
+    const n = islandTipYen(d.data() as Json);
+    if (n !== null) yen += n;
+  });
+  return yen;
+}
+
+/**
  * 内訳を組む。**1つでも読めなければ、理由の名前を返す。**
  *
  * ## 焼き直しに合わせる側と、いまを読む側
@@ -562,7 +676,8 @@ async function yenWhere(
  * | スパチャ | **焼き直しの合計 − 始まる前ぶん（いま読む）** |
  * | 出費 | **焼き直しの合計 − 始まる前ぶん（いま読む）** |
  * | ドネ | **いま読む**（`total` の Doneru がいまの累計なので） |
- * | 開始時点 | 残差（4行の足し引きが必ず「いま」に戻る） |
+ * | 島の投げ銭 | **焼き直しの合計 − 始まる前ぶん（いま読む）**（`total` の島の投げ銭が焼き直しなので） |
+ * | 開始時点 | 残差（5行の足し引きが必ず「いま」に戻る） |
  *
  * 焼き直したあとに来たスパチャは `total` にも入っていないが、
  * **「始まる前ぶん」はそれに動かされない**ので、ずれは期間内の行に
@@ -575,6 +690,7 @@ async function yenWhere(
  * @param {number} total いま貯金箱にいくら入っているか
  * @param {number} superchatAll 貯金箱に入っているスパチャぶん（÷2 後）
  * @param {number} spendAll 焼き直しの出費の合計
+ * @param {number} islandAll 「いま」に入っている島の投げ銭（`total` を組んだのと同じ値）
  * @return {Promise<SplitOut>} 内訳。組めなければ理由
  */
 async function splitOf(
@@ -582,18 +698,21 @@ async function splitOf(
   total: number,
   superchatAll: number,
   spendAll: number,
+  islandAll: number,
 ): Promise<SplitOut> {
   if (!Number.isFinite(spendAll)) return {split: null, why: "box"};
   try {
-    const [health, fullBefore, spendBefore, doneru] = await Promise.all([
-      DON_HEALTH.get(),
-      /* 始まる前のスパチャと出費。**`day` の単一フィールドだけ**で絞って、
-         足すのはこちら（`yenWhere` の頭。`sum()` は索引が要る）。 */
-      yenWhere(CHATS, "<", from),
-      yenWhere(SPENDS, "<", from),
-      // ドネだけは期間内を読む（`total` の Doneru がいまの累計なので）
-      yenWhere(DONATIONS, ">=", from),
-    ]);
+    const [health, fullBefore, spendBefore, doneru, islandBefore] =
+      await Promise.all([
+        DON_HEALTH.get(),
+        /* 始まる前のスパチャと出費。**`day` の単一フィールドだけ**で絞って、
+           足すのはこちら（`yenWhere` の頭。`sum()` は索引が要る）。 */
+        yenWhere(CHATS, "<", from),
+        yenWhere(SPENDS, "<", from),
+        // ドネだけは期間内を読む（`total` の Doneru がいまの累計なので）
+        yenWhere(DONATIONS, ">=", from),
+        islandBeforeOf(from),
+      ]);
     /* 写しが1度も来ていない／札が無いときは、内訳を組まない。
        **0 を作らない**（`docs/island-standards.md` 10章）。 */
     const h = health.exists ? health.data() ?? {} : {};
@@ -606,18 +725,23 @@ async function splitOf(
        半分にすると、両方が奇数のときに1円ずれる。 */
     const superchat = superchatAll - Math.floor(fullBefore / SUPERCHAT_RATE);
     const spend = spendAll - spendBefore;
+    /* 島の投げ銭は割らない（払った額のまま）。焼き直しから始まる前を引く */
+    const island = islandAll - islandBefore;
     /* 焼き直しが台帳より古いと、引き算が負になることがある。
        **負の「期間内」を出さない**——足し引きは合っても、読む人には
        意味の通らない数になる。 */
-    if (superchat < 0 || spend < 0) return {split: null, why: "stale"};
-    const start = total - superchat - doneru + spend;
+    if (superchat < 0 || spend < 0 || island < 0) {
+      return {split: null, why: "stale"};
+    }
+    const start = total - superchat - doneru - island + spend;
     return {
       split: {
         start,
         superchat,
         doneru,
+        island,
         spend,
-        total: start + superchat + doneru - spend,
+        total: start + superchat + doneru + island - spend,
         donationsAsOf: asOf,
       },
       why: null,
@@ -631,11 +755,14 @@ async function splitOf(
 
 /* ---------------------------------------------------------------- 履歴 */
 
-/** 履歴の1件。スパチャも Doneru も、画面から見れば同じ「もらった1件」。 */
+/** もらった1件の出どころ。`island` は島で受けた投げ銭（#1405） */
+type GotKind = "superchat" | "donation" | "island";
+
+/** 履歴の1件。スパチャも Doneru も島の投げ銭も、画面から見れば同じ「もらった1件」。 */
 type FundGot = {
+  /** 書類ID（島の投げ銭は Checkout Session の ID） */
   id: string;
-  /** `superchat` か `donation` */
-  kind: "superchat" | "donation";
+  kind: GotKind;
   /** ISO8601（日本時間）。**並べ替えの鍵** */
   at: string;
   day: string;
@@ -646,15 +773,26 @@ type FundGot = {
 };
 
 /**
- * スパチャと Doneru を**まぜて時系列**で返す（2026-09-25）。
+ * スパチャと Doneru と島の投げ銭を**まぜて時系列**で返す（2026-09-25。島は #1405）。
  *
  * あやとの言葉「スパチャ・ドネの履歴が見れたい」。前は2つが別の場所に
  * あって、**同じ晩に来た2件がどちらが先か分からなかった。**
  *
- * ## 2つの入れ物を1回のクエリでは読めない
+ * ## 3つの入れ物を1回のクエリでは読めない
  *
- * Firestore にコレクションをまたぐ並べ替えは無いので、**両方から同じ数だけ
- * 引いて、手元で混ぜて切る。** 1ページ N件なら、引くのは 2(N+1) 件。
+ * Firestore にコレクションをまたぐ並べ替えは無いので、**どれからも N+1 件
+ * 引いて、手元で混ぜて切る。**
+ *
+ * ## 島の投げ銭は、読んでから絞る
+ *
+ * `islandSiteTips` にはテストの支払いと返金ぶんも入っている。`livemode` と
+ * `status` で絞りながら `paidAt` で並べると複合索引が要る（#168 で作れない）
+ * ので、**`paidAt` の単一フィールドで並べて読み、手元で絞る**
+ * （`islandTipYen`）。絞って N+1 件に足りなければ、続きを読み足す——
+ * 足りないまま混ぜると、ページの境目より新しい島の1件が、次のページの
+ * 「これより古いもの」からも外れて**二度と出てこない。**
+ * 読み足すのは `SPLIT_CAP` 件まで。届いたら、読んだところより古いものを
+ * このページに入れない（`more` を立てて、続きをそこから読ませる）。
  *
  * ## 並べるのは `at`
  *
@@ -713,13 +851,59 @@ async function listFeed(q: {
     });
   };
 
-  const [a, b] = await Promise.all([
+  /**
+   * 島の投げ銭から、新しい順に n+1 件（本番で、いまも `paid` のものだけ）。
+   * `since` と `before` は `at` の字で来るので、ミリ秒に直して `paidAt` に掛ける。
+   * @return {Promise<object>} 1件ずつと、読み切れなかったときの境目（`at`）
+   */
+  const island = async (): Promise<{rows: FundGot[]; floor: string | null}> => {
+    const sinceMs = since ? Date.parse(since) : null;
+    const beforeMs = before ? Date.parse(before) : null;
+    // 読めない位置は、ほかの2つと同じ線が引けないので何も返さない
+    if (Number.isNaN(sinceMs) || Number.isNaN(beforeMs)) {
+      return {rows: [], floor: null};
+    }
+    let base = SITE_TIPS.orderBy("paidAt", "desc")
+      .orderBy(admin.firestore.FieldPath.documentId(), "desc");
+    if (sinceMs !== null) base = base.where("paidAt", ">", sinceMs);
+    /* 1回に読む数。テストの支払いが前に並んでいても、ふつうは1回で足りる数 */
+    const step = Math.max(n + 1, 100);
+    const rows: FundGot[] = [];
+    let cur: unknown[] | null = beforeMs !== null ? [beforeMs] : null;
+    let read = 0;
+    for (;;) {
+      const snap = await (cur ? base.startAfter(...cur) : base)
+        .limit(step).get();
+      read += snap.size;
+      for (const d of snap.docs) {
+        const g = islandGot(d.data() as Json);
+        if (!g) continue;
+        rows.push({id: d.id, kind: "island", day: g.at.slice(0, 10), ...g});
+      }
+      // 読み切った・足りた
+      if (snap.size < step || rows.length > n) return {rows, floor: null};
+      const last = snap.docs[snap.size - 1];
+      if (read >= SPLIT_CAP) {
+        // 読み足す上限。**読んだところより古いものは、このページに入れない**
+        return {rows, floor: jstAt(Number(last.get("paidAt")))};
+      }
+      cur = [last.get("paidAt"), last.id];
+    }
+  };
+
+  const [a, b, c] = await Promise.all([
     side(CHATS, "superchat"),
     side(DONATIONS, "donation"),
+    island(),
   ]);
-  const all = [...a, ...b].sort((x, y) => y.at.localeCompare(x.at));
+  let all = [...a, ...b, ...c.rows].sort((x, y) => y.at.localeCompare(x.at));
+  /* 島の投げ銭を読み切れなかった回は、読んだところより古いものを落とす。
+     落としたものは次のページ（`before` ＝ このページのいちばん古い1件）で出る */
+  const floor = c.floor;
+  const cut = floor !== null && all.some((g) => g.at < floor);
+  if (floor !== null) all = all.filter((g) => g.at >= floor);
   const got = all.slice(0, n);
-  const more = all.length > n;
+  const more = all.length > n || cut;
   const last = got[got.length - 1];
 
   /* 時刻の分からない控え。**いちばん後ろまで来たときだけ数える**
@@ -745,7 +929,10 @@ async function listFeed(q: {
       logger.warn("fund feed notime failed", String(e));
     }
   }
-  return {got, more, next: more && last ? last.at : null, noTime};
+  /* 続きの位置は、このページのいちばん古い1件。**1件も無いのに続きがある**
+     のは島の投げ銭を読み切れなかった回だけで、そのときは読んだところから */
+  const next = !more ? null : last ? last.at : floor;
+  return {got, more, next, noTime};
 }
 
 /**
@@ -842,7 +1029,13 @@ export async function replayFor(key: string, now: number): Promise<Json> {
   return {
     seq,
     show: {
-      kind: v.kind === "donation" ? "donation" : "superchat",
+      /* 島の投げ銭は、配信では **Doneru の donation と同じ形**で出す
+         （`app/alertbox/connectors/IslandTipConnector.ts` の
+         `toIslandNotification`。あやとの決め「同じ描きかた・同じ7段」）。
+         もう一度出すときも同じ形にしないと、2回目だけスパチャの絵で出る */
+      kind: v.kind === "donation" || v.kind === "island" ?
+        "donation" :
+        "superchat",
       yen: Number(v.yen) || 0,
       who: typeof v.who === "string" ? v.who : "",
       text: typeof v.text === "string" ? v.text : "",
@@ -908,14 +1101,27 @@ export async function handleFundDesk(
       const box =
         (typeof f.box === "object" && f.box ? f.box : null) as Json | null;
       /* いま貯金箱にいくら入っているか。**式は `GET /fund` の `total` と
-         同じ1本**（起点 ＋ スパチャの半分 ＋ Doneru）。ここで別の式を
-         組まない——2か所にあると、いつか2つが違う額を言う。 */
+         同じ1本**（起点 ＋ スパチャの半分 ＋ 島の投げ銭 ＋ Doneru）。ここで別の式を
+         組まない——2か所にあると、いつか2つが違う額を言う。
+
+         島の投げ銭（#1405）は、欄が無いときに 0 を作らない（`tip.ts` の
+         `islandYenOf`。`GET /fund` と同じ1本）。決められなければ `total` も null。
+         内訳（`splitOf`）には**同じ値**を渡して、期間内のぶんを5行目に分ける
+         （分けないと「開始時点」（残差）に入って、目標の前からあったお金に見える）。 */
       const start = Number(box?.start);
       const superchat = Number(box?.superchat);
+      const islandRaw = box?.island;
+      const baked = islandRaw === undefined || islandRaw === null ?
+        null :
+        Number(islandRaw);
+      const island =
+        baked !== null && (!Number.isFinite(baked) || baked < 0) ?
+          null :
+          box ? await islandYenOf(baked) : null;
       const total =
-        box && doneru !== null &&
+        box && doneru !== null && island !== null &&
         Number.isFinite(start) && Number.isFinite(superchat) ?
-          start + superchat + doneru :
+          start + superchat + island + doneru :
           null;
       /* いまの目標（`to` の空いているいちばん新しい1件）。
          **目標は同時に1つ**（`python/fund_box.py` の `read_goal`）。 */
@@ -925,9 +1131,11 @@ export async function handleFundDesk(
          （2026-09-25。理由が分からず13分よけいにかかったので）。 */
       const sp: SplitOut = !now ?
         {split: null, why: "goal"} :
-        total === null ?
+        total === null || island === null ?
           {split: null, why: "total"} :
-          await splitOf(now.from, total, superchat, Number(box?.spend));
+          await splitOf(
+            now.from, total, superchat, Number(box?.spend), island,
+          );
       res.json({
         /* 焼き直しの値そのもの。**画面の額はここから出す**ので、
            島の豚が出している額と1円も違わない。読めなければ null。 */
@@ -964,7 +1172,7 @@ export async function handleFundDesk(
       const uid = await deps.ownerUid(q.auth);
       const kind = String(q.body.kind ?? "");
       const id = docIdOf(String(q.body.id ?? ""));
-      if (kind !== "superchat" && kind !== "donation") {
+      if (kind !== "superchat" && kind !== "donation" && kind !== "island") {
         res.status(400).json({error: "kind"});
         return true;
       }
@@ -980,13 +1188,19 @@ export async function handleFundDesk(
         res.status(409).json({error: "noalertbox"});
         return true;
       }
-      const src = kind === "superchat" ? CHATS : DONATIONS;
+      const src = kind === "superchat" ? CHATS :
+        kind === "donation" ? DONATIONS :
+          SITE_TIPS;
       const row = await src.doc(id).get();
-      if (!row.exists) {
+      /* 島の投げ銭は、**履歴に出るものだけ**（本番で、いまも `paid`）。
+         テストの支払いを本番の配信に出さない（決定の記録 0017 の7）。
+         欄の名前が違うので、ほかの2つと同じ欄に読み替えてから組む */
+      const v: Json | null = !row.exists ? null :
+        kind === "island" ? islandGot(row.data() ?? {}) : row.data() ?? {};
+      if (!v) {
         res.status(404).json({error: "notfound"});
         return true;
       }
-      const v = row.data() ?? {};
       const ref = REPLAY.doc(key);
       const cur = (await ref.get()).data() ?? {};
       /* 印はサーバーの時刻。**ただし必ず前より大きくする**——同じミリ秒に

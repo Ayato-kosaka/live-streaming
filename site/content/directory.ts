@@ -7,6 +7,8 @@ import { tripsOfCountry } from "@/content/stayChapters";
 import { TRAVEL_ARTICLES, TRAVEL_CITIES, TRAVEL_PLACES } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { LEGENDS } from "@/content/legends";
+import { bookOf } from "@/content/legends/index";
+import { PROJECTS } from "@/content/projects";
 import { MONTHS } from "@/content/months";
 import { DAY_PAGES, NORDIC_GUIDE_HREF, cityName, dayHref } from "@/content/nordic";
 import { RECIPES, kindLabel } from "@/content/recipes";
@@ -103,6 +105,14 @@ const SINGLE: Record<string, Line> = {
 
 /** 街の探し言葉。**人が書く字**（面の中身の見どころ・食べもの）。無い街は名前と slug だけで引く */
 const CITY_Q: Record<string, Line> = {
+  /* 行った街。探し言葉は面に在る語だけ */
+  "armenia/yerevan": {
+    note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・ことば",
+    q: q(
+      "アルメニア armenia エレバン yerevan カスケード kaskad 共和国広場 マテナダラン matenadaran アララト " +
+        "ガルニ ゲガルド geghard エチミアジン ホル・ヴィラップ khor virap セヴァン sevanavank ホロヴァツ khorovats ラヴァシュ lavash ドラム コーカサス",
+    ),
+  },
   /* 2026-11-23 に公開した行った街。探し言葉は面に在る語だけ（記事6本は記事の名簿から別の行で並ぶ） */
   "albania/tirana": {
     note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの。行った人の話つき",
@@ -147,6 +157,11 @@ const FROM_TABLES: Record<string, Line> = Object.fromEntries<Line>([
     (m) => [`/months/${m.key}`, { note: `${m.streams.length}本・${m.people}人`, q: q(`${m.year}年${m.month}月 ${m.key} ふりかえり 月末 授賞式`) }] as const,
   ),
   ...LEGENDS.map((l) => [`/legends/${l.slug}`, { note: l.lead, q: q(l.title, l.lead, l.slug) }] as const),
+  /* 面の印の付いた企画（M-8）。1行は見出しの下の一行（book.json の meta）。**下書きの企画は `PROJECTS` に入らない**（M-33） */
+  ...PROJECTS.filter((p) => p.book).map((p) => {
+    const { meta } = bookOf(p.slug).book;
+    return [`/legends/${p.slug}`, { note: meta.sub, q: q(p.title, meta.description, p.slug) }] as const;
+  }),
   ...TRAVEL_PLACES.map((p) => {
     const c = p.country;
     /* 束ねる語彙は旅の名前（「北欧周遊」で探しても国が出る。`docs/spec/model.md` M-5） */

@@ -131,19 +131,23 @@ def main() -> None:
         start = int(sp.get("start") or 0)
         chat = int(sp.get("superchat") or 0)
         doneru = int(sp.get("doneru") or 0)
+        # 島の投げ銭（#1405）。**欄が無い口は、配り直す前の古い口**——0 と読まずに止める
+        if "island" not in sp:
+            raise SystemExit("**内訳に島の投げ銭の行がありません**（口が古い。配り直しが要る）")
+        island = int(sp.get("island") or 0)
         # **出費は正の数で返る。** 足し引きでは引く
         spend = int(sp.get("spend") or 0)
         got = int(sp.get("total") or 0)
         log.info(
-            "内訳: 開始時点 %s円 / スパチャ %s円 / ドネ %s円 / 出費 -%s円 → %s円",
-            start, chat, doneru, spend, got,
+            "内訳: 開始時点 %s円 / スパチャ %s円 / ドネ %s円 / 島の投げ銭 %s円 / 出費 -%s円 → %s円",
+            start, chat, doneru, island, spend, got,
         )
         log.info("ドネの写しは %s まで入っています", sp.get("donationsAsOf"))
-        # 足し引きが内訳の中で閉じているか（画面が5行目に出す額）
-        if start + chat + doneru - spend != got:
+        # 足し引きが内訳の中で閉じているか（画面が「いま」に出す額）
+        if start + chat + doneru + island - spend != got:
             raise SystemExit(
                 f"**内訳の足し引きが合いません**: "
-                f"{start}+{chat}+{doneru}-{spend} != {got}"
+                f"{start}+{chat}+{doneru}+{island}-{spend} != {got}"
             )
         # そして、それが公開の口の額と同じか（豚に出ている額）
         if got != int(a["total"]):

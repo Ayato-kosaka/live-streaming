@@ -123,6 +123,12 @@ export type IslandLimits = {
   name: number;
   /** 付箋に貼るリンク */
   link: number;
+  /** 島の投げ銭の1回のいちばん小さい額（円）。入力欄の初期値もこれ（#1405） */
+  tipYenMin: number;
+  /** 島の投げ銭の1回のいちばん大きい額（円）。あやとの決めではなく Stripe の1回の上限 */
+  tipYenMax: number;
+  /** 島の投げ銭のメッセージの字数 */
+  tipMessageMax: number;
 };
 
 /** 端末ごとの ID。1人1票と連投制限のために使う（ログインはしない）。 */
@@ -1488,9 +1494,11 @@ export type FundSplit = {
   superchat: number;
   /** 期間内の Doneru */
   doneru: number;
+  /** 期間内の島の投げ銭（#1405。**払った額のまま**） */
+  island: number;
   /** 期間内の出費（**引く額。正の数で来る**） */
   spend: number;
-  /** 4行の足し引き。**豚に出ている額と1円まで同じ** */
+  /** 5行の足し引き。**豚に出ている額と1円まで同じ** */
   total: number;
   /** ドネの1件ずつが、いつまで入っているか */
   donationsAsOf: string;
@@ -1523,9 +1531,12 @@ export type FundDesk = {
 };
 
 /** もらった1件。**スパチャも Doneru も、画面から見れば同じもの。** */
+/** もらった1件の出どころ。`island` は島で受けた投げ銭（#1405） */
+export type FundGotKind = "superchat" | "donation" | "island";
+
 export type FundGot = {
   id: string;
-  kind: "superchat" | "donation";
+  kind: FundGotKind;
   /** ISO8601（日本時間）。**並べ替えの鍵** */
   at: string;
   day: string;
@@ -1665,7 +1676,7 @@ export const getFundFeed = (
 
 /** もう一度出す前に、何が出るかを見せるためのもの。 */
 export type FundShown = {
-  kind: "superchat" | "donation";
+  kind: FundGotKind;
   id: string;
   yen: number;
   who: string;
@@ -1682,7 +1693,7 @@ export type FundShown = {
  * サーバーは印を進めないので、配信には**もう出ない**。
  */
 export const replayFund = (
-  p: { kind: "superchat" | "donation"; id: string },
+  p: { kind: FundGotKind; id: string },
   token: string,
 ) =>
   req<{ already: boolean; seq: number; shown?: FundShown }>("/fund/replay", {

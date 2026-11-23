@@ -736,6 +736,11 @@ BOOKS: dict[str, Book] = {
     ),
     "travelPath.ts": Book(DERIVED, SKIP, 0, "旅のガイドの区画の道（`/travel`）の字だけ。日付を持たない（#1201）"),
     "cities.ts": Book(DERIVED, SKIP, 0, "街の名簿（slug と名前）だけ。滞在の表が slug で指す（#1357）。日付を持たない"),
+    "projectDrafts.ts": Book(
+        HUMAN, SKIP, 0,
+        "下書きの企画（M-33）。出す日に行ごと `projects.ts` へ移る置き場で、空が正常。"
+        "古さは日では測れない（あやとの「繋いでいい」で動く）",
+    ),
     "kinds.ts": Book(DERIVED, SKIP, 0, "種類の表（道の型・種類・入口）。仕様の道の表の写しで、日付を持たない（#1357）"),
     "walked.ts": Book(
         DERIVED, SKIP, 0,

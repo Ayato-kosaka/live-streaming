@@ -92,6 +92,26 @@ type Base = {
    * 企画の期間（`range`）と旅の期間は別の事実なので、違っていてよい。違う理由は行の注に書く。
    */
   trip?: string;
+  /**
+   * **面の印**（M-8・`docs/adr/0018-upcoming-project-page.md`）。付いた企画は、始まる前から `/legends/<企画>` に面を持つ
+   * （決まりと、その企画のためのガイド。M-21）。面の中身は材料（`python/data/legends/<企画>/book.json`）を
+   * `python/legend_book_bake.py` が焼いたもの（`content/legends/<企画>.ts`）で、面は `app/legends/<企画>/page.tsx`。
+   * **伝説の丘（`/legends`）に並ぶのは伝説の印の付いた企画だけ**——面の印では並ばない。
+   */
+  book?: true;
+  /**
+   * **下書きの印**（M-33・ADR 0018。街の `draft` と同じ意味）。付いているあいだ、その企画は——
+   *
+   * - 面は在るが、検索に出さない（面の `robots` が `index: false`。`content/legends/index.ts` の `bookShare`）
+   * - **どの面からも引かない**: 表紙の「これから」・便り・掲示板・伝説の丘・索引・サイトマップ・llms.txt・島の上
+   *
+   * 下書きの行は、島じゅうが読む `PROJECTS` ではなく `content/projectDrafts.ts` の `DRAFT_PROJECTS` に置くので、
+   * 引く所ごとに印を見なくていい。**出すときは `draft: true` を消して、行をこの表の `PROJECTS` へ移す。**
+   * 下書きの行まで読むのは、面の名簿（`lib/pages.ts`）と面だけ（`content/projectDrafts.ts` の `PROJECT_ROWS`・`BOOK_PROJECTS`）。
+   * 結ぶ旅・滞在・お題の行は、印を外す日に足す（旅・滞在・お題には印を持たせない）。
+   * 見張りは `site/selftest/draftproject_selftest.mjs`（印を外すと出ることまで対照で見る）
+   */
+  draft?: true;
 };
 
 /** 伝説の印が付いた企画。`/legends` に並ぶ中身を持つ */
@@ -167,6 +187,13 @@ export type Project = LegendProject | EventProject;
  */
 const IRAN_WALK: Course = { from: "エレバン", to: "メグリ", km: 380, days: 12, arriveDay: 10 };
 
+/**
+ * **島じゅうが読む企画。下書きの印の付いた行は、ここに置かない**（`content/projectDrafts.ts` の `DRAFT_PROJECTS`。M-33）。
+ * 表紙の「これから」・便り（`lib/leadPlan.ts`）・掲示板（`components/live/Board.tsx`）・伝説の丘と島の上（`content/legends.ts`）・
+ * カードの日（`lib/cardDays.ts`）・札（`lib/tags.ts`）・お題の結び先（`content/themes.ts`）と、この並びを字で読む見張り
+ * （`python/ts_read.py` の読み手・`tools/sprites/tsread.mjs` の読み手）は、どれもここを読む。だから下書きの行は、どこにも出ない。
+ * **この表は掲示板やお題の棚（client）の束にも入る**ので、下書きの行をここに置くと、出す前の企画の名前が全部の面の JS に乗る
+ */
 export const PROJECTS: Project[] = [
   {
     slug: "food-wine-fest",

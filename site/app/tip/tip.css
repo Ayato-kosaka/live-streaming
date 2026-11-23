@@ -1,0 +1,239 @@
+/* =========================================================
+   あやとに投げ銭（/tip）
+   ---------------------------------------------------------
+   面は紙1枚（`.panel.paper`）。押すもの・書くものだけが板（`docs/island-world.md` 2.1）。
+   押せる合図は厚みだけ（`docs/island-design.md` 3-3）。押せないものは平ら。
+
+   ボタンは島の先例を借りる（`docs/island-standards.md` 33.6）:
+     払う・たしかめる … `.bbtn`（島でいちばん押してほしいボタンの桃）
+     ログイン        … `.signin-go`
+     もう一回なげる  … `.blank-go`
+     メッセージの欄  … `.bin`（へこんでいる）
+   ここに書くのは、この面にしか無い形（額の欄・額のボタン・伝票）だけ。
+   ========================================================= */
+
+/* 紙の中の字の柱。紙の題（`h2`）は紙の上へはみ出す札なので、上を空ける */
+.tip-paper { margin-top: var(--sp-6); }
+
+/* 形だけの板。入力の紙と同じくらいの背を先に取る（出たときに下が跳ねない） */
+.tip-wait > span { --wait-h: 64px; }
+.tip-wait > span:nth-child(2) { --wait-h: 48px; }
+.tip-wait > span:nth-child(3) { --wait-h: 140px; }
+
+.tip-lead {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.85;
+  color: var(--ink);
+}
+.tip-lead b { overflow-wrap: anywhere; }
+.tip-signin { width: 100%; justify-content: center; }
+
+/* --- だれとして投げるか（押せない。平ら） --- */
+.tip-who {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+  min-width: 0;
+}
+.tip-who img {
+  flex: none;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--paper-2);
+}
+.tip-who span { min-width: 0; overflow-wrap: anywhere; }
+.tip-who b { color: var(--ink); }
+
+/* --- 額の欄。書く場所は「へこんでいる」（`.bin` と同じ言い方） --- */
+.tip-yen {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border: var(--bw-2) solid var(--frame);
+  border-radius: var(--r-2);
+  background: var(--paper-2);
+  box-shadow: inset 0 3px 6px color-mix(in srgb, var(--frame-deep) 24%, transparent);
+  cursor: text;
+}
+.tip-yen > span {
+  flex: none;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--ink-2);
+}
+.tip-yen input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  padding: var(--sp-1) 0;
+  font-variant-numeric: tabular-nums;
+}
+.tip-yen input:focus { outline: none; }
+.tip-yen:focus-within { outline: 3px solid var(--accent-2); outline-offset: 3px; }
+.tip-yen[data-bad] { border-color: var(--accent-ink); }
+
+/* 額の下の1行。**背はいつも1行ぶん**（外れたときに字が替わるだけ） */
+.tip-hint {
+  margin: var(--sp-2) 0 var(--sp-3);
+  min-height: 1.8em;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+.tip-hint[data-bad] { color: var(--accent-ink); font-weight: 900; }
+
+/* --- 額のボタン。押すと額が入る。押せるので厚み4px（30px 台の札の厚み。3-3） --- */
+.tip-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2) var(--sp-2);
+  padding-bottom: var(--pop-d4);
+}
+.tip-preset {
+  min-height: 48px;
+  padding: 0 var(--sp-1);
+  border: var(--bw-2) solid var(--frame-dark);
+  border-radius: var(--r-pill);
+  background: linear-gradient(var(--paper), var(--paper-2));
+  color: var(--ink);
+  font-size: var(--fs-body);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 var(--pop-d4) 0 var(--frame-dark);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+.tip-preset:active { transform: translateY(4px); box-shadow: none; }
+/* いま入っている額。**沈んだまま**にして言う（色を変えるのではなく、押した形） */
+.tip-preset[aria-pressed="true"] {
+  transform: translateY(4px);
+  box-shadow: none;
+  background: color-mix(in srgb, var(--marker) 55%, var(--paper));
+  border-color: var(--ink);
+}
+
+/* --- メッセージ --- */
+.tip-msg { display: block; min-height: 7.5em; }
+.tip-left {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--sp-2);
+  margin: var(--sp-1) 0 var(--sp-4);
+  min-height: 1.8em;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  line-height: 1.8;
+  color: var(--ink-2);
+}
+.tip-left > span { margin-left: auto; flex: none; font-variant-numeric: tabular-nums; }
+.tip-msg-fail { color: var(--accent-ink); font-weight: 900; }
+
+/* --- 押すところ --- */
+.tip-go {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  min-height: 56px;
+  margin-top: var(--sp-2);
+  font-size: var(--fs-h3);
+}
+.tip-paper .err { margin: 0 0 var(--sp-2); }
+.tip-next {
+  /* 上のボタンは下へ厚みを持つ（`.bbtn` の側面）。字をその厚みに付けない */
+  margin: calc(var(--sp-3) + var(--pop-d4)) 0 0;
+  text-align: center;
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+/* 戻る道。板にしない（「払う」より先に指が行かないように、字だけ） */
+.tip-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin-top: var(--sp-1);
+  background: none;
+  border: 0;
+  font-size: var(--fs-body);
+  font-weight: 900;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.tip-back:disabled { color: var(--ink-2); }
+
+/* --- 最終確認の伝票。押せないので平ら。区切りは罫 --- */
+.tip-slip {
+  margin: 0 0 var(--sp-4);
+  padding: var(--sp-1) var(--sp-4);
+  border: 1.5px dashed var(--rule);
+  border-radius: var(--r-1);
+  background: color-mix(in srgb, var(--paper) 70%, transparent);
+}
+.tip-slip > div {
+  display: grid;
+  grid-template-columns: 5.5em minmax(0, 1fr);
+  gap: var(--sp-2);
+  align-items: baseline;
+  padding: var(--sp-3) 0;
+  border-top: 1px solid color-mix(in srgb, var(--rule) 60%, transparent);
+}
+.tip-slip > div:first-child { border-top: 0; }
+.tip-slip dt {
+  font-size: var(--fs-note);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.tip-slip dd {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 900;
+  line-height: 1.7;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.tip-slip-yen dd {
+  font-size: 30px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+.tip-slip-msg dd { font-weight: 700; white-space: pre-wrap; }
+.tip-none { color: var(--ink-2); font-weight: 700; }
+/* 取り消せないことは、読み飛ばされると困る字。蛍光ペンを敷く */
+.tip-slip-no dd {
+  text-decoration: underline;
+  text-decoration-color: var(--marker);
+  text-decoration-thickness: 0.45em;
+  text-underline-offset: -0.2em;
+  text-decoration-skip-ink: none;
+}
+
+/* --- 届きました --- */
+.tip-say { margin: var(--sp-2) 0 var(--sp-4); }
+.tip-say .gsay-bubble { flex: 1; min-width: 0; }
+.tip-done-go {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-1);
+}
+.tip-done-go .blank-go { margin-top: 0; }

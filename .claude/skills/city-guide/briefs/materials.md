@@ -59,7 +59,7 @@
 
     | 何 | どこ |
     | --- | --- |
-    | 公開前の印を外す | `site/content/travel.ts` の `draft: true` を消す |
+    | 公開前の印を外す | `site/content/cities.ts` の街の行の `draft: true` を消す（記事の `ARTICLES` の印は、記事ができてから運営が公開の PR で消す） |
     | 週の表が本番へ当てる線 | `python/seo_audit.py` の `PRESETS["prod"]` に `jsonld:/travel/<国>/<街>=Article+ItemList+FAQPage` |
     | 入れた手の控え | `docs/seo.md` 2章に1行（ブカレストの行の形。日はこの日、運営が公開の日に合わせる） |
     | 付箋 | `site/content/themes.ts` に宛先 `<国>`「<街の名前>でこれやって」（`romania` の形）と、面のいちばん下の窓（`page.tsx`）。前の国 `<前の国>` の宛先に `closesOn: "<移る日>"` → `node functions/tools/shutthemes.mjs --write` |
