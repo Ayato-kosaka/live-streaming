@@ -446,7 +446,7 @@ basics = {
     "summary": [
         {"key": "season", "title": "旬の季節", "text": "平年の最高気温は4月19.0℃・5月23.8℃・9月27.3℃・10月21.8℃。7〜8月は30.7℃、11月は雨が172mmといちばん多い。", "src": s("jawp")},
         {"key": "safety", "title": "治安", "text": "日本人が犯罪に巻き込まれたという情報は無い。夜の行動は控え、知らない人の誘いには乗らない。", "src": s("mofa")},
-        {"key": "budget", "title": "予算", "text": "空港から広場へのバスは400レク（約780円）。ダイティ山の乗り場へのタクシーは片道750レク（約1,460円）。", "src": s("wvtia", "dajtigo")},
+        {"key": "budget", "title": "予算", "text": "空港から広場へのバスは400レク（約780円）で30〜40分。ダイティ山の乗り場へのタクシーは片道750レク（約1,460円）。", "src": s("wvtia", "dajtigo")},
         {"key": "transit", "title": "移動", "text": "地下鉄は無く、歩くか市バスかタクシー。2024年4月から市バスの路線と時刻はGoogleマップで出る。", "src": s("wv")},
     ],
     "guide": [
@@ -588,7 +588,7 @@ compose = {
     "areas": {"skanderbeg": {"color": "#ffd98a", "plan": [2, 1, 2]}, "pazari": {"color": "#d9ccf5", "plan": [3, 1, 1]},
               "blloku": {"color": "#ffc4d2", "plan": [1, 2, 2]}},
     "summary": {
-        "season": {"icon": "sun", "value": "4〜5月・9〜10月", "lead": "平年の最高気温が19〜28℃", "to": "#guide-season"},
+        "season": {"icon": "sun", "value": "4〜5月・9〜10月", "lead": "平年の最高気温が19.0〜27.3℃", "to": "#guide-season"},
         "safety": {"icon": "key", "value": "夜の行動は控えめに", "lead": "日本人の被害の情報は無い", "to": "#guide-safety"},
         "budget": {"icon": "wallet", "label": "乗り物の目安", "value": "空港バス400レク", "lead": "広場まで30〜40分", "to": "#budget"},
         "transit": {"icon": "bus", "value": "地下鉄は無い", "lead": "歩きと市バスで回る", "to": "#guide-transit"},
