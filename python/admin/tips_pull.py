@@ -8,6 +8,8 @@
     args:   {"all": true}                … 全期間を出すだけ（既定は書かない）
     args:   {"all": true, "apply": true} … 全期間を書く
     args:   {"days": 7, "apply": true}   … 直近7日
+    args:   {"days": 30, "probe": true}  … 島の投げ銭の当て方（SQL_ISLAND）を、
+                                           Doneru の本番の時刻で確かめる（書かない）
 
 **既定は書かない。** 最初の1回は1,000件を超えるので、先に件数を見る。
 
@@ -37,6 +39,10 @@ def main() -> None:
         argv += ["--days", str(int(a.get("days", 7)))]
     if not a.get("apply", False):
         argv.append("--dry-run")
+    if a.get("probe"):
+        # 島の当て方を Doneru の本番の時刻で確かめるだけ（`island_tips.probe`）。
+        # Firestore を開かない・書かない
+        argv.append("--probe")
     log.info("引数: %s", " ".join(argv[1:]))
     sys.argv = argv
     raise SystemExit(island_tips.main())

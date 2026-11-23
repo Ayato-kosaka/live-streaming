@@ -114,7 +114,8 @@ def main() -> int:
     # ---- 2. 移す中身を組む ----
     sc = fb.gas_superchats()
     sc_full = sum(v["yen"] for _, v in sc)
-    sc_half = sc_full // fb.SUPERCHAT_RATE
+    # **割り算は `viewer_yen()` の1行だけ。** 移す GAS の表に島の投げ銭（#1405）は無い
+    sc_half = fb.viewer_yen(sc_full, 0, island_yen=0)
     ids = {k for k, _ in sc}
     log.info(
         "スパチャの控え: %d件 / 書類ID %d通り / 合計 %s円 / 半分 %s円",
@@ -162,7 +163,7 @@ def main() -> int:
         ok = False
 
     box_before = before["start"] + before["superchat"]
-    box_after = fb.box(sc_full, 0, spend_total)
+    box_after = fb.box(sc_full, 0, spend_total, island_yen=0)
     log.info(
         "貯金箱（Doneru を除いた側）: 移行前 %s円 / 移行後 %s円 / 差 %s円",
         box_before,
@@ -181,7 +182,9 @@ def main() -> int:
         # Doneru のぶんは本番の返り値からしか分からない。
         # 本番は startAmount + superChatAmount + doneru を返しているので、引く
         doneru = total - (before["start"] + before["superchat"])
-        after = fb.box(sc_full, doneru, spend_total)
+        # 島の投げ銭（#1405）は GAS に無いので 0。本番の total に入っていても、
+        # 上の引き算で doneru 側に吸われるので突き合わせはずれない
+        after = fb.box(sc_full, doneru, spend_total, island_yen=0)
         log.info(
             "本番の /island-api/fund: total=%s円（うち Doneru %s円）/ "
             "移行後の式で出すと %s円 / 差 %s円",

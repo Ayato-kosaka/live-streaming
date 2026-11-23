@@ -164,7 +164,7 @@ print(json.dumps({
   "chats": [fb.manual_id(d, y, w) for d, y, w in args["chats"]],
   "claims": [fb.claim_key(d, y) for d, y, _ in args["chats"]],
   "rate": fb.SUPERCHAT_RATE,
-  "box": [fb.box(f, 0, s) for f, s in args["box"]],
+  "box": [fb.box(f, 0, s, island_yen=0) for f, s in args["box"]],
   "start": [fb.start_amount(s) for s in args["start"]],
 }, ensure_ascii=False))
 `;

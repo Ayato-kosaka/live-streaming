@@ -1157,13 +1157,13 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
     ],
     "ペトラ": [
       {
-        "videoId": "IHLIhNV_y_k",
-        "title": "ヨルダン🇯🇴ペトラつきました",
+        "videoId": "Wdk-RIQ0fzg",
+        "title": "ヨルダン🇯🇴アンマンで少し",
         "date": "2025-05-29"
       },
       {
-        "videoId": "Wdk-RIQ0fzg",
-        "title": "ヨルダン🇯🇴アンマンで少し",
+        "videoId": "IHLIhNV_y_k",
+        "title": "ヨルダン🇯🇴ペトラつきました",
         "date": "2025-05-29"
       },
       {
@@ -3263,7 +3263,7 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
       },
       {
         "videoId": "yj1lPCg5e20",
-        "title": "【ﾋﾟｽﾀﾁｵ食べる】怖いイメージを変えたいので 一緒にご飯食べにイランまで歩く。",
+        "title": "【ﾋﾟｽﾀﾁｵ食べる】怖いイメージを変えたいので\n一緒にご飯食べにイランまで歩く。",
         "date": "2026-05-09"
       },
       {

@@ -105,7 +105,7 @@ def main() -> int:
     n1, s1 = fake.sums(fb.C_SUPERCHAT)
     sp1 = fake.sums(fb.C_SPEND)
     log.info("1回目: 控え %d件 / %s円（半分 %s円） / 支出 %d件 %s円",
-             n1, s1, s1 // fb.SUPERCHAT_RATE, sp1[0], sp1[1])
+             n1, s1, fb.viewer_yen(s1, 0, island_yen=0), sp1[0], sp1[1])
 
     # ---- 2回目。同じものをもう一度 ----
     pour(fake, fb.gas_superchats())
@@ -193,8 +193,12 @@ def main() -> int:
     if prod:
         total = fb.to_yen(prod.get("total"))
         given = fb.to_yen(prod.get("given"))
-        doneru = given - (s1 // fb.SUPERCHAT_RATE)
-        after = fb.box(s1, doneru, sp1[1])
+        # **割り算は `viewer_yen()` の1行だけ。** ここで自前で割らない。
+        # 島の投げ銭（#1405）は GAS の表に1件も無いので 0 を渡す。本番の
+        # `given` に島のぶんが入っていても、下の引き算で `doneru` 側に吸われるので
+        # 式の突き合わせは1円もずれない
+        doneru = given - fb.viewer_yen(s1, 0, island_yen=0)
+        after = fb.box(s1, doneru, sp1[1], island_yen=0)
         log.info(
             "本番 total=%s円 / given=%s円（うち Doneru %s円）/ 移行後の式 %s円 / 差 %s円",
             total, given, doneru, after, after - total,

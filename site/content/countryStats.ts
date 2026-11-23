@@ -44,7 +44,6 @@ const COUNTRY_STATS: Record<string, CountryStat> = {
   "georgia": { lives: 394, people: 1278, msgs: 67487, days: 373, top: ["2025-12-23", "xud2lfBsF48", "電波良し、気分良し、活気よし", 63] },
   "germany": { lives: 14, people: 51, msgs: 1758, days: 11, top: ["2025-03-28", "W5Q-wKTzflY", "前編【神回】ドイツのケルン街歩き！チョコ博物館から始めたら、ケルン大聖堂が想像の3倍デカかった件！ライブも見れて1日が濃すぎた…", 17] },
   "hungary": { lives: 5, people: 9, msgs: 52, days: 5, top: ["2024-11-24", "aencgvAwwn4", "ハンガリー最終日、別れはいつも突然に😢", 4] },
-  "iran-border": { lives: 9, people: 513, msgs: 4779, days: 7, top: ["2026-05-06", "8A-2mqkoAYs", "【8日目】怖いイメージを変えたいので 一緒にご飯食べにイランまで歩く。 8日目 Tatev 29キロ", 211] },
   "jordan": { lives: 37, people: 49, msgs: 5987, days: 29, top: ["2025-05-31", "Jk8jWqh1iQU", "【神回】ペトラ遺跡で限界街歩き！ペトラでシークを抜け、秘境モナストリー、ペトラ飯、夕日まで全部盛り！！", 14] },
   "latvia": { lives: 4, people: 54, msgs: 2202, days: 2, top: ["2026-09-17", "k4DxGQlkD6U", "【六日目】親友に会いにスウェーデンまでヒッチハイクします、ラトビア🇱🇻リガ観光日", 37] },
   "lithuania": { lives: 2, people: 56, msgs: 2243, days: 2, top: ["2026-09-14", "ZuzHKyDfocw", "【三日目】親友に会いにスウェーデンまでヒッチハイクします、リトアニアまで", 46] },
