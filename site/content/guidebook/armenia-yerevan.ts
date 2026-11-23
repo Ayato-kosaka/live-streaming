@@ -253,7 +253,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikivoyage.org/wiki/Yerevan",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "date": "2026-04-25",
+    "scene": {
+     "v": "5cWmE-KqHLA",
+     "t": 19830,
+     "date": "2026-04-25"
+    },
+    "story": [
+     "上の段からは、富士山のような山が見えました。最後の日は、次の日の大事な移動に備えて、エスカレーターで上へ。エスカレーターでも、上まで結構長かったです。"
+    ]
+   }
   },
   {
    "id": "khorovats",
@@ -493,7 +504,23 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikivoyage.org/wiki/Sevan",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "date": "2026-05-20",
+    "scene": {
+     "v": "haHAczqMooM",
+     "t": 9900,
+     "date": "2026-05-20"
+    },
+    "story": [
+     "市バスとミニバスを乗り継ぎ、最後はヒッチハイクで湖へ。対岸が見えないほど大きな湖で、ほとりの店で1,200円の魚料理を食べました。"
+    ],
+    "more": {
+     "href": "/travel/armenia/yerevan/sevan",
+     "title": "セヴァン湖に行ってきた【2026年5月】"
+    },
+    "say": "これはええわ。"
+   }
   }
  ],
  "see": {
@@ -591,6 +618,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-04-25",
+     "scene": {
+      "v": "5cWmE-KqHLA",
+      "t": 19950,
+      "date": "2026-04-25"
+     },
+     "story": [
+      "夕日まで20分しかなく、大階段を爆速で登りました。階段に座る人たちは、まるで無限映画館。でも、みんなが見ている方向は、夕日の沈む方向ではありませんでした。最後の日にもう一度行くと、エスカレーターはメンテナンスで止まっていました。"
+     ],
+     "say": "無限映画館。みんなほら、みんな座ってるやろ。この階段とこにここにな映画館ですよ。無限映画館。"
+    },
     "geo": {
      "lat": 40.191463,
      "lon": 44.515587
@@ -692,6 +731,26 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-05-17",
+     "scene": {
+      "v": "2y4IbYu-ZeI",
+      "t": 8910,
+      "date": "2026-05-17"
+     },
+     "pic": {
+      "src": "/travel/armenia/yerevan/hill-960.webp",
+      "small": "/travel/armenia/yerevan/hill-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "丘の上から見た街。雲のすきまから光が差す（2026年5月17日）",
+      "kind": "card",
+      "date": "2026-05-17"
+     },
+     "story": [
+      "記念碑の44mの塔は民族の復活、12の石板は失われた土地を表すそうです。犠牲者は100万〜150万人とされると聞いて、えげつないと感じました。丘の上からは、街の建物の向こうにアララト山が見えました。別の日の夜中にも、散歩で夜景を見に行きました。"
+     ]
+    },
     "geo": {
      "lat": 40.185718,
      "lon": 44.489184
@@ -833,6 +892,17 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-05-23",
+     "scene": {
+      "v": "1KWNenbPR5A",
+      "t": 1190,
+      "date": "2026-05-23"
+     },
+     "story": [
+      "ブルーモスクの前を通りました。アルメニアにも、ブルーモスクがあるんです。"
+     ]
+    },
     "geo": {
      "lat": 40.177883,
      "lon": 44.50556
@@ -990,6 +1060,17 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-04-25",
+     "scene": {
+      "v": "2u4HfAvQdsI",
+      "t": 200,
+      "date": "2026-05-19"
+     },
+     "story": [
+      "オペラ座の前の広場では、スティッチのダーツに当てると景品がもらえる遊びをやっていました。遠くから投げたダーツが外れて飛んでくるのが怖くて、ベンチの端でサングラスをして備えていました。"
+     ]
+    },
     "geo": {
      "lat": 40.185749,
      "lon": 44.515063
@@ -1275,6 +1356,30 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-05-16",
+     "scene": {
+      "v": "c-ogYrwX8iA",
+      "t": 4140,
+      "date": "2026-05-16"
+     },
+     "pic": {
+      "src": "/travel/armenia/yerevan/lake-960.webp",
+      "small": "/travel/armenia/yerevan/lake-480.webp",
+      "w": 960,
+      "h": 720,
+      "alt": "エレバン湖。曇り空の下の湖と、対岸の建物（2026年5月16日）",
+      "kind": "card",
+      "date": "2026-05-16"
+     },
+     "story": [
+      "街から歩いて1時間ほど。大きくて、晴れていればアララト山も見える眺めでしたが、近くで見ると汚くてびっくりしました。"
+     ],
+     "more": {
+      "href": "/travel/armenia/yerevan/lake",
+      "title": "エレバン湖まで歩いてきた【2026年5月】"
+     }
+    },
     "geo": {
      "lat": 40.161597,
      "lon": 44.478547
@@ -1668,6 +1773,21 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-05-20",
+     "scene": {
+      "v": "haHAczqMooM",
+      "t": 15780,
+      "date": "2026-05-20"
+     },
+     "story": [
+      "丘の上に教会が2つあって、片方は中に入れました。中は石でできていて、カトリックの大聖堂とは雰囲気が全然違います。ふもとは、お祭りみたいなにぎわいでした。"
+     ],
+     "more": {
+      "href": "/travel/armenia/yerevan/sevan",
+      "title": "セヴァン湖に行ってきた【2026年5月】"
+     }
+    },
     "geo": {
      "lat": 40.563984,
      "lon": 45.010808
@@ -1910,7 +2030,19 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Armenia",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-04-23",
+     "scene": {
+      "v": "o7OIStvxT0Q",
+      "t": 4870,
+      "date": "2026-04-23"
+     },
+     "story": [
+      "マーケット街の串焼き屋で、チキンの串を温めてもらいました。中身はつくね・ネギ・コリアンダーで、トルティーヤの上につくね串を敷いたような味。串焼きとトルティーヤで200円ぐらいでした。"
+     ],
+     "say": "このでかで200円はやばない?"
+    }
    },
    {
     "id": "lavash",
@@ -1946,7 +2078,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Armenia",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-04-21",
+     "scene": {
+      "v": "YFxoJhKOasQ",
+      "t": 3300,
+      "date": "2026-05-22"
+     },
+     "story": [
+      "スーパーでは、ラヴァシュを1枚ずつ量り売りで買えます。パンがおいしくて、毎日のようにスーパーで買って食べていました。街のパン屋では、ラヴァシュを機械で伸ばして焼いていました。"
+     ]
+    }
    },
    {
     "id": "dolma",
@@ -2140,7 +2283,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Armenia",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-05-18",
+     "scene": {
+      "v": "j_yInDStbKg",
+      "t": 3450,
+      "date": "2026-05-18"
+     },
+     "story": [
+      "ラフマジュンは、アルメニアのソウルフード。裏路地の奥の専門店で、まずザクロのソースを使ったアラビックを頼みました。2枚でお腹いっぱいになり、閉店時間を過ぎて店から追い出されました。"
+     ]
+    }
    },
    {
     "id": "khachapuri",
@@ -2176,7 +2330,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Armenia",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-04-21",
+     "scene": {
+      "v": "k-3fN6Ynsok",
+      "t": 3695,
+      "date": "2026-04-21"
+     },
+     "story": [
+      "中東寄りの店ザ・ピザでは、品書きのアジャリ・ハチャプリが480円。ジョージアより安かったです。"
+     ]
+    }
    },
    {
     "id": "shaurma",
@@ -2470,7 +2635,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Armenia",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-04-24",
+     "scene": {
+      "v": "7R7xote6efA",
+      "t": 7110,
+      "date": "2026-04-24"
+     },
+     "story": [
+      "フードマーケットのパン屋で買ったガタは100円。パイ生地に、カスタードのような中身が入っていました。お気に入りのパン屋のガタは、固くてずっしり重く、中に砂糖菓子のようなものが入っていて、おいしかったです。"
+     ]
+    }
    },
    {
     "id": "ponchik",
@@ -2532,7 +2708,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Armenia",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-05-21",
+     "scene": {
+      "v": "74c2AutI7PY",
+      "t": 4950,
+      "date": "2026-05-21"
+     },
+     "story": [
+      "あんずを初めて食べました。うまかったです。"
+     ]
+    }
    },
    {
     "id": "tan",
@@ -2976,7 +3163,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Armenia",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-05-21",
+     "scene": {
+      "v": "74c2AutI7PY",
+      "t": 4530,
+      "date": "2026-05-21"
+     },
+     "story": [
+      "エレバンマーケットで干し柿を買おうとしたら、果物をどんどん詰められて、所持金を全部持っていかれました。干し柿は3つで200円。硬めで、思ったより悪くなかったです。"
+     ]
+    }
    },
    {
     "id": "ttulavash",
@@ -3207,7 +3405,22 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-05-10",
+     "scene": {
+      "v": "ey_pIoeVo_8",
+      "t": 690,
+      "date": "2026-05-10"
+     },
+     "story": [
+      "切符は券売機テルセルで買う形で、バスでは現金もカードも使えませんでした。待っていた49番はなかなか来ず、降りる場所にも迷いました。"
+     ],
+     "more": {
+      "href": "/travel/armenia/yerevan/bus",
+      "title": "エレバンの市バスに乗ってきた【2026年5月】"
+     }
+    }
    },
    {
     "id": "pay",
@@ -3248,7 +3461,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-04-24",
+     "scene": {
+      "v": "7R7xote6efA",
+      "t": 6900,
+      "date": "2026-04-24"
+     },
+     "story": [
+      "ATMで下ろすときに間違えて、1,000円ほどしか下ろせておらず、パン屋で払ったら所持金がちょうど0円になりました。セヴァン湖の店では、カードは使えないと言われたのに、それなら帰りますと言ったら使えました。"
+     ]
+    }
    },
    {
     "id": "sim",
@@ -3280,7 +3504,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Armenia",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-04-19",
+     "scene": {
+      "v": "jTpvux9mM44",
+      "t": 3660,
+      "date": "2026-04-19"
+     },
+     "story": [
+      "SIMは1ヶ月無制限で1,600円ほど。10分以内に使えると言われたのに、開通まで30分ほどかかって使えず、店に戻って直してもらいました。"
+     ]
+    }
    },
    {
     "id": "safety",
@@ -3315,7 +3550,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-04-19",
+     "scene": {
+      "v": "jTpvux9mM44",
+      "t": 5530,
+      "date": "2026-04-19"
+     },
+     "story": [
+      "差別は受けず、めちゃくちゃ平和だと感じました。ただ、横断歩道は怖くて、信号をつけてほしいと思いました。夜中の1時ごろには、道路で車が衝突する事故を見ました。"
+     ]
+    }
    },
    {
     "id": "phrases",
@@ -3464,7 +3710,18 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikipedia.org/wiki/Time_in_Armenia",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "date": "2026-04-24",
+    "scene": {
+     "v": "7R7xote6efA",
+     "t": 5700,
+     "date": "2026-04-24"
+    },
+    "story": [
+     "4月24日の前の晩、帰り道で、ろうそくのようなものを持って音楽を流す大行列に出会いました。昔の大量虐殺を忘れないための行列らしく、道は警察に封鎖されていました。"
+    ]
+   }
   },
   "budget": {
    "rows": [],
@@ -3761,6 +4018,6 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "0491506b54800700"
+ "hash": "5ce1eb3b9f578e91"
 }
 /* END GUIDE */;
