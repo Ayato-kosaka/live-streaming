@@ -123,7 +123,7 @@ if (BREAK === "drop") {
 /** 並びの本。`[ファイル, 並びの名前, 1件を名乗る欄, 誰が読むか]` */
 const ARRAYS = [
   ["site/content/residents.ts", "RESIDENTS", "icon", "charfit / asme / asme202 / clutter"],
-  ["site/content/themes.ts", "THEME_ROWS", "id", "asme / boardseed"],
+  ["site/content/themes.ts", "THEME_ROWS", "id", "asme / boardseed / nextempty"],
   ["site/content/chapters.ts", "CHAPTERS", "slug", "orphanpage / chapterkey / isleart"],
   ["site/content/countries.ts", "COUNTRY_RECORDS", "slug", "walkedcount / countryart"],
   // 滞在の表（#1275）。`AHEAD_COUNTRIES` はここの `name` を持つ行から引いている

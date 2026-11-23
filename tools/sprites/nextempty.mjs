@@ -65,7 +65,8 @@ const PROJECT_ROWS = must(
   readArray(PROJECTS_SRC, "PROJECTS", { keys: ["date"], lists: ["range"], idKey: "slug" }),
   "projects.ts の PROJECTS",
 );
-const THEME_DAYS = must(readArray(THEMES_SRC, "THEMES", { keys: ["date"], idKey: "id" }), "themes.ts の THEMES")
+/* 字で書いてある行は `THEME_ROWS`（W5 #1394 から。`THEMES` は行き先を鍵から組んだ写しで、字では読めない） */
+const THEME_DAYS = must(readArray(THEMES_SRC, "THEME_ROWS", { keys: ["date"], idKey: "id" }), "themes.ts の THEME_ROWS")
   .map((r) => r.date)
   .filter(Boolean);
 
