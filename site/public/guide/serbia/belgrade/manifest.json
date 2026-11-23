@@ -1,0 +1,679 @@
+{
+ "cover": {
+  "src": "/guide/serbia/belgrade/ベオグラード-観光ガイド-1600.webp",
+  "src_small": "/guide/serbia/belgrade/ベオグラード-観光ガイド-800.webp",
+  "w": 1600,
+  "h": 900,
+  "alt": "ベオグラード観光ガイド「ドナウとサヴァに抱かれた白い町」。晩秋の午後の日に照らされた、2つの川の合流を見下ろす崖の上のベオグラード要塞。遠くに聖サヴァ大聖堂の白い丸屋根。ベオグラードの絵",
+  "kind": "ai",
+  "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。要塞と聖サヴァ大聖堂は写真を形の手本として渡した。下は川の水面、上は空。3:2 で描かせて 16:9 に切った。字なし",
+  "titled": true,
+  "og": {
+   "src": "/guide/serbia/belgrade/belgrade-cover-1200x630.jpg",
+   "w": 1200,
+   "h": 630,
+   "alt": "晩秋の午後の日に照らされた、2つの川の合流を見下ろす崖の上のベオグラード要塞。遠くに聖サヴァ大聖堂の白い丸屋根。ベオグラードの絵"
+  },
+  "ld": [
+   {
+    "src": "/guide/serbia/belgrade/belgrade-cover-16x9.jpg",
+    "w": 1200,
+    "h": 675
+   },
+   {
+    "src": "/guide/serbia/belgrade/belgrade-cover-4x3.jpg",
+    "w": 1200,
+    "h": 900
+   },
+   {
+    "src": "/guide/serbia/belgrade/belgrade-cover-1x1.jpg",
+    "w": 1200,
+    "h": 1200
+   }
+  ]
+ },
+ "cover_tall": {
+  "src": "/guide/serbia/belgrade/ベオグラード-観光ガイド-縦-1600.webp",
+  "src_small": "/guide/serbia/belgrade/ベオグラード-観光ガイド-縦-800.webp",
+  "w": 1600,
+  "h": 2000,
+  "alt": "ベオグラード観光ガイド「ドナウとサヴァに抱かれた白い町」。晩秋の午後の、2つの川の合流の上に立つベオグラード要塞と、遠くの聖サヴァ大聖堂。ベオグラードの絵",
+  "kind": "ai",
+  "prompt_note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "titled": true
+ },
+ "areamap": {
+  "src": "/guide/serbia/belgrade/ベオグラード-見どころマップ-地区分け-1200.webp",
+  "src_small": "/guide/serbia/belgrade/ベオグラード-見どころマップ-地区分け-800.webp",
+  "w": 1200,
+  "h": 1500,
+  "alt": "ベオグラードの見どころマップ（地区分け）。カレメグダン周辺・クネズ・ミハイロ通り周辺・スカダルリヤ・聖サヴァ大聖堂周辺の4つの地区を色で分け、名前を書いた絵地図。ベオグラード要塞・バイラクリ・モスク・共和国広場・スカダルリヤ・国会議事堂・テスラ博物館・聖サヴァ大聖堂の目印の絵と名前つき",
+  "kind": "ai",
+  "prompt_note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・4つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。ゼムン（北西4km）とユーゴスラビア博物館は地図の外（矢印）",
+  "baked": true,
+  "areas": [
+   {
+    "id": "kalemegdan",
+    "name": "カレメグダン周辺",
+    "label": [
+     "カレメグダン周辺"
+    ],
+    "local": "Kalemegdan",
+    "color": "#ffd98a",
+    "x": 0.3,
+    "y": 0.255,
+    "source": [
+     "https://www.arukikata.co.jp/webmagazine/272443/",
+     "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html"
+    ],
+    "w": 0.39,
+    "h": 0.0687
+   },
+   {
+    "id": "knez",
+    "name": "クネズ・ミハイロ通り周辺",
+    "label": [
+     "クネズ・ミハイロ",
+     "通り周辺"
+    ],
+    "local": "Knez Mihailova",
+    "color": "#d9ccf5",
+    "x": 0.36,
+    "y": 0.39,
+    "source": [
+     "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html"
+    ],
+    "w": 0.39,
+    "h": 0.108
+   },
+   {
+    "id": "skadarlija",
+    "name": "スカダルリヤ",
+    "label": [
+     "スカダルリヤ"
+    ],
+    "local": "Skadarlija",
+    "color": "#ffc4d2",
+    "x": 0.75,
+    "y": 0.253,
+    "source": [
+     "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%83%80%E3%83%AB%E3%83%AA%E3%83%A4"
+    ],
+    "w": 0.3067,
+    "h": 0.0687
+   },
+   {
+    "id": "sava",
+    "name": "聖サヴァ大聖堂周辺",
+    "label": [
+     "聖サヴァ大聖堂周辺"
+    ],
+    "local": "Hram Svetog Save",
+    "color": "#c8e6c9",
+    "x": 0.78,
+    "y": 0.81,
+    "source": [
+     "https://www.veltra.com/jp/guide/international/spot-international/36278/",
+     "https://www.arukikata.co.jp/webmagazine/272443/"
+    ],
+    "w": 0.4317,
+    "h": 0.0687
+   }
+  ],
+  "bbox": {
+   "west": 20.437,
+   "east": 20.4746,
+   "south": 44.7925,
+   "north": 44.8325
+  },
+  "beyond": [
+   {
+    "id": "zemun",
+    "name": "ゼムン",
+    "local": "Zemun",
+    "lat": 44.849309,
+    "lon": 20.411248,
+    "source": [
+     "https://en.wikipedia.org/wiki/Zemun"
+    ],
+    "x": 0.08,
+    "y": 0.13,
+    "dir": "nw"
+   },
+   {
+    "id": "yugoslavia",
+    "name": "ユーゴスラビア博物館（花の家）",
+    "local": "Muzej Jugoslavije",
+    "lat": 44.788019,
+    "lon": 20.452314,
+    "source": [
+     "https://en.wikipedia.org/wiki/Museum_of_Yugoslavia"
+    ],
+    "x": 0.36,
+    "y": 0.95,
+    "dir": "s"
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  },
+  "painted": [
+   {
+    "name": "ベオグラード 見どころマップ",
+    "x": 0.5,
+    "y": 0.0468,
+    "w": 1.0,
+    "h": 0.0936
+   },
+   {
+    "name": "ベオグラード要塞",
+    "x": 0.55,
+    "y": 0.128,
+    "w": 0.2433,
+    "h": 0.0407
+   },
+   {
+    "name": "バイラクリ・モスク",
+    "x": 0.74,
+    "y": 0.19,
+    "w": 0.27,
+    "h": 0.0407
+   },
+   {
+    "name": "共和国広場",
+    "x": 0.74,
+    "y": 0.4,
+    "w": 0.1633,
+    "h": 0.0407
+   },
+   {
+    "name": "国会議事堂",
+    "x": 0.77,
+    "y": 0.585,
+    "w": 0.1633,
+    "h": 0.0407
+   },
+   {
+    "name": "テスラ博物館",
+    "x": 0.885,
+    "y": 0.68,
+    "w": 0.19,
+    "h": 0.0407
+   },
+   {
+    "name": "聖サヴァ大聖堂",
+    "x": 0.66,
+    "y": 0.93,
+    "w": 0.2167,
+    "h": 0.0407
+   }
+  ]
+ },
+ "food": {
+  "cevapi": {
+   "src": "/guide/serbia/belgrade/food-cevapi-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-cevapi-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "焼いた棒の形のひき肉チェヴァピと、平たいパンと刻んだ玉ねぎ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "pljeskavica": {
+   "src": "/guide/serbia/belgrade/food-pljeskavica-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-pljeskavica-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "平たいパンにのせた大きなひき肉の焼き物プリェスカヴィツァと、刻んだ玉ねぎ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "karadjordjeva": {
+   "src": "/guide/serbia/belgrade/food-karadjordjeva-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-karadjordjeva-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "巻いて揚げたカツの断面から白いカイマク。レモンとタルタルソースを添えて",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "sarma": {
+   "src": "/guide/serbia/belgrade/food-sarma-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-sarma-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "陶器の鍋に入った、酢漬けのキャベツのロールキャベツ、サルマ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "paprike": {
+   "src": "/guide/serbia/belgrade/food-paprike-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-paprike-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "トマトのソースで煮た、米とひき肉を詰めたピーマン",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "pasulj": {
+   "src": "/guide/serbia/belgrade/food-pasulj-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-pasulj-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白いんげんと燻製の肉の、とろりとした豆の煮込み、パスリ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "prebranac": {
+   "src": "/guide/serbia/belgrade/food-prebranac-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-prebranac-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "土鍋で焼いた、表面が赤茶色の豆と玉ねぎの重ね焼き、プレブラナツ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "muckalica": {
+   "src": "/guide/serbia/belgrade/food-muckalica-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-muckalica-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "焼いた豚肉とピーマン・トマトの赤い煮込み、ムチュカリツァ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "riblja": {
+   "src": "/guide/serbia/belgrade/food-riblja-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-riblja-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "パプリカで赤い、川魚のスープ、リブリャ・チョルバ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "kajmak": {
+   "src": "/guide/serbia/belgrade/food-kajmak-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-kajmak-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "白くなめらかな乳脂のクリーム、カイマクの小鉢とパン",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "ajvar": {
+   "src": "/guide/serbia/belgrade/food-ajvar-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-ajvar-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤ピーマンのペースト、アイバルの小鉢と、塗ったパン",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "urnebes": {
+   "src": "/guide/serbia/belgrade/food-urnebes-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-urnebes-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "唐辛子の赤い粒が混ざった白いチーズのペースト、ウルネベス",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "sopska": {
+   "src": "/guide/serbia/belgrade/food-sopska-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-sopska-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "角切りのトマトときゅうりに、白いチーズをたっぷりおろしたショプスカ・サラダ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "cvarci": {
+   "src": "/guide/serbia/belgrade/food-cvarci-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-cvarci-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "かりかりの豚の脂かす、チュヴァルツィと、生の玉ねぎ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "burek": {
+   "src": "/guide/serbia/belgrade/food-burek-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-burek-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "渦巻きの薄い生地のパイ、ブレクの一切れと、飲むヨーグルト",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "pita": {
+   "src": "/guide/serbia/belgrade/food-pita-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-pita-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "薄い生地でチーズを巻いて焼いた、細長いチーズのピタの切り口",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "gibanica": {
+   "src": "/guide/serbia/belgrade/food-gibanica-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-gibanica-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "チーズと卵を薄い生地と重ねて焼いた、四角いギバニツァの一切れ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "proja": {
+   "src": "/guide/serbia/belgrade/food-proja-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-proja-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "四角く切った黄色いとうもろこしのパン、プロヤ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "palacinke": {
+   "src": "/guide/serbia/belgrade/food-palacinke-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-palacinke-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ジャムとくるみをのせて折りたたんだクレープ、パラチンケ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "krempita": {
+   "src": "/guide/serbia/belgrade/food-krempita-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-krempita-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "厚いカスタードを薄いパイで挟んだ、四角いクレムピタ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "baklava": {
+   "src": "/guide/serbia/belgrade/food-baklava-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-baklava-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "シロップで光る、くるみを挟んだひし形のバクラヴァ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "tufahije": {
+   "src": "/guide/serbia/belgrade/food-tufahije-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-tufahije-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "くるみを詰めて煮たりんごに、白いクリームをのせたトゥファヒヤ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "vanilice": {
+   "src": "/guide/serbia/belgrade/food-vanilice-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-vanilice-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ジャムを挟んで粉砂糖をかけた小さな丸いクッキー、ヴァニリツェ",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "rakija": {
+   "src": "/guide/serbia/belgrade/food-rakija-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-rakija-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "細い小さなグラスに入った透明なラキヤと、すもも",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "kafa": {
+   "src": "/guide/serbia/belgrade/food-kafa-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-kafa-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "柄つきの銅のポット、ジェズヴァと、小さなカップの濃いコーヒー",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "pivo": {
+   "src": "/guide/serbia/belgrade/food-pivo-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-pivo-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "ジョッキに注いだ金色のセルビアのビール",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  },
+  "prokupac": {
+   "src": "/guide/serbia/belgrade/food-prokupac-800.webp",
+   "src_small": "/guide/serbia/belgrade/food-prokupac-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "グラスの濃い赤ワイン、プロクパツと、黒いぶどう",
+   "kind": "ai",
+   "prompt_note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし"
+  }
+ },
+ "buy": {
+  "rakija": {
+   "src": "/guide/serbia/belgrade/buy-rakija-800.webp",
+   "src_small": "/guide/serbia/belgrade/buy-rakija-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "梨が丸ごと入った瓶と、金色のすももの瓶のラキヤ。小さなグラス",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "medovaca": {
+   "src": "/guide/serbia/belgrade/buy-medovaca-800.webp",
+   "src_small": "/guide/serbia/belgrade/buy-medovaca-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "輪の形の焼き物の瓶と、蜂蜜色のメドヴァチャ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "ajvar": {
+   "src": "/guide/serbia/belgrade/buy-ajvar-800.webp",
+   "src_small": "/guide/serbia/belgrade/buy-ajvar-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤ピーマンのペースト、アイバルの瓶詰め",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "plazma": {
+   "src": "/guide/serbia/belgrade/buy-plazma-800.webp",
+   "src_small": "/guide/serbia/belgrade/buy-plazma-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "包みから出した四角いビスケット、プラズマ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "eurocrem": {
+   "src": "/guide/serbia/belgrade/buy-eurocrem-800.webp",
+   "src_small": "/guide/serbia/belgrade/buy-eurocrem-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "茶と白の2色のクリームがうずを巻く、エウロクレムの器",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "smoki": {
+   "src": "/guide/serbia/belgrade/buy-smoki-800.webp",
+   "src_small": "/guide/serbia/belgrade/buy-smoki-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "袋からこぼれたピーナッツ味のスナック、スモキ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "opanci": {
+   "src": "/guide/serbia/belgrade/buy-opanci-800.webp",
+   "src_small": "/guide/serbia/belgrade/buy-opanci-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "つま先が角のように反った革の伝統の靴、オパンツィ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "pirot": {
+   "src": "/guide/serbia/belgrade/buy-pirot-800.webp",
+   "src_small": "/guide/serbia/belgrade/buy-pirot-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "赤と黒の幾何学模様のピロトのキリムを丸めたもの",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし"
+  },
+  "prokupac": {
+   "src": "/guide/serbia/belgrade/buy-prokupac-800.webp",
+   "src_small": "/guide/serbia/belgrade/buy-prokupac-400.webp",
+   "w": 800,
+   "h": 800,
+   "alt": "字の無いラベルの赤ワインの瓶とグラス。プロクパツ",
+   "kind": "ai",
+   "prompt_note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし"
+  }
+ },
+ "do": {
+  "kalemegdan": {
+   "src": "/guide/serbia/belgrade/do-kalemegdan-1200.webp",
+   "src_small": "/guide/serbia/belgrade/do-kalemegdan-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "夕暮れのベオグラード要塞の城壁から、サヴァ川とドナウ川が合わさる広い水面と中洲の島を眺める、小さな人の後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。要塞・スカダルリヤ・ペトロヴァラディン要塞は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/serbia/belgrade/do-kalemegdan-1200.webp",
+     "src_small": "/guide/serbia/belgrade/do-kalemegdan-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "cevapi": {
+   "src": "/guide/serbia/belgrade/do-cevapi-1200.webp",
+   "src_small": "/guide/serbia/belgrade/do-cevapi-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "木の板にのった焼きたてのチェヴァピと、ふっくらしたパン・刻んだ玉ねぎ・カイマク。パンをちぎる手元の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。要塞・スカダルリヤ・ペトロヴァラディン要塞は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/serbia/belgrade/do-cevapi-1200.webp",
+     "src_small": "/guide/serbia/belgrade/do-cevapi-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "skadarlija": {
+   "src": "/guide/serbia/belgrade/do-skadarlija-1200.webp",
+   "src_small": "/guide/serbia/belgrade/do-skadarlija-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "夜の石畳のスカダルリヤ。ランプの灯るテラス席と、アコーディオンと弦の小さな楽団の後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。要塞・スカダルリヤ・ペトロヴァラディン要塞は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/serbia/belgrade/do-skadarlija-1200.webp",
+     "src_small": "/guide/serbia/belgrade/do-skadarlija-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "sava": {
+   "src": "/guide/serbia/belgrade/do-sava-1200.webp",
+   "src_small": "/guide/serbia/belgrade/do-sava-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "聖サヴァ大聖堂の丸屋根の内側いっぱいの金色のモザイクを、下から見上げる小さな人影の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。要塞・スカダルリヤ・ペトロヴァラディン要塞は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/serbia/belgrade/do-sava-1200.webp",
+     "src_small": "/guide/serbia/belgrade/do-sava-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "tesla": {
+   "src": "/guide/serbia/belgrade/do-tesla-1200.webp",
+   "src_small": "/guide/serbia/belgrade/do-tesla-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "薄暗い展示室で、大きなテスラコイルから紫の放電が走るのを見守る見学の一行の後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。要塞・スカダルリヤ・ペトロヴァラディン要塞は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/serbia/belgrade/do-tesla-1200.webp",
+     "src_small": "/guide/serbia/belgrade/do-tesla-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "riblja": {
+   "src": "/guide/serbia/belgrade/do-riblja-1200.webp",
+   "src_small": "/guide/serbia/belgrade/do-riblja-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "ドナウ川沿いのテラス席の卓に、パプリカで赤い魚のスープとパン。後ろに川と、塔の立つ小さな丘の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。要塞・スカダルリヤ・ペトロヴァラディン要塞は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/serbia/belgrade/do-riblja-1200.webp",
+     "src_small": "/guide/serbia/belgrade/do-riblja-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "burek": {
+   "src": "/guide/serbia/belgrade/do-burek-1200.webp",
+   "src_small": "/guide/serbia/belgrade/do-burek-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "パン屋のカウンターで、紙にのせた渦巻きの薄い生地のブレクと、飲むヨーグルトの瓶を手に取る手元の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。要塞・スカダルリヤ・ペトロヴァラディン要塞は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/serbia/belgrade/do-burek-1200.webp",
+     "src_small": "/guide/serbia/belgrade/do-burek-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  },
+  "novi-sad": {
+   "src": "/guide/serbia/belgrade/do-novi-sad-1200.webp",
+   "src_small": "/guide/serbia/belgrade/do-novi-sad-600.webp",
+   "w": 1200,
+   "h": 900,
+   "alt": "ドナウ川を見下ろすペトロヴァラディン要塞の城壁と白い時計塔。下の川と対岸のノヴィ・サドの町並みを眺める人の後ろ姿の絵",
+   "kind": "ai",
+   "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。要塞・スカダルリヤ・ペトロヴァラディン要塞は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+   "variants": {
+    "4:3": {
+     "src": "/guide/serbia/belgrade/do-novi-sad-1200.webp",
+     "src_small": "/guide/serbia/belgrade/do-novi-sad-600.webp",
+     "w": 1200,
+     "h": 900
+    }
+   }
+  }
+ }
+}
