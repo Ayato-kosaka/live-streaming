@@ -89,13 +89,12 @@ const WAIT_MS = parseInt(process.env.WAIT_MS || "20000", 10);
 /**
  * 口が通っている面が `/state` を何本叩いてよいか。
  *
- * **既定は2本。** 1本は控え（`lib/liveStats.tsx` の `loadState`。10か所が
- * ここから配ってもらう）で、もう1本は `components/island/Theme.tsx` が
- * **控えを通さず直に叩いている**ぶん（島の景色を決めるため。`app/layout.tsx` に
- * 置いてあるので全部の面で1本ずつ増える）。
- * ここが増えたら、控えを通さない読み手がもう1人できたということ。
+ * **既定は1本。** 控え（`lib/liveStats.tsx` の `loadState`）から全員が配ってもらう。
+ * 2026-11-23 までは2本で、もう1本は `components/island/Theme.tsx`（島の景色を
+ * `current.theme` から決める部品。全部の面に置いてあった）が控えを通さず直に叩いていた。
+ * あの部品は外した（#1278）。ここが増えたら、控えを通さない読み手がもう1人できたということ。
  */
-const EXPECT = parseInt(process.env.EXPECT || "2", 10);
+const EXPECT = parseInt(process.env.EXPECT || "1", 10);
 /** 落ちたあと、押さずに置いておく時間（ここで叩いたら「勝手に叩いている」） */
 const IDLE_MS = parseInt(process.env.IDLE_MS || "8000", 10);
 

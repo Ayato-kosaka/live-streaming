@@ -1,9 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import IslandTheme from "@/components/island/Theme";
 import { AuthProvider } from "@/lib/auth";
 import Here from "@/components/live/Here";
-import { NOW_FALLBACK, SITE } from "@/content/site";
+import { SITE } from "@/content/site";
 import { HANDOFF_SCRIPT } from "@/lib/handoff";
 
 /* 島の書体は `app/css/fonts.css`（自動生成。`tools/fonts/subset.py`）が持っている。
@@ -92,20 +91,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* 古いドメインから 301 で来た人だけ、手元の記録を取りに1往復する（`lib/handoff.ts`）。
             島を描き始める前に移りたいので、いちばん上に置く。目印の無い人には何も起きない */}
         <script dangerouslySetInnerHTML={{ __html: HANDOFF_SCRIPT }} />
-        {/* 島の空の色を見ている人の時計に、島の景色をあやとの現在地に合わせる。
-            描き始める前に決めたいので、React を待たずにここで入れておく。
-            現在地はこのあと IslandTheme が本物の値で上書きする。 */}
+        {/* 島の空の色を見ている人の時計に合わせる。描き始める前に決めたいので、React を待たずにここで入れておく。
+
+            **島の景色（`data-theme`）はここで入れない**（#1278）。前は Firestore の `current.theme` を
+            読んで `<html>` に付けていた（`components/island/Theme.tsx`）が、本番の値は 2026-09-28 の
+            `georgia` のままで、`app/css/tokens.css` に georgia の色は無く、どの面にも何も効いていなかった。
+            土地の色はいまは章が持っていて、島（`components/isle/spec.ts` の `theme`）が自分の器に付ける。
+            `<html>` に付ければ全部の面の紙までその土地の色に替わるので、章から引き直すこともしない。 */}
         <script
           dangerouslySetInnerHTML={{
             __html:
               "(function(){var d=document.documentElement,h=new Date().getHours();" +
-              "d.dataset.time=h<5?'night':h<10?'morning':h<16?'day':h<19?'evening':'night';" +
-              `d.dataset.theme=${JSON.stringify(NOW_FALLBACK.theme)};})()`,
+              "d.dataset.time=h<5?'night':h<10?'morning':h<16?'day':h<19?'evening':'night';})()",
           }}
         />
       </head>
       <body>
-        <IslandTheme />
         <AuthProvider>
           {/* 「いま、このページを見ている」を置いてくる（`docs/island-here.md`）。
               どのページからも動かないと、`/board` を読んでいる人が島に出ない。

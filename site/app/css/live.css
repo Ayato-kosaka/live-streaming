@@ -803,41 +803,8 @@
   text-underline-offset: 3px;
 }
 
-/* =========================================================
-   9. いまどこ
-   上のしらせ（板の型）と、下の島だより（紙の型）を、はっきり分けて置く。
-   ========================================================= */
-/* いまの一言（`island/state.current.word`）。**打つ欄は `<textarea>` なので、
-   改行が来る。** 潰すと行末と次の行頭がくっついて別の語に読める（#83）。
-   `Wrote` を使えないのは、ここが `Say`（旅のあいだ言い方の変わる差し込み）を
-   通っているため。長い1語（URL）で横にあふれないよう `anywhere` を併せる。 */
-.np-word {
-  margin: 0;
-  font-size: clamp(15px, 4vw, 17px);
-  font-weight: 700;
-  line-height: 1.9;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-/* 島だよりの日付。紙の右上に押したスタンプに見せる。
-   前は色を #c07a5a で直に持っていて、紙の上で 2.66 : 1 しか無かった
-   （`docs/island-world.md` 7.9 の表）。うすい朱はこの紙の上では 4.5 を越えない
-   （`--pick` でも 2.94）ので、色を濃くするのではなく墨に替える。
-   「スタンプらしさ」を出しているのは色ではなく、傾いた二重の枠のほう。
-   opacity も外す。枠ごと薄くなって、字と枠の両方が沈んでいた。 */
-.np-stamp {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: var(--sp-1) var(--sp-2);
-  border: 2px solid var(--ink-2);
-  border-radius: 4px;
-  transform: rotate(6deg);
-  color: var(--ink-2);
-  font-size: var(--fs-min);
-  font-weight: 900;
-  letter-spacing: 0.08em;
-}
+/* 9. いまどこ（`/now`）の段は、面ごと畳んだので外した（#1278）。紙（`.pap`）は
+   ステッカー帳（`/goods/stickers`）が着ている */
 .pap { position: relative; }
 
 /* =========================================================
@@ -899,34 +866,6 @@
      数を言うだけの字なので、読める墨のうすいほうにする（5.9 : 1）。 */
   color: var(--ink-2);
 }
-
-/* いまいる国の旗。テーマの符丁（georgia など）は
-   文章としては出さない決まりなので、絵にだけ使う。
-
-   ## 地名のとなりの 30px から、地名の上の大きな1枚にした
-
-   この面の主役は「いまいる国」（`docs/island-world.md` 2章）なのに、
-   1画面目でいちばん大きい絵は見出しの印（70x70・面の 1.0%）で、
-   国そのものの絵は 30x20 しか無かった。**字だけで「いまジョージア」と
-   言っていて、絵で言っていない。**
-
-   旗はベクタで描いてある（`components/ui/Flag.tsx`）ので、
-   大きくしても**1バイトも増えない**。写真もスプライトも要らない。 */
-.now-hero .now-place { display: flex; flex-direction: column; align-items: center; gap: var(--sp-3); }
-.now-flag {
-  flex: none;
-  width: clamp(210px, 60vw, 280px);
-  height: auto;
-  /* 旗は押せない。**ぼかし0で真下に出る影は「押せる」の合図**なので
-     （`docs/island-design.md` 3章）、30px のときの `0 2px 0` を
-     そのまま大きくすると、押せない絵に厚みが付く。
-     地面に落ちる影のほう（右下へずらして少しぼかす）に替える。 */
-  filter: drop-shadow(3px 6px 2px rgba(52, 66, 32, 0.22));
-}
-/* 旗のふち。viewBox は幅 30 なので、260px で出すと 1.2 の線がそのまま
-   10px の枠になる。外枠は svg の直接の子の rect 1枚だけ（中身は
-   clipPath を掛けた <g> の中にいる）ので、そこだけ細くする。 */
-.now-flag > rect { stroke-width: 0.3; }
 
 /* 紙の上の引用。住人のセリフは吹き出し（板の型）ではなく、刷ってある文にする */
 .pap-quotes { display: grid; gap: var(--sp-2); }

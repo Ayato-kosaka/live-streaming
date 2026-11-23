@@ -1,70 +1,70 @@
 "use client";
 
+import Link from "next/link";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { NOW_FALLBACK } from "@/content/site";
-import { loadState } from "@/lib/liveStats";
-import { placeWord } from "@/lib/stay";
+import { BUILT_AT } from "@/lib/builtAt";
+import { hereNow, type HereNow } from "@/lib/leadPlan";
 
 /**
- * 表紙の名刺にある「いま ◯◯」。
+ * 名刺（表紙）と `/about` の「いま ◯◯」。**字は滞在の表、押した先はいまの旅の島**（#1278）。
  *
- * ## なぜ焼いた字のままではいけないか
+ * ## Firestore を読まない
  *
- * ここは `NOW_FALLBACK.place` をそのまま出していた。あれは
- * `/island-api/state` の `current.place`——**あやとが手で打つ1本の文字列**——を
- * 焼いたもので、本番の値は「ジョージア・トビリシ」、書かれたのは出発の1週間前
- * （2026-09-04）。**旅の17日間、あやとは走っている車の中にいて打ち直せない。**
- * 時計を旅の2日目に進めて本番を開くと、表紙がずっと
- * 「いま ジョージア・トビリシ」と言っていた（4回撮って4回とも同じ）。
+ * 前はここが `island/state.current.place`——あやとが手で打つ1本の字——を読んでいた。
+ * 打たれたのは 2026-09-28 が最後で、そのあとは「古ければ章か国で受ける」の継ぎ当てで
+ * 隠していた。居場所の持ち主は滞在の表（`content/stays.ts`）1か所で（`docs/spec/model.md` M-20）、
+ * 表紙の「これから」の［いまここ］も同じ表から引いている（`lib/leadPlan.ts` の `stayHere`）。
+ * **同じ面の上と下が、同じ1本を読む。**
  *
- * しかも押した先の `/now` は同じ日に「北欧周遊のとちゅう」と言う。
- * **1タップで言うことが変わる**（`docs/island-misses.md`「面の上と下で、
- * 違うことを言っていた」）。判定は `lib/stay.ts` にもうあったので、
- * 表紙もそこを見るだけでよかった。
+ * ## 押した先は、いまの旅の島
  *
- * ## なぜ画面が出てから引き直すのか
+ * `/now`（いまどこ）は畳んだ（`docs/adr/0006-fold-next-and-now.md`。`/` へ 301）。
+ * 「いま」を面として言うのは表紙だけなので（M-31）、ここから送る先は、いまの章の島
+ * （`/island/<章>`）。道は `chapterHref` 1か所が持つ。
  *
- * 静的書き出し（`output: "export"`）なので、焼いた HTML に入るのは
- * **配った日の答え**。出発の日をまたいでも、配り直すまで変わらない。
- * だから焼くのは配った日の答えで、そこから先は画面が出てから引き直す
- * （`components/isle/Cover.tsx` と同じ形）。
+ * ## 画面が出てから引き直す
  *
- * 引き直しは2段。**便りを待たない。**
+ * 静的書き出しなので、最初の1枚は**焼いた日**（`BUILT_AT`）で出す。ここで `new Date()` を
+ * 呼ぶと、焼いた HTML とブラウザの最初の描画が別の国を指して水あわせが落ちる。
+ * 画面が出たら今日で引き直し、1分ごとに数え直す（表紙の `NextUp` と同じ拍。
+ * 国を移った日に、同じ表紙の上と下が別の国を言わないように）。
  *
- *   1. まず、焼いてある便りの日付と**今日**で引き直す（通信なし）
- *   2. 便りが届いたら、打たれた字と日付でもう一度引き直す
- *
- * 1 を飛ばして便りを待つと、電波の細いところでは待っているあいだじゅう
- * 焼いた「ジョージア・トビリシ」が出たままになる。**待っても答えは変わらない**
- * （日付だけで決まる）ので、先に引く。
- *
- * 便りは `loadState()`（`lib/liveStats.tsx`）から取る。表紙は数字のために
- * もう1回読んでいるので、**取りにいく回数は増えない。**
+ * 引きかたは `lib/leadPlan.ts` の `hereNow`（見張りは `site/selftest/leadplan_selftest.mjs` の 8）。
  */
-export default function NowPlace({ baked }: { baked: string }) {
-  const [word, setWord] = useState(baked);
-
+function useHere(): HereNow {
+  const [here, setHere] = useState<HereNow>(() => hereNow(BUILT_AT));
   useEffect(() => {
-    let alive = true;
-    // 1. 焼いた答えは配った日のもの。まず今日の日付で引き直す
-    setWord(placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt, new Date()));
-    // 2. 便りが届いたら、打たれた字が新しいかを見て決め直す（新しければ人の字が勝つ）
-    loadState()
-      .then((s) => {
-        if (!alive) return;
-        const c = s?.current;
-        const place = typeof c?.place === "string" && c.place ? c.place : NOW_FALLBACK.place;
-        const at = typeof c?.updatedAt === "string" ? c.updatedAt : NOW_FALLBACK.updatedAt;
-        setWord(placeWord(place, at, new Date()));
-      })
-      .catch(() => {
-        /* 読めないときは 1 の答えのまま。旅かどうかは日付だけで決まるので、
-           読めなくても「いまどこ」が嘘になることはない */
-      });
-    return () => {
-      alive = false;
+    const read = () => {
+      const next = hereNow(new Date());
+      setHere((h) => (h.place === next.place && h.href === next.href && h.trip === next.trip ? h : next));
     };
+    read();
+    const id = setInterval(read, 60_000);
+    return () => clearInterval(id);
   }, []);
+  return here;
+}
 
-  return <>{word}</>;
+/**
+ * 「いま ◯◯」の札。中身（絵・字の並び）は呼ぶ側が渡し、ここは行き先だけを持つ。
+ * 字は中の `HerePlace` / `HereTrip` が同じ引きかたで出す。
+ */
+export default function HereLink({ className, children }: { className: string; children: ReactNode }) {
+  const { href } = useHere();
+  return (
+    <Link prefetch={false} className={className} href={href}>
+      {children}
+    </Link>
+  );
+}
+
+/** いまいる所（「ルーマニア」「ブルガリア・ソフィア」）。街が分からなければ国だけ */
+export function HerePlace() {
+  return <>{useHere().place}</>;
+}
+
+/** いまの旅の名前（「バルカン諸国周遊」）。押した先の島の名前と同じ字 */
+export function HereTrip() {
+  return <>{useHere().trip}</>;
 }

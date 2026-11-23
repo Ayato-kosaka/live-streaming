@@ -36,14 +36,7 @@ import {
 import { COUNTRIES } from "@/content/countries";
 import { chapterCountrySlugs } from "@/content/stayChapters";
 import { chapterCountries } from "@/content/walked";
-/* 「人が書いた欄が古いか」（`placeOutdated`）は、打たれた字を読む道具のほう
-   （`lib/place.ts`）に移した。旅の面（`/nordic`）はそれだけを使うので、
-   ここに置いたままだと国の表まで面の JS に付いてくる（実測 8kB）。
-   ここから読んでいた側は今までどおり `@/lib/stay` から取れる。 */
-import { placeOutdated } from "@/lib/place";
 import { jstNow } from "@/lib/nightly";
-
-export { placeOutdated };
 
 export type StayNow = {
   /** 国の名前 */
@@ -229,65 +222,6 @@ export function travelNow(now: Date = new Date()): TravelNow | null {
   };
 }
 
-/**
- * 「いまどこ」を、人の書いた欄ではなく**旅そのもの**で言う日か。
- *
- * 旅に出ていて、かつ人の欄がその旅より前のままのときだけ。
- * あやとが旅の途中で書き替えたら（「リガ・ラトビア」）、そちらのほうが細かいので
- * **人の字が勝つ。** ここが返すのは、誰も書けていない日の答え。
- */
-export function tripAsPlace(updatedAt: string | undefined, now: Date = new Date()): TravelNow | null {
-  const t = travelNow(now);
-  return t && placeOutdated(updatedAt, now) ? t : null;
-}
-
-/**
- * 人の字が古くなった日に、**国までは機械が受ける。**
- *
- * `tripAsPlace` は旅のあいだ（章が走っていて、国が引けない日）しか返さない。
- * **落ち着いて国に居る日は、受け皿が無かった。** `stayNow()` が国を知って
- * いるのに、画面の大きい字だけが人の打った古い場所を出しつづける。
- * 実際に起こりうる形はこう——
- *
- *     いまどこ … ジョージア・トビリシ   ← 2週間前に打たれた字
- *     札       … アルバニアに来て 5日目  ← 機械が数えた、本当のこと
- *
- * **同じ面が2つのことを言う。** あやとの言葉（2026-10-13 / #808）
- * 「機械が知っていることは機械が埋める」。国は知っているので、ここで埋める。
- *
- * 街までは知らないので、**人の字が新しいうちは人が勝つ**（そちらが細かい）。
- * 返すのは、人の字が古くなった日の答えだけ。
- *
- * 旅に出ている日は `tripAsPlace` のほうが先（章のほうが細かい）なので `null`。
- */
-export function stayAsPlace(
-  updatedAt: string | undefined,
-  now: Date = new Date(),
-): { name: string; slug: string } | null {
-  if (tripAsPlace(updatedAt, now)) return null;
-  if (!placeOutdated(updatedAt, now)) return null;
-  const s = stayNow(now);
-  return s ? { name: s.name, slug: s.slug } : null;
-}
-
-/**
- * 「いまどこ」の**言い方**。面がどれでも、同じ日には同じ字が出る。
- *
- * 判定（`tripAsPlace`）は前からここにあったが、**その答えを字にするところは
- * 面ごとに書いてあった。** `/now` の1画面目だけが `${trip.name}のとちゅう` と
- * 書いていて、表紙の名刺は判定を通さず `current.place` をそのまま出していたので、
- * 旅の2日目に表紙が「いま ジョージア・トビリシ」、押した先の `/now` が
- * 「北欧周遊のとちゅう」と、**1タップで言うことが変わっていた。**
- *
- * 言い方をここ1か所に置けば、次に足す面も判定と字を一緒に受け取れる。
- */
-export function placeWord(
-  place: string,
-  updatedAt: string | undefined,
-  now: Date = new Date(),
-): string {
-  const t = tripAsPlace(updatedAt, now);
-  if (t) return `${t.name}のとちゅう`;
-  // 旅に出ていない日も、人の字が古ければ国までは機械が知っている
-  return stayAsPlace(updatedAt, now)?.name ?? place;
-}
+/* 人の打った「いまどこ」（Firestore `island/state.current.place`）を、古ければ章か国で受ける
+   継ぎ当て（`tripAsPlace` `stayAsPlace` `placeWord`）は外した（#1278）。居場所は滞在の表の
+   ［いまここ］（`lib/leadPlan.ts` の `stayHere`）1本で、画面は人の字を読まない。 */

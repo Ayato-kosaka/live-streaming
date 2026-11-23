@@ -15,13 +15,11 @@ import { BEFORE_STREAM, BEFORE_STREAM_DAYS, countryBySlug } from "@/content/coun
 import { ALL_APPS, APPS, PAST_APPS } from "@/content/apps";
 import { CHAPTERS, chapterHref, chapterOf } from "@/content/chapters";
 import { VOICES } from "@/content/voices";
-import { NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import { PROFILE, STATS_FALLBACK } from "@/content/site";
 import Walked from "@/components/atlas/Walked";
 import { GAVE_UP, PROMISE, THAT_DAY, WORDS } from "@/content/aboutWords";
-import { placeWord } from "@/lib/stay";
-import NowPlace from "@/components/home/NowPlace";
+import HereLink, { HerePlace, HereTrip } from "@/components/home/NowPlace";
 import Say from "@/components/ui/Say";
-import { say } from "@/content/nights";
 import Days from "@/components/atlas/Days";
 import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
@@ -379,26 +377,21 @@ export default function AboutPage() {
             この面の中にもう一度出ていた。それだけで 1,006px あった。
             「これから」の札も外した。ヘッダーの札と、道のりの最後の石から行ける。 */}
         <div className="tiles" style={{ marginTop: 14 }}>
-          <Link prefetch={false} className="tile" href="/now">
+          {/* 「いま」は表紙の名刺と同じ部品・同じ1本（滞在の表）から引く。押した先はいまの旅の島
+              （`components/home/NowPlace.tsx`。#1278）。前は `/now` へ送り、字は Firestore の
+              `current.place` を読んでいたので、打たれなくなった 9/28 から古い字を継ぎ当てで隠していた */}
+          <HereLink className="tile">
             <span className="tile-mark">
               <Icon name="globe" size={24} />
             </span>
             <span className="tile-text">
-              <b>いま、どこで何してる</b>
-              {/* 「いまどこ」は、表紙の名刺・`/now` と**同じ判定・同じ言い方**で出す
-                  （`lib/stay.ts` の `placeWord`）。ここは `current.place` を素で
-                  出していたので、旅の2日目に撮ると常設のこの面だけ
-                  「ジョージア・トビリシ」と言っていた。**打つ人は走っている車の中に
-                  いて、17日間その欄を直せない。** 部品は表紙と同じものを使う
-                  （便りが届いたら人の字が勝つところまで、そちらが持っている）。
-                  添え字のほうは、旅のあいだカウントダウンが消えるので `Say` で言い替える。 */}
-              <i>
-                <NowPlace baked={placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt)} />
-                。<Say t={say("nowLink")} />
-              </i>
+              <b>
+                いま <HerePlace />
+              </b>
+              <i><HereTrip />の島へ</i>
             </span>
             <Icon name="right" size={16} className="tile-go" />
-          </Link>
+          </HereLink>
         </div>
       </Panel>
 

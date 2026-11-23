@@ -20,6 +20,7 @@ import { PROJECTS, isLegend, type Project } from "@/content/projects";
 import { THEMES } from "@/content/themes";
 import { streamTypeBySlug } from "@/content/streamTypes";
 import { guideDay } from "@/lib/guideDay";
+import { chapterHref, chapterNow } from "@/content/chapters";
 
 /** これからの企画か、定例の配信の回。表紙の「これから」の3段目に並ぶ1件 */
 export type Ahead = {
@@ -132,6 +133,28 @@ export function stayNext(today: Date, rows: readonly Stay[] = STAYS): StayCard |
     .filter((x) => x.from > day)
     .reduce<Stay | undefined>((a, x) => (!a || x.from < a.from ? x : a), undefined);
   return s && stayCard(s);
+}
+
+/** 名刺（表紙）と `/about` の「いま ◯◯」。 */
+export type HereNow = {
+  /** いまいる所。［いまここ］の `place`（街が分からなければ国だけ） */
+  place: string;
+  /** いまの旅の名前。押した先の島の名前 */
+  trip: string;
+  /** 押した先。いまの旅の島（`/island/<章>`） */
+  href: string;
+};
+
+/**
+ * 名刺と `/about` の「いま ◯◯」（#1278）。**字は［いまここ］と同じ1本、押した先はいまの旅の島。**
+ *
+ * 前は Firestore の `island/state.current.place`（あやとが手で打つ欄）を読み、`/now` へ送っていた。
+ * `/now` は畳み（`docs/adr/0006-fold-next-and-now.md`）、居場所の持ち主は滞在の表だけ（M-20）。
+ * 「いま」を面として言うのは表紙だけなので（M-31）、押した先は面ではなく、いまの章の島。
+ */
+export function hereNow(today: Date, rows: readonly Stay[] = STAYS): HereNow {
+  const c = chapterNow(today);
+  return { place: stayHere(today, rows)?.place ?? "", trip: c.name, href: chapterHref(c) };
 }
 
 /** 表紙の「これから」に出すもの、上から順に（M-32）。 */

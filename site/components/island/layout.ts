@@ -35,7 +35,6 @@ export type SpotId =
   | "kitchen"
   | "apps"
   | "legends"
-  | "now"
   | "board"
   | "friends"
   | "fellows"
@@ -103,23 +102,6 @@ export const PLACES: Place[] = [
     href: "/legends",
     /* 距離は企画の表から（`content/projects.ts`。数の持ち主は企画。M-20） */
     blurb: `イラン${courseOf("iran-walk").km}km、年越し24時間`,
-  },
-  {
-    id: "now",
-    x: 452,
-    y: 556,
-    label: "いまどこ",
-    // 郵便受けは「知らせが届く」の絵で、「いま居る場所」を指していなかった。
-    // 地球にピンが1本立っていれば、名前と絵が同じことを言う
-    icon: "globe-stand",
-    size: 48,
-    href: "/now",
-    /* **添え書きに「今週」を入れない。** 中身は旅先から打たれる欄で、
-       何日も打ち直せない日がある。島の看板は焼いた字なので、札が
-       「今週」と言い、中身が2週間前、という形が必ずいつか起きる
-       （`docs/island-standards.md` 16章 / `docs/island-misses.md` #228）。
-       「いまどこ」は、いつ読んでも「いま」があるのでよい。 */
-    blurb: "いまいる国と、あやとの島だより",
   },
   {
     id: "friends",

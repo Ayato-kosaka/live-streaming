@@ -98,6 +98,11 @@
         "type": 301
       },
       {
+        "source": "/now",
+        "destination": "/",
+        "type": 301
+      },
+      {
         "source": "/map",
         "destination": "/travel",
         "type": 301

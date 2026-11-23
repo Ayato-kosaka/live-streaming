@@ -33,14 +33,11 @@ import { STAYS } from "@/content/stays";
 import { aheadOn, stayHere } from "@/lib/leadPlan";
 import { countriesWalked } from "@/content/walked";
 import { RECIPES } from "@/content/recipes";
-import { LINKS, NOW_FALLBACK, STATS_FALLBACK } from "@/content/site";
+import { LINKS, STATS_FALLBACK } from "@/content/site";
 import { LATEST_DAY, lastYearOn, streamDaysBetween } from "@/content/onThisDay";
 import { jstNow, jstShift, readNight, spanText } from "@/lib/nightly";
 import { nights } from "@/content/nights";
 import { travelHref } from "@/content/travelPath";
-/* 「いまどこ」の言い方は1か所（`lib/stay.ts` の `placeWord`）。
-   板がここだけ独自に場所を言うと、同じ表紙の中で名刺と食い違う。 */
-import { placeWord } from "@/lib/stay";
 import { atText, watchAt } from "@/lib/peak";
 
 /** 配信の行き先。島のやぐらの札も配信中はここへ送るので、出どころを1つにする。 */
@@ -228,17 +225,10 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
       icon: "tower-studio",
       line: "いま、配信の時間",
       title: "いま、配信の時間",
-      /* **焼いた「いまどこ」を、そのまま言わない。**
-         `NOW_FALLBACK.place` はあやとが手で打つ欄の焼き込みで、本番の値は
-         出発の1週間前（2026-09-04「ジョージア・トビリシ」）。旅の17日間その人は
-         走っている車の中にいて打ち直せないので、ここは配信のある3時間のあいだ
-         毎晩「ジョージア・トビリシから繋いでます。」と言い続けていた（実測）。
-         旅に出ていて欄が古いままなら、旅そのものを言う（`lib/stay.ts`）。
-
-         **ここは便りを読みに行かない。** この板は島に降りた瞬間に出すもので、
-         往復を1つも増やさない決まり（このファイルの冒頭）。日付だけで決まる
-         ぶんはそれで正しく、あやとが旅先で打ち直した細かい地名までは出ない。 */
-      body: `${placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt, now)}から繋いでます。`,
+      /* 居場所は滞在の表の［いまここ］（`stayHere`。表紙の名刺・「これから」と同じ1本。#1278）。
+         前は Firestore の `current.place`（あやとが手で打つ欄）の焼き込みを継ぎ当てして言っていた。
+         **ここは便りを読みに行かない**——この板は島に降りた瞬間に出すもので、往復を増やさない */
+      body: `${stayHere(now)?.place || "世界のどこか"}から繋いでます。`,
       href: YOUTUBE,
       out: true,
       go: "見にいく",

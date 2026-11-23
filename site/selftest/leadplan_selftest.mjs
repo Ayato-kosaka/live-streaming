@@ -26,16 +26,18 @@
  *  5b. **滞在から引く**——移動は「これから」に入らない／［いまここ］は着いた日に入れ替わり、
  *     その前の日は前の国／翌年も消えない／つぎの行が先に足されても着くまではいまの国／
  *     日本時間の0時で替わる／「あと何日」は同じ表から。対照は「終わりの空いた行」と「日付で閉じる」の2つの読みかた
- *  6. 「今週、なにをするんだろう」の過ぎた行が落ちる／全部過ぎたら0行／
- *     日付の無い行は残る／年をまたいでも読み違えない
+ *  6. （「今週、なにをするんだろう」の過ぎた行。`/now` の島だよりごと畳んだので外した。#1278）
  *  7. **畳んだ表を画面が読んでいない**。表紙の部品が「へ移動」「進行中」「企画を、ぜんぶ見る」を持たない
+ *  8. **名刺と `/about` の「いま」が、［いまここ］と同じ1本**（`hereNow`。#1278）。押した先はいまの旅の島で、
+ *     `/now` へ送らない。畳んだ部品・表（`/now` の面・`NowLive`・`lib/place`・`lib/week`・島の景色）を
+ *     画面が読んでいない。画面が Firestore の `current` の欄（place・theme・word・week）を読んでいない
  *
  * ## 壊した写しで落ちることまで見る（`docs/island-misses.md` #99 #100）
  *
  * 写しの作りかたは下の `BREAK_HINT` に書いてある（`--hint` で出る）。
  */
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import Module, { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -48,7 +50,6 @@ const CONTENT = join(SITE, "content");
 
 /** 組み立てる本体。**落ちることを確かめる写しだけ、ここを差し替える。** */
 const LEAD_SRC = process.env.LEAD_TS || join(LIB, "leadPlan.ts");
-const WEEK_SRC = process.env.WEEK_TS || join(LIB, "week.ts");
 
 const BREAK_HINT = `わざと壊して、ここが落ちることを見るには:
 
@@ -57,10 +58,9 @@ const BREAK_HINT = `わざと壊して、ここが落ちることを見るには
     site/lib/leadPlan.ts > /tmp/lead-old.ts
   LEAD_TS=/tmp/lead-old.ts node site/selftest/leadplan_selftest.mjs
 
-  # 2) 「今週やること」の過ぎた行を落とさない。2026-10-07 までの /now → 6 が落ちる
-  sed 's|return rows.filter((r) => !weekRowPast(r, now));|return [...rows];|' \\
-    site/lib/week.ts > /tmp/week-old.ts
-  WEEK_TS=/tmp/week-old.ts node site/selftest/leadplan_selftest.mjs
+  # 2) 名刺の「いま」を［いまここ］から引かない（前の受け皿の字に戻す）→ 8 が落ちる
+  sed 's|place: stayHere(today, rows)?.place ?? ""|place: "世界のどこか"|' site/lib/leadPlan.ts > /tmp/lead-here.ts
+  LEAD_TS=/tmp/lead-here.ts node site/selftest/leadplan_selftest.mjs
 
   # 3) 企画の期間を読まない（始まった日1日で終わる）→ 3 の「期間の中の日に、いま」が落ちる
   sed 's|...(p.range && p.range\\[1\\] > p.date ? { until: p.range\\[1\\] } : {}),||' site/lib/leadPlan.ts > /tmp/lead-range.ts
@@ -82,7 +82,7 @@ if (process.argv.includes("--hint")) {
 /* ------------------------------------------------------------------ 組み立て
    本物の木をそのまま組み立てる（`@/…` は tsconfig の paths で引き、require のときに差し替える）。
    **本体は写しを置かずに本物を持ち込む**——写しを置くと、本体を直したのに確かめが古いまま通る。
-   落ちることを確かめる写し（`LEAD_TS` `WEEK_TS`）だけ、1本ずつ組み立て直して差し替える。
+   落ちることを確かめる写し（`LEAD_TS`）だけ、1本ずつ組み立て直して差し替える。
    `lib/leadPlan.ts` が滞在の表と国の記録まで読むようになったので（#1276）、
    前の「隣に並べてから組む」形では、並べる本数を足すたびにここが古くなる。 */
 const WORK = mkdtempSync(join(tmpdir(), "leadplan-src-"));
@@ -109,7 +109,7 @@ writeFileSync(
       typeRoots: [join(SITE, "node_modules", "@types")],
       types: ["node"],
     },
-    files: [join(LIB, "leadPlan.ts"), join(LIB, "week.ts")],
+    files: [join(LIB, "leadPlan.ts")],
   }),
 );
 try {
@@ -134,7 +134,6 @@ function swap(src, rel) {
   copyFileSync(join(WORK, `${name}.js`), join(OUT, `${rel}.js`));
 }
 swap(LEAD_SRC, "lib/leadPlan");
-swap(WEEK_SRC, "lib/week");
 
 const orig = Module._resolveFilename;
 Module._resolveFilename = function (request, ...rest) {
@@ -143,8 +142,8 @@ Module._resolveFilename = function (request, ...rest) {
 };
 
 const req = createRequire(import.meta.url);
-const { AHEAD, phaseOf, leadPlan, stayHere, stayNext, upNext, countdownDay } = req(join(OUT, "lib", "leadPlan.js"));
-const { weekAhead, weekRowPast } = req(join(OUT, "lib", "week.js"));
+const { AHEAD, phaseOf, leadPlan, stayHere, stayNext, upNext, countdownDay, hereNow } = req(join(OUT, "lib", "leadPlan.js"));
+const { chapterNow } = req(join(OUT, "content", "chapters.js"));
 /** 企画の表と滞在の表は**本物**（`site/content/projects.ts` `stays.ts`）。写しを置かない */
 const { PROJECTS } = req(join(OUT, "content", "projects.js"));
 const { STAYS } = req(join(OUT, "content", "stays.js"));
@@ -154,7 +153,6 @@ if (!AHEAD?.length || !PROJECTS?.length || !STAYS?.length || typeof stayHere !==
 }
 
 console.log(`# 組み立てた本体: ${LEAD_SRC}`);
-console.log(`#               ${WEEK_SRC}`);
 console.log(`# これから の元: ${AHEAD.length}件（企画 ${PROJECTS.length}件＋日を持つお題） / 滞在の表: ${STAYS.length}行`);
 
 let BAD = 0;
@@ -408,37 +406,6 @@ check(
   cdBad.slice(0, 3).map((d) => `${iso(d)}→${countdownDay(d)}`).join(" "),
 );
 
-/* -------------------------------------------- 6. 今週、なにをするんだろう */
-
-/** **本番の `week`**（`curl .../island-api/state` 2026-10-07）。作った字ではない */
-const PROD_WEEK = [
-  "9/27 ストックホルムを発つ",
-  "9/28 アルバニア着",
-  "回る先はこれから。島の風船に貼ってもらったものから決める",
-];
-const kept = weekAhead(PROD_WEEK, T);
-check("本番の week から、過ぎた2行が落ちる", kept.length === 1, `残った=${JSON.stringify(kept)}`);
-check("日付を持たない行は残る", kept[0] === PROD_WEEK[2]);
-check(
-  "ぜんぶ過ぎていたら0行（箱ごと出ない）",
-  weekAhead(PROD_WEEK.slice(0, 2), T).length === 0,
-);
-check(
-  "これからの行は残る",
-  weekAhead(["10/9 アルバニアを出る", "9/28 アルバニア着"], T).join("|") === "10/9 アルバニアを出る",
-);
-check("空の week は0行", weekAhead([], T).length === 0 && weekAhead(undefined, T).length === 0);
-check("きょうの行は残る（当日はまだ過ぎていない）", !weekRowPast("10/7 配信する", T));
-check("きのうの行は落ちる", weekRowPast("10/6 配信した", T));
-/* 1行に日付が2つあるときは、**いちばん遅いほう**で決める。
-   頭の日付で決めると、まだ続いている予定が初日を過ぎた瞬間に消える */
-check("またがる行は、終わりの日で決める", !weekRowPast("10/1〜10/20 アルバニアにいる", T));
-/* 年をまたぐ日。**`M/D` に年は書いていない**ので、今日にいちばん近い年で読む */
-check("年またぎ：1/3 に読んだ 12/30 は、過ぎている", weekRowPast("12/30 大みそかの前", noon(2027, 1, 3)));
-check("年またぎ：12/28 に読んだ 1/10 は、まだ来ていない", !weekRowPast("1/10 どこかへ", noon(2026, 12, 28)));
-/* 日付に見えるが日付ではない数。**ありえない日を作らない** */
-check("13/40 のような数は、日付として読まない", !weekRowPast("13/40 これは日付ではない", T));
-
 /* --------------------------- 7. 畳んだ表を、画面が読んでいないこと
 
    **ここが構造の見張り。** 告知の札の表（`content/plans.ts`）と日→企画の表（`content/planDays.ts`）は
@@ -485,6 +452,64 @@ const upCode = readFileSync(NEXTUP, "utf8")
 const said = ["へ移動", "進行中", "ぜんぶ見る"].filter((w) => upCode.includes(w));
 check("表紙の「これから」（NextUp.tsx）が「へ移動」「進行中」「ぜんぶ見る」を字に持たない", said.length === 0, said.join(" "));
 check("表紙の「これから」が、滞在から引く口（upNext）を読んでいる", /\bupNext\s*\(/.test(upCode));
+
+/* --------------------------- 8. 名刺と /about の「いま」（#1278）
+
+   **名刺と `/about` の「いま ◯◯」は、表紙の［いまここ］と同じ1本**（`hereNow`）。前は Firestore の
+   `island/state.current.place`（あやとが手で打つ欄）を読み、`/now` へ送っていた。打たれなくなった
+   2026-09-28 から、古い字を「古ければ章か国で受ける」継ぎ当てで隠していた。 */
+const hereBad = [];
+const hrefBad = [];
+for (const d of sweep) {
+  const h = hereNow(d);
+  if (h.place !== (stayHere(d)?.place ?? "")) hereBad.push(`${iso(d)}→${h.place}／［いまここ］${stayHere(d)?.place}`);
+  /* 押した先はいまの章の島。**`/now` にも表紙にも送らない**（M-31） */
+  if (h.href !== `/island/${chapterNow(d).slug}` || h.trip !== chapterNow(d).name) hrefBad.push(`${iso(d)}→${h.href}`);
+}
+check(`${sweep.length}日、名刺の「いま」は［いまここ］と同じ字`, sweep.length > 0 && hereBad.length === 0, hereBad.slice(0, 3).join(" "));
+check(`${sweep.length}日、押した先はいまの旅の島（/island/<章>）`, hrefBad.length === 0, hrefBad.slice(0, 3).join(" "));
+/* 本番の今日。**滞在の表の最後の行**（いまここ）と同じ国が出る */
+check(
+  `きょう（${iso(TODAY)}）の名刺は「${hereNow(TODAY).place}」で、空ではない`,
+  !!hereNow(TODAY).place && hereNow(TODAY).place === stayHere(TODAY)?.place,
+);
+
+/* 部品が、Firestore を読まず `hereNow` を読む。**注を落としてから見る**（経緯の注に名前が出てくる） */
+const strip = (t) =>
+  t
+    .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
+const code = (f) => strip(readFileSync(f, "utf8"));
+const NOWPLACE = process.env.NOWPLACE_TSX || join(SITE, "components", "home", "NowPlace.tsx");
+const npCode = code(NOWPLACE);
+check("名刺の「いま」の部品（NowPlace.tsx）が hereNow を読んでいる", /\bhereNow\s*\(/.test(npCode));
+const STATE_READ = /\b(loadState|getState)\b|lib\/(liveStats|api)["']/;
+check("名刺の「いま」の部品が、島の便り（/island-api/state）を読まない", !STATE_READ.test(npCode));
+const cardUsers = [join(SITE, "components", "home", "Meishi.tsx"), join(SITE, "app", "about", "page.tsx")].filter(
+  (f) => /from\s*["'](\.\/|@\/components\/home\/)NowPlace["']/.test(readFileSync(f, "utf8")),
+);
+check("名刺（Meishi.tsx）と /about が、同じ部品（NowPlace）を読んでいる", cardUsers.length === 2, `読んでいる=${cardUsers.length}`);
+
+/* 畳んだ面・部品・表。誰かが戻して画面が読み直したら、`current` の継ぎ当てが一緒に戻る。**`import` の行だけを見る** */
+const FOLDED = /from\s*["']@\/(components\/live\/NowLive|components\/me\/TripTools|components\/island\/Theme|content\/tripPlaces|content\/place|lib\/place|lib\/week)["']/;
+const foldedUsers = files.filter((f) => FOLDED.test(readFileSync(f, "utf8")));
+check("画面は、畳んだ部品と表（NowLive・TripTools・Theme・tripPlaces・place・week）を読んでいない", foldedUsers.length === 0,
+  foldedUsers.map((f) => f.slice(SITE.length + 1)).join(" "));
+const gone = [
+  ["app", "now"], ["components", "live", "NowLive.tsx"], ["components", "me", "TripTools.tsx"],
+  ["components", "island", "Theme.tsx"], ["content", "tripPlaces.ts"], ["content", "place.ts"],
+  ["lib", "place.ts"], ["lib", "week.ts"],
+].filter((p) => existsSync(join(SITE, ...p)));
+check("畳んだ面と部品のファイルが無い（app/now ほか8つ）", gone.length === 0, gone.map((p) => p.join("/")).join(" "));
+/* 画面が `current` の欄を読む形。**島の便りで残すと決めた欄は無い**（#1278）。数字（`stats`）と旅の事実（`nordic`）は別の箱 */
+const CURRENT_READ = /\bcurrent\??\.(place|theme|word|week|updatedAt)\b/;
+/* 対照（§15）: 読む形を拾い、注だけのものは拾わない */
+check("対照: `s?.current?.place` を拾う", CURRENT_READ.test(strip("const p = (s?.current?.place ?? \"\").trim();")));
+check("対照: 注の中の `current.theme` は拾わない", !CURRENT_READ.test(strip("/* current.theme */\n  // current.place\n{/* current.word */}")));
+const currentUsers = files.filter((f) => CURRENT_READ.test(code(f)));
+check("画面は、島の便りの欄（current.place・theme・word・week）を読んでいない", currentUsers.length === 0,
+  currentUsers.map((f) => f.slice(SITE.length + 1)).join(" "));
 
 console.log(`\n${OK + BAD}件中 ${OK}件通った`);
 if (BAD) {

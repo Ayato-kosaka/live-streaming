@@ -142,7 +142,7 @@
 「そこで終わった旅」に見える。**いつでも通る見張り**ができあがる（§15）。
 
 出どころは `site/content/chapters.ts` の章ひとつ（`BOOKS` の `chapter` に slug を書く）。
-あちらは島の連なり・表紙・`/now` がすでに見ているもので、**旅が終わったかどうかの
+あちらは島の連なり・表紙がすでに見ているもので、**旅が終わったかどうかの
 唯一の出どころ。** 終わりの決めかたも `chapters.ts` の `ended()` に合わせてある——
 `to` が入っていればそれ、空なら `plannedDays` ぶんか、次の章が始まる前日の早いほう。
 **`to` は旅から帰った本人が手で入れる欄なので、そこだけを見ると永久に閉じない。**
@@ -723,14 +723,12 @@ BOOKS: dict[str, Book] = {
     "nights.ts": Book(HUMAN, SKIP, 0, "配信の時間の言い方。画面に出る言葉"),
     "roulette.ts": Book(HUMAN, SKIP, 0, "ルーレットの結果に投げる1行。画面に出る言葉"),
     "trip.ts": Book(DERIVED, SKIP, 0, "旅の面の入口。`nordic.ts` から組む"),
-    "tripPlaces.ts": Book(DERIVED, SKIP, 0, "旅程で降りる街。`nordic.ts` から導出する"),
     "streamDigest.ts": Book(
         MACHINE_HUMAN, SKIP, 0,
         "配信1本の1〜2行（国の面の「この国であったこと」。#1262）。人が `/stream-notes` で足した議事録から、"
         "`python/stream_digest.py` が続けて焼く。**古いかどうかは日数ではなく、議事録と同じか**で決まるので、"
         "そちらは `stream_digest_selftest.py` が見る。日数を2か所に置かない",
     ),
-    "place.ts": Book(DERIVED, SKIP, 0, "打たれた場所から国と街を引く。`countries.ts` と `nordic.ts` から"),
     "directory.ts": Book(DERIVED, SKIP, 0, "島にある紙ぜんぶの一覧。ほかの焼き込みを集めるだけ"),
     "travel.ts": Book(
         DERIVED, SKIP, 0,
@@ -776,7 +774,7 @@ def _as_date(s: str) -> date | None:
 # ---------------------------------------------------------------- 章を読む
 #
 # **`site/content/chapters.ts` だけが、旅の始まりと終わりの出どころ。**
-# 島の連なりも表紙も `/now` もここを見ている（`lib/stay.ts`）。
+# 島の連なりも表紙もここを見ている（`lib/stay.ts`）。
 # 見張りだけ別のところから決めると、画面と見張りが別のことを言う日が来る。
 #
 # **字を読むのは `python/ts_read.py`。ここではやらない。** 同じものを3通りに

@@ -24,7 +24,7 @@ const SPORT = process.env.SPORT || "4140";
 const W = Number(process.argv[2] || 390);
 const H = Number(process.argv[3] || 844);
 const PAGES = (process.env.PAGES ||
-  "/apps/nanitabeyo,/map/georgia,/kitchen/tamagoyaki,/nordic/sweden,/legends/iran-walk,/streams/cooking,/nordic/day/1,/friends,/now"
+  "/apps/nanitabeyo,/map/georgia,/kitchen/tamagoyaki,/nordic/sweden,/legends/iran-walk,/streams/cooking,/nordic/day/1,/friends"
 ).split(",");
 
 const b = await chromium.launch({

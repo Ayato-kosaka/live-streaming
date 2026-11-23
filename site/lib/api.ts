@@ -7,14 +7,6 @@
 
 export const API_BASE = "/island-api";
 
-export type IslandCurrent = {
-  place: string;
-  theme: string;
-  word: string;
-  week: string[];
-  updatedAt: string;
-};
-
 export type IslandStats = {
   streams: number;
   streamDays: number;
@@ -90,7 +82,8 @@ export type NordicFacts = {
 export type NextNote = { id: string; planId: string; text: string; createdAt: string };
 
 export type IslandState = {
-  current?: Partial<IslandCurrent>;
+  /* `current`（いまどこ・島だより・島の景色）は口が返しても読まない（#1278）。居場所は滞在の表
+     （`content/stays.ts`）が持つ。型に置くと、また誰かが読みはじめる */
   stats?: Partial<IslandStats>;
   notes?: NextNote[];
   residents?: ResidentShow[];
@@ -770,25 +763,8 @@ export const amIOwner = async (token: string): Promise<boolean> => {
   }
 };
 
-/**
- * いま、どこにいるか。**あやとだけ。**
- *
- * 旅の途中に書きかえる（島の景色・`/now`・北欧の面が、みなここを読む）。
- *
- * `week`（今週やること）は**渡したときだけ**書き替わる。渡さなければ島に
- * 入っているものがそのまま残る。**空の配列を渡すと消える。**
- * 日付印だけ新しくなって中身が先週のまま、というのがいちばん悪いので、
- * せめて消せるようにしてある。
- */
-export const postCurrent = (
-  c: { place: string; word?: string; theme?: string; week?: string[] },
-  token: string,
-) =>
-  req<{ current: Partial<IslandCurrent> }>("/current", {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify(c),
-  });
+/* 「いまどこ」を書く口（`POST /current`）を叩く関数は外した（#1278）。机の「いまどこ」道具ごと畳んだ。
+   口そのものを縮めるのは Functions の側（#1281） */
 
 export const getNordicPhotos = () =>
   req<{ days: NordicPhotoDay[] }>("/nordic/photos");

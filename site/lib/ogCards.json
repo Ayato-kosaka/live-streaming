@@ -48,11 +48,6 @@
       "alt": "付箋の貼られた島の掲示板",
       "wrap": 3
     },
-    "now": {
-      "file": "/og/now.png",
-      "label": "いま何してる",
-      "alt": "島のたき火とテント"
-    },
     "cards": {
       "file": "/og/cards.png",
       "label": "あやと島カード",

@@ -1,6 +1,5 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { loadState } from "@/lib/liveStats";
-import { placeOutdated, samePlace } from "@/lib/place";
 import { planStop, tripDate, type PlanStop } from "./where";
 
 /**
@@ -17,7 +16,7 @@ import { planStop, tripDate, type PlanStop } from "./where";
  * わかれ道はオーナーの指示で1日ぶんのページへ移してある。あちらには司令塔が
  * 居ないので、司令塔の居ない面のために `useHereAt` を置く。
  *
- * ## 出どころは、旅程の日付。手打ちは上書き
+ * ## 出どころは、旅程の日付。着いた事実は上書き
  *
  * ここは長いあいだ `current.place`——**あやとが手で打つ1本の文字列**——だけを
  * 読んでいた。本番のその字は「ジョージア・トビリシ」で、打たれたのは出発の
@@ -29,9 +28,8 @@ import { planStop, tripDate, type PlanStop } from "./where";
  * すでに越えた日に票が入り続けていた。
  *
  * `/nordic` は #273 で直っている（`components/nordic/where.ts`）。同じ直しを
- * ここにも入れる。**旅程の日付から引いた居どころが既定で、手で打った字が上書き。**
- * 打ってあっても、いまの旅より前に打たれた字なら受け取らない
- * （`lib/place.ts` の `placeOutdated`）。
+ * ここにも入れる。**旅程の日付から引いた居どころが既定で、着いた事実が上書き。**
+ * 手で打った字は、打つ欄ごと畳んだので読まない（#1278）。
  *
  * ## 道の上の位置は、街と区間が半歩ずつ交互に並ぶ
  *
@@ -145,19 +143,8 @@ export function useHereAt(route: StopAt[], until?: string): Here | null {
         /* 着いたことは島から届いた事実（`docs/nordic-depart.md`）。
            そこから先は、道の上の問いはぜんぶ越えている。 */
         if (s?.nordic?.arrivedOn) return setHereSeq(goal, true);
-        const typed = (s?.current?.place ?? "").trim();
-        /* **古い字は「いま」ではない。** ここを素通しにしていたので、旅の17日間
-           ずっとトビリシにいることになっていた。 */
-        if (!typed || placeOutdated(s?.current?.updatedAt)) return;
-        /* 「リガ」でも「ラトビア・リガ」でも、「ビリニュス」でも当たるように
-           `samePlace` で見る（`lib/place.ts`）。走っている車の中で打つので
-           1字ずれる。**後ろから探す。** 先へ進んだほうを採っておくと、街の名前が
-           別の街の名前に含まれていても、旅の進み方を巻き戻さない。 */
-        for (let i = route.length - 1; i >= 0; i--) {
-          if (samePlace(typed, route[i].name)) return setHereSeq(posOf(i), true);
-        }
-        /* 旅程の外の街を打っている日（足止め・寄り道）。旅程から引いたものを
-           そのまま残す。当たらなかったからといって、位置を捨てない。 */
+        /* 手で打った「いまどこ」（`current.place`）は読まない（#1278）。打つ欄ごと畳んだ。
+           旅は 2026-09-27 に終わっていて、着いた事実（上）と旅程の日付で位置が決まる */
       })
       .catch(() => {
         /* 島の様子が読めなくても、旅程から引いたぶんはもう置いてある */

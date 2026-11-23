@@ -7,7 +7,6 @@ import { useAuth } from "@/lib/auth";
 import Icon from "@/components/ui/Icon";
 import PhotoPost from "@/components/nordic/PhotoPost";
 import PlanVideos from "./PlanVideos";
-import { TripPlace } from "./TripTools";
 import { StickyCare, useWaiting } from "./OwnerCare";
 import { ReadAgainPanel, WaitingPanel } from "./ReadAgain";
 import Fold from "@/components/ui/Fold";
@@ -191,7 +190,6 @@ export default function Desk() {
 
         <div className="mp-tool-body">
           {tool === "photo" && <PhotoPost />}
-          {tool === "place" && <TripPlace />}
           {tool === "video" && <PlanVideos />}
           {tool === "sticky" && <StickyCare waiting={waiting} />}
           {tool === "dest" && <NoteThemes />}

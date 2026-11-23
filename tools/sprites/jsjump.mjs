@@ -1,7 +1,7 @@
 /**
  * **画面が出た瞬間に、札が何px伸びるかを測る。**
  *
- *   node tools/sprites/jsjump.mjs                          # 本番の /nordic /now /nordic/day/*
+ *   node tools/sprites/jsjump.mjs                          # 本番の /nordic /nordic/day/*
  *   PAGES=/nordic ORIGIN=http://127.0.0.1:4960 node tools/sprites/jsjump.mjs
  *
  * 焼いた HTML には「まだ分からない」ときの字が入っていて（#143）、数が届くと
@@ -33,7 +33,7 @@ import { existsSync, readFileSync } from "node:fs";
 
 const ORIGIN = process.env.ORIGIN || PROD;
 const LOCAL = !/^https:/.test(ORIGIN);
-const PAGES = (process.env.PAGES || "/nordic,/now,/nordic/day/2026-09-18").split(",").filter(Boolean);
+const PAGES = (process.env.PAGES || "/nordic,/nordic/day/2026-09-18").split(",").filter(Boolean);
 /** 跳ねとして数える下限(px)。にじみと丸めで 1px 前後は動く */
 const MIN = Number(process.env.MIN || 4);
 const WAIT = Number(process.env.WAIT || (LOCAL ? 4000 : 8000));

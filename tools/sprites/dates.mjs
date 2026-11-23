@@ -38,7 +38,6 @@ function walk(d, base = "") {
 /** 読みたい面と、読みたいところ。文字で拾う（class は変わりうるので広めに取る） */
 const SPOTS = [
   ["/index.html", [".now-place", ".meishi", ".nextup-count", ".chip"]],
-  ["/now.html", [".now-place", ".np-word", ".tiles", ".chips", ".nowc-head", ".pap-sec h2"]],
   ["/nordic.html", [".tnow-count", ".tnow-pair", ".tnow-act.is-main", ".ndayr"]],
   ["/about.html", [".now-place", ".np-word"]],
   ["/atlas.html", [".isles-now", ".isle-days"]],
