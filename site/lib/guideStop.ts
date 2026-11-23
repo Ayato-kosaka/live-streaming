@@ -12,15 +12,15 @@
  * ## ここは型しか import しない
  *
  * 選ぶのは画面が出てからもう一度やる（`components/ui/FootGuide.tsx`）。
- * 全面の足もとに付く JS なので、企画の表（`content/plans.ts`）を連れていかない。
+ * 全面の足もとに付く JS なので、滞在の表（`content/stays.ts`）を連れていかない。
  * 表を渡すのは面の側（`components/ui/PageShell.tsx`）で、ブラウザへは
  * `guideStops` が組んだ小さな並びだけが行く。
  *
  * 見張りは `site/selftest/guidestop_selftest.mjs`（本物の滞在の表で、選んだ1本が
- * 企画の段と食い違わないか）。
+ * 表紙の［いまここ］と食い違わないか）。
  */
 
-import type { Plan } from "@/content/plans";
+import type { Stay } from "@/content/stays";
 import type { TravelCity } from "@/content/travel";
 
 /** 街のガイドのある滞在1つ。**滞在の始まる日の順**に並ぶ */
@@ -32,7 +32,7 @@ export type GuideStop = {
   /**
    * 滞在の終わる日（`YYYY-MM-DD`。この日までは居る）。**まだ決まっていなければ無い。**
    *
-   * つぎの国へ移る日が企画の表に入ると、その前の日がここに入る（`content/plans.ts` の `closeStays`）。
+   * 滞在の行の出た日（`to`）。空のあいだ（いまここ）は無い。
    */
   until?: string;
 };
@@ -40,22 +40,19 @@ export type GuideStop = {
 /**
  * 滞在の表から、足もとに出せる街のガイドを組む。
  *
- * `stays` は**つぎの国へ移ったら終わる企画**（`endsWhen` が `NEXT_MOVE`）。街を手で書かない——
- * 企画の行き先（`href`）が街のガイドの道と同じ滞在だけを、始まる日の順に並べる。
- * 終わる日は事実（`done`）が先、なければ予定（`until`。つぎの国の日の前の日）。
- * **公開前の印（`draft`）の付いた街も入れる**（`components/ui/PageShell.tsx` の注）。
+ * 街を手で書かない——滞在の案内の面（`guide.href`）が街のガイドの道と同じ滞在だけを、着いた日の順に並べる
+ * （国の案内しか持たない滞在は入らない。北マケドニアは国の面 `/travel/north-macedonia`）。
+ * 終わる日は滞在の出た日（`to`）。**公開前の印（`draft`）の付いた街も入れる**（`components/ui/PageShell.tsx` の注）。
  */
 export function guideStops(
-  stays: Pick<Plan, "date" | "href" | "until" | "done">[],
+  stays: readonly Pick<Stay, "from" | "to" | "guide">[],
   cities: Pick<TravelCity, "href" | "name">[],
 ): GuideStop[] {
-  return stays
-    .filter((p) => p.date)
-    .sort((a, b) => (a.date as string).localeCompare(b.date as string))
-    .flatMap((p) => {
-      const city = cities.find((c) => c.href === p.href);
-      const until = p.done ?? p.until;
-      return city ? [{ href: city.href, name: city.name, ...(until ? { until } : {}) }] : [];
+  return [...stays]
+    .sort((a, b) => a.from.localeCompare(b.from))
+    .flatMap((s) => {
+      const city = cities.find((c) => c.href === s.guide?.href);
+      return city ? [{ href: city.href, name: city.name, ...(s.to ? { until: s.to } : {}) }] : [];
     });
 }
 

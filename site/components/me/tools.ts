@@ -22,7 +22,6 @@ export type Tool =
   | "video"
   | "sticky"
   | "dest"
-  | "plan"
   | "donor"
   | "chara"
   | "fund"
@@ -53,7 +52,6 @@ export const TOOLS: ToolRow[] = [
   /* 付箋を貼れる先そのものを足す／締め切る（`NoteThemes.tsx`）。
      上の「付箋」が1枚ずつへの返事で、こちらは棚のほう。用事が続くので隣に置く。 */
   { id: "dest", label: "貼る先", icon: "signpost" },
-  { id: "plan", label: "企画", icon: "checklist" },
   { id: "donor", label: "投げ銭", icon: "coin" },
   /* 投げ銭の下。**紐付けたあとに絵を足す**という順で使うことが多い
      （知らない どねID が来た → つないだ → その人の絵をまだ持っていない）。 */

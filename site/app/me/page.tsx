@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import MyPage from "@/components/me/MyPage";
-import { PLAN_BY_DAY } from "@/content/planDays";
+import { DAY_BRIEFS } from "@/lib/cardDays";
 import "./me.css";
 
 export const metadata: Metadata = share({
@@ -35,7 +35,7 @@ export default function MePage() {
       {/* 企画の表は面（server）で引いて値だけ渡す。カードに出る「その日の
           企画」はこれで引く。client から `content/plans.ts`（20KB）を
           読ませないため。 */}
-      <MyPage planDays={PLAN_BY_DAY} />
+      <MyPage planDays={DAY_BRIEFS} />
     </PageShell>
   );
 }

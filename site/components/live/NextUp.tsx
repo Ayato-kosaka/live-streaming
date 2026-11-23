@@ -3,8 +3,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { BUILT_AT, daysUntil, planDaysLeft, planPhase, type Plan } from "@/content/plans";
-import { upNext, type StayCard, type UpNext } from "@/lib/leadPlan";
+import { BUILT_AT, daysUntil } from "@/lib/nightly";
+import { phaseOf, upNext, type Ahead, type StayCard, type UpNext } from "@/lib/leadPlan";
 import { guideOn, type GuideSpan } from "@/lib/guideDay";
 import Icon from "@/components/ui/IconCore";
 import Wrote from "@/components/ui/Wrote";
@@ -24,13 +24,13 @@ export type GuideItem = GuideSpan & {
  *
  * ## 滞在の表から引く。企画の表から引かない
  *
- * 前は企画の表（`content/plans.ts`）のいちばん近い1件を出していた。国を移る日も企画の行
+ * 前は告知の札の表（いまは無い `content/plans.ts`）のいちばん近い1件を出していた。国を移る日も企画の行
  * （「ブルガリア・ソフィアへ移動」）だったので、**着いたあとも題が「へ移動」、印が「進行中」**で、
  * 下に「企画を、ぜんぶ見る」が出ていた。あやと（2026-11-18）:「ソフィアに**いる**、は欲しい。
  * **へ移動**は変。移動はもうしちゃってる」「企画をぜんぶ見る、は要らない」。
  *
  * いまは居場所を滞在の表（`content/stays.ts`）から引く（`docs/spec/model.md` 6章「引きかた」・
- * M-32）。移動の企画は読まない（`lib/leadPlan.ts` の `isMovePlan`）。
+ * M-32）。3段目は企画の表と、日を持つお題（定例の配信の回）から（`lib/leadPlan.ts` の `upNext`）。
  *
  * ## ［いまここ］は日付で消えない
  *
@@ -97,9 +97,9 @@ export default function NextUp({ guides, guideLabel }: { guides: GuideItem[]; gu
             <div className="nextup-rest">
               <span>ほかにも</span>
               {rest.map((p) => (
-                <Link key={p.id} href={p.href ?? `/next#${p.id}`} prefetch={p.href ? false : undefined}>
+                <Link key={p.id} href={p.href} prefetch={false}>
                   {p.title}
-                  <i>{p.when}</i>
+                  <i>{md(p.date)}</i>
                 </Link>
               ))}
             </div>
@@ -206,7 +206,7 @@ function StayBlock({
   );
 }
 
-/** 「9/11」。数え直す前に出しておく、日付だけの表示（`components/live/PlanCard.tsx` と同じ形）。 */
+/** 「9/11」。数え直す前に出しておく、日付だけの表示。 */
 function shortDate(date?: string) {
   if (!date) return "";
   const [, m, d] = date.split("-");
@@ -217,18 +217,17 @@ function shortDate(date?: string) {
  * 日にちの決まった回の札。
  *
  * **「進行中」と言わない**（あやと 2026-11-18）。何日かにまたがる回が始まっていれば「開催中」。
- * 終わった回はここに来ない（`lib/leadPlan.ts` の `planBoard` は行ってきたものを返さない）。
+ * 終わった回はここに来ない（`lib/leadPlan.ts` の `upNext` は行ってきたものを返さない）。
  */
-function PlanBlock({ plan, today }: { plan: Plan; today: Date | null }) {
-  const href = plan.href ?? `/next#${plan.id}`;
-  const days = today ? planDaysLeft(plan, today) : null;
-  const phase = today ? planPhase(plan, today) : null;
+function PlanBlock({ plan, today }: { plan: Ahead; today: Date | null }) {
+  const days = today ? daysUntil(plan.date, today) : null;
+  const phase = today ? phaseOf(plan, today) : null;
   return (
-    <Link className="nextup-card is-small" href={href} prefetch={plan.href ? false : undefined} data-plan={plan.id}>
+    <Link className="nextup-card is-small" href={plan.href} prefetch={false} data-plan={plan.id}>
       <span className="nextup-count">
         {days === null || phase === null ? (
-          <b>{shortDate(plan.date) || "未定"}</b>
-        ) : phase === "during" && (plan.endsWhen || plan.until || days < 0) ? (
+          <b>{shortDate(plan.date)}</b>
+        ) : phase === "during" && (plan.until || days < 0) ? (
           <b>開催中</b>
         ) : days <= 0 ? (
           <b>今日</b>
@@ -240,7 +239,7 @@ function PlanBlock({ plan, today }: { plan: Plan; today: Date | null }) {
       </span>
       <span className="nextup-body">
         <b className="nextup-title">{plan.title}</b>
-        <i className="nextup-when">{plan.when}</i>
+        <i className="nextup-when">{plan.until ? `${md(plan.date)}から${md(plan.until)}まで` : md(plan.date)}</i>
         <Wrote t={plan.note} className="nextup-note" />
       </span>
       <span className="nextup-go" aria-hidden>
