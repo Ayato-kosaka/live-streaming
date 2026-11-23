@@ -422,7 +422,7 @@ JSON は**引いた結果の写し**として置き直すだけで、もう入�
 | `countries.ts` | 歩いた国と滞在期間。本人しか知らない |
 | `chapters.ts` | 章（島）の区切り |
 | `projects.ts` | 企画の表。どれを伝説と呼ぶか（`legend: true`）。**ただし「いつ1つ増えるべきか」は数えられる**（下の「終わった旅には、伝説が1つ要る」） |
-| `plans.ts` `apps.ts` | 国を移る行と月末配信の回（告知の札。W3 #1277 が畳む）・アプリの選定 |
+| `apps.ts` | アプリの選定（告知の札の表 `plans.ts` は #1277 で畳んだ。移動は `stays.ts`、月末配信の回は `themes.ts` の日を持つお題） |
 | `voice.ts` `chatter.ts` `themes.ts` `directory.ts` | 画面に出る言葉 |
 | `goods.ts` | グッズの品ぞろえ。ステッカーの名簿（`STICKERS`）と、LINE・SUZURI のお店への札。LINEスタンプの欄は店への札1枚だけ（2026-11-20。候補のセリフの枠と、透かしを焼く道具は消した） |
 | `site.ts` の `SITE` `PROFILE` `NOW_FALLBACK` `LINKS` | 名前・説明・本人から聞いた事実（誕生日・日本を出た日・勤めていた期間）・画面に出る言葉。**同じファイルの `STATS_FALLBACK` だけは①**（2章） |
@@ -779,7 +779,6 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 | `voices.ts` | 人 | LATEST | 60日 | 6日前 |
 | `site.ts`（`updatedAt`） | 人 | LATEST | 30日 | 13日前 |
 | `streamTypes.ts` | 人 | LATEST | 60日 | 24日前 |
-| `plans.ts` | 人 | **見ない** | — | **0件が正常**（2026-10-07 / #673）。見張りは `site/selftest/leadplan_selftest.mjs` |
 | `apps.ts` | 人 | LATEST | 120日 | 26日前 |
 | `countries.ts` | 人 | LATEST | 150日 | 6日前 |
 | `chapters.ts` | 人 | LATEST | 240日 | 6日前 |
@@ -802,7 +801,7 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 | `aboutWords.ts` | 人（日付つきの引用） | — | 見ない | 古くならない設計（4章） |
 | `nordicFood.ts` | 人（読みもの） | — | 見ない | 日付を持たない |
 | `themes.ts` `voice.ts` `nights.ts` `roulette.ts` | 人（画面に出る言葉） | — | 見ない | 日付を持たない |
-| `trip.ts` `tripPlaces.ts` `place.ts` `planDays.ts` `directory.ts` | 導出 | — | 見ない | ほかの焼き込みから組む |
+| `trip.ts` `tripPlaces.ts` `place.ts` `directory.ts` | 導出 | — | 見ない | ほかの焼き込みから組む |
 | `walked.ts` | 導出 | — | 見ない | 歩いた国の数。`countries.ts` から**画面が出てから**数える。自分では日付を持たない |
 | `northMacedonia.ts` | 人（読みもの） | — | 見ない | いまいる国の案内。今日がいつかを知らないと決められない字を置いていない |
 | `goods.ts` | 人（品ぞろえ） | — | 見ない | 日付を1つも持たない。ステッカーが増えたら名簿に1枚足すだけ |

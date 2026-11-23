@@ -2,7 +2,7 @@
 
     python3 python/guide_photos.py                          # 全部の面ぶん、まだ置いていない写真だけ落とす（外に出る）
     python3 python/guide_photos.py north-macedonia/skopje   # 1つの面だけ
-    python3 python/guide_photos.py nordic plans             # 頭が合う面をまとめて（北欧の6か国・企画）
+    python3 python/guide_photos.py nordic                   # 頭が合う面をまとめて（北欧の6か国）
     python3 python/guide_photos.py --check                  # 落とさずに確かめるだけ（外に出ない）
     python3 python/guide_photos.py --lookup "File:X.jpg" …  # Commons のファイルのページから、材料の写真の欄を組む（外に出る）
 
@@ -21,10 +21,10 @@
 | --- | --- | --- | --- |
 | 街のガイドブック（`/travel/<国>/<街>`） | `guide/<国>/<街>/photos/` | 120・500・960 | `python/data/…` の写真の欄 |
 | 北欧の6か国（`/travel/<国>`） | `travel/<国>/photos/` | 250・500・960 | `python/data/nordic-src/` のその国の見どころ |
-| 企画（`/next`） | `next/photos/` | 960 | `site/content/projects.ts` の写真の出どころ（`creditHref`） |
 
 幅は**面が読む幅だけ**置く。ガイドブックは 500（狭い画面）・960（広い画面・窓）と、120（前は見どころマップのピン。2026-11-16 にピンをやめて面は読まなくなった。置き場の絵を外すのは絵の担当）。
-北欧は 250（段の頭の 52px 角）・500（国の札・見たいものの一覧）・960（開いた写真・国の表紙）。企画は 960 だけ。
+北欧は 250（段の頭の 52px 角）・500（国の札・見たいものの一覧）・960（開いた写真・国の表紙）。
+企画の写真（前の `next/photos/`。告知の面 `/next` の札）は、面ごと畳んだときに置き場ごと消した（#1277）。
 
 ## 置き場の名前
 
@@ -127,15 +127,6 @@ PLACES: dict[str, dict] = {
             "baked": [f"site/content/nordic/{slug}.json"],
         }
         for slug, src in NORDIC.items()
-    },
-    # 企画は手書きの表で、焼く道具を持たない。写真の `src` には置き場の道を人が書き、借りた写真の名前は
-    # 出どころのリンク（`creditHref` の `File:`）から引く。
-    # 写真を持つのは企画の表（`projects.ts` の告知の欄）。面の名前（`plans`・`next/photos/`）は告知の面 `/next` のまま
-    "plans": {
-        "dir": "next/photos",
-        "widths": (960,),
-        "from": [("site/content/projects.ts", ())],
-        "baked": ["site/content/projects.ts"],
     },
 }
 
@@ -487,7 +478,7 @@ def pick(asked: list[str]) -> tuple[list[str], list[str]]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("key", nargs="*", help="面（例: north-macedonia/skopje・nordic/finland・nordic・plans）。無ければ全部")
+    ap.add_argument("key", nargs="*", help="面（例: north-macedonia/skopje・nordic/finland・nordic）。無ければ全部")
     ap.add_argument("--check", action="store_true", help="落とさずに確かめるだけ")
     ap.add_argument("--lookup", nargs="+", metavar="FILE", help="Commons のファイル名から、材料の写真の欄を組む")
     ap.add_argument("--gentle", action="store_true", help="1枚ごとに60秒あけ、429 が1回でも返ったら止める（置き場が締め出している日）")

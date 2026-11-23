@@ -2,11 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import {
-  PLAN_STATUS_NAME,
-  type NextPlan,
-  type Sticky,
-} from "@/lib/api";
+import type { Sticky } from "@/lib/api";
 import { destById, useDests } from "@/lib/dests";
 import { jstDay } from "@/lib/nightly";
 import Icon from "@/components/ui/IconCore";
@@ -32,15 +28,15 @@ export type Bag<T> = { st: "wait" } | { st: "ok"; list: T[] } | { st: "down" };
 /* 日付は `lib/nightly.ts` の `jstDay` で切る。**写しを作らない。**
    ここは前に字をそのまま切っていて、UTC の日付が出ていた */
 
-type Tab = "note" | "plan" | "card";
+type Tab = "note" | "card";
 
 /**
- * じぶんが島に置いてきたもの。**3つの紙を、1つの棚に寄せた。**
+ * じぶんが島に置いてきたもの。**紙を、1つの棚に寄せた。**
  *
  * ## なぜ札で切り替えるのか
  *
- * 付箋・企画・カードは、前はそれぞれ独立した紙で、上から順に積んであった。
- * **3つとも「溜まるほど伸びる」もの**なので、よく来てくれている人ほど
+ * 付箋・カードは（企画も、#1277 で畳むまでは）、前はそれぞれ独立した紙で、上から順に積んであった。
+ * **どれも「溜まるほど伸びる」もの**なので、よく来てくれている人ほど
  * 下の紙が遠くなる。付箋を20枚貼った人は、カードを見るまでにスマホ4画面ぶん
  * 送ることになっていた。溜まっても背が変わらない形にするには、
  * **同時に1つしか出さない**のがいちばん確実で、押す回数も1回しか増えない。
@@ -52,24 +48,20 @@ type Tab = "note" | "plan" | "card";
  *
  * ## 出す枚数
  *
- * 1件の背が高い順に、付箋3・企画4・カード4。押せば最後まで出る
+ * 1件の背が高い順に、付箋3・カード4。押せば最後まで出る
  * （`components/ui/Longer.tsx`）。
  */
 export default function MyStuff({
   stickies,
-  plans,
   cards,
   planDays,
-  uid,
   hasChannel,
   onRetry,
   quiet = false,
 }: {
   stickies: Bag<Sticky>;
-  plans: Bag<NextPlan>;
   cards: Bag<ShownCard>;
   planDays: PlanDays;
-  uid: string;
   /** YouTube のチャンネルが結び付いているか。カードの持ち主はこれで決まる */
   hasChannel: boolean;
   onRetry: () => void;
@@ -83,11 +75,10 @@ export default function MyStuff({
   return (
     <section className="panel paper">
       <h2>じぶんのもの</h2>
-      <div className="mp-tabs is-3" role="tablist" aria-label="じぶんのもの">
+      <div className="mp-tabs is-2" role="tablist" aria-label="じぶんのもの">
         {(
           [
             ["note", "付箋", count(stickies)],
-            ["plan", "企画", count(plans)],
             ["card", "カード", hasChannel ? count(cards) : ""],
           ] as const
         ).map(([id, label, n]) => (
@@ -106,9 +97,6 @@ export default function MyStuff({
 
       <div className="mp-stuff">
         {tab === "note" && <Notes notes={stickies} onRetry={onRetry} quiet={quiet} />}
-        {tab === "plan" && (
-          <Plans plans={plans} uid={uid} onRetry={onRetry} quiet={quiet} />
-        )}
         {tab === "card" && (
           <Cards
             cards={cards}
@@ -188,48 +176,6 @@ function Notes({
           </li>
         );
       }}
-    </Longer>
-  );
-}
-
-function Plans({
-  plans,
-  uid,
-  onRetry,
-  quiet,
-}: {
-  plans: Bag<NextPlan>;
-  uid: string;
-  onRetry: () => void;
-  quiet: boolean;
-}) {
-  if (plans.st === "wait") return <Waiting />;
-  if (plans.st === "down") return <ReadAgain what="企画" onRetry={onRetry} quiet={quiet} />;
-  if (plans.list.length === 0)
-    return (
-      <div className="blank">
-        <b>まだ1つも出していません</b>
-        <p>題ひとつでいい。日にちも場所も、あとから足せる。</p>
-        <Link prefetch={false} className="blank-go" href="/board">
-          企画を出しにいく
-          <Icon name="right" size={14} />
-        </Link>
-      </div>
-    );
-  return (
-    <Longer items={plans.list} first={4} step={10} unit="件" className="mp-plans">
-      {(p) => (
-        <li key={p.id}>
-          <span className="mp-plan-t">
-            <b>{p.title || "（題なし）"}</b>
-            <i>
-              <span>{PLAN_STATUS_NAME[p.status]}</span>
-              {jstDay(p.createdAt) && <span>{jstDay(p.createdAt)}</span>}
-              {p.hearts > 0 && <span>さんせい {p.hearts}</span>}
-            </i>
-          </span>
-        </li>
-      )}
     </Longer>
   );
 }

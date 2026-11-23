@@ -38,7 +38,7 @@ const POSTS: { spot: SpotId; r: number }[] = [
   { spot: "map", r: 66 },
   { spot: "now", r: 62 },
   { spot: "legends", r: 62 },
-  { spot: "next", r: 62 },
+  { spot: "board", r: 92 },
   { spot: "kitchen", r: 100 },
   { spot: "streams", r: 118 },
   { spot: "friends", r: 96 },

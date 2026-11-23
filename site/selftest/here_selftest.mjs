@@ -229,9 +229,10 @@ if (!Array.isArray(PLACES) || typeof spotOfPath !== "function" || typeof tidyPat
   check("対照2b 終わりのスラッシュを落とす", spotOfPath("/kitchen/") === "kitchen");
   check("対照2c 空の道は島そのもの", tidyPath("") === "/" && spotOfPath("") === undefined);
 
-  /* 足3 いちばん長く一致したものが勝つ（`under` の要） */
-  check("対照3 長いほうが勝つ", spotOfPath("/next/new") === "board" && spotOfPath("/next") === "next",
-    `${spotOfPath("/next/new")} / ${spotOfPath("/next")}`);
+  /* 足3 軒の道の下に居ない面は `under` が引き受ける。前は `/next/new`（掲示板）と `/next`（企画）で
+     「長いほうが勝つ」を当てていたが、企画の軒を畳んだ（#1277）ので、重なる道がいまは無い */
+  check("対照3 軒の道の下でない面は `under` が引き受ける", spotOfPath("/months/2026-10") === "streams" && spotOfPath("/months") === "streams",
+    `${spotOfPath("/months/2026-10")} / ${spotOfPath("/months")}`);
 
   /* 足4 面を歩く */
   {

@@ -42,7 +42,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // 行き先をぜんぶ並べた面。ここから全部の紙へリンクが1本ずつ出ているので、
     // 検索の側から見ても島の索引になる。
     "/all",
-    "/streams", TRAVEL, "/kitchen", "/apps", "/legends", "/now", "/next", "/board", "/friends",
+    "/streams", TRAVEL, "/kitchen", "/apps", "/legends", "/now", "/board", "/friends",
     // 月ごとのふりかえり（#844）。**足し忘れて、配ったあとの見回りが赤くなった**（#872）
     "/months",
     /* あやと島案内鳥からのお知らせ（#851）。あやとの「気にしてる人少ないので、
@@ -55,9 +55,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/updates",
     // その日いてくれた人に渡る1枚（#173）。誰でも見られる面
     "/cards",
-    // 「企画のページを作る」（`/next/new`）は並べない（2026-10-01）。
-    // 視聴者さんが企画を出す道を畳んで、いまは `/board` へ送るだけの1枚
-    // （`robots: index: false`）。索引に出すと、検索から来た人が送り返される。
+    // 企画の面（`/next`）と「企画のページを作る」（`/next/new`）は並べない。どちらも `/board` へ 301（#1277）。
+    // 索引に出すと、検索から来た人が送り返される。
     // これからの大きい企画。専用ページを持つものはここに足す。
     // **足し忘れると `prodsweep.mjs` が「sitemap.xml に無い」で赤くする。**
     // 2026-10-08 に `/north-macedonia` を作ったとき、面と `/all` の棚は足したのに

@@ -371,6 +371,21 @@ export default function Notes({
     setToday(new Date());
   }, []);
 
+  /* **`#<お題の id>` で来たら、その棚を開く**（#1277）。企画の面（`/next`）を畳んで `/board` へ 301 したので、
+     前の `/next#food-wine-fest` は `/board#food-wine-fest` に着く（ブラウザは 301 のあとも `#` を持っていく）。
+     棚を選んだら、下の見出し（`id` がお題の id）まで `components/ui/HashJump.tsx` が送る。
+     宛先を決め打ちしている面（`fixed`）は棚を持たないので見ない。 */
+  useEffect(() => {
+    if (fixed || !themes) return;
+    const read = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      if (id && themes.some((t) => t.id === id)) setPick(id);
+    };
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, [fixed, themes]);
+
   /* 掲示板は1回で全部読む。テーマごとの枚数も、選んだテーマの中身も、
      同じ1回から出せる（枚数を出すには、どのみち全部が要る）。
      テーマが決まっている面は、そのテーマぶんだけを押された順に読む。
@@ -921,7 +936,8 @@ export default function Notes({
 
       <div className="nb-board">
         {!fixed && (
-          <div className="nb-head">
+          /* 見出しの `id` はお題の id。`/board#<id>` で来た人を、ここまで送る（上の `#` の効果） */
+          <div className="nb-head" id={here.id}>
             <Sub className="sub">{here.name}</Sub>
             {list.length > 0 && (
               <span className="bd-count">

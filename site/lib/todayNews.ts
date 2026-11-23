@@ -29,10 +29,9 @@
 
 import { COUNTRIES, countryNameBySlug } from "@/content/countries";
 import { STAYS } from "@/content/stays";
-/* 居場所は滞在の表から（`stayHere`）。移動の企画は読まない（`isMovePlan`）。表紙の「これから」と同じ口（#1276） */
-import { isMovePlan, stayHere } from "@/lib/leadPlan";
+/* 居場所は滞在の表から（`stayHere`）、その日の企画と配信の回は表紙の「これから」と同じ口から（`aheadOn`。#1276 #1277） */
+import { aheadOn, stayHere } from "@/lib/leadPlan";
 import { countriesWalked } from "@/content/walked";
-import { PLANS } from "@/content/plans";
 import { RECIPES } from "@/content/recipes";
 import { LINKS, NOW_FALLBACK, STATS_FALLBACK } from "@/content/site";
 import { LATEST_DAY, lastYearOn, streamDaysBetween } from "@/content/onThisDay";
@@ -246,17 +245,16 @@ export function todayNewsList(now: Date = new Date(), who: TodayWho = {}): Today
     });
   }
 
-  // 2. 今日が企画の当日
-  /* 移動の企画は読まない。国に入った日は、下の節目（滞在の表）が言う（#1276） */
-  const plan = PLANS.find((p) => p.date === j.date && !isMovePlan(p));
+  // 2. 今日が企画の当日（定例の配信の回も）。国に入った日は、下の節目（滞在の表）が言う（#1276）
+  const plan = aheadOn(j.date)[0];
   if (plan) {
     out.push({
       kind: "plan",
       icon: "tent",
       line: `今日は ${plan.title}`,
       title: plan.title,
-      body: plan.note,
-      href: plan.href ?? "/next",
+      body: plan.note ?? "",
+      href: plan.href,
       go: "くわしく",
     });
   }

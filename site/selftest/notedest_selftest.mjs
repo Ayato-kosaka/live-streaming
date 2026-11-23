@@ -42,13 +42,13 @@
  *
  * `theme={c.slug}` のような式は、字から値が決まらない。**式ごとに
  * 「どこから値が来るか」を1つだけ書いて、値そのものは中身の表から取る**
- * （`content/nordic/index.json` の国、`content/plans.ts` の企画、
- * `THEMES` の区間）。**知らない式が1つ出たら落ちる**ので、
+ * （`content/nordic/index.json` の国、`THEMES` の区間）。**知らない式が1つ出たら落ちる**ので、
  * 新しい渡しかたを書いた日にここが赤くなる（名簿なら黙る）。
  *
  * 式のうち、ほんとうに「表に無い宛先」になりうるのは
- * **`{c.slug}` と字で書いた分だけ。** 区間と企画は `themeById()` を
+ * **`{c.slug}` と字で書いた分だけ。** 区間は `themeById()` を
  * 通してから渡しているので、無い宛先はそこで落ちて欄ごと出ない。
+ * 企画あての宛先を決め打ちしていた企画の面（`/next`）は畳んだ（#1277）。いまは掲示板の棚から貼る。
  *
  * ## わざと壊して、赤くなることを見る
  *
@@ -109,12 +109,6 @@ const BREAK_HINT = `わざと壊して、ここが落ちることを見るには
     site/content/themes.ts > /tmp/themes-shut.ts
   THEMES_TS=/tmp/themes-shut.ts node site/selftest/notedest_selftest.mjs   # → 2
 
-  # 5) 締め切った企画へ降ろす札を戻す（押しても何も起きない札）
-  mkdir -p /tmp/nd5/components/live
-  sed 's|canNote|!!themeById(plan.id)|g' \
-    site/components/live/PlanCard.tsx > /tmp/nd5/components/live/PlanCard.tsx
-  NOTEDEST_SRC=/tmp/nd5 node site/selftest/notedest_selftest.mjs   # → 1
-
   （4) だけ 2 で落ちる。判定が死ぬと「畳んだ宛先を決め打ちしている面」が
   0件になるので、**守りを測る相手そのものが消える**——数字を出さずに止める
   のが正しい（\`docs/island-standards.md\` 15章）。食い違いの件数は先に出る。`;
@@ -158,8 +152,7 @@ function bring(src, name) {
 bring(join(LIB, "builtAt.ts"), "builtAt.ts");
 bring(join(CONTENT, "chapters.ts"), "chapters.ts");
 bring(join(LIB, "nightly.ts"), "nightly.ts");
-bring(join(CONTENT, "plans.ts"), "plans.ts");
-/* 企画の表。`plans.ts` は告知の欄を持つ企画をここから札に組む */
+/* 企画の表。企画あての宛先は、結んだ企画（`project`）の日で締まる */
 bring(join(CONTENT, "projects.ts"), "projects.ts");
 bring(THEMES_SRC, "themes.ts");
 
@@ -185,7 +178,6 @@ execFileSync(
 
 const req = createRequire(import.meta.url);
 const T = req(join(OUT, "themes.js"));
-const P = req(join(OUT, "plans.js"));
 const { THEMES, GOODS_GROUP, isOpenTheme, shutDest, shelves, themeById } = T;
 
 if (!Array.isArray(THEMES) || THEMES.length === 0) nothing("`THEMES` が読めない");
@@ -196,13 +188,11 @@ if (typeof isOpenTheme !== "function" || typeof shelves !== "function") {
   nothing("`content/themes.ts` の関数が読めない");
 }
 if (!GOODS_GROUP) nothing("`GOODS_GROUP`（グッズの束の見出し）が読めない");
-if (!Array.isArray(P.PLANS) || P.PLANS.length === 0) nothing("`content/plans.ts` の企画が読めない");
 
 const THEME_IDS = new Set(THEMES.map((t) => t.id));
-const PLAN_IDS = new Set(P.PLANS.map((p) => p.id));
 
 console.log(`# 組み立てた表: ${THEMES_SRC}${SRC_OVER ? `\n# 面の写し: ${SRC_OVER}` : ""}`);
-console.log(`# 宛先 ${THEMES.length}件 / 企画 ${PLAN_IDS.size}件`);
+console.log(`# 宛先 ${THEMES.length}件`);
 
 /* ---------------------------------------------------------- 面を読む道具 */
 
@@ -294,9 +284,6 @@ const FROM = {
      下の節へ移した（#1201）。国を1つ足して宛先を足し忘れた日に、上の
      「実在する」が赤くなるのはこの足 */
   "components/nordic/CountryGuide.tsx::c.slug": () => nordicSlugs(),
-  /* 企画あて。`themeById(plan.id)` を通すので、宛先の在る企画だけ */
-  "components/live/NextPlans.tsx::theme.id": () =>
-    [...PLAN_IDS].filter((id) => THEME_IDS.has(id)),
 };
 
 /** そのファイルの中の `theme="…"` を全部（小さな部品へ字で渡しているぶん） */
@@ -484,30 +471,6 @@ for (const [what, marker] of [
   );
 }
 
-/* **締め切った宛先へ降ろす札を残さない。** 企画の札（`PlanCard.tsx`）には
-   「付箋を貼る」「付箋で教える」の2つがあって、どちらも付箋の欄の錨へ降ろす。
-   欄が消えたのに札が残ると、**押しても何も起きない札**になる
-   （決まりは `PlanCard.tsx` の `useCanNote` に書いてある）。 */
-const PLANCARD = readSrc("components/live/PlanCard.tsx");
-const JUMP = "-notes`}";
-const jumpAt = [];
-for (let i = PLANCARD.indexOf(JUMP); i >= 0; i = PLANCARD.indexOf(JUMP, i + 1)) jumpAt.push(i);
-check("企画から付箋へ降ろす札が在る（分母）", jumpAt.length >= 2, `${jumpAt.length}本`);
-jumpAt.forEach((at, i) => {
-  /* 印そのものは `href={`…`}` の中にいるので、**その札（`<a`）の頭から**
-     さかのぼる。印から直に数えると、`href={` の `{` で止まる */
-  const cond = (guardAt(PLANCARD, PLANCARD.lastIndexOf("<a", at)) ?? "").replace(/\s+/g, " ").trim();
-  check(
-    `企画から付箋へ降ろす札 ${i + 1}本目が、締め切りの判定の下にある`,
-    /canNote\b/.test(cond),
-    `条件=${cond}`,
-  );
-});
-check(
-  "企画の札が、宛先の在る無しだけで判定していない（`hasNotes` が残っていない）",
-  !/\bhasNotes\b/.test(PLANCARD),
-);
-
 /* --------------------------------- 3. 新しい宛先（グッズの束）と `#` の先 */
 
 const goods = THEMES.filter((t) => t.group === GOODS_GROUP);
@@ -580,14 +543,13 @@ check(
  * `href` の `#` の先の欄が、その面に在るか。
  *
  * 字で書いた錨（`id="suzuri"`）は面の中から引ける。
- * **企画の錨は `id={plan.id}` なので字では引けない**ので、
- * 企画の id と同じものは別に数えて、そちらは通す
- * （`components/live/PlanCard.tsx` が錨を立てている）。
+ * **掲示板（`/board`）の錨はお題の id**（`components/live/Notes.tsx` の棚の見出し。`/next#<id>` の着き先）なので、
+ * 字では引けない。`/board#<お題の id>` は宛先の表に在る id のときだけ通す。
  */
 const frags = THEMES.filter((t) => t.href?.includes("#"));
 if (frags.length === 0) nothing("`#` 付きの行き先が1つも無い");
 const deadFrag = [];
-let byPlan = 0;
+let byBoard = 0;
 for (const t of frags) {
   const [path, frag] = t.href.split("#");
   const route = ROUTES.find((r) => r.path === (path || "/"));
@@ -596,14 +558,14 @@ for (const t of frags) {
     continue;
   }
   if (readSrc(route.file).includes(`id="${frag}"`)) continue;
-  if (PLAN_IDS.has(frag)) {
-    byPlan++;
+  if (path === "/board" && THEME_IDS.has(frag)) {
+    byBoard++;
     continue;
   }
   deadFrag.push(`${t.id}→${t.href}`);
 }
 check(
-  `\`#\` の先の欄が実在する（${frags.length}件中 ${byPlan}件は企画の錨）`,
+  `\`#\` の先の欄が実在する（${frags.length}件中 ${byBoard}件は掲示板のお題の錨）`,
   deadFrag.length === 0,
   deadFrag.join(" "),
 );

@@ -36,14 +36,12 @@ const PROOF = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia"]
  * ひとこと1件。2026-09-30 に付箋へ移した）。あやと本人も「企画で合ってるのか、
  * イマイチ私もよくわかってない」と言っている。
  *
- * ## 畳んだのは「視聴者さんが出す道」だけ
+ * ## 企画の面と道具も畳んだ（#1277）
  *
- * 入れ物（`islandNextPlans`）も、あやとが段を動かす道具（`/me` の `PlanCare`）も、
- * 口（`POST /island-api/nextplans`）も残っている。**畳んだのは画面だけ。**
- *
- * 畳める理由は、提案の口があっても工程が1つも減らないから。段を「これから」に
- * 上げても、企画のページは `site/content/plans.ts`（Git）にしか立たない。
- * つまり**どちらにしても、あやとがこちらに言う**。だったら受け口は1つでいい。
+ * 2026-10-01 に畳んだのは「視聴者さんが出す道」だけだった。あやと（2026-11-18）
+ * 「企画というのが要らない。企画を出す人も付箋でやってる」で、企画を並べる面（`/next`）と、
+ * あやとが段を動かす道具（`/me` の机）も外した。`/next#<id>` はここの、そのお題の棚に着く。
+ * 口（`POST /island-api/nextplans`）の片づけは Functions の側（#1281）。
  *
  * ## ここに残っているもの
  *
@@ -103,27 +101,9 @@ export default function Board() {
           </Link>
         </div>
 
-        {/* 読む先。**出す先ではない。** 付箋から育った企画が、どこに出るか。
-
-            **時制も数も名乗らない**（`docs/island-standards.md` 16章の決めごと1）。
-            ここは長いあいだ「これから／いま ◯ つ立っています」と数えていた。
-            数え直しは画面が出てからなので、**開いている人の目には合っている。**
-            合っていないのは**焼いた HTML のほう**で、出した日の数がそのまま
-            配られ続ける。10-12 に焼いた「いま 1 つ立っています」は、企画が
-            その日で終わったあとも配りっぱなしになった（#770）。
-            札は常設で、中身は日付で動く。**動かないほうに時制を置かない。** */}
-        <Link prefetch={false} className="tile" href="/next" style={{ marginTop: "var(--sp-4)" }}>
-          <img className="tile-icon" src="/sprites/tent.webp" alt="" />
-          <span className="tile-text">
-            {/* **「終わったもの」とも書かない。** あれも時制で、`navtruth.mjs` の
-                `tenseOf` は過去の札として読む（＝行き先に先の日付が1つでも
-                在れば嘘になる）。札が言うのは**行き先が何の置き場か**だけ。 */}
-            <b>企画</b>
-            <i>付箋から育ったものが出る先</i>
-          </span>
-          <Icon name="right" size={15} className="tile-go" />
-        </Link>
-        <Link prefetch={false} className="tile" href="/legends">
+        {/* 読む先。**出す先ではない。** 付箋から育った企画のうち、語り継ぐものが並ぶ所。
+            企画を並べる面（`/next`）への札は外した（#1277。`/next` は ここ `/board` へ 301）。 */}
+        <Link prefetch={false} className="tile" href="/legends" style={{ marginTop: "var(--sp-4)" }}>
           <img className="tile-icon" src="/sprites/hall-museum.webp" alt="" />
           <span className="tile-text">
             <b>伝説の企画</b>
