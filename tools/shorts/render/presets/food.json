@@ -1,0 +1,317 @@
+{
+ "_note": "回の型「食べ物の反応」（食べて・飲んで、うまい／まずいが山の回。ボザ・ヨーグルト・バニツァ）の様式の組（#1403 の F・edit_axis_2026-11.md 5章）。食べ物の画が主役なので、字は小さく少なく、味の一言だけを暖色の大きい字にする。まずいは冷たい色で小さく揺らす。キラキラ（絵）は付けない（あやと #926「男のショートには合わない」）",
+ "extends": "style_v3.json",
+ "title_card": {
+  "top": 470,
+  "max_height": 560,
+  "box": {
+   "alpha": 0
+  },
+  "lines": [
+   {
+    "font": "caption",
+    "size": 82,
+    "min_size": 52,
+    "look": {
+     "fill": "#FDFDFD",
+     "outline": [
+      {
+       "color": "#FDFDFD",
+       "width": 0.75
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.055
+      }
+     ],
+     "tracking": -0.04
+    },
+    "wrap_below": 80
+   },
+   {
+    "font": "caption",
+    "size": 114,
+    "min_size": 64,
+    "wrap_below": 72,
+    "look": {
+     "fill": {
+      "stops": [
+       [
+        0.0,
+        "#FBEE1E"
+       ],
+       [
+        0.2,
+        "#FEF21D"
+       ],
+       [
+        0.3,
+        "#FDF674"
+       ],
+       [
+        0.35,
+        "#FDFCA1"
+       ],
+       [
+        0.45,
+        "#FDF758"
+       ],
+       [
+        0.55,
+        "#FCEE06"
+       ],
+       [
+        0.75,
+        "#FDE103"
+       ],
+       [
+        1.0,
+        "#FAE707"
+       ]
+      ]
+     },
+     "outline": [
+      {
+       "color": "#EF0101",
+       "width_em": 0.057
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.079
+      }
+     ],
+     "glow": {
+      "color": "#EBD050",
+      "half_px": 16,
+      "extent_px": 35
+     },
+     "tracking": -0.07,
+     "line_pitch_em": 1.105
+    }
+   }
+  ],
+  "max_width": 690
+ },
+ "big": {
+  "order": [
+   "taste_good",
+   "static_white",
+   "glow_yellow"
+  ],
+  "looks": {
+   "taste_good": {
+    "_note": "味の一言（うまい・甘い・とろとろ）。暖色のグラデに焦げ茶の縁、暖かい光。ポンと出る（0.6→1.08→1.0・5コマ）。顔を隠さないよう下寄りに置く（centers）",
+    "font": "caption",
+    "size": 112,
+    "min_size": 64,
+    "wrap_below": 96,
+    "look": {
+     "fill": {
+      "stops": [
+       [
+        0.0,
+        "#FFF6C8"
+       ],
+       [
+        0.45,
+        "#FFD54A"
+       ],
+       [
+        1.0,
+        "#FF9F1C"
+       ]
+      ]
+     },
+     "outline": [
+      {
+       "color": "#FFF6C8",
+       "width": 0.75
+      },
+      {
+       "color": "#4A2200",
+       "width_em": 0.085
+      }
+     ],
+     "glow": {
+      "color": "#FFB347",
+      "half_px": 10,
+      "extent_px": 26
+     },
+     "tracking": -0.04,
+     "line_pitch_em": 1.08
+    },
+    "anim": {
+     "in": {
+      "frames": 5,
+      "first_hold": 2,
+      "scale": {
+       "keys": [
+        [
+         0,
+         0.6
+        ],
+        [
+         2,
+         1.08
+        ],
+        [
+         4,
+         1.0
+        ]
+       ]
+      }
+     }
+    }
+   },
+   "taste_bad": {
+    "_note": "まずい・くさい。青白い字に深緑の縁、小さく揺れて少し傾く（食欲が引く色）",
+    "font": "DelaGothicOne-Regular.ttf",
+    "size": 104,
+    "min_size": 60,
+    "wrap_below": 90,
+    "rotate": -3,
+    "look": {
+     "fill": "#E9F7EF",
+     "outline": [
+      {
+       "color": "#E9F7EF",
+       "width": 0.75
+      },
+      {
+       "color": "#14361F",
+       "width_em": 0.09
+      }
+     ],
+     "tracking": -0.03,
+     "line_pitch_em": 1.1
+    },
+    "anim": {
+     "hold": {
+      "type": "shake",
+      "first_hold": 2,
+      "update_every": 2,
+      "dx_sd": 3,
+      "dx_max": 5,
+      "dy_sd": 3,
+      "dy_max": 5
+     }
+    }
+   }
+  }
+ },
+ "moods": {
+  "looks": {
+   "giongo": {
+    "_note": "擬音（ジュワッ・とろ〜り・ゴクッ）。字幕の書体を小さく傾けて、白に黒縁。動かさない（坪和の回の「こぷん」「ちょろろ」）",
+    "font": "caption",
+    "size": 50,
+    "min_size": 40,
+    "face_min_size": 40,
+    "rotate": -6,
+    "look": {
+     "fill": "#FFFFFF",
+     "outline": [
+      {
+       "color": "#000000",
+       "width_em": 0.07
+      }
+     ],
+     "tracking": 0.02
+    }
+   }
+  }
+ },
+ "_axis": {
+  "_how": "様式の部分は build_edit.py --style presets/<型>.json（回の様式から \"extends\": \"presets/<型>.json\" でもよい）。_axis は書き出しが読まない。効果音は polish の sfx に、行（spec の kind・turn）と出来事で置く（置く道具は次の段。edit_axis_2026-11.md 6章）",
+  "source": ".claude/skills/viral-shorts-creator/references/edit_axis_2026-11.md",
+  "common": {
+   "title_card": "全部の型で同じ（あやとが選んだ箱なし・まん中寄り。F-084）。0〜3秒は題の札＋出来事の画（F-020・C の結論1）",
+   "caption": "字幕は白に黒縁・まん中（いまの形。あやとが 11-20 に A を選んだ）。型で変えるのは大きさ・行数・話し手の色だけ",
+   "big_density": "大きい字は「その型の山の言葉」だけ。1本に3〜6回（10秒に1回まで）。同じ見た目を続けない（big.order）",
+   "sfx_place": "効果音は『出来事が起きたコマ』に鳴らす。カットの度・字が出る度に足さない（F-087 で 12→5 に減らした回がある）",
+   "sfx_level": "効果音は声と同じくらい（様式の sfx_rms_dbfs −22・指示書の db で ±3）。参考の聞いた感じ（style_reference.md 3.3）",
+   "end": "終わりは回に合う物（F-091）。締めの字だけに効果音を足さない"
+  },
+  "type": "食べ物の反応",
+  "id": "food",
+  "fits": "ボザ（bg-boza）・ヨーグルト（jnKVIXn4qQs）・バニツァ（hJ6vFAGX3rI）",
+  "telop": {
+   "caption": "字幕は今の大きさ（48px）のまま。食べ物の画に字を重ねすぎない（字が出ている秒は参考の食べ物の回で 6〜9割）",
+   "big_on": [
+    "味の一言（turn=c の味・反応の行）→ taste_good／まずい → taste_bad",
+    "値段・量の数（kind=数）→ static_white"
+   ],
+   "big_per_video": [
+    2,
+    4
+   ],
+   "giongo": "食べる・注ぐ・焼く音が鳴る画に、擬音を小さく（mood giongo）。1本に0〜3",
+   "title_keyword": "題の札の黄の行に、味か危なさの一語（激まず・甘酒の小麦版）を入れる",
+   "avoid": [
+    "本人の声の行で、顔の上に大きい字（F-087）",
+    "味の言い表しを全部大きい字にする"
+   ]
+  },
+  "sfx": {
+   "per_10s": [
+    0.5,
+    1.5
+   ],
+   "rules": [
+    {
+     "on": "味の一言（良い）の字が出るコマ",
+     "sfx": "上品なキラキラ",
+     "pocket": "https://pocket-se.info/archives/1803/",
+     "at": "字の出",
+     "db": -3,
+     "why": "うまいの瞬間だけ。1本に1〜2回"
+    },
+    {
+     "on": "味の一言（悪い）の字が出るコマ",
+     "sfx": "呆れ「チーン」",
+     "pocket": "https://pocket-se.info/archives/1632/",
+     "at": "字の出",
+     "db": 0,
+     "why": "まずいの落ち"
+    },
+    {
+     "on": "一口目（配信の音に食べる音が無いとき）",
+     "sfx": "パクッと食べる",
+     "pocket": "https://pocket-se.info/archives/1748/",
+     "at": "口に入るコマ",
+     "db": -6
+    },
+    {
+     "on": "一口目の直前の溜め（「いただきます……」）",
+     "sfx": "結果発表前のドラムロール",
+     "pocket": "https://pocket-se.info/archives/479/",
+     "at": "溜めの頭から 1.2秒",
+     "db": -4,
+     "why": "BGM を止められない間の代わり。BGM を溜めで止める道具ができたら外す"
+    }
+   ],
+   "avoid": [
+    "カットの度の風切り音",
+    "札（写真）が出る度のポン"
+   ],
+   "keep_live": "食べる・飲む・注ぐ音（配信の音）は残す（cut の audio_db −14 前後）"
+  },
+  "bgm": {
+   "use": true,
+   "level": "いまのまま（bgm_rms_dbfs −26.8）",
+   "stop_before_peak": "一口目の直前 0.4〜0.8秒（道具が要る）"
+  },
+  "cuts": {
+   "close_up": "料理・器の寄りを長めに（参考の料理の回は寄りが 6〜7 割。2.48秒）",
+   "shot_s": [
+    1.5,
+    2.5
+   ]
+  },
+  "grade": {
+   "saturation": 1.5,
+   "contrast": 1.08,
+   "warmth": 0.05
+  }
+ }
+}

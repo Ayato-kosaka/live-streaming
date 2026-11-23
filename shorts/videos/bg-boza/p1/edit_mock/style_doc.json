@@ -1,0 +1,35 @@
+{
+ "_note": "比べの絵（axis_compare.jpg）の別案「ドキュメンタリー風」。食べ物の型（presets/food.json）に重ねて、字幕を明朝（Kaisei Tokumin）の白字・細い黒縁・影にし、要の一語（行の highlight）だけを赤にする。479倍に跳ねた路上ジュースの回（bTfgjnx9654）の札の形。大きい字は使わない（味の一言も字幕のまま赤で見せる）",
+ "extends": "presets/food.json",
+ "caption": {
+  "font": "KaiseiTokumin-ExtraBold.ttf",
+  "size": 78,
+  "face_min_size": 52,
+  "look": {
+   "fill": "#FFFFFF",
+   "outline": [
+    {
+     "color": "#FFFFFF",
+     "width": 0.75
+    },
+    {
+     "color": "#111111",
+     "width_em": 0.045
+    }
+   ],
+   "shadow": {
+    "dx": 0,
+    "dy": 5,
+    "blur": 6,
+    "color": "#000000",
+    "alpha": 0.6
+   },
+   "tracking": -0.02,
+   "line_pitch_em": 1.18,
+   "highlight": {
+    "fill": "#FF2B2B",
+    "scale": 1.0
+   }
+  }
+ }
+}

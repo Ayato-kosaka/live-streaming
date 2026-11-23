@@ -1,0 +1,292 @@
+{
+ "_note": "回の型「トラブル・やらかし」（その最中の出来事と結末。宿が屋根裏・パソコンが戻らない・ぼったくり）の様式の組（#1403 の F・edit_axis_2026-11.md 5章）。跳ねた回は、その場の声のやりとりを話し手ごとの色の字幕で見せるか、大きい字（1〜3語）で話を運ぶ。BGM は声の下に下げ、効果音は結末の1〜2回だけ",
+ "extends": "style_v3.json",
+ "title_card": {
+  "top": 470,
+  "max_height": 560,
+  "box": {
+   "alpha": 0
+  },
+  "lines": [
+   {
+    "font": "caption",
+    "size": 82,
+    "min_size": 52,
+    "look": {
+     "fill": "#FDFDFD",
+     "outline": [
+      {
+       "color": "#FDFDFD",
+       "width": 0.75
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.055
+      }
+     ],
+     "tracking": -0.04
+    },
+    "wrap_below": 80
+   },
+   {
+    "font": "caption",
+    "size": 114,
+    "min_size": 64,
+    "wrap_below": 72,
+    "look": {
+     "fill": {
+      "stops": [
+       [
+        0.0,
+        "#FBEE1E"
+       ],
+       [
+        0.2,
+        "#FEF21D"
+       ],
+       [
+        0.3,
+        "#FDF674"
+       ],
+       [
+        0.35,
+        "#FDFCA1"
+       ],
+       [
+        0.45,
+        "#FDF758"
+       ],
+       [
+        0.55,
+        "#FCEE06"
+       ],
+       [
+        0.75,
+        "#FDE103"
+       ],
+       [
+        1.0,
+        "#FAE707"
+       ]
+      ]
+     },
+     "outline": [
+      {
+       "color": "#EF0101",
+       "width_em": 0.057
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.079
+      }
+     ],
+     "glow": {
+      "color": "#EBD050",
+      "half_px": 16,
+      "extent_px": 35
+     },
+     "tracking": -0.07,
+     "line_pitch_em": 1.105
+    }
+   }
+  ],
+  "max_width": 690
+ },
+ "audio": {
+  "duck_db": -8
+ },
+ "big": {
+  "order": [
+   "story_word",
+   "reveal_red",
+   "static_white"
+  ],
+  "looks": {
+   "story_word": {
+    "_note": "字で話を運ぶ一言（「こうだった。」「45分後」）。白に太い黒縁と影、カットで出て消える（動かさない）",
+    "font": "DelaGothicOne-Regular.ttf",
+    "size": 128,
+    "min_size": 72,
+    "wrap_below": 108,
+    "look": {
+     "fill": "#FFFFFF",
+     "outline": [
+      {
+       "color": "#FFFFFF",
+       "width": 0.75
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.11
+      }
+     ],
+     "shadow": {
+      "dx": 0,
+      "dy": 10,
+      "blur": 0,
+      "color": "#000000",
+      "alpha": 0.5
+     },
+     "tracking": -0.03,
+     "line_pitch_em": 1.08
+    }
+   },
+   "reveal_red": {
+    "_note": "結末・やらかしの一言（「交渉決裂」「2000バーツと消えた」）。赤に白と黒の縁、大きく出て締まり、小さく揺れる",
+    "font": "DelaGothicOne-Regular.ttf",
+    "size": 120,
+    "min_size": 70,
+    "wrap_below": 100,
+    "look": {
+     "fill": "#FF3B30",
+     "outline": [
+      {
+       "color": "#FFFFFF",
+       "width_em": 0.05
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.1
+      }
+     ],
+     "tracking": -0.03,
+     "line_pitch_em": 1.08
+    },
+    "anim": {
+     "in": {
+      "frames": 4,
+      "first_hold": 2,
+      "scale": {
+       "keys": [
+        [
+         0,
+         1.4
+        ],
+        [
+         2,
+         0.95
+        ],
+        [
+         3,
+         1.0
+        ]
+       ]
+      }
+     },
+     "hold": {
+      "type": "shake",
+      "first_hold": 2,
+      "update_every": 2,
+      "dx_sd": 2,
+      "dx_max": 4,
+      "dy_sd": 2,
+      "dy_max": 4
+     }
+    }
+   }
+  }
+ },
+ "moods": {
+  "looks": {
+   "speaker2": {
+    "_note": "相手の言葉（運転手・店の人・宿の人）。字幕の書体のまま水色に濃紺の縁（自分は白）。FIREマンさん・こよたびさんの色分け",
+    "font": "caption",
+    "size": 48,
+    "min_size": 40,
+    "face_min_size": 36,
+    "look": {
+     "fill": "#8FD3FF",
+     "outline": [
+      {
+       "color": "#8FD3FF",
+       "width": 0.75
+      },
+      {
+       "color": "#0B2545",
+       "width_em": 0.0625
+      }
+     ],
+     "tracking": -0.04,
+     "line_pitch_em": 1.07
+    }
+   }
+  }
+ },
+ "_axis": {
+  "_how": "様式の部分は build_edit.py --style presets/<型>.json（回の様式から \"extends\": \"presets/<型>.json\" でもよい）。_axis は書き出しが読まない。効果音は polish の sfx に、行（spec の kind・turn）と出来事で置く（置く道具は次の段。edit_axis_2026-11.md 6章）",
+  "source": ".claude/skills/viral-shorts-creator/references/edit_axis_2026-11.md",
+  "common": {
+   "title_card": "全部の型で同じ（あやとが選んだ箱なし・まん中寄り。F-084）。0〜3秒は題の札＋出来事の画（F-020・C の結論1）",
+   "caption": "字幕は白に黒縁・まん中（いまの形。あやとが 11-20 に A を選んだ）。型で変えるのは大きさ・行数・話し手の色だけ",
+   "big_density": "大きい字は「その型の山の言葉」だけ。1本に3〜6回（10秒に1回まで）。同じ見た目を続けない（big.order）",
+   "sfx_place": "効果音は『出来事が起きたコマ』に鳴らす。カットの度・字が出る度に足さない（F-087 で 12→5 に減らした回がある）",
+   "sfx_level": "効果音は声と同じくらい（様式の sfx_rms_dbfs −22・指示書の db で ±3）。参考の聞いた感じ（style_reference.md 3.3）",
+   "end": "終わりは回に合う物（F-091）。締めの字だけに効果音を足さない"
+  },
+  "type": "トラブル・やらかし",
+  "id": "trouble",
+  "fits": "ブルガリアへ移動・宿（bg-move）・パソコン待ち（pc-wait）",
+  "telop": {
+   "caption": "その場の声のやりとりは、話し手で色を分ける（自分は白・相手は mood speaker2）",
+   "big_on": [
+    "結末・やらかし（turn=c）→ reveal_red",
+    "字で運ぶ一言（期待→こうだった・時刻）→ story_word"
+   ],
+   "big_per_video": [
+    3,
+    6
+   ],
+   "header": "題の帯を全編の上に出す回もある（【悲報】…）。いまの道具では全編のタイトル（黄の箱）しか無い → 道具を足す（6章）"
+  },
+  "sfx": {
+   "per_10s": [
+    0.3,
+    1.0
+   ],
+   "rules": [
+    {
+     "on": "結末・やらかしの字（reveal_red）",
+     "sfx": "衝撃的事実発覚「ズドーン」",
+     "pocket": "https://pocket-se.info/archives/1745/",
+     "at": "字の出",
+     "db": -2
+    },
+    {
+     "on": "落ち（してやられた）",
+     "sfx": "失敗「デデーン」",
+     "pocket": "https://pocket-se.info/archives/1145/",
+     "at": "字の出",
+     "db": -2
+    },
+    {
+     "on": "数・時刻の字（45分後・520ペソ）",
+     "sfx": "ピコーン",
+     "pocket": "https://pocket-se.info/archives/1185/",
+     "at": "字の出",
+     "db": -4
+    }
+   ],
+   "avoid": [
+    "その場の声に重なる効果音",
+    "切り替えの風切り音（その場の空気が切れる）"
+   ],
+   "keep_live": "相手の声・その場の音は残す（cut の audio_db −10〜−14）"
+  },
+  "bgm": {
+   "use": "低く（声の下に −8dB 下げる: duck_db −8）。やりとりの間は無しでもよい",
+   "stop_before_peak": "結末の直前 0.4秒（道具が要る）"
+  },
+  "cuts": {
+   "shot_s": [
+    1.5,
+    3.0
+   ],
+   "note": "やりとりは切らずに長め（参考 1カット13秒・平均18秒の回がある）。カットの3秒の決め（#959）とは、配信の素材の回で相談"
+  },
+  "grade": {
+   "saturation": 1.35,
+   "contrast": 1.06,
+   "warmth": 0.0
+  }
+ }
+}

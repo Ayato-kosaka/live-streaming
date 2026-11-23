@@ -1,0 +1,185 @@
+{
+ "_note": "回の型「その国の驚き」（知る・比べる・暮らしの違い。クリスマスマーケット・街の決まり）の様式の組（#1403 の F・edit_axis_2026-11.md 5章）。参考は番号の見出し（1. ◯◯）・題の語ごとの色・2〜3行の字幕。見出しは緑のテロップ、字幕は少し大きく、驚きの事実だけ大きい字",
+ "extends": "style_v3.json",
+ "title_card": {
+  "top": 470,
+  "max_height": 560,
+  "box": {
+   "alpha": 0
+  },
+  "lines": [
+   {
+    "font": "caption",
+    "size": 82,
+    "min_size": 52,
+    "look": {
+     "fill": "#FDFDFD",
+     "outline": [
+      {
+       "color": "#FDFDFD",
+       "width": 0.75
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.055
+      }
+     ],
+     "tracking": -0.04
+    },
+    "wrap_below": 80
+   },
+   {
+    "font": "caption",
+    "size": 114,
+    "min_size": 64,
+    "wrap_below": 72,
+    "look": {
+     "fill": {
+      "stops": [
+       [
+        0.0,
+        "#FBEE1E"
+       ],
+       [
+        0.2,
+        "#FEF21D"
+       ],
+       [
+        0.3,
+        "#FDF674"
+       ],
+       [
+        0.35,
+        "#FDFCA1"
+       ],
+       [
+        0.45,
+        "#FDF758"
+       ],
+       [
+        0.55,
+        "#FCEE06"
+       ],
+       [
+        0.75,
+        "#FDE103"
+       ],
+       [
+        1.0,
+        "#FAE707"
+       ]
+      ]
+     },
+     "outline": [
+      {
+       "color": "#EF0101",
+       "width_em": 0.057
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.079
+      }
+     ],
+     "glow": {
+      "color": "#EBD050",
+      "half_px": 16,
+      "extent_px": 35
+     },
+     "tracking": -0.07,
+     "line_pitch_em": 1.105
+    }
+   }
+  ],
+  "max_width": 690
+ },
+ "caption": {
+  "size": 54,
+  "face_min_size": 40
+ },
+ "telop": {
+  "color": "#7CF29A",
+  "stroke_color": "#0D2B16"
+ },
+ "big": {
+  "order": [
+   "static_white",
+   "glow_yellow",
+   "brush_zoom"
+  ]
+ },
+ "_axis": {
+  "_how": "様式の部分は build_edit.py --style presets/<型>.json（回の様式から \"extends\": \"presets/<型>.json\" でもよい）。_axis は書き出しが読まない。効果音は polish の sfx に、行（spec の kind・turn）と出来事で置く（置く道具は次の段。edit_axis_2026-11.md 6章）",
+  "source": ".claude/skills/viral-shorts-creator/references/edit_axis_2026-11.md",
+  "common": {
+   "title_card": "全部の型で同じ（あやとが選んだ箱なし・まん中寄り。F-084）。0〜3秒は題の札＋出来事の画（F-020・C の結論1）",
+   "caption": "字幕は白に黒縁・まん中（いまの形。あやとが 11-20 に A を選んだ）。型で変えるのは大きさ・行数・話し手の色だけ",
+   "big_density": "大きい字は「その型の山の言葉」だけ。1本に3〜6回（10秒に1回まで）。同じ見た目を続けない（big.order）",
+   "sfx_place": "効果音は『出来事が起きたコマ』に鳴らす。カットの度・字が出る度に足さない（F-087 で 12→5 に減らした回がある）",
+   "sfx_level": "効果音は声と同じくらい（様式の sfx_rms_dbfs −22・指示書の db で ±3）。参考の聞いた感じ（style_reference.md 3.3）",
+   "end": "終わりは回に合う物（F-091）。締めの字だけに効果音を足さない"
+  },
+  "type": "その国の驚き",
+  "id": "surprise",
+  "fits": "クリスマスマーケット（bg-xmas）・国の決まりや暮らしの回",
+  "telop": {
+   "caption": "字幕を 54px に（説明の行が多いので読みやすく。1分のショックさんの回は2〜3行）",
+   "headings": "驚きの1つ目・2つ目…の頭に番号の見出し（telops[]「1. 温泉が水道から出る」・緑）",
+   "big_on": [
+    "驚きの事実（日本と違う一点）→ static_white",
+    "数（気温・値段）→ glow_yellow"
+   ],
+   "big_per_video": [
+    2,
+    4
+   ],
+   "title_keyword": "題の語ごとに色（日本人＝緑・国＝黄・ショック＝赤）は、いまの題の札では白と黄の2行だけ → 道具を足す（6章）"
+  },
+  "sfx": {
+   "per_10s": [
+    1.0,
+    2.0
+   ],
+   "rules": [
+    {
+     "on": "番号の見出しが出るコマ",
+     "sfx": "ピコーン",
+     "pocket": "https://pocket-se.info/archives/1185/",
+     "at": "見出しの出",
+     "db": -3
+    },
+    {
+     "on": "驚きの事実の大きい字",
+     "sfx": "低いドン！という音",
+     "pocket": "https://pocket-se.info/archives/343/",
+     "at": "字の出",
+     "db": -2
+    },
+    {
+     "on": "「なんで？」と問いを開く行（turn=o）",
+     "sfx": "疑問・はてな・不思議",
+     "pocket": "https://pocket-se.info/archives/1192/",
+     "at": "行の頭",
+     "db": -4
+    }
+   ],
+   "avoid": [
+    "説明の行ごとの効果音"
+   ]
+  },
+  "bgm": {
+   "use": true,
+   "level": "いまのまま"
+  },
+  "cuts": {
+   "shot_s": [
+    1.5,
+    2.5
+   ]
+  },
+  "grade": {
+   "saturation": 1.5,
+   "contrast": 1.08,
+   "warmth": 0.05
+  }
+ }
+}

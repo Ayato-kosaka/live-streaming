@@ -1,0 +1,344 @@
+{
+ "_note": "回の型「やってみた・体験」（その土地のことを自分でやる。温泉の湯を飲む・ダチョウに乗る・グランクラス）の様式の組（#1403 の F・edit_axis_2026-11.md 5章）。参考は西園寺さんの型（題の札・小さい字幕・場面ごとに違う大きい字・段の札）で、いまの様式（style_p3/v3）の元。型として足すのは、段の札（いま何をしているか）と、逆接・予想外し・切り替えの大きい字",
+ "extends": "style_v3.json",
+ "title_card": {
+  "top": 470,
+  "max_height": 560,
+  "box": {
+   "alpha": 0
+  },
+  "lines": [
+   {
+    "font": "caption",
+    "size": 82,
+    "min_size": 52,
+    "look": {
+     "fill": "#FDFDFD",
+     "outline": [
+      {
+       "color": "#FDFDFD",
+       "width": 0.75
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.055
+      }
+     ],
+     "tracking": -0.04
+    },
+    "wrap_below": 80
+   },
+   {
+    "font": "caption",
+    "size": 114,
+    "min_size": 64,
+    "wrap_below": 72,
+    "look": {
+     "fill": {
+      "stops": [
+       [
+        0.0,
+        "#FBEE1E"
+       ],
+       [
+        0.2,
+        "#FEF21D"
+       ],
+       [
+        0.3,
+        "#FDF674"
+       ],
+       [
+        0.35,
+        "#FDFCA1"
+       ],
+       [
+        0.45,
+        "#FDF758"
+       ],
+       [
+        0.55,
+        "#FCEE06"
+       ],
+       [
+        0.75,
+        "#FDE103"
+       ],
+       [
+        1.0,
+        "#FAE707"
+       ]
+      ]
+     },
+     "outline": [
+      {
+       "color": "#EF0101",
+       "width_em": 0.057
+      },
+      {
+       "color": "#000000",
+       "width_em": 0.079
+      }
+     ],
+     "glow": {
+      "color": "#EBD050",
+      "half_px": 16,
+      "extent_px": 35
+     },
+     "tracking": -0.07,
+     "line_pitch_em": 1.105
+    }
+   }
+  ],
+  "max_width": 690
+ },
+ "big": {
+  "order": [
+   "shake_white",
+   "glow_yellow",
+   "jump_word",
+   "brush_zoom",
+   "static_white"
+  ],
+  "looks": {
+   "jump_word": {
+    "_note": "場面の切り替え・次の段の一言（「次！◯◯！」「しかーし！」）。白に太い黒縁と外の白縁、大きく出てすぐ締まる（1.25→0.96→1.0・4コマ）",
+    "font": "caption",
+    "size": 124,
+    "min_size": 72,
+    "wrap_below": 104,
+    "look": {
+     "fill": "#FFFFFF",
+     "outline": [
+      {
+       "color": "#000000",
+       "width_em": 0.1
+      },
+      {
+       "color": "#FFFFFF",
+       "width_em": 0.04
+      }
+     ],
+     "tracking": -0.05,
+     "line_pitch_em": 1.06
+    },
+    "anim": {
+     "in": {
+      "frames": 4,
+      "first_hold": 2,
+      "scale": {
+       "keys": [
+        [
+         0,
+         1.25
+        ],
+        [
+         2,
+         0.96
+        ],
+        [
+         3,
+         1.0
+        ]
+       ]
+      }
+     }
+    }
+   },
+   "taste_good": {
+    "_note": "味の一言（うまい・甘い・とろとろ）。暖色のグラデに焦げ茶の縁、暖かい光。ポンと出る（0.6→1.08→1.0・5コマ）。顔を隠さないよう下寄りに置く（centers）",
+    "font": "caption",
+    "size": 112,
+    "min_size": 64,
+    "wrap_below": 96,
+    "look": {
+     "fill": {
+      "stops": [
+       [
+        0.0,
+        "#FFF6C8"
+       ],
+       [
+        0.45,
+        "#FFD54A"
+       ],
+       [
+        1.0,
+        "#FF9F1C"
+       ]
+      ]
+     },
+     "outline": [
+      {
+       "color": "#FFF6C8",
+       "width": 0.75
+      },
+      {
+       "color": "#4A2200",
+       "width_em": 0.085
+      }
+     ],
+     "glow": {
+      "color": "#FFB347",
+      "half_px": 10,
+      "extent_px": 26
+     },
+     "tracking": -0.04,
+     "line_pitch_em": 1.08
+    },
+    "anim": {
+     "in": {
+      "frames": 5,
+      "first_hold": 2,
+      "scale": {
+       "keys": [
+        [
+         0,
+         0.6
+        ],
+        [
+         2,
+         1.08
+        ],
+        [
+         4,
+         1.0
+        ]
+       ]
+      }
+     }
+    }
+   },
+   "taste_bad": {
+    "_note": "まずい・くさい。青白い字に深緑の縁、小さく揺れて少し傾く（食欲が引く色）",
+    "font": "DelaGothicOne-Regular.ttf",
+    "size": 104,
+    "min_size": 60,
+    "wrap_below": 90,
+    "rotate": -3,
+    "look": {
+     "fill": "#E9F7EF",
+     "outline": [
+      {
+       "color": "#E9F7EF",
+       "width": 0.75
+      },
+      {
+       "color": "#14361F",
+       "width_em": 0.09
+      }
+     ],
+     "tracking": -0.03,
+     "line_pitch_em": 1.1
+    },
+    "anim": {
+     "hold": {
+      "type": "shake",
+      "first_hold": 2,
+      "update_every": 2,
+      "dx_sd": 3,
+      "dx_max": 5,
+      "dy_sd": 3,
+      "dy_max": 5
+     }
+    }
+   }
+  }
+ },
+ "_axis": {
+  "_how": "様式の部分は build_edit.py --style presets/<型>.json（回の様式から \"extends\": \"presets/<型>.json\" でもよい）。_axis は書き出しが読まない。効果音は polish の sfx に、行（spec の kind・turn）と出来事で置く（置く道具は次の段。edit_axis_2026-11.md 6章）",
+  "source": ".claude/skills/viral-shorts-creator/references/edit_axis_2026-11.md",
+  "common": {
+   "title_card": "全部の型で同じ（あやとが選んだ箱なし・まん中寄り。F-084）。0〜3秒は題の札＋出来事の画（F-020・C の結論1）",
+   "caption": "字幕は白に黒縁・まん中（いまの形。あやとが 11-20 に A を選んだ）。型で変えるのは大きさ・行数・話し手の色だけ",
+   "big_density": "大きい字は「その型の山の言葉」だけ。1本に3〜6回（10秒に1回まで）。同じ見た目を続けない（big.order）",
+   "sfx_place": "効果音は『出来事が起きたコマ』に鳴らす。カットの度・字が出る度に足さない（F-087 で 12→5 に減らした回がある）",
+   "sfx_level": "効果音は声と同じくらい（様式の sfx_rms_dbfs −22・指示書の db で ±3）。参考の聞いた感じ（style_reference.md 3.3）",
+   "end": "終わりは回に合う物（F-091）。締めの字だけに効果音を足さない"
+  },
+  "type": "やってみた・体験",
+  "id": "try",
+  "fits": "温泉（2EKBYEnv850）・ブルガリアへ移動（bg-move）のやってみる行",
+  "telop": {
+   "caption": "字幕は今のまま（48px・白に黒縁・まん中）",
+   "big_on": [
+    "逆接・予想外し（しかーし・って思ってたら）→ jump_word",
+    "体の反応（あちち・まずい）→ shake_white",
+    "数（値段・温度・倍）→ static_white",
+    "段の切り替え（次！）→ jump_word",
+    "やってみた結果が味（飲んだ・食べた）→ 食べ物の型と同じ taste_good / taste_bad"
+   ],
+   "big_per_video": [
+    4,
+    6
+   ],
+   "steps": "段の札（左上の注）「◆中央鉱泉浴場」「◆蛇口の広場」を場面の頭に。いま何の段かを字で言う（西園寺さんの「13:00 金刀比羅に！」）",
+   "memes": "本人の反応が無い所だけ、絵（札）で反応を足す。本人の声の行には足さない（F-087）"
+  },
+  "sfx": {
+   "per_10s": [
+    1.5,
+    2.5
+   ],
+   "rules": [
+    {
+     "on": "場面の切り替え（行の頭のカット）",
+     "sfx": "風切り音",
+     "pocket": "https://pocket-se.info/archives/289/",
+     "at": "カットの 0.05秒前",
+     "db": 0,
+     "why": "段が変わる所だけ。同じ段の中のカットには鳴らさない"
+    },
+    {
+     "on": "段の札・写真の札が出るコマ",
+     "sfx": "ひょっこり",
+     "pocket": "https://pocket-se.info/archives/1667/",
+     "at": "札の出 +0.2秒",
+     "db": 0
+    },
+    {
+     "on": "逆接・予想外しの大きい字",
+     "sfx": "衝撃的事実発覚「ズドーン」",
+     "pocket": "https://pocket-se.info/archives/1745/",
+     "at": "字の出",
+     "db": -3
+    },
+    {
+     "on": "やってみた結果が悪い（まずい・熱い）落ち",
+     "sfx": "呆れ「チーン」",
+     "pocket": "https://pocket-se.info/archives/1632/",
+     "at": "字の出",
+     "db": 0
+    },
+    {
+     "on": "やってみた結果が良い（素敵・最高）",
+     "sfx": "上品なキラキラ",
+     "pocket": "https://pocket-se.info/archives/1803/",
+     "at": "字の出",
+     "db": -3
+    }
+   ],
+   "avoid": [
+    "1行に効果音を2つ",
+    "本人の声の行の上に、声より大きい効果音"
+   ]
+  },
+  "bgm": {
+   "use": true,
+   "level": "いまのまま（−26.8・声で上下させない。参考 HPJrXDpkfuo の差 13.6dB に近い）",
+   "stop_before_peak": "結果の直前 0.4秒（道具が要る）"
+  },
+  "cuts": {
+   "shot_s": [
+    1.5,
+    2.5
+   ],
+   "note": "カットの速さは目標にしない（前の研究 H13）"
+  },
+  "grade": {
+   "saturation": 1.5,
+   "contrast": 1.08,
+   "warmth": 0.05
+  }
+ }
+}
