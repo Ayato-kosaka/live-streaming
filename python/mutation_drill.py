@@ -243,14 +243,6 @@ REPO_CASES: list[dict] = [
      "new": 'src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/'
             'Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg/960px-Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg"',
      "why": "企画の写真を Commons から直に読む道に戻す（2026-11-15 まで、この形で 429 の日に枠が空になった）"},
-    # 口調の見張りが飛ばすのは、外の出どころの題（`data-quote="src"` の付いた外へのリンクの字）だけ（2026-11-23。#1365）。
-    # 比較をひっくり返す `py` の当てかたでは「飛ばしかたを広げすぎた」形を当てていない（こちらを書くと `py` の代わりにこれが当たる）。
-    # 外の事実の箱（`data-src`）ごと飛ばすと、同じ箱の中の案内鳥の地の文の「おすすめ」が素通りする。その形そのものを置く
-    {"watch": "python/guide_watch_selftest.py",
-     "file": "python/guide_watch.py",
-     "old": '        return ext_title(n) and "srctitle" not in BREAK',
-     "new": '        return (ext_title(n) or is_src(n)) and "srctitle" not in BREAK',
-     "why": "出どころの題を飛ばすのを、外の事実の箱ごとに広げる（同じ箱の地の文の「おすすめ」を読まなくなる）"},
     # 焼いた書体を PR に入れなくなった（2026-11-20）ので、「焼くか」は `--stale` の判定1つで決まる。
     # 判定が「追いついている」と嘘をつくと、PR の見張りは古い束を見て通り、master では誰も焼かない
     {"watch": "python/fontstamp_selftest.py",
@@ -267,6 +259,14 @@ REPO_CASES: list[dict] = [
      "file": "tools/sprites/fontabsent.mjs",
      "old": "absent.has(c) && isLetter(c))", "new": "absent.has(c))",
      "why": "字母だけ外す境目を消す（記号も「字形が無い」で黙って通る）"},
+    # 口調の見張りが飛ばすのは、外の出どころの題（`data-quote="src"` の付いた外へのリンクの字）だけ（2026-11-23。#1365）。
+    # 比較をひっくり返す `py` の当てかたでは「飛ばしかたを広げすぎた」形を当てていない（こちらを書くと `py` の代わりにこれが当たる）。
+    # 外の事実の箱（`data-src`）ごと飛ばすと、同じ箱の中の案内鳥の地の文の「おすすめ」が素通りする。その形そのものを置く
+    {"watch": "python/guide_watch_selftest.py",
+     "file": "python/guide_watch.py",
+     "old": '        return ext_title(n) and "srctitle" not in BREAK',
+     "new": '        return (ext_title(n) or is_src(n)) and "srctitle" not in BREAK',
+     "why": "出どころの題を飛ばすのを、外の事実の箱ごとに広げる（同じ箱の地の文の「おすすめ」を読まなくなる）"},
 ]
 
 
