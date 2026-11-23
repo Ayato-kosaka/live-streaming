@@ -1433,3 +1433,4 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1267#issuecomment-7076329918（ボザの回: v8c を 2026/11/26 に出す）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1271#issuecomment-7076355203（配信丸わかりサイトの回: v7d を 2026/11/25 朝 09:30 に出す）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1272#issuecomment-7076392693（観光ガイドの回: v5e を 2026/11/26 朝 09:30 に出す）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1403#issuecomment-7108514644（チャットの書き置き: 温泉・ボザの予約は外さない。新しい版が間に合って品質が上がっていれば差し替え、間に合わなければ今の版が出る）
