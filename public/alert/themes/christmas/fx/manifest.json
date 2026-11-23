@@ -1,0 +1,21 @@
+{
+  "tiers": {
+    "3": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t3-full-back-intro.webm",
+            "stay": "t3-full-back-stay.webm",
+            "outro": "t3-full-back-outro.webm"
+          },
+          "front": null
+        }
+      },
+      "revealAt": 1.4,
+      "introDur": 2.2,
+      "stayDur": 4.0,
+      "outroDur": 1.0,
+      "charBottom": 0.72
+    }
+  }
+}
