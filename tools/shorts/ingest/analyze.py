@@ -169,7 +169,7 @@ def build_captions(it: dict, mdir: Path, out: Path, ctx: dict) -> dict:
 # ---------------------------------------------------------------- audio / video
 
 def build_audio(it: dict, mdir: Path, out: Path, ctx: dict, work: Path) -> dict:
-    from media import audio_series, extract_wav, write_csv
+    from media import audio_series, extract_wav, keep_audio, write_csv
 
     src = src_video(mdir)
     wav = work / "audio16k.wav"
@@ -178,7 +178,12 @@ def build_audio(it: dict, mdir: Path, out: Path, ctx: dict, work: Path) -> dict:
     rows, summ = audio_series(src, wav, work)
     write_csv(out / "audio.csv", rows, ["t", "hms", "rms_db", "peak_db", "lufs_m", "lufs_s"])
     ctx["audio"], ctx["audio_summary"] = rows, summ
-    return {"seconds": len(rows)}
+    res = {"seconds": len(rows)}
+    # 参考ショートの効果音・BGM を数えるときだけ（依頼の audio: true。#1403 の F）、元の音の束も渡す。
+    # 1秒ごとの audio.csv では 0.3秒の「ポン」は拾えず、声と BGM を左右の差で分ける測りには左右が要る
+    if it["mode"] == "reference" and it.get("audio"):
+        res["audio_bytes"] = keep_audio(src, out / "audio.mka")
+    return res
 
 
 def build_visual(it: dict, mdir: Path, out: Path, ctx: dict, work: Path) -> dict:
@@ -810,6 +815,8 @@ FILES = {
                   "score_max（その秒の場面の変わりめの点数の最大）/ cut（その秒の変わりめの数）",
     "audio.csv": "1秒ごと。rms_db / peak_db（dBFS。0 が最大）/ lufs_m（その秒の momentary "
                  "ラウドネスの最大。LUFS）/ lufs_s（short-term。3秒窓）",
+    "audio.mka": "元の音の束（符号化し直していない。左右・帯域・音量そのまま）。reference で依頼に "
+                 "`audio: true` があるときだけ。効果音・BGM を測る（`ffmpeg -i audio.mka` で開く）",
     "timeline10.csv": "10秒ごとの要約（シートの1コマと同じ刻み）。motion / bright / sat / rms_db / "
                       "lufs_m_max / speech_chars（whisper の字数）/ caption_chars（自動字幕の字数）/ "
                       "cuts / heat（よく再生された度合い 0〜1。無ければ空）",

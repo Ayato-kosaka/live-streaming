@@ -335,6 +335,18 @@ def extract_wav(src: Path, dst: Path) -> None:
                     "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(dst)], check=True)
 
 
+def keep_audio(src: Path, dst: Path) -> int:
+    """元の音の束を、符号化し直さずに Matroska の音だけの入れ物へ写す。バイト数を返す。
+
+    16kHz モノラルに落とした wav では、左右の差（声は真ん中・BGM は広がる。
+    `tools/shorts/style/bgm_gap.py` の M/S）も、8kHz より上の効果音（キラキラ）も消える。
+    符号化し直すと YouTube の Opus に2度目の傷が乗るので、束をそのまま写す（1分 約1MB）。
+    """
+    subprocess.run(["ffmpeg", "-v", "error", "-nostdin", "-y", "-i", str(src), "-map", "0:a:0",
+                    "-vn", "-sn", "-dn", "-c:a", "copy", str(dst)], check=True)
+    return dst.stat().st_size
+
+
 def read_wav(path: Path) -> np.ndarray:
     with wave.open(str(path), "rb") as w:
         n = w.getnframes()

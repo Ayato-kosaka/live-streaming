@@ -27,6 +27,8 @@ analyze.py → seal.py → decrypt.py を通す。whisper はモデルを落と�
 9. 見る用の小さな封（sheets.key.enc・sheets.enc）だけを別の置き場に写して
    `decrypt.py --sheets` で開ける（mp4 の暗号文が手元に無くても開く）。開いたものは
    シートと一覧だけで、元と1バイトも違わない。先に開いた mp4 は消さない
+10. reference の `audio: true` だけが元の音の束（audio.mka）を置く。符号の種類・左右・長さが
+   元のまま（符号化し直さない）。頼まない reference と archive には置かない（#1403 の F）
 """
 
 from __future__ import annotations
@@ -339,6 +341,65 @@ def clips_leg(root: Path, media: Path, pub: Path, priv: Path, fails: list[str]) 
         fails.append("切れ端が1つ欠けたのに開いてしまった")
 
 
+def reference_audio_leg(root: Path, media: Path, item: dict, fails: list[str]) -> None:
+    """reference の `audio: true` だけが元の音の束（audio.mka）を置く。束は符号化し直さない
+    （符号の種類・左右の数・長さが元と同じ）。頼まない reference には置かない（#1403 の F）。
+    元の動画は 12秒に切って使う（reference は 1/30秒ごとに画を読むので、90秒だと遅い）"""
+    src = media / item["key"] / "src.mkv"
+
+    def probe_audio(p: Path) -> dict:
+        r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries",
+                            "stream=codec_name,channels:format=duration", "-of", "json", str(p)],
+                           capture_output=True, text=True)
+        j = json.loads(r.stdout or "{}")
+        s = (j.get("streams") or [{}])
+        return {"n": len(j.get("streams") or []), "codec": s[0].get("codec_name"),
+                "channels": s[0].get("channels"),
+                "dur": float((j.get("format") or {}).get("duration") or 0)}
+
+    got = {}
+    for flag in (True, False):
+        key = f"dryrun00000__reference_{'a' if flag else 'n'}"
+        d = media / key
+        d.mkdir(parents=True)
+        # 左右で違う音（左 440Hz・右 660Hz）にして、束が左右のまま写るかを見る
+        sh("ffmpeg", "-v", "error", "-y", "-t", "12", "-i", str(src), "-f", "lavfi", "-t", "12",
+           "-i", "sine=f=440", "-f", "lavfi", "-t", "12", "-i", "sine=f=660", "-filter_complex",
+           "[1:a][2:a]join=inputs=2:channel_layout=stereo[a]", "-map", "0:v", "-map", "[a]",
+           "-c:v", "libx264", "-preset", "veryfast", "-c:a", "aac", "-b:a", "128k", str(d / "src.mkv"))
+        for f in ("src.info.json", "src.ja.json3", "fetch.json"):
+            shutil.copy(media / item["key"] / f, d / f)
+        it = dict(item, key=key, mode="reference", dir="reference",
+                  dest=f"dryrun00000/reference_{'a' if flag else 'n'}")
+        if flag:
+            it["audio"] = True
+        (root / f"{key}.json").write_text(json.dumps(it))
+        o = root / f"{key}_out"
+        subprocess.run([PY, str(HERE / "analyze.py"), str(root / f"{key}.json"), str(media), str(o)],
+                       env={**os.environ, "RUNNER_TEMP": str(root)}, capture_output=True)
+        st = json.loads((root / f"stages-{key}.json").read_text())["stages"]
+        if st.get("audio") != "ok":
+            fails.append(f"reference（audio: {flag}）の段 audio が {st.get('audio')}")
+        got[flag] = o
+
+    a = got[True] / "audio.mka"
+    if not a.exists():
+        fails.append("reference に audio: true を付けたのに audio.mka が無い")
+    else:
+        want, have = probe_audio(media / "dryrun00000__reference_a" / "src.mkv"), probe_audio(a)
+        if have["n"] != 1 or have["codec"] != want["codec"] or have["channels"] != 2:
+            fails.append(f"audio.mka が元の束のままでない（元 {want}・置いた {have}）")
+        if abs(have["dur"] - 12) > 0.3:
+            fails.append(f"audio.mka の長さが {have['dur']:.2f}秒（12秒のはず）")
+        idx = (got[True] / "index.md").read_text(encoding="utf-8")
+        if "`audio.mka`" not in idx:
+            fails.append("index.md に audio.mka の説明が無い")
+    if (got[False] / "audio.mka").exists():
+        fails.append("audio を頼まない reference に audio.mka が置かれた")
+    if (root / "out" / "audio.mka").exists():
+        fails.append("archive に audio.mka が置かれた")
+
+
 def main() -> int:
     root = Path(sys.argv[1]).resolve()
     if root.exists():
@@ -437,6 +498,8 @@ def main() -> int:
         fails.append(f"zoom のシートが違う: {zs}")
     if not any(abs(float(r["t"]) - 45) <= 0.3 for r in csv.DictReader(open(root / "zout" / "scenes.csv"))):
         fails.append("zoom で 45秒の変わりめが元の時刻で出ない")
+
+    reference_audio_leg(root, media, item, fails)
 
     # channel: 一覧と、上位だけ詳しく引いたもの
     citem = {"key": "channels__dryrun__shorts", "mode": "channel", "channel": "@dryrun",

@@ -20,6 +20,7 @@ workflow_dispatch のときは入力から依頼を1件こしらえる（形は�
   待ち切れたら止める。Actions が読めないときだけ、前の時計の枠（21:15〜23:59 UTC）で決める。
   待つのは依頼の形を見終わってから（読めない依頼を60分待たせてから断らない）
 - 結果を置く枝が `claude/` で始まらない（**master に平文も暗号文も入れない**）
+- `audio`（元の音の束も渡す）が reference 以外・真偽でない。配信まるごとの音は数百MB になる
 
 ## 字幕だけの道（captions）は列を分ける
 
@@ -152,6 +153,15 @@ def items_of(req: dict, origin: str) -> list[dict]:
         models = [m for m in bench.get("models", []) if m in MODELS]
         bench = {"range": [bs, be], "models": models[:4]}
 
+    # 元の音の束（audio.mka）を渡すのは参考ショートだけ（効果音・BGM を測る。#1403 の F）。
+    # 配信まるごとの音は数百MB になって作業枝に積もるので、ほかの mode では断る。
+    # "yes" のような字を真に読むと、頼んでいない回に黙って付くので、真偽だけを受ける
+    keep_audio = req.get("audio", False)
+    if not isinstance(keep_audio, bool):
+        raise Bad(f"{origin}: audio は true か false（来たのは {keep_audio!r}）")
+    if keep_audio and mode != "reference":
+        raise Bad(f"{origin}: audio（元の音の束）は reference だけ（来たのは {mode}）")
+
     # zoom は区間を1つ（range）でも、いくつも（ranges）でも受ける。1区間が1本の job
     # clips も同じ読みかた。`range` に1行で「a-b,c-d,…」と並べてもよい
     # （workflow_dispatch の入力欄は1つなので）。空なら parse_range が断る
@@ -182,6 +192,8 @@ def items_of(req: dict, origin: str) -> list[dict]:
         for rg in ranges:
             it = {"video": v, "mode": mode, "req": origin, "pubkey": pem, "pubkey_sha256": fp,
                   "whisper": w, "bench": bench if mode == "archive" else None}
+            if keep_audio:
+                it["audio"] = True
             if mode == "zoom":
                 s, e = rg
                 fps = float(req.get("fps", 1))

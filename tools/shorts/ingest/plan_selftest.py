@@ -18,6 +18,8 @@ plan.py は「Cookie を握って取りに行く前に、依頼を断れる最�
 - zoom: 区間ごとに1本の job（clips を足したことで変わっていない）・区間が空なら断る
 - archive: 動画ごとに1本・置き場は `<id>/archive`
 - 公開鍵が無い依頼は断る
+- reference の `audio: true`（元の音の束も渡す。#1403 の F）: 頼んだ回の job にだけ `audio` が載り、
+  頼まない回には欄そのものが無い（今までの依頼は1字も変わらない）。真偽でない値・reference 以外は断る
 - captions（字幕だけの道）: 動画ごとに1本・置き場は `<id>/captions`・whisper も区間も持たない。
   **fetch / analyze の列（matrix / fetch / count）に入れず、captions / captions_count に分ける**。
   字幕だけの依頼では count が 0、captions の無い依頼では captions_count が 0
@@ -118,6 +120,20 @@ def main() -> int:
           "archive は動画ごとに1本・置き場は <id>/archive")
     check(refused({"mode": "clip", "videos": ["yk-by7R7iPA"], "pubkey": pem}),
           "知らない mode（clip）を断る")
+
+    # 元の音の束（audio.mka）は reference の頼んだ回だけ（#1403 の F）。頼まない回は今までと1字も変わらない
+    ref = {"mode": "reference", "videos": ["HPJrXDpkfuo", "f8t9XIz9bPc"], "pubkey": pem}
+    ra = plan.items_of(dict(ref, audio=True), "selftest")
+    check([i.get("audio") for i in ra] == [True, True] and ra[0]["dest"] == "HPJrXDpkfuo/reference",
+          "reference に audio: true を付けた依頼は、どの回の job にも audio が載る")
+    rn = plan.items_of(dict(ref), "selftest")
+    check(all("audio" not in i for i in rn), "audio を書かない reference の job には欄そのものが無い")
+    check(all("audio" not in i for i in plan.items_of(dict(ref, audio=False), "selftest")),
+          "audio: false の reference も欄が無い")
+    check(refused(dict(ref, audio="yes")), "audio が真偽でない（\"yes\"）のを断る")
+    check(refused({"mode": "archive", "videos": ["yk-by7R7iPA"], "pubkey": pem, "audio": True}),
+          "archive に audio を付けたのを断る（配信まるごとの音は数百MB）")
+    check(refused(dict(base, ranges=RANGES[:1], audio=True)), "clips に audio を付けたのを断る")
 
     # 字幕だけの道（#1014）。fetch / analyze の列に入れず、captions / captions_count に分ける
     c = plan.items_of({"mode": "captions", "videos": ["VusdZVyjgjQ", "yk-by7R7iPA"],

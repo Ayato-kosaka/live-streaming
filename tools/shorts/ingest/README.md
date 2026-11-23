@@ -75,6 +75,7 @@ push の前後を GitHub の compare で比べて拾う）。同じものをも�
 | `tab` | `shorts` / `videos` / `streams` | `shorts` |
 | `limit` | 一覧で取る本数（新しい順） | 200 |
 | `details` | 一覧のうち再生数の多い順に何本、1本ずつのページから長さ・投稿日・高評価数・正確な再生数を引き直すか（200まで） | 50 |
+| `audio` | reference だけ。`true` で元の音の束も渡す（`audio.mka`。符号化し直さない・左右そのまま・1分 約1MB）。効果音・BGM を測るとき（1秒ごとの `audio.csv` では 0.3秒の音を拾えず、`tools/shorts/style/bgm_gap.py` の M/S には左右が要る）。ほかの mode・真偽でない値は断る | false |
 
 `workflow_dispatch` でも同じ入力で回せる（master に入ってから。`videos` 欄に、channel のときは
 チャンネルを並べる。clips の区間は `range` 欄にカンマ区切りで並べる。`branch` は結果を置く枝で、
@@ -202,6 +203,7 @@ ls $O/weSZaHeQVlI/clips/sheets/          # 01_01.jpg 01_02.jpg 02_01.jpg …（R
 | `scenes.csv` | ○ | ○ | ○ | | 場面の変わりめ（t / hms / score / ratio） |
 | `visual.csv` | ○ | ○ | ○ | | 1秒ごと: motion_mean / motion_max / bright / sat / score_max / cut |
 | `audio.csv` | ○ | ○ | | | 1秒ごと: rms_db / peak_db / lufs_m / lufs_s |
+| `audio.mka` | | 依頼に `audio: true` | | | 元の音の束（YouTube の Opus か AAC のまま。左右・帯域・音量そのまま）。`ffmpeg -i audio.mka` で開く |
 | `timeline10.csv` | ○ | | | | 10秒ごとの要約（シートの1コマと同じ刻み）と heat（よく再生された度合い） |
 | `structure.json` | | ○ | | | カット数・平均ショット長・字数/秒・喋っている割合・頭3秒・再生数と高評価 |
 | `bench/bench.md` | 依頼に bench があれば | | | | 同じ区間をモデル違いで書き起こした比べ |
@@ -307,6 +309,8 @@ clips のシートは、**シートの各コマに写っている縞が「区間
 （帯の秒と画が合っている）・コマの数と枚数・横長の長い区間（65.5秒・頭に端数）が横長の格子で
 17＋16 に均されること・小さな封の3つだけ（mp4 の暗号文無し）で `--sheets` が開けて、
 出てくるのがシートと一覧だけで元と1バイトも違わないことを見る。
+reference は、`audio: true` を付けた回だけが `audio.mka` を置き、束が元のまま（符号の種類・左右・長さ）で、
+頼まない reference と archive には置かないことを見る（左右で違う音を入れた12秒の動画で）。
 
 毎回の PR では、ffmpeg の要らない5本が回し役（`python3 python/selftest_runner.py`）から走る。
 
@@ -318,7 +322,8 @@ clips のシートは、**シートの各コマに写っている縞が「区間
   守りを1つずつ外した写しで回して、その足だけが落ちることも見る（`BREAK=<名前>` で1つだけ）
 
 - `plan_selftest.py` — 依頼の読みかた。clips の18区間が1本の job・頼んだ順のまま・上限で断る、
-  zoom と archive が変わっていない。captions は fetch / analyze の列に入らず `captions` / `captions_count` に分かれる
+  zoom と archive が変わっていない。captions は fetch / analyze の列に入らず `captions` / `captions_count` に分かれる。
+  reference の `audio: true` は頼んだ回の job にだけ載り、真偽でない値・reference 以外は断る
 - `gate_selftest.py` — 毎晩の取り込みとぶつからないか（下の「毎晩の取り込みと同時に取らない」）。
   偽の Actions と偽の時計で、動いていない → すぐ通る・queued / in_progress → 待つ・
   60分で止まる・読めない → 時計の枠に戻る、と、plan / download が本当にここを通ること・
