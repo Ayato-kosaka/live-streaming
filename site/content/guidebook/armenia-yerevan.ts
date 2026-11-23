@@ -3854,7 +3854,7 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
    {
     "icon": "passport",
     "label": "パスポート",
-    "why": "日本の人は、観光などの180日以内の滞在なら査証が要らない。",
+    "why": "日本の人は、観光などで滞在が180日までなら査証が要らない。",
     "src": [
      {
       "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
@@ -4046,6 +4046,6 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "65affa1f360040b1"
+ "hash": "e02bb87806bb170a"
 }
 /* END GUIDE */;
