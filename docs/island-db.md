@@ -1,5 +1,7 @@
 # あやと島 — データ設計
 
+種別: 台帳
+
 **この文書は「いま、本番がどうなっているか」だけを書く。**
 なぜそう決めたか・何に躓いたかは [`island-db-notes.md`](./island-db-notes.md)、
 口（API）の一覧は [`island-api.md`](./island-api.md) にある。
