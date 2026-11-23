@@ -16,6 +16,26 @@
       "stayDur": 4.0,
       "outroDur": 1.0,
       "charBottom": 0.72
+    },
+    "4": {
+      "variants": {
+        "full": {
+          "back": {
+            "intro": "t4-full-back-intro.webm",
+            "stay": "t4-full-back-stay.webm",
+            "outro": "t4-full-back-outro.webm"
+          },
+          "front": {
+            "intro": "t4-full-front-intro.webm",
+            "stay": "t4-full-front-stay.webm",
+            "outro": "t4-full-front-outro.webm"
+          }
+        }
+      },
+      "revealAt": 2.6,
+      "introDur": 3.4,
+      "stayDur": 3.0,
+      "outroDur": 1.0
     }
   }
 }
