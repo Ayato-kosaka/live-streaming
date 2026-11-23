@@ -98,6 +98,16 @@ import {ownedChannel} from "./youtubeOwner";
    `docs/card-import.md` 3章）。 */
 import {handleCardImport} from "./cardImport";
 import {capHit} from "./capWatch";
+/* 島で受ける投げ銭（#1405。決定の記録 0017）。同じ理由で外に置いてある。
+   **額は Stripe の知らせの値だけ**、名前とチャンネルは口が引く（`tip.ts` 冒頭）。
+   字数と額の線は向こうが正で、`GET /state` の `limits` はそれを配るだけ。 */
+import {
+  TIP_MESSAGE_MAX,
+  TIP_YEN_MAX,
+  TIP_YEN_MIN,
+  handleTip,
+  islandYenOf,
+} from "./tip";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -1024,6 +1034,12 @@ const fundChatOf = (b: Json, now: number): FundChat | null => {
 type FundBox = {
   /** 貯金箱に入るぶん（**÷2 済み**） */
   superchat: number;
+  /**
+   * 島の投げ銭（本番で払われたぶん。払った額のまま。#1405）。
+   * **欄が無ければ null**——「まだ焼いていない」で、0円ではない。
+   * 決めるのは `tip.ts` の `islandYenOf`
+   */
+  island: number | null;
   /** 起点。支出の合計の符号を反転した**負の数** */
   start: number;
   /** バーの高さ。分からなければ 0 */
@@ -1049,10 +1065,18 @@ const boxOf = (v: unknown): FundBox | null => {
   const start = Number(b.start);
   if (!Number.isFinite(superchat) || superchat < 0) return null;
   if (!Number.isFinite(start)) return null;
+  /* 島の投げ銭（#1405）。**欄が無いのと、欄が壊れているのは別。**
+     無ければ null（決めるのは `islandYenOf`）、壊れていれば焼き直しごと
+     使わない（スパチャの欄が壊れているときと同じ）。 */
+  const islandRaw = b.island;
+  const island =
+    islandRaw === undefined || islandRaw === null ? null : Number(islandRaw);
+  if (island !== null && (!Number.isFinite(island) || island < 0)) return null;
   const g = (typeof b.goal === "object" && b.goal ? b.goal : {}) as Json;
   const yen = Number(g.yen);
   return {
     superchat,
+    island,
     start,
     goalYen: Number.isFinite(yen) && yen > 0 ? yen : 0,
     goalLabel: String(g.label ?? ""),
@@ -2751,6 +2775,31 @@ export const islandApi = onRequest(
         return;
       }
 
+      /* ---------------- 島で受ける投げ銭(#1405) ----------------
+         中身は `tip.ts`。ここは取り付けだけ。扱ったら true。
+         **Stripe の知らせは生の本文（`req.rawBody`）で確かめる**ので、
+         JSON にした `body` とは別に渡す。戻り先は来たホストから決める
+         （知らないホストなら正の URL。向こうの `originOf`）。 */
+      if (
+        await handleTip(
+          {
+            method,
+            path,
+            auth: req.headers.authorization,
+            body,
+            rawBody: req.rawBody,
+            signature: String(req.headers["stripe-signature"] ?? ""),
+            host: String(
+              req.headers["x-forwarded-host"] ?? req.headers.host ?? "",
+            ),
+          },
+          res,
+          {whoIs, takeQuota, clean},
+        )
+      ) {
+        return;
+      }
+
       /* ---------------- ログイン ---------------- */
       // ログインした直後に呼ばれる。誰が来たかを覚えておくだけ。
       if (method === "POST" && path === "/me") {
@@ -3206,6 +3255,14 @@ export const islandApi = onRequest(
             name: MAX_NAME_LEN,
             /** 付箋に貼るリンク（`MAX_LINK_LEN`） */
             link: MAX_LINK_LEN,
+            /* 島の投げ銭（#1405）。**正は `tip.ts`**。画面は数字を持たない。
+               上限は Stripe の1回の上限（あやとの決めた上限ではない）。 */
+            /** 1回の最小額（円。`TIP_YEN_MIN`） */
+            tipYenMin: TIP_YEN_MIN,
+            /** 1回の上限（円。`TIP_YEN_MAX`） */
+            tipYenMax: TIP_YEN_MAX,
+            /** メッセージの字数（`TIP_MESSAGE_MAX`） */
+            tipMessageMax: TIP_MESSAGE_MAX,
           },
         });
         return;
@@ -3264,13 +3321,23 @@ export const islandApi = onRequest(
            最後まで残っていた Doneru の鍵が `islandFundConfig/doneru` へ
            移ったので、あの書類を読む理由が1つも無くなった。 */
         const b = boxOf(f.box);
+        /* 島の投げ銭（#1405）。**決められないときは、0 で足さずに 503。**
+           豚の口（`GET /alertbox/{合言葉}/fund`）と同じ額を言うため
+           （向こうも 503 にする）。焼き直しが読めない回（`b` が無い）は
+           下の古い受け皿に落ちるので、そこには足さない。 */
+        const island = b ? await islandYenOf(b.island) : 0;
+        if (island === null) {
+          res.set("Cache-Control", "no-store");
+          res.status(503).json({error: "no fund data"});
+          return;
+        }
         const superchat = b ? b.superchat : num(f.superchat);
         const start = b ? b.start : num(f.start);
-        let total = (doneru ?? 0) + superchat + start;
+        let total = (doneru ?? 0) + superchat + island + start;
         /* **人が実際に出した額は、上の合計とは別物。** 合計には起点の
            マイナスが入っているので、「N人があわせて◯円出してくれました」に
            使うと嘘になる。そちらはマイナスを含まない額を渡す。 */
-        const given = (doneru ?? 0) + superchat;
+        const given = (doneru ?? 0) + superchat + island;
         // どれも読めなかったときだけ、集計が置いていった合計に落ちる
         if (total <= 0) total = num(f.total);
         /* 1円も分からないときは、200 で 0 を返さない。
@@ -4537,12 +4604,15 @@ export const islandApi = onRequest(
         ]);
         const f = ((snap.exists ? snap.data() ?? {} : {}).fund ?? {}) as Json;
         const b = boxOf(f.box);
+        /* 島の投げ銭（#1405）。欄が無いときに 0 を作らない（`islandYenOf`）。 */
+        const island = b ? await islandYenOf(b.island) : null;
         /* **0円を 200 で返さない。** 豚が「0円」と出るのは、出ないより悪い
            （`docs/island-standards.md` 10章）。読めなかったときは 200 以外を
            返して、OBS 側に印だけ出させる（`setDead("init")`）。 */
-        if (!b || doneru === null) {
+        if (!b || doneru === null || island === null) {
           logger.warn(
-            `alertbox fund: not ready (box=${!!b} doneru=${doneru !== null})`,
+            `alertbox fund: not ready (box=${!!b} doneru=${doneru !== null}` +
+              ` island=${island !== null})`,
           );
           res.set("Cache-Control", "no-store");
           res.status(503).json({error: "no fund data"});
@@ -4551,7 +4621,7 @@ export const islandApi = onRequest(
         res.set("Cache-Control", "no-store");
         res.json({
           // 豚の針が指す額。**式は `GET /fund` の total と同じ1本**
-          currentAmount: b.start + b.superchat + doneru,
+          currentAmount: b.start + b.superchat + island + doneru,
           /* バーの高さ。**落ち先は持たない**（`GET /fund` と同じ。#639）。
              0 のとき豚は 0% を出す（`PiggyGauge` が `targetAmount <= 0` を見る）。 */
           targetAmount: b.goalYen,
