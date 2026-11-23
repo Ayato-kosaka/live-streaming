@@ -78,7 +78,7 @@ class Scene(Stage):
         n = 150
         self.stars = np.stack([R.random(n) * W, R.random(n) ** 1.3 * 1000, R.random(n), R.random(n), R.random(n)], -1)
         self.keep = self.thin_keep()
-        self.snow = Loop(170, 4102, cycles=(1, 2))
+        self.snow = Loop(220, 4102, cycles=(1, 2))
         self.near = Loop(40, 4103, cycles=(1, 1))
         self.dust = Loop(60, 4104, cycles=(1, 2))
         R = np.random.default_rng(4105)
@@ -143,7 +143,9 @@ class Scene(Stage):
         if c.clip == "intro" and T < 1.88:
             art = self.pop
         else:
-            art = self.wave[int(math.floor((T - self.INTRO) / WAVE + 1e-6)) % 2]
+            # 切り替わりを滞在の頭（継ぎ目）から半拍ずらす。継ぎ目で絵が替わると、キーフレームの質の段と重なって
+            # 継ぎ目の差が中のどのコマ送りより大きくなった（2026-11-23 の1回目の焼き: 1.60 > 1.31）
+            art = self.wave[int(math.floor((T - self.INTRO) / WAVE + 0.5)) % 2]
         return art, r, sx, sy
 
     def draw(self, c):
@@ -151,7 +153,7 @@ class Scene(Stage):
         intro = c.clip == "intro"
         out_k = 1 - ease(ramp(u, 0.25, 1.0))
         back, front, hero, lipc = Canvas(), Canvas(), Canvas(), Canvas()
-        sp_b, sp_f = Splat(), Splat()
+        sp_sky, sp_b, sp_f = Splat(), Splat(), Splat()
         thin = self.thin_at(c)
         lit = ease(ramp(Ti, 0.2, 1.2))
 
@@ -164,7 +166,7 @@ class Scene(Stage):
         st = self.stars
         tw = (0.5 + 0.5 * np.sin(2 * np.pi * (c.ph * (1 + (st[:, 2] * 3).astype(int)) + st[:, 3]))) ** 3
         on = np.clip((Ti - 0.1 - st[:, 1] / 1400) / 0.3, 0, 1)
-        sp_b.add_screen(st[:, 0], st[:, 1], (WHITE * 1.1)[None] * (0.15 + 0.7 * tw * st[:, 4])[:, None]
+        sp_sky.add_screen(st[:, 0], st[:, 1], (WHITE * 1.1)[None] * (0.15 + 0.7 * tw * st[:, 4])[:, None]
                         * (on * sky_k)[:, None])
 
         # ---- 満月（前兆で明るくなり、光の筋を落とす）
@@ -201,6 +203,18 @@ class Scene(Stage):
                      * (0.75 + 0.25 * np.sin(6.283 * (c.ph * 3 + xx * 6)))
                      * (1 + 1.2 * np.exp(-((T - POP - 0.05 - xx * 0.2) / 0.08) ** 2) * intro), 0.8 * rk)
 
+        sp_sky.into(back)
+
+        # ---- キャラ絵が出たら、景色を縁だけに引く（前掛けなので、色・覆い・光を同じ濃さで掛ければ層ごと薄くなる）。
+        # 粒（雪・光の筋・はじける雪）は引いたあとに足す。先に足すと、縁の外の雪と、上の帯の夜空の外を回る光の筋まで消えた
+        m = 1 - thin * (1 - self.keep) if thin > 0.002 else None
+        if m is not None:
+            back.P *= m[..., None]
+            back.A *= m
+            back.L *= m[..., None]
+            # 月のまわりの光は、形で残した月の外にも少し（光だけ）
+            glow(back, mx, my, MOON[2] * 0.62, GOLD * 0.55 + WHITE * 0.25, 0.3 * mg * thin)
+
         # ---- 煙突が雪をふく（すぽん！の前に2回）
         for t0, nn in ((1.0, 14), (1.25, 18)):
             self.puff(c, sp_b, hx, hy, hs, T - t0, nn, seed=int(t0 * 100), k=rk * intro)
@@ -231,20 +245,13 @@ class Scene(Stage):
         a1 = g.age(c)
         x = g.r[:, 0] * W + 26 * np.sin(6.283 * (a1 * 2 + g.r[:, 1]))
         y = -20 + a1 * 1320
-        kd = np.sin(np.pi * a1) ** 0.5 * (0.25 + 0.35 * (g.r[:, 2] < 0.3)) * amb * (1 - 0.5 * thin)
+        kd = np.sin(np.pi * a1) ** 0.5 * (0.25 + 0.35 * (g.r[:, 2] < 0.3)) * amb * (1 - 0.3 * thin)
         sp_b.add_screen(x, y, (WHITE * 1.3)[None] * kd[:, None], coc=np.where(g.r[:, 2] < 0.3, 2.0, 0.0))
         sp_b.into(back)
 
-        # ---- キャラ絵が出たら、景色を縁だけに引く（前掛けなので、色・覆い・光を同じ濃さで掛ければ層ごと薄くなる）
-        if thin > 0.002:
-            m = 1 - thin * (1 - self.keep)
-            back.P *= m[..., None]
-            back.A *= m
-            back.L *= m[..., None]
+        if m is not None:
             lipc.P *= m[..., None]
             lipc.A *= m
-            # 月のまわりの光は、形で残した月の外にも少し（光だけ）
-            glow(back, mx, my, MOON[2] * 0.62, GOLD * 0.55 + WHITE * 0.25, 0.3 * mg * thin)
         # ---- 引いたあとの縁のきらめき
         ek = thin * out_k
         if ek > 0.003:
@@ -362,7 +369,7 @@ class Scene(Stage):
             x = hx + lx * math.cos(tilt) - ly * math.sin(tilt)
             y = cy + lx * math.sin(tilt) + ly * math.cos(tilt) - (1 - grow) * 60 * hs
             fade = (1 - tt / 0.42) ** 1.6
-            col = (GOLD * 1.3 + WHITE * 0.5)[None] * (fade * 0.3 * k)[:, None]
+            col = (GOLD * 1.3 + WHITE * 0.5)[None] * (fade * 0.5 * k)[:, None]
             far = np.sin(ang) < 0   # 奥（あやとの後ろ）は back、手前は front
             sp_b.add_screen(x[far], y[far], col[far], coc=np.full(far.sum(), 1.2))
             sp_f.add_screen(x[~far], y[~far], col[~far] * 0.8, coc=np.full((~far).sum(), 1.2))

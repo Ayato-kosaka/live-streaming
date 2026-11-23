@@ -111,7 +111,7 @@ class Scene(Stage):
         self.tree_top = self.BOTTOM + 2 - sprite_top(self.tree, H_TREE)
         self.star_home = (TX + 1.0, self.tree_top + 4.0)
         self.snow = Loop(150, 3402, cycles=(1, 2))
-        self.bok = Loop(14, 3403, cycles=(1, 1))
+        self.bok = Loop(20, 3403, cycles=(1, 1))
         self.glint = Loop(26, 3404, cycles=(2, 3))
 
     # ---------------- 時刻
@@ -296,7 +296,9 @@ class Scene(Stage):
             # 抱き下ろして、ピポと一緒に2回跳ねる
             lift, land = hops(s, 1.9, 3.1, 2, 10)
             return Pose(self.carry, H_CARRY, LX, lift, rot=sway, sx=1 + 0.06 * land + 0.04 * sq, sy=1 - 0.08 * land - 0.05 * sq)
-        return Pose(self.lift, H_LIFT, LX, 0.0, rot=sway, sx=1 - 0.03 * sq, sy=1 + 0.05 * sq, flip=True)
+        # 抱き上げているあいだは、ピポを星へ届けるように弾ませる（1秒に1回。輪の頭で 0・速さも 0）
+        bounce = 5.0 * math.sin(2 * math.pi * s / 1.0) ** 2
+        return Pose(self.lift, H_LIFT, LX, bounce, rot=sway * 1.6, sx=1 - 0.03 * sq, sy=1 + 0.05 * sq, flip=True)
 
     def draw_star(self, c, cv, mom, foot, ceil, out_k):
         """金の星。登場ではピポが掲げて運び、1.45〜1.75 にツリーのてっぺんへ。付いたら閃く。滞在はゆっくり瞬く"""
@@ -364,8 +366,11 @@ class Scene(Stage):
         # オレオが前を通るときは、身をかがめて通す
         duck = math.exp(-((ox_now - JX) / 34) ** 2) if ox_now is not None else 0.0
         if s < 0.3 or s >= 2.1:
+            # オレオが運んでいるあいだは、その場で跳ねて応援する（通るときはかがむ）
             br = 0.015 * math.sin(2 * math.pi * s / 1.0)
-            return Pose(self.j_walk, H_JW, JX, 0.0, flip=True, sx=1 + 0.05 * duck, sy=1 + br - 0.1 * duck)
+            lift, land = hops(s, 2.45, 3.85, 4, 9)
+            return Pose(self.j_walk, H_JW, JX, lift * (1 - duck), flip=True, sx=1 + 0.05 * duck + 0.06 * land,
+                        sy=1 + br - 0.1 * duck - 0.08 * land)
         if s < 0.9:
             p = (s - 0.3) / 0.6
             lift, land = hops(s, 0.3, 0.9, 2, 14)
@@ -432,7 +437,9 @@ class Scene(Stage):
             k = math.sin(math.pi * (q - 1.85) / 0.1)
             p = Pose(self.o_walk, H_OW, OX, 0.0, flip=q >= 1.9, sx=1 + 0.08 * k, sy=1 - 0.1 * k)
         else:
+            # ジモモが運んでいるあいだは、その場で跳ねて応援する
             br = 0.015 * math.sin(2 * math.pi * q / 1.0)
-            p = Pose(self.o_walk, H_OW, OX, 0.0, flip=True, sy=1 + br)
+            lift, land = hops(q, 2.45, 3.85, 4, 9)
+            p = Pose(self.o_walk, H_OW, OX, lift, flip=True, sx=1 + 0.06 * land, sy=1 + br - 0.08 * land)
         p.ground = -front
         return p
