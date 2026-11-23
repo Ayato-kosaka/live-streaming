@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "okmf2aIMXAY__reference",
+ "mode": "reference",
+ "dest": "okmf2aIMXAY/reference",
+ "video": "okmf2aIMXAY",
+ "channel": null,
+ "request": "shorts/requests/teko-C-refs1-20261123.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1325,
+  "tar_gz": 1044,
+  "encrypted": 1056
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1056,
+   "sha256": "6f50add5676023472526023d3f8e6286d430e05e1f495b8e0eeb7ac86aba8d58"
+  }
+ ],
+ "hmac_sha256": "c342478e2be4348a01bd2f97c9c3b39316a6640977bc8ccd39a58895763c0b31",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45169159105",
+ "created_at": "2026-11-23T12:16:16+00:00"
+}
