@@ -55,7 +55,11 @@ if not (kb.DATA / "book.json").exists():
 print("[1] 本物: 焼いてあるものが今の材料と同じ")
 with contextlib.redirect_stdout(io.StringIO()):
     rc = kb.bake(check=True)
+    named = kb.main([kb.SLUG, "--check"])
+    other = kb.main(["india-street-food", "--check"])
 ok("焼き直しが要らない（--check）", rc, 0)
+ok("企画を名指ししても同じ（heavy_watch の legend の口の形）", named, 0)
+ok("ほかの企画を名指しすると、焼かずに 2", other, 2)
 
 print("[2] 対照: 材料の写しを壊すと、何も書かずに止まる")
 real_book = json.loads((kb.DATA / "book.json").read_text(encoding="utf-8"))

@@ -2,6 +2,7 @@
 
     python3 python/legend_kitchen_bake.py                # 焼く（site/content/legends/nomad-kitchen-car.ts）
     python3 python/legend_kitchen_bake.py --check        # 焼かずに、焼いてあるものが今の材料と同じかだけ（違えば 1）
+    python3 python/legend_kitchen_bake.py nomad-kitchen-car --check   # 企画の名指しはインドの道具と同じ形（heavy_watch の legend の口）
     python3 python/legend_kitchen_bake.py --say-table    # 案内鳥のひとこと7つが、つまみの格子のどこで出るかの表
     python3 python/legend_kitchen_bake.py --src <置き場> --out y.ts   # 置き場を差し替える（見張りが壊した写しを当てる）
 
@@ -674,11 +675,15 @@ def bake(*, src: Path | None = None, out: Path | None = None, check: bool = Fals
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("slug", nargs="?", default=SLUG, help=f"企画の slug（{SLUG} だけ。インドの道具と同じ形で名指しできる）")
     ap.add_argument("--check", action="store_true", help="焼かずに、焼いてあるものが同じかだけ見る")
     ap.add_argument("--say-table", action="store_true", help="ひとこと7つが、つまみの格子のどこで出るかの表を出す（焼かない）")
     ap.add_argument("--src", type=Path, help="材料の置き場（既定は python/data/legends/nomad-kitchen-car/）")
     ap.add_argument("--out", type=Path, help="焼く先（既定は site/content/legends/nomad-kitchen-car.ts）")
     a = ap.parse_args(argv)
+    if a.slug != SLUG:
+        print(f"::error::この道具は {SLUG} だけを焼く（{a.slug!r}）。ほかの企画は python/legend_book_bake.py")
+        return 2
     return bake(src=a.src, out=a.out, check=a.check, table=a.say_table)
 
 
