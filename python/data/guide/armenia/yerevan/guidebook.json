@@ -109,7 +109,7 @@
    {
     "key": "history",
     "title": "世界最古の都市のひとつ",
-    "text": "紀元前782年、ウラルトゥ王国がこの丘にエレブニの要塞を築いた。エレバンの名前はエレブニから来ている。",
+    "text": "紀元前782年、ウラルトゥ王国がエレブニの要塞を築いた。エレバンの名前はエレブニから来ている。",
     "src": [
      {
       "name": "Wikipedia「Erebuni Fortress」",
@@ -148,7 +148,7 @@
    {
     "key": "pink",
     "title": "ピンクシティ",
-    "text": "街のまん中の建物は、ピンクや黄色の凝灰岩で建てた。濃さのちがうピンクの石から「ピンクシティ」と呼ばれる。",
+    "text": "共和国広場の建物は、ピンクや黄色の凝灰岩で建てた。濃さのちがうピンクの凝灰岩から「ピンクシティ」と呼ばれる。",
     "src": [
      {
       "name": "Wikipedia「Republic Square, Yerevan」",
@@ -4292,7 +4292,7 @@
     "alcohol": false,
     "pork": false,
     "what": {
-     "text": "アルメニアの甘いパン。町や地方で形が違う。中にバターと砂糖と小麦粉の詰め物を入れたものが多い。",
+     "text": "アルメニアの甘いパン。町や地方で形が違う。よく食べられるコリツは、小麦粉・バター・砂糖の詰め物を入れる。",
      "src": [
       {
        "name": "Wikipedia「Gata (food)」",
@@ -4512,33 +4512,6 @@
       },
       "went": false,
       "maps": "https://www.google.com/maps/search/?api=1&query=OST+Yerevan&hl=ja"
-     },
-     {
-      "key": "artlunch",
-      "name": "アート・ランチ（食堂）",
-      "local": "Art Lunch",
-      "area": "south",
-      "lat": 40.150326,
-      "lon": 44.516478,
-      "coord_src": [
-       {
-        "name": "OpenStreetMap「Art Lunch」",
-        "url": "https://www.openstreetmap.org/way/369823759",
-        "seen": "2026-11-23"
-       }
-      ],
-      "why": {
-       "text": "スープと家庭料理の食堂。品書きにハリサ（930ドラム）・スパス（560ドラム）・キュフタ（1,080ドラム）・ガタ（100gで250ドラム）・ラヴァシュ（50gで60ドラム）・ハチャプリ・タン。",
-       "src": [
-        {
-         "name": "Glovo「Art Lunch」（配達の品書き）",
-         "url": "https://glovoapp.com/en/am/yerevan/stores/art-lunch-yrv-yrv",
-         "seen": "2026-11-23"
-        }
-       ]
-      },
-      "went": false,
-      "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
      }
     ],
     "went": false
@@ -5375,7 +5348,7 @@
       "ja": "いいえ"
      },
      {
-      "local": "Կներե՛ք",
+      "local": "Կներեք",
       "roman": "knereq",
       "kana": "クネレク",
       "ja": "すみません（呼びかけ）"
@@ -5387,7 +5360,7 @@
       "ja": "お願いします"
      },
      {
-      "local": "Սա ի՞նչ արժե",
+      "local": "Սա ինչ արժե",
       "roman": "sa inch arzhe",
       "kana": "サ・インチ・アルジェ？",
       "ja": "これはいくらですか？"
