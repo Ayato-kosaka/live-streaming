@@ -19,13 +19,13 @@
   },
   {
    "title": "「東欧で物価が安い国」",
-   "body": "安いのは本当だが、2026年の数字で見ると昔のガイド記事ほどではない。クラウドソースの物価データ（2026年11月6日更新）では、安い店の食事1人15ユーロ（約2,700円）、中級店で2人・前菜からデザートまで60ユーロ（約10,600円）、カプチーノ3.13ユーロ（約550円）。一方で市内交通は1回0.80ユーロ（約140円）と、ここは本当に安い。『1日2,500円』と書いてある記事はユーロ導入前の取材なので、そのままでは当てにしない。",
+   "body": "安いのは本当だが、2026年の数字で見ると昔のガイド記事ほどではない。クラウドソースの物価データ（2026年11月20日更新）では、安い店の食事1人15ユーロ（約2,700円）、中級店で2人・前菜からデザートまで60ユーロ（約10,600円）、カプチーノ3.24ユーロ（約570円）。一方で市内交通は1回0.80ユーロ（約140円）と、ここは本当に安い。『1日2,500円』と書いてある記事はユーロ導入前の取材なので、そのままでは当てにしない。",
    "src": "https://www.numbeo.com/cost-of-living/in/Sofia"
   },
   {
    "title": "バラの国",
-   "body": "バラのオイル（розово масло）の世界最大の産地で、品質も最上級とされる。ただしソフィアの土産物屋に並ぶ小瓶は玉石混交で、本物は密封したガラス瓶に入っているのが普通。香りだけ持ち帰るならローズウォーターのほうが安くて外れにくい。なお、バラの収穫と祭りはカザンラクで毎年6月なので、11月の現地にバラ畑の風景はない。",
-   "src": "https://sofiaadventures.com/bulgarian-souvenirs/"
+   "body": "バラのオイル（розово масло）とバラの精油（アッター）の名産地。ただしソフィアの土産物屋に並ぶ小瓶は玉石混交で、本物は密封したガラス瓶に入っているのが普通。香りだけ持ち帰るならローズウォーターのほうが安くて外れにくい。なお、バラの収穫と祭りはカザンラクで毎年6月なので、11月の現地にバラ畑の風景はない。",
+   "src": "https://www.inyourpocket.com/bulgaria/sofia/articles/our-top-5-gifts-to-bring-back-from-bulgaria"
   }
  ],
  "history": [
@@ -78,7 +78,7 @@
    "n": "20",
    "unit": "分",
    "cap": "空港から中心まで、地下鉄M4で。ターミナル2の真横に駅がある",
-   "src": "https://www.euronews.com/2026/08/22/sofia-travel-guide-how-to-spend-48-hours-in-bulgarias-capital"
+   "src": "https://metroeasy.com/sofia-metro.html"
   },
   {
    "n": "1.95583",
@@ -129,7 +129,7 @@
   },
   {
    "title": "物価の目安",
-   "body": "クラウドソースの物価データ（2026年11月6日更新）で、安い店の食事1人15ユーロ（約2,700円）、中級店の2人前菜〜デザート60ユーロ（約10,600円）、生ビール1パイント3.50ユーロ（約620円）、カプチーノ3.13ユーロ（約550円）、レストランの水（小瓶）1.54ユーロ（約270円）。あくまで投稿の平均で、同じページのコメント欄には「実際はもっと高い」という書き込みもある。",
+   "body": "クラウドソースの物価データ（2026年11月20日更新）で、安い店の食事1人15ユーロ（約2,700円）、中級店の2人前菜〜デザート60ユーロ（約10,600円）、生ビール1パイント3.50ユーロ（約620円）、カプチーノ3.24ユーロ（約570円）、レストランの水（小瓶）1.53ユーロ（約270円）。あくまで投稿の平均で、同じページのコメント欄には「実際はもっと高い」という書き込みもある。",
    "src": "https://www.numbeo.com/cost-of-living/in/Sofia"
   },
   {
@@ -174,17 +174,17 @@
   },
   {
    "title": "チップ",
-   "body": "義務ではないが、レストランで10%前後を現金で置くのが通例とされる。タクシーも料金の10%ほどを足す人が多い。カード払いのときは伝票に書く欄がないことがあるので、小額の現金を持っておくとやりやすい。",
-   "src": "https://www.cia.gov/the-world-factbook/about/archives/2024/static/6fcdab8c59ea20351e3d5bd022c75916/BU-travel-facts.pdf"
+   "body": "義務ではないが、喜ばれる。レストランでは会計の5〜10%がふつうとされる。よい接客に少し足すのは自由で、求められてはいない。",
+   "src": "https://www.rexby.com/planinkabg/t/things-to-know-before-visiting-bulgaria-1"
   },
   {
    "title": "電源とプラグ",
    "body": "230V、プラグはCタイプとFタイプ（丸ピン2本）。日本の100V機器はそのままでは使えないので、変換プラグと、必要なら変圧器を持つ。配信機材は入力電圧の表示（100-240V）を出発前に確認しておく。",
-   "src": "https://www.rexby.com/planinkabg/t/things-to-know-before-visiting-bulgaria-1"
+   "src": "https://en.wikipedia.org/wiki/Mains_electricity_by_country"
   },
   {
    "title": "SIM・ネット",
-   "body": "主要キャリアはA1、Yettel（旧Telenor）、Vivacom。街なかの直営店でプリペイドSIMが買える。あるガイドはデータ5GB・1ヶ月でおよそ8レフ（＝約4ユーロ／約720円）と書いているが、これはレフ時代の取材なので、現地の店頭価格で確かめたい。EU圏のeSIMもそのまま使える。",
+   "body": "主要キャリアはA1、Yettel（旧Telenor）、Vivacom。プリペイドSIMは、街なかの店や携帯ショップで買える。",
    "src": "https://www.rexby.com/planinkabg/t/things-to-know-before-visiting-bulgaria-1"
   },
   {
@@ -268,7 +268,7 @@
    "lat": 42.644672,
    "lon": 23.266172,
    "what": "1979年に世界遺産に登録された小さな教会。10世紀・13世紀・19世紀の3棟がつながっていて、目当ては13世紀（1259年）のフレスコ。ルネサンスより200年早く、顔が「個人の顔」になっている壁画として知られる。",
-   "how": "公式の案内で、見学は9人ずつ・1回10分。11〜3月は9:00〜17:30（最終券17:00）、4〜10月は9:30〜18:00（最終券17:30）。大人10.00ユーロ（約1,770円）。市の南西の外れ、ヴィトシャ山の麓。",
+   "how": "公式の案内で、見学は9人ずつ・1回10分。11〜3月は9:00〜17:30（券は17:20まで）、4〜10月は9:30〜18:00（券は17:50まで）。大人10.00ユーロ（約1,770円）。市の南西の外れ、ヴィトシャ山の麓。",
    "walk": "中心から7.3km。64番バス（NDKまたは地下鉄Vitosha駅から／降車は Боянско ханче）か107番バス（降車は Боянска църква）で30〜40分",
    "stay": "30分（内部は10分。待ち時間を含む）",
    "advice": "10分交代制なので、団体と重なると外で待つ。内部は撮影厳禁（外と庭は自由）。毎月最終月曜の15:00以降は無料だが、その日は混んで入れないことがある。国立歴史博物館とは徒歩15分なので、同じ日に回れる。",
@@ -282,7 +282,7 @@
    "rank": 2,
    "lat": 42.6967,
    "lon": 23.32137,
-   "what": "街のど真ん中に立つ正教会の主教座聖堂。中世に建てられて何度も建て直されている。1925年にここで爆破テロが起きた歴史を持つ。セルビアの聖王ステファン・ミルティンの聖遺物が納められていて、セルビアからの巡礼も来る。このページの「中心から徒歩◯分」は、この教会から数えている。",
+   "what": "街のど真ん中に立つ正教会の主教座聖堂。中世に建てられて何度も建て直されている。1925年にここで爆破テロが起きた歴史を持つ。セルビアの聖王ステファン・ミルティンの聖遺物が納められていて、セルビアからの巡礼も来る。",
    "how": "入場無料。地下鉄セルディカ駅からすぐ。",
    "walk": "ここが中心（徒歩0分）",
    "stay": "20分",
@@ -362,7 +362,7 @@
    "walk": "中心から徒歩6分（約370m）",
    "stay": "30分",
    "advice": "中はスーパーで、量り売りの市場ではない。地下の遺構の一角だけ見るなら15分で足りる。屋外の市場が見たいなら、西へ300mほどの女性市場へ。",
-   "src": "https://bnrnews.bg/en/post/106944/the-iconic-central-market-hall-in-sofia-will-soon-reopen-to-visitors"
+   "src": "https://www.across-magazine.com/revitalization-how-kaufland-is-developing-a-market-hall-into-the-new-tourism-magnet-of-sofia/"
   },
   {
    "name": "ヴィトシャ大通り（歩行者区間）",
@@ -373,11 +373,11 @@
    "lat": 42.695362,
    "lon": 23.320958,
    "what": "聖ネデリャ教会から南へ伸びる、街でいちばん有名な通り。歩行者専用の区間にカフェとテラスが並び、突き当たりの正面にヴィトシャ山が見える。街の人が「ヴィトシュカ」と呼ぶのはここ。",
-   "how": "通りなので自由。南端がNDK（国立文化宮殿）に突き当たる。",
+   "how": "通りなので自由。南の端は南公園で、その手前にNDK（国立文化宮殿）が建つ。",
    "walk": "中心から徒歩2分（約150m）",
    "stay": "30分（通り抜けるだけなら15分）",
    "advice": "観光客向けで、値段は1〜2割高め。地元の店で飲み食いしたいなら、東に2ブロック入ったツァル・シシュマン通り（ул. Цар Шишман）のほうが落ち着いている。",
-   "src": "https://www.euronews.com/2026/08/22/sofia-travel-guide-how-to-spend-48-hours-in-bulgarias-capital"
+   "src": "https://en.wikipedia.org/wiki/Vitosha_Boulevard"
   },
   {
    "name": "聖ペトカ地下教会",
@@ -417,12 +417,12 @@
    "rank": 3,
    "lat": 42.70068,
    "lon": 23.318208,
-   "what": "1878年に始まった、街でいちばん古い青空市場。野菜・果物・スパイス・漬物・菓子・衣類が通りの両側に延々と並ぶ。土産物ではなく、街の人が今日の晩飯を買いに来る場所。",
+   "what": "1878年の解放より前から市が立っていた、街でいちばん大きく古い青空市場。野菜・果物・スパイス・漬物・菓子・衣類が通りの両側に延々と並ぶ。土産物ではなく、街の人が今日の晩飯を買いに来る場所。",
    "how": "入場自由。通りに沿って数ブロック続く。",
    "walk": "中心から徒歩8分（約510m）",
    "stay": "45分",
    "advice": "現金が要る。午前のほうが品が多く、夕方は畳み始める。混むのでカメラと荷物は前に持つ。",
-   "src": "https://www.euronews.com/2026/08/22/sofia-travel-guide-how-to-spend-48-hours-in-bulgarias-capital"
+   "src": "https://bg.wikipedia.org/wiki/%D0%96%D0%B5%D0%BD%D1%81%D0%BA%D0%B8_%D0%BF%D0%B0%D0%B7%D0%B0%D1%80"
   },
   {
    "name": "ロシア教会（奇蹟者聖ニコライ聖堂）",
@@ -789,10 +789,10 @@
   {
    "what": "バラのオイル／ローズウォーター",
    "cyr": "розово масло / розова вода",
-   "why": "ブルガリアはバラのオイルの世界最大の産地で、品質も最上級とされる。",
-   "where": "市内のバラ専門店。土産物屋の安物は中身が怪しいことがあるので、密封されたガラス瓶のものを選ぶ。",
-   "price": "本物のオイルは小瓶で10ユーロ前後から（約1,800円〜）。ローズウォーターなら数ユーロ",
-   "src": "https://sofiaadventures.com/bulgarian-souvenirs/"
+   "why": "ブルガリアはバラのオイルとバラの精油（アッター）の名産地。ローズウォーターは安く、香りだけ持ち帰るならこちら。",
+   "where": "評判のよい店で買う。本物は密封した小瓶で売られていて、観光地に並ぶ偽物は避ける。",
+   "price": "本物のオイルは1mlで45〜50レフ（約23〜26ユーロ／約4,100〜4,500円）という案内がある（ユーロ導入前の額）。ローズウォーターは安い",
+   "src": "https://www.inyourpocket.com/bulgaria/sofia/articles/our-top-5-gifts-to-bring-back-from-bulgaria"
   },
   {
    "what": "リュテニツァ（赤いペースト）",
@@ -805,18 +805,18 @@
   {
    "what": "トロヤン焼きの陶器",
    "cyr": "троянска керамика",
-   "why": "滴が流れたような独特の模様の陶器。マグや小皿なら手荷物に入る。中部のトロヤンとオレシャクが産地。",
-   "where": "模倣品が多いので、ソフィアでは専門の土産物店で買う（ブルガリア国営ラジオが、専門店なら本物が手に入ると書いている）。",
+   "why": "中部の町トロヤンの伝統の陶器。土地の粘土から育った焼き物で、いまは手作りの品が土産として売られている。マグや小皿なら手荷物に入る。",
+   "where": "土産物屋、工芸品の店。",
    "price": "マグ・小皿で5〜15ユーロ（約900〜2,700円）",
-   "src": "https://bnr.bg/en/post/100418609/rose-oil-vial-troyan-pottery-rose-hip-jam-wool-sheep-figures"
+   "src": "https://en.wikipedia.org/wiki/Troyan"
   },
   {
    "what": "ラキヤ（果実の蒸留酒）",
    "cyr": "ракия",
-   "why": "ブルガリアの食卓に必ず出る酒。小さな生産者のものがよく、専用の小さなグラスや陶器の徳利も一緒に売っている。",
-   "where": "量販店の棚より、小さな生産者・修道院・ワイナリーのものを探すほうがよい、とされる。",
+   "why": "ブルガリアの食卓に必ず出る果実の蒸留酒。ワインと並ぶ定番の土産。",
+   "where": "瓶が割れやすいので、ソフィア空港の免税店で買うのがいちばん安全、という案内がある。",
    "price": "1本10〜25ユーロ（約1,800〜4,400円）。機内持ち込みは不可なので預け荷物に",
-   "src": "https://freesofiatour.com/blog/best-bulgarian-souvenirs/"
+   "src": "https://www.inyourpocket.com/bulgaria/sofia/articles/our-top-5-gifts-to-bring-back-from-bulgaria"
   },
   {
    "what": "ブルガリアワイン（マヴルッド、メルニク）",
@@ -845,18 +845,18 @@
   {
    "what": "ローズジャムとローズのロクム",
    "cyr": "сладко от рози / локум",
-   "why": "バラの花びらをそのまま煮たジャムと、バラ風味の求肥菓子。小瓶・小箱で配りやすい。",
+   "why": "バラの花びらのジャム（シロップもある）と、バラ味もあるロクム（砂糖とでんぷんの菓子）。ロクムは昔ながらの箱の地元銘柄が土産になる。ジャムは瓶なので、手荷物には向かない。",
    "where": "土産物屋、スーパー。",
    "price": "小瓶3〜6ユーロ（約530〜1,100円）",
-   "src": "https://sofiaadventures.com/bulgarian-souvenirs/"
+   "src": "https://www.inyourpocket.com/bulgaria/sofia/articles/our-top-5-gifts-to-bring-back-from-bulgaria"
   },
   {
    "what": "刺繍（シェヴィツァ）の小物",
    "cyr": "шевица",
-   "why": "地方ごとに模様が違う伝統刺繍。ハンカチやしおり、ブローチにしたものが売られていて、かさばらない。",
+   "why": "民族衣装に施す伝統刺繍で、地方ごとに模様・色・図柄が違う。",
    "where": "土産物屋、工芸品の店。",
    "price": "小物で5〜15ユーロ（約900〜2,700円）",
-   "src": "https://theculturetrip.com/europe/bulgaria/articles/12-beautiful-and-unique-handmade-gifts-you-can-only-buy-in-bulgaria"
+   "src": "https://bg.wikipedia.org/wiki/%D0%A8%D0%B5%D0%B2%D0%B8%D1%86%D0%B0"
   }
  ],
  "events": [
@@ -1024,5 +1024,88 @@
    "kana": "ス・ピレ・モリャ",
    "jp": "鶏でお願いします。пиле＝鶏。豚を避けたいときの言い換え"
   }
- ]
+ ],
+ "seen": {
+  "https://3seaseurope.com/bulgarians-shake-nod-heads/": "2026-11-23",
+  "https://allinmap.app/en/city-guides/free-attractions-sofia": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%90%D0%B9%D1%80%D1%8F%D0%BD": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%91%D0%B0%D0%BD%D0%B8%D1%86%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%91%D0%BE%D0%B1_%D1%87%D0%BE%D1%80%D0%B1%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%91%D0%BE%D0%B7%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%91%D1%8A%D0%BB%D0%B3%D0%B0%D1%80%D1%81%D0%BA%D0%BE_%D0%BA%D0%B8%D1%81%D0%B5%D0%BB%D0%BE_%D0%BC%D0%BB%D1%8F%D0%BA%D0%BE": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%93%D1%8E%D0%B2%D0%B5%D1%87": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%96%D0%B5%D0%BD%D1%81%D0%BA%D0%B8_%D0%BF%D0%B0%D0%B7%D0%B0%D1%80": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%9A%D0%B0%D0%B2%D1%8A%D1%80%D0%BC%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%9A%D0%B5%D0%B1%D0%B0%D0%BF%D1%87%D0%B5": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%9A%D1%8E%D1%84%D1%82%D0%B5": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%9B%D1%8E%D1%82%D0%B5%D0%BD%D0%B8%D1%86%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%9C%D0%B5%D0%BA%D0%B8%D1%86%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%9C%D0%B5%D1%85%D0%B0%D0%BD%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%9C%D0%B8%D1%88-%D0%BC%D0%B0%D1%88": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%9C%D1%83%D1%81%D0%B0%D0%BA%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%9F%D0%B0%D1%82%D0%B0%D1%82%D0%BD%D0%B8%D0%BA": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%A0%D0%B0%D0%BA%D0%B8%D1%8F": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%A1%D0%B0%D1%80%D0%BC%D0%B8": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%A1%D0%B8%D1%80%D0%B5%D0%BD%D0%B5": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%A2%D0%B0%D1%80%D0%B0%D1%82%D0%BE%D1%80": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%A8%D0%B5%D0%B2%D0%B8%D1%86%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%A8%D0%BA%D0%B5%D0%BC%D0%B1%D0%B5_%D1%87%D0%BE%D1%80%D0%B1%D0%B0": "2026-11-23",
+  "https://bg.wikipedia.org/wiki/%D0%A8%D0%BE%D0%BF%D1%81%D0%BA%D0%B0_%D1%81%D0%B0%D0%BB%D0%B0%D1%82%D0%B0": "2026-11-23",
+  "https://bnrnews.bg/en/post/387631/sofias-city-garden-hosts-the-traditional-german-christmas-market": "2026-11-23",
+  "https://bnrnews.bg/en/post/408705/increase-in-price-of-taxi-services-in-sofia": "2026-11-23",
+  "https://boyanachurch.info/en/visitors-information-en/": "2026-11-23",
+  "https://ca-voir.com/bulgarian-food-jp/": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Banya_Bashi_Mosque": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Bulgarian_cuisine": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Bulgarian_yogurt": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Lukanka": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Mains_electricity_by_country": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Martenitsa": "2026-11-23",
+  "https://en.wikipedia.org/wiki/National_Palace_of_Culture": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Public_holidays_in_Bulgaria": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Rose_Festival,_Bulgaria": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Saint_Alexander_Nevsky_Cathedral,_Sofia": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Saint_Nedelya_Cathedral,_Sofia": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Sofia": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Sofia_Synagogue": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Troyan": "2026-11-23",
+  "https://en.wikipedia.org/wiki/Vitosha_Boulevard": "2026-11-23",
+  "https://freesofiatour.com/blog/how-to-get-to-vitosha-mountain/": "2026-11-23",
+  "https://historymuseum.org/en/prices-and-working-time/": "2026-11-23",
+  "https://internationalsupermarketnews.com/europes-cheapest-supermarkets-in-2025-a-country-by-country-comparison/": "2026-11-23",
+  "https://inyourpocket.com/Bulgaria/sofia/venues/embassy-of-japan": "2026-11-23",
+  "https://metroeasy.com/sofia-metro.html": "2026-11-23",
+  "https://naim.bg/en/content/category/300/80/": "2026-11-23",
+  "https://nationalgallery.bg/visiting/museum-of-christian-art/": "2026-11-23",
+  "https://nationaltheatre.bg/bg/buy-now/preferencialni-ceni": "2026-11-23",
+  "https://ndk.bg/": "2026-11-23",
+  "https://sofiaglobe.com/?p=125427": "2026-11-23",
+  "https://sofiahistorymuseum.bg/images/pdf/akbg.pdf": "2026-11-23",
+  "https://sofiahistorymuseum.bg/images/pdf/mbg.pdf": "2026-11-23",
+  "https://sofiahistorymuseum.bg/images/pdf/stsbg.pdf": "2026-11-23",
+  "https://trade.ec.europa.eu/access-to-markets/en/news/bulgaria-adopts-euro-1-january-2026": "2026-11-23",
+  "https://www.across-magazine.com/revitalization-how-kaufland-is-developing-a-market-hall-into-the-new-tourism-magnet-of-sofia/": "2026-11-23",
+  "https://www.bta.bg/bg/museums/1132067-muzey-na-rilskata-sveta-obitel-rilski-manastir": "2026-11-23",
+  "https://www.gov.uk/foreign-travel-advice/bulgaria/safety-and-security": "2026-11-23",
+  "https://www.inyourpocket.com/bulgaria/sofia/articles/our-top-5-gifts-to-bring-back-from-bulgaria": "2026-11-23",
+  "https://www.inyourpocket.com/bulgaria/sofia/articles/top-annual-festivals-in-bulgaria": "2026-11-23",
+  "https://www.inyourpocket.com/sofia/presidency_77212v": "2026-11-23",
+  "https://www.maff.go.jp/aqs/tetuzuki/product/aq2.html": "2026-11-23",
+  "https://www.meiji.co.jp/corporate/pressrelease/2022/0420_01/index.html": "2026-11-23",
+  "https://www.metrosofia.com/en/sofia-airport": "2026-11-23",
+  "https://www.mofa.go.jp/mofaj/annai/zaigai/list/europe/bulgaria.html": "2026-11-23",
+  "https://www.novinite.com/articles/226204/Sofia+Mayor+Reveals+Funding+Options+for+Vitosha+Lifts+Modernization+Project": "2026-11-23",
+  "https://www.novinite.com/articles/236189/Public+Transport+in+Sofia%3A+Tickets+Now+%E2%82%AC0.80%2C+Annual+Pass+%E2%82%AC185": "2026-11-23",
+  "https://www.numbeo.com/cost-of-living/in/Sofia": "2026-11-23",
+  "https://www.openstreetmap.org/?mlat=42.696398&mlon=23.324578": "2026-11-23",
+  "https://www.openstreetmap.org/?mlat=42.698457&mlon=23.322083": "2026-11-23",
+  "https://www.rexby.com/planinkabg/t/things-to-know-before-visiting-bulgaria-1": "2026-11-23",
+  "https://www.sofiasynagogue.com/en/events/a-new-cultural-experience-in-the-heart-of-sofia-interactive-audio-guide-at-the-sofia-synagogue/": "2026-11-23",
+  "https://www.wikidata.org/wiki/Q1766560": "2026-11-23",
+  "https://www.wikidata.org/wiki/Q207945": "2026-11-23",
+  "https://www.wikidata.org/wiki/Q598811": "2026-11-23",
+  "https://www.wikidata.org/wiki/Q602853": "2026-11-23",
+  "https://www.wikidata.org/wiki/Q873892": "2026-11-23",
+  "https://www.wikidata.org/wiki/Q893826": "2026-11-23"
+ }
 }
