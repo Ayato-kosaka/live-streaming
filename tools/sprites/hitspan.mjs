@@ -30,9 +30,9 @@ const CLS = [
 /** 面の一覧は `popcheck.mjs` と同じ並び＋机とカードの中。 */
 const PAGES = [
   "/", "/about", "/streams", "/streams/cooking", "/kitchen", "/kitchen/egg-sandwich",
-  "/legends", "/legends/iran-walk", "/apps", "/apps/nanitabeyo", "/next", "/next/new",
+  "/legends", "/legends/iran-walk", "/apps", "/apps/nanitabeyo",
   "/board", "/map", "/map/france", "/atlas", "/nordic", "/nordic/guide", "/nordic/finland",
-  "/nordic/photos", "/nordic/day/2", "/cards", "/all", "/friends", "/now", "/design",
+  "/nordic/photos", "/nordic/day/2", "/cards", "/all", "/friends", "/design",
   "/privacy", "/me", "/me/desk", "/me/roulette", "/roulette",
 ];
 /** 机の道具は札を押さないと作られない。1面の中で9つ押して回る。 */

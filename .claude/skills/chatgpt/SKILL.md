@@ -18,7 +18,7 @@ description: ChatGPT（chatgpt.com）を、EC2 のログイン済み Chrome か�
 | アカウント | **あやとの ChatGPT**（Plus）。ログインは `~/cdp-chatgpt` の Chrome に入っている。**複製し直さない**（5） | Q1: A |
 | 会話の残し場所 | **専用のプロジェクト「あやと島案内鳥」**（`chatgpt.py` の `PROJECT`）に入れる。一時チャットは使わない。会話は消さない。**`chatgpt.com/` から始めない**（下） | Q2: C。あやとの履歴・メモリに島の作業を混ぜない。長い待ちのあとでも取りに戻れる |
 | 会話の題 | **返事が来たら毎回付け直す**（`rename()`）。形は下 | あやと 2026-10-13「チャット名は毎回わかりやすく」 |
-| 名乗り | ChatGPT への頼みごとの中で `Claude` と名乗らない（視聴者さんに出る字に混ざりうる） | CLAUDE.md |
+| 名乗り | ChatGPT への頼みごとの中で `Claude` と名乗らない（視聴者さんに出る字に混ざりうる） | `docs/island-standards.md` §17 |
 
 ### プロジェクトの外に作らない
 
@@ -137,7 +137,7 @@ print(where(t.url()))       # 会話の URL（…/g/g-p-…/c/…）。あとで
 | 書いている途中 | **止めるボタンが出ないことがある**。箱が `in_progress` | `button[aria-label="Stop generating"]` |
 | 作った絵 | `[data-testid=generated-image-gallery] img`（alt「Generated image N」、src は `blob:`） | 作れない |
 | ファイルを渡す | `input[type=file][aria-label="Attach files"]`。同じ form に絵だけの口が3つ並ぶ（Take a photo など。どれも `accept=image/*…`）。名前で当たらなければ、`accept` の無い口 | 渡せない |
-| 右上のメニュー | `main header` の `button[aria-haspopup=menu]`。aria-label は **2026-10「More」→ 2026-11-02「Chat actions」**。名前（`MENU_LABELS`）で当たらなければ形（`MENU_SHAPE`）で探し、開いた中に目当ての項目（「Rename」など）があるかで確かめる | — |
+| 右上のメニュー | `main header` の `button[aria-haspopup=menu]`。aria-label は **2026-10「More」→ 2026-11-02「Chat actions」**。名前（`MENU_LABELS`）で当たらなければ形（`MENU_SHAPE`）で探し、開いた中に目当ての項目（「Rename」など）があるかで確かめる。**項目の名前は innerText の1行目**で比べる（2026-11-23 から押す鍵の字が2行目に付く: `"Rename\nR"`。前方一致にはしない） | — |
 | 題を付け直す | 「Rename」で出るダイアログの `input[aria-label="Chat title"]`（無ければ、送る（submit）ボタンのあるダイアログのただ1つの字の欄）→「Save」（無ければ submit） | — |
 
 - **会話を読む印も、名前1つで決め打ちしない**（2026-11-02、`data-message-author-role` が無くなって `turns()` が空を返し、

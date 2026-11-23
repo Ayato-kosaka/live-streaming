@@ -24,24 +24,11 @@ const TARGETS = [
     sel: {
       "看板の一行": ".hero-say",
       "いちばん近い企画": ".nextup",
-      "名刺 いまどこ": ".mei-go[href='/now'] b",
-      "名刺 添え字": ".mei-go[href='/now'] i",
+      "名刺 いまどこ": ".mei-go[href^='/island/'] b",
+      "名刺 添え字": ".mei-go[href^='/island/'] i",
       "名刺 日本を出て": ".mei-since",
       "今夜の配信 札": ".mei-go.is-live i",
       "見にいく 見出し": "#watch .ch-title, #watch h2",
-    },
-  },
-  {
-    page: "/now.html",
-    label: "/now（いまどこ）",
-    sel: {
-      "いまどこ 大文字": ".now-place",
-      "ひとこと": ".np-word",
-      "札ぜんぶ": ".now-hero .tiles",
-      "チップ": ".now-hero .chips",
-      "島だより スタンプ": ".np-stamp",
-      "今週やること": ".pap-sec:has(.pap-rows)",
-      "いま歩いているところ / いまいる国": ".pap-sec:has(.nowc-head)",
     },
   },
   {
@@ -69,11 +56,6 @@ const TARGETS = [
       "毎日配信の日数": ".astats .stat:nth-child(1)",
       "旅した日数": ".astats .stat:nth-child(3)",
     },
-  },
-  {
-    page: "/next.html",
-    label: "/next（これから）",
-    sel: { "企画ぜんぶ": ".plans, main" },
   },
 ];
 

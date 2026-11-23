@@ -6,6 +6,7 @@ import { H, Rec, Sheet, Zone } from "@/components/streams/Sheet";
 import { ArtMedal, ArtMeeting } from "@/components/streams/Art";
 import Icon from "@/components/ui/Icon";
 import { MONTHS, TAP_GOAL } from "@/content/months";
+import { crumbsOf } from "@/lib/pages";
 import { Face, man, md, yen } from "@/components/months/parts";
 
 export const metadata: Metadata = share({
@@ -41,7 +42,7 @@ export default function MonthsPage() {
   const bars = [...MONTHS].reverse();
 
   return (
-    <PageShell crumbs={[{ label: "ふりかえり" }]}>
+    <PageShell crumbs={crumbsOf("/months")}>
       <PageHead
         icon="stage-award"
         title="月ごとのふりかえり"

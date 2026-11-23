@@ -4,8 +4,10 @@
  * **島の連なりは、ここが唯一の出どころ。** 大きさも、住人も、船の道も、これを見て決める
  * （`docs/island-atlas.md`）。
  *
- * 章の切りかたは、`content/countries.ts` の滞在と、BigQuery の配信タイトルから決めた。
+ * 章の切りかたは、滞在（`content/stays.ts`）と、BigQuery の配信タイトルから決めた。
  * **手で「この島は大きめ」と決めない。** 大きさは滞在日数から計算する。
+ *
+ * **章で回った国は、ここに書かない。** 期間が重なる滞在から引く（`content/stayChapters.ts` の `chapterCountrySlugs`）。
  */
 
 /* 焼いた日は `lib/builtAt.ts` から直に取る。**`lib/nightly.ts` 経由にしない**
@@ -20,8 +22,6 @@ export type Chapter = {
   from: string;
   /** 終わった日。いまも続いている章は空 */
   to: string;
-  /** この章で回った国（`content/countries.ts` の slug） */
-  countries: string[];
   /**
    * 本線から逸れた枝か。
    *
@@ -70,7 +70,6 @@ export const CHAPTERS: Chapter[] = [
     name: "ヨーロッパ周遊",
     from: "2024-10-28",
     to: "2025-03-29",
-    countries: ["france", "netherlands", "belgium", "hungary", "austria", "slovakia", "czech", "germany", "uk"],
     note: "配信が始まった島。週3から毎日になった",
   },
   {
@@ -78,7 +77,6 @@ export const CHAPTERS: Chapter[] = [
     name: "中東周遊",
     from: "2025-03-30",
     to: "2025-06-28",
-    countries: ["turkey", "cyprus", "egypt", "jordan", "uae"],
     note: "祭りが生まれた島",
   },
   {
@@ -86,7 +84,6 @@ export const CHAPTERS: Chapter[] = [
     name: "コーカサス周遊",
     from: "2025-06-29",
     to: "2026-09-11",
-    countries: ["azerbaijan", "georgia", "armenia"],
     // 旅に出た日から、ここは「いまいる島」ではなくなる（いまいる島は日付で決まる）。
     // 焼いた字は日付で書き換わらないので、**いつ読んでも本当のこと**だけを書く。
     note: "腰を据えた島。なに食べよを作った",
@@ -96,9 +93,11 @@ export const CHAPTERS: Chapter[] = [
     name: "イランまで歩く",
     from: "2026-04-29",
     to: "2026-05-08",
-    countries: ["iran-border"],
     branchOf: "caucasus",
-    note: "先へ進んだのではなく、歩いて国境まで行って戻ってきた",
+    /* **企画の話を書かない**（`docs/spec/model.md` M-20・M-21）。歩いた理由・道のり・日数は企画の表
+       （`content/projects.ts` の `iran-walk`。この旅を `trip` で指している）が持ち、島には伝説として建つ。
+       ここは旅の形（本線から外れて、戻ってきた枝）だけ */
+    note: "先へ進んだのではなく、国境の町まで行って戻ってきた",
   },
   {
     slug: "nordic",
@@ -114,7 +113,6 @@ export const CHAPTERS: Chapter[] = [
     name: "北欧周遊",
     from: "2026-09-12",
     to: "2026-09-27",
-    countries: ["poland", "lithuania", "latvia", "estonia", "finland", "sweden"],
     // 出発したあとも焼かれたまま出る字なので、「次の島」「まだ建っていない」と
     // 書かない。旅の中身そのものなら、出る前・最中・終わったあとのどれで読んでも合う。
     //
@@ -126,7 +124,10 @@ export const CHAPTERS: Chapter[] = [
     // ぜんぶ（54KB＋JSON 6本）で、この `chapters.ts` は島の連なりの画面が読む
     // （`opensAt` の下のコメントと同じ理由）。**だから数は、数を持っている面に置く。**
     // ここは行き先と手段だけを言う（`docs/island-misses.md` #38「同じ数を2か所に書かない」）。
-    note: "会いたい人に、ポーランドから北へ、ぜんぶ人の車で",
+    // **企画の話も書かない**（`docs/spec/model.md` M-20・M-21）。会いに行った理由と乗せてもらった話は
+    // 企画の表（`content/projects.ts` の `nordic`。この旅を `trip` で指している）が持ち、島には伝説として建つ。
+    // ここは回った順（旅が持つ事実）だけ。
+    note: "ポーランドから、バルト三国とフィンランドを抜けてスウェーデンまで北へ",
     // 出発の日時。**`content/nordic.ts` の DEPART と同じ値**（ジョージア時間 23:30）。
     // あちらを読みに行かないのは、`chapters.ts` は島の連なりの画面（クライアント）が
     // 読むもので、そこに旅程の表ぜんぶ（500行＋JSON 6本）を連れてきてしまうから。
@@ -162,8 +163,8 @@ export const CHAPTERS: Chapter[] = [
        1国1島の飛び石になって、旅が旅に見えない。
 
        **これから入る国も、この島の中。** 章を分けないので、国を1つ越えても
-       ここに行を足さない——足すのは `countries` の中身と、その国の案内への
-       入口（`components/isle/spec.ts` の `GUIDES`）。 */
+       ここに行を足さない——足すのは滞在の表（`content/stays.ts`）の1行だけ。
+       章の国も、その国の案内も、そこから引く。 */
     slug: "balkans",
     name: "バルカン諸国周遊",
     from: "2026-09-28",
@@ -183,15 +184,6 @@ export const CHAPTERS: Chapter[] = [
        かといって北欧の `to` を 09-28 へ伸ばさない——あちらの終わりは
        「ストックホルム出るまでが北欧旅です」（あやと 2026-09-06）が根拠で、
        日付を1日ずらすと**根拠のほうが嘘になる。** ずれるのは1本ぶん。 */
-    /* **歩き終わった国だけ**（`content/countries.ts` の `COUNTRIES` の slug）。2026-11-22 に
-       アルバニア・北マケドニア・ブルガリアを `COUNTRIES` へ移したときに入れた（#664）。
-       `order` は北欧の続き（25〜27）なので、ほかの国の「◯カ国目」は1つも動かない。
-
-       **いま歩いている国（ルーマニア）はここに書かない。** 書いても、読む側が `COUNTRIES` から
-       引き直すので黙って落ちる。島が歩いた国を数えるときは、`content/walked.ts` の
-       `chapterCountries()` が `AHEAD_COUNTRIES` の `entered` から足している。
-       歩き終わって `COUNTRIES` へ移す日に、ここにも足す。 */
-    countries: ["albania", "north-macedonia", "bulgaria"],
     /* 出る前・最中・終わったあとの**どれで読んでも合う字**にする（北欧と同じ決まり）。
        「いま◯◯にいる」「つぎは◯◯」と書くと、国を1つ越えた日から嘘になる。
        **数も書かない**——国の数も日数も、数を持っている面が言う。

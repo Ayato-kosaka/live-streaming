@@ -152,6 +152,20 @@ run の要約に「札を付けたら → go / wait / fail」と、**何をマ�
    ファイルが1件も出てこないマージは、何もしていない（#100）
 3. **配る**（`push` では起きない。両方とも手で起動する）
 
+   master にマージしたら、**両方**を `workflow_dispatch` で走らせる。
+
+   | 何を変えたか | 走らせるワークフロー |
+   | --- | --- |
+   | `site/` `public/` `app/`（画面） | `Firebase Hosting Deploy`（`firebase-hosting-deploy-prod.yml`） |
+   | `functions/`（API） | `Deploy Firebase Functions`（`firebase-functions-deploy.yml`） |
+
+   どちらも `push` トリガーは効いていない（Hosting はコメントアウト、Functions は `main` を
+   見ているがこのリポジトリの既定ブランチは `master`）。**手で起動する必要がある。**
+
+   Hosting は `npm run build:web` を通る。Expo の web ビルド → `dist/` に public をコピー →
+   `site`（Next.js）をビルドして `site/out/` を `dist/` に重ねる、という順。
+   つまり **あやと島は `dist/` の一部として配信される**。
+
    ```
    mcp__github__actions_run_trigger  method=run_workflow  workflow_id=<yml>  ref=master
    mcp__github__actions_list  method=list_workflow_jobs  resource_id=<run id>  minimal_output=true
@@ -173,7 +187,7 @@ run の要約に「札を付けたら → go / wait / fail」と、**何をマ�
 ## 6. issue を閉じる（飛ばさない）
 
 - `Closes #NNN` を書いておけば、マージで閉じ、ship.yml が同じ1行を残す。**手で閉じるぶんは、出したその場で**
-  （あとでまとめて、にしない。#159 #160 #161 #163 が2日開いたままだった）
+  （決まりは `docs/README.md` D-11・D-12）
 - 新しく立てた issue には `待ち-あやと` / `待ち-システム` / `旅のあと` のどれか（迷ったら `待ち-システム`）。
   あやとにしかできないことなら `/ask-ayato`（自分のトークンの `@Ayato-kosaka` は通知が飛ばない）
 - 閉じるときは**何を出したかを1行**。やっていないことが残るなら、**残りがどこで追えるか**を書く

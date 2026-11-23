@@ -2760,89 +2760,10 @@ p.nday-lead {
    ものを並べていた。**まったく同じ件数が上下で2回**出ていたので、番号は
    一覧の行の写真の角へ移した（`.ndsp-n` / `.nspot-n`）。 */
 
-/* ---- 旅の道具「いまどこ」（`components/me/TripTools.tsx`） ----
-   走っている車の中で親指1本で触るところ。押しどころは 48px を割らない。 */
-
-/* 旅程の街の札。押すと「いる場所」に入る。**いま欄に入っている街だけ、
-   押し込まれた見え方にする。** 選ばれているものの出し方は、道具の札
-   （`.mp-tab.is-on`）と同じ形にそろえる。
-
-   `.nlog-seeds` / `.nlog-seed` は、その日に起きたことの「書き出しの札」と
-   共用だった。あちらの欄は外した（2026-09-10）ので、いまはここだけが使う。
-   名前は据え置く——変えると `is-on` まで含めて3か所を同時に触ることになる。 */
-.nlog-seeds { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
-.nlog-seeds > span {
-  align-self: center;
-  font-size: var(--fs-min);
-  font-weight: 900;
-  color: var(--ink-2);
-}
-/* 押せるチップの型（板・厚み4px・48px）。 */
-.nlog-seed {
-  display: inline-flex;
-  align-items: center;
-  min-height: 48px;
-  padding: var(--sp-2) var(--sp-4);
-  border-radius: var(--r-pill);
-  border: var(--bw-1) solid var(--frame);
-  background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
-  font-size: var(--fs-note);
-  font-weight: 900;
-  color: var(--ink);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8),
-    0 var(--pop-d2) 0 color-mix(in srgb, var(--frame) 62%, var(--frame-dark));
-  transition: transform 0.12s ease;
-}
-.nlog-seed:active {
-  transform: translateY(4px);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
-}
-.trip-cities { margin-top: calc(var(--sp-2) * -1); }
-.nlog-seed.is-on {
-  border-color: var(--pick);
-  transform: translateY(4px);
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8);
-}
-
-/* 今週やること。**消すためのところ**なので、行と「消す」を横に並べる。 */
-.trip-week {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-  padding-top: var(--sp-2);
-  border-top: var(--bw-1) dashed color-mix(in srgb, var(--frame) 55%, transparent);
-}
-.trip-week-h {
-  font-size: var(--fs-min);
-  font-weight: 900;
-  color: var(--ink-2);
-}
-.trip-week-none {
-  margin: 0;
-  font-size: var(--fs-note);
-  font-weight: 800;
-  color: var(--ink-2);
-}
-.trip-week-rows { display: flex; flex-direction: column; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
-.trip-week-row {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  min-height: 48px;
-  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
-  border-radius: var(--r-2);
-  border: var(--bw-1) solid var(--frame);
-  background: var(--paper);
-}
-.trip-week-row > span {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--fs-note);
-  font-weight: 800;
-  line-height: 1.5;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
+/* ---- 小さな押しどころ（「消す」「足す」）。机の付箋の貼る先（`NoteThemes.tsx`）と
+   キャラ（`Characters.tsx`）が使う。もとは旅の道具「いまどこ」の今週やることの札で、
+   道具は畳んだ（#1278）。名前は据え置く——変えると2か所を同時に触ることになる。
+   押しどころは 48px を割らない。 */
 .trip-week-x,
 .trip-week-plus {
   flex: none;
@@ -2861,42 +2782,6 @@ p.nday-lead {
 .trip-week-x:active,
 .trip-week-plus:active { transform: translateY(4px); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.8); }
 .trip-week-plus:disabled { opacity: 0.55; box-shadow: var(--pop-push); }
-.trip-week-add { display: flex; gap: var(--sp-2); align-items: stretch; }
-.trip-week-add input { flex: 1; min-width: 0; min-height: 48px; }
-
-/* --- 送りの帯（`.trip-send`） ----------------------------------------
-   **「ここにいる、と出す」を、画面の下に貼り付ける。**
-
-   390×844 で測ると、街の札を押したあと送りに届くまで 1,405px あった
-   （1.66画面目）。あいだにあるのは ひとこと・島の景色・今週やること で、
-   今週やることは週1の手入れなのに約 400px 居座っていた。
-   **街を押すのは日に何度もある動き。** 押した指がそのまま届かないと、
-   走っている車の中では送らずに閉じる。
-
-   `sticky` は台（`.dform`）の中だけで効く。台の下まで送れば帯も流れて
-   いくので、ページの足元（ルーレット・遠隔操作・footer）は隠れない。
-   帯は台のいちばん最後に置いてあるので、**この下に隠れる欄は無い。** */
-.trip-send {
-  position: sticky;
-  bottom: var(--sp-2);
-  z-index: 2;
-  display: grid;
-  gap: var(--sp-2);
-  padding: var(--sp-2);
-  border-radius: var(--r-2);
-  /* 下の欄が透けると「浮いている板」に見えない。地は塗りきる */
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--paper) 88%, var(--frame)) 0%,
-    var(--paper) 100%
-  );
-  box-shadow: 0 -2px 0 color-mix(in srgb, var(--frame) 40%, transparent),
-    0 8px 18px color-mix(in srgb, var(--frame-deep) 26%, transparent);
-}
-/* 帯の中では、送りが幅いっぱい。押しどころを探させない */
-.trip-send .mp-send { width: 100%; }
-.trip-send .nph-ok,
-.trip-send .err { margin: 0; }
 
 /* =========================================================
    その国の、ふだんのごはん（`components/nordic/DailyFood.tsx`）

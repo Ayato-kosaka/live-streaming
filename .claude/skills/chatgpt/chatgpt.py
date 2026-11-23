@@ -499,6 +499,24 @@ def in_project(t):
 MENU_LABELS = ("Chat actions", "More")
 MENU_SHAPE = "main header button[aria-haspopup=menu]"
 
+# 画面に出ている名前で、メニューの項目やボタンを当てるときの「名前」。innerText の1行目（改行より前）を trim したもの。
+# 2026-11-23、右上のメニューの項目に押す鍵の字が2行目に付き、innerText が "Rename\nR" になった。全体を完全一致で
+# 比べていた _menu が「Rename」を見つけられず、rename() が落ちた。鍵の字が付かない古い形（"Rename" だけ）も1行目は同じ。
+# 前方一致にはしない（「Rename」で "Rename project" を押さないため）。
+# 集める側と押す側で比べ方がずれると「在るのに押せない」になるので、名前で当てるところは全部これを通す
+# （見張りは python/chatgpt_menu_selftest.py）
+NAME_OF = "(e => (e.innerText || '').trim().split('\\n')[0].trim())"
+
+
+def _names(css):
+    """css に当たる要素の名前（NAME_OF）を並べて返す JS の式"""
+    return f"[...document.querySelectorAll({json.dumps(css)})].map({NAME_OF})"
+
+
+def _named(css, name):
+    """css に当たる要素のうち、名前（NAME_OF）が name とちょうど同じ最初の1つを返す JS の式（無ければ undefined）"""
+    return f"[...document.querySelectorAll({json.dumps(css)})].find(e => {NAME_OF}(e) === {json.dumps(name)})"
+
 
 def _menu(t, item):
     """会話の右上のメニューを開いて、項目を押す（Rename / Move to project / Archive …）。
@@ -525,12 +543,12 @@ def _menu(t, item):
             seen.append(f"{label!r}（{how}）: 押せなかった")
             continue
         time.sleep(1.2)
-        items = t.js("[...document.querySelectorAll('[role=menuitem]')].map(e => (e.innerText || '').trim().slice(0, 30))") or []
+        items = t.js(_names("[role=menuitem]")) or []
         if item in items:
-            t.click(f"[...document.querySelectorAll('[role=menuitem]')].find(e => (e.innerText || '').trim() === {json.dumps(item)})")
+            t.click(_named("[role=menuitem]", item))
             time.sleep(1.2)
             return label
-        seen.append(f"{label!r}（{how}）: {items[:10]}")
+        seen.append(f"{label!r}（{how}）: {[s[:30] for s in items[:10]]}")
         t.key("Escape")
         time.sleep(0.5)
     raise RuntimeError(f"右上のメニューに「{item}」が見つからない（名前 {list(MENU_LABELS)}・形 {MENU_SHAPE!r} で"
@@ -558,9 +576,9 @@ def rename(t, title):
         raise RuntimeError("「Rename」を押したが、題を入れる欄が出ない")
     t.type(title)
     time.sleep(0.5)
-    t.click("""(() => { const e = document.querySelector('[data-cg-title]');
+    t.click(f"""(() => {{ const e = document.querySelector('[data-cg-title]');
         const d = (e && e.closest('[role=dialog]')) || document;
-        return [...d.querySelectorAll('button')].find(b => b.innerText.trim() === 'Save') || d.querySelector('button[type=submit]'); })()""")
+        return [...d.querySelectorAll('button')].find(b => {NAME_OF}(b) === 'Save') || d.querySelector('button[type=submit]'); }})()""")
     for _ in range(10):
         time.sleep(0.8)
         if t.js("document.title") == title:
@@ -593,7 +611,8 @@ def rename_or_warn(t, title, tries=2):
 
 def logged_in(t):
     """ログインしているか。未ログインの画面は右上と左下に「Log in」のボタンを出す"""
-    return not t.js("[...document.querySelectorAll('button')].some(b => b.innerText.trim() === 'Log in')")
+    # _named は要素を返す。要素のまま持ち帰ると中身の無い値になり Python の真偽がぶれるので、真偽にしてから返す
+    return not t.js(f"!!{_named('button', 'Log in')}")
 
 
 def ask_once(question, title, timeout=600, url=PROJECT):

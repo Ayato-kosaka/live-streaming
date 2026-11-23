@@ -1,5 +1,7 @@
 # あやと島 — データ設計
 
+種別: 台帳
+
 **この文書は「いま、本番がどうなっているか」だけを書く。**
 なぜそう決めたか・何に躓いたかは [`island-db-notes.md`](./island-db-notes.md)、
 口（API）の一覧は [`island-api.md`](./island-api.md) にある。
@@ -48,7 +50,7 @@ erDiagram
 読み方: **左が「1」、右が「多」。** 名前で置き場が分かる。
 **`snake_case` は BigQuery**（`videos` `chat_messages` `doneru_donations`）、
 **`islandXxx` は Firestore**、`plans_ts` `themes_ts` は Git
-（`site/content/plans.ts` / `themes.ts`）、`storage_photos` は Cloud Storage。
+（`site/content/projects.ts` / `themes.ts`）、`storage_photos` は Cloud Storage。
 
 **カードは、写真と投げ銭の掛け算でできる。** 1枚の写真に対して、**その写真の日**に
 投げ銭した人ぶんカードができる。だから `islandCards` に矢印が2本入っている。
@@ -403,9 +405,10 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 
 | 事実 | 正 | 写し | 食い違ったら |
 | --- | --- | --- | --- |
+| **いつ、どの国・街に居たか**（予定を含む） | `site/content/stays.ts`（滞在の表） | 島の便り `island/state.current` の `place` | **滞在の表が正**（2026-11-22。#1275）。`COUNTRIES[].stays`・`AHEAD_COUNTRIES`・章の国・案内の出し分け・足もとの街のガイド・カードの「居た所」・`python/stays.py` はここから引く。告知の札の表の移動の行は #1277 で消した。便りは W4（#1278）で寄せる |
 | 住人（誰が島にいるか） | `islandUsers` ＋ `islandChannels`（本番） | `site/content/residents.ts`（焼き込み） | **本番が正。** 焼き込みは、島の状態の口が読めなかったときの受け皿 |
 | 常連の数 | `island/state.stats.activeFriends` | `residents.ts` の `ACTIVE_FRIENDS` | **本番が正**（画面に出るのはこちら） |
-| 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/plans.ts` / `legends.ts` の `PLANS` `LEGENDS` | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
+| 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/projects.ts` の `PROJECTS`（伝説はその印。告知の札の表 `plans.ts` は #1277 で畳んだ） | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
 | ~~企画に付く写真~~ | `islandStreamEventImage` | — | **2か所ではなくなった**（2026-10-13）。読み（`GET /nordic/photos`）も書き（`POST /nordic/photos`）も新だけ。**宣言は 10-01 から「新が正」だったのに、公開の面に出ていたのは旧のほうだった** |
 | ~~「その日いた人」~~ | `islandTips`（台帳） | — | **2か所ではなくなった**（2026-10-13）。`nordicDays` は読まれていなかったが、**毎晩2本が書き続けていた**。止めた |
 | キャラクターの割り当て | Firestore `islandCharacter` | `site/content/residents.ts` | **本番が正**（2026-09-16 に確かめ直した。前の版は「あやとのスプレッドシート」と書いていたが、Viewers 表はもう誰も読んでいない。`build_residents.py` は図鑑を読む）。焼き直しで反映する。**誰のものかは 3.4** |
@@ -520,14 +523,14 @@ Viewers 表の列は `name` / `Emoji` / `Icon` / `videoUrl` の4つで、
 
 | 欄 | 誰が決めるか | 機械は何を知っているか | 人が打たない日、どうなるか |
 | --- | --- | --- | --- |
-| `place` | **人**（街まで） | **国と章は知っている**（章は `chapters.ts`、滞在は `countries.ts`） | 打たれた日が古くなったら、機械の答えに入れ替わる——旅のあいだは章（`lib/stay.ts` の `tripAsPlace`。「北欧周遊のとちゅう」）、落ち着いていれば国（同 `stayAsPlace`）。**人の字のほうが細かいので、新しいうちは人が勝つ**（`placeOutdated`）。受け皿が1つも無い日だけ、人の古い字がそのまま残る |
+| `place` | **人**（街まで） | **国と章は知っている**（章は `chapters.ts`、滞在は `stays.ts`） | 打たれた日が古くなったら、機械の答えに入れ替わる——旅のあいだは章（`lib/stay.ts` の `tripAsPlace`。「北欧周遊のとちゅう」）、落ち着いていれば国（同 `stayAsPlace`）。**人の字のほうが細かいので、新しいうちは人が勝つ**（`placeOutdated`）。受け皿が1つも無い日だけ、人の古い字がそのまま残る |
 | `word` | **人だけ** | 何も知らない。その日どこで何を見たかは、本人の頭の中にしかない | 出ない。**埋めない**——ここに当たりさわりの無い字を置くと、毎日同じ挨拶が「今日のひとこと」として出る |
 | `week` | **中身は人／過ぎた行は機械** | 行の頭の `M/D` が今日より前かどうか | 過ぎた行は、**口と画面の両方が落とす。** 全部落ちたら「やることの書き置きは、いまはありません」 |
 | `theme` | **人**（島の景色の好み） | 何も知らない。章と景色を結ぶ表がどこにも無い（`georgia` / `nordic` / `desert` の3つは**場所ではなく色**） | 前の景色のまま。**字としては出さない**（`NowLive` の `SLUG` で弾く）ので、嘘にはならない |
 
 `current` に入っていない「いまどこ」のまわりのもの——**章・旅の何日目か・
 いまいる国に来て何日目か・配信本数・歩いた国の数**——は、**はじめから人に
-打たせていない。** 章と日数は `content/chapters.ts` と `countries.ts` から、
+打たせていない。** 章と日数は `content/chapters.ts` と `stays.ts` から、
 配信本数と人数は毎晩の `island/state.stats` から出している。
 
 #### 埋めるのは誰か — **毎晩の焼き直しではなく、画面と口でその場**
@@ -1155,7 +1158,7 @@ island/state
 | ~~`ip`~~ | — | **もう無い**（2026-09-13・#293）。`x-forwarded-for` の先頭を入れていたが、読む仕組みが1つも無く、消す期限も決めていなかった。取るのをやめて、溜まっていたぶんも落とした（`python/admin/ip_purge.py`） |
 | `hearts` | number | ハートの数。仕組みは付箋と同じ（`islandHearts`） |
 | `status` | string | `proposed`（提案）→ `next`（これから）→ `done`（やった） |
-| `planId` | string? | 立ったページの id（`content/plans.ts` の `PLANS` / `LEGENDS`） |
+| `planId` | string? | 立ったページの id（`content/projects.ts` の slug） |
 | `videoIds` | string[] | **この企画のものだと決めた配信**。あやとだけが足せる |
 | `source` | string? | `git-plan` / `nordic-day`。運営側が種から入れた行の印 |
 | `board` | boolean? | `false` なら掲示板の一覧に出さない。**`hidden` とは別**（`hidden` はカードの組み立てからも落ちる） |
@@ -1670,15 +1673,50 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | ファイル | 中身 | なぜ機械にできないか |
 | --- | --- | --- |
 | `recipes.ts` | 作ってきた料理（クッキング・スタンプ帳の元） | **スタンプの絵を `food-*` 105枚から1枚選ぶ**（同じ絵を2品で使わない）。題名から料理名は決まらない |
-| `countries.ts` | 歩いた国と、滞在期間 | どの街にいつからいつまでいたか。本人しか知らない |
+| `stays.ts` | 滞在の表（いつ、どの国・街に居たか。予定を含む） | 国を移った日に1行。**居場所を手で書くのはここだけ**（#1275）。街の名簿に在る街は slug で書く（#1357） |
+| `cities.ts` | 街の名簿（ガイドを書いた街の slug と名前） | ガイドを書くと決めた街。滞在の表がここを slug で指す（#1357） |
+| `countries.ts` | 歩いた国の記録（紹介・見どころ・何カ国目） | 歩き終わってから書く。滞在は `stays.ts` から引く |
 | `chapters.ts` | 島の連なり（章）と、その期間 | どこで区切るか |
-| `legends.ts` | 伝説の企画 | どれを伝説と呼ぶか |
-| `plans.ts` `apps.ts` | これからの企画／作っているアプリ | 選定 |
+| `projects.ts` | 企画の表（伝説はその印） | どれを企画・伝説と呼ぶか。企画の話と数字（M-20） |
+| `apps.ts` | 作っているアプリ | 選定 |
 | `python/data/shorts.json` | ショートの一覧（`shorts.ts` の元） | **BigQuery にショートは1本も入っていない** |
 | `python/voices_picks.json` | 他己紹介の抜粋（`voices.ts` の元） | どの声を載せるか |
 | `python/kitchen_talk_picks.json` | その日の台所の引用（`kitchenTalk.ts` の元） | 機械が選ぶと「こんばんは」が並ぶ |
 | `site.ts` の `SITE` `PROFILE` `NOW_FALLBACK` `LINKS` ／ `voice.ts` `chatter.ts` | プロフィール・画面に出る言葉・住人のセリフ | 文章。**同じファイルの `STATS_FALLBACK` は機械が焼く**（下の (a)） |
-| `streamTypes.ts` `themes.ts` `directory.ts` `roulette.ts` `planDays.ts` `nights.ts` `place.ts` `trip.ts` `tripPlaces.ts` | 配信の型・島の景色・目次・ルーレット・日付から企画を引く表・夜の言い方・場所・旅 | 決めごと |
+| `streamTypes.ts` `themes.ts` `directory.ts` `roulette.ts` `nights.ts` `place.ts` `trip.ts` `tripPlaces.ts` | 配信の型・付箋の宛先（日を持つお題は月末配信の回）・目次・ルーレット・夜の言い方・場所・旅 | 決めごと |
+| `kinds.ts` | 種類の表（道の型・種類・入口）。仕様の道の表（`docs/spec/routes.md` 2章）と同じ行 | 道の型を足すのは仕様を通してから（R-5）。索引・`/all`・パンくずはここから（`lib/pages.ts`） |
+
+#### 種類の表どうしの結ばれかた（`docs/spec/model.md` 4章）
+
+上の人が書く表は、**名前の鍵（slug）と日付だけで**結ぶ（M-6）。どちらの表も相手の行を写さない。
+結ぶのは `content/stayChapters.ts`（旅と滞在）と `lib/tags.ts`（面の札。国・街・旅・企画・料理・月）の2か所だけ。
+
+```mermaid
+erDiagram
+    chapters_ts ||--o{ stays_ts      : "期間で含む（stayChapters.ts）"
+    chapters_ts |o--o{ chapters_ts   : "branchOf（枝の旅）"
+    countries_ts ||--o{ stays_ts     : "country（slug）"
+    countries_ts ||--o{ cities_ts    : "country（slug）"
+    stays_ts     }o--o{ cities_ts    : "cities の slug（行った街）"
+    projects_ts  |o--o| chapters_ts  : "trip（旅そのものが企画のとき）"
+    recipes_ts   }o--|| countries_ts : "country（作った国）"
+    recipes_ts   }o--o| stays_ts     : "date（作った日が入る滞在）"
+    months_ts    }o--o{ stays_ts     : "期間で重なる"
+    onThisDay_ts }o--|| stays_ts     : "配信の日（M-14）"
+```
+
+| 表 | ファイル | 指す先（鍵） |
+| --- | --- | --- |
+| 旅 | `chapters.ts` | 親の旅（`branchOf`。枝の旅だけ） |
+| 滞在 | `stays.ts` | 国（`country`）・行った街（`cities`。名簿の街は slug）・案内の街（`guide.city`） |
+| 国 | `countries.ts` | — |
+| 街 | `cities.ts` | 国（`country`） |
+| 企画 | `projects.ts` | 旅（`trip`。旅と1対1のときだけ） |
+| 料理 | `recipes.ts` | 国（`country`）・作った日（`date`） |
+| 月 | `months.ts`（焼き込み） | — |
+
+配信1回は表を持たない（`model.md` 8章）。配信の日は毎晩焼く `onThisDay.ts` から読み、
+**どの日もちょうど1つの滞在に入る**ことを `lib/tags.ts` の `modelProblems`（M-14）が書き出しの前に確かめる。
 
 #### 機械が焼く（**手で書き換えない**）
 
@@ -1691,8 +1729,8 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | `chapterStats.ts` `chapterStreams.ts` | BigQuery + `chapters.ts` | `python/build_chapter_stats.py` |
 | `residents.ts` | BigQuery + `islandCharacter` + `islandTips` | `python/build_residents.py` |
 | `streamPeaks.ts` | BigQuery | `python/build_stream_peaks.py` |
-| `onThisDay.ts` | BigQuery + `countries.ts` + `streamPeaks.ts` | `python/build_on_this_day.py` |
-| `cityStreams.ts` | BigQuery + `countries.ts` | `python/build_city_streams.py` |
+| `onThisDay.ts` | BigQuery + 滞在（`python/stays.py`）+ `streamPeaks.ts` | `python/build_on_this_day.py` |
+| `cityStreams.ts` | BigQuery + 滞在（`python/stays.py`） | `python/build_city_streams.py` |
 | `countryStats.ts` | BigQuery + 滞在（`python/stays.py`） | `python/build_country_stats.py` |
 | `shorts.ts` | **YouTube のショートのタブ**（BigQuery ではない） | `python/build_shorts.py` |
 | `site.ts` の `STATS_FALLBACK` | **公開の口**（`GET /island-api/state` の `stats`） | `python/build_site_stats.py` |
@@ -1707,7 +1745,7 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 上書きする（`site/lib/liveStats.tsx`）ので、受け皿が口と食い違っていると
 **口が落ちた日だけ数字が飛ぶ。** 同じ数を2通りに数えない（3章）。
 
-`build_city_streams` だけは上流に人の書く `countries.ts` があるが、
+`build_city_streams` だけは上流に人の書く `stays.ts`（滞在の表）があるが、
 **街の一覧が止まっても街ごとの本数は機械だけで動く**ので毎晩に入れてある。
 `build_residents` は BigQuery（出席）のほかに Firestore を2つ読む——
 候補になる名簿（`islandCharacter`）と、投げ銭の台帳（`islandTips`）。
@@ -1761,7 +1799,7 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | 焼かれるもの | 元 | 回すもの | 待っているもの | `rebake` から |
 | --- | --- | --- | --- | --- |
 | `kitchenTalk.ts` | `python/data/kitchen_*.json` + `recipes.ts` + `residents.ts` | `build_kitchen_talk.py --build` | `recipes.ts` と `kitchen_talk_picks.json` | 手で押せば回る |
-| `legendDays.ts` | `python/data/legend_*.json` + `legends.ts` | `build_legend_days.py` | `legends.ts` | **回せない** |
+| `legendDays.ts` | `python/data/legend_*.json` + `projects.ts` | `build_legend_days.py` | `projects.ts` | **回せない** |
 | `voices.ts` | `python/voices_picks.json` | `build_voices.py --build` | `voices_picks.json` | **回せない** |
 | `shorts.ts` | `python/data/shorts.json` | `build_shorts.py --build` | `shorts.json` | **回せない** |
 | `nordic.ts` + `nordic/*.json` | 下ごしらえした JSON | `build_nordic.py` / `build_nordic_map.py` | 元の JSON（**リポジトリに無い**） | **回せない** |

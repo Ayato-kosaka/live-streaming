@@ -197,8 +197,9 @@ function loadLayout(src) {
   if (!existsSync(js)) nothing(`${src} が組み立てられなかった`);
   const mod = { exports: {} };
   const nodeRequire = createRequire(import.meta.url);
-  // 建物の添え書きが1つ、住人の言葉を引いている。印には関わらないので空で返す
-  const req = (id) => (id === "@/content/nights" ? { say: () => "" } : nodeRequire(id));
+  // 建物の添え書きが2つ、住人の言葉と企画の道のりを引いている。印には関わらないので空で返す
+  const STUB = { "@/content/nights": { say: () => "" }, "@/content/projects": { courseOf: () => ({ km: 0 }) } };
+  const req = (id) => STUB[id] ?? nodeRequire(id);
   new Function("require", "exports", "module", readFileSync(js, "utf8"))(req, mod.exports, mod);
   return mod.exports;
 }
@@ -228,9 +229,10 @@ if (!Array.isArray(PLACES) || typeof spotOfPath !== "function" || typeof tidyPat
   check("対照2b 終わりのスラッシュを落とす", spotOfPath("/kitchen/") === "kitchen");
   check("対照2c 空の道は島そのもの", tidyPath("") === "/" && spotOfPath("") === undefined);
 
-  /* 足3 いちばん長く一致したものが勝つ（`under` の要） */
-  check("対照3 長いほうが勝つ", spotOfPath("/next/new") === "board" && spotOfPath("/next") === "next",
-    `${spotOfPath("/next/new")} / ${spotOfPath("/next")}`);
+  /* 足3 軒の道の下に居ない面は `under` が引き受ける。前は `/next/new`（掲示板）と `/next`（企画）で
+     「長いほうが勝つ」を当てていたが、企画の軒を畳んだ（#1277）ので、重なる道がいまは無い */
+  check("対照3 軒の道の下でない面は `under` が引き受ける", spotOfPath("/months/2026-10") === "streams" && spotOfPath("/months") === "streams",
+    `${spotOfPath("/months/2026-10")} / ${spotOfPath("/months")}`);
 
   /* 足4 面を歩く */
   {

@@ -2,7 +2,7 @@
 
 ## なぜ足したか
 
-`content/legends.ts` の `streams` は**見どころの抜き書き**で、その期間の
+企画の表（`content/projects.ts`）の伝説の `streams` は**見どころの抜き書き**で、その期間の
 配信ぜんぶではない。「イランまで歩く」は12日間で15本あるのに、面に出ていたのは
 6本だった。しかも面の見出しは「その時の配信 6本」で、**6本しか無かったように
 読める。** 伝説だと言っている企画なのに、実物より小さく見せていた。
@@ -47,11 +47,12 @@ import ts_read  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(__file__).resolve().parent / "data"
-LEGENDS_TS = ROOT / "site" / "content" / "legends.ts"
+# 伝説は企画の表の印（`docs/spec/model.md` M-3）。`legends.ts` は面の形に組むだけで、字で読める表は持たない
+PROJECTS_TS = ROOT / "site" / "content" / "projects.ts"
 OUT_TS = ROOT / "site" / "content" / "legendDays.ts"
 
 SQL_STREAMS = """
--- 期間の配信ぜんぶ。{ranges} は legends.ts の range を OR で並べたもの
+-- 期間の配信ぜんぶ。{ranges} は企画の表（projects.ts）の伝説の range を OR で並べたもの
 WITH m AS (
   SELECT video_id,
     FORMAT_TIMESTAMP('%Y-%m-%d', MIN(published_at), 'UTC') AS d,
@@ -79,7 +80,7 @@ WHERE g IS NOT NULL GROUP BY g
 
 
 def legends() -> list[dict]:
-    """legends.ts から slug・期間・抜き書きの videoId を読む。TS を1つの正にする。
+    """企画の表（`projects.ts`）の、伝説の印が付いた行から slug・期間・抜き書きの videoId を読む。TS を1つの正にする。
 
     **字を読むのは `python/ts_read.py` の1本だけ。** ここは前、
     `src.split('\\n    slug: "')` で塊に割って、塊ごとに
@@ -89,22 +90,25 @@ def legends() -> list[dict]:
     （`chapters.ts` の北欧がそれで消えた。`ts_read.py` の頭）。
     """
     got = ts_read.read_array(
-        LEGENDS_TS.read_text(encoding="utf-8"),
-        "LEGENDS",
-        keys=("slug",),
+        PROJECTS_TS.read_text(encoding="utf-8"),
+        "PROJECTS",
+        keys=("slug", "legend"),
         lists=("range",),
         nested={"streams": ("videoId",)},
     )
     # **止め金。** 読み落としは例外を出さず、伝説が黙って減るだけ。
     # 減ると、その伝説の日は `legendDays.ts` に1行も焼かれない
     if got.declared == 0:
-        raise SystemExit("legends.ts に伝説が1つもありません（置き場が変わった？）")
+        raise SystemExit("projects.ts に企画が1つもありません（置き場が変わった？）")
     if got.missed:
         raise SystemExit(
-            f"legends.ts の {got.declared} 件のうち {got.missed} 件を読み落としました"
+            f"projects.ts の {got.declared} 件のうち {got.missed} 件を読み落としました"
         )
+    rows = [r for r in got.rows if r["legend"] == "true"]
+    if not rows:
+        raise SystemExit("projects.ts に伝説の印（legend: true）が1つもありません")
     out = []
-    for r in got.rows:
+    for r in rows:
         rng = r["range"]
         out.append({
             "slug": r["slug"],
@@ -212,7 +216,7 @@ HEADER = '''/**
  * 伝説の企画の、その期間の配信ぜんぶ。**手で直さない。**
  * `python/build_legend_days.py` が BigQuery から焼く。
  *
- * `content/legends.ts` の `streams` は**見どころの抜き書き**で、
+ * 企画の表（`content/projects.ts`）の伝説の `streams` は**見どころの抜き書き**で、
  * その期間の配信ぜんぶではない（イランの12日間は抜き書き6本／実物15本）。
  * 面に「6本」と出ていると、伝説が実物より小さく見える。こちらが実物のほう。
  *

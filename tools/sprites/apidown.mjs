@@ -52,7 +52,7 @@ const MEPAGES = ["/me", "/me/desk", "/me/roulette"];
 
 const PAGES = ME ? MEPAGES : process.env.PAGELIST
   ? readFileSync(process.env.PAGELIST, "utf8").trim().split("\n").filter(Boolean)
-  : (process.env.PAGES || "/,/nordic,/now,/cards,/board,/friends,/me").split(",");
+  : (process.env.PAGES || "/,/nordic,/cards,/board,/friends,/me").split(",");
 const PASS = new RegExp(`${OUR_HOSTS}|yt3\\.ggpht\\.com|googleusercontent\\.com|firebasestorage\\.googleapis\\.com`);
 const TYPE = { js: "application/javascript", css: "text/css", html: "text/html",
   json: "application/json", svg: "image/svg+xml", png: "image/png", jpg: "image/jpeg",

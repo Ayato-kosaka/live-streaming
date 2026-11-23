@@ -11,7 +11,7 @@ import CardMonth from "./CardMonth";
 import CardSheet from "./CardSheet";
 import DayPanel from "./DayPanel";
 import ImportDoor from "./ImportDoor";
-import { useCardWall, type PhotoGroup, type PlanDays } from "./cards";
+import { briefsOn, useCardWall, type PhotoGroup, type PlanDays } from "./cards";
 
 /**
  * あやと島カード。**1日ぶんが1枚の紙で、並ぶのは写真。**
@@ -150,14 +150,14 @@ export default function CardWall({ plans }: { plans: PlanDays }) {
           （#225）。 */}
       {!cal && (
         <Longer items={days ?? []} first={3} step={6} unit="日ぶん" as="div">
-          {(d) => <DayPanel key={d.day} day={d} plans={plans[d.day]} onOpen={setOpen} />}
+          {(d) => <DayPanel key={d.day} day={d} plans={briefsOn(plans, d.day)} onOpen={setOpen} />}
         </Longer>
       )}
 
       {open && (
         <CardSheet
           group={open}
-          plans={plans[open.day]}
+          plans={briefsOn(plans, open.day)}
           onClose={() => setOpen(null)}
           /* 消えたら、その場で棚から落として紙を閉じる。**読み直しに行かない。**
              消したのはこちらなので、消えたことはもう分かっている。 */

@@ -1,10 +1,9 @@
 /**
  * 旅の文言を、**書き出したものの実 DOM で**確かめる。
  *
- * 静的 HTML を grep しても分からないものが3つある。
+ * 静的 HTML を grep しても分からないものが2つある。
  *   1. 住人のセリフは client が話しかけられてから描く（HTML に無い）
  *   2. 島の札は client が組む（`components/isle/spec.ts` は HTML に出ない）
- *   3. `/now` の「今週やること」は API が返れば上書きされる
  * だから、時計を進めたブラウザで実際に開いて、住人に話しかけて読む。
  *
  *   ISO=2026-09-20T12:00:00Z SPORT=4320 node tools/sprites/tripwords.mjs
@@ -119,23 +118,7 @@ async function isleInfo(url) {
 
 say(`\n===== ISO=${ISO}  DOWN=${DOWN ? "state を落とした" : "ふつう"} =====`);
 
-// 1) /now の「今週やること」
-await p.goto(`http://localhost:${SPORT}/now.html`, { waitUntil: "domcontentloaded" });
-await p.waitForTimeout(2500);
-const now = await p.evaluate(() => {
-  const sec = [...document.querySelectorAll(".pap-sec, .panel")].find((s) =>
-    /今週/.test(s.querySelector("h2")?.textContent || ""),
-  );
-  return {
-    head: sec?.querySelector("h2")?.textContent?.trim() ?? null,
-    rows: [...(sec?.querySelectorAll("li") ?? [])].map((li) => li.textContent.trim()),
-    place: document.querySelector(".now-place")?.textContent?.trim() ?? null,
-    overflow: document.documentElement.scrollWidth - window.innerWidth,
-  };
-});
-say(`/now  いまどこ=「${now.place}」  横あふれ=${now.overflow}px`);
-say(`/now  ${now.head}`);
-now.rows.forEach((r) => say(`   ・${r}${EMOJI.test(r) ? "  << 絵文字" : ""}`));
+// 1) `/now` の「今週やること」は面ごと畳んだ（#1278）。読むのは島の札と住人のセリフ
 
 // 2) 表紙の島と章の島の札
 for (const u of ["/index.html", "/island/nordic.html"]) {

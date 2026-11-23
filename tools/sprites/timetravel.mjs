@@ -55,8 +55,6 @@ const PAGES = [
   ["photos", "/nordic/photos.html"],
   ["atlas", "/atlas.html"],
   ["isle-nordic", "/island/nordic.html"],
-  ["next", "/next.html"],
-  ["now", "/now.html"],
 ];
 
 const DATES = (process.env.DATES || [

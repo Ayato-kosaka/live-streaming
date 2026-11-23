@@ -4,6 +4,7 @@ import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { LEGENDS } from "@/content/legends";
+import { courseOf } from "@/content/projects";
 import Icon from "@/components/ui/Icon";
 import { Fig } from "@/components/streams/Vid";
 import { H, Sheet, Tape, Zone } from "@/components/streams/Sheet";
@@ -14,7 +15,8 @@ import { isoDay } from "@/lib/isoDay";
 export const metadata: Metadata = share({
   key: "legends",
   title: "伝説の企画 — 語り継がれている配信",
-  description: "イランまで12日間歩いた話、GWエジプト祭り、年越し24時間配信。視聴者さんと一緒に作って、いまも語り継がれている配信の企画たち。",
+  /* 日数は企画の表から（`content/projects.ts`。数の持ち主は企画。M-20） */
+  description: `イランまで${courseOf("iran-walk").days}日間歩いた話、GWエジプト祭り、年越し24時間配信。視聴者さんと一緒に作って、いまも語り継がれている配信の企画たち。`,
   path: "/legends",
 });
 
@@ -44,7 +46,7 @@ export default function LegendsPage() {
    * 同じものをもう一度やる先が無い（`content/nordic.ts` の `WHY`）。
    * 似た旅をやりたいという案は、下の掲示板へ送る側の話。
    *
-   * 札の字は `content/legends.ts` から取る。ここで書き写すと、
+   * 札の字は企画の表（`content/projects.ts`）から取る。ここで書き写すと、
    * 題名が変わったときにこちらだけ古い字が残る。
    */
   const ONCE_MORE = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia", "kazbegi", "iwashi-festival"];

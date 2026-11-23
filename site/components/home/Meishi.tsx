@@ -5,10 +5,9 @@ import Walked from "@/components/atlas/Walked";
 import Say from "@/components/ui/Say";
 import { say } from "@/content/nights";
 import { LiveNumber } from "@/lib/liveStats";
-import { LINKS, NOW_FALLBACK, PROFILE, STATS_FALLBACK } from "@/content/site";
+import { LINKS, PROFILE, STATS_FALLBACK } from "@/content/site";
 import { ACTIVE_FRIENDS } from "@/content/residents";
-import { placeWord } from "@/lib/stay";
-import NowPlace from "./NowPlace";
+import HereLink, { HerePlace, HereTrip } from "./NowPlace";
 import { TRAVEL } from "@/content/travelPath";
 
 /**
@@ -41,10 +40,6 @@ function when(iso: string) {
 export default function Meishi() {
   const s = STATS_FALLBACK;
   const youtube = LINKS.find((l) => l.id === "youtube")!;
-  /* 焼く「いまどこ」は、**配った日の答え**。旅に出たあとは画面が出てから
-     引き直す（`NowPlace.tsx`）。ここで判定を通しておかないと、配り直した
-     晩の HTML が翌朝まで古い場所を出す。 */
-  const place = placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt);
 
   return (
     <div className="mei">
@@ -126,21 +121,18 @@ export default function Meishi() {
           </span>
           <Icon name="external" size={14} />
         </a>
-        <Link prefetch={false} className="mei-go" href="/now">
+        {/* 「いま」は滞在の表から、押した先はいまの旅の島（`NowPlace.tsx`。#1278）。
+            すぐ上の「これから」の［いまここ］と同じ1本を読むので、表紙の上と下で国が食い違わない */}
+        <HereLink className="mei-go">
           <Icon name="pin" size={22} />
           <span>
-            {/* 「いまどこ」は `/now` と同じ判定・同じ言い方で出す（`lib/stay.ts`
-                の `placeWord`）。ここだけ `current.place` を素で出していたので、
-                旅のあいだ表紙が「いま ジョージア・トビリシ」、押した先の `/now` が
-                「北欧周遊のとちゅう」と食い違っていた。
-                添え字のほうは、旅のあいだカウントダウンが消えるので `Say` に任せる。 */}
             <b>
-              いま <NowPlace baked={place} />
+              いま <HerePlace />
             </b>
-            <i><Say t={say("nowLink")} /></i>
+            <i><HereTrip />の島へ</i>
           </span>
           <Icon name="right" size={14} />
-        </Link>
+        </HereLink>
         <Link prefetch={false} className="mei-go" href="/about">
           <Icon name="cottage" size={22} />
           <span>

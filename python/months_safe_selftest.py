@@ -52,7 +52,7 @@ ATTEND_KEYS = {"n", "d", "i"}
 
 # `content/months.ts` を読んでよいところ。**ここだけ額を出してよい**
 # （`docs/island-money.md` 2.1）。
-ALLOWED_READERS = ("app/months/", "components/months/", "content/directory.ts", "app/sitemap.ts")
+ALLOWED_READERS = ("app/months/", "components/months/", "content/directory.ts", "lib/pages.ts", "lib/tags.ts")
 
 # このうち **額を出さないと約束しているもの**。索引に月を並べるだけで、
 # 読むのは `key` だけ。**約束を字で持つのではなく、下で機械に確かめさせる**
@@ -62,7 +62,10 @@ ALLOWED_READERS = ("app/months/", "components/months/", "content/directory.ts", 
 # `/months` の10面が索引から漏れて、配ったあとの見回りが赤くなった。
 # 索引に出すには月の `key` が要る。`directory.ts` が同じ形で先に許されていたが、
 # **「額を読まない」が人の目でしか見られていなかった。** 機械で見るようにした。
-INDEX_ONLY = ("content/directory.ts", "app/sitemap.ts")
+#
+# 2026-11-23（#1357）: 索引の行は種類の表の面の一覧（`lib/pages.ts`）から出るようになり、`app/sitemap.ts` は
+# 月を読まなくなった。札（`lib/tags.ts`）は月の `key` と期間（`from` `to`）だけを読んで、国・旅・企画と結ぶ。
+INDEX_ONLY = ("content/directory.ts", "lib/pages.ts", "lib/tags.ts")
 
 # **額と順位の欄。索引に並べるだけの面が触ってはいけないもの。**
 #

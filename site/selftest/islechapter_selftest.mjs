@@ -33,7 +33,7 @@
  *     行き先の面が実在して、索引（`sitemap.ts`）にも載っている。
  *     **いま居る国に面が無い日は、案内が出ていないこと**のほうを見る
  *     （前の国の案内へ戻っていたら落ちる）
- *  3b. **案内は、その日に居る国のもの。** 国の表（`content/countries.ts`）から
+ *  3b. **案内は、その日に居る国のもの。** 国の表（`content/countries.ts`。滞在は `content/stays.ts` から引く）から
  *     「その日に居る国」をここで組み直して、日を差し替えながら見くらべる。
  *     入った日に替わる／つぎの国に入る前の日まで当たる／つぎの国が無ければ
  *     開いたまま／つぎの国に面が無ければ出ない、の4本足
@@ -61,11 +61,11 @@
  *
  * # (c) 国の案内の行き先を、面の無いところへ向ける → 3b の「行き先がぜんぶ在る」が落ちる
  * #     （いま居る国の行なら、3 の「その行き先の面が実在する」も一緒に落ちる）
- * sed 's#href: "/travel/north-macedonia",#href: "/albania",#' site/components/isle/spec.ts > /tmp/spec-dead.ts
- * SPEC_TS=/tmp/spec-dead.ts node site/selftest/islechapter_selftest.mjs
+ * sed 's#href: "/travel/north-macedonia",#href: "/albania",#' site/content/stays.ts > /tmp/stays-dead.ts
+ * STAYS_TS=/tmp/stays-dead.ts node site/selftest/islechapter_selftest.mjs
  *
  * # (d) トップの紙に、国の名前を書き写す → 3 の裏が落ちる
- * #     （字は、いま居る国の案内の `name`。`spec.ts` の `GUIDES` から写す）
+ * #     （字は、いま居る国の案内の `name`。`content/stays.ts` のその行の `guide` から写す）
  * sed 's|name: g.name,|name: "<いま居る国の案内の name>",|' site/app/page.tsx > /tmp/home-copied.tsx
  * HOME_TSX=/tmp/home-copied.tsx node site/selftest/islechapter_selftest.mjs
  *
@@ -85,21 +85,21 @@
  * sed 's|guideOf(c.slug, today)|guideOf(c.slug)|' site/components/isle/cover.ts > /tmp/cover-now.ts
  * COVER_TS=/tmp/cover-now.ts node site/selftest/islechapter_selftest.mjs
  *
- * # (j) 国の表に「つぎの国（案内の面なし）」を今日の日付で足す → 落ちない。
+ * # (j) 滞在の表に「つぎの国（案内の面なし）」を今日の日付で足す → 落ちない。
  * #     3 が「案内を出さない」側へ切り替わって通ること（＝満たしようのある見張り）
- * COUNTRIES_TS=/tmp/countries-next.ts node site/selftest/islechapter_selftest.mjs
+ * STAYS_TS=/tmp/stays-next.ts node site/selftest/islechapter_selftest.mjs
  *
- * # (k) 案内の行に、手で書いた期間を戻す → 3b の「手で書いた期間が無い」が落ちる
- * sed 's|      slug: "bulgaria",|&\n      to: "2026-11-19",|' site/components/isle/spec.ts > /tmp/spec-hand.ts
- * SPEC_TS=/tmp/spec-hand.ts node site/selftest/islechapter_selftest.mjs
+ * # (k) 案内の面に、手で書いた期間を戻す → 3b の「手で書いた期間が無い」が落ちる
+ * sed 's|      name: "ブルガリア・ソフィア",|&\n      to: "2026-11-19",|' site/content/stays.ts > /tmp/stays-hand.ts
+ * STAYS_TS=/tmp/stays-hand.ts node site/selftest/islechapter_selftest.mjs
  *
- * # (l) 紙の板に、選びかたの写しを持たせる → 3b の「同じ式で選んでいる」が落ちる
- * sed 's|guideOn(items, new Date())|items.find((g) => g.from <= "9999") ?? null|' \
- *   site/components/live/GuideLink.tsx > /tmp/link-own.tsx
+ * # (l) 表紙の「これから」に、選びかたの写しを持たせる → 3b の「同じ式で選んでいる」が落ちる
+ * sed 's|const g = guideOn(guides, on);|const g = guides.find((x) => x.from <= "9999") ?? null;|' \
+ *   site/components/live/NextUp.tsx > /tmp/link-own.tsx
  * LINK_TSX=/tmp/link-own.tsx node site/selftest/islechapter_selftest.mjs
  *
- * # (m) いま居る国の案内の行を、表から丸ごと抜く（面は在るまま）→ 3 の「国の案内がある」が落ちる
- * #     （`GUIDES` の `{ slug: "<いま居る国>", … },` を消した写しを SPEC_TS に渡す）
+ * # (m) いま居る国の案内を、滞在の表から丸ごと抜く（面は在るまま）→ 3 の「国の案内がある」が落ちる
+ * #     （`content/stays.ts` のいまの行の `guide: { … },` を消した写しを STAYS_TS に渡す）
  *
  * # (n) 閉じた滞在の終わりを見ない → 3b の「歩き終わった国」が落ちる
  * sed 's|isDay(e.left) ? e.left : ""|""|' site/components/isle/spec.ts > /tmp/spec-noleft.ts
@@ -112,7 +112,7 @@
  * 同じ答えになること（＝期間が重なっていないこと）を足した。
  *
  * **(d) は1度、空振りしていた。** `<b>{guide.name}</b>` を `app/page.tsx` から
- * 探していたが、その字は部品（`GuideLink.tsx`）のほうに在る。sed は当たらなくても
+ * 探していたが、その字は部品（前は `GuideLink.tsx`、いまは `NextUp.tsx`）のほうに在る。sed は当たらなくても
  * 黙って元の字を返すので、**壊していない写しで「落ちる」を確かめたつもり**になる。
  * 写しを作ったら、まず `diff` で1行変わっていることを見る。
  *
@@ -141,6 +141,7 @@
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { sitemapReadsCities, sitemapReadsTravel, travelCities, travelFixedRoutes } from "./travelreg.mjs";
+import { arraySpan, codeOnly, fields, nestedBody, objects } from "../../tools/sprites/tsread.mjs";
 import Module from "node:module";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -157,10 +158,13 @@ const SPEC_SRC = process.env.SPEC_TS || join(ISLE, "spec.ts");
 const CHAPTERS_SRC = process.env.CHAPTERS_TS || join(CONTENT, "chapters.ts");
 const STATS_SRC = process.env.STATS_TS || join(CONTENT, "chapterStats.ts");
 const COUNTRIES_SRC = process.env.COUNTRIES_TS || join(CONTENT, "countries.ts");
+/** 滞在の表。**いつどの国に居たかと、案内の面はここ**（#1275） */
+const STAYS_SRC = process.env.STAYS_TS || join(CONTENT, "stays.ts");
 const COVER_SRC = process.env.COVER_TS || join(ISLE, "cover.ts");
 const GUIDEDAY_SRC = process.env.GUIDEDAY_TS || join(SITE, "lib", "guideDay.ts");
-/** 紙の板の部品。**字として読む**（選びかたの写しを持っていないか） */
-const LINK_SRC = process.env.LINK_TSX || join(SITE, "components", "live", "GuideLink.tsx");
+/** 表紙の「これから」の部品（前は「いま」の章の紙の板 `GuideLink.tsx`。#1276 で寄せた）。
+ *  **字として読む**（選びかたの写しを持っていないか） */
+const LINK_SRC = process.env.LINK_TSX || join(SITE, "components", "live", "NextUp.tsx");
 /** 面。**字として読む**（表を自前で持っていないか） */
 const PAGE_SRC = process.env.PAGE_TSX || join(SITE, "app", "island", "[chapter]", "page.tsx");
 /** トップの紙。同じく字として読む（国の名前を書き写していないか） */
@@ -244,6 +248,7 @@ swap(SPEC_SRC, ISLE, "spec", join("components", "isle"));
 swap(CHAPTERS_SRC, CONTENT, "chapters", "content");
 swap(STATS_SRC, CONTENT, "chapterStats", "content");
 swap(COUNTRIES_SRC, CONTENT, "countries", "content");
+swap(STAYS_SRC, CONTENT, "stays", "content");
 swap(COVER_SRC, ISLE, "cover", join("components", "isle"));
 swap(GUIDEDAY_SRC, join(SITE, "lib"), "guideDay", "lib");
 
@@ -259,7 +264,7 @@ const { ENTERED, GUIDE_BLURB, GUIDE_LABEL, TRIP_SPEC, chapterIsle, guideOf, guid
   req(join(OUT, "components", "isle", "spec.js"));
 const { coverSpec } = req(join(OUT, "components", "isle", "cover.js"));
 const { guideOn } = req(join(OUT, "lib", "guideDay.js"));
-const { AHEAD_COUNTRIES, COUNTRIES, isWalkedCountry } = req(join(OUT, "content", "countries.js"));
+const { AHEAD_COUNTRIES, COUNTRIES } = req(join(OUT, "content", "countries.js"));
 const { CHAPTERS, chapterNow } = req(join(OUT, "content", "chapters.js"));
 const { CHAPTER_STATS } = req(join(OUT, "content", "chapterStats.js"));
 
@@ -386,7 +391,7 @@ const isDay = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d ?? "");
 const doneSlugs = new Set(COUNTRIES.map((c) => c.slug));
 const ENTRIES = [
   ...COUNTRIES.flatMap((c) => c.stays.map((x) => ({ slug: c.slug, on: x.from, left: x.to || "" }))),
-  ...AHEAD_COUNTRIES.filter((c) => isWalkedCountry(c.slug) && !doneSlugs.has(c.slug)).map((c) => ({
+  ...AHEAD_COUNTRIES.filter((c) => !doneSlugs.has(c.slug)).map((c) => ({
     slug: c.slug,
     on: c.entered,
     left: "",
@@ -498,9 +503,8 @@ if (guide?.href) {
     Boolean(pageOf(guide.href)),
     `${guide.href} に当たる page.tsx が無い`,
   );
-  /* 面を1枚増やす仕事は3か所（`app/sitemap.ts` の注）。索引から落ちると、
-     検索からだけ見つからない面になる */
-  const sitemap = readFileSync(join(SITE, "app", "sitemap.ts"), "utf8");
+  /* 索引から落ちると、検索からだけ見つからない面になる。索引の行は種類の表の面の一覧（`lib/pages.ts`）から出る（#1357） */
+  const sitemap = readFileSync(join(SITE, "lib", "pages.ts"), "utf8");
   /* 国の面は、索引が字で書かずに名簿（`content/travel.ts`）から並べる（#1201）。
      **街の面も同じ**（ソフィアは国の面を持たず、街の面が国の案内を兼ねる。#1228）——公開前の印の無い街だけが索引に出る */
   const viaTravel = [
@@ -508,9 +512,9 @@ if (guide?.href) {
     ...(sitemapReadsCities(sitemap) ? travelCities(SITE).filter((c) => !c.draft).map((c) => c.route) : []),
   ];
   check(
-    "その行き先が、索引（sitemap.ts か、国の面の名簿）にも載っている",
+    "その行き先が、索引（面の一覧 lib/pages.ts か、国の面の名簿）にも載っている",
     sitemap.includes(`"${guide.href}"`) || viaTravel.includes(guide.href),
-    `${guide.href} が sitemap.ts にも content/travel.ts にも無い`,
+    `${guide.href} が lib/pages.ts にも content/travel.ts にも無い`,
   );
   /* 島に建てるだけでは足りない（送って読む人には小さな札が見つからない。#216 の裏）。
      トップの紙にも1本引いてあるが、**そこに国の名前を書き写していない**こと。
@@ -518,7 +522,7 @@ if (guide?.href) {
   const homeSrc = readFileSync(HOME_SRC, "utf8");
   /* `guidesOf`（表ぜんぶ）でも通す。**滞在の期間で入れ替える面**は、
      どの国かを焼いた日で決められないので、表ぜんぶを部品へ渡して
-     画面が出てから選び直している（`components/live/GuideLink.tsx`）。
+     画面が出てから選び直している（`components/live/NextUp.tsx`）。
      見たいのは「紙が表から引いているか」なので、どちらの口でもよい。 */
   check(
     "トップの紙の1本が、案内の表から字を引いている",
@@ -693,7 +697,7 @@ if (!ROWS.length) {
   );
 
   /* (5) 境目ぜんぶと、ずっと先。**3つの口が、同じ日に同じ国を指す**
-     ——島の札の表（`guideOf`）・紙の板（`guideOn`。`GuideLink` が呼ぶ式）・表紙の板 */
+     ——島の札の表（`guideOf`）・紙の板（`guideOn`。表紙の「これから」の `NextUp` が呼ぶ式）・表紙の板 */
   const days = [...new Set([...marks.flatMap((m) => [addDays(m.e.on, -1), m.e.on]), TODAY, far])].sort();
   const points = days.flatMap((day) => [jst0(day), new Date(jst0(addDays(day, 1)).getTime() - 1)]);
   const off = points.flatMap((at) => {
@@ -743,22 +747,26 @@ if (!ROWS.length) {
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/^\s*\/\/.*$/gm, "");
   check(
-    "紙の板（GuideLink）が、島の札と同じ式（lib/guideDay.ts の guideOn）で選んでいる",
+    "表紙の「これから」（NextUp）が、島の札と同じ式（lib/guideDay.ts の guideOn）で選んでいる",
     /guideOn\s*\(/.test(linkSrc) && !/\.find\s*\(/.test(linkSrc),
-    "GuideLink.tsx が guideOn を呼んでいないか、自前の .find( を持っている",
+    "NextUp.tsx が guideOn を呼んでいないか、自前の .find( を持っている",
   );
 
-  /* (7) 案内の行に、手で書いた期間が戻っていない */
-  const specCode = readFileSync(SPEC_SRC, "utf8")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "");
-  const table = /const GUIDES\b[\s\S]*?\n};/.exec(specCode)?.[0] ?? "";
-  if (!table) stop("components/isle/spec.ts から案内の表（GUIDES）を読めなかった");
-  const hand = [...table.replace(/"(?:[^"\\]|\\.)*"/g, '""').matchAll(/\b(from|to)\s*:/g)].map((m) => m[1]);
+  /* (7) 案内の面に、手で書いた期間が戻っていない。案内の面は滞在の表の行の `guide: { … }`
+     （#1275）。期間はその行の `from` / `to` が持つので、`guide` の中に日付の欄があれば二重書き */
+  /* 字は `tools/sprites/tsread.mjs` で読む（自前の正規表現を生やさない。`tsread_selftest.mjs` の 4） */
+  const staysCode = codeOnly(readFileSync(STAYS_SRC, "utf8"));
+  const [a, e] = arraySpan(staysCode, "STAYS");
+  if (a < 0) stop("content/stays.ts から滞在の表（STAYS）を読めなかった");
+  const guides = objects(staysCode.slice(a + 1, e))
+    .map((o) => nestedBody(o, "guide"))
+    .filter((g) => g.trim());
+  if (!guides.length) stop("content/stays.ts に案内の面（guide）が1つも無い");
+  const hand = guides.flatMap((g) => Object.keys(fields(g)).filter((k) => ["from", "to", "on"].includes(k)));
   check(
-    "案内の行に、手で書いた期間（from / to）が無い",
+    `案内の面（${guides.length}つ）に、手で書いた期間（from / to）が無い`,
     hand.length === 0,
-    `${hand.join(" ")} が書いてある。いつ出すかは国の表（content/countries.ts）の入った日から導く`,
+    `${hand.join(" ")} が書いてある。いつ出すかは滞在の行の from / to から導く`,
   );
 }
 

@@ -59,7 +59,6 @@ const SCENES = [
   },
   { id: "cards", page: "/cards.html", sel: "a.akd-day-plan, a.akd-plan", seed: true },
   { id: "foot-board", page: "/board.html", sel: "a.ifoot-privacy" },
-  { id: "foot-next", page: "/next.html", sel: "a.ifoot-privacy" },
   { id: "foot-about", page: "/about.html", sel: "a.ifoot-privacy" },
   { id: "foot-me", page: "/me.html", sel: "a.ifoot-privacy", seed: true },
 ];

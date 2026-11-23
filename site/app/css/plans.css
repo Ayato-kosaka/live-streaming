@@ -316,3 +316,11 @@
   .nextup-count { width: calc(var(--fs-h1) * 2.94 + 30px); padding: var(--sp-3) var(--sp-3); }
   .nextup-go { justify-self: end; padding: var(--sp-3) var(--sp-4); font-size: var(--fs-body); }
 }
+
+/* 表紙の「これから」の滞在の札（`components/live/NextUp.tsx` の `StayBlock`。#1276）。
+   案内の面が無い国の札は押せない板なので、厚みと押し込みを付けない（押せるものにだけ厚みがある） */
+.nextup-card.is-still { box-shadow: var(--shadow-2), var(--np-lip); }
+.nextup-card.is-still:hover,
+.nextup-card.is-still:active { transform: none; box-shadow: var(--shadow-2), var(--np-lip); }
+/* 案内の面の絵は、行き先のボタンの字の頭に1つ（行き先の面の頭の印と同じ絵） */
+.nextup-go .nextup-art { flex: none; }

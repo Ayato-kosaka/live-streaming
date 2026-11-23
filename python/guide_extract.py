@@ -60,7 +60,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guide_facts as gf  # noqa: E402
 import stream_notes as sn  # noqa: E402
 
-MODEL = "sonnet"     # 3本の完成形と同じ回で比べて決めた（SKILL.md §5）
+# ティラナの3本（観光の多い 10-03 を含む）を master の facts と並べて、Haiku（claude-haiku-5-5）でも
+# 行った場所の行が落ちず・作り話0・NG 0 だったので、額が約9分の1の Haiku にした（SKILL.md §6。前は sonnet）。
+# トークンは約1.6倍（考える分の出力が多い）。--effort low は場所が落ちたので既定のまま
+MODEL = "haiku"
 FIXES = 1            # 直させる回数。2回目も落ちたものは落とす
 JOBS_MAX = 3         # 並べて回すのは3本まで（箱と API の混み具合）
 SMALL = 6000         # 字幕がこれ以下の回は、窓を選ばせずに全部入れる
@@ -132,7 +135,8 @@ RULES = """あなたは、配信の文字起こしから「実際に行った」
 - src.lines: 根拠にした字幕の行の時刻（下の字幕の [h:mm:ss] をそのまま）。いちばん早い行から遅い行まで5分以内
 - src.notes: 下の「見出し」から1つを一字も変えずに写す。t がその見出しの時刻から次の見出しの時刻までの中に在ること
 - place: {name, heard}。name は読める正の名前（下の「場所の表」に在る場所なら、その名前）。heard はこの配信の字幕に在る形
-  （崩れたまま。字幕に無ければ []）。kind が place の項目には必ず付ける
+  （崩れたまま。字幕に無ければ []）。kind が place の項目には必ず付ける。国・街の名前そのもの（「この配信」の国・街）は
+  name にしない——街の中のどこか分からない項目には place を付けない
 - quote: 本人の言い回し。字幕の字のまま（句読点・空白は違ってよい）。直してよいのは2つだけ——誤字のすぐあとに [正しい字] を足す
   （字幕の字は消さない）、途中を飛ばすときは …。崩れがひどい所は言い回しにしない
 - 額が在るとき: what（何の額か）と amounts [{value, unit, as}]。as は "said"（配信で言ったまま）。unit は言ったままの単位
@@ -205,8 +209,26 @@ def mask_text(s: str, names) -> str:
     if short:
         s = re.sub("(?:" + "|".join(_pat(f) for f in sorted(short, key=len, reverse=True)) + r")(?=\s*" + gf.HONOR + ")",
                    MASK, s, flags=re.I)
+        s = bracketed(s, short)
     s = GREET_M.sub(lambda m: m.group(0) if m.group(1).endswith(MASK) else MASK + m.group(2), s)
     return GREET_BARE.sub(lambda m: MASK + m.group(2), s)
+
+
+def bracketed(s: str, short) -> str:
+    """括弧の中にだけ書いた短い名前も伏せる。議事録は読みのあとに表記を括弧で添える（「歌（UTA）」）ので、
+    敬称が括弧の外に出て、敬称つきの形では当たらない（2026-11-23 のエレバン 04-21 で、見張りが拾って止まった）"""
+    alt = "|".join(_pat(f) for f in sorted(short, key=len, reverse=True))
+    return re.sub(r"(?<=[(「『])\s*(?:" + alt + r")\s*(?=[)」』])", MASK, s, flags=re.I)
+
+
+def fixed_forms() -> str:
+    """1枚の決まった字（抜く決まり・窓の選びかた・直しの字・返す形の欄と種類の名前）を比べる形にしたもの。
+
+    視聴者さんの名前が、たまたまここの語と同じ形のことがある（エレバンの2本で、投稿者名が種類の名前 `fact`
+    そのものだった）。材料の側は `mask_text` が伏せるので、決まった字に在るだけの形は伏せ残しと数えない。
+    数えると、その人がチャットにいた回は1本も抜けなくなる
+    """
+    return gf.squash(RULES + PICK_RULES + FIX_NOTE + json.dumps(SCHEMA) + json.dumps(PICK_SCHEMA))
 
 
 def leaks(text: str, names) -> list[str]:
@@ -215,6 +237,8 @@ def leaks(text: str, names) -> list[str]:
     出すのは札だけで、字は出さない（出力は公開のログに残りうる）。
     """
     long, short = names
+    fixed = fixed_forms()
+    long = {f for f in long if f not in fixed}
     n = gf.norm(text)
     sq = gf.squash(text.replace(MASK, "／"))
     out = []
@@ -237,6 +261,32 @@ def chat_line(c: dict, names) -> str:
     # つなぐと「eyes」「hand」の境に名前の形ができて、伏せ残しの見張りが空振りで止まる（2026-11 に1回）
     body = mask_text(EMOJI.sub("", c["body"]), names)[:CHAT_CUT]
     return f"    チャット {sn.hms(c['t'])}{'（投げ銭）' if c['paid'] else ''}: {body}"
+
+
+def drop_city_place(items: list, country: dict, city: dict) -> list:
+    """place の名前が国・街の名前そのもの（「エレバン」「アルメニア」）なら、その place を外す（項目は残す）。
+
+    「どこの話か分かる項目には place を付ける」を、街の名前で埋めてくることがある（2026-11-23 のエレバン23本を Haiku で
+    抜いたら、405件のうち88件が place「エレバン」「アルメニア」）。束ねたときの「どこへ行った」が街の名前で埋まる。
+    kind が place の項目は外さない（check がそのまま見る）。遠出の札の名前（「セヴァン湖」）は場所として残す。
+    「どこへ行った」の言い回し（about が place）で街の名前のものは、街そのものの感想なので about を fact にする
+    （place を外すだけだと check が「場所の項目には place.name が要る」で落とす）
+    """
+    cs = {country.get("name"), *country.get("heads", [])} - {None, ""}
+    ts = {city.get("name"), *city.get("heads", [])} - {None, ""}
+    # 「エジプト・シワ」のように、議事録の場所の頭そのままで来ることもある（シワ12本で13件）
+    gen = cs | ts | {f"{c}・{t}" for c in cs for t in ts}
+    gen -= {t.get("name") for t in city.get("trips", {}).values()}
+    gen = {gf.norm(g) for g in gen}
+    out = []
+    for it in items:
+        pl = it.get("place") if isinstance(it, dict) else None
+        if isinstance(pl, dict) and it.get("kind") != "place" and gf.norm(str(pl.get("name", ""))) in gen:
+            it = {k: v for k, v in it.items() if k != "place"}
+            if it.get("about") == "place":
+                it["about"] = "fact"
+        out.append(it)
+    return out
 
 
 # ---------------------------------------------------------------- 材料
@@ -280,7 +330,7 @@ class Material:
                 if key in by_time:
                     it = {**it, "src": {**src, "notes": by_time[key]}}
             out.append(it)
-        return out
+        return drop_city_place(out, self.country, self.city)
 
     def flow(self) -> str:
         """議事録の「## 流れ」を、行の形のまま（見出しと、時刻つきの箇条）。"""
@@ -397,9 +447,11 @@ def pick_prompt(m: Material, budget: int) -> str:
 def fix_prompt(base: str, items: list, ng: list[str]) -> str:
     listed = "\n".join(f"#{i} {json.dumps(x, ensure_ascii=False)}" for i, x in enumerate(items))
     return (base + "\n## 直し\n前回あなたが返した items（#番号は0から数えた位置）:\n" + listed
-            + "\n\n道具が出した NG:\n" + "\n".join(ng)
-            + "\n\nNG の付いた項目を、字幕に合わせて直すか、直せなければ items から外す。NG の無い項目はそのまま残す。"
-              "split と chatfirst は、本当に額が割れている・チャットが先に言った数字なら verify を付けてよい。全体を同じ形で返す。\n")
+            + "\n\n道具が出した NG:\n" + "\n".join(ng) + FIX_NOTE)
+
+
+FIX_NOTE = ("\n\nNG の付いた項目を、字幕に合わせて直すか、直せなければ items から外す。NG の無い項目はそのまま残す。"
+            "split と chatfirst は、本当に額が割れている・チャットが先に言った数字なら verify を付けてよい。全体を同じ形で返す。\n")
 
 
 # ---------------------------------------------------------------- 呼ぶ
@@ -479,6 +531,19 @@ def ng_lines(r: gf.Result) -> list[str]:
     return [f"[{c}] {'頭' if i is None else f'#{i}'}: {msg}" for i, c, msg in r.ng]
 
 
+def keep_unflagged(said: list, bad: set[int], got: list) -> list:
+    """直しの返事が、NG の無い項目まで落としていたら戻す。
+
+    「全体を同じ形で返す」と頼んでも、直した項目だけを返してくることがある（2026-11-22 のティラナ最終日。
+    19件のうち NG の1件だけが返り、18件が黙って消えて「項目 1件・落とした 0」で置かれた）。
+    NG の無い項目より返ってきた数が少なければ、NG の無い項目は残すものとして足し戻す
+    """
+    ok = [x for k, x in enumerate(said) if k not in bad]
+    if len(got) >= len(ok):
+        return got
+    return ok + [x for x in got if x not in ok]
+
+
 def drop_ng(m: Material, table: dict, items: list) -> tuple[list, Counter, gf.Result]:
     """NG の付いた項目を落とす。落とすと隣の項目の「近くの額」が変わるので、NG が無くなるまで繰り返す。"""
     dropped: Counter = Counter()
@@ -545,7 +610,7 @@ def extract_one(root: Path, table: dict, stem: str, a) -> dict:
     if m.chars <= SMALL:
         spans = [(0, m.last)]
     else:
-        budget = min(PICK_MAX, int((m.last + gf.BIN) * PICK_SHARE))
+        budget = min(a.pick_max * 60 if a.pick_max else PICK_MAX, int((m.last + gf.BIN) * PICK_SHARE))
         pp = pick_prompt(m, budget)
         if leaks(pp, m.names):
             rec["note"] = f"窓を選ばせる1枚に伏せ残し（{'・'.join(leaks(pp, m.names))}）。呼ばない"
@@ -591,7 +656,8 @@ def extract_one(root: Path, table: dict, stem: str, a) -> dict:
         got = ask(fp, SCHEMA, f"fix{k + 1}")
         if got is None:
             break
-        said = [clean(x) for x in got.get("items") or []]
+        said = keep_unflagged(said, {i for i, _, _ in r.ng if i is not None},
+                              [clean(x) for x in got.get("items") or []])
         items = m.restore(said)
         rec["new_trips"] = sorted(set(rec["new_trips"]) | set(got.get("new_trips") or []))
         r = check_items(m, table, items)
@@ -652,10 +718,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--city")
     ap.add_argument("--out", required=True, help="控え（渡した1枚・返事・途中の facts）を置く場所。スクラッチパッドの下")
     ap.add_argument("--runs", help="1回1行の控え（.jsonl）に足す（トークンと時間）")
-    ap.add_argument("--model", default=MODEL)
+    ap.add_argument("--model", default=MODEL, help=f"claude -p の --model（省くと {MODEL}。sonnet / opus で比べ直せる）")
     ap.add_argument("--effort", default=None, help="low / medium / high（省くと既定）")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--jobs", type=int, default=1, help=f"並べて回す本数（{JOBS_MAX}まで）")
+    # 見どころを何か所も歩いた長い回は、60分の窓では足りない（2026-10-03 のティラナ 3:25 が、60分で場所1つ・105分で6つ）
+    ap.add_argument("--pick-max", type=int, default=None, help=f"選ばせる窓の合計の上限（分。省くと {PICK_MAX // 60}）")
     ap.add_argument("--no-write", action="store_true", help="streams/ に置かない（控えだけ）")
     ap.add_argument("--force", action="store_true", help="もう在る .facts.json を作り直す")
     ap.add_argument("--prompt-only", action="store_true", help="1枚を組んで控えに置くだけ（呼ばない）")

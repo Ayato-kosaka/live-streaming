@@ -48,16 +48,6 @@
       "alt": "付箋の貼られた島の掲示板",
       "wrap": 3
     },
-    "next": {
-      "file": "/og/next.png",
-      "label": "企画",
-      "alt": "島に立てたテントと屋台"
-    },
-    "now": {
-      "file": "/og/now.png",
-      "label": "いま何してる",
-      "alt": "島のたき火とテント"
-    },
     "cards": {
       "file": "/og/cards.png",
       "label": "あやと島カード",

@@ -11,8 +11,7 @@ import { LiveNumber } from "@/lib/liveStats";
 import { IslandFooter } from "@/components/ui/PageShell";
 import { LINKS, STATS_FALLBACK } from "@/content/site";
 import { HERO, HOME } from "@/content/voice";
-import GuideLink from "@/components/live/GuideLink";
-import { guidesOf } from "@/components/isle/spec";
+import { GUIDE_LABEL, guidesOf } from "@/components/isle/spec";
 import NextUp from "@/components/live/NextUp";
 import Icon from "@/components/ui/Icon";
 import Chapter from "@/components/home/Chapter";
@@ -44,7 +43,7 @@ export const metadata: Metadata = {
  * 章ごとに違うのは吊り看板の文字だけだった。撮って並べると、章の境目が
  * 絵として見えない。中身をそれぞれ別の形にした。
  *
- *   これから … しらせと時計。いちばん近い企画と、いちばん大きい企画（NextUp）
+ *   これから … いまここ・つぎ・日にちの決まった回（NextUp。滞在の表から引く）
  *   いま     … 名刺。顔と3行と数字と押しどころが1枚に（Meishi）
  *   これまで … 棚の格子。数を持った6マス（Shelf）と、カードへの板1枚
  *   見にいく … 画面。今夜の1本と、外へ出る口
@@ -217,7 +216,26 @@ export default function Home() {
           kicker="これから"
           title={HOME.next}
         >
-          <NextUp />
+          {/* 案内の面は、島の札と同じ表（`components/isle/spec.ts` の `guidesOf`）から引いて渡す。
+              **国の名前をここに書かない**——書き写すと、国を越えた日に紙だけが前の国を指す
+              （`docs/island-standards.md` 8章）。どの行かは、画面が出てから今日で選ぶ（`NextUp`）。
+
+              前は「いま」の章にも同じ案内の板（`GuideLink`）を置いていた。［いまここ］の札が
+              その面へ行くので、同じ行き先の板が1画面のうちに2枚並ぶ。こちらに寄せた（#1276） */}
+          {/* 行き先のボタンの字は、島の札と同じ「この国の歩きかた」（`spec.ts` の `GUIDE_LABEL`）。
+              国の名前は札の題が言っているので、ボタンでくり返さない */}
+          <NextUp
+            guideLabel={GUIDE_LABEL}
+            guides={guidesOf(baked.slug).map((g) => ({
+              href: g.href,
+              name: g.name,
+              lead: g.lead,
+              from: g.from,
+              to: g.to,
+              /* 絵はここ（サーバ）で描く。なぜ部品の中で描かないかは `NextUp` の `GuideItem` の注 */
+              art: <Icon name={g.icon} size={20} className="nextup-art" />,
+            }))}
+          />
           {/* 掲示板への誘いは、絵と3行と大きいボタンの箱を積んでいた（290px）。
               ここで言いたいのは「行き先は自分でも出せる」の一言だけなので、
               押せる板1枚に畳んだ。読ませる文は掲示板の面が持っている。 */}
@@ -237,46 +255,6 @@ export default function Home() {
 
         <Chapter id="now" kicker="いま" title={HOME.about} note={HOME.aboutNote}>
           <Meishi />
-          {/* いまいる国のこと（2026-10-12）。
-              ------------------------------------------------
-              あやと:「北マケドニアについて事前に調べたページへの導線が初期ページから
-              無くなってるので、いい感じに追加してください。みんな気になってると思う」。
-
-              **島にも建てたうえで、紙にも1本引く。** `/goods` と `/cards` が同じ形で、
-              島に建てるだけでも、紙に引くだけでも足りない——島を歩く人には紙が見えず
-              （#448）、送って読む人には島の小さな札が見つからない（#216）。
-              島の札（「この国の歩きかた」）は近づけば名前が出るが、引きの札は
-              常設の6つで埋まっているので、ここが**押さずに読める1本**になる。
-
-              **なぜ「いま」の章か。** この章の問いは「いま何をしているんだろう」で、
-              その答えがいまいる国。「これから」は日にちの決まった企画の段なので、
-              国の読みものを混ぜると企画が1つ増えたように見える。
-
-              **国の名前をここに書かない。** `components/isle/spec.ts` の `GUIDES`
-              （島の札と同じ1本）から引く。書き写すと、国を越えた日に紙だけが
-              前の国を指す（`docs/island-standards.md` 8章）。
-              案内の面を持たない章では、この板ごと出ない。
-
-              **どの国かを、焼いた日で決めない。** 出すのはその日に居る国の案内で、
-              入れ替わりは**画面が出てから**今日の日付で選び直す
-              （`components/live/GuideLink.tsx`）。ここで決め打つと、ビルドした日の
-              国が焼き込まれて、国を越えても次のビルドまで替わらない。
-
-              **期間をここにも表にも書かない。** `from`〜`to` は `guidesOf` が
-              国の表（`content/countries.ts` の入った日）から導いたもの。
-              居る国が案内の面を持たない日は、どの行にも当たらず、板ごと出ない。 */}
-          <GuideLink
-            items={guidesOf(baked.slug).map((g) => ({
-              href: g.href,
-              name: g.name,
-              lead: g.lead,
-              from: g.from,
-              to: g.to,
-              /* 絵はここ（サーバ）で描く。寸法は `.hjoin-art` の 72px に合わせる
-                 （カードの板と同じ理由）。なぜ部品の中で描かないかは `GuideLink` の注 */
-              art: <Icon name={g.icon} size={72} className="hjoin-art" />,
-            }))}
-          />
         </Chapter>
 
         <Chapter

@@ -817,9 +817,11 @@ class Book:
         ところだった（記事の面は、引いた回が一覧に無いと書き出しを止める）。
         """
         # 見張りが組んだ小さな置き場（`root`）に国の表が無ければ、リポジトリの表を読む
-        ts = self.root / "site/content/countries.ts"
-        src = (ts if ts.exists() else ROOT / "site/content/countries.ts").read_text(encoding="utf-8")
-        got = ts_read.read_countries(src)
+        def book(name: str) -> str:
+            ts = self.root / "site/content" / name
+            return (ts if ts.exists() else ROOT / "site/content" / name).read_text(encoding="utf-8")
+
+        got = ts_read.read_countries(book("countries.ts"), book("stays.ts"))
         if got.declared == 0 or got.missed:
             raise Stop(f"countries.ts の国を読めていない（名乗り {got.declared} / 読み落とし {got.missed}）")
         done = next((c for c in got.rows if c["slug"] == self.country), None)
@@ -827,7 +829,7 @@ class Book:
             cities = [x for st in done["stays"] for x in st["cities"]]
             if name not in cities:
                 raise Stop(f"{self.country} の滞在の街（{'・'.join(cities)}）に {name} が無い"
-                           "（`site/content/countries.ts` の `stays` の `cities` と、ガイドの街の名前を揃える）")
+                           "（`site/content/stays.ts` の `cities` と、ガイドの街の名前を揃える）")
             return name
         return self.table["countries"][self.country]["name"]
 

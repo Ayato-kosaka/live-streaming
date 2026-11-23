@@ -737,15 +737,17 @@ const DRESSING: Item[] = [
   // 伝説の企画(丘の館): 記念碑
   { n: "statue", x: P.legends.x - 62, y: P.legends.y + 16, s: 54 },
   { n: "statue-head", x: P.legends.x + 66, y: P.legends.y + 20, s: 40 },
-  // これから: たきぎ(旅立ちの支度)
-  { n: "log", x: P.next.x + 40, y: P.next.y + 18, s: 14 },
+  /* 企画のテントが建っていた所（296, 548。#1277 で軒を畳んだ）。たきぎと茂みは残して、
+     軒の跡を空き地にしない */
+  { n: "log", x: 336, y: 566, s: 14 },
   // あやとのこと(あやとの家): 庭の丸太
   { n: "log", x: P.friends.x - 44, y: P.friends.y + 6, s: 15 },
   { n: "log", x: P.friends.x + 46, y: P.friends.y + 10, s: 15, flip: true },
   { n: "bench", x: P.friends.x + 4, y: P.friends.y + 42, s: 26 },
   // 企画をだす(掲示板): 立ち読み用の灯り
   { n: "lantern", x: P.board.x + 74, y: P.board.y + 6, s: 52 },
-  { n: "bench", x: P.now.x - 56, y: P.now.y + 24, s: 26 },
+  /* 「いまどこ」の軒が建っていた所（452, 556。#1278 で畳んだ）。腰掛けは残して、軒の跡を空き地にしない */
+  { n: "bench", x: 396, y: 580, s: 26 },
   // 歩いた国(道しるべ): 舟
   { n: "canoe", x: 214, y: 916, s: 20, flip: true },
   // 池
@@ -758,7 +760,7 @@ const DRESSING: Item[] = [
 const DRESS_DECO: Deco[] = [
   { k: "stump", x: P.kitchen.x + 52, y: P.kitchen.y + 20, s: 20 },
   { k: "shroom", x: P.kitchen.x + 74, y: P.kitchen.y + 34, s: 16 },
-  { k: "bush", x: P.next.x - 44, y: P.next.y + 14, s: 20 },
+  { k: "bush", x: 252, y: 562, s: 20 },
   { k: "rock", x: 300, y: 906, s: 12 },
   { k: "rock", x: POND.x + 56, y: POND.y + 16, s: 16 },
 ];
@@ -909,8 +911,6 @@ const ROUTES: Route[] = [
   { a: foot("streams", 34), b: foot("kitchen"), bend: 30 },
   { a: foot("streams", 34), b: foot("apps"), bend: -32 },
   { a: foot("streams", 34), b: foot("board", 8), bend: 24 },
-  { a: foot("streams", 34), b: foot("now", 10), bend: -16 },
-  { a: foot("now", 10), b: foot("next", 10), bend: 20 },
   { a: foot("kitchen"), b: foot("map", 6), bend: -18 },
   { a: foot("apps"), b: foot("friends", 10), bend: 24 },
   // 丘の館は高台の上。道を丘の上まで引くと、崖の面に土が塗られたように見える。
@@ -1096,7 +1096,6 @@ const beachDetail = (() => {
 export const LAMPS: [number, number, number][] = [
   [P.friends.x, P.friends.y - 10, 104],
   [P.board.x + 74, P.board.y - 36, 60],
-  [P.now.x, P.now.y - 32, 52],
   [P.kitchen.x + 14, P.kitchen.y - 30, 70],
   [P.apps.x + 12, P.apps.y - 30, 70],
   [P.streams.x + 4, P.streams.y - 80, 72],

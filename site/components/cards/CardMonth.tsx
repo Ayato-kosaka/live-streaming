@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Icon from "@/components/ui/IconCore";
 import DayPanel from "./DayPanel";
-import { type DayShelf, type PhotoGroup, type PlanDays } from "./cards";
+import { briefsOn, type DayShelf, type PhotoGroup, type PlanDays } from "./cards";
 
 /**
  * カレンダーで選ぶ。**並び（`CardWall`）を消さずに足した、もう1つの見かた。**
@@ -174,7 +174,7 @@ export default function CardMonth({
       {/* 押した日の紙。**並びと同じ紙**（`DayPanel`）なので、押したあとの
           道は1本のまま */}
       {open && shelf.get(open) && (
-        <DayPanel day={shelf.get(open)!} plans={plans[open]} onOpen={onOpen} />
+        <DayPanel day={shelf.get(open)!} plans={briefsOn(plans, open)} onOpen={onOpen} />
       )}
     </>
   );
