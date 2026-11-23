@@ -274,7 +274,7 @@
   "budget": {
    "icon": "wallet",
    "label": "乗り物の目安",
-   "value": "空港バス300ドラム",
+   "value": "空港バス201番",
    "lead": "街のまん中まで約30分",
    "to": "#budget"
   },

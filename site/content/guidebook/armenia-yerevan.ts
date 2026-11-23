@@ -3357,7 +3357,7 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
     "id": "budget",
     "icon": "wallet",
     "label": "乗り物の目安",
-    "value": "空港バス300ドラム",
+    "value": "空港バス201番",
     "lead": "街のまん中まで約30分",
     "to": "#budget"
    },
@@ -4046,6 +4046,6 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "e02bb87806bb170a"
+ "hash": "c0fbe59ef0e4c843"
 }
 /* END GUIDE */;

@@ -772,7 +772,7 @@ compose = {
     "summary": {
         "season": {"icon": "sun", "value": "5月・9〜10月", "lead": "平年の最高気温が20.7〜29.0℃", "to": "#guide-season"},
         "safety": {"icon": "key", "value": "スリと置き引きに注意", "lead": "写真を口実に近づく手口がある", "to": "#guide-safety"},
-        "budget": {"icon": "wallet", "label": "乗り物の目安", "value": "空港バス300ドラム", "lead": "街のまん中まで約30分", "to": "#budget"},
+        "budget": {"icon": "wallet", "label": "乗り物の目安", "value": "空港バス201番", "lead": "街のまん中まで約30分", "to": "#budget"},
         "transit": {"icon": "bus", "value": "地下鉄は1路線", "lead": "QRコードかカードで乗る", "to": "#guide-transit"},
     },
     "guides": {
