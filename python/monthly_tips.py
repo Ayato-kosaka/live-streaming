@@ -1,8 +1,10 @@
 """月末配信の投げ銭ランキングを組む。**外に出ない。数えるだけ。**
 
-BigQuery も Firestore も触らない。行を渡されて、名寄せして、
+BigQuery も Firestore も自分では開かない。行を渡されて、名寄せして、
 `fund_box.viewer_yen()` で貢献額にして、順位を付けて返すだけ。
 本番の値を作るのは `python/admin/monthly_tips_run.py`。
+（台帳を読む口 `read_ledger()` だけは、**開いたクライアントを渡されたときに**
+読む。月末と実額の表 `admin/tips_sealed.py` が同じ1本を通すため）
 
 ## ランキングに出る額は「貢献額」
 
@@ -37,6 +39,12 @@ BigQuery も Firestore も触らない。行を渡されて、名寄せして、
 | --- | --- | --- |
 | スパチャ | `author_channel_id` | `islandCharacter.channelId` |
 | Doneru | 名乗り（`normKey` 済み） | `islandCharacter.lookupKeys` |
+| 島の投げ銭 | 台帳の `channelId`（口が `islandUsers` から引いたもの） | `islandCharacter.channelId` |
+
+**島の投げ銭はスパチャと同じ側で寄せる**（`docs/island-money.md` 3章）。
+YouTube のチャンネルを結んだ人しか投げられないので、名乗りで当てる段が無い。
+図鑑に当たらなくても、**同じチャンネルのスパチャとは1行にまとまる**
+（同じ鍵 `("s", channelId)` に落ちる）。
 
 Doneru 側が `lookupKeys` なのは、**アラートボックスと配信中のカードが
 同じ欄で引いているから**（`functions/src/cards.ts` の `iconsOf`、
@@ -60,7 +68,10 @@ import unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fund_box import viewer_yen  # noqa: E402
+from fund_box import SOURCE_ISLAND, viewer_yen  # noqa: E402
+
+# 台帳。**円に直した額（`amountJpy`）と島の投げ銭が入っているのはここだけ**
+TIPS = "islandTips"
 
 # 見えない字と異体字セレクタ。**口の `normKey` の写し**
 # （`functions/src/islandCharacter.ts`）。向こうを直したらこちらも直す。
@@ -136,16 +147,22 @@ class Roster:
         return got[0] if len(got) == 1 else None
 
 
-def merge(superchats, doneru, roster):
-    """スパチャと Doneru を、同じ人ごとに1行へまとめる。
+def merge(superchats, doneru, roster, *, island):
+    """スパチャと Doneru と島の投げ銭を、同じ人ごとに1行へまとめる。
+
+    **`island` は省略できない**（`fund_box.viewer_yen()` と同じ決め。
+    `docs/island-standards.md` 30.4）。島の投げ銭が無い月も `[]` を渡す。
+    省略できると、渡し忘れた月に島の投げ銭が黙って順位から消える。
 
     Args:
         superchats: `{"channelId", "handle", "yen"}` の並び
         doneru: `{"name", "yen"}` の並び（どねIDは見ない。名前で引く）
         roster: `Roster`
+        island: 島の投げ銭。`{"channelId", "handle", "yen"}` の並び
+            （`island_rows()` が返す形。スパチャと同じ側で寄せる）
 
     Returns:
-        `{"char", "handle", "display", "sc", "dn"}` の並び（順位はまだ無い）
+        `{"char", "handle", "display", "sc", "dn", "il"}` の並び（順位はまだ無い）
     """
     rows = {}
 
@@ -154,7 +171,7 @@ def merge(superchats, doneru, roster):
         if r is None:
             r = rows[key] = {
                 "char": char, "handle": handle, "display": display,
-                "sc": 0, "dn": 0,
+                "sc": 0, "dn": 0, "il": 0,
             }
         # 図鑑に当たった行が後から来たら、そちらの名前とキャラクターを採る
         if char and not r["char"]:
@@ -163,13 +180,21 @@ def merge(superchats, doneru, roster):
             r["handle"] = handle
         return r
 
-    for s in superchats:
+    def by_channel(s):
+        """チャンネルで寄せる行（スパチャと島の投げ銭）の、入れ先。"""
         handle = str(s.get("handle") or "")
         char = roster.by_channel(s.get("channelId"))
         key = ("c", char) if char else ("s", str(s.get("channelId") or handle))
         name = (roster.by_id.get(char, {}).get("channelName") or handle
                 if char else handle)
-        slot(key, handle, name, char)["sc"] += int(s.get("yen") or 0)
+        return slot(key, handle, name, char)
+
+    for s in superchats:
+        by_channel(s)["sc"] += int(s.get("yen") or 0)
+
+    # **スパチャと同じ寄せ方**（同じ `by_channel`）。別の当て方を作らない
+    for s in island:
+        by_channel(s)["il"] += int(s.get("yen") or 0)
 
     for d in doneru:
         name = str(d.get("name") or "")
@@ -195,7 +220,9 @@ def rank(rows):
     """
     out = []
     for r in rows:
-        yen = viewer_yen(int(r["sc"]), int(r["dn"]))
+        # 島の投げ銭は割らない（式の中で足す）。`r["il"]` が無ければ KeyError で
+        # 落ちる——`merge()` を通っていない行を黙って 0円 で数えない
+        yen = viewer_yen(int(r["sc"]), int(r["dn"]), island_yen=int(r["il"]))
         if yen <= 0:
             continue
         out.append({**r, "yen": yen})
@@ -210,6 +237,71 @@ def rank(rows):
 def total(rows) -> int:
     """画面に出す合計。**貢献額の足し算。実額の合計ではない。**"""
     return sum(int(r["yen"]) for r in rows)
+
+
+def read_ledger(client, d0: str, d1: str) -> list:
+    """その期間の台帳（`islandTips`）を読む。**読むだけ。**
+
+    **範囲の下だけ Firestore に投げる**（`day` 1本の並べ替えなので、
+    自動でできる索引だけで引ける）。上は手元で切る——`build_residents.py` の
+    `fetch_tips` と同じ引き方。
+
+    月末（`admin/monthly_tips_run.py`）と実額の表（`admin/tips_sealed.py`）が
+    **同じ1本を通す。** 円に直した額（`amountJpy`）と島の投げ銭は、
+    台帳にしか無い。
+
+    Args:
+        client: 読み専用のクライアント（`admin/_fs.py` の `readonly(db())`）
+        d0: 始まりの日（この日を含む）
+        d1: 終わりの日（この日を含む）
+
+    Returns:
+        1行ずつの辞書
+    """
+    out = []
+    for doc in client.collection(TIPS).where("day", ">=", d0).stream():
+        v = doc.to_dict() or {}
+        if d0 <= str(v.get("day") or "") <= d1:
+            out.append(v)
+    return out
+
+
+def island_rows(ledger) -> tuple:
+    """台帳の行から、**島の投げ銭**（`source: island`）を `merge()` の形にする。
+
+    台帳に入っているのは、本番で払われ、いまも `paid` のものだけ
+    （`python/island_tips.py` が `fund_box.island_counts()` で絞り、返金や
+    払い戻しの請求になったものは外している）。ここでは絞り直さない。
+
+    **額は `fx_rate.row_yen()` を通す**（`docs/island-money.md` 6章。
+    `amount` を直に足さない）。島の投げ銭は円だけなので、そのまま返る。
+
+    **足せない行は 0 にしない。** 額が読めない行・チャンネルの無い行は
+    `merge()` に渡さず、件数だけ返す（呼ぶ側がログに出す）。
+
+    Args:
+        ledger: `read_ledger()` が返した台帳の行
+
+    Returns:
+        (`{"channelId", "handle", "yen"}` の並び, 足せなかった件数)
+    """
+    import fx_rate
+
+    out = []
+    stuck = 0
+    for d in (ledger or []):
+        d = d or {}
+        if d.get("source") != SOURCE_ISLAND:
+            continue
+        yen, _why = fx_rate.row_yen(d)
+        cid = str(d.get("channelId") or "")
+        if yen is None or not cid:
+            stuck += 1
+            continue
+        out.append({"channelId": cid,
+                    "handle": str(d.get("displayNameSnapshot") or ""),
+                    "yen": int(yen)})
+    return out, stuck
 
 
 def currency_of(text) -> str:

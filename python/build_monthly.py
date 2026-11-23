@@ -40,7 +40,7 @@
 
 ## 投げ銭の額は貢献額
 
-**式は `python/fund_box.py` の `viewer_yen()` ひとつ**（スパチャ ÷ 2 + Doneru）。
+**式は `python/fund_box.py` の `viewer_yen()` ひとつ**（スパチャ ÷ 2 + Doneru + 島の投げ銭）。
 ここでは割り算をしない。名寄せは図鑑（`islandCharacter`）が正なので、
 順位そのものは `python/admin/monthly_tips_run.py` が Actions で作る
 （Firestore の名簿はこの箱から読めない）。こちらはその出力を取り置きから読む。
@@ -430,7 +430,7 @@ HEADER = '''/**
  *
  * ## 額は貢献額だけ
  *
- * `tips` に入っているのは **貢献額（スパチャ ÷ 2 + Doneru）** で、
+ * `tips` に入っているのは **貢献額（スパチャ ÷ 2 + Doneru + 島の投げ銭）** で、
  * 実額ではない。式は `python/fund_box.py` の `viewer_yen()` ひとつ。
  * **月ごとの面は、実額を出さない決めの唯一の例外**（`docs/island-money.md` 2章）。
  * ここの値を島のほかの面へ持ち出さない。
