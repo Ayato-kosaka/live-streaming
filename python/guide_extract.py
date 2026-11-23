@@ -60,7 +60,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guide_facts as gf  # noqa: E402
 import stream_notes as sn  # noqa: E402
 
-MODEL = "sonnet"     # 3本の完成形と同じ回で比べて決めた（SKILL.md §5）
+# ティラナの3本（観光の多い 10-03 を含む）を master の facts と並べて、Haiku（claude-haiku-5-5）でも
+# 行った場所の行が落ちず・作り話0・NG 0 だったので、額が約9分の1の Haiku にした（SKILL.md §6。前は sonnet）。
+# トークンは約1.6倍（考える分の出力が多い）。--effort low は場所が落ちたので既定のまま
+MODEL = "haiku"
 FIXES = 1            # 直させる回数。2回目も落ちたものは落とす
 JOBS_MAX = 3         # 並べて回すのは3本まで（箱と API の混み具合）
 SMALL = 6000         # 字幕がこれ以下の回は、窓を選ばせずに全部入れる
@@ -666,7 +669,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--city")
     ap.add_argument("--out", required=True, help="控え（渡した1枚・返事・途中の facts）を置く場所。スクラッチパッドの下")
     ap.add_argument("--runs", help="1回1行の控え（.jsonl）に足す（トークンと時間）")
-    ap.add_argument("--model", default=MODEL)
+    ap.add_argument("--model", default=MODEL, help=f"claude -p の --model（省くと {MODEL}。sonnet / opus で比べ直せる）")
     ap.add_argument("--effort", default=None, help="low / medium / high（省くと既定）")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--jobs", type=int, default=1, help=f"並べて回す本数（{JOBS_MAX}まで）")
