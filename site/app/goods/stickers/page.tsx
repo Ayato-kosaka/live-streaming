@@ -5,6 +5,7 @@ import Link from "next/link";
 import Icon from "@/components/ui/Icon";
 import Notes from "@/components/live/Notes";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import StickerBook from "@/components/goods/StickerBook";
 import { STICKERS } from "@/content/goods";
 
@@ -57,7 +58,7 @@ export const metadata: Metadata = share({
 export default function StickersPage() {
   return (
     <PageShell
-      crumbs={[{ label: "あやとグッズ", href: "/goods" }, { label: "あやとステッカー" }]}
+      crumbs={crumbsOf("/goods/stickers")}
     >
       <PageHead
         mark={<Icon name="stamp" size={44} />}

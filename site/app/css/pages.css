@@ -313,7 +313,11 @@
 @media (min-width: 900px) {
   .ih { position: sticky; top: 0; }
   .ih-in { flex-wrap: nowrap; }
-  .ih-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+  /* **札の幅は字の長さで分ける**（#1279）。同じ幅の格子だと、伝説の企画が看板に入って6つになった日に
+     900px で1枚 112px になり、いちばん長い「やってほしいこと」（8字）が札からはみ出した。
+     字の短い札（配信・アプリ）から幅を譲る */
+  .ih-nav { display: flex; }
+  .ih-nav > .ih-link { flex: 1 1 auto; }
 }
 /* ふだは押せる。だから板に彫り込むのではなく、厚みのある札にする
    （ac-reference 6章「押せるものには必ず下に厚みがある」）。

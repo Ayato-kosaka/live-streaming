@@ -1,43 +1,41 @@
-import { DOORS } from "@/components/island/layout";
-import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/chain/route";
-import { ISLAND_PATH, ISLAND_LABEL } from "@/content/chapters";
+import { PLACES } from "@/components/island/layout";
+import { ISLE_CHAPTERS, chapterHref } from "@/components/chain/route";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
+import { kindOf, routeOf } from "@/content/kinds";
 import { tripsOfCountry } from "@/content/stayChapters";
-import { TRAVEL_LABEL, TRAVEL_PLACES, publicArticles, publicCities, travelCity, travelHref, travelPage } from "@/content/travel";
+import { TRAVEL_ARTICLES, TRAVEL_CITIES, TRAVEL_PLACES } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { LEGENDS } from "@/content/legends";
 import { MONTHS } from "@/content/months";
-import { DAY_PAGES, NORDIC_COUNTRIES, NORDIC_GUIDE_HREF, NORDIC_HREF, cityName, dayHref, dayName } from "@/content/nordic";
+import { DAY_PAGES, NORDIC_GUIDE_HREF, cityName, dayHref } from "@/content/nordic";
 import { RECIPES, kindLabel } from "@/content/recipes";
 import { STREAM_TYPES } from "@/content/streamTypes";
-import { say } from "@/content/nights";
-import { listedPages, pageAt } from "@/lib/pages";
+import { listedPages, pageAt, type Page } from "@/lib/pages";
 
 /**
- * 島にある紙、ぜんぶ。
+ * 島にある紙、ぜんぶ。`/all` がこれを並べる。
  *
- * ## なぜ要るか
+ * ## 棚は入口の9つ＋そのほか（`docs/spec/routes.md` R-22。#1279）
  *
- * 島の外の面は94ある。上の帯に出るのは6つ、パンくずは「島 › ○○」の2段だけで、
- * 残りは**どこかの面の中まで入らないと名前も見えない**。
- * 「あの話どこだっけ」から始めると、当てずっぽうで面を1枚ずつ開くことになる。
+ * **棚は入口の表（`components/island/layout.ts` の `PLACES`）から、並べる面は種類の表から引く。**
+ * 面がどの棚に並ぶかは、その面の道の型の「入口」（`content/kinds.ts`）で決まる。
+ * パンくずの2段目（`lib/pages.ts` の `crumbsOf`）と砂浜の印（`spotOfPath`）も同じ欄から引くので、
+ * 「`/all` ではこの棚、パンくずでは別の親」が起きない。
  *
- * ここは行き先を1か所に集めた表で、`/all` がこれを並べる。
- * **帯を増やして解こうとしない。** 帯は6つのままにする決まりがあり
- * （`site/components/island/layout.ts` の `DOORS`）、そこへ94を並べたら
- * 帯そのものが読めなくなる。器を別に立てて、帯からはその器へ1つ足す。
+ * 前は13棚が5つの切り口（島のなか・配信の型・月ごと・国ごと・旅ごと…）で並んでいて、
+ * 北欧6か国が「歩いた国」と「北欧の旅」の2つの棚に並んでいた。どこに何があるかを探すのに、
+ * まず切り口を当てる必要があった。いまは1つの面は1つの棚にしか並ばない（下で止める）。
  *
- * ## 手で書かない
+ * ## ここが持つのは、人が書く字だけ
  *
- * 行き先は全部、元のデータ（`content/*.ts`）から作る。
- * ここに直接パスを書き並べると、料理が1品増えたときに黙って落ちる。
- * 手で書いてよいのは、データを持たない単発の面（`/design` など）だけ。
+ * 1行の説明（`note`）と探し言葉（`q`）。行き先と名前は面の一覧（`lib/pages.ts`）が持つ。
+ * 字の出どころは中身の表（`content/*.ts`）で、ここで書くのは表の無い単発の面と、街の探し言葉だけ。
  */
 
 export type Dest = {
   href: string;
-  /** 行き先の名前。面の h1 と揃える。 */
+  /** 行き先の名前。面の h1 と揃える（面の一覧の `name`）。 */
   name: string;
   /** 押す前に中身が分かる1行。 */
   note: string;
@@ -47,7 +45,7 @@ export type Dest = {
 
 export type Shelf = {
   id: string;
-  /** 棚の名前。 */
+  /** 棚の名前。入口の名前そのもの（そのほか の棚だけ別） */
   title: string;
   /** その棚が何の集まりか。 */
   note: string;
@@ -62,379 +60,218 @@ const y = (d: string) => (d ? `${d.slice(0, 4)}年` : "");
 
 const countryName = Object.fromEntries(COUNTRIES.map((c) => [c.slug, c.name]));
 
-export const SHELVES: Shelf[] = [
-  {
-    id: "island",
-    title: "島のなか",
-    /* **軒数を書かない。** 「10軒」と焼いてあったので、島に1軒足した日から
-       `/all` だけが古い数を名乗ることになる（`docs/island-standards.md` 8章）。
-       数は下の一覧が持っていて、そこは `DOORS` から作られている。 */
-    note: "島に建っているものと、島そのもの",
-    items: [
-      { href: "/", name: "島", note: "ここ。建っているものは、ぜんぶ押せば入れる", q: q("島 top home ayato") },
-      /* 建物ではないが、島の直下にある面（#173）。`/about` と `/friends` と
-         `/me` の3か所から見えるので、どれかの子にはしていない。 */
-      {
-        href: "/cards",
-        name: "あやと島カード",
-        note: "その日の写真。キャラクターを入れて持って帰れる",
-        /* 「旅の写真」で探す人がここへ着くようにする。2026-09-10 に
-           `/nordic/photos` をこの面へ寄せたので、探し言葉も引き取る */
-        q: q("あやと島カード cards カード コレクション 投げ銭 旅の写真 photos 写真 スタンプ"),
-      },
-      ...DOORS.map((d) => ({
-        href: d.href,
-        name: d.label,
-        note: d.blurb,
-        q: q(d.label, d.blurb, d.id, d.href),
-      })),
-    ],
+type Line = Pick<Dest, "note" | "q">;
+
+/**
+ * 表を持たない単発の面の1行。**数も時制も書かない**（`docs/island-standards.md` 16章）。
+ * 入口の建物の面（`/about` `/streams` …）は、ここに無ければ建物の一言（`PLACES` の `blurb`）を使う。
+ */
+const SINGLE: Record<string, Line> = {
+  "/": { note: "ここ。建っているものは、ぜんぶ押せば入れる", q: q("島 top home ayato") },
+  "/months": {
+    note: "ひと月ずつ、ならべて見る",
+    q: q("月ごとのふりかえり months 月末 ふりかえり 振り返り 授賞式 タップ 出席 投げ銭 ランキング"),
   },
-  {
-    id: "streams",
-    title: "配信の型",
-    note: say("typesLong"),
-    items: STREAM_TYPES.map((t) => ({
-      href: `/streams/${t.slug}`,
-      name: t.name,
-      note: t.short,
-      q: q(t.name, t.short, t.lead, t.slug),
-    })),
+  "/island": { note: "矢印でとなりの島へ渡れる", q: q("島の地図 atlas island 連なり 章") },
+  [NORDIC_GUIDE_HREF]: { note: "お金・通信・服・サウナ・食べもの", q: q("旅のしおり guide 持ち物 サウナ お金 北欧") },
+  "/goods": {
+    note: "ステッカー・カード・キャラクター・LINEスタンプ・SUZURI",
+    q: q(
+      "あやとグッズ goods グッズ ステッカー sticker シール LINEスタンプ line stamp " +
+        "LINE STORE ちゃす 仲間たち " +
+        "スタンプ カレンダー calendar SUZURI suzuri トートバッグ tシャツ 透かし 無料",
+    ),
   },
-  {
-    id: "months",
-    title: "月ごとのふりかえり",
-    /* **数も時制も書かない**（`docs/island-standards.md` 16章）。
-       月は毎月1つ増えるので、ここに数を焼くと翌月から嘘になる。
-       数は `/months` の中身が数える。 */
-    note: "ひと月ずつの記録。出席・投げ銭・タップ",
-    items: [
-      {
-        href: "/months",
-        name: "月ごとのふりかえり",
-        note: "ひと月ずつ、ならべて見る",
-        q: q("月ごとのふりかえり months 月末 ふりかえり 振り返り 授賞式 タップ 出席 投げ銭 ランキング"),
-      },
-      ...MONTHS.map((m) => ({
-        href: `/months/${m.key}`,
-        name: `${m.year}年${m.month}月のふりかえり`,
-        note: `${m.streams.length}本・${m.people}人`,
-        q: q(`${m.year}年${m.month}月 ${m.key} ふりかえり 月末 授賞式`),
-      })),
-    ],
+  "/goods/stickers": {
+    /* **枚数を書かない**（1枚足した日から嘘になる） */
+    note: "落として、好きなところに貼れる1枚",
+    q: q("あやとステッカー sticker シール 無料 ダウンロード 落とす 貼る 透過 印刷 グッズ 図鑑 ステッカー帳"),
   },
-  {
-    id: "kitchen",
-    title: "作った料理",
-    note: `買い出しから作った${RECIPES.length}品`,
-    items: RECIPES.map((r) => ({
-      href: `/kitchen/${r.slug}`,
-      name: r.name,
+  "/cards": {
+    note: "その日の写真。キャラクターを入れて持って帰れる",
+    /* 「旅の写真」で探す人がここへ着くようにする。2026-09-10 に `/nordic/photos` をこの面へ寄せた（#1279 で控えの面も消した） */
+    q: q("あやと島カード cards カード コレクション 投げ銭 旅の写真 photos 写真 スタンプ"),
+  },
+  /* 島を直したところ（2026-10-13）。表紙にも島にも出さない——あやとの言葉「気にしてる人少ないのでさりげなく」。
+     探しに来た人が1回で着ければ足りる。棚はやってほしいこと（こうしてほしい を、ここから貼れる） */
+  "/updates": {
+    note: "どこが変わったか。こうしてほしいも、ここから",
+    q: q("島をなおしたところ updates 変わった 直した 要望 改良 お知らせ"),
+  },
+  "/design": { note: "島で使う印と部品の棚", q: q("デザインの見本 design 部品 アイコン") },
+};
+
+/** 街の探し言葉。**人が書く字**（面の中身の見どころ・食べもの）。無い街は名前と slug だけで引く */
+const CITY_Q: Record<string, Line> = {
+  "romania/bucharest": {
+    note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・ことば",
+    q: q(
+      "ルーマニア romania ブカレスト bucharest 国民の館 palace parliament ドラキュラ dracula ブラン城 bran " +
+        "ペレシュ城 peles アテネ音楽堂 athenaeum サルマーレ sarmale パパナシ papanasi レイ lei バルカン",
+    ),
+  },
+  "bulgaria/sofia": {
+    note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・1日の予算・ことば",
+    q: q(
+      "ブルガリア bulgaria ソフィア sofia ヨーグルト バラ rose キリル文字 cyrillic " +
+        "バニツァ banitsa タラトル tarator ショプスカ shopska ネフスキー nevski " +
+        "ボヤナ boyana リラ修道院 rila ヴィトシャ vitosha ユーロ euro レフ lev バルカン",
+    ),
+  },
+  "north-macedonia/skopje": {
+    note: "見る・食べる・買う・すること。行った人の話つき",
+    q: q("北マケドニア north macedonia スコピエ skopje 観光 見どころ 食べ物 物価 マトカ渓谷 matka 旧市街 石橋 ケバピ ホステル"),
+  },
+};
+
+/** 中身の表を持つ面の1行。道 → 1行 */
+const FROM_TABLES: Record<string, Line> = Object.fromEntries<Line>([
+  ...STREAM_TYPES.map((t) => [`/streams/${t.slug}`, { note: t.short, q: q(t.name, t.short, t.lead, t.slug) }] as const),
+  ...MONTHS.map(
+    (m) => [`/months/${m.key}`, { note: `${m.streams.length}本・${m.people}人`, q: q(`${m.year}年${m.month}月 ${m.key} ふりかえり 月末 授賞式`) }] as const,
+  ),
+  ...LEGENDS.map((l) => [`/legends/${l.slug}`, { note: l.lead, q: q(l.title, l.lead, l.slug) }] as const),
+  ...TRAVEL_PLACES.map((p) => {
+    const c = p.country;
+    /* 束ねる語彙は旅の名前（「北欧周遊」で探しても国が出る。`docs/spec/model.md` M-5） */
+    const trips = tripsOfCountry(p.slug).map((t) => t.name).join(" ");
+    const towns = TRAVEL_CITIES.filter((x) => x.country === p.slug).map((x) => `${x.name} ${x.slug}`).join(" ");
+    return [
+      p.href,
+      c ?
+        { note: c.summary, q: q(c.name, c.en, c.slug, trips, c.stays.flatMap((s) => s.cities).join(" ")) } :
+        /* 歩いている最中の国（記録の面。`app/travel/record.tsx`） */
+        { note: "いつ行ったか・配信の数・行った街", q: q(p.name, p.slug, trips, towns, "旅の記録 配信 行った街") },
+    ] as const;
+  }),
+  ...TRAVEL_CITIES.map((c) => {
+    const hand = CITY_Q[`${c.country}/${c.slug}`];
+    return [c.href, hand ?? { note: "見る・食べる・買う・すること", q: q(c.name, c.slug, "観光 見どころ 食べ物") }] as const;
+  }),
+  ...TRAVEL_ARTICLES.map((a) => {
+    const g = articleOf(a.country, a.city, a.slug);
+    return [a.href, { note: g.h1.slice(1).join(""), q: q(g.title, a.slug) }] as const;
+  }),
+  ...ISLE_CHAPTERS.map((c) => [
+    chapterHref(c),
+    /* まだ始まっていない章は from が空。**「次の島」と書かない**（始まっていない章は1つとはかぎらない） */
+    { note: c.from ? `${c.from.slice(0, 4)}年から。歩ける島` : "これから建っていく島", q: q(c.name, c.slug, "島 歩く 旅") },
+  ] as const),
+  ...ISLE_CHAPTERS.map((c) => [`${chapterHref(c)}/streams`, { note: "この旅のあいだにやった配信だけ", q: q(c.name, c.slug, "配信 アーカイブ") }] as const),
+  ...DAY_PAGES.map((d) => [
+    dayHref(d),
+    {
+      note: d.lead ?? "",
+      /* 動かない日（休息日）は区間を持たない。街の名前で引けなくなるので、`city` と「寄るかもしれない街」も混ぜる */
+      q: q(
+        "北欧",
+        d.lead,
+        [
+          ...(d.legs ?? []).flatMap((l) => [cityName(l.from), cityName(l.to), ...(l.maybe ?? [])]),
+          d.city ?? "",
+          ...(d.maybe ?? []),
+        ].join(" "),
+      ),
+    },
+  ] as const),
+  ...RECIPES.map((r) => [
+    `/kitchen/${r.slug}`,
+    {
       note: `${countryName[r.country] ?? ""}・${kindLabel(r.kind)}／${y(r.date)}${ym(r.date)}`,
       q: q(r.name, r.note, r.slug, countryName[r.country], kindLabel(r.kind)),
-    })),
-  },
-  {
-    id: "map",
-    title: TRAVEL_LABEL,
-    // 終点の街を書かない（旅は毎日進む）。数は `COUNTRIES` から数える
-    note: `行った順に${COUNTRIES.length}カ国`,
-    /* 国の面の名簿（`content/travel.ts`）から。歩いた記録を持つ国だけ——行く前の案内だけの国は
-       下に自分の棚を持っている（混ぜると「行った順に◯カ国」と数が合わない） */
-    items: TRAVEL_PLACES.flatMap((p) => (p.country ? [{ ...p, c: p.country }] : [])).map(({ href, c }) => ({
-      href,
-      name: c.name,
-      note: c.summary,
-      /* 束ねる語彙は旅の名前（「北欧周遊」で探しても国が出る。`docs/spec/model.md` M-5） */
-      q: q(c.name, c.en, c.slug, tripsOfCountry(c.slug).map((t) => t.name).join(" "), c.stays.flatMap((s) => s.cities).join(" ")),
-    })),
-  },
-  {
-    id: "legends",
-    title: "伝説の企画",
-    note: "いまでも話に出てくる回",
-    items: LEGENDS.map((l) => ({
-      href: `/legends/${l.slug}`,
-      name: l.title,
-      note: l.lead,
-      q: q(l.title, l.lead, l.slug),
-    })),
-  },
-  {
-    id: "apps",
-    title: "アプリ",
-    note: "配信で作って、配信で直しているもの",
-    /* **`APPS` ではなく `ALL_APPS`。** 工房（`/apps`）に並べているのは
-       配信のある2本だけだが、Spelieve の紙も書き出されている。
-       ここに載せないと、その1枚だけ2回では着かない（工房を通って3回になる）。
-       ここは「島にある紙、ぜんぶ」なので、建っていないものも入れる。 */
-    items: ALL_APPS.map((a) => ({
-      href: `/apps/${a.slug}`,
-      name: a.name,
-      note: a.tagline,
-      q: q(a.name, a.tagline, a.slug),
-    })),
-  },
-  {
-    id: "nordic",
-    title: "北欧の旅",
-    /* **「次の旅」と書かない。** 旅は 2026-09-27 に終わっている。
-       ここは焼き込みなので、時点を言う字を置くとその日から嘘になる
-       （`content/chapters.ts` の同じ決まり）。何の旅だったかだけを言う。 */
-    note: "ポーランドからスウェーデンまで、ぜんぶ人の車で",
-    items: [
-      /* 旅そのものは章の島（`/island/nordic`）の紙に寄せた（#1201）。下の「島の連なり」の
-         「北欧周遊」と同じ紙を指すが、**行は消さない**——北欧の旅を探す人はここを見る。
-         紙の数は行き先で数えるので、2回は数えない（下の `DEST_COUNT`） */
-      {
-        href: NORDIC_HREF,
-        name: "北欧ヒッチハイク",
-        note: "会いに行く理由と、通る道ぜんぶ",
-        q: q("北欧ヒッチハイク nordic 旅 スウェーデン"),
-      },
-      /* 1日ぶんのページ。**ここに載せないと、旅程表を通らないと着けない。**
-         どこからでも2タップの決まりは、面を足すたびにここへ1行足して守る。 */
-      ...DAY_PAGES.map((d) => ({
-        href: dayHref(d),
-        name: `北欧 ${dayName(d)}`,
-        note: d.lead ?? "",
-        q: q(
-          "北欧",
-          dayName(d),
-          d.lead,
-          // 動かない日（休息日）は区間を持たない。街の名前で引けなくなるので、
-          // `city` と「寄るかもしれない街」も混ぜる
-          [
-            ...(d.legs ?? []).flatMap((l) => [cityName(l.from), cityName(l.to), ...(l.maybe ?? [])]),
-            d.city ?? "",
-            ...(d.maybe ?? []),
-          ].join(" "),
-        ),
-      })),
-      {
-        href: NORDIC_GUIDE_HREF,
-        name: "旅のしおり",
-        note: "お金・通信・服・サウナ・食べもの",
-        q: q("旅のしおり guide 持ち物 サウナ お金"),
-      },
-      /* 国の行は、歩いた記録の面へ（2026-11-13 に `/nordic/<国>` を寄せた。#1201）。
-         上の「歩いた国」の棚と同じ紙を指すが、**行は消さない**——北欧の旅から国を探す人は
-         ここを見る。紙の数は行き先で数えるので、2回は数えない（下の `DEST_COUNT`） */
-      ...NORDIC_COUNTRIES.map((c) => ({
-        href: travelHref(c.slug),
-        name: c.name,
-        note: c.catch,
-        q: q(c.name, c.en, c.slug, c.catch, c.cities.join(" ")),
-      })),
-    ],
-  },
-  {
-    /* ルーマニア（2026-11-20 にブカレストのガイドを公開した。国の面は入った日の 11-21 に建てた）。
-       ブルガリアと同じく、国ごとに棚を立てる */
-    id: "romania",
-    title: "ルーマニア",
-    /* **時点を言わない**（`docs/island-standards.md` 16章） */
-    note: "「東欧のパリ」と称えられた街。首都はブカレスト",
-    items: [
-      /* 国の面（旅の記録。ほかの国と同じ型。`app/travel/record.tsx`）。国の案内はブカレストの面が持つ */
-      {
-        href: travelPage("romania").href,
-        name: "ルーマニア",
-        note: "いつ行ったか・配信の数・行った街",
-        q: q("ルーマニア romania 旅の記録 配信 行った街 ブカレスト bucharest バルカン"),
-      },
-      {
-        href: travelCity("romania", "bucharest").href,
-        name: "ルーマニア・ブカレスト",
-        note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・ことば",
-        q: q(
-          "ルーマニア romania ブカレスト bucharest 国民の館 palace parliament ドラキュラ dracula ブラン城 bran " +
-            "ペレシュ城 peles アテネ音楽堂 athenaeum サルマーレ sarmale パパナシ papanasi レイ lei バルカン",
-        ),
-      },
-    ],
-  },
-  {
-    /* ブルガリア。**北マケドニアと同じ棚にしない。** 同じ周遊の中の国だが、
-       棚は「どの国の話か」で分ける——混ぜると、ソフィアの紙がスコピエの
-       中の1行に見える（北マケドニアの棚を立てたときと同じ理由）。 */
-    id: "bulgaria",
-    title: "ブルガリア",
-    /* **時点を言わない**（`docs/island-standards.md` 16章） */
-    note: "二千年の歴史が足もとに眠る街。首都はソフィア",
-    items: [
-      /* 国の面（旅の記録。ほかの国と同じ型。`app/travel/record.tsx`）。国の案内はソフィアの面が持つ */
-      {
-        href: travelPage("bulgaria").href,
-        name: "ブルガリア",
-        note: "いつ行ったか・配信の数・行った街",
-        q: q("ブルガリア bulgaria 旅の記録 配信 行った街 ソフィア sofia バルカン"),
-      },
-      {
-        /* 前の `/bulgaria`。街の面に移った（#1228）。道は名簿から引く */
-        href: travelCity("bulgaria", "sofia").href,
-        name: "ブルガリア・ソフィア",
-        note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・1日の予算・ことば",
-        q: q(
-          "ブルガリア bulgaria ソフィア sofia ヨーグルト バラ rose キリル文字 cyrillic " +
-            "バニツァ banitsa タラトル tarator ショプスカ shopska ネフスキー nevski " +
-            "ボヤナ boyana リラ修道院 rila ヴィトシャ vitosha ユーロ euro レフ lev バルカン",
-        ),
-      },
-      /* 街の記事（物価など）。北マケドニアの棚と同じく、名簿の公開した記事から（`publicArticles`） */
-      ...publicArticles("bulgaria").map((a) => {
-        const g = articleOf(a.country, a.city, a.slug);
-        return { href: a.href, name: g.h1[0], note: g.h1.slice(1).join(""), q: q(g.title, a.slug, "物価 値段 prices") };
-      }),
-    ],
-  },
-  {
-    /* 北マケドニア。**面は1枚だが、棚を立てる。**
-       北欧の棚に混ぜると「北欧の旅」の中の1行になって、別の国の話だと読めない。
-       歩き終わったら、記録と案内は同じ1枚（`/travel/<国>`）に育つ（#1201）。 */
-    id: "north-macedonia",
-    title: "北マケドニア",
-    /* **時点を言わない**（`docs/island-standards.md` 16章）。
-       「これから行く国」と書くと、着いた日から嘘になる。 */
-    note: "海に出ない、山と湖の国。首都はスコピエ",
-    items: [
-      /* 国の面（旅の記録。ほかの国と同じ型。`app/travel/record.tsx`）。前は行く前の読みもの
-         （どんな国か・ことば）で、探し言葉もそちらの中身だった。面に無い語で引っかけない */
-      {
-        href: travelPage("north-macedonia").href,
-        name: "北マケドニア",
-        note: "いつ行ったか・配信の数・行った街・作ったごはん・付箋",
-        q: q("北マケドニア north macedonia 旅の記録 配信 行った街 スコピエ skopje 料理 付箋 バルカン"),
-      },
-      /* 街のガイド。**公開前の印（`draft`）が付いた街は並べない**（`content/travel.ts` の `publicCities`）。
-         印を外した日に、ここへひとりでに1行増える */
-      ...publicCities("north-macedonia").map((c) => ({
-        href: c.href,
-        name: c.name,
-        note: "見る・食べる・買う・すること。行った人の話つき",
-        q: q(c.name, c.slug, "スコピエ skopje 観光 見どころ 食べ物 物価 マトカ渓谷 matka 旧市街 石橋 ケバピ ホステル"),
-      })),
-      /* 街の記事（物価など）。街と同じく、印を外した日にここへひとりでに1行増える（`publicArticles`） */
-      ...publicArticles("north-macedonia").map((a) => {
-        const g = articleOf(a.country, a.city, a.slug);
-        return { href: a.href, name: g.h1[0], note: g.h1.slice(1).join(""), q: q(g.title, a.slug) };
-      }),
-    ],
-  },
-  {
-    id: "atlas",
-    title: "島の連なり",
-    note: "これまで渡ってきた島、ぜんぶ",
-    items: [
-      { href: ISLAND_PATH, name: ISLAND_LABEL, note: "矢印でとなりの島へ渡れる", q: q("島の地図 atlas island 連なり 章") },
-      ...ISLE_CHAPTERS.map((c) => ({
-        href: chapterHref(c),
-        name: c.name,
-        /* まだ始まっていない章は from が空。年を出すと「年から」になる。
-           **「次の島」と書かない。** 始まっていない章は1つとはかぎらないし
-           （行き先だけ決まっている島がうしろに並ぶ）、この字は焼かれるので
-           出発した日から「まだ建っていない」が嘘になる。島の面と同じ言い方にそろえる。 */
-        note: c.from ? `${c.from.slice(0, 4)}年から。歩ける島` : "これから建っていく島",
-        q: q(c.name, c.slug, "島 歩く"),
-      })),
-      // 配信の一覧は、配信のある章だけ。無い章に口を出すと、押した先が無い
-      ...ISLE_STREAM_CHAPTERS.map((c) => ({
-        href: `/island/${c.slug}/streams`,
-        name: `${c.name}の配信`,
-        note: "この章のあいだにやった配信だけ",
-        q: q(c.name, c.slug, "配信 アーカイブ"),
-      })),
-    ],
-  },
-  {
-    /* グッズ（2026-10-08）。**「そのほか」に混ぜずに、棚を立てる。**
-       「そのほか」に混ぜると、デザインの見本と同じ段に見える。あちらは
-       作る側の棚で、こちらは持って帰る人の棚。用事がまるごと違う。
-       **ステッカーは自分の面を持った**（2026-10-13、`/goods/stickers`）。
-       増えるのはその面の中なので、棚に並ぶ行き先はこれ以上増えない。 */
-    id: "goods",
-    title: "グッズ",
-    /* **時点を言わない**（`docs/island-standards.md` 16章）。
-       「いま3つ」と書くと、1つ増えた日から嘘になる。 */
-    note: "島から持って帰れるものと、お店で買えるもの",
-    items: [
-      {
-        href: "/goods",
-        name: "あやとグッズ",
-        note: "ステッカー・カード・キャラクター・LINEスタンプ・SUZURI",
-        q: q(
-          "あやとグッズ goods グッズ ステッカー sticker シール LINEスタンプ line stamp " +
-            "LINE STORE ちゃす 仲間たち " +
-            "スタンプ カレンダー calendar SUZURI suzuri トートバッグ tシャツ 透かし 無料",
-        ),
-      },
-      {
-        href: "/goods/stickers",
-        name: "あやとステッカー",
-        /* **枚数を書かない**（`docs/island-standards.md` 16章）。
-           1枚足した日から嘘になる */
-        note: "落として、好きなところに貼れる1枚",
-        q: q(
-          "あやとステッカー sticker シール 無料 ダウンロード 落とす 貼る 透過 " +
-            "印刷 グッズ 図鑑 ステッカー帳",
-        ),
-      },
-    ],
-  },
+    },
+  ] as const),
+  /* **配信の無いアプリ（`PAST_APPS`）も並べる。** 工房に建っていなくても、紙は書き出されている */
+  ...ALL_APPS.map((a) => [`/apps/${a.slug}`, { note: a.tagline, q: q(a.name, a.tagline, a.slug) }] as const),
+]);
+
+/** 入口の建物の面（`/about` など）。1行は建物の一言 */
+const DOOR_LINES: Record<string, Line> = Object.fromEntries(
+  PLACES.map((d) => [d.href, { note: d.blurb, q: q(d.label, d.blurb, d.id, d.href) }]),
+);
+
+function destOf(p: Page): Dest {
+  const line = SINGLE[p.path] ?? FROM_TABLES[p.path] ?? DOOR_LINES[p.path];
+  /* 1行の無い面を、黙って空で並べない。面の種類を足したら、上の表のどれかに1行足す */
+  if (!line) throw new Error(`content/directory.ts: ${p.path} の1行（note と探し言葉）が無い`);
+  return { href: p.path, name: p.name, ...line, q: q(p.name, line.q) };
+}
+
+/**
+ * 並びは種類の表の並びのまま、**同じ親の下の面を続けて**並べる（国のすぐ下にその国の街と話題、旅の島のすぐ下にその旅の日）。
+ * 種類の表は「国ぜんぶ → 街ぜんぶ」の順なので、そのままだと街が国から離れる。
+ */
+function grouped(pages: Page[]): Page[] {
+  const keyOf = (path: string) => path.split("/").slice(0, 3).join("/") || "/";
+  const order: string[] = [];
+  const by = new Map<string, Page[]>();
+  for (const p of pages) {
+    const k = keyOf(p.path);
+    if (!by.has(k)) {
+      by.set(k, []);
+      order.push(k);
+    }
+    by.get(k)!.push(p);
+  }
+  return order.flatMap((k) => by.get(k)!);
+}
+
+/* **検索には出すが、棚には並べない面。** 理由ごとここに書く（`tools/sprites/prodsweep.mjs` の `ABSENCES` と同じ決め）。
+   - `/all` … この面そのもの。自分の中に自分への行を置かない
+   - `/privacy` … 読み物ではない。Google の OAuth 審査に URL を出す都合で持っている面なので、
+     検索からは引けるようにして、島の索引には並べない（2026-09-19 の決め。2026-11-23 に戻した。#1386） */
+const OFF_SHELF = new Set(["/all", "/privacy"]);
+/** 検索には出さないが、棚には並べる面（`prodsweep.mjs` の `ABSENCES` で sitemap だけ外してある面）。部品を探すときはここから入る */
+const SHELF_ONLY = ["/design"];
+
+const ON_SHELF = [
+  ...listedPages().filter((p) => !OFF_SHELF.has(p.path)),
+  ...SHELF_ONLY.map((h) => {
+    const p = pageAt(h);
+    if (!p) throw new Error(`content/directory.ts: 棚に並べる ${h} が、面の一覧（lib/pages.ts）に無い`);
+    return p;
+  }),
+];
+
+const entranceOf = (path: string): string => kindOf(routeOf(path)!).entrance;
+
+export const SHELVES: Shelf[] = [
+  ...PLACES.map((d) => ({
+    id: d.id,
+    title: d.label,
+    note: d.blurb,
+    items: grouped(ON_SHELF.filter((p) => entranceOf(p.path) === d.label)).map(destOf),
+  })),
   {
     id: "misc",
     title: "そのほか",
-    note: "書くところと、部品の見本",
-    items: [
-      /* 「企画のページを作る」（`/next/new`）は、ここから外した（2026-10-01）。
-         視聴者さんが企画を出す道を畳んだので、面は `/board` へ送るだけの
-         1枚になっている。索引から名指しで呼ぶと、押した先で送り返される。 */
-      /* 島を直したところ（2026-10-13）。**入口はここと、掲示板の
-         「あやと島へ」の札だけ**（`content/themes.ts`）。表紙にも島にも
-         出さない——あやとの言葉「気にしてる人少ないのでさりげなく」。
-         探しに来た人が1回で着ければ足りる。 */
-      {
-        href: "/updates",
-        name: "島をなおしたところ",
-        note: "どこが変わったか。こうしてほしいも、ここから",
-        q: q("島をなおしたところ updates 変わった 直した 要望 改良 お知らせ"),
-      },
-      {
-        href: "/design",
-        name: "デザインの見本",
-        note: "島で使う印と部品の棚",
-        q: q("デザインの見本 design 部品 アイコン"),
-      },
-    ],
+    /* 入口を持たない面（表紙と、建物の外。種類の表の「表紙」「建物の外」） */
+    note: "島そのものと、部品の見本",
+    items: ON_SHELF.filter((p) => !PLACES.some((d) => d.label === entranceOf(p.path))).map(destOf),
   },
 ];
 
 /**
  * 行き先の数。`/all` が「島にある紙、◯枚」と名乗る数。
  *
- * **行の数ではなく、行き先の数を数える。** 名乗っているのは「紙」なので、
- * 同じ紙へ行く行が2つあれば1枚。
- * 2026-09-19 まではここが行の数（122）で、本番の `/all` に並んでいる行き先は
- * 121 だった。**画面が「122枚」と名乗って、121枚しか無かった。**
- *
- * 2026-11-13 までは、章の島の行が**いまいる島のぶんだけ `/` に化けて**いたので
- * 1つ引いていた。いまは章の島はいつも `/island/<章>`（`chapterHref`。#1201）なので、引かない。
+ * **同じ行き先を2つの棚に並べない**ので、行の数と行き先の数は同じになる。
+ * 前は北欧の国が「歩いた国」と「北欧の旅」の2棚に並んでいて、行の数と名乗る枚数がずれないように
+ * 行き先で数え直していた（2026-09-19 には画面が「122枚」と名乗って、121枚しか無かった）。
+ * いまは2回並んだら書き出しを止める。
  */
-const DEST_HREFS = new Set(SHELVES.flatMap((s) => s.items.map((d) => d.href)));
+const ROWS = SHELVES.flatMap((s) => s.items.map((d) => d.href));
+const DEST_HREFS = new Set(ROWS);
+if (DEST_HREFS.size !== ROWS.length) {
+  const dup = ROWS.filter((h, i) => ROWS.indexOf(h) !== i);
+  throw new Error(`content/directory.ts: 同じ行き先が2つの棚に並んでいる（${[...new Set(dup)].join(", ")}）`);
+}
 
 /* **棚の行き先と、索引に出す面（種類の表。`lib/pages.ts`）を突き合わせる**（R-22。#1357）。
    - 索引に出す面が、どの棚にも無い → 止める。立て忘れると、索引には在るのに `/all` から行けない面になる
-     （前は配ったあとの `prodsweep.mjs` で初めて分かった。#1201）
-   - 棚の行き先が、面の一覧に無い → 止める。押した先が無い行を並べない
-   棚の添え書き（1行・探し言葉）は人が書く字なのでここが持つが、**行き先の集まりは種類の表と同じ**になる */
-const LISTED = listedPages().map((p) => p.path);
-/* **検索には出すが、棚には並べない面。** 理由ごとここに書く（`tools/sprites/prodsweep.mjs` の `ABSENCES` と同じ決め）。
-   - `/all` … この面そのもの。自分の中に自分への行を置かない
-   - `/privacy` … 読み物ではない。Google の OAuth 審査に URL を出す都合で持っている面なので、
-     検索からは引けるようにして、島の索引には並べない（2026-09-19 の決め。W10 で種類の表から
-     棚を作り直したときに並んでしまい、配ったあとの見回りが落ちた。2026-11-23） */
-const OFF_SHELF = new Set(["/all", "/privacy"]);
-const offShelf = LISTED.filter((h) => !OFF_SHELF.has(h) && !DEST_HREFS.has(h));
+   - 棚の行き先が、面の一覧に無い → 止める。押した先が無い行を並べない */
+const offShelf = listedPages()
+  .map((p) => p.path)
+  .filter((h) => !OFF_SHELF.has(h) && !DEST_HREFS.has(h));
 if (offShelf.length) throw new Error(`content/directory.ts: 索引に出す面が /all の棚に無い（${offShelf.join(", ")}）`);
 const ghost = [...DEST_HREFS].filter((h) => !pageAt(h));
 if (ghost.length) throw new Error(`content/directory.ts: /all の棚の行き先が、面の一覧（lib/pages.ts）に無い（${ghost.join(", ")}）`);

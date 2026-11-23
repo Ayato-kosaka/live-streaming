@@ -4,6 +4,7 @@ import { fitTitle } from "@/lib/seoText";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import { Panel } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
 import { ALL_APPS, appBySlug, type AppMilestone } from "@/content/apps";
@@ -71,7 +72,7 @@ export default async function AppPage({ params }: { params: Promise<{ slug: stri
   const released = a.milestones.find((m) => m.kind === "release");
 
   return (
-    <PageShell crumbs={[{ label: "アプリ", href: "/apps" }, { label: a.name }]}>
+    <PageShell crumbs={crumbsOf(`/apps/${a.slug}`)}>
       <PageHead
         logo={a.logo}
         mark={a.slug === "nanikore" ? <HeadphoneArt size={62} /> : <DishArt size={62} />}

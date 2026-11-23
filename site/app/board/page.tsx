@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import { GUIDE } from "@/content/voice";
 import Board from "@/components/live/Board";
 
@@ -26,7 +27,7 @@ export const metadata: Metadata = share({
 
 export default function BoardPage() {
   return (
-    <PageShell crumbs={[{ label: "やってほしいこと" }]}>
+    <PageShell crumbs={crumbsOf("/board")}>
       <PageHead
         icon="signboard"
         title="やってほしいこと"

@@ -5,7 +5,7 @@ import PageShell, { PageHead } from "@/components/ui/PageShell";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import { NORDIC_GUIDE as G, NORDIC_COUNTRIES, NORDIC_GUIDE_HREF, DAYS, cityCountry, cityName } from "@/content/nordic";
-import { chapterCrumbs, chapterOf } from "@/content/chapters";
+import { crumbsOf } from "@/lib/pages";
 import Flag from "@/components/ui/Flag";
 import GuideNow from "@/components/nordic/GuideNow";
 import { GUIDE_CHAPTERS as CHAPTERS } from "./chapters";
@@ -120,7 +120,7 @@ function Chapter({
 export default async function NordicGuidePage({ params }: { params: Promise<{ chapter: string }> }) {
   if ((await params).chapter !== GUIDE_CHAPTER) notFound();
   return (
-    <PageShell crumbs={chapterCrumbs(chapterOf(GUIDE_CHAPTER), { label: "旅のしおり" })}>
+    <PageShell crumbs={crumbsOf(NORDIC_GUIDE_HREF)}>
       <PageHead
         mark={<Icon name="book" size={44} />}
         title="旅のしおり"

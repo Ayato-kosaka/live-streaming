@@ -395,15 +395,8 @@ export function chapterHref(c: Chapter): string {
   return `/island/${c.slug}`;
 }
 
-/**
- * 章の島の下の面のパンくず。**道の階層と同じ**（島 › 島の地図 › <章> › …）。
- * 見えるパンくずと名札（`BreadcrumbList`）の両方がここから出る。
- */
-export const chapterCrumbs = (c: Chapter, ...rest: { label: string; href?: string }[]) => [
-  { label: ISLAND_LABEL, href: ISLAND_PATH },
-  rest.length ? { label: c.name, href: chapterHref(c) } : { label: c.name },
-  ...rest,
-];
+/* 章の島の下の面のパンくずは、ここでは組まない。面の一覧（`lib/pages.ts` の `crumbsOf`）が
+   入口（歩いた国。`docs/spec/routes.md` R-23）と道の上の段から組む（#1279。前の `chapterCrumbs` は入口を持たなかった） */
 
 /**
  * 次の島。**日付で決める。**

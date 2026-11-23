@@ -154,6 +154,8 @@ bring(join(CONTENT, "chapters.ts"), "chapters.ts");
 bring(join(LIB, "nightly.ts"), "nightly.ts");
 /* 企画の表。企画あての宛先は、結んだ企画（`project`）の日で締まる */
 bring(join(CONTENT, "projects.ts"), "projects.ts");
+/* 種類の表（お題の行き先を鍵から組む `hrefOf`。何も読まない1枚。#1279） */
+bring(join(CONTENT, "kinds.ts"), "kinds.ts");
 bring(THEMES_SRC, "themes.ts");
 
 execFileSync(

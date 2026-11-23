@@ -741,9 +741,9 @@ const DRESSING: Item[] = [
      軒の跡を空き地にしない */
   { n: "log", x: 336, y: 566, s: 14 },
   // あやとのこと(あやとの家): 庭の丸太
-  { n: "log", x: P.friends.x - 44, y: P.friends.y + 6, s: 15 },
-  { n: "log", x: P.friends.x + 46, y: P.friends.y + 10, s: 15, flip: true },
-  { n: "bench", x: P.friends.x + 4, y: P.friends.y + 42, s: 26 },
+  { n: "log", x: P.about.x - 44, y: P.about.y + 6, s: 15 },
+  { n: "log", x: P.about.x + 46, y: P.about.y + 10, s: 15, flip: true },
+  { n: "bench", x: P.about.x + 4, y: P.about.y + 42, s: 26 },
   // 企画をだす(掲示板): 立ち読み用の灯り
   { n: "lantern", x: P.board.x + 74, y: P.board.y + 6, s: 52 },
   /* 「いまどこ」の軒が建っていた所（452, 556。#1278 で畳んだ）。腰掛けは残して、軒の跡を空き地にしない */
@@ -912,10 +912,10 @@ const ROUTES: Route[] = [
   { a: foot("streams", 34), b: foot("apps"), bend: -32 },
   { a: foot("streams", 34), b: foot("board", 8), bend: 24 },
   { a: foot("kitchen"), b: foot("map", 6), bend: -18 },
-  { a: foot("apps"), b: foot("friends", 10), bend: 24 },
+  { a: foot("apps"), b: foot("about", 10), bend: 24 },
   // 丘の館は高台の上。道を丘の上まで引くと、崖の面に土が塗られたように見える。
   // 崖のふもとで止めて、そこから上は登るものとして残す。
-  { a: foot("friends", 10), b: [PLATEAU.cx + 2, PLATEAU.cy + 100], bend: -26 },
+  { a: foot("about", 10), b: [PLATEAU.cx + 2, PLATEAU.cy + 100], bend: -26 },
 ];
 
 /** ルートの中央の制御点。曲げないと格子になって、島が公園に見える。 */
@@ -1094,7 +1094,7 @@ const beachDetail = (() => {
  * 島の絵に混ぜると時間帯の色かぶせに沈むので、その上の層で描く。
  */
 export const LAMPS: [number, number, number][] = [
-  [P.friends.x, P.friends.y - 10, 104],
+  [P.about.x, P.about.y - 10, 104],
   [P.board.x + 74, P.board.y - 36, 60],
   [P.kitchen.x + 14, P.kitchen.y - 30, 70],
   [P.apps.x + 12, P.apps.y - 30, 70],

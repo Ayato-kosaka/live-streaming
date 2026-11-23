@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import Isles from "@/components/chain/Isles";
 import { atlasIsles } from "@/components/chain/isles";
 import { CHAPTERS, ISLAND_PATH, ISLAND_LABEL } from "@/content/chapters";
@@ -47,7 +48,7 @@ export const metadata: Metadata = share({
  */
 export default function IslandIndexPage() {
   return (
-    <PageShell crumbs={[{ label: ISLAND_LABEL }]}>
+    <PageShell crumbs={crumbsOf("/island")}>
       <PageHead
         icon="signpost-flags"
         title={ISLAND_LABEL}

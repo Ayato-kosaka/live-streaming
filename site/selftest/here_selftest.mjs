@@ -28,7 +28,8 @@
  *
  * **3 がこの見張りのいちばんの仕事。** 新しい枝（`/nordic` のような
  * 「中身は軒のものだが道の名前が違う面」）を建てた日に赤くなる。
- * 直し方は2つしかない——`layout.ts` の `under` にその枝を足して軒に属させるか、
+ * 直し方は2つしかない——種類の表（`content/kinds.ts`。仕様は `docs/spec/routes.md` の2章）の
+ * その道の型の「入口」を9つのどれかにして軒に属させるか（#1279。前は `layout.ts` の `under`）、
  * 下の `OUTSIDE` に**島のどこの軒でもない理由**を書くか。どちらも1行。
  *
  * ## 対照（`docs/island-standards.md` §15）
@@ -73,17 +74,18 @@ const nothing = (why) => {
    「使っていないから」は理由にならない。書くのは「その面に立っている人は、
    島のどの軒にも入っていない」と言い切れる中身のほう。
    ここに無い枝が出たら赤くなる（それがこの見張りの本体）。
+
+   鍵は道そのもの（`/cards/import`）か、枝（いちばん上の段。`/me`）。道が先に当たる。
+   仕様の「建物の外」（`docs/spec/routes.md` 2章）と同じ顔ぶれになる（#1279 で `/cards` `/island` `/updates` は軒に入った）。
    =================================================================== */
 const OUTSIDE = {
   "/": "島そのものと 404。軒の中ではなく、軒の建っている島の上に立っている",
   "/all": "行き先の索引。軒ではなく、軒ぜんぶを並べた道しるべ",
-  "/cards": "あやと島カード。グッズの中から行けるが、島には建てていない（layout.ts の但し書き）",
+  "/cards/import": "写真をまとめて登録する道具。あやとが使う手元の道具で、グッズの軒の中身ではない（仕様の「建物の外」）",
   "/design": "デザインの見本。作る側が見る面で、島の軒ではない",
-  "/island": "島の地図と章ごとの島（旅の記録）。章の島をまたぐ地図も、旅ごとの島とその下の日ごとの面・しおりも、軒ではなく島そのものの連なり（2026-11-13 に `/atlas` `/nordic` をここへ寄せた。#1201）",
-  "/nordic": "前の北欧旅の道。いまは `/cards` へ送るだけの面（`/nordic/photos`）しか立っていない。旅そのものは章の島（`/island/nordic`）へ寄せた（#1201）",
   "/me": "じぶんのこと。島のどこかではなく、その人の手元",
   "/privacy": "プライバシーポリシー。島の外の決めごと",
-  "/updates": "島をなおしたところ。軒ではなく、島そのものの移り変わり。島に建てず、帯も立てていない（`/all` の棚と掲示板の棚札からだけ行ける）",
+  "/roulette": "配信に映すルーレットの盤。視聴者さんが歩いて入る軒ではなく、配信の画面の道具（仕様の「建物の外」）",
 };
 
 /* ===================================================================
@@ -172,7 +174,10 @@ export function routesIn(dir, base = "") {
   return out;
 }
 
-/** 道の、いちばん上の段。`OUTSIDE` の鍵はこの形。 */
+/** 面のひな型の道（`/island/[chapter]`）を、名前の入った道（`/island/x`）にする */
+export const asPath = (route) => route.replace(/\[[^\]]+\]/g, "x");
+
+/** 道の、いちばん上の段。`OUTSIDE` の鍵はこの形（か、道そのもの）。 */
 export const branchOf = (route) => {
   const seg = route.split("/")[1];
   return seg ? `/${seg}` : "/";
@@ -195,14 +200,37 @@ function loadLayout(src) {
   }
   const js = join(out, basename(src).replace(/\.ts$/, ".js"));
   if (!existsSync(js)) nothing(`${src} が組み立てられなかった`);
-  const mod = { exports: {} };
   const nodeRequire = createRequire(import.meta.url);
+  /* 種類の表（`content/kinds.ts`）。どの軒かは、その道の型の「入口」で決まる（#1279）。**本物を組み立てて渡す**——
+     写しを置くと、表を直したのに見張りが古いまま通る。何も読まない1枚なので、これだけで組み上がる */
+  const kinds = run(compile(KINDS_TS), {});
   // 建物の添え書きが2つ、住人の言葉と企画の道のりを引いている。印には関わらないので空で返す
-  const STUB = { "@/content/nights": { say: () => "" }, "@/content/projects": { courseOf: () => ({ km: 0 }) } };
-  const req = (id) => STUB[id] ?? nodeRequire(id);
-  new Function("require", "exports", "module", readFileSync(js, "utf8"))(req, mod.exports, mod);
-  return mod.exports;
+  const STUB = {
+    "@/content/nights": { say: () => "" },
+    "@/content/projects": { courseOf: () => ({ km: 0 }) },
+    "@/content/kinds": kinds,
+  };
+  return run(js, STUB);
+
+  function run(file, stub) {
+    const mod = { exports: {} };
+    const req = (id) => stub[id] ?? nodeRequire(id);
+    new Function("require", "exports", "module", readFileSync(file, "utf8"))(req, mod.exports, mod);
+    return mod.exports;
+  }
+  function compile(ts) {
+    const o = mkdtempSync(join(tmpdir(), "here-kinds-"));
+    try {
+      execFileSync(TSC, [ts, "--outDir", o, "--module", "commonjs", "--target", "es2022", "--skipLibCheck", "--noResolve"], { stdio: "pipe" });
+    } catch {
+      /* 書き出せたかで見る */
+    }
+    const j = join(o, basename(ts).replace(/\.ts$/, ".js"));
+    if (!existsSync(j)) nothing(`${ts} が組み立てられなかった`);
+    return j;
+  }
 }
+const KINDS_TS = process.env.KINDS_TS || join(SITE, "content", "kinds.ts");
 
 const LAYOUT_TS = process.env.LAYOUT_TS || join(SITE, "components", "island", "layout.ts");
 const layout = loadLayout(LAYOUT_TS);
@@ -229,10 +257,14 @@ if (!Array.isArray(PLACES) || typeof spotOfPath !== "function" || typeof tidyPat
   check("対照2b 終わりのスラッシュを落とす", spotOfPath("/kitchen/") === "kitchen");
   check("対照2c 空の道は島そのもの", tidyPath("") === "/" && spotOfPath("") === undefined);
 
-  /* 足3 軒の道の下に居ない面は `under` が引き受ける。前は `/next/new`（掲示板）と `/next`（企画）で
-     「長いほうが勝つ」を当てていたが、企画の軒を畳んだ（#1277）ので、重なる道がいまは無い */
-  check("対照3 軒の道の下でない面は `under` が引き受ける", spotOfPath("/months/2026-10") === "streams" && spotOfPath("/months") === "streams",
-    `${spotOfPath("/months/2026-10")} / ${spotOfPath("/months")}`);
+  /* 足3 道の名前が軒とそろっていない面は、種類の表の「入口」が引き受ける（#1279。前は `layout.ts` の `under`）。
+     `/island/**` `/cards` `/updates` は前はどの軒でもなかった。同じ枝の下でも、道具（`/cards/import`）は軒の外 */
+  check("対照3 道の名前が軒とそろっていない面は、種類の表の入口が引き受ける",
+    spotOfPath("/months/2026-10") === "streams" && spotOfPath("/months") === "streams" &&
+    spotOfPath("/island/nordic/day/depart") === "map" && spotOfPath("/cards") === "goods" && spotOfPath("/updates") === "board",
+    `${spotOfPath("/months/2026-10")} / ${spotOfPath("/months")} / ${spotOfPath("/island/nordic/day/depart")} / ${spotOfPath("/cards")} / ${spotOfPath("/updates")}`);
+  check("対照3b 同じ枝の下でも、建物の外の道具は軒にしない", spotOfPath("/cards/import") === undefined,
+    String(spotOfPath("/cards/import")));
 
   /* 足4 面を歩く */
   {
@@ -308,21 +340,22 @@ let marked = 0;
   for (const { route, file } of pages) {
     if (!hasBeach(stripComments(readFileSync(file, "utf8")))) continue;
     beaches += 1;
-    if (spotOfPath(route)) {
+    /* 動く段（`[slug]`）は、名前が1つ入った道として当てる（種類の表の `<…>` は英小文字・数字・ハイフンの名前1つ） */
+    if (spotOfPath(asPath(route))) {
       marked += 1;
       continue;
     }
     const b = branchOf(route);
-    if (!OUTSIDE[b]) unknown.push(`${route}（枝 ${b}）`);
+    if (!OUTSIDE[route] && !OUTSIDE[b]) unknown.push(`${route}（枝 ${b}）`);
   }
   check("砂浜を出す面が、軒に属しているか／属さない理由が書いてあるか", unknown.length === 0,
-    `${unknown.join(" / ")} ← layout.ts の under に足すか、OUTSIDE に理由を書く`);
+    `${unknown.join(" / ")} ← content/kinds.ts の入口を9つのどれかにするか、OUTSIDE に理由を書く`);
   check("砂浜を出す面が数えられた", beaches >= 20, `${beaches}枚`);
 }
 
-// 3b. `OUTSIDE` の腐り。**消えた枝の言い訳を残さない**
+// 3b. `OUTSIDE` の腐り。**消えた道・枝の言い訳を残さない**
 {
-  const live = new Set(pages.map((p) => branchOf(p.route)));
+  const live = new Set(pages.flatMap((p) => [p.route, branchOf(p.route)]));
   const dead = Object.keys(OUTSIDE).filter((b) => !live.has(b));
   check("OUTSIDE に、もう無い枝が残っていない", dead.length === 0, dead.join(" "));
   const thin = Object.entries(OUTSIDE).filter(([, why]) => why.length < 12).map(([b]) => b);

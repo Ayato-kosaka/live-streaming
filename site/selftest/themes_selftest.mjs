@@ -74,8 +74,8 @@ const BREAK_HINT = `わざと壊して、ここが落ちることを見るには
     site/content/themes.ts > /tmp/themes-dup.ts
   THEMES_TS=/tmp/themes-dup.ts node site/selftest/themes_selftest.mjs   # → 1
 
-  # 2) 行き先の面が無い href を書く
-  sed 's|href: "/goods#suzuri"|href: "/goodz#suzuri"|' \\
+  # 2) 行き先の面が無い鍵を書く（組んだ href の先に面が無い）
+  sed 's|    country: "poland",|    country: "polland",|' \\
     site/content/themes.ts > /tmp/themes-href.ts
   THEMES_TS=/tmp/themes-href.ts node site/selftest/themes_selftest.mjs   # → 1
 
@@ -89,8 +89,8 @@ const BREAK_HINT = `わざと壊して、ここが落ちることを見るには
     site/content/themes.ts > /tmp/themes-order.ts
   THEMES_TS=/tmp/themes-order.ts node site/selftest/themes_selftest.mjs   # → 1
 
-  # 5) 面が在るのに href を外す（押せる先を1つ捨てている）
-  sed 's|^    href: "/island/nordic",$||' \\
+  # 5) 面が在るのに鍵を外す（押せる先を1つ捨てている）
+  sed 's|^    chapter: "nordic",$||' \\
     site/content/themes.ts > /tmp/themes-nohref.ts
   THEMES_TS=/tmp/themes-nohref.ts node site/selftest/themes_selftest.mjs   # → 1
 

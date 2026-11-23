@@ -44,7 +44,10 @@
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
-import { mkdirSync, writeFileSync } from "fs";
+import { mkdirSync, readFileSync, writeFileSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { must, readArray } from "./tsread.mjs";
 
 const SPORT = process.env.SPORT || "5600";
 const PAGE = process.env.PAGE || "/kitchen/gyoza";
@@ -53,16 +56,18 @@ const OUT = `/tmp/navband/${TAG}`;
 const WIDTHS = (process.env.W || "390,600,820,898,900,1200,1920").split(",").map(Number);
 mkdirSync(OUT, { recursive: true });
 
-/** 看板を出す6つ（`site/components/island/layout.ts` の `SPOTS`）と、島そのもの。
+/** 看板を出す6つ（`site/components/island/layout.ts` の `PLACES` のうち `sign` の付いた軒）と、島そのもの。
     **島（`/`）を入れておく。** 「島の入口へ行く道があるか」は、6軒へ行けるかと、
-    島そのものへ戻れるかの両方。帯から札が消える幅では、戻り道のほうが先に効く。 */
+    島そのものへ戻れるかの両方。帯から札が消える幅では、戻り道のほうが先に効く。
+
+    **入口を手で並べない**（#1279）。前はここに6つを書き写していて、歩いた国が前の道 `/map` のまま残り、
+    伝説の企画が看板に入った日にも古い6つを数えていた。入口の表から読む */
+const LAYOUT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "site", "components", "island", "layout.ts");
 const SIGNS = [
   ["/", "島じたい"],
-  ["/about", "あやとのこと"],
-  ["/streams", "配信"],
-  ["/apps", "アプリ"],
-  ["/board", "やってほしいこと"],
-  ["/map", "歩いた国"],
+  ...must(readArray(readFileSync(LAYOUT, "utf8"), "PLACES", { keys: ["href", "label", "sign"], idKey: "id" }), "layout.ts の PLACES")
+    .filter((p) => p.sign === "true")
+    .map((p) => [p.href, p.label]),
 ];
 
 /** 仕込み。**数え方が届いているかを毎回出す**（`docs/island-misses.md` #19）。
