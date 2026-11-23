@@ -8,7 +8,7 @@
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
 const SPORT = process.env.SPORT || "4171";
-const PAGES = (process.env.PAGES || "/,/about,/friends,/streams,/streams/cooking,/streams/walk,/streams/making,/streams/meeting,/streams/monthly,/kitchen,/kitchen/tamagoyaki,/legends,/legends/iran-walk,/apps,/apps/nanitabeyo,/now,/next,/board,/map,/map/georgia,/atlas,/nordic,/nordic/guide,/design").split(",");
+const PAGES = (process.env.PAGES || "/,/about,/friends,/streams,/streams/cooking,/streams/walk,/streams/making,/streams/meeting,/streams/monthly,/kitchen,/kitchen/tamagoyaki,/legends,/legends/iran-walk,/apps,/apps/nanitabeyo,/now,/board,/map,/map/georgia,/atlas,/nordic,/nordic/guide,/design").split(",");
 const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
 const worst = new Map();
 for (const [W, H] of [[390, 844], [1440, 900]]) {

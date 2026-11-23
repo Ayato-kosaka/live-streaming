@@ -37,7 +37,7 @@ const TAG = process.env.TAG || "";
 const WHENS = (process.env.WHENS ||
   "2026-09-10T12:00:00Z,2026-09-11T19:25:00Z,2026-09-11T19:35:00Z,2026-09-11T20:00:00Z,2026-09-18T12:00:00Z"
 ).split(",");
-const PAGES = (process.env.PAGES || "/,/next,/board,/atlas").split(",");
+const PAGES = (process.env.PAGES || "/,/board,/atlas").split(",");
 
 const STATE = existsSync("/tmp/state.json") ? readFileSync("/tmp/state.json", "utf8") : null;
 const NEXTPLANS = existsSync("/tmp/nextplans.json") ? readFileSync("/tmp/nextplans.json", "utf8") : null;
@@ -78,19 +78,6 @@ const READ = {
       料理の数: [...body.matchAll(/(\d+)\s*品/g)].map((m) => m[0].replace(/\s+/g, "")),
       名刺: nums,
       棚: shelf,
-    };
-  },
-  "/next": () => {
-    const main = document.querySelector("main") ?? document.body;
-    /* 先頭の札は `PlanCard`（`h2` と `.nx-clock`）。一覧の札は `.count` を持つ。
-       クラス名を決め打ちにすると、形の違う実装を「無い」と読む
-       （`docs/island-standards.md` 13）ので、見出しと札の両方を並べて出す。 */
-    return {
-      あたま: main.innerText.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 8),
-      見出し: [...main.querySelectorAll("h2, h3")].map((e) => e.textContent.trim()).slice(0, 12),
-      日数の札: [...main.querySelectorAll(".count, .nx-clock")].map((e) =>
-        e.innerText.replace(/\s+/g, " ").trim(),
-      ).slice(0, 12),
     };
   },
   "/board": () => {

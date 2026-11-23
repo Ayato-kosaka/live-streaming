@@ -33,8 +33,6 @@ const PAGES = [
   ["07-legends-slug", "/legends/iran-walk"],
   ["08-apps", "/apps"],
   ["09-apps-slug", "/apps/nanitabeyo"],
-  ["10-next", "/next"],
-  ["11-next-new", "/next/new"],
   ["12-board", "/board"],
   ["13-map", "/map"],
   ["14-map-slug", "/map/france"],

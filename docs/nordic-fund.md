@@ -3,7 +3,7 @@
 種別: 仕様
 
 投げ銭を「支援」ではなく「参加」にするための設計。
-`/nordic`（[`island-plan-drafts.md`](./island-plan-drafts.md) でいう大きい企画の専用ページ）に
+`/nordic`（大きい企画の専用ページ。いまの `/island/nordic`）に
 何を足すか、お金をどう扱うか、誰の名前をどこに残すかを決める。
 
 **先に読む**: [`island-design.md`](./island-design.md)（拘束力あり）/ [`island-db.md`](./island-db.md)

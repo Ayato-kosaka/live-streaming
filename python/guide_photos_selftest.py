@@ -36,6 +36,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guide_photos as gp  # noqa: E402
 
+# 手書きの TS の表から、出どころのリンク（`creditHref`）で写真を引く道。**本物の面はいま持っていない**
+# （持っていた企画の告知の欄を #1277 で畳んだ）が、道そのもの（`wanted` の `CREDIT`）は残っているので、
+# 作った面1つで当て続ける。本物の `PLACES` に足さない——足すと `--check` が「数えるものが無い」で止まる
+_TS = "zz-ts"
+gp.PLACES[_TS] = {
+    "dir": "zz-ts/photos",
+    "widths": (960,),
+    "from": [("site/content/projects.ts", ())],
+    "baked": ["site/content/projects.ts"],
+}
+
 FAILS: list[str] = []
 SEEN = 0
 
@@ -101,7 +112,7 @@ def widths() -> None:
     nw = gp.widths_of("nordic/finland")
     for asked, want in ((120, 250), (250, 250), (251, 500), (500, 500), (960, 960), (1100, 960), (None, 960)):
         ok(gp.slot(asked, nw) == want, f"北欧: {asked} 幅には {want} を当てる（{gp.slot(asked, nw)}）")
-    ok(gp.slot(500, gp.widths_of("plans")) == 960 and gp.slot(None, gp.widths_of("plans")) == 960, "企画は 960 だけ")
+    ok(gp.slot(500, gp.widths_of(_TS)) == 960 and gp.slot(None, gp.widths_of(_TS)) == 960, "手書きの TS の表は 960 だけ")
 
 
 NSRC = {
@@ -121,7 +132,7 @@ NSRC = {
 PLANS_TS = """export const PROJECTS = [{
     photos: [
       {
-        src: "/next/photos/%s-960.webp",
+        src: "/zz-ts/photos/%s-960.webp",
         alt: "観覧車",
         credit: "Wikimedia Commons (CC BY-SA 2.0)",
         creditHref: "https://commons.wikimedia.org/wiki/File:Tbilisi_-_Mtatsminda_Park_(9460953464).jpg",
@@ -140,10 +151,11 @@ def places() -> None:
        f"北欧の国が build_nordic.py の ROUTE_ORDER と同じ（{sorted(gp.NORDIC)}）")
     n = "Suomenlinna_(Kustaanmiekka)_island.JPG"
     ok(gp.public("nordic/finland", n, 250) == f"/travel/finland/photos/{gp.stem(n)}-250.webp", "北欧は国の面の下（/travel/<国>/photos/）")
-    ok(gp.public("plans", "A.jpg", 960) == f"/next/photos/{gp.stem('A.jpg')}-960.webp", "企画は /next/photos/")
+    ok(gp.public(_TS, "A.jpg", 960) == f"/zz-ts/photos/{gp.stem('A.jpg')}-960.webp", "置き場の道は面の dir の下")
+    ok("plans" not in gp.PLACES, "畳んだ企画の置き場（plans・next/photos）は面の表に無い（#1277）")
     ok(gp.public("bulgaria/sofia", "A.jpg", 500) == f"/guide/bulgaria/sofia/photos/{gp.stem('A.jpg')}-500.webp", "街は前のまま")
     ok(gp.pick(["nordic"]) == ([f"nordic/{s}" for s in gp.NORDIC], []), f"頭で面を選ぶ（{gp.pick(['nordic'])}）")
-    ok(gp.pick(["plans", "nordic/sweden", "nordi"]) == (["plans", "nordic/sweden"], ["nordi"]), "名前の途中では選ばない")
+    ok(gp.pick([_TS, "nordic/sweden", "nordi"]) == ([_TS, "nordic/sweden"], ["nordi"]), "名前の途中では選ばない")
     ok(gp.pick([])[0] == list(gp.PLACES), "無ければ全部")
     ok(gp.UP.match(NSRC["spots"]["フィンランド"][0]["fbs"]).group(1) == "Fallback_only.JPG", "名前に `|` から先を入れない")
 
@@ -170,17 +182,17 @@ def places() -> None:
         plans.parent.mkdir(parents=True, exist_ok=True)
         p = "Tbilisi_-_Mtatsminda_Park_(9460953464).jpg"
         plans.write_text(PLANS_TS % gp.stem(p), encoding="utf-8")
-        w = gp.wanted("plans", root)
-        ok(set(w) == {p} and w[p]["big"] is True, f"企画は出どころのリンクから名前を引き、縮小を先に頼む（{w}）")
-        bad, seen = gp.check("plans", root)
+        w = gp.wanted(_TS, root)
+        ok(set(w) == {p} and w[p]["big"] is True, f"手書きの表は出どころのリンクから名前を引き、縮小を先に頼む（{w}）")
+        bad, seen = gp.check(_TS, root)
         ok(any("揃っていない" in b for b in bad) and any("置き場に無い" in b for b in bad), "置いていなければ落とす")
-        dp = gp.photo_dir("plans", root)
+        dp = gp.photo_dir(_TS, root)
         dp.mkdir(parents=True)
         (dp / f"{gp.stem(p)}-960.webp").write_bytes(b"x")
-        bad, seen = gp.check("plans", root)
+        bad, seen = gp.check(_TS, root)
         ok(not bad and seen == 2, f"置けば食い違い0（{bad} / {seen}）")
-        plans.write_text((PLANS_TS % gp.stem(p)).replace("/next/photos/", "/travel/finland/photos/"), encoding="utf-8")
-        bad, _ = gp.check("plans", root)
+        plans.write_text((PLANS_TS % gp.stem(p)).replace("/zz-ts/photos/", "/travel/finland/photos/"), encoding="utf-8")
+        bad, _ = gp.check(_TS, root)
         ok(any("別の面" in b for b in bad), "別の面の置き場を指していれば落とす")
 
     # Commons から消えた写真: 取りに行かず、焼く道具は「写真なし」で焼く

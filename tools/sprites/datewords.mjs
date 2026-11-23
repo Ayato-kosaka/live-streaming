@@ -70,11 +70,6 @@ const TARGETS = [
       "旅した日数": ".astats .stat:nth-child(3)",
     },
   },
-  {
-    page: "/next.html",
-    label: "/next（これから）",
-    sel: { "企画ぜんぶ": ".plans, main" },
-  },
 ];
 
 const b = await chromium.launch({

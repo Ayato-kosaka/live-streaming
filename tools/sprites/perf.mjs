@@ -88,7 +88,7 @@ function pick(flag) {
 }
 
 /** 既定は「重いはずの面」だけ。島は演出があるので必ず入れる。 */
-const pages = argv.length ? argv : ["/", "/nordic", "/map", "/kitchen", "/streams", "/next", "/board", "/friends"];
+const pages = argv.length ? argv : ["/", "/nordic", "/map", "/kitchen", "/streams", "/board", "/friends"];
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",

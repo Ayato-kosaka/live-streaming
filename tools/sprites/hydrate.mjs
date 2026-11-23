@@ -50,7 +50,6 @@ const PAGES = (process.env.PAGES || [
   "/atlas.html",
   "/all.html",
   "/now.html",
-  "/next.html",
   "/board.html",
   "/nordic.html",
   "/island/europe.html",
