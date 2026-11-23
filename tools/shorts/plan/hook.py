@@ -38,13 +38,17 @@ spec の**行ごとの区間**の前後 `--margin` 秒（既定 30）。前は�
 | 物差し | 何を見ているか |
 | --- | --- |
 | 色の強さ | Hasler と Süsstrunk の colorfulness。くすんだ壁・歩道・暗い車内は低い |
-| 暖色の寄り | 画の真ん中（横 15〜85%・縦 20〜80%）のうち、赤〜黄で鮮やかな画素の割合。料理・黄色いバスの寄りで高い |
+| 暖色の寄り | 画の真ん中（横 15〜85%・縦 20〜80%）のうち、赤〜黄で鮮やかな画素の割合。料理・黄色いバスの寄りで高い。**点には入れない**（json にだけ残す） |
 | くっきり | 真ん中のラプラシアンの分散。ぶれた画は低い |
-| 動き | 取り込みの `visual.csv`（1秒ごとの隣のコマとの差）。archive と zoom は刻みが違うので、同じ置き場の中で順位を付ける。無い秒は真ん中の順位 |
-| 顔の寄り | YuNet でいちばん大きい顔の面積の割合。2人以上写っていれば「第三者の顔」の印（ぼかしが要る） |
-| 山場 | その時刻が、spec の後ろ6割にある【大】か「上がる」感情の行の画か（その動画の答えに近い画） |
+| 動き | 隣のコマとの明るさの差の1秒の平均。窓の mp4 は、そのコマのまわりを1秒に5コマ読んで測る（取り込みの `visual.csv` と同じ物差し）。シートのコマは取り込みの `visual.csv`（archive・zoom）から。刻みが違うので、同じ物差しの中で順位を付ける。無い秒は真ん中の順位 |
+| 顔の寄り | YuNet でいちばん大きい顔の面積の割合。2人以上写っていれば「第三者の顔」の印（ぼかしが要る）。**点には入れない** |
+| 出来事の行 | その時刻が、spec の種類（`kind`）が出来事の行か、why に【答】・【大】の行の画か（位置は問わない） |
+| 前置きの行 | その時刻が、spec の種類が前置きの行の画か（場所・移動・予定。景色になりやすい） |
 
-点 ＝ 色の強さ・暖色の寄りの順位（各1）＋くっきり・動き・顔の順位（各0.5）＋山場（1）− 暗い画（1）。
+点 ＝ 動きの順位（1.5）＋出来事の行（1.5）＋色の強さ・くっきりの順位（各0.5）− 前置きの行（1）− 暗い画（1）。
+**暖色の寄りと顔は点に入れない**（2026-11-23 #1403。前の点は 色の強さ・暖色 各1＋くっきり・動き・顔 各0.5＋後ろ6割の山場 1 で、
+料理の寄り・夕日・顔だけの画が、何も起きていなくても上に来た。直近18本の0秒目は14本が景色・物の写真・カード・顔で、
+跳ねた回は20本中12本が出来事の最中から入っていた）。spec に種類が無い回は、出来事の行は【答】【大】の行だけ、前置きは引かない。
 順位は候補の中での百分位（物差しの目盛りを揃えるため。同じ値は同じ順位。顔の無い画がみな 0 のとき、並んだ順で順位が
 割れて後ろの画ほど点が高くなっていた）。上から、**場面の違う**3つを選ぶ（場面は `scenes.csv` の変わりめで区切る。archive が
 無い回は、zoom の変わりめと、窓・zoom の頭も切れ目にする。窓どうしは別の場所なので）。
@@ -53,7 +57,8 @@ spec の**行ごとの区間**の前後 `--margin` 秒（既定 30）。前は�
 
 重みは SHORTS_QA_YUNET → `render/models/` → `qa/models/` →（worktree なら）元の clone の同じ所、の順に探し、どこにも無ければ
 書き出しの道具と同じ `tools/shorts/render/fetch_fonts.sh` で取りに行く（`--no-fetch` なら取りに行かずに止まる）。取れなければ
-止まる（2）。顔を数えずに回すなら `--no-faces` と言う（絵の見出しと json に「顔は数えていない」と出て、点に顔を足さない）。
+止まる（2）。顔を数えずに回すなら `--no-faces` と言う（絵の見出しと json に「顔は数えていない」と出る。顔は点に入れないので、
+落ちるのは「人2」の印＝第三者の顔のぼかしの目安だけ）。
 ラベルの書体も同じ（M PLUS → 箱の和文の書体。和文の字形が無い書体は豆腐になるので使わない）。
 
 **大きい顔は、点が高いときだけ数える**（面積 `BIG_FACE` を越える箱は、YuNet の点 `BIG_FACE_SCORE` 以上）。クラムチャウダーの回で
@@ -93,6 +98,13 @@ MIN_APART = 8.0            # 候補どうしをこれだけ離す（同じ場面
 DEDUP_S = 0.6              # 同じ回のこの秒の内は同じ画（細かい置き場のほうを残す）
 PRIO = {"clip": 0, "zoom": 1, "clipsheet": 2, "archive": 3}   # 同じ秒なら小さいほうを残す
 BIG_FACE, BIG_FACE_SCORE = 0.30, 0.90   # 面積がこれを越える顔の箱は、点がこれ以上のときだけ数える（頭の注）
+# 点の重み（頭の「何を測るか」）。暖色と顔は測って絵に出すが、点には入れない（#1403）
+WEIGHTS = {"motion": 1.5, "colorful": 0.5, "sharp": 0.5}
+EVENT_W, PREFACE_W, DARK_W = 1.5, 1.0, 1.0
+# spec の行の種類（`kind`）。名前は `tools/shorts/script/lint.py` の KINDS と同じ（ここから読み込まない: 見張りが道具を写して回すので）
+EVENT_KINDS = ("出来事",)   # 引っ張り（〜たら……）の行の画は、向かう途中の景色になりやすい（バニツァの回で公園の道が上に来た）
+PREFACE_KINDS = ("前置き",)
+MOTION_FPS, MOTION_W, MOTION_H = 5, 72, 128   # 窓の mp4 の動きを測る刻みと大きさ（取り込みの visual.csv と同じ 1/5秒の差・縦128）
 
 
 def stop(msg: str) -> None:
@@ -222,11 +234,25 @@ def row_spans(spec: dict, main: str) -> tuple[list[tuple[int, str, float, float]
     return out, maps
 
 
-def payoff_rows(spec: dict) -> set[int]:
-    """山場の行: 後ろ6割にある【大】か「上がる」感情（mood が up_ で始まる）の行"""
-    n = len(spec["rows"])
+def kind_of(r: dict) -> str:
+    return str(r.get("kind") or "").strip()
+
+
+def event_rows(spec: dict) -> set[int]:
+    """出来事の行: 種類（kind）が出来事の行と、why に【答】・【大】の印のある行。位置は問わない
+    （前は後ろ6割の【大】と「上がる」感情の行だけで、最初の出来事の画が山場に数えられなかった）"""
     return {i for i, r in enumerate(spec["rows"])
-            if i >= 0.4 * n and (r.get("big") or str(r.get("mood") or "").startswith("up"))}
+            if kind_of(r) in EVENT_KINDS or "【答】" in str(r.get("why") or "") or r.get("big")}
+
+
+def answer_rows(spec: dict) -> set[int]:
+    """題の答えの行（why に【答】）。候補3つのうち1つは、この行の画にする（`pick`）"""
+    return {i for i, r in enumerate(spec["rows"]) if "【答】" in str(r.get("why") or "")}
+
+
+def preface_rows(spec: dict) -> set[int]:
+    """前置きの行: 種類が前置き（場所・移動・予定・経緯）の行"""
+    return {i for i, r in enumerate(spec["rows"]) if kind_of(r) in PREFACE_KINDS}
 
 
 def wanted(spans: list[tuple[int, str, float, float]], margin: float):
@@ -262,12 +288,35 @@ def clip_frames(index: Path, clips: list[dict], vid: str, ok) -> list[dict]:
                               "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], check=True, capture_output=True).stdout
         n = len(raw) // (TW * TH * 3)
         arr = np.frombuffer(raw[:n * TW * TH * 3], np.uint8).reshape(n, TH, TW, 3)
+        mv = clip_motion(f, float(c["start"]))
         for k in range(n):
             t = float(c["start"]) + k + 0.5
             if ok(vid, t):
                 out.append({"vid": vid, "t": t, "kind": "clip", "src": f"窓 {f.name}",
-                            "img": fit(Image.fromarray(arr[k]))})
+                            "img": fit(Image.fromarray(arr[k])), "clip_motion": mv.get(int(t))})
     return out
+
+
+def per_second(diffs: list[float], start: float, fps: float) -> dict[int, float]:
+    """隣のコマとの差（k 番目は k+1 枚目と k 枚目の差）→ 1秒ごとの平均（取り込みの `per_second_visual` と同じ数えかた）"""
+    acc: dict[int, list[float]] = {}
+    for k, v in enumerate(diffs, 1):
+        acc.setdefault(int(start + k / fps), []).append(v)
+    return {s: round(sum(v) / len(v), 2) for s, v in acc.items()}
+
+
+def clip_motion(f: Path, start: float) -> dict[int, float]:
+    """窓の mp4 の1秒ごとの動き。窓には visual.csv が無く、前は窓のコマの動きがみな「真ん中の順位」になっていた
+    （うどんの回は候補1,467コマが全部そう）。1秒に5コマ、縦128の灰色で読んで、隣のコマとの明るさの差を平均する"""
+    import numpy as np
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", str(f), "-vf",
+                          f"fps={MOTION_FPS},scale={MOTION_W}:{MOTION_H},format=gray", "-f", "rawvideo", "-"],
+                         check=True, capture_output=True).stdout
+    n = len(raw) // (MOTION_W * MOTION_H)
+    if n < 2:
+        return {}
+    a = np.frombuffer(raw[:n * MOTION_W * MOTION_H], np.uint8).reshape(n, MOTION_H, MOTION_W).astype(np.int16)
+    return per_second([float(x) for x in np.abs(np.diff(a, axis=0)).mean(axis=(1, 2))], start, MOTION_FPS)
 
 
 def sheet_frames(d: Path, base: Path, kind: str, vid: str, ok, only_clips: set[int] | None = None) -> list[dict]:
@@ -411,17 +460,23 @@ def pct(vals: list[float]) -> list[float]:
 
 
 def score_all(cands: list[dict], spec: dict, spans, motion: dict[str, tuple[dict, str]], faces: bool) -> None:
-    pay = payoff_rows(spec)
+    """点（頭の「何を測るか」）。faces は顔を測ったかで、点には入れない（絵と json の印だけ）"""
+    ev, pre, ans = event_rows(spec), preface_rows(spec), answer_rows(spec)
     for c in cands:
         near = [(0.0 if a <= c["t"] <= b else min(abs(c["t"] - a), abs(c["t"] - b)), i)
                 for i, v, a, b in spans if v == c["vid"]]
         d, i = min(near) if near else (99.0, None)
         c["row"] = i if d <= 3.0 else None
-        c["payoff"] = c["row"] in pay
+        c["event"] = c["row"] in ev
+        c["answer"] = c["row"] in ans
+        c["preface"] = c["row"] in pre
         mv, kind = motion.get(c["vid"], ({}, "none"))
-        c["m"]["motion"] = mv.get(int(c["t"]))
+        if c.get("clip_motion") is not None:
+            c["m"]["motion"], kind = c["clip_motion"], "clip"
+        else:
+            c["m"]["motion"] = mv.get(int(c["t"]))
         c["motion_src"] = f"{c['vid']}:{kind}"
-    keys = {"colorful": 1.0, "warm": 1.0, "sharp": 0.5, "motion": 0.5, **({"face": 0.5} if faces else {})}
+    keys = dict(WEIGHTS)
     ranks = {k: pct([c["m"][k] for c in cands]) for k in keys if k != "motion"}
     # 動きは archive（1/5秒の差）と zoom（1/10秒の差）で目盛りが違うので、同じ物差しの中で順位を付ける。無い秒は真ん中
     ranks["motion"] = [0.5] * len(cands)
@@ -433,8 +488,8 @@ def score_all(cands: list[dict], spec: dict, spans, motion: dict[str, tuple[dict
         for j, r in zip(js, pct([cands[j]["m"]["motion"] for j in js])):
             ranks["motion"][j] = r
     for j, c in enumerate(cands):
-        s = sum(w * ranks[k][j] for k, w in keys.items()) + (1.0 if c["payoff"] else 0.0)
-        s -= 1.0 if c["m"]["bright"] < 40 else 0.0
+        s = sum(w * ranks[k][j] for k, w in keys.items()) + (EVENT_W if c["event"] else 0.0)
+        s -= (PREFACE_W if c["preface"] else 0.0) + (DARK_W if c["m"]["bright"] < 40 else 0.0)
         c["score"] = round(s, 3)
         c["ranks"] = {k: round(ranks[k][j], 2) for k in keys}
 
@@ -442,15 +497,22 @@ def score_all(cands: list[dict], spec: dict, spans, motion: dict[str, tuple[dict
 def pick(cands: list[dict], scenes: dict[str, list[float]], n: int = 3) -> list[dict]:
     """点の高い順に、**場面（scenes.csv の変わりめで区切った間）が互いに違う**ものを n 個。
     北マケドニアの B で、時刻（8秒）や見た目の差で離すだけだと、3つとも「同じバス停で同じ構図で食べている」画になり、
-    選ぶ意味が無かった（縮めた絵の差は、同じ場面どうし 0.10〜0.21・別の場面 0.16〜0.32 で、線が引けなかった）"""
-    out = []
-    for c in sorted(cands, key=lambda c: -c["score"]):
+    選ぶ意味が無かった（縮めた絵の差は、同じ場面どうし 0.10〜0.21・別の場面 0.16〜0.32 で、線が引けなかった）。
+
+    **題の答え（【答】）の行の画があれば、いちばん点の高い1つを必ず並べる**（2026-11-23 #1403）。跳ねた回のフックの型の2つ目は
+    「答えの画を先に見せて、意味は伏せる」。点を出来事の行に寄せたら、バニツァの回で食べている画（答え）が4位から10位に下がり、
+    店の外観・公園が3つを占めた（シートだけの回は動きが測れず、静かな出来事の行の画と分けられない）"""
+    ranked = sorted(cands, key=lambda c: -c["score"])
+    for c in ranked:
         c["scene"] = f"{c['vid']}#{bisect.bisect_right(scenes.get(c['vid'], []), c['t'])}"
-        if all((c["vid"] != o["vid"] or abs(c["t"] - o["t"]) >= MIN_APART) and c["scene"] != o["scene"] for o in out):
-            out.append(c)
+    ans = next((c for c in ranked if c.get("answer")), None)
+    out = [ans] if ans else []
+    for c in ranked:
         if len(out) == n:
             break
-    return out
+        if c is not ans and all((c["vid"] != o["vid"] or abs(c["t"] - o["t"]) >= MIN_APART) and c["scene"] != o["scene"] for o in out):
+            out.append(c)
+    return sorted(out, key=lambda c: -c["score"])
 
 
 def current_frame(mp4: Path) -> Image.Image:
@@ -498,7 +560,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--name", help="出力の名前（hook_<名前>.jpg）。既定は spec_<名前>.json の <名前>、無ければ spec の id")
     ap.add_argument("--margin", type=float, default=30.0, help="spec の行ごとの区間の前後に足す秒（候補を探す範囲）")
-    ap.add_argument("--no-faces", action="store_true", help="顔を数えない（絵と json にそう出し、点に顔を足さない）")
+    ap.add_argument("--no-faces", action="store_true", help="顔を数えない（絵と json にそう出す。顔は点に入れないので、落ちるのは第三者の顔の印だけ）")
     ap.add_argument("--no-fetch", action="store_true", help="顔の重み・書体が無くても取りに行かずに止まる")
     a = ap.parse_args(argv)
     spec = json.loads(a.spec.read_text())
@@ -564,10 +626,11 @@ def main(argv: list[str] | None = None) -> int:
     def lines_of(c: dict, k: int) -> list[str]:
         r = c["row"]
         m = c["m"]
-        return [f"候補{k}  点 {c['score']:.2f}" + ("  山場" if c["payoff"] else ""),
+        return [f"候補{k}  点 {c['score']:.2f}" + ("  答え" if c["answer"] else "  出来事" if c["event"] else "")
+                + ("  前置き" if c["preface"] else ""),
                 f"{when(c)}  {c['src'][:16]}" if c["vid"] == main_vid else when(c),
                 f"行 {r if r is not None else '—'}" + (f" {spec['rows'][r]['line'][:11]}" if r is not None else "（spec の外）"),
-                f"色{m['colorful']:.0f} 暖{m['warm'] * 100:.0f}% 動{(m['motion'] or 0):.1f}"
+                f"動{(m['motion'] or 0):.1f} 色{m['colorful']:.0f}"
                 + (f" 顔{m['face'] * 100:.0f}%" if faces else " 顔—")
                 + (f" 人{m['faces']}" if m["faces"] > 1 else "")]
     rank = sorted(cands, key=lambda c: -c["score"])

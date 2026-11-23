@@ -19,6 +19,8 @@ numpy と OpenCV が在る箱（ショートの見張り `shorts_selftest.yml`�
 | `no_archive` | archive が無い（窓の見る用のシートと zoom だけ。mp4 も無い）: 回る・どの候補も切った秒のコマ（6x5 と 5x4 の並び）・同じ秒は細かい置き場の1枚だけ・窓の頭で場面を分けて3つ選ぶ・見出しだけの `archive/sheets.csv` でも落ちない |
 | `row_windows` | 最後の行が回の終わり近く（2:19:43）でも、候補は行ごとの区間の前後 `--margin` 秒だけ（回まるごとに広がらない） |
 | `face_filter` | 面積 30% を越える顔の箱は点 0.9 以上のときだけ顔と数える（鍋の手羽先を「顔 45%」と数えない）・本物の大きい顔と小さい顔は数える・顔の無い画がみな 0 でも順位が並び順で割れない |
+| `answer_pick` | 候補3つのうち1つは、題の答え（why に【答】）の行のいちばん点の高い画（点が低くても入れる。ほかの2つとは場面が違う）。答えの行が無ければ、点の順に場面の違う3つ（#1403） |
+| `score` | 点（2026-11-23 #1403）: 出来事の行（spec の kind が出来事、why に【答】、【大】）の画は +1.5（**前のほうの行でも**）。引っ張りの行は足さない・前置きの行の画は −1・暖色と顔は点を動かさない・動きの順位の重みは 1.5・窓の mp4 から測った動きがあれば、それを使う（`visual.csv` より先）・隣のコマとの差を1秒ごとに平均する数えかた |
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
 
@@ -95,7 +97,33 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
     "big_face": ("hook.py", "        if area > BIG_FACE and float(f[14]) < BIG_FACE_SCORE:\n", "        if False:\n",
                  {"face_filter"}, "点の低い大きな箱（鍋の手羽先）も顔と数える"),
     "pct_ties": ("hook.py", "            rank[x] = (k + j) / 2\n", "            rank[x] = order.index(x)\n",
-                 {"face_filter"}, "同じ値の順位を並び順で割る（顔の無い画がみな 0 のとき、後ろの画ほど点が高い）"),
+                 {"face_filter", "score"}, "同じ値の順位を並び順で割る（顔の無い画がみな 0 のとき、後ろの画ほど点が高い。点の足も同じ値の画を並べて比べる）"),
+    # 7. 点の重み（2026-11-23 #1403）
+    "warm_back": ("hook.py", 'WEIGHTS = {"motion": 1.5, "colorful": 0.5, "sharp": 0.5}\n',
+                  'WEIGHTS = {"motion": 1.5, "colorful": 0.5, "sharp": 0.5, "warm": 1.0}\n',
+                  {"score"}, "暖色を点に戻す（料理の寄り・夕日が、何も起きていなくても上に来る）"),
+    "face_back": ("hook.py", 'WEIGHTS = {"motion": 1.5, "colorful": 0.5, "sharp": 0.5}\n',
+                  'WEIGHTS = {"motion": 1.5, "colorful": 0.5, "sharp": 0.5, "face": 0.5}\n',
+                  {"score", "assets"}, "顔を点に戻す（顔だけの画が上に来る。--no-faces でも顔の順位を足す）"),
+    "motion_light": ("hook.py", 'WEIGHTS = {"motion": 1.5,', 'WEIGHTS = {"motion": 0.5,', {"score"}, "動きを前の重み（0.5）に戻す"),
+    "event_off": ("hook.py", "EVENT_W, PREFACE_W, DARK_W = 1.5, 1.0, 1.0\n", "EVENT_W, PREFACE_W, DARK_W = 0.0, 1.0, 1.0\n",
+                  {"score"}, "出来事の行の画を重くしない"),
+    "preface_off": ("hook.py", "EVENT_W, PREFACE_W, DARK_W = 1.5, 1.0, 1.0\n", "EVENT_W, PREFACE_W, DARK_W = 1.5, 0.0, 1.0\n",
+                    {"score"}, "前置きの行の画を引かない"),
+    "event_late": ("hook.py", '            if kind_of(r) in EVENT_KINDS or "【答】" in str(r.get("why") or "") or r.get("big")}\n',
+                   '            if i >= 0.4 * len(spec["rows"]) and (kind_of(r) in EVENT_KINDS or "【答】" in str(r.get("why") or "") or r.get("big"))}\n',
+                   {"score"}, "出来事の行を後ろ6割だけにする（前の山場の形）"),
+    "event_pull": ("hook.py", 'EVENT_KINDS = ("出来事",)', 'EVENT_KINDS = ("出来事", "引っ張り")', {"score"},
+                   "引っ張り（〜たら……）の行まで出来事に数える"),
+    "event_answer": ("hook.py", ' or "【答】" in str(r.get("why") or "") or r.get("big")}\n', ' or r.get("big")}\n',
+                     {"score"}, "why の【答】の行を出来事の行に数えない"),
+    "clip_motion_off": ("hook.py", '        if c.get("clip_motion") is not None:\n', "        if False:\n",
+                        {"score"}, "窓の mp4 から測った動きを使わない（窓のコマがみな真ん中の順位）"),
+    "answer_slot": ("hook.py", "    out = [ans] if ans else []\n", "    out = []\n", {"answer_pick"},
+                    "答えの行の画を、点が低ければ並べない（食べている画が4位から10位に落ちる）"),
+    "per_second_shift": ("hook.py", "        acc.setdefault(int(start + k / fps), []).append(v)\n",
+                         "        acc.setdefault(int(start + (k - 1) / fps), []).append(v)\n", {"score"},
+                         "隣のコマとの差を、1つ前のコマの秒に数える"),
 }
 
 MAIN, OTHER = "MAINvid_001", "kun-t2s_nFQ"   # 11字の videoId（- と _ を含む回も読む）
@@ -438,12 +466,65 @@ def leg_face_filter(b: Bench):
     return out
 
 
+def leg_score(b: Bench):
+    h = b.h
+
+    def cand(t, **m):
+        return {"vid": MAIN, "t": float(t), "kind": "zoom", "src": "x",
+                "m": {"colorful": 5.0, "warm": 0.1, "sharp": 5.0, "face": 0.0, "faces": 0, "bright": 100.0, **m}}
+    kinds = ["題", None, "前置き", "出来事", "説明", None, "引っ張り", "反応", "説明", "締め"]
+    rows = [{"line": f"{i}行", "src": [f"0:00:{10 * (i + 1):02d}"], **({"kind": k} if k else {})} for i, k in enumerate(kinds)]
+    rows[1]["why"] = "【答】前のほうに置いた答え"
+    rows[5]["big"] = True
+    spec = {"rows": rows}
+    spans, _ = h.row_spans(spec, MAIN)
+    cands = [cand(10 * (i + 1)) for i in range(10)] + [cand(51, warm=0.9, face=0.5, faces=2)]
+    h.score_all(cands, spec, spans, {MAIN: ({}, "zoom")}, True)
+    sc = {int(c["t"]): c["score"] for c in cands}
+    base = sc[50]
+    move = [cand(80), cand(81)]
+    h.score_all(move, spec, spans, {MAIN: ({80: 0.5, 81: 9.0}, "zoom")}, True)
+    clip = [cand(80, ), {**cand(81), "kind": "clip", "clip_motion": 7.0}]
+    h.score_all(clip, spec, spans, {MAIN: ({80: 0.5, 81: 1.0}, "zoom")}, True)
+    ps = h.per_second([1, 1, 1, 1, 1, 3, 3, 3, 3, 3], 10.0, 5)
+    return [(f"出来事・【大】の行の画は +1.5（{sc[40]}・{sc[60]}。説明の行 {base}）",
+             all(abs(sc[t] - base - 1.5) < 1e-6 for t in (40, 60))),
+            (f"引っ張りの行の画は足さない（{sc[70]}。向かう途中の景色になりやすい）", sc[70] == base),
+            (f"why に【答】の行は、前のほう（2行目）でも +1.5（{sc[20]}）", abs(sc[20] - base - 1.5) < 1e-6),
+            (f"前置きの行の画は −1（{sc[30]}）", abs(sc[30] - base + 1.0) < 1e-6),
+            (f"暖色・顔（2人）が強くても点は同じ（{sc[51]} と {base}）", sc[51] == base),
+            (f"動きの順位の重みは 1.5（{move[1]['score']} − {move[0]['score']}）", abs(move[1]["score"] - move[0]["score"] - 1.5) < 1e-6),
+            (f"窓の mp4 から測った動き（7.0）を visual.csv（1.0）より先に使う（{clip[1]['m']['motion']}・{clip[1]['motion_src']}）",
+             clip[1]["m"]["motion"] == 7.0 and clip[1]["motion_src"].endswith(":clip") and clip[0]["motion_src"].endswith(":zoom")),
+            (f"隣のコマとの差を、後ろのコマの秒で1秒ごとに平均（{ps}）", ps == {10: 1.0, 11: 2.6, 12: 3.0})]
+
+
+def leg_answer_pick(b: Bench):
+    h = b.h
+
+    def cand(t, score, answer=False):
+        return {"vid": MAIN, "t": float(t), "score": score, "answer": answer}
+    scenes = {MAIN: [100.0, 200.0, 300.0, 400.0]}   # 場面の変わりめ（0〜100・100〜200…が別の場面）
+    plain = [cand(10, 3.0), cand(20, 2.9), cand(110, 2.8), cand(210, 2.7), cand(310, 1.0)]
+    with_ans = plain + [cand(320, 0.5, answer=True), cand(330, 0.4, answer=True)]
+    same_scene = plain + [cand(15, 0.5, answer=True)]
+    got = [c["t"] for c in h.pick([dict(c) for c in plain], scenes)]
+    got_ans = [(c["t"], c["answer"]) for c in h.pick([dict(c) for c in with_ans], scenes)]
+    got_same = [c["t"] for c in h.pick([dict(c) for c in same_scene], scenes)]
+    return [(f"答えの行が無ければ、点の順に場面の違う3つ（{got}）", got == [10.0, 110.0, 210.0]),
+            (f"答えの行の画は、点が低くても1つ入る（いちばん点の高い答えの画。{got_ans}）",
+             [t for t, _ in got_ans] == [10.0, 110.0, 320.0] and got_ans[-1][1] is True),
+            (f"答えの画と同じ場面の画（10秒）は、点が高くても並べない（{got_same}）", sorted(got_same) == [15.0, 110.0, 210.0])]
+
+
 LEGS = {
     "named_src": leg_named_src,
     "assets": leg_assets,
     "no_archive": leg_no_archive,
     "row_windows": leg_row_windows,
     "face_filter": leg_face_filter,
+    "score": leg_score,
+    "answer_pick": leg_answer_pick,
 }
 
 
