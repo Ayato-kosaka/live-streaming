@@ -1,0 +1,126 @@
+{
+ "_meta": {
+  "何か": "エレバンのガイドブックの面（/travel/armenia/yerevan）の組み立て。材料（guidebook.json）にあるのは事実で、ここにあるのは選びかたと並べかただけ。焼くのは python/guidebook_bake.py",
+  "行った": "行った街。カード・話・一言は、行った担当が facts から足す（ここでは空）",
+  "どんな街": "問いは日本語の頁がエレバンを語る3つ（材料の about.why_src）。前の街の問いを写していない",
+  "題": "「エレバン観光ガイド」が頭（docs/island-misses.md #332・#333）"
+ },
+ "title": "エレバン観光ガイド【2026年】見どころマップ・やりたいこと・グルメ｜アルメニア",
+ "description": {
+  "text": "アルメニアの首都エレバンの観光ガイド。見どころマップと、やりたいこと{todo}つ（大階段カスケード、アララトのブランデー工場、ガルニ神殿とゲガルド修道院への日帰り）、ホロヴァツとラヴァシュ。",
+  "facts": []
+ },
+ "persona": [
+  "コーカサスを周る20〜30代の個人旅行者。ジョージアから陸路で入り、エレバンに何日いて何をするか決めかねている（いちばん大事な読み手）",
+  "ガルニ・ゲガルド・エチミアジン・ホル・ヴィラップ・セヴァン湖への日帰りの拠点を探している人",
+  "世界で最初にキリスト教を国の宗教にした国の、教会と修道院を見たい人"
+ ],
+ "terms": [
+  "エレバン 観光",
+  "エレバン 見どころ",
+  "エレバン 地図",
+  "アルメニア エレバン 観光",
+  "エレバン 日帰り"
+ ],
+ "published": "2026-11-23",
+ "cover": {
+  "catch": 0
+ },
+ "cards": {},
+ "say": {},
+ "items": {},
+ "about": {
+  "history": {
+   "q": "歴史は？",
+   "icon": "ruins"
+  },
+  "ararat": {
+   "q": "アララト山は？",
+   "icon": "mountain"
+  },
+  "pink": {
+   "q": "なぜピンクシティ？",
+   "icon": "plaza"
+  }
+ },
+ "areas": {
+  "republic": {
+   "color": "#ffc4d2",
+   "plan": [
+    2,
+    1,
+    2
+   ]
+  },
+  "cascade": {
+   "color": "#d9ccf5",
+   "plan": [
+    1,
+    2,
+    2
+   ]
+  }
+ },
+ "summary": {
+  "season": {
+   "icon": "sun",
+   "value": "5月・9〜10月",
+   "lead": "平年の最高気温が20.7〜29.0℃",
+   "to": "#guide-season"
+  },
+  "safety": {
+   "icon": "key",
+   "value": "スリと置き引きに注意",
+   "lead": "写真を口実に近づく手口がある",
+   "to": "#guide-safety"
+  },
+  "budget": {
+   "icon": "wallet",
+   "label": "乗り物の目安",
+   "value": "空港バス300ドラム",
+   "lead": "街のまん中まで約30分",
+   "to": "#budget"
+  },
+  "transit": {
+   "icon": "bus",
+   "value": "地下鉄は1路線",
+   "lead": "QRコードかカードで乗る",
+   "to": "#guide-transit"
+  }
+ },
+ "guides": {
+  "airport": {
+   "icon": "plane",
+   "lead": "201番のバスで街のまん中へ"
+  },
+  "transit": {
+   "icon": "bus",
+   "lead": "地下鉄はQRコードかカード。タクシーはアプリで"
+  },
+  "pay": {
+   "icon": "currency",
+   "lead": "通貨はドラム。サービス料に気をつける"
+  },
+  "sim": {
+   "icon": "sim",
+   "lead": "旅行者には Ucom か Viva"
+  },
+  "safety": {
+   "icon": "key",
+   "lead": "スリと、荒い車に気をつける"
+  },
+  "phrases": {
+   "icon": "phrase"
+  }
+ },
+ "season": {
+  "lead": "歩きやすいのは5月と9〜10月"
+ },
+ "pack": {
+  "passport": "passport",
+  "bottle": "bottle",
+  "insurance": "firstaid",
+  "coat": "jacket",
+  "sun": "sunglasses"
+ }
+}

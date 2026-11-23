@@ -1,0 +1,5811 @@
+{
+ "_meta": {
+  "何か": "エレバンを「ガイドブック型の街の面」（/travel/armenia/yerevan）にするための材料。行った街（2026-04-19〜04-28・05-10〜05-23）。焼くのは python/guidebook_bake.py",
+  "見張り": "python3 python/guide_book_check.py armenia/yerevan（出どころの無い事実・座標の無い店・枠の外の座標）。マイマップの CSV も同じ道具が書く（--mymaps）",
+  "出どころ": "事実を持つ欄には src（https と見た日）。座標は OpenStreetMap（Nominatim）。値段と「いまも」は2024年以降の出どころ（Wikivoyage の店と名所の欄は 2024-09 以降の書き込み）。確かめきれないものは unknown へ",
+  "行った": "行った街。went は全部 false で、行った箱と記事は行った担当が配信の facts（streams/2026/04-05）から足す。骨組みの字には混ぜない",
+  "店": "店に結ぶ品は、その店のいまの品書き（Glovo の配達の品書き。2026-11-23 に見た）か、2024年以降の Wikivoyage の店の欄に載っている品だけ。値段は配達の値段",
+  "円": "円は 1ユーロ＝395.18ドラム・10円＝22.695ドラム（2026年11月20日のアルメニア中央銀行のレート。1ドラム＝約0.4406円）で直し、10円で丸めた",
+  "地図": "多角形（range.polygon）は、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない。虐殺記念館・エレブニ・エレバン湖・グム市場・ブランデー工場・日帰りの5つの町は見どころマップの外（矢印）",
+  "rank": "見たいものの rank は、初めての人に向けた見どころの大きさ（1 が定番）",
+  "選んだ問い": "どんな街の問いは、日本語の頁がエレバンを語る3つ。トラベルjp の「世界最古の都市の1つ」「南にアララト山を望み」と、VELTRA の「『ピンクシティ』と呼ばれるエレバン」（about.why_src）。前の街の問いは写していない",
+  "キャッチの手本": "型3の手本は「『東欧のパリ』と称えられた街」（ブカレスト）と「『ドナウの真珠』と称えられる歴史都市ブダペスト」（docs/guide-copy.md 8章）。愛称は VELTRA の「ピンクシティ」の字のまま"
+ },
+ "city": {
+  "key": "armenia/yerevan",
+  "name": "エレバン",
+  "town": "yerevan",
+  "local": {
+   "text": "Երևան",
+   "lang": "hy",
+   "roman": "Yerevan",
+   "src": [
+    {
+     "name": "Wikipedia（日本語）「エレバン」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%A8%E3%83%AC%E3%83%90%E3%83%B3",
+     "seen": "2026-11-23"
+    }
+   ]
+  }
+ },
+ "rate": {
+  "text": "1ドラムは約0.44円。アルメニアのドラム（AMD）は変動相場で、円は1ユーロ＝395.18ドラム・10円＝22.695ドラム（2026年11月20日のアルメニア中央銀行のレート）で直した。",
+  "src": [
+   {
+    "name": "アルメニア中央銀行の為替レート（2026年11月20日）",
+    "url": "https://api.cba.am/exchangerates.asmx",
+    "seen": "2026-11-23"
+   }
+  ],
+  "unit": "ドラム",
+  "eur_local": 395.18,
+  "eur_jpy": 174.13,
+  "date": "2026-11-20"
+ },
+ "cover": {
+  "catch": [
+   {
+    "text": "「ピンクシティ」と称えられた街",
+    "type": "型3（「愛称」と称えられた＋呼び名。手本「『東欧のパリ』と称えられた街」ブカレスト・「『ドナウの真珠』と称えられる歴史都市ブダペスト」）",
+    "src": [
+     {
+      "name": "VELTRA「エレバン市内半日観光ツアー＜貸切／日本語ガイド／4時間／エレバン発＞」（2026年2月20日）",
+      "url": "https://www.veltra.com/jp/europe/armenia/a/188787",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "text": "アララト山に見守られた 石の都",
+    "type": "型2（決まった動詞＋呼び名。手本「アルプスに抱かれた 中世の街 ザルツブルク」）",
+    "src": [
+     {
+      "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+      "url": "https://www.travel.co.jp/guide/matome/3139/",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikipedia「Republic Square, Yerevan」",
+      "url": "https://en.wikipedia.org/wiki/Republic_Square,_Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "text": "世界最古の都市のひとつ、エレバンへ",
+    "type": "型5（呼びかけ。手本「光の国、スウェーデンへ」）",
+    "src": [
+     {
+      "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+      "url": "https://www.travel.co.jp/guide/matome/3139/",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "photo": {
+   "file": "Yerevan, Republic Square, Armenia.jpg",
+   "by": "Vyacheslav Argenberg",
+   "lic": "CC BY 4.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Yerevan,_Republic_Square,_Armenia.jpg",
+   "alt": "共和国広場。ピンクの石の建物が広場を囲む",
+   "w": 4912,
+   "src": [
+    {
+     "name": "Wikimedia Commons（ファイルのページ）",
+     "url": "https://commons.wikimedia.org/wiki/File:Yerevan,_Republic_Square,_Armenia.jpg",
+     "seen": "2026-11-23"
+    }
+   ],
+   "thumbs": {
+    "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Yerevan%2C_Republic_Square%2C_Armenia.jpg/250px-Yerevan%2C_Republic_Square%2C_Armenia.jpg",
+    "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Yerevan%2C_Republic_Square%2C_Armenia.jpg/500px-Yerevan%2C_Republic_Square%2C_Armenia.jpg",
+    "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Yerevan%2C_Republic_Square%2C_Armenia.jpg/960px-Yerevan%2C_Republic_Square%2C_Armenia.jpg"
+   }
+  }
+ },
+ "about": {
+  "cards": [
+   {
+    "key": "history",
+    "title": "世界最古の都市のひとつ",
+    "text": "紀元前782年、ウラルトゥ王国がこの丘にエレブニの要塞を築いた。エレバンの名前はエレブニから来ている。",
+    "src": [
+     {
+      "name": "Wikipedia「Erebuni Fortress」",
+      "url": "https://en.wikipedia.org/wiki/Erebuni_Fortress",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+      "url": "https://www.travel.co.jp/guide/matome/3139/",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "ararat",
+    "title": "アララト山",
+    "text": "街の南に見える山。ノアの箱舟がたどり着いたと伝わる。いまはトルコの側にある。",
+    "src": [
+     {
+      "name": "Wikipedia「Mount Ararat」",
+      "url": "https://en.wikipedia.org/wiki/Mount_Ararat",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+      "url": "https://www.travel.co.jp/guide/matome/3139/",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "pink",
+    "title": "ピンクシティ",
+    "text": "街のまん中の建物は、ピンクや黄色の凝灰岩で建てた。濃さのちがうピンクの石から「ピンクシティ」と呼ばれる。",
+    "src": [
+     {
+      "name": "Wikipedia「Republic Square, Yerevan」",
+      "url": "https://en.wikipedia.org/wiki/Republic_Square,_Yerevan",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "VELTRA「エレバン市内半日観光ツアー＜貸切／日本語ガイド／4時間／エレバン発＞」（2026年2月20日）",
+      "url": "https://www.veltra.com/jp/europe/armenia/a/188787",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "why_src": [
+   {
+    "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+    "url": "https://www.travel.co.jp/guide/matome/3139/",
+    "seen": "2026-11-23",
+    "words": "世界最古の都市の1つである「エレバン」は南にアララト山を望み"
+   },
+   {
+    "name": "VELTRA「エレバン市内半日観光ツアー＜貸切／日本語ガイド／4時間／エレバン発＞」（2026年2月20日）",
+    "url": "https://www.veltra.com/jp/europe/armenia/a/188787",
+    "seen": "2026-11-23",
+    "words": "「ピンクシティ」と呼ばれるエレバン独特の、濃淡さまざまなピンク色の凝灰岩"
+   }
+  ],
+  "areas": [
+   {
+    "key": "republic",
+    "name": "共和国広場周辺",
+    "local": {
+     "text": "Հանրապետության հրապարակ",
+     "roman": "Hanrapetutyan hraparak",
+     "src": [
+      {
+       "name": "Wikipedia「Republic Square, Yerevan」",
+       "url": "https://en.wikipedia.org/wiki/Republic_Square,_Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "tone": {
+     "text": "ピンクと黄色の石の建物に囲まれた広場のまわりに、歴史博物館、週末の青空市、ブルーモスク、大聖堂が集まる街のまん中。",
+     "src": [
+      {
+       "name": "Wikipedia「Republic Square, Yerevan」",
+       "url": "https://en.wikipedia.org/wiki/Republic_Square,_Yerevan",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "center": {
+     "lat": 40.178026,
+     "lon": 44.512877,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Հանրապետության հրապարակ」",
+       "url": "https://www.openstreetmap.org/node/9740281135",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       40.1815,
+       44.504
+      ],
+      [
+       40.1815,
+       44.5175
+      ],
+      [
+       40.1785,
+       44.5215
+      ],
+      [
+       40.1705,
+       44.5205
+      ],
+      [
+       40.169,
+       44.513
+      ],
+      [
+       40.1745,
+       44.5035
+      ]
+     ],
+     "how": "共和国広場のまわりに、歴史博物館・ヴェルニサージュ・ブルーモスク・聖グレゴリー啓蒙者大聖堂を囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Հանրապետության հրապարակ」",
+       "url": "https://www.openstreetmap.org/node/9740281135",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Հայաստանի պատմության թանգարան」",
+       "url": "https://www.openstreetmap.org/node/1436858079",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Vernissage」",
+       "url": "https://www.openstreetmap.org/way/31662730",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Կապույտ Մզկիթ」",
+       "url": "https://www.openstreetmap.org/way/235841246",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Սուրբ Գրիգոր Լուսավորիչ եկեղեցի」",
+       "url": "https://www.openstreetmap.org/way/31622320",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "アルメニア歴史博物館",
+      "local": "History Museum of Armenia",
+      "lat": 40.178514,
+      "lon": 44.513861,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Հայաստանի պատմության թանգարան」",
+        "url": "https://www.openstreetmap.org/node/1436858079",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "name": "ヴェルニサージュ",
+      "local": "Vernissage",
+      "lat": 40.175976,
+      "lon": 44.51818,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Vernissage」",
+        "url": "https://www.openstreetmap.org/way/31662730",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "VELTRA「エレバン市内半日観光ツアー＜貸切／日本語ガイド／4時間／エレバン発＞」（2026年2月20日）",
+      "url": "https://www.veltra.com/jp/europe/armenia/a/188787",
+      "seen": "2026-11-23",
+      "words": "ソ連時代の名残を感じさせる共和国広場周辺を中心に"
+     },
+     {
+      "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+      "url": "https://www.travel.co.jp/guide/matome/3139/",
+      "seen": "2026-11-23",
+      "words": "定番観光地【6】共和国広場／エレバン"
+     }
+    ]
+   },
+   {
+    "key": "cascade",
+    "name": "カスケード周辺",
+    "local": {
+     "text": "Կասկադ",
+     "roman": "Kaskad",
+     "src": [
+      {
+       "name": "Wikipedia「Yerevan Cascade」",
+       "url": "https://en.wikipedia.org/wiki/Yerevan_Cascade",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "tone": {
+     "text": "オペラ座から北の丘へ、大きな階段のカスケードが上る。丘の上には古文書館と、街を見下ろす母なるアルメニア像。",
+     "src": [
+      {
+       "name": "Wikipedia「Yerevan Cascade」",
+       "url": "https://en.wikipedia.org/wiki/Yerevan_Cascade",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "center": {
+     "lat": 40.191463,
+     "lon": 44.515587,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Կասկադ」",
+       "url": "https://www.openstreetmap.org/way/83688503",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       40.1975,
+       44.512
+      ],
+      [
+       40.1975,
+       44.5265
+      ],
+      [
+       40.1915,
+       44.526
+      ],
+      [
+       40.1845,
+       44.5205
+      ],
+      [
+       40.1818,
+       44.5175
+      ],
+      [
+       40.1818,
+       44.511
+      ],
+      [
+       40.188,
+       44.51
+      ]
+     ],
+     "how": "カスケードのまわりに、オペラ座・北大通りの北の端・マテナダラン・母なるアルメニア像を囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Կասկադ」",
+       "url": "https://www.openstreetmap.org/way/83688503",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Օպերայի և բալետի ազգային ակադեմիական թատրոն」",
+       "url": "https://www.openstreetmap.org/relation/19203229",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Հյուսիսային պողոտա」",
+       "url": "https://www.openstreetmap.org/way/430406007",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Երևանի Մատենադարան」",
+       "url": "https://www.openstreetmap.org/relation/20960090",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Մայր Հայաստան」",
+       "url": "https://www.openstreetmap.org/node/375565244",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "オペラ座",
+      "local": "Yerevan Opera Theatre",
+      "lat": 40.185749,
+      "lon": 44.515063,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Օպերայի և բալետի ազգային ակադեմիական թատրոն」",
+        "url": "https://www.openstreetmap.org/relation/19203229",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "name": "マテナダラン",
+      "local": "Matenadaran",
+      "lat": 40.192461,
+      "lon": 44.522209,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Երևանի Մատենադարան」",
+        "url": "https://www.openstreetmap.org/relation/20960090",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "Trip.com「2024年版エレバン観光ガイド」（Trip Moments）",
+      "url": "https://jp.trip.com/moments/yerevan-21357/",
+      "seen": "2026-11-23",
+      "words": "カスケード・コンプレックス（目印＋周辺。docs/guide-copy.md 5章の2）"
+     },
+     {
+      "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+      "url": "https://www.travel.co.jp/guide/matome/3139/",
+      "seen": "2026-11-23",
+      "words": "穴場観光地【4】カスカード／エレバン"
+     }
+    ]
+   }
+  ]
+ },
+ "todo": [
+  {
+   "key": "cascade",
+   "town": "yerevan",
+   "title": "大階段カスケードを上りたい！",
+   "head": "上の段から、アララト山と街を見渡す",
+   "points": {
+    "what": [
+     {
+      "text": "テラスと噴水と彫刻のある大きな階段の建物、カスケードを上る。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Cascade」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Cascade",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "建築家タマニャンが描いた街の計画の軸の上にあり、街の象徴の1つ。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Cascade」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Cascade",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "上の段からは、アララト山と街のまん中が見渡せる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "オペラ座のすぐ北。ふもとの彫刻の庭には、ボテロなど世界の作家の作品が並ぶ。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "中のエスカレーターは毎日8時〜20時。段ごとに外へ出られる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "money": [
+     {
+      "text": "1階と中のエスカレーターはただ。カフェスジアン美術館の展示は大人1,000ドラム（約440円）。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "夕方に上ると、街とアララト山の眺めがいい。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": [
+     {
+      "text": "上ったら道を渡って勝利公園へ。母なるアルメニア像と遊園地がある。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Yerevan Cascade」",
+     "url": "https://en.wikipedia.org/wiki/Yerevan_Cascade",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Yerevan」",
+     "url": "https://en.wikivoyage.org/wiki/Yerevan",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "cascade",
+     "mother"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "khorovats",
+   "town": "yerevan",
+   "title": "本場のホロヴァツを食べたい！",
+   "head": "肉も野菜も炭火で焼く、アルメニアのバーベキュー",
+   "points": {
+    "what": [
+     {
+      "text": "アルメニアの焼き肉、ホロヴァツを食べる。",
+      "src": [
+       {
+        "name": "Wikipedia「Khorovats」",
+        "url": "https://en.wikipedia.org/wiki/Khorovats",
+        "seen": "2026-11-23"
+       },
+       {
+        "name": "Wikivoyage「Armenia」",
+        "url": "https://en.wikivoyage.org/wiki/Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "豚・羊・鶏・牛の塊を焼き、玉ねぎとアルメニアのスパイスで味をつける。トマト・なす・ピーマンも一緒に焼く。",
+      "src": [
+       {
+        "name": "Wikivoyage「Armenia」",
+        "url": "https://en.wikivoyage.org/wiki/Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "ひき肉で作るものはキャバブと呼び、ホロヴァツより安い。",
+      "src": [
+       {
+        "name": "Wikivoyage「Armenia」",
+        "url": "https://en.wikivoyage.org/wiki/Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "焼いた肉は、薄いパンのラヴァシュで包んで食べる。",
+      "src": [
+       {
+        "name": "Wikipedia「Lavash」",
+        "url": "https://en.wikipedia.org/wiki/Lavash",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "郷土料理のチェーン、カラスの品書きに鶏のホロヴァツがある。ラヴァシュ4枚と玉ねぎ、香草が付く。",
+      "src": [
+       {
+        "name": "Glovo「KARAS」（配達の品書き）",
+        "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [
+     {
+      "text": "カラスの鶏のホロヴァツは3,730ドラム（約1,640円）。",
+      "src": [
+       {
+        "name": "Glovo「KARAS」（配達の品書き）",
+        "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "夏は、フラズダン渓谷の店で地元の人がホロヴァツとザリガニを囲む。値段は店でまちまちなので、先に確かめる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Khorovats」",
+     "url": "https://en.wikipedia.org/wiki/Khorovats",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Armenia」",
+     "url": "https://en.wikivoyage.org/wiki/Armenia",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Lavash」",
+     "url": "https://en.wikipedia.org/wiki/Lavash",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Glovo「KARAS」（配達の品書き）",
+     "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Yerevan」",
+     "url": "https://en.wikivoyage.org/wiki/Yerevan",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "eat": [
+     "khorovats",
+     "kebab",
+     "lavash"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "brandy",
+   "town": "yerevan",
+   "title": "アララトのブランデー工場を見学したい！",
+   "head": "1887年から続く蒸留所の熟成庫へ",
+   "points": {
+    "what": [
+     {
+      "text": "アララトの名前でブランデーを造るエレバン・ブランデー工場の、博物館のツアーに入る。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Brandy Company」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "1887年に商人のネルセス・タイリャンがエレバンに開いた蒸留所が始まり。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Brandy Company」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "1902年のボルドーの博覧会で、コニャックの造りの基準にかなうと認められた。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Brandy Company」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "1940年代にできた「ドヴィン」は、イギリスの首相に好まれたと伝わる。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Brandy Company」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "フラズダン川を見下ろす建物で、1953年にできた。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Brandy Company」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "ツアーは、いまも使う熟成庫を通って、たいてい試飲で終わる。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Brandy Company」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "money": [],
+    "tips": [
+     {
+      "text": "アルメニアのブランデーは土産の定番。街なかにアララトのブランデーだけを売る店がいくつもあり、空港の免税店でも買える。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Yerevan Brandy Company」",
+     "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Yerevan」",
+     "url": "https://en.wikivoyage.org/wiki/Yerevan",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "brandy"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "vernissage",
+   "town": "yerevan",
+   "title": "ヴェルニサージュでおみやげを探したい！",
+   "head": "週末だけの青空市に、じゅうたんと工芸品",
+   "points": {
+    "what": [
+     {
+      "text": "共和国広場の近くで週末に開く青空の市、ヴェルニサージュを歩く。",
+      "src": [
+       {
+        "name": "Wikivoyage「Armenia」",
+        "url": "https://en.wikivoyage.org/wiki/Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "古いじゅうたん、木彫りとバックギャモンの盤、絵、みやげ、古い磁器、刺しゅう、石の細工が並ぶ。",
+      "src": [
+       {
+        "name": "Wikivoyage「Armenia」",
+        "url": "https://en.wikivoyage.org/wiki/Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "アラム通りとブザンド通りのあいだの公園。共和国広場から歩ける。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "開くのは土曜と日曜。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "money": [],
+    "tips": [
+     {
+      "text": "古いじゅうたんを国の外へ持ち出すには、文化省の輸出の証明が要る。買うときに売り手に取ってもらう。",
+      "src": [
+       {
+        "name": "Wikivoyage「Yerevan」",
+        "url": "https://en.wikivoyage.org/wiki/Yerevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikivoyage「Armenia」",
+     "url": "https://en.wikivoyage.org/wiki/Armenia",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Yerevan」",
+     "url": "https://en.wikivoyage.org/wiki/Yerevan",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "vernissage"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "garni",
+   "town": "garni",
+   "title": "ガルニ神殿とゲガルド修道院へ行きたい！",
+   "head": "ギリシャ風の神殿と、岩を掘った世界遺産",
+   "points": {
+    "what": [
+     {
+      "text": "エレバンの東の、ガルニ神殿とゲガルド修道院を1日で回る。",
+      "src": [
+       {
+        "name": "Wikivoyage「Garni」",
+        "url": "https://en.wikivoyage.org/wiki/Garni",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "ガルニ神殿はイオニア式の柱が並ぶ神殿で、キリスト教より前のアルメニアのいちばんの象徴。",
+      "src": [
+       {
+        "name": "Wikipedia「Temple of Garni」",
+        "url": "https://en.wikipedia.org/wiki/Temple_of_Garni",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "ゲガルド修道院は山を半分掘って造った修道院で、ユネスコの世界遺産。",
+      "src": [
+       {
+        "name": "Wikipedia「Geghard」",
+        "url": "https://en.wikipedia.org/wiki/Geghard",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "神殿の下のガルニ渓谷には、六角の玄武岩の柱が並ぶ。",
+      "src": [
+       {
+        "name": "Wikipedia「Garni Gorge」",
+        "url": "https://en.wikipedia.org/wiki/Garni_Gorge",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "エレバンのガイ・バスステーションから266番のマルシュルートカ（乗合バス）でガルニへ。約30分おきに出る。",
+      "src": [
+       {
+        "name": "Wikivoyage「Garni」",
+        "url": "https://en.wikivoyage.org/wiki/Garni",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "いちばん速いのはタクシー。",
+      "src": [
+       {
+        "name": "Wikivoyage「Garni」",
+        "url": "https://en.wikivoyage.org/wiki/Garni",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [],
+    "route": [
+     {
+      "text": "先にゲガルドへ行き、そこからガルニへ戻るように回るとよい。ガルニ・ゴグト・ゲガルドのあいだは3〜4kmずつ。",
+      "src": [
+       {
+        "name": "Wikivoyage「Garni」",
+        "url": "https://en.wikivoyage.org/wiki/Garni",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   "src": [
+    {
+     "name": "Wikivoyage「Garni」",
+     "url": "https://en.wikivoyage.org/wiki/Garni",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Temple of Garni」",
+     "url": "https://en.wikipedia.org/wiki/Temple_of_Garni",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Geghard」",
+     "url": "https://en.wikipedia.org/wiki/Geghard",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Garni Gorge」",
+     "url": "https://en.wikipedia.org/wiki/Garni_Gorge",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "garni",
+     "geghard",
+     "symphony"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "khorvirap",
+   "town": "khor-virap",
+   "title": "ホル・ヴィラップからアララト山を見たい！",
+   "head": "トルコ国境の近くで、聖書の山を正面に",
+   "points": {
+    "what": [
+     {
+      "text": "トルコとの国境の近くの修道院、ホル・ヴィラップへ行き、アララト山を見る。",
+      "src": [
+       {
+        "name": "Wikipedia「Khor Virap」",
+        "url": "https://en.wikipedia.org/wiki/Khor_Virap",
+        "seen": "2026-11-23"
+       },
+       {
+        "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+        "url": "https://www.travel.co.jp/guide/matome/3139/",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "国の守護聖人グレゴリウスが、王に13年閉じ込められた所。",
+      "src": [
+       {
+        "name": "Wikipedia「Khor Virap」",
+        "url": "https://en.wikipedia.org/wiki/Khor_Virap",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "アララト山は、ノアの箱舟がたどり着いたと伝わる山。",
+      "src": [
+       {
+        "name": "Wikipedia「Mount Ararat」",
+        "url": "https://en.wikipedia.org/wiki/Mount_Ararat",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "エレバンの南バスステーションから467番のマルシュルートカで、修道院から1.5kmの所まで行ける。",
+      "src": [
+       {
+        "name": "Wikivoyage「Artashat」",
+        "url": "https://en.wikivoyage.org/wiki/Artashat",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [
+     {
+      "text": "グレゴリウスが閉じ込められた深い穴には、いまも下りられる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Artashat」",
+        "url": "https://en.wikivoyage.org/wiki/Artashat",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": [
+     {
+      "text": "エレバン発の1日ツアーは、ホル・ヴィラップと、さらに南のノラヴァンクを合わせて回ることが多い。",
+      "src": [
+       {
+        "name": "Wikivoyage「Artashat」",
+        "url": "https://en.wikivoyage.org/wiki/Artashat",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Khor Virap」",
+     "url": "https://en.wikipedia.org/wiki/Khor_Virap",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+     "url": "https://www.travel.co.jp/guide/matome/3139/",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Mount Ararat」",
+     "url": "https://en.wikipedia.org/wiki/Mount_Ararat",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Artashat」",
+     "url": "https://en.wikivoyage.org/wiki/Artashat",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "khorvirap",
+     "noravank"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "etchmiadzin",
+   "town": "etchmiadzin",
+   "title": "世界最古の大聖堂へ行きたい！",
+   "head": "301年にキリスト教を選んだ国の総本山",
+   "points": {
+    "what": [
+     {
+      "text": "アルメニア使徒教会の総本山、エチミアジン大聖堂へ行く。",
+      "src": [
+       {
+        "name": "Wikipedia「Etchmiadzin Cathedral」",
+        "url": "https://en.wikipedia.org/wiki/Etchmiadzin_Cathedral",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "言い伝えでは301〜303年にグレゴリウスが建てた。世界でいちばん古い大聖堂とされることが多い。",
+      "src": [
+       {
+        "name": "Wikipedia「Etchmiadzin Cathedral」",
+        "url": "https://en.wikipedia.org/wiki/Etchmiadzin_Cathedral",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "アルメニアは301年に、世界で最初に公式にキリスト教を受け入れた国。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "エレバンの中央（キリキア）バスステーションから203番のマルシュルートカで20〜30分。",
+      "src": [
+       {
+        "name": "Wikivoyage「Echmiadzin」",
+        "url": "https://en.wikivoyage.org/wiki/Echmiadzin",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [],
+    "route": [
+     {
+      "text": "途中のズヴァルトノツ大聖堂の跡でも降りられる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Echmiadzin」",
+        "url": "https://en.wikivoyage.org/wiki/Echmiadzin",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "同じ街に、618年に建てた聖フリプシメ教会がある。",
+      "src": [
+       {
+        "name": "Wikipedia「Saint Hripsime Church」",
+        "url": "https://en.wikipedia.org/wiki/Saint_Hripsime_Church",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Etchmiadzin Cathedral」",
+     "url": "https://en.wikipedia.org/wiki/Etchmiadzin_Cathedral",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+     "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Echmiadzin」",
+     "url": "https://en.wikivoyage.org/wiki/Echmiadzin",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Saint Hripsime Church」",
+     "url": "https://en.wikipedia.org/wiki/Saint_Hripsime_Church",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "etchmiadzin",
+     "hripsime",
+     "zvartnots"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "sevan",
+   "town": "sevan-lake",
+   "title": "セヴァン湖へ日帰りしたい！",
+   "head": "コーカサスでいちばん大きな湖と、半島の修道院",
+   "points": {
+    "what": [
+     {
+      "text": "アルメニアとコーカサスでいちばん大きな湖、セヴァン湖へ行く。",
+      "src": [
+       {
+        "name": "Wikipedia「Lake Sevan」",
+        "url": "https://en.wikipedia.org/wiki/Lake_Sevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "湖の北西の半島に、874年にできた修道院セヴァナヴァンクが建つ。",
+      "src": [
+       {
+        "name": "Wikipedia「Sevanavank」",
+        "url": "https://en.wikipedia.org/wiki/Sevanavank",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "修道院からは、広い湖が見渡せる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Sevan」",
+        "url": "https://en.wikivoyage.org/wiki/Sevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "エレバンの北バスステーションから、セヴァンの町へマルシュルートカで1時間。",
+      "src": [
+       {
+        "name": "Wikivoyage「Sevan」",
+        "url": "https://en.wikivoyage.org/wiki/Sevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [
+     {
+      "text": "湖のあたりの名物は魚とザリガニ。焼いても、揚げても、燻しても出す。",
+      "src": [
+       {
+        "name": "Wikivoyage「Sevan」",
+        "url": "https://en.wikivoyage.org/wiki/Sevan",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Lake Sevan」",
+     "url": "https://en.wikipedia.org/wiki/Lake_Sevan",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Sevanavank」",
+     "url": "https://en.wikipedia.org/wiki/Sevanavank",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Sevan」",
+     "url": "https://en.wikivoyage.org/wiki/Sevan",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "sevanavank"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  }
+ ],
+ "see": [
+  {
+   "key": "republic",
+   "town": "yerevan",
+   "name": "共和国広場",
+   "local": {
+    "text": "Հանրապետության հրապարակ",
+    "roman": "Hanrapetutyan hraparak",
+    "src": [
+     {
+      "name": "Wikipedia「Republic Square, Yerevan」",
+      "url": "https://en.wikipedia.org/wiki/Republic_Square,_Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "街のまん中の広場。楕円の広場と、音楽に合わせて動く噴水の池からなる。まわりの5つの建物は、ピンクと黄色の凝灰岩で建てた、アルメニアの模様を使った新古典様式。",
+    "src": [
+     {
+      "name": "Wikipedia「Republic Square, Yerevan」",
+      "url": "https://en.wikipedia.org/wiki/Republic_Square,_Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.178026,
+   "lon": 44.512877,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Հանրապետության հրապարակ」",
+     "url": "https://www.openstreetmap.org/node/9740281135",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Republic+Square+Yerevan&hl=ja",
+   "photo": {
+    "file": "Yerevan, Republic Square, Armenia.jpg",
+    "by": "Vyacheslav Argenberg",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Yerevan,_Republic_Square,_Armenia.jpg",
+    "alt": "共和国広場。ピンクの石の建物が広場を囲む",
+    "w": 4912,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Yerevan,_Republic_Square,_Armenia.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Yerevan%2C_Republic_Square%2C_Armenia.jpg/250px-Yerevan%2C_Republic_Square%2C_Armenia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Yerevan%2C_Republic_Square%2C_Armenia.jpg/500px-Yerevan%2C_Republic_Square%2C_Armenia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Yerevan%2C_Republic_Square%2C_Armenia.jpg/960px-Yerevan%2C_Republic_Square%2C_Armenia.jpg"
+    }
+   }
+  },
+  {
+   "key": "cascade",
+   "town": "yerevan",
+   "name": "カスケード",
+   "local": {
+    "text": "Կասկադ",
+    "roman": "Kaskad",
+    "src": [
+     {
+      "name": "Wikipedia「Yerevan Cascade」",
+      "url": "https://en.wikipedia.org/wiki/Yerevan_Cascade",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "テラス・噴水・彫刻・展示室を段々に重ねた、大きな階段の建物。街のまん中と北の高台を結び、街の象徴の1つ。",
+    "src": [
+     {
+      "name": "Wikipedia「Yerevan Cascade」",
+      "url": "https://en.wikipedia.org/wiki/Yerevan_Cascade",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.191463,
+   "lon": 44.515587,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Կասկադ」",
+     "url": "https://www.openstreetmap.org/way/83688503",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "1階と、上まで行く中のエスカレーターはただ。カフェスジアン美術館の展示は大人1,000ドラム（約440円）",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Cascade+Complex+Yerevan&hl=ja",
+   "links": {
+    "todo": [
+     "cascade"
+    ]
+   },
+   "photo": {
+    "file": "Yerevan, Cascade of Yerevan, Armenia.jpg",
+    "by": "Vyacheslav Argenberg",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Yerevan,_Cascade_of_Yerevan,_Armenia.jpg",
+    "alt": "カスケード。白い大きな階段と噴水",
+    "w": 4912,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Yerevan,_Cascade_of_Yerevan,_Armenia.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg/250px-Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg/500px-Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg/960px-Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg"
+    }
+   }
+  },
+  {
+   "key": "matenadaran",
+   "town": "yerevan",
+   "name": "マテナダラン（古文書館）",
+   "local": {
+    "text": "Մատենադարան",
+    "roman": "Matenadaran",
+    "src": [
+     {
+      "name": "Wikipedia「Matenadaran」",
+      "url": "https://en.wikipedia.org/wiki/Matenadaran",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "アルメニアの写本を世界でいちばん多く持つ、博物館と研究所を兼ねた古文書館。前に、アルメニア文字を作ったメスロプ・マシュトツの像が立つ。",
+    "src": [
+     {
+      "name": "Wikipedia「Matenadaran」",
+      "url": "https://en.wikipedia.org/wiki/Matenadaran",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.192461,
+   "lon": 44.522209,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Երևանի Մատենադարան」",
+     "url": "https://www.openstreetmap.org/relation/20960090",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Matenadaran+Yerevan&hl=ja",
+   "photo": {
+    "file": "Matenadaran building exterior Yerevan 2026.jpg",
+    "by": "Furkan Akkurt",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Matenadaran_building_exterior_Yerevan_2026.jpg",
+    "alt": "マテナダランの建物と、前に立つ像",
+    "w": 2560,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Matenadaran_building_exterior_Yerevan_2026.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Matenadaran_building_exterior_Yerevan_2026.jpg/250px-Matenadaran_building_exterior_Yerevan_2026.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Matenadaran_building_exterior_Yerevan_2026.jpg/500px-Matenadaran_building_exterior_Yerevan_2026.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Matenadaran_building_exterior_Yerevan_2026.jpg/960px-Matenadaran_building_exterior_Yerevan_2026.jpg"
+    }
+   }
+  },
+  {
+   "key": "genocide",
+   "town": "yerevan",
+   "name": "アルメニア人虐殺記念館（ツィツェルナカベルド）",
+   "local": {
+    "text": "Ծիծեռնակաբերդ",
+    "roman": "Tsitsernakaberd",
+    "src": [
+     {
+      "name": "Wikipedia「Tsitsernakaberd」",
+      "url": "https://en.wikipedia.org/wiki/Tsitsernakaberd",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "1915年ごろのオスマン帝国によるアルメニア人虐殺の犠牲者をしのぶ、国の記念碑と博物館。1967年に「つばめの砦」という名の丘に建てた。毎年4月24日には多くの人が花を手向ける。",
+    "src": [
+     {
+      "name": "Wikipedia「Tsitsernakaberd」",
+      "url": "https://en.wikipedia.org/wiki/Tsitsernakaberd",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.185718,
+   "lon": 44.489184,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Ծիծեռնակաբերդ」",
+     "url": "https://www.openstreetmap.org/way/1168573628",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "開館",
+     "text": "記念碑はいつでも入れる。博物館は火〜日曜の11時〜16時で、入場はただ",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Tsitsernakaberd+Yerevan&hl=ja",
+   "photo": {
+    "file": "Genocide Memorial complex from air on a sunny day, September 2017.jpg",
+    "by": "Aleksey Chalabyan (a.k.a. Xelgen)",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Genocide_Memorial_complex_from_air_on_a_sunny_day,_September_2017.jpg",
+    "alt": "丘の上の虐殺記念碑を上から",
+    "w": 3477,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Genocide_Memorial_complex_from_air_on_a_sunny_day,_September_2017.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg/250px-Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg/500px-Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg/960px-Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg"
+    }
+   }
+  },
+  {
+   "key": "mother",
+   "town": "yerevan",
+   "name": "母なるアルメニア像",
+   "local": {
+    "text": "Մայր Հայաստան",
+    "roman": "Mayr Hayastan",
+    "src": [
+     {
+      "name": "Wikipedia「Mother Armenia」",
+      "url": "https://en.wikipedia.org/wiki/Mother_Armenia",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "勝利公園から街を見下ろす女性の像。1967年に、スターリンの像に代えて立てた。",
+    "src": [
+     {
+      "name": "Wikipedia「Mother Armenia」",
+      "url": "https://en.wikipedia.org/wiki/Mother_Armenia",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.195155,
+   "lon": 44.524674,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Մայր Հայաստան」",
+     "url": "https://www.openstreetmap.org/node/375565244",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Mother+Armenia+Yerevan&hl=ja",
+   "links": {
+    "todo": [
+     "cascade"
+    ]
+   },
+   "photo": {
+    "file": "2025-05-18 Yerevan, Mother Armenia Monument 1.jpg",
+    "by": "Alexkom000",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:2025-05-18_Yerevan,_Mother_Armenia_Monument_1.jpg",
+    "alt": "剣を持って立つ母なるアルメニア像",
+    "w": 5307,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:2025-05-18_Yerevan,_Mother_Armenia_Monument_1.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/2025-05-18_Yerevan%2C_Mother_Armenia_Monument_1.jpg/250px-2025-05-18_Yerevan%2C_Mother_Armenia_Monument_1.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/2025-05-18_Yerevan%2C_Mother_Armenia_Monument_1.jpg/500px-2025-05-18_Yerevan%2C_Mother_Armenia_Monument_1.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/2025-05-18_Yerevan%2C_Mother_Armenia_Monument_1.jpg/960px-2025-05-18_Yerevan%2C_Mother_Armenia_Monument_1.jpg"
+    }
+   }
+  },
+  {
+   "key": "gregory",
+   "town": "yerevan",
+   "name": "聖グレゴリー啓蒙者大聖堂",
+   "local": {
+    "text": "Սուրբ Գրիգոր Լուսավորիչ",
+    "roman": "Surb Grigor Lusavorich",
+    "src": [
+     {
+      "name": "Wikipedia「Saint Gregory the Illuminator Cathedral, Yerevan」",
+      "url": "https://en.wikipedia.org/wiki/Saint_Gregory_the_Illuminator_Cathedral,_Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "アルメニア使徒教会でいちばん大きな大聖堂。キリスト教の国になって1700年を記念して、2001年にできた。",
+    "src": [
+     {
+      "name": "Wikipedia「Saint Gregory the Illuminator Cathedral, Yerevan」",
+      "url": "https://en.wikipedia.org/wiki/Saint_Gregory_the_Illuminator_Cathedral,_Yerevan",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.172074,
+   "lon": 44.516871,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Սուրբ Գրիգոր Լուսավորիչ եկեղեցի」",
+     "url": "https://www.openstreetmap.org/way/31622320",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Saint+Gregory+the+Illuminator+Cathedral+Yerevan&hl=ja",
+   "photo": {
+    "file": "Saint Gregory the Illuminator Cathedral, Yerevan (2026).jpg",
+    "by": "Petar Milošević",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Saint_Gregory_the_Illuminator_Cathedral,_Yerevan_(2026).jpg",
+    "alt": "聖グレゴリー啓蒙者大聖堂の外観",
+    "w": 8256,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Saint_Gregory_the_Illuminator_Cathedral,_Yerevan_(2026).jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Saint_Gregory_the_Illuminator_Cathedral%2C_Yerevan_%282026%29.jpg/250px-Saint_Gregory_the_Illuminator_Cathedral%2C_Yerevan_%282026%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Saint_Gregory_the_Illuminator_Cathedral%2C_Yerevan_%282026%29.jpg/500px-Saint_Gregory_the_Illuminator_Cathedral%2C_Yerevan_%282026%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Saint_Gregory_the_Illuminator_Cathedral%2C_Yerevan_%282026%29.jpg/960px-Saint_Gregory_the_Illuminator_Cathedral%2C_Yerevan_%282026%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "bluemosque",
+   "town": "yerevan",
+   "name": "ブルーモスク",
+   "local": {
+    "text": "Կապույտ մզկիթ",
+    "roman": "Kapuyt mzkit",
+    "src": [
+     {
+      "name": "Wikipedia「Blue Mosque, Yerevan」",
+      "url": "https://en.wikipedia.org/wiki/Blue_Mosque,_Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "18世紀にイランのハーンが建てたシーア派のモスク。街のまん中に残るいちばん古い建物の1つで、いまアルメニアで礼拝をしているただ1つのモスク。",
+    "src": [
+     {
+      "name": "Wikipedia「Blue Mosque, Yerevan」",
+      "url": "https://en.wikipedia.org/wiki/Blue_Mosque,_Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.177883,
+   "lon": 44.50556,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Կապույտ Մզկիթ」",
+     "url": "https://www.openstreetmap.org/way/235841246",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Blue+Mosque+Yerevan&hl=ja",
+   "photo": {
+    "file": "Blue Mosque, Yerevan in 2019 06.jpg",
+    "by": "23artashes",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Blue_Mosque,_Yerevan_in_2019_06.jpg",
+    "alt": "ブルーモスクの青いタイルの丸屋根",
+    "w": 3264,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Blue_Mosque,_Yerevan_in_2019_06.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Blue_Mosque%2C_Yerevan_in_2019_06.jpg/250px-Blue_Mosque%2C_Yerevan_in_2019_06.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Blue_Mosque%2C_Yerevan_in_2019_06.jpg/500px-Blue_Mosque%2C_Yerevan_in_2019_06.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Blue_Mosque%2C_Yerevan_in_2019_06.jpg/960px-Blue_Mosque%2C_Yerevan_in_2019_06.jpg"
+    }
+   }
+  },
+  {
+   "key": "vernissage",
+   "town": "yerevan",
+   "name": "ヴェルニサージュ",
+   "local": {
+    "text": "Վեռնիսաժ",
+    "roman": "Vernisazh",
+    "src": [
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "共和国広場の近くで、土曜と日曜に開く工芸品と古物の青空市。",
+    "src": [
+     {
+      "name": "Wikivoyage「Armenia」",
+      "url": "https://en.wikivoyage.org/wiki/Armenia",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.175976,
+   "lon": 44.51818,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Vernissage」",
+     "url": "https://www.openstreetmap.org/way/31662730",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "開く日",
+     "text": "土曜・日曜",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Vernissage+Yerevan&hl=ja",
+   "links": {
+    "todo": [
+     "vernissage"
+    ]
+   },
+   "photo": {
+    "file": "Vernissage in yerevan.jpg",
+    "by": "acid holic",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Vernissage_in_yerevan.jpg",
+    "alt": "ヴェルニサージュの工芸品の売り場",
+    "w": 1920,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Vernissage_in_yerevan.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Vernissage_in_yerevan.jpg/250px-Vernissage_in_yerevan.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Vernissage_in_yerevan.jpg/500px-Vernissage_in_yerevan.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Vernissage_in_yerevan.jpg/960px-Vernissage_in_yerevan.jpg"
+    }
+   }
+  },
+  {
+   "key": "erebuni",
+   "town": "yerevan",
+   "name": "エレブニ要塞",
+   "local": {
+    "text": "Էրեբունի",
+    "roman": "Erebuni",
+    "src": [
+     {
+      "name": "Wikipedia「Erebuni Fortress」",
+      "url": "https://en.wikipedia.org/wiki/Erebuni_Fortress",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ウラルトゥ王国の要塞の町の跡。紀元前782年から丘の上に建ち、エレバンという名前はエレブニから来ている。",
+    "src": [
+     {
+      "name": "Wikipedia「Erebuni Fortress」",
+      "url": "https://en.wikipedia.org/wiki/Erebuni_Fortress",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.140305,
+   "lon": 44.538147,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Էրեբունու ամրոց」",
+     "url": "https://www.openstreetmap.org/way/445380061",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "博物館と遺跡で1,000ドラム（約440円）、遺跡だけなら500ドラム。火〜日曜の10時半〜16時半",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Erebuni+Fortress+Yerevan&hl=ja",
+   "photo": {
+    "file": "2014 Erywań, Erebuni, Ruiny twierdzy (01).jpg",
+    "by": "Marcin Konsek",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:2014_Erywa%C5%84,_Erebuni,_Ruiny_twierdzy_(01).jpg",
+    "alt": "丘の上のエレブニ要塞の石の壁",
+    "w": 4223,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:2014_Erywa%C5%84,_Erebuni,_Ruiny_twierdzy_(01).jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/2014_Erywa%C5%84%2C_Erebuni%2C_Ruiny_twierdzy_%2801%29.jpg/250px-2014_Erywa%C5%84%2C_Erebuni%2C_Ruiny_twierdzy_%2801%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/2014_Erywa%C5%84%2C_Erebuni%2C_Ruiny_twierdzy_%2801%29.jpg/500px-2014_Erywa%C5%84%2C_Erebuni%2C_Ruiny_twierdzy_%2801%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/2014_Erywa%C5%84%2C_Erebuni%2C_Ruiny_twierdzy_%2801%29.jpg/960px-2014_Erywa%C5%84%2C_Erebuni%2C_Ruiny_twierdzy_%2801%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "opera",
+   "town": "yerevan",
+   "name": "オペラ座（オペラ・バレエ劇場）",
+   "local": {
+    "text": "Օպերայի և բալետի թատրոն",
+    "roman": "Operayi yev baleti tatron",
+    "src": [
+     {
+      "name": "Wikipedia「Yerevan Opera Theatre」",
+      "url": "https://en.wikipedia.org/wiki/Yerevan_Opera_Theatre",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "1933年に開いた、オペラとバレエの劇場。設計は街の計画を手がけた建築家タマニャン。前は自由広場。",
+    "src": [
+     {
+      "name": "Wikipedia「Yerevan Opera Theatre」",
+      "url": "https://en.wikipedia.org/wiki/Yerevan_Opera_Theatre",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.185749,
+   "lon": 44.515063,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Օպերայի և բալետի ազգային ակադեմիական թատրոն」",
+     "url": "https://www.openstreetmap.org/relation/19203229",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Yerevan+Opera+Theatre&hl=ja",
+   "photo": {
+    "file": "Exterior of Opera house of Yerevan 2019-05-16.jpg",
+    "by": "Armenak Margarian",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg",
+    "alt": "円い形のオペラ座の建物",
+    "w": 5472,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg/250px-Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg/500px-Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg/960px-Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg"
+    }
+   }
+  },
+  {
+   "key": "history",
+   "town": "yerevan",
+   "name": "アルメニア歴史博物館",
+   "local": {
+    "text": "Հայաստանի պատմության թանգարան",
+    "roman": "Hayastani patmutyan tangaran",
+    "src": [
+     {
+      "name": "Wikipedia「History Museum of Armenia」",
+      "url": "https://en.wikipedia.org/wiki/History_Museum_of_Armenia",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "共和国広場に建つ国の博物館。1920年にでき、40万点を持つ。考古・貨幣・民族の部がある。",
+    "src": [
+     {
+      "name": "Wikipedia「History Museum of Armenia」",
+      "url": "https://en.wikipedia.org/wiki/History_Museum_of_Armenia",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.178514,
+   "lon": 44.513861,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Հայաստանի պատմության թանգարան」",
+     "url": "https://www.openstreetmap.org/node/1436858079",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "2,000ドラム（約880円）。火〜土曜の11時〜18時、日曜は11時〜17時",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=History+Museum+of+Armenia+Yerevan&hl=ja",
+   "photo": {
+    "file": "Yerevan, History Museum of Armenia at night, Armenia.jpg",
+    "by": "Vyacheslav Argenberg",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Yerevan,_History_Museum_of_Armenia_at_night,_Armenia.jpg",
+    "alt": "夜の歴史博物館。共和国広場に面した建物",
+    "w": 4912,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Yerevan,_History_Museum_of_Armenia_at_night,_Armenia.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Yerevan%2C_History_Museum_of_Armenia_at_night%2C_Armenia.jpg/250px-Yerevan%2C_History_Museum_of_Armenia_at_night%2C_Armenia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Yerevan%2C_History_Museum_of_Armenia_at_night%2C_Armenia.jpg/500px-Yerevan%2C_History_Museum_of_Armenia_at_night%2C_Armenia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Yerevan%2C_History_Museum_of_Armenia_at_night%2C_Armenia.jpg/960px-Yerevan%2C_History_Museum_of_Armenia_at_night%2C_Armenia.jpg"
+    }
+   }
+  },
+  {
+   "key": "brandy",
+   "town": "yerevan",
+   "name": "エレバン・ブランデー工場（アララト）",
+   "local": {
+    "text": "Երևանի կոնյակի գործարան",
+    "roman": "Yerevani konyaki gortsaran",
+    "src": [
+     {
+      "name": "Wikipedia「Yerevan Brandy Company」",
+      "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "アララトの名前でブランデーを造る工場。フラズダン川を見下ろす建物は1953年にでき、敷地の中にアララト博物館がある。",
+    "src": [
+     {
+      "name": "Wikipedia「Yerevan Brandy Company」",
+      "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.176361,
+   "lon": 44.496414,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Երևանի Կոնյակի Գործարան」",
+     "url": "https://www.openstreetmap.org/way/468079561",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Yerevan+Brandy+Company&hl=ja",
+   "links": {
+    "todo": [
+     "brandy"
+    ]
+   },
+   "photo": {
+    "file": "Ararat brandy factory in Yerevan, Winter time.JPG",
+    "by": "Brejnev",
+    "lic": "CC0",
+    "page": "https://commons.wikimedia.org/wiki/File:Ararat_brandy_factory_in_Yerevan,_Winter_time.JPG",
+    "alt": "川の上に建つブランデー工場の建物",
+    "w": 3264,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Ararat_brandy_factory_in_Yerevan,_Winter_time.JPG",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Ararat_brandy_factory_in_Yerevan%2C_Winter_time.JPG/250px-Ararat_brandy_factory_in_Yerevan%2C_Winter_time.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Ararat_brandy_factory_in_Yerevan%2C_Winter_time.JPG/500px-Ararat_brandy_factory_in_Yerevan%2C_Winter_time.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Ararat_brandy_factory_in_Yerevan%2C_Winter_time.JPG/960px-Ararat_brandy_factory_in_Yerevan%2C_Winter_time.JPG"
+    }
+   }
+  },
+  {
+   "key": "gum",
+   "town": "yerevan",
+   "name": "グム市場",
+   "local": {
+    "text": "ԳՈՒՄ շուկա",
+    "roman": "GUM shuka",
+    "src": [
+     {
+      "name": "Wikivoyage「Armenia」",
+      "url": "https://en.wikivoyage.org/wiki/Armenia",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "タシール・モールの近くの、屋根つきの大きな市場。果物と野菜、ドライフルーツ、肉、干したハーブの売り場がある。",
+    "src": [
+     {
+      "name": "Wikivoyage「Armenia」",
+      "url": "https://en.wikivoyage.org/wiki/Armenia",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.167397,
+   "lon": 44.514941,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「GumMarket」",
+     "url": "https://www.openstreetmap.org/way/31651862",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=GUM+Market+Yerevan&hl=ja",
+   "photo": {
+    "file": "Dried fruits in Gum Market, Yerevan.jpg",
+    "by": "Armineaghayan",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Dried_fruits_in_Gum_Market,_Yerevan.jpg",
+    "alt": "グム市場に山と積まれたドライフルーツ",
+    "w": 4896,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Dried_fruits_in_Gum_Market,_Yerevan.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Dried_fruits_in_Gum_Market%2C_Yerevan.jpg/250px-Dried_fruits_in_Gum_Market%2C_Yerevan.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Dried_fruits_in_Gum_Market%2C_Yerevan.jpg/500px-Dried_fruits_in_Gum_Market%2C_Yerevan.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Dried_fruits_in_Gum_Market%2C_Yerevan.jpg/960px-Dried_fruits_in_Gum_Market%2C_Yerevan.jpg"
+    }
+   }
+  },
+  {
+   "key": "northern",
+   "town": "yerevan",
+   "name": "北大通り",
+   "local": {
+    "text": "Հյուսիսային պողոտա",
+    "roman": "Hyusisayin poghota",
+    "src": [
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "オペラ座と共和国広場を結ぶ、歩行者の通り。2008年に開いた。",
+    "src": [
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.182178,
+   "lon": 44.514677,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Հյուսիսային պողոտա」",
+     "url": "https://www.openstreetmap.org/way/430406007",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Northern+Avenue+Yerevan&hl=ja",
+   "photo": {
+    "file": "Yerevan, Northern Avenue, Armenia.jpg",
+    "by": "Vyacheslav Argenberg",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Yerevan,_Northern_Avenue,_Armenia.jpg",
+    "alt": "北大通り。両側に石の建物が並ぶ歩行者の道",
+    "w": 4912,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Yerevan,_Northern_Avenue,_Armenia.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Yerevan%2C_Northern_Avenue%2C_Armenia.jpg/250px-Yerevan%2C_Northern_Avenue%2C_Armenia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Yerevan%2C_Northern_Avenue%2C_Armenia.jpg/500px-Yerevan%2C_Northern_Avenue%2C_Armenia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Yerevan%2C_Northern_Avenue%2C_Armenia.jpg/960px-Yerevan%2C_Northern_Avenue%2C_Armenia.jpg"
+    }
+   }
+  },
+  {
+   "key": "parajanov",
+   "town": "yerevan",
+   "name": "パラジャーノフ博物館",
+   "local": {
+    "text": "Սերգեյ Փարաջանովի թանգարան",
+    "roman": "Sergey Parajanovi tangaran",
+    "src": [
+     {
+      "name": "Wikipedia「Sergei Parajanov Museum」",
+      "url": "https://en.wikipedia.org/wiki/Sergei_Parajanov_Museum",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ソ連の映画監督で美術家のセルゲイ・パラジャーノフの家の博物館。コラージュの作品で知られる。",
+    "src": [
+     {
+      "name": "Wikipedia「Sergei Parajanov Museum」",
+      "url": "https://en.wikipedia.org/wiki/Sergei_Parajanov_Museum",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.178897,
+   "lon": 44.50007,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Սերգեյ Փարաջանովի թանգարան」",
+     "url": "https://www.openstreetmap.org/node/1957114625",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "1,000ドラム（約440円）。毎日10時〜17時半",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Sergei+Parajanov+Museum+Yerevan&hl=ja",
+   "photo": {
+    "file": "Sergei Parajanov Museum.jpg",
+    "by": "Tiia Monto",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Sergei_Parajanov_Museum.jpg",
+    "alt": "峡谷の上に建つパラジャーノフ博物館",
+    "w": 4046,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Sergei_Parajanov_Museum.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Sergei_Parajanov_Museum.jpg/250px-Sergei_Parajanov_Museum.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Sergei_Parajanov_Museum.jpg/500px-Sergei_Parajanov_Museum.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Sergei_Parajanov_Museum.jpg/960px-Sergei_Parajanov_Museum.jpg"
+    }
+   }
+  },
+  {
+   "key": "yerevanlake",
+   "town": "yerevan",
+   "name": "エレバン湖",
+   "local": {
+    "text": "Երևանյան լիճ",
+    "roman": "Yerevanyan lich",
+    "src": [
+     {
+      "name": "Wikipedia「Yerevan Lake」",
+      "url": "https://en.wikipedia.org/wiki/Yerevan_Lake",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "街の南西、フラズダン渓谷の先にある人造の湖。1963年に造られ、広さは57.45ha。",
+    "src": [
+     {
+      "name": "Wikipedia「Yerevan Lake」",
+      "url": "https://en.wikipedia.org/wiki/Yerevan_Lake",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.161597,
+   "lon": 44.478547,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Երևանյան լիճ」",
+     "url": "https://www.openstreetmap.org/relation/15674125",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Yerevan+Lake&hl=ja",
+   "photo": {
+    "file": "View of Yerevan Lake 01.jpg",
+    "by": "Violmsyan",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:View_of_Yerevan_Lake_01.jpg",
+    "alt": "エレバン湖と、まわりの街",
+    "w": 3264,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:View_of_Yerevan_Lake_01.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/View_of_Yerevan_Lake_01.jpg/250px-View_of_Yerevan_Lake_01.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/View_of_Yerevan_Lake_01.jpg/500px-View_of_Yerevan_Lake_01.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/View_of_Yerevan_Lake_01.jpg/960px-View_of_Yerevan_Lake_01.jpg"
+    }
+   }
+  },
+  {
+   "key": "garni",
+   "town": "garni",
+   "name": "ガルニ神殿",
+   "local": {
+    "text": "Գառնիի տաճար",
+    "roman": "Garnii tachar",
+    "src": [
+     {
+      "name": "Wikipedia「Temple of Garni」",
+      "url": "https://en.wikipedia.org/wiki/Temple_of_Garni",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "イオニア式の柱が並ぶ神殿で、キリスト教より前のアルメニアのいちばんの象徴。旧ソ連でただ1つ、ほぼ形の残るヘレニズムの建物。1679年の地震で崩れ、1970年代に建て直した。",
+    "src": [
+     {
+      "name": "Wikipedia「Temple of Garni」",
+      "url": "https://en.wikipedia.org/wiki/Temple_of_Garni",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Garni」",
+      "url": "https://en.wikivoyage.org/wiki/Garni",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.112341,
+   "lon": 44.730219,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Գառնիի հեթանոսական տաճար」",
+     "url": "https://www.openstreetmap.org/way/108255791",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Garni+Temple&hl=ja",
+   "links": {
+    "todo": [
+     "garni"
+    ]
+   },
+   "photo": {
+    "file": "Garni Temple (front view, 2026).jpg",
+    "by": "Petar Milošević",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Garni_Temple_(front_view,_2026).jpg",
+    "alt": "ガルニ神殿。石の階段の上に柱が並ぶ",
+    "w": 7200,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Garni_Temple_(front_view,_2026).jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Garni_Temple_%28front_view%2C_2026%29.jpg/250px-Garni_Temple_%28front_view%2C_2026%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Garni_Temple_%28front_view%2C_2026%29.jpg/500px-Garni_Temple_%28front_view%2C_2026%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Garni_Temple_%28front_view%2C_2026%29.jpg/960px-Garni_Temple_%28front_view%2C_2026%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "geghard",
+   "town": "garni",
+   "name": "ゲガルド修道院",
+   "local": {
+    "text": "Գեղարդ",
+    "roman": "Geghard",
+    "src": [
+     {
+      "name": "Wikipedia「Geghard」",
+      "url": "https://en.wikipedia.org/wiki/Geghard",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "山を半分掘って造った修道院で、ユネスコの世界遺産。4世紀にグレゴリウスが洞窟の泉に開き、いまの本堂は1215年にできた。",
+    "src": [
+     {
+      "name": "Wikipedia「Geghard」",
+      "url": "https://en.wikipedia.org/wiki/Geghard",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.140327,
+   "lon": 44.81839,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Գեղարդի վանք」",
+     "url": "https://www.openstreetmap.org/way/405284197",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Geghard+Monastery+Garni&hl=ja",
+   "links": {
+    "todo": [
+     "garni"
+    ]
+   },
+   "photo": {
+    "file": "Geghard Monastery, Armenia.jpg",
+    "by": "Vyacheslav Argenberg",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Geghard_Monastery,_Armenia.jpg",
+    "alt": "崖を背にしたゲガルド修道院",
+    "w": 4912,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Geghard_Monastery,_Armenia.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Geghard_Monastery%2C_Armenia.jpg/250px-Geghard_Monastery%2C_Armenia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Geghard_Monastery%2C_Armenia.jpg/500px-Geghard_Monastery%2C_Armenia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Geghard_Monastery%2C_Armenia.jpg/960px-Geghard_Monastery%2C_Armenia.jpg"
+    }
+   }
+  },
+  {
+   "key": "symphony",
+   "town": "garni",
+   "name": "石のシンフォニー（ガルニ渓谷）",
+   "local": {
+    "text": "Քարերի սիմֆոնիա",
+    "roman": "Kareri simfonia",
+    "src": [
+     {
+      "name": "Wikipedia「Garni Gorge」",
+      "url": "https://en.wikipedia.org/wiki/Garni_Gorge",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "アザト川が削ったガルニ渓谷の壁に、六角の玄武岩の柱が並ぶ。上の岬にガルニ神殿が建つ。",
+    "src": [
+     {
+      "name": "Wikipedia「Garni Gorge」",
+      "url": "https://en.wikipedia.org/wiki/Garni_Gorge",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Garni」",
+      "url": "https://en.wikivoyage.org/wiki/Garni",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.115054,
+   "lon": 44.741141,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Symphony of Stones」",
+     "url": "https://www.openstreetmap.org/way/1149049717",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Symphony+of+Stones+Garni&hl=ja",
+   "links": {
+    "todo": [
+     "garni"
+    ]
+   },
+   "photo": {
+    "file": "Symphony of Stones, Armenia.jpg",
+    "by": "mk4oto https://www.instagram.com/mk4oto/",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Symphony_of_Stones,_Armenia.jpg",
+    "alt": "渓谷の壁に並ぶ六角の石の柱",
+    "w": 5168,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Symphony_of_Stones,_Armenia.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Symphony_of_Stones%2C_Armenia.jpg/250px-Symphony_of_Stones%2C_Armenia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Symphony_of_Stones%2C_Armenia.jpg/500px-Symphony_of_Stones%2C_Armenia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Symphony_of_Stones%2C_Armenia.jpg/960px-Symphony_of_Stones%2C_Armenia.jpg"
+    }
+   }
+  },
+  {
+   "key": "etchmiadzin",
+   "town": "etchmiadzin",
+   "name": "エチミアジン大聖堂",
+   "local": {
+    "text": "Էջմիածնի Մայր տաճար",
+    "roman": "Ejmiatsni Mayr tachar",
+    "src": [
+     {
+      "name": "Wikipedia「Etchmiadzin Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/Etchmiadzin_Cathedral",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "アルメニア使徒教会の総本山。言い伝えでは301〜303年にグレゴリウスが建て、世界でいちばん古い大聖堂とされることが多い。",
+    "src": [
+     {
+      "name": "Wikipedia「Etchmiadzin Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/Etchmiadzin_Cathedral",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Echmiadzin」",
+      "url": "https://en.wikivoyage.org/wiki/Echmiadzin",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.16184,
+   "lon": 44.291116,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Էջմիածնի Մայր Տաճար」",
+     "url": "https://www.openstreetmap.org/way/133909119",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Etchmiadzin+Cathedral+Vagharshapat&hl=ja",
+   "links": {
+    "todo": [
+     "etchmiadzin"
+    ]
+   },
+   "photo": {
+    "file": "Etchmiadzin Cathedral 2024.jpg",
+    "by": "Antisyntagmatarchos",
+    "lic": "CC0",
+    "page": "https://commons.wikimedia.org/wiki/File:Etchmiadzin_Cathedral_2024.jpg",
+    "alt": "エチミアジン大聖堂の石の外観",
+    "w": 3024,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Etchmiadzin_Cathedral_2024.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Etchmiadzin_Cathedral_2024.jpg/250px-Etchmiadzin_Cathedral_2024.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Etchmiadzin_Cathedral_2024.jpg/500px-Etchmiadzin_Cathedral_2024.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Etchmiadzin_Cathedral_2024.jpg/960px-Etchmiadzin_Cathedral_2024.jpg"
+    }
+   }
+  },
+  {
+   "key": "hripsime",
+   "town": "etchmiadzin",
+   "name": "聖フリプシメ教会",
+   "local": {
+    "text": "Սուրբ Հռիփսիմե",
+    "roman": "Surb Hripsime",
+    "src": [
+     {
+      "name": "Wikipedia「Saint Hripsime Church」",
+      "url": "https://en.wikipedia.org/wiki/Saint_Hripsime_Church",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "618年に、アルメニアのキリスト教化の話に出てくるローマの乙女フリプシメの墓の上に建てた教会。アルメニアの古い建築の傑作とされる。",
+    "src": [
+     {
+      "name": "Wikipedia「Saint Hripsime Church」",
+      "url": "https://en.wikipedia.org/wiki/Saint_Hripsime_Church",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.16698,
+   "lon": 44.309558,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Սուրբ Հռիփսիմե եկեղեցի」",
+     "url": "https://www.openstreetmap.org/way/190331200",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Saint+Hripsime+Church+Vagharshapat&hl=ja",
+   "links": {
+    "todo": [
+     "etchmiadzin"
+    ]
+   },
+   "photo": {
+    "file": "Saint Hripsime Church.jpg",
+    "by": "MSyuzan",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Saint_Hripsime_Church.jpg",
+    "alt": "聖フリプシメ教会の石の外観",
+    "w": 2448,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Saint_Hripsime_Church.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Saint_Hripsime_Church.jpg/250px-Saint_Hripsime_Church.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Saint_Hripsime_Church.jpg/500px-Saint_Hripsime_Church.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Saint_Hripsime_Church.jpg/960px-Saint_Hripsime_Church.jpg"
+    }
+   }
+  },
+  {
+   "key": "zvartnots",
+   "town": "etchmiadzin",
+   "name": "ズヴァルトノツ古代遺跡",
+   "local": {
+    "text": "Զվարթնոց",
+    "roman": "Zvartnots",
+    "src": [
+     {
+      "name": "Wikipedia「Zvartnots Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/Zvartnots_Cathedral",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "643〜652年に建てた大聖堂の跡。外が円い三層の建物で、中世のアルメニアの建物では他に例が無い。小さな博物館がある。",
+    "src": [
+     {
+      "name": "Wikipedia「Zvartnots Cathedral」",
+      "url": "https://en.wikipedia.org/wiki/Zvartnots_Cathedral",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Echmiadzin」",
+      "url": "https://en.wikivoyage.org/wiki/Echmiadzin",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+      "url": "https://www.travel.co.jp/guide/matome/3139/",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.160031,
+   "lon": 44.336343,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Զվարթնոց տաճար」",
+     "url": "https://www.openstreetmap.org/way/1169668461",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Zvartnots+Cathedral+Vagharshapat&hl=ja",
+   "links": {
+    "todo": [
+     "etchmiadzin"
+    ]
+   },
+   "photo": {
+    "file": "Zvartnots Cathedral 2018-09-28.jpg",
+    "by": "Սարո Հովհաննիսյան",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Zvartnots_Cathedral_2018-09-28.jpg",
+    "alt": "ズヴァルトノツの大聖堂の跡。円く並ぶ柱",
+    "w": 4104,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Zvartnots_Cathedral_2018-09-28.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Zvartnots_Cathedral_2018-09-28.jpg/250px-Zvartnots_Cathedral_2018-09-28.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Zvartnots_Cathedral_2018-09-28.jpg/500px-Zvartnots_Cathedral_2018-09-28.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Zvartnots_Cathedral_2018-09-28.jpg/960px-Zvartnots_Cathedral_2018-09-28.jpg"
+    }
+   }
+  },
+  {
+   "key": "khorvirap",
+   "town": "khor-virap",
+   "name": "ホル・ヴィラップ修道院",
+   "local": {
+    "text": "Խոր Վիրապ",
+    "roman": "Khor Virap",
+    "src": [
+     {
+      "name": "Wikipedia「Khor Virap」",
+      "url": "https://en.wikipedia.org/wiki/Khor_Virap",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "トルコとの国境の近く、アララト平原の修道院。国の守護聖人グレゴリウスが王に13年閉じ込められた所で、巡礼の地。",
+    "src": [
+     {
+      "name": "Wikipedia「Khor Virap」",
+      "url": "https://en.wikipedia.org/wiki/Khor_Virap",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 39.878388,
+   "lon": 44.57635,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Խոր Վիրապ」",
+     "url": "https://www.openstreetmap.org/way/81992498",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Khor+Virap+Monastery+Lusarat&hl=ja",
+   "links": {
+    "todo": [
+     "khorvirap"
+    ]
+   },
+   "photo": {
+    "file": "Khor Virap Monastery and Mount Ararat, Armenia.jpg",
+    "by": "Andrew Behesnilian ( MrAndrew47 )",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Khor_Virap_Monastery_and_Mount_Ararat,_Armenia.jpg",
+    "alt": "ホル・ヴィラップ修道院と、うしろのアララト山",
+    "w": 3504,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Khor_Virap_Monastery_and_Mount_Ararat,_Armenia.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Khor_Virap_Monastery_and_Mount_Ararat%2C_Armenia.jpg/250px-Khor_Virap_Monastery_and_Mount_Ararat%2C_Armenia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Khor_Virap_Monastery_and_Mount_Ararat%2C_Armenia.jpg/500px-Khor_Virap_Monastery_and_Mount_Ararat%2C_Armenia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Khor_Virap_Monastery_and_Mount_Ararat%2C_Armenia.jpg/960px-Khor_Virap_Monastery_and_Mount_Ararat%2C_Armenia.jpg"
+    }
+   }
+  },
+  {
+   "key": "sevanavank",
+   "town": "sevan-lake",
+   "name": "セヴァナヴァンク（セヴァン修道院）",
+   "local": {
+    "text": "Սևանավանք",
+    "roman": "Sevanavank",
+    "src": [
+     {
+      "name": "Wikipedia「Sevanavank」",
+      "url": "https://en.wikipedia.org/wiki/Sevanavank",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "セヴァン湖の北西の半島に建つ修道院で、874年にできた。もとは島だったが、スターリンの時代に湖の水を抜いて水面が約20m下がり、半島になった。",
+    "src": [
+     {
+      "name": "Wikipedia「Sevanavank」",
+      "url": "https://en.wikipedia.org/wiki/Sevanavank",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.563984,
+   "lon": 45.010808,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Սեւանավանք」",
+     "url": "https://www.openstreetmap.org/way/503179918",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Sevanavank&hl=ja",
+   "links": {
+    "todo": [
+     "sevan"
+    ]
+   },
+   "photo": {
+    "file": "Sevanavank on 1.09.23, 22.jpg",
+    "by": "Anastasiya Lvova (1988–)",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Sevanavank_on_1.09.23,_22.jpg",
+    "alt": "湖の半島に建つ石の修道院",
+    "w": 3000,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Sevanavank_on_1.09.23,_22.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Sevanavank_on_1.09.23%2C_22.jpg/250px-Sevanavank_on_1.09.23%2C_22.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Sevanavank_on_1.09.23%2C_22.jpg/500px-Sevanavank_on_1.09.23%2C_22.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Sevanavank_on_1.09.23%2C_22.jpg/960px-Sevanavank_on_1.09.23%2C_22.jpg"
+    }
+   }
+  },
+  {
+   "key": "noravank",
+   "town": "noravank",
+   "name": "ノラヴァンク修道院",
+   "local": {
+    "text": "Նորավանք",
+    "roman": "Noravank",
+    "src": [
+     {
+      "name": "Wikipedia「Noravank」",
+      "url": "https://en.wikipedia.org/wiki/Noravank",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "エレバンから122km、アマグ川の細い渓谷にある13世紀の修道院。向かいの赤い崖と、壁から突き出た石の階段で上る2階建ての教会で知られる。",
+    "src": [
+     {
+      "name": "Wikipedia「Noravank」",
+      "url": "https://en.wikipedia.org/wiki/Noravank",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "トラベルjp「【2025年最新】アルメニアでおすすめの観光地14選 ミステリアスな風景の虜に」（2025年4月14日更新）",
+      "url": "https://www.travel.co.jp/guide/matome/3139/",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 39.684823,
+   "lon": 45.233039,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Նորավանք」",
+     "url": "https://www.openstreetmap.org/node/955156087",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行き方",
+     "text": "エレバンのゴルツァラナイン駅の近くから、イェゲグナゾル行きのマルシュルートカ（乗合バス）で1時間半〜2時間、2,000ドラム（2025年4月）。8時〜18時に出る",
+     "src": [
+      {
+       "name": "Wikivoyage「Yeghegnadzor」",
+       "url": "https://en.wikivoyage.org/wiki/Yeghegnadzor",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Noravank+Monastery+Areni&hl=ja",
+   "photo": {
+    "file": "Surb Astvatsatsin Church, Noravank Monastery, Armenia.jpg",
+    "by": "Petar Milošević",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Surb_Astvatsatsin_Church,_Noravank_Monastery,_Armenia.jpg",
+    "alt": "赤い崖の下のノラヴァンク修道院",
+    "w": 5550,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Surb_Astvatsatsin_Church,_Noravank_Monastery,_Armenia.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Surb_Astvatsatsin_Church%2C_Noravank_Monastery%2C_Armenia.jpg/250px-Surb_Astvatsatsin_Church%2C_Noravank_Monastery%2C_Armenia.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Surb_Astvatsatsin_Church%2C_Noravank_Monastery%2C_Armenia.jpg/500px-Surb_Astvatsatsin_Church%2C_Noravank_Monastery%2C_Armenia.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Surb_Astvatsatsin_Church%2C_Noravank_Monastery%2C_Armenia.jpg/960px-Surb_Astvatsatsin_Church%2C_Noravank_Monastery%2C_Armenia.jpg"
+    }
+   }
+  }
+ ],
+ "eat": {
+  "kinds": [
+   {
+    "key": "local",
+    "name": "アルメニアの料理"
+   },
+   {
+    "key": "quick",
+    "name": "安く手早く"
+   },
+   {
+    "key": "sweets",
+    "name": "甘いもの"
+   },
+   {
+    "key": "drinks",
+    "name": "飲み物"
+   }
+  ],
+  "items": [
+   {
+    "key": "khorovats",
+    "name": "ホロヴァツ（アルメニアのバーベキュー）",
+    "local": {
+     "text": "Khorovats",
+     "roman": "Khorovats",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "肉の塊を焼き、玉ねぎとアルメニアのスパイスで味をつける。トマト・なす・ピーマンも一緒に焼く。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikipedia「Khorovats」",
+       "url": "https://en.wikipedia.org/wiki/Khorovats",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "karas",
+      "name": "カラス（郷土料理のチェーン）",
+      "local": "Karas",
+      "area": "west",
+      "lat": 40.190495,
+      "lon": 44.463084,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Կարաս」",
+        "url": "https://www.openstreetmap.org/way/397093245",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "郷土料理のチェーン。品書きに鶏のホロヴァツ（3,730ドラム）・ドルマ（2,160ドラム）・ハシュ（2,730ドラム）・ハリサ（1,370ドラム）・スパス（950ドラム）・ラフマジョ（480ドラム）・タン。",
+       "src": [
+        {
+         "name": "Glovo「KARAS」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karas+Yerevan&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "豚・羊・鶏・牛のどれでも作る。カラスの品書きのホロヴァツは鶏。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Glovo「KARAS」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "kebab",
+    "name": "キャバブ（ひき肉の串焼き）",
+    "local": {
+     "text": "Kebab",
+     "roman": "Kebab",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ホロヴァツをひき肉で作ったもので、ホロヴァツより安い。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "ひき肉が何の肉かは、出どころに書かれていない。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "lavash",
+    "name": "ラヴァシュ（薄いパン）",
+    "local": {
+     "text": "Lavash",
+     "roman": "Lavash",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "薄くて大きなパン。タンドールの壁に貼って焼く。アルメニアでは毎日食べ、焼いた肉を包むのにも使う。",
+     "src": [
+      {
+       "name": "Wikipedia「Lavash」",
+       "url": "https://en.wikipedia.org/wiki/Lavash",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "artlunch",
+      "name": "アート・ランチ（食堂）",
+      "local": "Art Lunch",
+      "area": "south",
+      "lat": 40.150326,
+      "lon": 44.516478,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Art Lunch」",
+        "url": "https://www.openstreetmap.org/way/369823759",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "スープと家庭料理の食堂。品書きにハリサ（930ドラム）・スパス（560ドラム）・キュフタ（1,080ドラム）・ガタ（100gで250ドラム）・ラヴァシュ（50gで60ドラム）・ハチャプリ・タン。",
+       "src": [
+        {
+         "name": "Glovo「Art Lunch」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/art-lunch-yrv-yrv",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "dolma",
+    "name": "ドルマ（ぶどうの葉の包み）",
+    "local": {
+     "text": "Dolma",
+     "roman": "Dolma",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ぶどうの葉で包む。キャベツの葉や、ピーマン・なすに詰める作りもある。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "karas",
+      "name": "カラス（郷土料理のチェーン）",
+      "local": "Karas",
+      "area": "west",
+      "lat": 40.190495,
+      "lon": 44.463084,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Կարաս」",
+        "url": "https://www.openstreetmap.org/way/397093245",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "郷土料理のチェーン。品書きに鶏のホロヴァツ（3,730ドラム）・ドルマ（2,160ドラム）・ハシュ（2,730ドラム）・ハリサ（1,370ドラム）・スパス（950ドラム）・ラフマジョ（480ドラム）・タン。",
+       "src": [
+        {
+         "name": "Glovo「KARAS」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karas+Yerevan&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "中の肉が何の肉かは、品書きに書かれていない。",
+     "src": [
+      {
+       "name": "Glovo「KARAS」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "khash",
+    "name": "ハシュ（牛の足の煮込み）",
+    "local": {
+     "text": "Khash",
+     "roman": "Khash",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "牛や羊の頭・足・胃を煮た、アルメニアの古い料理。冬のごちそうで、慣れの要る味と言われる。",
+     "src": [
+      {
+       "name": "Wikipedia「Khash (dish)」",
+       "url": "https://en.wikipedia.org/wiki/Khash_(dish)",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "karas",
+      "name": "カラス（郷土料理のチェーン）",
+      "local": "Karas",
+      "area": "west",
+      "lat": 40.190495,
+      "lon": 44.463084,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Կարաս」",
+        "url": "https://www.openstreetmap.org/way/397093245",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "郷土料理のチェーン。品書きに鶏のホロヴァツ（3,730ドラム）・ドルマ（2,160ドラム）・ハシュ（2,730ドラム）・ハリサ（1,370ドラム）・スパス（950ドラム）・ラフマジョ（480ドラム）・タン。",
+       "src": [
+        {
+         "name": "Glovo「KARAS」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karas+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "harissa",
+    "name": "ハリサ（麦と肉の粥）",
+    "local": {
+     "text": "Harissa",
+     "roman": "Harissa",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "煮てほぐした鶏か羊の肉と、ひいた麦を粥のように煮る。復活祭に食べ、国の料理とされる。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "karas",
+      "name": "カラス（郷土料理のチェーン）",
+      "local": "Karas",
+      "area": "west",
+      "lat": 40.190495,
+      "lon": 44.463084,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Կարաս」",
+        "url": "https://www.openstreetmap.org/way/397093245",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "郷土料理のチェーン。品書きに鶏のホロヴァツ（3,730ドラム）・ドルマ（2,160ドラム）・ハシュ（2,730ドラム）・ハリサ（1,370ドラム）・スパス（950ドラム）・ラフマジョ（480ドラム）・タン。",
+       "src": [
+        {
+         "name": "Glovo「KARAS」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karas+Yerevan&hl=ja"
+     },
+     {
+      "key": "artlunch",
+      "name": "アート・ランチ（食堂）",
+      "local": "Art Lunch",
+      "area": "south",
+      "lat": 40.150326,
+      "lon": 44.516478,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Art Lunch」",
+        "url": "https://www.openstreetmap.org/way/369823759",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "スープと家庭料理の食堂。品書きにハリサ（930ドラム）・スパス（560ドラム）・キュフタ（1,080ドラム）・ガタ（100gで250ドラム）・ラヴァシュ（50gで60ドラム）・ハチャプリ・タン。",
+       "src": [
+        {
+         "name": "Glovo「Art Lunch」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/art-lunch-yrv-yrv",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "spas",
+    "name": "スパス（ヨーグルトのスープ）",
+    "local": {
+     "text": "Spas",
+     "roman": "Spas",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "発酵乳マツンのスープ。香草と皮をむいた麦を入れ、卵と小麦粉で分離を防ぐ。",
+     "src": [
+      {
+       "name": "Wikipedia「Spas (soup)」",
+       "url": "https://en.wikipedia.org/wiki/Spas_(soup)",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "karas",
+      "name": "カラス（郷土料理のチェーン）",
+      "local": "Karas",
+      "area": "west",
+      "lat": 40.190495,
+      "lon": 44.463084,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Կարաս」",
+        "url": "https://www.openstreetmap.org/way/397093245",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "郷土料理のチェーン。品書きに鶏のホロヴァツ（3,730ドラム）・ドルマ（2,160ドラム）・ハシュ（2,730ドラム）・ハリサ（1,370ドラム）・スパス（950ドラム）・ラフマジョ（480ドラム）・タン。",
+       "src": [
+        {
+         "name": "Glovo「KARAS」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karas+Yerevan&hl=ja"
+     },
+     {
+      "key": "artlunch",
+      "name": "アート・ランチ（食堂）",
+      "local": "Art Lunch",
+      "area": "south",
+      "lat": 40.150326,
+      "lon": 44.516478,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Art Lunch」",
+        "url": "https://www.openstreetmap.org/way/369823759",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "スープと家庭料理の食堂。品書きにハリサ（930ドラム）・スパス（560ドラム）・キュフタ（1,080ドラム）・ガタ（100gで250ドラム）・ラヴァシュ（50gで60ドラム）・ハチャプリ・タン。",
+       "src": [
+        {
+         "name": "Glovo「Art Lunch」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/art-lunch-yrv-yrv",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "lahmajo",
+    "name": "ラフマジョ（薄焼きの肉のパン）",
+    "local": {
+     "text": "Lahmajo",
+     "roman": "Lahmajo",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "薄い生地に、ひき肉・刻んだ野菜・香草をのせて焼く。",
+     "src": [
+      {
+       "name": "Wikipedia「Lahmacun」",
+       "url": "https://en.wikipedia.org/wiki/Lahmacun",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "tunlahmajo",
+      "name": "トゥン・ラフマジョ（ラフマジョの店）",
+      "local": "Tun Lahmajo",
+      "area": "center",
+      "lat": 40.182834,
+      "lon": 44.514285,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Տուն Լահմաջո」",
+        "url": "https://www.openstreetmap.org/node/5064245821",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "とても安いラフマジョの店で、いつも地元の人でいっぱい。",
+       "src": [
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tun+Lahmajo+Yerevan&hl=ja"
+     },
+     {
+      "key": "mertaghe",
+      "name": "メル・タゲ（ラフマジョの店）",
+      "local": "Mer Taghe",
+      "area": "center",
+      "lat": 40.183152,
+      "lon": 44.516107,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「ՄԵՐ ԹԱՂԸ」",
+        "url": "https://www.openstreetmap.org/node/5002025526",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "トゥマニャン通りの小さなラフマジョの店。マンティと、地方のラザニアに似たノラハルスもある。",
+       "src": [
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Mer+Taghe+Yerevan&hl=ja"
+     },
+     {
+      "key": "ost",
+      "name": "オスト（ラフマジョとハチャプリ）",
+      "local": "OST",
+      "area": "center",
+      "lat": 40.186089,
+      "lon": 44.507588,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「ՕՍՏ」",
+        "url": "https://www.openstreetmap.org/node/4411411953",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "安い軽食の店。品書きにラフマジョ（1,400ドラム）・メグレリ風のハチャプリ（3,500ドラム）・タン（500ドラム）。",
+       "src": [
+        {
+         "name": "Glovo「OST」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/ost",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=OST+Yerevan&hl=ja"
+     },
+     {
+      "key": "karas",
+      "name": "カラス（郷土料理のチェーン）",
+      "local": "Karas",
+      "area": "west",
+      "lat": 40.190495,
+      "lon": 44.463084,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Կարաս」",
+        "url": "https://www.openstreetmap.org/way/397093245",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "郷土料理のチェーン。品書きに鶏のホロヴァツ（3,730ドラム）・ドルマ（2,160ドラム）・ハシュ（2,730ドラム）・ハリサ（1,370ドラム）・スパス（950ドラム）・ラフマジョ（480ドラム）・タン。",
+       "src": [
+        {
+         "name": "Glovo「KARAS」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karas+Yerevan&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "のせるひき肉は牛か羊が多い。オストとカラスの品書きは牛肉。",
+     "src": [
+      {
+       "name": "Wikipedia「Lahmacun」",
+       "url": "https://en.wikipedia.org/wiki/Lahmacun",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Glovo「OST」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/ost",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Glovo「KARAS」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "khachapuri",
+    "name": "ハチャプリ（チーズのパン）",
+    "local": {
+     "text": "Khachapuri",
+     "roman": "Khachapuri",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "チーズを詰めて焼く、ジョージアのパン。",
+     "src": [
+      {
+       "name": "Wikipedia「Khachapuri」",
+       "url": "https://en.wikipedia.org/wiki/Khachapuri",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "ost",
+      "name": "オスト（ラフマジョとハチャプリ）",
+      "local": "OST",
+      "area": "center",
+      "lat": 40.186089,
+      "lon": 44.507588,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「ՕՍՏ」",
+        "url": "https://www.openstreetmap.org/node/4411411953",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "安い軽食の店。品書きにラフマジョ（1,400ドラム）・メグレリ風のハチャプリ（3,500ドラム）・タン（500ドラム）。",
+       "src": [
+        {
+         "name": "Glovo「OST」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/ost",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=OST+Yerevan&hl=ja"
+     },
+     {
+      "key": "artlunch",
+      "name": "アート・ランチ（食堂）",
+      "local": "Art Lunch",
+      "area": "south",
+      "lat": 40.150326,
+      "lon": 44.516478,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Art Lunch」",
+        "url": "https://www.openstreetmap.org/way/369823759",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "スープと家庭料理の食堂。品書きにハリサ（930ドラム）・スパス（560ドラム）・キュフタ（1,080ドラム）・ガタ（100gで250ドラム）・ラヴァシュ（50gで60ドラム）・ハチャプリ・タン。",
+       "src": [
+        {
+         "name": "Glovo「Art Lunch」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/art-lunch-yrv-yrv",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "shaurma",
+    "name": "シャウルマ（エレバン風のシャワルマ）",
+    "local": {
+     "text": "Shaurma",
+     "roman": "Shaurma",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "肉と、細く削ったじゃがいも・玉ねぎ・香草・トマト・漬けたきゅうりを巻く。",
+     "src": [
+      {
+       "name": "Glovo「Tumanyan Shaurma」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/tumanyan-shaurma",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "tumanyan",
+      "name": "トゥマニャン・シャウルマ",
+      "local": "Tumanyan Shaurma",
+      "area": "republic",
+      "lat": 40.179104,
+      "lon": 44.51326,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Tumanyan Shaurma」",
+        "url": "https://www.openstreetmap.org/node/10924674649",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "エレバン風のシャウルマの地元のチェーンで、街に十数店ある。品書きに鶏のシャウルマ（XL 1,950ドラム）・豚のシャウルマ（XL 2,050ドラム）。どちらも細く削ったじゃがいもを巻く。",
+       "src": [
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Glovo「Tumanyan Shaurma」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/tumanyan-shaurma",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tumanyan+Shaurma+Yerevan&hl=ja"
+     },
+     {
+      "key": "masterclass",
+      "name": "マスター・クラス（シャウルマとラフマジョ）",
+      "local": "Master Class",
+      "area": "south",
+      "lat": 40.166511,
+      "lon": 44.505983,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Master Class」",
+        "url": "https://www.openstreetmap.org/node/11040330589",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "シャウルマとラフマジョの店。品書きに鶏のシャウルマ（小さいもので820ドラム）・ラフマジョ（1,100ドラム）・タン。",
+       "src": [
+        {
+         "name": "Glovo「Master Class」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/master-class-yrv",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Master+Class+Yerevan&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "トゥマニャン・シャウルマの品書きには鶏と豚がある。マスター・クラスの品書きは鶏。",
+     "src": [
+      {
+       "name": "Glovo「Tumanyan Shaurma」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/tumanyan-shaurma",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Glovo「Master Class」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/master-class-yrv",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "zhingyalov",
+    "name": "ジンガロフ・ハツ（香草を包んだパン）",
+    "local": {
+     "text": "Jingalov Hats",
+     "roman": "Jingalov Hats",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "刻んだ香草と青い野菜を包んだ平たいパン。アルツァフとシュニクのアルメニア人の料理。",
+     "src": [
+      {
+       "name": "Wikipedia「Zhingyalov hats」",
+       "url": "https://en.wikipedia.org/wiki/Zhingyalov_hats",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "manti",
+    "name": "マンティ（小さな肉のギョウザ）",
+    "local": {
+     "text": "Manti",
+     "roman": "Manti",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ギョウザの一種。ラフマジョの店メル・タゲでも出す。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "mertaghe",
+      "name": "メル・タゲ（ラフマジョの店）",
+      "local": "Mer Taghe",
+      "area": "center",
+      "lat": 40.183152,
+      "lon": 44.516107,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「ՄԵՐ ԹԱՂԸ」",
+        "url": "https://www.openstreetmap.org/node/5002025526",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "トゥマニャン通りの小さなラフマジョの店。マンティと、地方のラザニアに似たノラハルスもある。",
+       "src": [
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Mer+Taghe+Yerevan&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "中の肉が何の肉かは、出どころに書かれていない。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "kufta",
+    "name": "キュフタ（肉団子）",
+    "local": {
+     "text": "Kufta",
+     "roman": "Kufta",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "肉を使った団子の料理。挽き割り麦と合わせたイシュリ・キュフタもある。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "artlunch",
+      "name": "アート・ランチ（食堂）",
+      "local": "Art Lunch",
+      "area": "south",
+      "lat": 40.150326,
+      "lon": 44.516478,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Art Lunch」",
+        "url": "https://www.openstreetmap.org/way/369823759",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "スープと家庭料理の食堂。品書きにハリサ（930ドラム）・スパス（560ドラム）・キュフタ（1,080ドラム）・ガタ（100gで250ドラム）・ラヴァシュ（50gで60ドラム）・ハチャプリ・タン。",
+       "src": [
+        {
+         "name": "Glovo「Art Lunch」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/art-lunch-yrv-yrv",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "アート・ランチの品書きのキュフタは牛肉。",
+     "src": [
+      {
+       "name": "Glovo「Art Lunch」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/art-lunch-yrv-yrv",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "ghapama",
+    "name": "ガパマ（かぼちゃの詰め物）",
+    "local": {
+     "text": "Ghapama",
+     "roman": "Ghapama",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local",
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "中をくりぬいたかぼちゃに、米・バター・はちみつ・ドライフルーツ・木の実を詰めて焼く。デザートとして出すことが多い。",
+     "src": [
+      {
+       "name": "Wikipedia「Ghapama」",
+       "url": "https://en.wikipedia.org/wiki/Ghapama",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "肉を詰める作りもあり、何の肉かは出どころに書かれていない。",
+     "src": [
+      {
+       "name": "Wikipedia「Ghapama」",
+       "url": "https://en.wikipedia.org/wiki/Ghapama",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "sujukh",
+    "name": "スジュフ（干したソーセージ）",
+    "local": {
+     "text": "Sujukh",
+     "roman": "Sujukh",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "牛肉で作る、干して塩漬けにした辛いソーセージ。トルコのスジュクより詰まっていて辛い。",
+     "src": [
+      {
+       "name": "Wikipedia「Armenian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Armenian_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "matnakash",
+    "name": "マトナカシュ（ふんわりしたパン）",
+    "local": {
+     "text": "Matnakash",
+     "roman": "Matnakash",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "発酵させたふっくらしたパン。指で筋をつけて形を作り、甘い紅茶を塗って焼くので皮が金色になる。",
+     "src": [
+      {
+       "name": "Wikipedia「Matnakash」",
+       "url": "https://en.wikipedia.org/wiki/Matnakash",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "matsun",
+    "name": "マツン（ヨーグルト）",
+    "local": {
+     "text": "Matsun",
+     "roman": "Matsun",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "何世紀も前からある、アルメニアのヨーグルト。冷やして食べると、夏の暑い日にさっぱりする。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "gata",
+    "name": "ガタ（甘いパン）",
+    "local": {
+     "text": "Gata",
+     "roman": "Gata",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "アルメニアの甘いパン。町や地方で形が違う。中にバターと砂糖と小麦粉の詰め物を入れたものが多い。",
+     "src": [
+      {
+       "name": "Wikipedia「Gata (food)」",
+       "url": "https://en.wikipedia.org/wiki/Gata_(food)",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "artlunch",
+      "name": "アート・ランチ（食堂）",
+      "local": "Art Lunch",
+      "area": "south",
+      "lat": 40.150326,
+      "lon": 44.516478,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Art Lunch」",
+        "url": "https://www.openstreetmap.org/way/369823759",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "スープと家庭料理の食堂。品書きにハリサ（930ドラム）・スパス（560ドラム）・キュフタ（1,080ドラム）・ガタ（100gで250ドラム）・ラヴァシュ（50gで60ドラム）・ハチャプリ・タン。",
+       "src": [
+        {
+         "name": "Glovo「Art Lunch」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/art-lunch-yrv-yrv",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "ponchik",
+    "name": "ポンチク（カスタードの揚げパン）",
+    "local": {
+     "text": "Ponchik",
+     "roman": "Ponchik",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "揚げた生地にカスタードを詰め、粉砂糖をかけたドーナツ。",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "grandcandy",
+      "name": "グランド・キャンディのポンチク屋",
+      "local": "Ponchikanots",
+      "area": "cascade",
+      "lat": 40.190233,
+      "lon": 44.519125,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Պոնչիկանոց」",
+        "url": "https://www.openstreetmap.org/node/1456826041",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "ソ連の時代のポンチク屋のあとに入った、菓子の会社グランド・キャンディの店。揚げたてのポンチクを安く出し、地元で作った飴とチョコレートも売る。10時〜20時。",
+       "src": [
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ponchikanots+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "apricot",
+    "name": "あんず（アプリコット）",
+    "local": {
+     "text": "Tsiran",
+     "roman": "Tsiran",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "あんずの学名プルヌス・アルメニアカは、アルメニアにちなむ。生でも、干しても食べる。",
+     "src": [
+      {
+       "name": "Wikipedia「Armenian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Armenian_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "tan",
+    "name": "タン（塩味のヨーグルトの飲み物）",
+    "local": {
+     "text": "Tan",
+     "roman": "Tan",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "ヨーグルトを水でのばし、塩を少し入れた飲み物。炭酸入りの瓶もある。",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "karas",
+      "name": "カラス（郷土料理のチェーン）",
+      "local": "Karas",
+      "area": "west",
+      "lat": 40.190495,
+      "lon": 44.463084,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Կարաս」",
+        "url": "https://www.openstreetmap.org/way/397093245",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "郷土料理のチェーン。品書きに鶏のホロヴァツ（3,730ドラム）・ドルマ（2,160ドラム）・ハシュ（2,730ドラム）・ハリサ（1,370ドラム）・スパス（950ドラム）・ラフマジョ（480ドラム）・タン。",
+       "src": [
+        {
+         "name": "Glovo「KARAS」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karas+Yerevan&hl=ja"
+     },
+     {
+      "key": "ost",
+      "name": "オスト（ラフマジョとハチャプリ）",
+      "local": "OST",
+      "area": "center",
+      "lat": 40.186089,
+      "lon": 44.507588,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「ՕՍՏ」",
+        "url": "https://www.openstreetmap.org/node/4411411953",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "安い軽食の店。品書きにラフマジョ（1,400ドラム）・メグレリ風のハチャプリ（3,500ドラム）・タン（500ドラム）。",
+       "src": [
+        {
+         "name": "Glovo「OST」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/ost",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=OST+Yerevan&hl=ja"
+     },
+     {
+      "key": "artlunch",
+      "name": "アート・ランチ（食堂）",
+      "local": "Art Lunch",
+      "area": "south",
+      "lat": 40.150326,
+      "lon": 44.516478,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Art Lunch」",
+        "url": "https://www.openstreetmap.org/way/369823759",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "スープと家庭料理の食堂。品書きにハリサ（930ドラム）・スパス（560ドラム）・キュフタ（1,080ドラム）・ガタ（100gで250ドラム）・ラヴァシュ（50gで60ドラム）・ハチャプリ・タン。",
+       "src": [
+        {
+         "name": "Glovo「Art Lunch」（配達の品書き）",
+         "url": "https://glovoapp.com/en/am/yerevan/stores/art-lunch-yrv-yrv",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "brandy",
+    "name": "アルメニアのブランデー",
+    "local": {
+     "text": "Konyak",
+     "roman": "Konyak",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "アルメニアの人はコニャックとも呼ぶ。熟成が長いほど味がまろやかで、値段も上がる。",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "areni",
+    "name": "アレニのワイン",
+    "local": {
+     "text": "Areni",
+     "roman": "Areni",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "アルメニアにしかない赤ぶどうの品種。アレニ村の近くの洞窟で、2007年に世界でいちばん古いワインの醸造所の跡が見つかった。",
+     "src": [
+      {
+       "name": "Wikipedia「Areni (grape)」",
+       "url": "https://en.wikipedia.org/wiki/Areni_(grape)",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "oghi",
+    "name": "果物のウォッカ（オギ）",
+    "local": {
+     "text": "Oghi",
+     "roman": "Oghi",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "果物だけで造る蒸留酒。いちばん人気は桑の実のトゥティ・オギ。セイヨウサンシュユ・梨・あんず・桃のものもある。",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   }
+  ]
+ },
+ "buy": {
+  "items": [
+   {
+    "key": "brandy",
+    "name": "アルメニアのブランデー（アララト）",
+    "local": {
+     "text": "ARARAT",
+     "roman": "ARARAT",
+     "src": [
+      {
+       "name": "Wikipedia「Yerevan Brandy Company」",
+       "url": "https://en.wikipedia.org/wiki/Yerevan_Brandy_Company",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "土産の定番。街なかにアララトの工場のブランデーだけを売る店がいくつもあり、空港の免税店でも買える。熟成が長いほど高い。",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": true,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "wine",
+    "name": "アレニのワイン",
+    "local": {
+     "text": "Areni",
+     "roman": "Areni",
+     "src": [
+      {
+       "name": "Wikipedia「Areni (grape)」",
+       "url": "https://en.wikipedia.org/wiki/Areni_(grape)",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "アルメニアにしかない赤ぶどうの品種アレニのワイン。ヴァヨツ・ゾルの高い所のぶどう畑で多く育つ。",
+     "src": [
+      {
+       "name": "Wikipedia「Areni (grape)」",
+       "url": "https://en.wikipedia.org/wiki/Areni_(grape)",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": true,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "carpet",
+    "name": "アルメニアのじゅうたん",
+    "local": {
+     "text": "Հայկական գորգ",
+     "roman": "Haykakan gorg",
+     "src": [
+      {
+       "name": "Wikipedia「Armenian carpet」",
+       "url": "https://en.wikipedia.org/wiki/Armenian_carpet",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "新しいものも古いものも土産に人気。古いじゅうたんはヴェルニサージュにも並ぶ。古いものを持ち出すには文化省の輸出の証明が要る。",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "vernissage",
+      "name": "ヴェルニサージュ（週末の青空市）",
+      "local": "Vernissage",
+      "area": "republic",
+      "lat": 40.175976,
+      "lon": 44.51818,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Vernissage」",
+        "url": "https://www.openstreetmap.org/way/31662730",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "土曜と日曜に開く青空の市。古いじゅうたん・木彫り・バックギャモンの盤・絵・みやげ・古い磁器・刺しゅう・石の細工・楽器が並ぶ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Armenia」",
+         "url": "https://en.wikivoyage.org/wiki/Armenia",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Vernissage+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "khachkar",
+    "name": "ハチュカル（十字架石）を彫った石の細工",
+    "local": {
+     "text": "Խաչքար",
+     "roman": "Khachkar",
+     "src": [
+      {
+       "name": "Wikipedia「Khachkar」",
+       "url": "https://en.wikipedia.org/wiki/Khachkar",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "十字架を彫った石の碑ハチュカルは、中世のアルメニアの美術。彫る技はユネスコの無形文化遺産。ヴェルニサージュには石の細工の売り場がある。",
+     "src": [
+      {
+       "name": "Wikipedia「Khachkar」",
+       "url": "https://en.wikipedia.org/wiki/Khachkar",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "vernissage",
+      "name": "ヴェルニサージュ（週末の青空市）",
+      "local": "Vernissage",
+      "area": "republic",
+      "lat": 40.175976,
+      "lon": 44.51818,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Vernissage」",
+        "url": "https://www.openstreetmap.org/way/31662730",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "土曜と日曜に開く青空の市。古いじゅうたん・木彫り・バックギャモンの盤・絵・みやげ・古い磁器・刺しゅう・石の細工・楽器が並ぶ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Armenia」",
+         "url": "https://en.wikivoyage.org/wiki/Armenia",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Vernissage+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "duduk",
+    "name": "ドゥドゥク（あんずの木の笛）",
+    "local": {
+     "text": "Դուդուկ",
+     "roman": "Duduk",
+     "src": [
+      {
+       "name": "Wikipedia「Duduk」",
+       "url": "https://en.wikipedia.org/wiki/Duduk",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "あんずの木で作る、二枚のリードの笛。ヴェルニサージュには楽器も並ぶ。",
+     "src": [
+      {
+       "name": "Wikipedia「Duduk」",
+       "url": "https://en.wikipedia.org/wiki/Duduk",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "vernissage",
+      "name": "ヴェルニサージュ（週末の青空市）",
+      "local": "Vernissage",
+      "area": "republic",
+      "lat": 40.175976,
+      "lon": 44.51818,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Vernissage」",
+        "url": "https://www.openstreetmap.org/way/31662730",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "土曜と日曜に開く青空の市。古いじゅうたん・木彫り・バックギャモンの盤・絵・みやげ・古い磁器・刺しゅう・石の細工・楽器が並ぶ。",
+       "src": [
+        {
+         "name": "Wikivoyage「Armenia」",
+         "url": "https://en.wikivoyage.org/wiki/Armenia",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Vernissage+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "driedfruit",
+    "name": "ドライフルーツ",
+    "local": {
+     "text": "Dried fruits",
+     "roman": "Dried fruits",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "グム市場の中に、ドライフルーツの売り場が並ぶ。種を抜いた干し桃に、くるみと砂糖を詰めたアラニという菓子もある。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "gum",
+      "name": "グム市場",
+      "local": "GUM Market",
+      "area": "south",
+      "lat": 40.167397,
+      "lon": 44.514941,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「GumMarket」",
+        "url": "https://www.openstreetmap.org/way/31651862",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "タシール・モールの近くの、屋根つきの大きな市場。果物と野菜、ドライフルーツ、肉、干したハーブの売り場がある。",
+       "src": [
+        {
+         "name": "Wikivoyage「Armenia」",
+         "url": "https://en.wikivoyage.org/wiki/Armenia",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=GUM+Market+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "ttulavash",
+    "name": "トゥトゥ・ラヴァシュ（果物の干した板）",
+    "local": {
+     "text": "Ttu lavash",
+     "roman": "Ttu lavash",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "すももやあんず、さくらんぼを薄い板に干したもの。",
+     "src": [
+      {
+       "name": "Wikivoyage「Armenia」",
+       "url": "https://en.wikivoyage.org/wiki/Armenia",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "jam",
+    "name": "くるみやサジーのジャム",
+    "local": {
+     "text": "Chichkhan",
+     "roman": "Chichkhan",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "アルメニアでは、とれるものはほとんど何でも瓶に詰める。くるみの実のジャムや、サジー（チチハン）のジャムが土産になる。",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "chocolate",
+    "name": "グランド・キャンディの飴とチョコレート",
+    "local": {
+     "text": "Grand Candy",
+     "roman": "Grand Candy",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "菓子の会社グランド・キャンディの店は、ポンチクのほかに地元で作った飴とチョコレートを売る。",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "grandcandy",
+      "name": "グランド・キャンディのポンチク屋",
+      "local": "Ponchikanots",
+      "area": "cascade",
+      "lat": 40.190233,
+      "lon": 44.519125,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Պոնչիկանոց」",
+        "url": "https://www.openstreetmap.org/node/1456826041",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "ソ連の時代のポンチク屋のあとに入った、菓子の会社グランド・キャンディの店。揚げたてのポンチクを安く出し、地元で作った飴とチョコレートも売る。10時〜20時。",
+       "src": [
+        {
+         "name": "Wikivoyage「Yerevan」",
+         "url": "https://en.wikivoyage.org/wiki/Yerevan",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ponchikanots+Yerevan&hl=ja"
+     }
+    ],
+    "went": false
+   }
+  ]
+ },
+ "basics": {
+  "summary": [
+   {
+    "key": "season",
+    "title": "旬の季節",
+    "text": "平年の最高気温は5月24.3℃・9月29.0℃・10月20.7℃。7月は34.0℃、1月は0.6℃。雨は1年を通じて少ない。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「エレバン」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A8%E3%83%AC%E3%83%90%E3%83%B3",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "safety",
+    "title": "治安",
+    "text": "治安は比較的安定しているが、スリと置き引きが多い。観光地で一緒に写真を撮ろうと近づく手口がある。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "budget",
+    "title": "予算",
+    "text": "空港から街のまん中へのバス201番は300ドラム（約130円）で約30分。歴史博物館は2,000ドラム（約880円）。",
+    "src": [
+     {
+      "name": "Wikipedia「Zvartnots International Airport」",
+      "url": "https://en.wikipedia.org/wiki/Zvartnots_International_Airport",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Yerevan」",
+      "url": "https://en.wikivoyage.org/wiki/Yerevan",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "transit",
+    "title": "移動",
+    "text": "地下鉄は1本の路線。QRコードか、NFCのカードで乗る。流しのタクシーより配車アプリ。",
+    "src": [
+     {
+      "name": "Wikipedia「Yerevan Metro」",
+      "url": "https://en.wikipedia.org/wiki/Yerevan_Metro",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "guide": [
+   {
+    "key": "airport",
+    "title": "空港から市内へ",
+    "points": [
+     {
+      "text": "ズヴァルトノツ国際空港（EVN）。街の中心まで車で12km、約20分。",
+      "src": [
+       {
+        "name": "Wikipedia「Zvartnots International Airport」",
+        "url": "https://en.wikipedia.org/wiki/Zvartnots_International_Airport",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "201番のバスが7時〜23時は30分おき、0時〜6時は1時間おきに出る。片道300ドラム（約130円）で約30分。終点はアミリャン通り。",
+      "src": [
+       {
+        "name": "Wikipedia「Zvartnots International Airport」",
+        "url": "https://en.wikipedia.org/wiki/Zvartnots_International_Airport",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "タクシーは配車アプリの gg か Yandex Go を使うと、法外な料金を求められにくい。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "transit",
+    "title": "市内の乗り物",
+    "points": [
+     {
+      "text": "地下鉄は南北に1本の路線。2024年11月からトークンは使えず、QRコード（Telcellのアプリか端末で買う）か、NFCの銀行カードで払う。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Metro」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Metro",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "紙の切符は2025年8月で終わった。",
+      "src": [
+       {
+        "name": "Wikipedia「Yerevan Metro」",
+        "url": "https://en.wikipedia.org/wiki/Yerevan_Metro",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "流しのタクシーは法外な料金を求めることがあるので、gg や Yandex Go の配車アプリを使う。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "pay",
+    "title": "払いかたとチップ",
+    "points": [
+     {
+      "text": "通貨はドラム（AMD）。1ドラムは約0.44円（2026年11月20日のアルメニア中央銀行のレート）。",
+      "src": [
+       {
+        "name": "アルメニア中央銀行の為替レート（2026年11月20日）",
+        "url": "https://api.cba.am/exchangerates.asmx",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "レストランは10%のサービス料を付けるところが増えた。品書きに書いていないこともあるので、聞いて確かめる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Armenia」",
+        "url": "https://en.wikivoyage.org/wiki/Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "チップは端数を切り上げるか、10%を置く人が多い。タクシーではふつう要らない。",
+      "src": [
+       {
+        "name": "Wikivoyage「Armenia」",
+        "url": "https://en.wikivoyage.org/wiki/Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "現金は合わせて1万米ドル相当まで、申告なしで持ち込める。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "sim",
+    "title": "ネットと SIM",
+    "points": [
+     {
+      "text": "携帯の会社は Viva・Team・Ucom の3つ。大きな町に店があり、SIM を買える。",
+      "src": [
+       {
+        "name": "Wikipedia「Telecommunications in Armenia」",
+        "url": "https://en.wikipedia.org/wiki/Telecommunications_in_Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "旅行者には、料金の組み合わせが多く、いろいろな言葉で助けてもらえる Ucom と Viva がよくすすめられる。",
+      "src": [
+       {
+        "name": "Wikipedia「Telecommunications in Armenia」",
+        "url": "https://en.wikipedia.org/wiki/Telecommunications_in_Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "街のカフェは無料の Wi-Fi が多い。",
+      "src": [
+       {
+        "name": "Wikivoyage「Armenia」",
+        "url": "https://en.wikivoyage.org/wiki/Armenia",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "safety",
+    "title": "治安のコツ",
+    "points": [
+     {
+      "text": "スリと置き引きが多い。貴重品は体に付け、バッグはたすき掛けにして手で押さえる。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "観光地で一緒に写真を撮ろうと声をかけ、肩を組むなどして財布を抜く手口がある。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "運転手は交通の決まりを守らないことが多い。横断歩道でも気をつける。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "知らない人から荷物を預からない。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "phrases",
+    "title": "アルメニア語のひとこと",
+    "phrases": [
+     {
+      "local": "Բարև ձեզ",
+      "roman": "barev dzez",
+      "kana": "バレヴ・ズェズ",
+      "ja": "こんにちは"
+     },
+     {
+      "local": "Բարի լույս",
+      "roman": "bari luys",
+      "kana": "バリ・ルイス",
+      "ja": "おはようございます"
+     },
+     {
+      "local": "Բարի երեկո",
+      "roman": "bari yereko",
+      "kana": "バリ・イェレコ",
+      "ja": "こんばんは"
+     },
+     {
+      "local": "Շնորհակալություն",
+      "roman": "shnorhakalutyun",
+      "kana": "シュノラカルチュン",
+      "ja": "ありがとう"
+     },
+     {
+      "local": "Այո",
+      "roman": "ayo",
+      "kana": "アヨ",
+      "ja": "はい"
+     },
+     {
+      "local": "Ոչ",
+      "roman": "voch",
+      "kana": "ヴォチ",
+      "ja": "いいえ"
+     },
+     {
+      "local": "Կներե՛ք",
+      "roman": "knereq",
+      "kana": "クネレク",
+      "ja": "すみません（呼びかけ）"
+     },
+     {
+      "local": "Խնդրեմ",
+      "roman": "khndrem",
+      "kana": "ヘンドレム",
+      "ja": "お願いします"
+     },
+     {
+      "local": "Սա ի՞նչ արժե",
+      "roman": "sa inch arzhe",
+      "kana": "サ・インチ・アルジェ？",
+      "ja": "これはいくらですか？"
+     },
+     {
+      "local": "Ցտեսություն",
+      "roman": "tstesutyun",
+      "kana": "ツテスチュン",
+      "ja": "さようなら"
+     }
+    ],
+    "phrases_src": [
+     {
+      "name": "Wikivoyage「Armenian phrasebook」",
+      "url": "https://en.wikivoyage.org/wiki/Armenian_phrasebook",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "budget": {
+   "days": [],
+   "extras": [
+    {
+     "label": "空港バス201番（街のまん中まで）",
+     "local": "300",
+     "yen": "130",
+     "src": [
+      {
+       "name": "Wikipedia「Zvartnots International Airport」",
+       "url": "https://en.wikipedia.org/wiki/Zvartnots_International_Airport",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "カフェスジアン美術館（カスケード）",
+     "local": "1,000",
+     "yen": "440",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "アルメニア歴史博物館",
+     "local": "2,000",
+     "yen": "880",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "エレブニ要塞（博物館と遺跡）",
+     "local": "1,000",
+     "yen": "440",
+     "src": [
+      {
+       "name": "Wikivoyage「Yerevan」",
+       "url": "https://en.wikivoyage.org/wiki/Yerevan",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "ノラヴァンクの近くのイェゲグナゾルまでマルシュルートカ",
+     "local": "2,000",
+     "yen": "880",
+     "src": [
+      {
+       "name": "Wikivoyage「Yeghegnadzor」",
+       "url": "https://en.wikivoyage.org/wiki/Yeghegnadzor",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "鶏のホロヴァツ（カラス）",
+     "local": "3,730",
+     "yen": "1,640",
+     "src": [
+      {
+       "name": "Glovo「KARAS」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "ラフマジョ（カラス）",
+     "local": "480",
+     "yen": "210",
+     "src": [
+      {
+       "name": "Glovo「KARAS」（配達の品書き）",
+       "url": "https://glovoapp.com/en/am/yerevan/stores/karas-yvn",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ]
+  },
+  "packing": [
+   {
+    "key": "passport",
+    "text": "パスポート。日本の人は、観光などの180日以内の滞在なら査証が要らない。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "bottle",
+    "text": "水のボトル。街の中心の水道の水は歯みがきや料理には使えるが、飲むならミネラルウォーター。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "insurance",
+    "text": "海外旅行の保険。新しい医療の機械を持つ病院は限られている。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "coat",
+    "text": "冬は厚いコート。12〜2月は雪が積もり、マイナス10〜20度まで下がる。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "sun",
+    "text": "夏は日差しの備え。7月の平年の最高気温は34.0℃。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「エレバン」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A8%E3%83%AC%E3%83%90%E3%83%B3",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "climate": {
+   "where": "エレバン（平年値）",
+   "src": [
+    {
+     "name": "Wikipedia（日本語）「エレバン」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%A8%E3%83%AC%E3%83%90%E3%83%B3",
+     "seen": "2026-11-23"
+    }
+   ],
+   "months": [
+    {
+     "month": "1月",
+     "high": 0.6,
+     "low": -7.8,
+     "rain_mm": 22
+    },
+    {
+     "month": "2月",
+     "high": 3.7,
+     "low": -5.3,
+     "rain_mm": 25
+    },
+    {
+     "month": "3月",
+     "high": 11.7,
+     "low": 0.3,
+     "rain_mm": 30
+    },
+    {
+     "month": "4月",
+     "high": 19.5,
+     "low": 6.9,
+     "rain_mm": 37
+    },
+    {
+     "month": "5月",
+     "high": 24.3,
+     "low": 10.8,
+     "rain_mm": 44
+    },
+    {
+     "month": "6月",
+     "high": 29.6,
+     "low": 14.7,
+     "rain_mm": 21
+    },
+    {
+     "month": "7月",
+     "high": 34.0,
+     "low": 18.8,
+     "rain_mm": 9
+    },
+    {
+     "month": "8月",
+     "high": 33.0,
+     "low": 17.8,
+     "rain_mm": 8
+    },
+    {
+     "month": "9月",
+     "high": 29.0,
+     "low": 13.3,
+     "rain_mm": 8
+    },
+    {
+     "month": "10月",
+     "high": 20.7,
+     "low": 7.0,
+     "rain_mm": 27
+    },
+    {
+     "month": "11月",
+     "high": 12.1,
+     "low": 1.4,
+     "rain_mm": 23
+    },
+    {
+     "month": "12月",
+     "high": 4.5,
+     "low": -3.6,
+     "rain_mm": 23
+    }
+   ]
+  },
+  "emergency": {
+   "numbers": [
+    {
+     "no": "102",
+     "what": "警察",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "no": "103",
+     "what": "救急車",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "no": "101",
+     "what": "消防",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "embassy": {
+    "name": "在アルメニア日本国大使館",
+    "exists": true,
+    "address": "Babayan street 23/4, Yerevan 0037",
+    "tel": "+374-11-52-30-10",
+    "url": "https://www.am.emb-japan.go.jp/itprtop_ja/index.html",
+    "text": "エレバンに日本の大使館がある。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "OpenStreetMap「Ճապոնիայի Դեսպանություն」",
+      "url": "https://www.openstreetmap.org/way/1518979292",
+      "seen": "2026-11-23"
+     }
+    ],
+    "lat": 40.198411,
+    "lon": 44.515918,
+    "coord_src": [
+     {
+      "name": "OpenStreetMap「Ճապոնիայի Դեսպանություն」",
+      "url": "https://www.openstreetmap.org/way/1518979292",
+      "seen": "2026-11-23"
+     }
+    ],
+    "maps": "https://www.google.com/maps/search/?api=1&query=Embassy+of+Japan+in+Armenia+Yerevan&hl=ja"
+   },
+   "water": {
+    "text": "水道の水は歯みがきや料理には使えるが、飲むならミネラルウォーターがすすめられている。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  },
+  "holidays": {
+   "text": "4月24日はアルメニア人虐殺の犠牲者を追悼する日で、国の休み。",
+   "src": [
+    {
+     "name": "Wikipedia「Public holidays in Armenia」",
+     "url": "https://en.wikipedia.org/wiki/Public_holidays_in_Armenia",
+     "seen": "2026-11-23"
+    }
+   ]
+  },
+  "time": {
+   "text": "アルメニアは UTC+4 で、日本より5時間遅い。",
+   "src": [
+    {
+     "name": "Wikipedia「Time in Armenia」",
+     "url": "https://en.wikipedia.org/wiki/Time_in_Armenia",
+     "seen": "2026-11-23"
+    }
+   ]
+  }
+ },
+ "unknown": [
+  {
+   "what": "地下鉄と市バスの1回の運賃",
+   "why": "Wikivoyage の地下鉄100ドラムに日付が無い。払いかた（QRコード・NFCのカード）は Wikipedia の2024〜2025年の書き込みで確かめた"
+  },
+  {
+   "what": "アララト博物館（エレバン・ブランデー工場）のツアーの値段と時間",
+   "why": "公式の頁（araratbrandy.com）がこの箱から開けなかった（403）。Wikivoyage の3,500／5,000ドラムは、どちらの工場の値段か書きかたから分からない"
+  },
+  {
+   "what": "ガルニ・ゲガルドへの266番のマルシュルートカの運賃と、ガイ・バスステーションの場所",
+   "why": "Wikivoyage に日付が無い（500ドラムと書く）"
+  },
+  {
+   "what": "ガルニ神殿の入場料と時間",
+   "why": "Wikivoyage の1,500ドラムは2019年の書き込み"
+  },
+  {
+   "what": "エチミアジン行きの203番のマルシュルートカの運賃",
+   "why": "Wikivoyage の250〜300ドラムに日付が無い"
+  },
+  {
+   "what": "ズヴァルトノツの入場料",
+   "why": "Wikivoyage の1,300ドラムは2018年の書き込みで、OpenStreetMap の切符売り場の点は1,500ドラムと書く"
+  },
+  {
+   "what": "ホル・ヴィラップへの467番のマルシュルートカの運賃と、降りる所",
+   "why": "Wikivoyage の350ドラムに日付が無い"
+  },
+  {
+   "what": "セヴァン湖（セヴァンの町）へのマルシュルートカの時刻と運賃",
+   "why": "Wikivoyage は「1日に何本か・1時間」とだけ書き、日付が無い"
+  },
+  {
+   "what": "ノラヴァンク修道院の、イェゲグナゾルから先の足",
+   "why": "Wikivoyage はイェゲグナゾルまでの行き方（2025年4月）だけを書く"
+  },
+  {
+   "what": "マテナダランの入場料と時間",
+   "why": "2024年以降の出どころで値段と時間を書いたものが見つからない（Wikivoyage は案内の別料金があるとだけ書く）"
+  },
+  {
+   "what": "店の値段（Glovo の品書き）が店で食べる値段と同じか",
+   "why": "載せた値段は Glovo の配達の品書きの値段"
+  },
+  {
+   "what": "カラス・アート・ランチ・マスター・クラスの、地図の点の店で品書きの品を出すか",
+   "why": "どれもチェーンで、Glovo の品書きがどの店のものかは書かれていない。地図の点は OpenStreetMap の1店"
+  },
+  {
+   "what": "ジンガロフ・ハツ・ガパマ・スジュフ・マトナカシュ・マツンを出す店",
+   "why": "見た店の品書き（Glovo）と Wikivoyage の店の欄に載っていなかった"
+  },
+  {
+   "what": "アルメニアのブランデー・ワイン・トゥトゥ・ラヴァシュ・ジャムを買える店",
+   "why": "店の名前と、いまも置いていることを書いた2024年以降の出どころが見つからない"
+  },
+  {
+   "what": "グム市場の場所",
+   "why": "Wikivoyage の「屋根つき市場（G.U.M.）」の点はマシュトツ通りの古い市場の建物を指していて、OpenStreetMap のグム市場と約1.2kmずれる。面は OpenStreetMap の点にした"
+  }
+ ],
+ "shorts": {
+  "src": [
+   {
+    "name": "site/content/shorts.ts の章（チャンネルのショートのタブから焼いたもの）",
+    "url": "https://www.youtube.com/channel/UCCwutAH6ieHNvdyJAfSld7w/shorts",
+    "seen": "2026-11-23"
+   }
+  ],
+  "items": []
+ }
+}
