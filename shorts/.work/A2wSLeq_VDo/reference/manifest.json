@@ -1,0 +1,47 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "A2wSLeq_VDo__reference",
+ "mode": "reference",
+ "dest": "A2wSLeq_VDo/reference",
+ "video": "A2wSLeq_VDo",
+ "channel": null,
+ "request": "shorts/requests/teko-C-refs2-20261123.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "structure": "ok"
+ },
+ "counts": {
+  "sheets": 3,
+  "caption_segments": 13,
+  "transcript_segments": 2,
+  "cuts": 1,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 17
+ },
+ "bytes": {
+  "plain": 778700,
+  "tar_gz": 667741,
+  "encrypted": 667744
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 667744,
+   "sha256": "7d5afc7d8b11566b0e8a2ad13d7683532c69522f7ee3db726ebb488bc4ba975e"
+  }
+ ],
+ "hmac_sha256": "2972ecd77fa590ee2beb272d7e458ad2c472c7bd67634ac0fd9a9afb38b4632b",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45183745837",
+ "created_at": "2026-11-23T13:48:00+00:00"
+}
