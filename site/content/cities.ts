@@ -44,6 +44,9 @@ export const CITIES: CityRow[] = [
   /* 行った街（2026-09-28〜10-11）。骨組みを先に置き、行った担当が facts から肉付けする。
      運営が確かめ表（`.claude/skills/city-guide/review.md`）で見てから印を外す */
   { country: "albania", slug: "tirana", name: "ティラナ", draft: true },
+  /* 行った街（2026-04-19〜04-28・05-10〜05-23）。骨組みを先に置き、行った担当が facts から肉付けする。
+     運営が確かめ表（`.claude/skills/city-guide/review.md`）で見てから印を外す */
+  { country: "armenia", slug: "yerevan", name: "エレバン", draft: true },
 ];
 
 /** 名簿の街。無ければ `undefined` */
