@@ -57,7 +57,7 @@
   "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: every road, every park, the river and the two district colors must stay where they are in the layout, and each landmark sits exactly on its numbered dot. Republic Square (1) and the Blue Mosque (2) are in the pink district in the lower middle; the Opera House (3) is at the bottom of the lavender district in the middle; the Cascade (4) climbs the hill above it, and the Mother Armenia statue (5) stands on the hilltop at the upper right. Keep every icon small so that it fits on its own dot and does not cover its neighbours. Leave the bottom of the pink district and the east part of the lavender district calm and empty (only the wash and the roads): names will be placed there later. ",
   "prompt": "Paint an illustrated sightseeing map of central Yerevan, Armenia, as a tall portrait image (2:3, 1024x1536), using the attached layout as the exact base. North is up. Keep every white road, every green park, the river and the two colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove roads, the river or districts. This is a calm, clean picture map: do NOT draw any houses, buildings, rooftops, trees, people or cars. The blocks between the roads stay flat warm cream paper with a faint rosy-apricot tint (the color of Yerevan's pink tuff stone) and a faint watercolor texture; parks are flat soft green watercolor washes; the Hrazdan River winds along the left (west) side in its green gorge as a narrow, calm, soft blue watercolor stream; roads are clean cream-white ribbons. Paint the two districts as flat translucent watercolor washes in their own colors from the layout (soft pink for the Republic Square area in the lower middle, soft lavender for the Cascade area in the upper middle and upper right), with gently darker soft edges, so the roads inside them stay visible. At each numbered dark dot in the layout, draw ONE small cute illustrated landmark (about 7% of the image width; Republic Square and the Cascade may be about 12%), standing exactly on its dot with a soft contact shadow; do NOT draw the numbers or the dots themselves: 1 Republic Square (an oval stone square with a rectangular fountain pool, framed on one side by a rosy-pink tuff arcaded building with a slim square clock tower); 2 the Blue Mosque (a small mosque with one turquoise-blue tiled dome and one slender blue-tiled minaret); 3 the Opera House (a round, pale cream-pink stone theatre with a low drum and columned porches); 4 the Cascade (a giant white limestone stairway climbing the hill in wide terraces with small fountains); 5 the Mother Armenia statue (a tall dark copper statue of a woman holding a sword horizontally across her body, on a tall pale stone pedestal on the hilltop). These five landmarks are the only drawn objects on the map.",
   "alt": "エレバンの見どころマップ（地区分け）。共和国広場周辺・カスケード周辺の2つの地区を色で分け、名前を書いた絵地図。共和国広場・ブルーモスク・オペラ座・カスケード・母なるアルメニア像の目印の絵と名前つき",
-  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・2つの地区の色・目印5か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。地の色はエレバンの凝灰岩の淡いばら色。虐殺記念館・エレブニ要塞・エレバン湖と日帰りの町は地図の外（縁の矢印）",
+  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・2つの地区の色・目印5か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。地の色はエレバンの凝灰岩の淡いばら色。地図の外は縁の矢印（虐殺記念館と日帰りの町5つ。いちばん狭い絵で札と目印に重ならない数に絞り、エレブニ要塞とエレバン湖は見たいものの地図に任せた）。母なるアルメニア像の頭が題の帯にかからないよう、上を少なく切った",
   "bbox": {
    "west": 44.4925,
    "east": 44.5285,
@@ -164,45 +164,45 @@
   },
   "names": [
    {
-    "id": "republic",
+    "id": "mother",
     "label": [
-     "共和国広場"
+     "母なる",
+     "アルメニア像"
     ],
-    "x": 0.566,
-    "y": 0.7
-   },
-   {
-    "id": "bluemosque",
-    "label": [
-     "ブルーモスク"
-    ],
-    "x": 0.363,
-    "y": 0.7
-   },
-   {
-    "id": "opera",
-    "label": [
-     "オペラ座"
-    ],
-    "x": 0.627,
-    "y": 0.47
+    "x": 0.87,
+    "y": 0.285
    },
    {
     "id": "cascade",
     "label": [
      "カスケード"
     ],
-    "x": 0.642,
-    "y": 0.31
+    "x": 0.45,
+    "y": 0.3
    },
    {
-    "id": "mother",
+    "id": "opera",
     "label": [
-     "母なる",
-     "アルメニア像"
+     "オペラ座"
     ],
-    "x": 0.86,
-    "y": 0.2
+    "x": 0.47,
+    "y": 0.455
+   },
+   {
+    "id": "bluemosque",
+    "label": [
+     "ブルーモスク"
+    ],
+    "x": 0.32,
+    "y": 0.755
+   },
+   {
+    "id": "republic",
+    "label": [
+     "共和国広場"
+    ],
+    "x": 0.51,
+    "y": 0.78
    }
   ],
   "areas": [
@@ -214,8 +214,8 @@
     ],
     "local": "Hanrapetutyan hraparak",
     "color": "#ffc4d2",
-    "x": 0.6,
-    "y": 0.8,
+    "x": 0.41,
+    "y": 0.59,
     "source": [
      "https://www.veltra.com/jp/europe/armenia/a/188787",
      "https://www.travel.co.jp/guide/matome/3139/"
@@ -225,12 +225,13 @@
     "id": "cascade",
     "name": "カスケード周辺",
     "label": [
-     "カスケード周辺"
+     "カスケード",
+     "周辺"
     ],
     "local": "Kaskad",
     "color": "#d9ccf5",
-    "x": 0.8,
-    "y": 0.36,
+    "x": 0.69,
+    "y": 0.19,
     "source": [
      "https://jp.trip.com/moments/yerevan-21357/",
      "https://www.travel.co.jp/guide/matome/3139/"
@@ -244,7 +245,7 @@
     "local": "Tsitsernakaberd",
     "dir": "w",
     "x": 0.0,
-    "y": 0.4,
+    "y": 0.32,
     "lat": 40.185718,
     "lon": 44.489184,
     "source": [
@@ -257,24 +258,11 @@
     "local": "Ejmiatsni Mayr tachar",
     "dir": "w",
     "x": 0.0,
-    "y": 0.56,
+    "y": 0.45,
     "lat": 40.16184,
     "lon": 44.291116,
     "source": [
      "https://en.wikipedia.org/wiki/Etchmiadzin_Cathedral"
-    ]
-   },
-   {
-    "id": "yerevanlake",
-    "name": "エレバン湖",
-    "local": "Yerevanyan lich",
-    "dir": "sw",
-    "x": 0.0,
-    "y": 0.78,
-    "lat": 40.161597,
-    "lon": 44.478547,
-    "source": [
-     "https://en.wikipedia.org/wiki/Yerevan_Lake"
     ]
    },
    {
@@ -283,7 +271,7 @@
     "local": "Sevanavank",
     "dir": "ne",
     "x": 1.0,
-    "y": 0.36,
+    "y": 0.395,
     "lat": 40.563984,
     "lon": 45.010808,
     "source": [
@@ -292,28 +280,15 @@
    },
    {
     "id": "garni",
-    "name": "ガルニ・ゲガルド",
+    "name": "ガルニ神殿",
     "local": "Garnii tachar",
     "dir": "e",
     "x": 1.0,
-    "y": 0.57,
+    "y": 0.555,
     "lat": 40.112341,
     "lon": 44.730219,
     "source": [
      "https://en.wikipedia.org/wiki/Temple_of_Garni"
-    ]
-   },
-   {
-    "id": "erebuni",
-    "name": "エレブニ要塞",
-    "local": "Erebuni",
-    "dir": "se",
-    "x": 1.0,
-    "y": 0.72,
-    "lat": 40.140305,
-    "lon": 44.538147,
-    "source": [
-     "https://en.wikipedia.org/wiki/Erebuni_Fortress"
     ]
    },
    {
@@ -334,7 +309,7 @@
     "name": "ホル・ヴィラップ",
     "local": "Khor Virap",
     "dir": "s",
-    "x": 0.3,
+    "x": 0.33,
     "y": 1.0,
     "lat": 39.878388,
     "lon": 44.57635,
@@ -346,7 +321,8 @@
   "base": {
    "by": "© OpenStreetMap contributors",
    "licence": "https://www.openstreetmap.org/copyright"
-  }
+  },
+  "bias": 0.25
  },
  "food": {
   "model": "bulgaria/sofia:food-shopska-salata",

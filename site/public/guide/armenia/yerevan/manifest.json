@@ -1,0 +1,229 @@
+{
+ "cover": {
+  "src": "/guide/armenia/yerevan/エレバン-観光ガイド-1600.webp",
+  "src_small": "/guide/armenia/yerevan/エレバン-観光ガイド-800.webp",
+  "w": 1600,
+  "h": 900,
+  "alt": "エレバン観光ガイド「「ピンクシティ」と称えられた街」。晴れた午後の、ピンクと黄色の石の建物と時計塔の政府庁舎に囲まれた共和国広場。空の向こうに雪をかぶったアララト山。エレバンの絵",
+  "kind": "ai",
+  "prompt_note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。共和国広場は写真を形の手本として渡した。下は広場の石畳、上は空とアララト山。3:2 で描かせて 16:9 に切った。字なし",
+  "titled": true,
+  "og": {
+   "src": "/guide/armenia/yerevan/yerevan-cover-1200x630.jpg",
+   "w": 1200,
+   "h": 630,
+   "alt": "晴れた午後の、ピンクと黄色の石の建物と時計塔の政府庁舎に囲まれた共和国広場。空の向こうに雪をかぶったアララト山。エレバンの絵"
+  },
+  "ld": [
+   {
+    "src": "/guide/armenia/yerevan/yerevan-cover-16x9.jpg",
+    "w": 1200,
+    "h": 675
+   },
+   {
+    "src": "/guide/armenia/yerevan/yerevan-cover-4x3.jpg",
+    "w": 1200,
+    "h": 900
+   },
+   {
+    "src": "/guide/armenia/yerevan/yerevan-cover-1x1.jpg",
+    "w": 1200,
+    "h": 1200
+   }
+  ]
+ },
+ "cover_tall": {
+  "src": "/guide/armenia/yerevan/エレバン-観光ガイド-縦-1600.webp",
+  "src_small": "/guide/armenia/yerevan/エレバン-観光ガイド-縦-800.webp",
+  "w": 1600,
+  "h": 2000,
+  "alt": "エレバン観光ガイド「「ピンクシティ」と称えられた街」。晴れた午後の、ピンクと黄色の石の建物に囲まれた共和国広場と、空の向こうの雪のアララト山。エレバンの絵",
+  "kind": "ai",
+  "prompt_note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "titled": true
+ },
+ "areamap": {
+  "src": "/guide/armenia/yerevan/エレバン-見どころマップ-地区分け-1200.webp",
+  "src_small": "/guide/armenia/yerevan/エレバン-見どころマップ-地区分け-800.webp",
+  "w": 1200,
+  "h": 1500,
+  "alt": "エレバンの見どころマップ（地区分け）。共和国広場周辺・カスケード周辺の2つの地区を色で分け、名前を書いた絵地図。共和国広場・ブルーモスク・オペラ座・カスケード・母なるアルメニア像の目印の絵と名前つき",
+  "kind": "ai",
+  "prompt_note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・2つの地区の色・目印5か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。地の色はエレバンの凝灰岩の淡いばら色。地図の外は縁の矢印（虐殺記念館と日帰りの町5つ。いちばん狭い絵で札と目印に重ならない数に絞り、エレブニ要塞とエレバン湖は見たいものの地図に任せた）。母なるアルメニア像の頭が題の帯にかからないよう、上を少なく切った",
+  "baked": true,
+  "areas": [
+   {
+    "id": "republic",
+    "name": "共和国広場周辺",
+    "label": [
+     "共和国広場周辺"
+    ],
+    "local": "Hanrapetutyan hraparak",
+    "color": "#ffc4d2",
+    "x": 0.41,
+    "y": 0.59,
+    "source": [
+     "https://www.veltra.com/jp/europe/armenia/a/188787",
+     "https://www.travel.co.jp/guide/matome/3139/"
+    ],
+    "w": 0.3483,
+    "h": 0.0687
+   },
+   {
+    "id": "cascade",
+    "name": "カスケード周辺",
+    "label": [
+     "カスケード",
+     "周辺"
+    ],
+    "local": "Kaskad",
+    "color": "#d9ccf5",
+    "x": 0.69,
+    "y": 0.19,
+    "source": [
+     "https://jp.trip.com/moments/yerevan-21357/",
+     "https://www.travel.co.jp/guide/matome/3139/"
+    ],
+    "w": 0.265,
+    "h": 0.108
+   }
+  ],
+  "bbox": {
+   "west": 44.4925,
+   "east": 44.5285,
+   "south": 40.1622,
+   "north": 40.2034
+  },
+  "beyond": [
+   {
+    "id": "genocide",
+    "name": "虐殺記念館",
+    "local": "Tsitsernakaberd",
+    "dir": "w",
+    "x": 0.0,
+    "y": 0.32,
+    "lat": 40.185718,
+    "lon": 44.489184,
+    "source": [
+     "https://en.wikipedia.org/wiki/Tsitsernakaberd"
+    ]
+   },
+   {
+    "id": "etchmiadzin",
+    "name": "エチミアジン",
+    "local": "Ejmiatsni Mayr tachar",
+    "dir": "w",
+    "x": 0.0,
+    "y": 0.45,
+    "lat": 40.16184,
+    "lon": 44.291116,
+    "source": [
+     "https://en.wikipedia.org/wiki/Etchmiadzin_Cathedral"
+    ]
+   },
+   {
+    "id": "sevanavank",
+    "name": "セヴァン湖",
+    "local": "Sevanavank",
+    "dir": "ne",
+    "x": 1.0,
+    "y": 0.395,
+    "lat": 40.563984,
+    "lon": 45.010808,
+    "source": [
+     "https://en.wikipedia.org/wiki/Sevanavank"
+    ]
+   },
+   {
+    "id": "garni",
+    "name": "ガルニ神殿",
+    "local": "Garnii tachar",
+    "dir": "e",
+    "x": 1.0,
+    "y": 0.555,
+    "lat": 40.112341,
+    "lon": 44.730219,
+    "source": [
+     "https://en.wikipedia.org/wiki/Temple_of_Garni"
+    ]
+   },
+   {
+    "id": "noravank",
+    "name": "ノラヴァンク",
+    "local": "Noravank",
+    "dir": "se",
+    "x": 1.0,
+    "y": 0.865,
+    "lat": 39.684823,
+    "lon": 45.233039,
+    "source": [
+     "https://en.wikipedia.org/wiki/Noravank"
+    ]
+   },
+   {
+    "id": "khorvirap",
+    "name": "ホル・ヴィラップ",
+    "local": "Khor Virap",
+    "dir": "s",
+    "x": 0.33,
+    "y": 1.0,
+    "lat": 39.878388,
+    "lon": 44.57635,
+    "source": [
+     "https://en.wikipedia.org/wiki/Khor_Virap"
+    ]
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  },
+  "painted": [
+   {
+    "name": "エレバン 見どころマップ",
+    "x": 0.5,
+    "y": 0.0468,
+    "w": 1.0,
+    "h": 0.0936
+   },
+   {
+    "name": "母なるアルメニア像",
+    "x": 0.87,
+    "y": 0.285,
+    "w": 0.19,
+    "h": 0.0667
+   },
+   {
+    "name": "カスケード",
+    "x": 0.45,
+    "y": 0.3,
+    "w": 0.1633,
+    "h": 0.0407
+   },
+   {
+    "name": "オペラ座",
+    "x": 0.47,
+    "y": 0.455,
+    "w": 0.1367,
+    "h": 0.0407
+   },
+   {
+    "name": "ブルーモスク",
+    "x": 0.32,
+    "y": 0.755,
+    "w": 0.19,
+    "h": 0.0407
+   },
+   {
+    "name": "共和国広場",
+    "x": 0.51,
+    "y": 0.78,
+    "w": 0.1633,
+    "h": 0.0407
+   }
+  ]
+ },
+ "food": {},
+ "buy": {},
+ "do": {}
+}
