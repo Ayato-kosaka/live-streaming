@@ -2,23 +2,27 @@
 光の尾を引くプレゼントをまく（#1034）。
 
 流れ（秒は登場の動画の時刻）:
-- 前兆 0〜1.0: 夜空が降りてきて、オーロラのカーテンが下から立ち上がり、星が瞬く。下に雪の大地と丘の上の白いお城。
-  町の窓が灯る。雪が降り始める
+- 前兆 0〜1.0: 背景の1枚（オーロラの夜空と雪の町・丘の上の白いお城）が降りてきて、描いたオーロラの上に光のカーテンが
+  ゆらめき、星が瞬く。町の窓が左から灯る。雪が降り始める
 - 先触れ 0.3〜2.5: ソリより先に、左の外から光の尾を引くプレゼントが4つ、夜空を横切って降る
 - 登場 0.8〜1.8: 左から、ソリが箱の幅いっぱい（約 90%）の大きさで駆け込んでくる。ソリの後ろに金の星くずの尾
 - 山場 1.4〜3.1: あやとがプレゼントをぽーんと放る（1.4 に3つ、2.05 に2つを高く）。プレゼントは光の尾を引いて降っていく。真ん中で手を振り、
-  金の粒がはじける。2.6〜3.1 にソリが右上へ弧を描いて昇り、上の帯で止まる（大きさは箱の幅の 58%）
-- キャラ絵が出たら（3.2）: 金の輪がはじける。2,000円からは全面の景色のまま
+  金の粒がはじける。2.6〜3.1 にソリが右上へ弧を描いて昇り、上の帯で止まる（大きさは箱の幅の 79%）
+- キャラ絵が出たら（3.2）: 金の輪がはじける。滞在も全面の景色のまま（縁のぼかしは11月の城と同じ。内側は不透明）
 - 滞在（3秒の輪）: 上の帯でソリが浮かんでゆれ、あやとが手を振り、2回プレゼントを放る（光の尾を引いて降る）。
-  ソリの後ろから星くずがこぼれ続け、オーロラがゆらめき、雪が箱ぜんぶに降る
+  ソリの後ろから星くずがこぼれ続け、オーロラがゆらめき、流れ星が3つ流れ、町の窓がまたたき、雪が箱ぜんぶに降る
 - 締め 1.2秒: ソリが右へ駆け去り、景色が溶ける
 
 あやとが決めた中身（#1034）: 雪の王子のあやとが白いトナカイの銀のソリでオーロラの夜空を横切り、光の尾を引く
 プレゼントをまく。月1の額なので、段5 よりはっきり豪華に。
 段3・段4 で決めたこと: 登場でいちばん大きく（主役の組が箱の幅の 55% 以上）→ キャラ絵が出る前に上の帯へ退く。
 光の筋・粒は録画の 1.0／2.5 秒ではっきり見える明るさと太さ。
+あやとの見立て（2026-11-23）: 2,000円からはキャラ絵の後ろをもっと豪華に。11月の城の段6 と同じく、滞在のあいだも
+全面の景色を残す（背景の1枚 `plate.webp`）。上の帯のソリは帯いっぱいに。いまの `plate.webp` は、ChatGPT が描いた
+段6 の静止画から、上のソリとプレゼントを抜いたもの（その下のオーロラの空を上下に返して埋めた。ChatGPT の絵の上限で
+人の居ない背景を描いてもらえなかった日 2026-11-23 のつなぎ）。
 
-オーロラは絵ではなく、波打つ光のカーテンを 1/8 の細かさで描いて拡げる（滞在の輪の周期で動くので、継ぎ目でつながる）。
+描いたオーロラの上に重ねる光のカーテンは、波打つ光を 1/8 の細かさで描いて拡げる（滞在の輪の周期で動くので、継ぎ目でつながる）。
 """
 import math
 import os
@@ -31,11 +35,14 @@ sys.path.insert(0, os.path.join(ME, "..", ".."))
 sys.path.insert(0, ME)
 from fx_stage import *  # noqa: E402,F401,F403
 import fx_stage as fs  # noqa: E402
-from xmas_kit import burst, emit_masked, snowfall, soft_dot, trail  # noqa: E402
+from xmas_kit import burst, snowfall, soft_dot, trail  # noqa: E402
+from xmas_t67 import load_plate, plate_lights, put_plate, shooting_star  # noqa: E402
 
 ART = os.path.join(ME, "..", "..", "fx_art", "christmas", "t6")
 
-REST, W_REST = (390.0, 150.0), 430.0    # 上の帯で止まる所（ソリの絵の真ん中）と幅（箱の幅の 58%）
+# 上の帯で止まる所（ソリの絵の真ん中）と幅（箱の幅の 79%）。11月の城の段6 のあやと（全身 215px）に見劣りしないよう、
+# 上の帯（キャラ絵が出たら隠れない 231 より上）いっぱいに。ゆれ 3px・傾き 1° でも下の端が 228 に収まる
+REST, W_REST = (360.0, 114.0), 570.0
 HOVER, W_BIG = (360.0, 560.0), 660.0    # 登場で真ん中に浮かぶ所と幅（箱の幅の 92%）
 ENTER = (0.8, 1.8)
 SWOOP = (2.6, 3.1)
@@ -47,6 +54,9 @@ HERALD = ((0.30, -40.0, 430.0, 430.0, -320.0), (0.48, -40.0, 560.0, 380.0, -280.
 TOSS_STAY = (0.25, 1.4)                 # 滞在の輪の中で放る秒（降り終わりが輪の終わり 3.0 をまたがないように）
 BACK_PT = (0.2, 0.18)                   # ソリの絵の中の、プレゼントを放る所（あやとの後ろ・左上）
 TAIL_PT = (0.06, 0.78)                  # ソリの絵の中の、星くずがこぼれる所（ソリの後ろの下）
+# 流れ星（滞在の輪の中の秒・頭の出る所・向き（度）・長さ）。登場の 1.0 秒からも同じ輪で流れる
+SHOOT = ((0.2, 640.0, 300.0, 158.0, 430.0), (0.75, 420.0, 520.0, 152.0, 360.0), (1.25, 560.0, 150.0, 150.0, 380.0),
+         (1.75, 690.0, 610.0, 160.0, 420.0), (2.2, 700.0, 430.0, 165.0, 470.0))
 AURORA = (  # (下の端の y, 波の高さ, 波長, 1周で何回うねるか, 位相, 下の色, 上の色, 上へのびる長さ)
     (430.0, 60.0, 520.0, 1, 0.1, (0.15, 1.0, 0.55), (0.55, 0.3, 1.0), 170.0),
     (300.0, 45.0, 380.0, 2, 0.6, (0.2, 0.95, 0.85), (0.95, 0.3, 0.8), 130.0),
@@ -64,16 +74,15 @@ class Scene(Stage):
         a = lambda n: Art.load(os.path.join(ART, n + ".webp"))
         self.wave, self.toss = a("sleigh_wave"), a("sleigh_toss")
         self.gifts = [a("gift_gold"), a("gift_red"), a("gift_blue")]
-        self.land = a("land")
-        self.land_win = fs.window_mask(self.land.levels[0])
-        yy = np.arange(H, dtype=np.float32)[:, None] / H
-        top, bot = np.float32([0.03, 0.03, 0.12]), np.float32([0.10, 0.08, 0.26])
-        self.sky_col = np.broadcast_to(((1 - yy) * top + yy * bot)[:, None, :], (H, W, 3)).astype(np.float32).copy()
+        # 背景の1枚（オーロラの夜空と雪の町。滞在もキャラ絵の後ろに全面で残す）
+        self.plate = load_plate(os.path.join(ART, "plate.webp"))
+        self.lights = plate_lights(self.plate)
         R = np.random.default_rng(6101)
         self.stars = np.stack([R.random(160) * W, R.random(160) ** 1.2 * 950, R.random(160), R.random(160), R.random(160)], -1)
-        self.sparkles = np.stack([30 + R.random(26) * 660, 30 + R.random(26) * 640, R.random(26), R.random(26)], -1)
-        self.snow_far = Loop(130, 6102, cycles=(1, 1))
-        self.snow_mid = Loop(150, 6103, cycles=(2, 2))
+        self.sparkles = np.stack([30 + R.random(44) * 660, 30 + R.random(44) * 900, R.random(44), R.random(44)], -1)
+        # 全面の景色の上では、雪の粒の動きが透明の地より小さく数えられる（色だけが変わる）。粒を増やして城の段6 の動きに届かせる
+        self.snow_far = Loop(190, 6102, cycles=(1, 1))
+        self.snow_mid = Loop(210, 6103, cycles=(2, 2))
         self.near = Loop(30, 6104, cycles=(3, 3))
         self.flake = {r: soft_dot(r) for r in (1.6, 3.0, 6.5)}
         self.dust = Loop(30, 6105, cycles=(2, 2))
@@ -87,8 +96,8 @@ class Scene(Stage):
     # ---------------- ソリ（主役）: 返す (絵, 真ん中の x, y, 幅, 傾き)
     def sleigh(self, c):
         T, Ti, u = c.T, c.Ti, c.u
-        bob = 6 * math.sin(2 * math.pi * 2 * (T - self.INTRO) / self.STAY)
-        pitch = 2 * math.sin(2 * math.pi * (T - self.INTRO) / self.STAY + 0.6)
+        bob = 3 * math.sin(2 * math.pi * 2 * (T - self.INTRO) / self.STAY)
+        pitch = 1 * math.sin(2 * math.pi * (T - self.INTRO) / self.STAY + 0.6)
         s = (T - self.INTRO) % self.STAY
         toss = any(t0 <= s < t0 + 0.4 for t0 in TOSS_STAY)
         if c.clip == "intro":
@@ -163,13 +172,13 @@ class Scene(Stage):
         back, front, heroc = Canvas(), Canvas(), Canvas()
         sp_b, sp_f = Splat(), Splat()
         sky_k = ease(ramp(Ti, 0.0, 0.6)) * out_k
-        lit = ease(ramp(Ti, 0.3, 1.2))
 
-        # ---- 夜空・オーロラ・星
-        drop = np.clip((Ti * 2000 - np.arange(H, dtype=np.float32)) / 500, 0, 1)[:, None]
-        a_ = (np.full((H, W), 0.94, np.float32) * drop * sky_k).astype(np.float32)
-        back.over((self.sky_col * a_[..., None]).astype(np.float32), a_)
-        self.aurora(c, back, ease(ramp(Ti, 0.1, 1.0)) * out_k)
+        # ---- 背景の1枚（オーロラの夜空と雪の町）が上から降りてくる。滞在も全面（縁のぼかしの内側は不透明）。
+        # 描かれたオーロラの上に、波打つ光のカーテンを薄く重ねてゆらめかせる
+        yy_ = np.arange(H, dtype=np.float32)[:, None]
+        drop = np.clip((Ti * 2000 - yy_) / 500, 0, 1)
+        put_plate(back, self.plate, drop * out_k)
+        self.aurora(c, back, 0.8 * ease(ramp(Ti, 0.1, 1.0)) * out_k)
         st = self.stars
         tw = (0.5 + 0.5 * np.sin(2 * np.pi * (c.ph * (1 + (st[:, 2] * 3).astype(int)) + st[:, 3]))) ** 3
         sp_b.add_screen(st[:, 0], st[:, 1], (WHITE * 1.1)[None] * ((0.15 + 0.7 * tw * st[:, 4]) * sky_k)[:, None])
@@ -177,12 +186,17 @@ class Scene(Stage):
             tw1 = max(0.0, math.sin(6.283 * (c.ph * (1 + int(r0 * 2)) + r1))) ** 3
             fxv.stamp(back.L, self.kit.star["white" if j % 3 else "magenta"], x, y, (0.2 + 0.6 * tw1) * sky_k)
 
-        # ---- 雪の大地とお城（下の端。窓が灯る）
-        lk = ease(ramp(Ti, 0.2, 0.9)) * out_k
-        dst = sprite(back, self.land, 360.0, 1282.0, 900.0 * self.land.h / self.land.w, k=lk,
-                     grade=np.float32([0.9, 0.92, 1.05]) * (0.75 + 0.25 * lit))
-        emit_masked(back, self.land_win, dst, lambda yy, xx: np.clip((Ti - 0.5 - xx * 0.4) / 0.2, 0, 1)
-                    * (0.75 + 0.25 * np.sin(6.283 * (c.ph * 2 + xx * 9 + yy * 3))), 0.8 * lk)
+        # ---- 町の窓の灯り（背景の1枚の灯りが、左から灯ってまたたく）
+        lk = ease(ramp(Ti, 0.4, 1.2)) * out_k
+        if lk > 0.003:
+            xx_ = np.arange(W, dtype=np.float32)[None, :]
+            fl = np.clip((Ti - 0.4 - xx_ / W * 0.5) / 0.2, 0, 1) * (0.6 + 0.4 * np.sin(2 * np.pi * (c.ph * 2 + xx_ / 37 + yy_ / 23)))
+            back.emit((self.lights * fl)[..., None] * (GOLD * 0.9 + AMBER * 0.3 + WHITE * 0.2) * 0.8 * lk)
+
+        # ---- 流れ星（滞在の輪で5つ。登場の 1.0 秒から）
+        for j, (t0, x0, y0, ang, ln) in enumerate(SHOOT):
+            for age, _ in c.events(self.INTRO + t0, self.STAY, first=1.0, dur=0.7):
+                shooting_star(self.kit, back, sp_b, x0, y0, ang, ln, age, sky_k)
 
         # ---- ソリ（主役だけの層）と、ソリの後ろからこぼれる金の星くず
         sl = self.sleigh(c)
@@ -221,9 +235,11 @@ class Scene(Stage):
                                      v=(-120 - 30 * j, -360 + 50 * j))
             if not intro or T >= SWOOP[1]:
                 bx, by = self.pt(REST[0], REST[1], W_REST, 0.0, BACK_PT)
+                # 1回に2つずつ放る（全面の景色の上では動きが小さく数えられるので、光の尾を増やす）
                 for j, t0 in enumerate(TOSS_STAY):
-                    age = ((T - self.INTRO) - t0 - 0.15) % self.STAY
-                    self.gift_flight(back, sp_b, bx, by, age, j + 1, out_k)
+                    for m in range(2):
+                        age = ((T - self.INTRO) - t0 - 0.15 - 0.12 * m) % self.STAY
+                        self.gift_flight(back, sp_b, bx, by, age, j + 1 + m, out_k, v=(-(150 + 50 * m + 30 * j), -(140 - 40 * m)))
             # 手を振ると金の粒がはじける（登場の真ん中で）
             if intro:
                 hx_, hy_ = self.pt(HOVER[0], HOVER[1], W_BIG, 0.0, (0.25, 0.1))

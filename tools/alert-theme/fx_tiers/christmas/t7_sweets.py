@@ -2,16 +2,17 @@
 転がり出て、お菓子の世界が順に立ち上がる（#1034）。
 
 流れ（秒は登場の動画の時刻）:
-- 前兆 0〜0.9: 赤い夜空が降りてきて、星が瞬く。金の光のリボンが2本、上の角から渦を巻いて流れ込む。花火が上がり始める
-- 登場 0.15〜0.9: わたあめの雲に乗ったあやとが、上から箱の真ん中へ大きく（雲の幅が箱の 82%）降りてくる。1.0 で杖の星が光る
-- 0.6〜1.3: 砂糖の雪の大地が、手前から地平線まで広がる。奥の真ん中に金の門の光
+- 前兆 0〜0.9: 赤い夜空（背景の1枚の空）が降りてきて、星が瞬く。金の光のリボンが2本、上の角から渦を巻いて流れ込む。
+  花火が上がり始める
+- 登場 0.15〜0.9: わたあめの雲に乗ったあやとが、上から箱の真ん中へ大きく（あやとの幅が箱の 52%・雲の幅が 80%）降りてくる。1.0 で杖の星が光る
+- 0.6〜1.3: 背景の1枚の砂糖の雪原が、手前から地平線まで広がる。奥の真ん中に金の門の光
 - 1.42 杖を振り下ろす → 1.5〜2.6 赤いじゅうたんの筒が手前から奥へ転がって、じゅうたんが敷かれていく
 - 2.62 杖を振る → キャンディケインの列が手前から奥へ順に立ち上がり、ペロペロキャンディ・マカロン・グミ・いちごが出る
 - 3.28 杖を振る → ジンジャーブレッドの兵隊さんが左右に立ち上がって敬礼
 - 3.86 杖を振る → 左にケーキのツリー、右にお菓子のお城が立ち上がる（飾りと窓が灯る）
-- 4.45〜5.1: あやとの雲が上の帯へ退く（雲の幅が箱の 34%）
+- 3.95〜4.65: あやとが上の帯へ退き、雲が腰までふくらむ（滞在は雲から上だけを、上の帯に大きく）
 - キャラ絵が出たら（5.3）: 金の輪がはじける
-- 滞在（3秒の輪）: あやとが雲の上でゆれて、2回杖を振る（光がお菓子へ飛ぶ）。花火が3発、リボンの光が流れ、
+- 滞在（3秒の輪）: 背景の1枚とお菓子の世界は全面のまま。あやとが雲の中でゆれて、杖の星から2回光が飛ぶ。花火が3発、リボンの光が流れ、
   キャンディケインがゆれ、兵隊さんが交代で敬礼し、お城の窓とツリーの飾りがまたたき、じゅうたんの縁を金の光が奥へ走る
 - 締め 1.5秒: あやとが上へ飛び去り、景色が溶ける（輪で動くものは滞在の頭の姿で止める）
 
@@ -19,6 +20,12 @@
 魔法で現れる。部品は分けて描いてある（`fx_art/christmas/t7/`）ので、直しは部品の差し替えで済む。
 段3〜6 で決めたこと: 登場でいちばん大きく（主役の組が箱の幅の 55% 以上）→ キャラ絵が出る前に上の帯へ退く。
 光の筋・粒は録画の 1.0／2.5 秒ではっきり見える明るさと太さ。お城・ツリー・マントは箱の縁で切らない。
+あやとの見立て（2026-11-23）: 2,000円からはキャラ絵の後ろをもっと豪華に。11月の城の段7 と同じく、滞在のあいだも
+全面の景色を残す（背景の1枚 `plate.webp`。縁のぼかしは城と同じ）。いまの `plate.webp` は、ChatGPT の絵の上限で
+人の居ない舞台を描いてもらえなかった日（2026-11-23）のつなぎで、この台本の遠近（地平線 690・真ん中の奥に門）に合わせて
+手元で塗った空と雪原。ChatGPT に描いてもらった絵に差し替えるときは、地平線と門の位置を HZ に合わせる。
+滞在のあやとは城の段7 のあやと（全身 250px ほど）より大きく、しかもキャラ絵に隠れない上の帯に収めるので、
+腰から下を手前の雲に沈める（雲より下は主役の層に描かない）。
 
 奥行きは、地平線 HZ と「奥行き d の物の足もとの y = HZ + (Y1 - HZ) / d」だけの簡単な遠近。
 じゅうたんは平らな帯の絵を台形へ写す（遠いほど模様が詰まる）。
@@ -36,6 +43,7 @@ sys.path.insert(0, ME)
 from fx_stage import *  # noqa: E402,F401,F403
 import fx_stage as fs  # noqa: E402
 from xmas_kit import burst, emit_masked, soft_dot, trail  # noqa: E402
+from xmas_t67 import firework as firework67, load_plate, put_plate  # noqa: E402
 
 ART = os.path.join(ME, "..", "..", "fx_art", "christmas", "t7")
 RED = np.float32([1.0, 0.25, 0.3])
@@ -55,21 +63,25 @@ def gx(lat, d):
     return 360.0 + lat / d
 
 
-# ---- あやとと雲の組（1枚の絵に組んで置く）
-CLOUD_W = 1.9                           # 雲の幅（あやとの絵の幅に対して）
-CLOUD_SY = 0.55                         # 雲を縦につぶす（上の帯に収める）
-G_REST, TOP_REST = 210.0, 14.0          # 上の帯での組の高さと上の端。ゆれて 4px 下がっても下の端が 232 より上
-Z_BIG, TOP_BIG = 2.4, 44.0             # 登場で真ん中に大きく（雲の幅が箱の 82%・あやとの幅が 43%。下の端 548 でツリーの頭にかからない）
+# ---- あやと（わたあめの雲に乗る）。雲はあやとの手前に置く。登場は雲の上に立ち、滞在は腰まで雲に沈む
+# 滞在のあやとを11月の城の段7（全身 250px ほど）より大きく、しかも上の帯（キャラ絵が出たら隠れない 231 より上）に
+# 収めるため。雲より下のあやとは描かない（主役の層に、キャラ絵の後ろへ回る画素を残さない）
+A_BIG, TOP_BIG = 470.0, 30.0            # 登場（あやとの高さ・上の端。あやとの幅が箱の 52%・雲の幅が 80%。静止画のあやとの 9割より大きく）
+A_REST, TOP_REST = 310.0, 8.0           # 滞在（顔の幅 84px）
+CLOUD_W, CLOUD_SY = 1.55, 0.55          # 登場の雲（あやとの絵の幅に対する幅・縦のつぶし）
+BANK = (190.0, 520.0, 160.0)            # 滞在の雲の土手（上の端・幅・高さ）
+CLIP_IN = 0.19                          # 雲の上の端から、あやとを切る線まで（雲の高さに対する割合。雲の中身が詰まっている所）
 DESCEND = (0.15, 0.85)
-RETREAT = (4.45, 5.1)
+RETREAT = (3.95, 4.65)                  # ツリーとお城が立ち上がるのと一緒に退く（大きな雲が、立ち上がるところを隠さない）
 STAR_UP = (0.19, 0.12)                  # あやとの絵の中の、杖の星（掲げた／振り下ろした）
 STAR_SWING = (0.54, 0.79)
 FACE = (0.36, 0.70, 0.21, 0.435)        # あやとの絵の中の顔（x0, x1, y0, y1。割合）
+SWAY = 2.5                              # 滞在で雲の中で左右にゆれる（度）
 # 登場で杖を振る秒と、光が飛ぶ先（そのあとにじゅうたん・ケインの列・兵隊さん・ツリーとお城が出る）
 SWINGS = ((1.42, ((360.0, 1120.0),)), (2.62, ((175.0, 1000.0), (545.0, 1000.0))),
-          (3.28, ((215.0, 920.0), (505.0, 920.0))), (3.86, ((182.0, 700.0), (543.0, 700.0))))
+          (3.28, ((215.0, 920.0), (505.0, 920.0))), (3.86, ((190.0, 600.0), (530.0, 640.0))))
 SWING_LEN = 0.42
-STAY_SWINGS = (0.7, 1.95)               # 滞在の輪の中で振る秒（光がはじけ終わるのが輪の終わり 3.0 をまたがないように）
+STAY_CAST = (0.7, 1.95)                 # 滞在の輪の中で杖の星から光を飛ばす秒（はじけ終わるのが輪の終わり 3.0 をまたがないように）
 ROLL = (1.5, 2.6)
 
 # ---- お菓子の世界（奥行き d・横 lat・高さ（奥行き 1 での px）・立ち上がる秒）
@@ -78,9 +90,10 @@ CANE_D = (1.12, 2.05, 3.4, 4.5, 6.0)
 CANE_LAT, CANE_H, CANE_T = CW + 46.0, 250.0, 2.70
 SOLDIER_D, SOLDIER_H, SOLDIER_T = (1.55, 2.7), 285.0, 3.34
 LOLLI = (1.0, 265.0, 130.0, 2.70)
-# ツリーとお城は、じゅうたんの奥の両わき（箱の縁 60px のぼかしにかからず、じゅうたんにも乗らない奥行き）
-TREE = (3.0, 182.0, 330.0, 3.92)        # (d, 画面の x, 画面の高さ, 秒)
-CASTLE = (3.2, 540.0, 310.0, 3.98)
+# ツリーとお城は、じゅうたんの奥の両わき（箱の縁 60px のぼかしにかからず、じゅうたんにも乗らない奥行き）。
+# 静止画（あやとの見本）のツリーとお城に負けない大きさ
+TREE = (4.0, 190.0, 377.0, 3.92)        # (d, 画面の x, 画面の高さ, 秒)
+CASTLE = (4.2, 530.0, 333.0, 3.98)
 RISE = 0.32
 
 # ---- 金の光のリボン（3次ベジェの4点・太さ・流れ込む秒）
@@ -89,9 +102,8 @@ RIBBONS = (((-60.0, 250.0), (250.0, 120.0), (40.0, 520.0), (300.0, 660.0), 40.0,
            ((780.0, 210.0), (470.0, 110.0), (700.0, 470.0), (440.0, 650.0), 38.0, 0.40),
            ((-40.0, 640.0), (200.0, 450.0), (520.0, 560.0), (760.0, 380.0), 24.0, 0.95))
 # ---- 花火（1秒ごとに1発。3か所を順に。滞在の輪で3発）
-FW_SPOTS = ((140.0, 330.0, GOLD * 1.1 + WHITE * 0.2), (590.0, 290.0, PINK * 0.9 + WHITE * 0.4),
-            (380.0, 560.0, WHITE * 0.7 + GOLD * 0.5))
-SKY = ((0.0, (0.06, 0.03, 0.12)), (0.45, (0.20, 0.05, 0.16)), (0.54, (0.42, 0.10, 0.15)), (1.0, (0.42, 0.10, 0.15)))
+FW_SPOTS = ((115.0, 440.0, GOLD * 1.1 + WHITE * 0.2), (605.0, 410.0, PINK * 0.9 + WHITE * 0.4),
+            (360.0, 560.0, WHITE * 0.7 + GOLD * 0.5))
 
 
 def bez(P, s):
@@ -113,9 +125,10 @@ class Scene(Stage):
 
     def setup(self):
         a = lambda n: Art.load(os.path.join(ART, n + ".webp"))
-        up, sw = a("ayato_up"), a("ayato_swing")
+        self.up, self.sw = a("ayato_up"), a("ayato_swing")
         self.cloud = a("cloud")
-        self.g_up, self.g_sw = self.group(up), self.group(sw)
+        # 背景の1枚（空と雪原。滞在もキャラ絵の後ろに全面で残す）
+        self.plate = load_plate(os.path.join(ART, "plate.webp"))
         self.cane, self.lolli = a("cane"), a("lolli")
         self.candy = [a(n) for n in ("mac_pink", "gum_yellow", "berry", "mac_green", "gum_orange")]
         self.sold, self.salute = a("soldier"), a("soldier_salute")
@@ -124,8 +137,7 @@ class Scene(Stage):
         self.castle_win = fs.window_mask(self.castle.levels[0])
         self.roll = a("roll")
         self.build_carpet(Art.load(os.path.join(ART, "carpet.webp")).levels[0])
-        self.build_world()
-        self.build_sky()
+        self.build_items()
         R = np.random.default_rng(7101)
         self.stars = np.stack([R.random(120) * W, R.random(120) ** 1.2 * 660, R.random(120), R.random(120), R.random(120)], -1)
         self.sparkles = np.stack([30 + R.random(20) * 660, 40 + R.random(20) * 600, R.random(20), R.random(20)], -1)
@@ -144,27 +156,6 @@ class Scene(Stage):
         self.dot = {r: soft_dot(r, GOLD * 1.1 + WHITE * 0.3) for r in (1.4, 2.4)}
 
     # ---------------- 組み立て
-    def group(self, pose):
-        """あやとの絵と雲を1枚に組む（雲の上に立つ）。顔と杖の星の位置も、組の絵の割合で持つ"""
-        P = pose.levels[0]
-        ph_, pw = P.shape[:2]
-        cl = self.cloud.levels[0]
-        cw = int(CLOUD_W * pw)
-        chh = int(cw / cl.shape[1] * cl.shape[0] * CLOUD_SY)
-        clr = cv2.resize(cl, (cw, chh), interpolation=cv2.INTER_AREA)
-        ctop = int(ph_ - 0.30 * chh)
-        gh, gw = ctop + chh, cw
-        G = np.zeros((gh, gw, 4), np.float32)
-        G[ctop:ctop + chh] = clr
-        x0 = (gw - pw) // 2
-        sl = G[0:ph_, x0:x0 + pw]
-        G[0:ph_, x0:x0 + pw] = P + sl * (1 - P[..., 3:4])
-        art = Art(G)
-        f = lambda fx, fy: ((x0 + fx * pw) / gw, fy * ph_ / gh)
-        art.star_up, art.star_sw = f(*STAR_UP), f(*STAR_SWING)
-        art.face = (*f(FACE[0], FACE[2]), *f(FACE[1], FACE[3]))
-        return art
-
     def build_carpet(self, tex):
         """平らな赤いじゅうたんの帯（横長）を2枚つないで、手前 D_NEAR から奥 D_FAR までの台形へ写す"""
         tex = np.concatenate([tex, tex[:, ::-1]], axis=1)
@@ -174,33 +165,8 @@ class Scene(Stage):
                           [360 + CW / D_FAR, gy(D_FAR)], [360 + CW / D_NEAR, gy(D_NEAR)]])
         self.carpet = warp_into(tex, src, dst)
 
-    def build_world(self):
-        """砂糖の雪の大地（動かない1枚）と、地平線の金の門の光"""
-        yy = np.arange(H, dtype=np.float32)[:, None]
-        xx = np.arange(W, dtype=np.float32)[None, :]
-        side = np.abs(xx - 360) / 360
-        edge = HZ - 4 - 12 * (0.5 + 0.5 * np.sin(xx / 41 + 1.3)) - 9 * (0.5 + 0.5 * np.sin(xx / 17 + 0.4)) - 46 * side ** 2
-        a = np.clip((yy - edge) / 3, 0, 1)
-        t = np.clip((yy - HZ) / (H - HZ), 0, 1) ** 0.55
-        far, near = np.float32([0.60, 0.36, 0.52]), np.float32([0.97, 0.86, 0.92])
-        col = far * (1 - t[..., None]) + near * t[..., None]
-        # 雪の吹きだまりのうねり（手前ほど間が広い）
-        v = np.clip((yy - HZ) / (Y1 - HZ), 0, 2) ** 0.6
-        drift = 0.5 + 0.5 * np.sin(2 * np.pi * v * 6 + 0.9 * np.sin(xx / 70 + v * 3))
-        col = col * (0.92 + 0.08 * drift[..., None])
-        # 砂糖の粒（ところどころ明るい点）と、門の光が雪に映る暖かさ
-        R = np.random.default_rng(7110)
-        sp = np.zeros((H, W), np.float32)
-        n = 5000
-        ys_ = (HZ + R.random(n) ** 0.7 * (H - HZ)).astype(int).clip(0, H - 1)
-        xs_ = (R.random(n) * W).astype(int).clip(0, W - 1)
-        sp[ys_, xs_] = 0.25 + 0.5 * R.random(n)
-        sp = cv2.GaussianBlur(sp, (0, 0), 0.6)
-        col = col + sp[..., None] * np.float32([1.0, 0.95, 1.0]) * 0.5
-        warm = np.exp(-((xx - 360) / 170) ** 2 - ((yy - HZ - 20) / 70) ** 2)
-        col = col + warm[..., None] * (GOLD * 0.22)
-        self.ground = (np.clip(col, 0, 1.2) * a[..., None]).astype(np.float32), a.astype(np.float32)
-        # お菓子の世界の物（遠いものから描く）
+    def build_items(self):
+        """お菓子の世界の物（遠いものから描く）。背景の1枚の手前の隅にもお菓子はあるので、ばらまく粒は少なめ"""
         R = np.random.default_rng(7111)
         items = []
         for i, d in enumerate(CANE_D):
@@ -212,7 +178,7 @@ class Scene(Stage):
             for i, d in enumerate(SOLDIER_D):
                 items.append(dict(kind="soldier", d=d, lat=side_ * CANE_LAT, h=SOLDIER_H, t=SOLDIER_T + 0.12 * i + (0.06 if side_ > 0 else 0),
                                   side=side_, i=i))
-        for j in range(34):
+        for j in range(20):
             side_ = -1 if j % 2 == 0 else 1
             d = 1.0 + R.random() ** 1.3 * 1.8
             lat = side_ * (CW + 30 + R.random() * 270)
@@ -226,53 +192,50 @@ class Scene(Stage):
         items.append(dict(kind="castle", d=d, lat=(x - 360) * d, h=hh * d, t=t, side=1, i=0))
         self.items = sorted(items, key=lambda it: -it["d"])
 
-    def build_sky(self):
-        yy = np.arange(H, dtype=np.float32) / H
-        col = np.zeros((H, 3), np.float32)
-        for (y0, c0), (y1, c1) in zip(SKY[:-1], SKY[1:]):
-            m = (yy >= y0) & (yy <= y1)
-            k = ((yy[m] - y0) / max(y1 - y0, 1e-6))[:, None]
-            col[m] = np.float32(c0) * (1 - k) + np.float32(c1) * k
-        self.sky_col = np.broadcast_to(col[:, None, :], (H, W, 3)).astype(np.float32).copy()
-
     # ---------------- あやと
     def hero(self, c):
-        """返す: (組の絵, 真ん中の x, 上の端の y, 組の高さ, 振っている 0/1)"""
+        """あやとと雲の置き場。返す dict: 絵・x・あやとの上の端と高さ・ゆれ・雲（上の端・幅・高さ）・あやとを切る線"""
         T, u = c.T, c.u
-        bob = 4 * math.sin(2 * math.pi * (T - self.INTRO) / self.STAY)
+        bob = 3 * math.sin(2 * math.pi * (T - self.INTRO) / self.STAY)
+        swing = False
         if c.clip == "intro":
             if T < DESCEND[0]:
                 return None
-            p = ramp(T, *DESCEND)
-            top_big = lerp(-640.0, TOP_BIG, back_out(p, 1.2))
+            top_b = lerp(-700.0, TOP_BIG, back_out(ramp(T, *DESCEND), 1.2))
             r = ease(ramp(T, *RETREAT))
-            z = lerp(Z_BIG, 1.0, r)
-            # 大きいあいだはゆらさない（大きな絵が毎コマ動くと、登場の予算を食う）。上の帯へ退きながら滞在のゆれへ
-            top = lerp(top_big, TOP_REST + bob, r)
             swing = any(t0 <= T < t0 + SWING_LEN for t0, _ in SWINGS)
-            return (self.g_sw if swing else self.g_up), 360.0, top, G_REST * z, swing
-        s = (c.ph * self.STAY) % self.STAY if c.clip == "stay" else 0.0
-        swing = c.clip == "stay" and any(t0 <= s < t0 + SWING_LEN for t0 in STAY_SWINGS)
-        top = TOP_REST + bob
+        else:
+            top_b, r = TOP_BIG, 1.0
+        A = lerp(A_BIG, A_REST, r)
+        top = lerp(top_b, TOP_REST + bob, r)
+        ar = self.up.w / self.up.h
+        cw_b = CLOUD_W * A_BIG * ar
+        ch_b = cw_b / (self.cloud.w / self.cloud.h) * CLOUD_SY
+        cy_b = top_b + 0.985 * A_BIG - 0.30 * ch_b
+        cw, ch = lerp(cw_b, BANK[1], r), lerp(ch_b, BANK[2], r)
+        cy = lerp(cy_b, BANK[0] + bob, r)
+        # 滞在のゆれ（登場の終わりで 0。退くあいだに入ってくる）
+        rot = SWAY * r * math.sin(2 * math.pi * (T - self.INTRO) / self.STAY)
         if c.clip == "outro":
-            top = TOP_REST + bob - 420 * ease_in(ramp(u, 0.05, 0.7))
-        return (self.g_sw if swing else self.g_up), 360.0, top, G_REST, swing
+            up_ = 460 * ease_in(ramp(u, 0.05, 0.7))
+            top, cy = top - up_, cy - up_
+        return dict(art=self.sw if swing else self.up, x=360.0, top=top, A=A, rot=rot, cw=cw, ch=ch, cy=cy,
+                    clip=cy + CLIP_IN * ch, swing=swing)
 
-    def star_at(self, hp):
-        art, x, top, gh, swing = hp
-        fx_, fy_ = art.star_sw if swing else art.star_up
-        gw = gh * art.w / art.h
-        return x + (fx_ - 0.5) * gw, top + fy_ * gh
+    def star_at(self, hp, swing=None):
+        swing = hp["swing"] if swing is None else swing
+        fx_, fy_ = STAR_SWING if swing else STAR_UP
+        pw = hp["A"] * self.up.w / self.up.h
+        return hp["x"] + (fx_ - 0.5) * pw, hp["top"] + fy_ * hp["A"]
 
     def face_box(self, c):
         """顔の箱（画面の px: x0, y0, x1, y1）。manifest の顔の線を引く道具が読む"""
         hp = self.hero(c)
         if hp is None:
             return None
-        art, x, top, gh, _ = hp
-        gw = gh * art.w / art.h
-        fx0, fy0, fx1, fy1 = art.face
-        return x + (fx0 - 0.5) * gw, top + fy0 * gh, x + (fx1 - 0.5) * gw, top + fy1 * gh
+        pw = hp["A"] * self.up.w / self.up.h
+        x, top, A = hp["x"], hp["top"], hp["A"]
+        return x + (FACE[0] - 0.5) * pw, top + FACE[2] * A, x + (FACE[1] - 0.5) * pw, top + FACE[3] * A
 
     # ---------------- 1コマ
     def draw(self, c):
@@ -288,10 +251,13 @@ class Scene(Stage):
         sky_k = ease(ramp(Ti, 0.0, 0.6)) * out_k
         lit = ease(ramp(Ti, 0.6, 1.4))
 
-        # ---- 夜空・星
-        drop = np.clip((Ti * 2200 - np.arange(H, dtype=np.float32)) / 500, 0, 1)[:, None]
-        a_ = (np.full((H, W), 0.94, np.float32) * drop * sky_k).astype(np.float32)
-        back.over((self.sky_col * a_[..., None]).astype(np.float32), a_)
+        # ---- 背景の1枚: 空は上から降りてきて、地面は手前から地平線へ広がる。滞在は全面（縁のぼかしの内側は不透明）
+        yy = np.arange(H, dtype=np.float32)[:, None]
+        drop = np.clip((Ti * 2200 - yy) / 500, 0, 1)
+        yg = lerp(H + 40, HZ - 60, ease_out(ramp(Ti, 0.6, 1.3)))
+        rev = np.clip((yy - yg) / 70, 0, 1)
+        gnd = np.clip((yy - (HZ - 80)) / 60, 0, 1)
+        put_plate(back, self.plate, drop * (1 - gnd + gnd * rev) * out_k)
         st = self.stars
         tw = (0.5 + 0.5 * np.sin(2 * np.pi * (c.ph * (1 + (st[:, 2] * 3).astype(int)) + st[:, 3]))) ** 3
         sp_b.add_screen(st[:, 0], st[:, 1], (WHITE * 1.1)[None] * ((0.15 + 0.7 * tw * st[:, 4]) * sky_k)[:, None])
@@ -316,14 +282,9 @@ class Scene(Stage):
         for j, rb in enumerate(self.rib):
             self.ribbon(c, back, sp_b, rb, j, sky_k)
 
-        # ---- 砂糖の雪の大地（手前から地平線へ広がる）
+        # ---- 地平線の門の光と、雪の上の砂糖のきらめき
         wk = out_k
-        yg = lerp(H + 40, HZ - 60, ease_out(ramp(Ti, 0.6, 1.3)))
-        p, a = self.ground
-        rev = np.clip((np.arange(H, dtype=np.float32)[:, None] - yg) / 70, 0, 1)
-        back.over((p * (rev * wk)[..., None]).astype(np.float32), (a * rev * wk).astype(np.float32))
         glow(back, 360, HZ + 30, 100, GOLD * 0.8 + WHITE * 0.3, (0.32 + 0.06 * c.osc(2)) * gk)
-        # 雪の上の砂糖のきらめき
         for j, (r0, r1, r2) in enumerate(self.sugar):
             d = 1.0 + r0 * 3
             side = -1 if j % 2 else 1
@@ -362,36 +323,43 @@ class Scene(Stage):
         for it in self.items:
             self.put_item(c, back, it, wk)
 
-        # ---- あやと（主役だけの層）。杖の星・振ったときの光
+        # ---- あやと（主役だけの層）と、手前の雲（別の層。あやとより手前）。杖の星・振ったときの光
         hp = self.hero(c)
         hk = 1.0 if c.clip != "outro" else 1 - ease(ramp(u, 0.3, 0.75))
+        cloudc = Canvas()
         if hp is not None:
-            art, x, top, gh, swing = hp
-            sprite(heroc, art, x, top, gh, anchor=(0.5, 0.0), k=hk, rim=0.45, light_dir=(-0.3, -1.0))
+            x, A = hp["x"], hp["A"]
+            ay = (hp["clip"] - hp["top"]) / A
+            sprite(heroc, hp["art"], x, hp["clip"], A, anchor=(0.5, ay), rot=hp["rot"], k=hk, rim=0.45, light_dir=(-0.3, -1.0),
+                   clip_below=hp["clip"])
+            sprite(cloudc, self.cloud, x, hp["cy"], hp["ch"], anchor=(0.5, 0.0), sx=(hp["cw"] / hp["ch"]) / (self.cloud.w / self.cloud.h),
+                   k=hk, rim=0.25, light_dir=(-0.3, -1.0))
             sx_, sy_ = self.star_at(hp)
-            z = gh / G_REST
-            self.cloud_fluff(c, back, x, top + gh * 0.9, gh * art.w / art.h, z, hk)
+            z = A / A_REST
+            self.cloud_fluff(c, back, x, hp["cy"] + hp["ch"] * 0.8, hp["cw"], z, hk)
             if intro:
                 # 1.0 で杖を掲げて星が光る
                 fl = math.exp(-((T - 1.0) / 0.12) ** 2)
                 fxv.stamp(back.L, self.kit.flare_s, sx_, sy_, 0.8 * fl)
                 burst(back, self.kit, sx_, sy_, (T - 0.95) / 0.6, 7130, n=16, spread=50 * z, cols=("gold", "white", "pink"))
                 for j, (t0, tg) in enumerate(SWINGS):
-                    self.beam(back, sp_b, hp, t0, tg, T, 7140 + j)
+                    self.beam(back, sp_b, hp, t0, tg, T, 7140 + j, swing=True)
             elif c.clip == "stay":
                 s = (c.ph * self.STAY) % self.STAY
-                for j, t0 in enumerate(STAY_SWINGS):
-                    tg = ((TREE[1], 700.0),) if j == 0 else ((CASTLE[1], 700.0),)
-                    self.beam(back, sp_b, hp, t0, tg, s, 7150 + j)
+                for j, t0 in enumerate(STAY_CAST):
+                    tg = ((TREE[1], 640.0),) if j == 0 else ((CASTLE[1], 660.0),)
+                    fl = math.exp(-((s - t0) / 0.1) ** 2)
+                    fxv.stamp(back.L, self.kit.flare_s, sx_, sy_, 0.7 * fl)
+                    self.beam(back, sp_b, hp, t0, tg, s, 7150 + j, swing=False)
             # 星は いつも かすかに光る
             glow(back, sx_, sy_, 16 * z, GOLD * 0.8 + WHITE * 0.4, 0.35 * hk)
             if intro and T < DESCEND[1] + 0.2:
                 # 降りてくる雲のうしろの、ピンクと金のきらきらの尾
                 tau = np.linspace(0, 0.45, 200)
-                ty = np.array([lerp(-640.0, TOP_BIG, back_out(ramp(T - tt, *DESCEND), 1.2)) for tt in tau]) + gh * 0.9
+                ty = np.array([lerp(-700.0, TOP_BIG, back_out(ramp(T - tt, *DESCEND), 1.2)) for tt in tau]) + A * 0.95
                 fade = (1 - tau / 0.45) ** 1.3 * (T - tau > DESCEND[0])
                 for side in (-1, 1):
-                    trail(self.kit, back, sp_b, x + side * gh * 0.35 + 0 * ty, ty, fade, 0.8 * (1 - ramp(T, 0.8, 1.05)),
+                    trail(self.kit, back, sp_b, x + side * hp["cw"] * 0.3 + 0 * ty, ty, fade, 0.8 * (1 - ramp(T, 0.8, 1.05)),
                           head="pink" if side < 0 else "gold", core=1.6, halo=9.0)
 
         # ---- 金の紙吹雪（back。箱ぜんぶにゆらゆら降る）
@@ -419,6 +387,7 @@ class Scene(Stage):
             glow(back, 360, 760, 220, GOLD * 0.7 + WHITE * 0.2, 0.6 * (1 - rv) ** 2)
         out_b = back.finish(bloom=0.8, edge=self.edge)
         out_b = over_rgba(self.finish_hero(heroc, bloom=0.4), out_b)
+        out_b = over_rgba(cloudc.finish(bloom=0.0, edge=self.hero_edge), out_b)
 
         # ---- front（光と粒だけ）: 金の粉が昇る・ぼけ玉・キャラ絵が出る瞬間の星
         dd = self.dust
@@ -529,12 +498,12 @@ class Scene(Stage):
             kk = math.sin(math.pi * a_[j]) * (0.35 + 0.4 * rr[2]) * k
             fxv.stamp(cv.L, self.kit.star["pink" if j % 2 else "white"], xx, yy, kk)
 
-    def beam(self, cv, sp, hp, t0, targets, t, seed):
-        """杖を振ると、星から光が弧を描いて飛び、着いた所ではじける"""
+    def beam(self, cv, sp, hp, t0, targets, t, seed, swing=True):
+        """杖を振ると（滞在は掲げた杖の星から）、光が弧を描いて飛び、着いた所ではじける"""
         age = t - t0 - 0.08
         if not (0 <= age < 0.95):
             return
-        sx_, sy_ = self.star_at((self.g_sw, hp[1], hp[2], hp[3], True))
+        sx_, sy_ = self.star_at(hp, swing=swing)
         for j, (tx, ty) in enumerate(targets):
             cx, cy = (sx_ + tx) / 2 + (j - 0.5) * 120, min(sy_, ty) - 120
             fly = 0.32
@@ -548,23 +517,7 @@ class Scene(Stage):
             burst(cv, self.kit, tx, ty, (age - fly) / 0.6, seed + j, n=18, spread=70, cols=("gold", "white", "pink"))
 
     def firework(self, sp, cv, x, y, age, seed, col, k):
-        if not (0 <= age < 1.1) or k <= 0.003:
-            return
-        R = np.random.default_rng(seed)
-        n = 56
-        ang = 2 * np.pi * (np.arange(n) + R.random(n) * 0.5) / n
-        spd = 140 + 80 * R.random(n)
-        for lag in (0.0, 0.035, 0.07, 0.105, 0.14):
-            ag = max(age - lag, 0.0)
-            e = 1 - (1 - min(ag / 0.9, 1.0)) ** 3
-            xs_ = x + np.cos(ang) * spd * e
-            ys_ = y + np.sin(ang) * spd * e * 0.9 + 70 * ag * ag
-            b = (1 - age / 1.1) ** 1.5 * (1 - lag / 0.18) * k
-            sp.add_screen(xs_, ys_, col[None] * np.full((n, 1), 2.2 * b, np.float32), coc=np.full(n, 1.0))
-            if lag == 0.0:
-                sp.add_screen(xs_, ys_, col[None] * np.full((n, 1), 5.0 * b, np.float32), coc=np.full(n, 3.0))
-        if age < 0.25:
-            glow(cv, x, y, 46, col * 0.8 + WHITE * 0.3, 0.9 * (1 - age / 0.25) ** 2 * k)
+        firework67(sp, cv, x, y, age, seed, col, k)
 
     def ribbon(self, c, cv, sp, rb, j, k):
         """金の光のリボン: 道のまわりに光の粒を撒き、明るさの波が流れる（滞在の輪の周期）"""
