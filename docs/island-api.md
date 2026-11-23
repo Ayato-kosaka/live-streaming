@@ -860,6 +860,36 @@ node functions/selftest/api_trust_selftest.mjs
   畳んだ口の 404・本文の切り落とし・窓の鳴り・道のログ・ハンドルのログ・
   リンクの長さを1つずつ外した写しで回して、**狙った行が赤くなるか**を見る
 
+
+## 13. 島で受ける投げ銭（`/tip/*`。決定の記録 0017・#1405）
+
+| メソッド | パス | 誰が | 何を |
+| --- | --- | --- | --- |
+| `POST` | `/tip/checkout` | ログイン済みで、**YouTube のチャンネルを結んだ人だけ** | Stripe の支払い画面（Checkout Session）を作り、その URL を返す |
+| `POST` | `/stripe/webhook` | **Stripe だけ**（`Stripe-Signature` の署名で見分ける） | 払い終わった知らせを受け、`islandSiteTips` と `islandAlertFeed` に書く |
+
+### `/tip/checkout` が受け取るもの・受け取らないもの
+
+- `body` から読むのは **`yen` と `message` の2つだけ**
+- **名前は送らせない。** アラートに出す名前は、口が `islandUsers/{uid}.channelId` のチャンネル名を引く（スパチャと同じ）。
+  `channelId` を送ってきても見ない（7章「チャンネルを名乗らせない」と同じ）
+- `yen` は整数で ¥100 以上。1回の上限と `message` の字数は Doneru に合わせる（#1405）。外れたら 400
+- チャンネルを結んでいない人は 403（`{"error":"channel required"}`）。画面は「チャンネルを結ぶ」へ案内する
+- 1人1日に作れる支払い画面は100枚まで（`takeQuota`。投げ銭の額の上限ではなく、口を叩きすぎないための栓）
+
+### `/stripe/webhook` が守ること
+
+- **署名が合わなければ 400 で断り、1バイトも書かない。** 本文は署名を確かめる前に JSON にしない（生の本文で確かめる）
+- **額は Stripe が知らせてきた額だけを使う。** 支払い画面を作るときに画面から来た額は使わない
+- **同じ知らせが何度来ても1件**（書類IDが Checkout Session の ID）
+- **`livemode` が偽（テスト環境）なら、テスト用の合言葉の `islandAlertFeed` にだけ書く。** 台帳・貯金箱・本番のアラートに入れない
+- 返金（`charge.refunded`）と払い戻し請求（`charge.dispute.created`）は、`islandSiteTips.status` を直す。アラートには出さない
+
+### アラート画面へは、この口を通さない
+
+アラート画面は `islandAlertFeed/{合言葉}` を Firestore のリアルタイム購読で直に読む（約1秒）。
+口を何秒かおきに読む形にしないのは、あやとが「12秒では遅い」と退けたから（決定の記録 0017）。
+
 ---
 
 ## 確かめかた

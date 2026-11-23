@@ -383,6 +383,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | その日の出来事 | Firestore `islandStreamEvent` | あやと（種入れ・動画を結ぶ口） | 机の「配信」・写真を貼る先・カード | 種は Git の企画から入れ直せる。**結んだ動画は戻らない**。採らなかった視聴者さんの提案が `hidden` のまま3件入っている（人の字） |
 | 島の見え方の設定 | Firestore `islandUsers` | 本人（島での見え方を保存する口） | 島の状態が返す `residents` | 本人が入れ直せる |
 | どねID とチャンネルの対応 | Firestore `islandDonors` | 毎朝の種＋あやとが手で結ぶ | 投げ銭台帳の `channelId` | **手で結んだぶんは戻らない** |
+| 島で受けた投げ銭 | Firestore `islandSiteTips`（決定の記録 0017・#1405） | Stripe の知らせを受ける口だけ（`functions/src/islandApi.ts`） | 投げ銭台帳・アラートの1枚・貯金箱 | 額と時刻は Stripe に残る。**メッセージは Stripe の `metadata` にも写すので戻る** |
 | 手で書くコンテンツ | Git `site/content/*.ts` | 人（レビューあり） | 島の全ページ | Git に履歴がある |
 | **スタンプに乗せることば** | Firestore `islandStampLine.lines` | 本人（`POST /stampline/mine`）だった。**2026-10-14 に口を閉じた**（#860）。いまは管理の道具（`python/admin/stamp_line_*.py`）だけ | LINE スタンプを作るとき（2026-10-13 に申請済み。公開の面には出さない） | **戻らない。** 人の字。**閉じたあとも記録として残す** |
 | ~~いまいる場所・書き置き~~ | ~~Firestore `island/state.current`~~ | — | — | **読む面も書く口も無い**（#1278・#1281）。居場所は滞在の表（`site/content/stays.ts`）。書類には古い字が残っている。書く道も #1389 で無くなる |
@@ -392,7 +393,8 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | データ | 写し先 | 元 | 作り直すもの |
 | --- | --- | --- | --- |
 | 島の数字 | Firestore `island/state.stats` `island/state.fund` | BigQuery | `python/island_daily_stats.py` |
-| 投げ銭台帳 | Firestore `islandTips` | BigQuery（スパチャ＋Doneru） | `python/island_tips.py` |
+| 投げ銭台帳 | Firestore `islandTips` | BigQuery（スパチャ＋Doneru）＋ Firestore `islandSiteTips`（島の投げ銭） | `python/island_tips.py` |
+| アラートが購読する1枚 | Firestore `islandAlertFeed` | `islandSiteTips` | Stripe の知らせを受ける口（書くたびに直近ぶんで組み直す） |
 | カード | Firestore `islandCards` | **その日の写真 × その日の台帳**（軸は `islandStreamEventImage.day`） | `python/island_cards.py` / `functions/src/streamEvents.ts` |
 | チャンネル名・日数 | Firestore `islandChannels`（`name` `lastAt` `days`） | BigQuery | `python/island_channels.py` |
 | チャンネル写真 | Firestore `islandChannels.photo` | YouTube API | `python/island_channel_photos.py` |
@@ -1183,8 +1185,8 @@ island/state
 
 | 項目 | 型 | 中身 |
 | --- | --- | --- |
-| `sourceEventId` | string | 元のID。`yt:<videoId>:<eventId>` か `doneru:<donationId>`。**一意** |
-| `source` | string | `youtube_superchat` / `doneru` |
+| `sourceEventId` | string | 元のID。`yt:<videoId>:<eventId>` か `doneru:<donationId>` か `island:<checkoutSessionId>`。**一意** |
+| `source` | string | `youtube_superchat` / `doneru` / `island`（島で受けた投げ銭。決定の記録 0017） |
 | `channelId` | string \| null | YouTube のチャンネル。Doneru は `islandDonors` を通して引く。紐付いていなければ null |
 | `day` | string | **日本時間で切った、投げた瞬間の日**（YYYY-MM-DD）。**配信日ではない**——0時をまたいだ晩は、後半に投げた人がここで翌日になる。カードの当たりは下の `videoStartedAt` を先に見る（2.3） |
 | `donatedAt` | number | 出された時刻（ミリ秒） |
@@ -1192,7 +1194,7 @@ island/state
 | `videoStartedAt` | number \| null | **その配信が始まった時刻。カードの「配信日」はここで決まる**（`tipDay` / `tip_day`）。落とすと補正がまるごと死ぬので、`python/island_tips.py` が BigQuery の `started_ms` から必ず入れる |
 | `amount` | number \| null | 視聴者が払った額 |
 | `currency` | string | `JPY` ほか。**外貨が混ざる**（本番の380件に ₪ と CA$ が1件ずつあった） |
-| `settlementAmount` | number \| null | 手数料を引いた額（Doneru だけ） |
+| `settlementAmount` | number \| null | 手数料を引いた額（Doneru と島の投げ銭。島の投げ銭は Stripe の `balance_transaction.net`） |
 | `displayNameSnapshot` | string \| null | そのときの表示名 |
 | `viewerPk` | string \| null | どねID（Doneru だけ） |
 | `createdAt` / `updatedAt` | string | ISO8601 |
@@ -1202,6 +1204,45 @@ YouTube の `event_id` が Base64 風で `/` を含みうるから。
 **同じ寄付なら毎回同じIDになるので、流し直しても増えない。**
 
 **金額は持つが、外に出さない** — [`island-db-notes.md` の10](./island-db-notes.md)。
+
+**`islandSiteTips/{checkoutSessionId}`** — 島で受けた投げ銭（決定の記録 0017・#1405）
+
+**Stripe の知らせ（`checkout.session.completed`）を受けた口だけが書く。** 書類IDは
+Stripe の Checkout Session の ID なので、**同じ知らせが2回届いても1件のまま**。
+毎晩 `python/island_tips.py` がここを読み、`islandTips`（`source: island`）へ畳む。
+台帳の書き手は `island_tips.py` の1本のまま。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `livemode` | boolean | Stripe の本番の支払いなら真。**偽（テスト環境）の行は、台帳・貯金箱・貢献額・本番のアラートのどれにも入れない** |
+| `uid` | string | 投げた人の `islandUsers` の書類ID |
+| `channelId` | string | 投げた人の YouTube のチャンネル。**口が `islandUsers/{uid}.channelId` から引く。送られてきた値は見ない** |
+| `displayNameSnapshot` | string | アラートに出した名前（そのときのチャンネル名） |
+| `amount` | number | 払った額（円）。**Stripe が知らせてきた額**を入れる。画面から送られてきた額は使わない |
+| `currency` | string | `JPY` だけ |
+| `message` | string | メッセージ。字数の上限は Doneru に合わせる |
+| `paidAt` | number | 払い終わった時刻（ミリ秒。Stripe の `created`） |
+| `paymentIntentId` | string | Stripe の支払いの ID（返金・払い戻し請求を引くため） |
+| `settlementAmount` | number \| null | 手数料を引いた額（Stripe の `balance_transaction.net`）。引けなければ null |
+| `status` | string | `paid` / `refunded` / `disputed` |
+| `createdAt` / `updatedAt` | string | ISO8601 |
+
+**ルール: 読みも書きも閉じる**（`islandTips` と同じ）。書くのは Admin SDK だけ。
+
+**`islandAlertFeed/{合言葉}`** — アラート画面がリアルタイムで購読する1枚（決定の記録 0017）
+
+**島の投げ銭を、約1秒でアラートに届けるための1枚。** 書類IDはアラートの合言葉
+（`islandUsers.alertboxId`。32桁の16進）。アラート画面はこれを Firestore の
+リアルタイム購読で読む。
+
+| 項目 | 型 | 中身 |
+| --- | --- | --- |
+| `seq` | number | 書くたびに1つ増える。アラート画面は、前に見た `seq` より大きいものだけ出す |
+| `items` | array | 直近20件まで。1件は `{seq, who, yen, text, at}`。**配信のアラートに出すものだけ**（名前・額・メッセージ・時刻）。`channelId`・`uid`・Stripe の ID は入れない |
+| `updatedAt` | string | ISO8601 |
+
+**ルール: `get` だけ開ける。`list` と書きは閉じる**（`docs/island-standards.md` 29.4）。
+合言葉を知っている人だけが1枚を読める。**テスト環境の支払いは、テスト用の合言葉の1枚にだけ書く。**
 
 **`islandFundSuperChats/{書類ID}`** — 豚の貯金箱に入ったスパチャの控え
 
