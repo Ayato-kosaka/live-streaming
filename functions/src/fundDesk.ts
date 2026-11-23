@@ -82,6 +82,8 @@
 import {logger} from "firebase-functions";
 import * as admin from "firebase-admin";
 import {createHash} from "crypto";
+/* 島の投げ銭（#1405）。「いま」の額を `GET /fund` と同じ1本で出すために借りる。 */
+import {islandYenOf} from "./tip";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -908,14 +910,28 @@ export async function handleFundDesk(
       const box =
         (typeof f.box === "object" && f.box ? f.box : null) as Json | null;
       /* いま貯金箱にいくら入っているか。**式は `GET /fund` の `total` と
-         同じ1本**（起点 ＋ スパチャの半分 ＋ Doneru）。ここで別の式を
-         組まない——2か所にあると、いつか2つが違う額を言う。 */
+         同じ1本**（起点 ＋ スパチャの半分 ＋ 島の投げ銭 ＋ Doneru）。ここで別の式を
+         組まない——2か所にあると、いつか2つが違う額を言う。
+
+         島の投げ銭（#1405）は、欄が無いときに 0 を作らない（`tip.ts` の
+         `islandYenOf`。`GET /fund` と同じ1本）。決められなければ `total` も null。
+         **内訳（`splitOf`）には行を足していない。** 期間内の島の投げ銭は
+         「開始時点」（残差）に入るので、4行の足し引きは「いま」に戻ったまま。
+         行を分けるのは、机の画面が5行目を出せるようになってから。 */
       const start = Number(box?.start);
       const superchat = Number(box?.superchat);
+      const islandRaw = box?.island;
+      const baked = islandRaw === undefined || islandRaw === null ?
+        null :
+        Number(islandRaw);
+      const island =
+        baked !== null && (!Number.isFinite(baked) || baked < 0) ?
+          null :
+          box ? await islandYenOf(baked) : null;
       const total =
-        box && doneru !== null &&
+        box && doneru !== null && island !== null &&
         Number.isFinite(start) && Number.isFinite(superchat) ?
-          start + superchat + doneru :
+          start + superchat + island + doneru :
           null;
       /* いまの目標（`to` の空いているいちばん新しい1件）。
          **目標は同時に1つ**（`python/fund_box.py` の `read_goal`）。 */

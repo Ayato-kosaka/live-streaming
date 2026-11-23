@@ -27,8 +27,12 @@ AES-256-CBC（pbkdf2）で中身を包み、その合言葉を RSA-OAEP で包�
 | --- | --- |
 | `sc` | スパチャの実額（円だけ） |
 | `dn` | Doneru の実額（こちらに届いた額） |
-| `got` | 受け取り側 = `viewer_yen(sc, dn)`（豚の貯金箱と同じ式） |
-| `paid` | 払った側 = `sc + dn × 1.2`（Doneru は送る人が手数料を上乗せして払う） |
+| `il` | 島の投げ銭の実額（払った額。台帳 `islandTips` の `source: island`。#1405） |
+| `got` | 受け取り側 = `viewer_yen(sc, dn, island_yen=il)`（豚の貯金箱と同じ式） |
+| `paid` | 払った側 = `sc + dn × 1.2 + il`（Doneru は送る人が手数料を上乗せして払う。島の投げ銭は払った額のまま） |
+
+島の投げ銭は BigQuery に無いので、台帳を月末と**同じ1本**（`monthly_tips.read_ledger()`
+→ `island_rows()`）で読む。名寄せも月末と同じ（スパチャと同じ `channelId` の側）。
 
 **ログに出すのは件数と暗号文だけ。** 名前も額も平文では1つも出ない。
 
@@ -53,7 +57,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import BQ_DATASET, BQ_PROJECT_ID  # noqa: E402
 from doneru.dedup import dedup_sql  # noqa: E402
 from fund_box import viewer_yen  # noqa: E402
-from monthly_tips import Roster, merge  # noqa: E402
+from monthly_tips import Roster, island_rows, merge, read_ledger  # noqa: E402
 
 # 問い合わせは `monthly_tips_run.py` と同じもの。あちらは import すると
 # main() が走るので写してある。**片方を直したらもう片方も直す。**
@@ -162,22 +166,28 @@ def main() -> None:
            "yen": int(r["yen"] or 0)} for r in bq(SQL_SC, d0, d1)]
     dn = [{"name": r["name"] or "", "yen": int(r["yen"] or 0)}
           for r in bq(SQL_DN, d0, d1)]
-    roster, emoji = load_roster(readonly(db()))
+    ro = readonly(db())
+    roster, emoji = load_roster(ro)
+    # 島の投げ銭（#1405）。月末と同じ1本で台帳から読む。**足せない行は件数だけ**
+    isl, isl_stuck = island_rows(read_ledger(ro, d0, d1))
+    if isl_stuck:
+        log.warning("島の投げ銭 %d件 は額かチャンネルが読めず、表に入っていない", isl_stuck)
 
     rows = []
-    for r in merge(sc, dn, roster):
-        s, d = int(r["sc"]), int(r["dn"])
-        if s + d <= 0:
+    for r in merge(sc, dn, roster, island=isl):
+        s, d, i = int(r["sc"]), int(r["dn"]), int(r["il"])
+        if s + d + i <= 0:
             continue
         rows.append({
             "display": r["display"], "handle": r["handle"] or "",
             "emoji": emoji.get(r["char"], "") if r["char"] else "",
-            "sc": s, "dn": d,
-            "got": viewer_yen(s, d),
-            "paid": s + d * PAYER_NUM // PAYER_DEN,
+            "sc": s, "dn": d, "il": i,
+            "got": viewer_yen(s, d, island_yen=i),
+            # 島の投げ銭は払った額のまま（Stripe の手数料は受け取り側が持つ）
+            "paid": s + d * PAYER_NUM // PAYER_DEN + i,
         })
-    log.info("スパチャ %d 人 / Doneru の名乗り %d 通り → %d 行",
-             len(sc), len(dn), len(rows))
+    log.info("スパチャ %d 人 / Doneru の名乗り %d 通り / 島の投げ銭 %d件 → %d 行",
+             len(sc), len(dn), len(isl), len(rows))
 
     plain = json.dumps({"from": d0, "to": d1, "rows": rows},
                        ensure_ascii=False).encode()
