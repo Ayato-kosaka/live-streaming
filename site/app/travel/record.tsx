@@ -3,10 +3,10 @@ import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
 import { Panel, StreamCard } from "@/components/ui/Bits";
 import Fold from "@/components/ui/Fold";
-import { COUNTRIES, countryBySlug, isWalkedCountry, type Country } from "@/content/countries";
+import { COUNTRIES, countryBySlug, type Country } from "@/content/countries";
 import { WALKED_DONE, chapterCountries, walkingCountries } from "@/content/walked";
-import { CHAPTERS, chapterNow } from "@/content/chapters";
-import { chapterCountrySlugs } from "@/content/stayChapters";
+import { chapterHref, chapterNow } from "@/content/chapters";
+import { tripsOfCountry } from "@/content/stayChapters";
 import { RECIPES } from "@/content/recipes";
 import { streamsOfCity, type CityStream } from "@/content/cityStreams";
 import { STREAM_DIGEST } from "@/content/streamDigest";
@@ -83,9 +83,14 @@ type Highlight = Country["highlights"][number];
 type CountryRecord = {
   slug: string;
   name: string;
-  /** 英字の国名・地方。**歩いている最中の国は持たない**（無いものを埋めない） */
+  /** 英字の国名。**歩いている最中の国は持たない**（無いものを埋めない） */
   en?: string;
-  region?: string;
+  /**
+   * その国に行った旅（本線も枝も。始まった順）。パスポートの下に札で出て、押すと旅の島へ。
+   * **滞在から引く**（`content/stayChapters.ts` の `tripsOfCountry`）。前は国の地域（`region`）を字で出していて、
+   * 旅の島へ行けるのは北欧の6か国（旅のしおりの部品）だけだった（#1355）
+   */
+  trips: { slug: string; name: string; href: string }[];
   /** 面の一言の、字だけの形（題の下・検索の一文・名札） */
   summary: string;
   /** 面の一言。まだ続いている滞在は、長さを画面が出てから数え直す */
@@ -104,7 +109,7 @@ type CountryRecord = {
    * 歩き終わった国の街の欄は題名で拾った代表なので、底には使わない（0）
    */
   streamFloor: number;
-  /** スタンプに押す「◯カ国目」。国でない区間（`iran-border`）は無し */
+  /** スタンプに押す「◯カ国目」 */
   walkedNo?: number;
   /** 面に出る配信の、いちばん新しい日（名札の `dateModified`） */
   modified?: string;
@@ -126,18 +131,20 @@ const ymdJa = (d: string) => `${d.slice(0, 4)}年${md(d)}`;
 const daysBetween = (from: string, to: string) =>
   Math.max(0, Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000));
 
+/** その国に行った旅の札。島の道は `chapterHref` から（手で組まない） */
+const tripTags = (slug: string) => tripsOfCountry(slug).map((t) => ({ slug: t.slug, name: t.name, href: chapterHref(t) }));
+
+/** 題に入れる旅の名前。**本線の旅**（枝の旅「イランまで歩く」は題の「〜で〈長さ〉」に続かない）。2回入っていれば、あとの旅 */
+const mainTrip = (slug: string) => tripsOfCountry(slug).filter((t) => !t.branchOf).at(-1)?.name;
+
 /** 歩き終わった国（`COUNTRIES`）。一言も見どころも、人が書いたもの */
 function walkedRecord(c: Country): CountryRecord {
   const ordered = [...COUNTRIES].sort((a, b) => a.order - b.order);
   /**
-   * スタンプに押す「◯カ国目」。**`order` ではなく、国だけを数え直した番号。**
-   *
-   * `order` は表の並び順で、国境までしか行っていない区間（`iran-border`）にも
-   * 1つ振ってある。`/travel` の年表は前からそこを避けて数え直していて
-   * （`app/travel/page.tsx` の `noOf`）、この面だけが `order` を生で押していた。
-   * 同じ面のことを、年表と札が別の数で言うのがいちばん悪い。
+   * スタンプに押す「◯カ国目」。**初めてその国に入った順**（`/travel` の年表の番号と同じ）。
+   * 国の表には国だけが居るので（M-17）、表の並び（`order`）の順番そのもの
    */
-  const walkedNo = ordered.filter((x) => isWalkedCountry(x.slug)).findIndex((x) => x.slug === c.slug) + 1;
+  const walkedNo = ordered.findIndex((x) => x.slug === c.slug) + 1;
   const towns = [...new Set(c.stays.flatMap((s) => s.cities))].map((name) => town(c.slug, name, streamsOfCity(c.slug, name)));
   /* **ガイドのカードになった街の配信は、見どころのあとに並べる。** 街の行がカードになると、その街の配信は
      街の畳みに出ない（`Town` の注）。歩いているあいだは「この国であったこと」に全部並んでいたので
@@ -149,7 +156,7 @@ function walkedRecord(c: Country): CountryRecord {
     slug: c.slug,
     name: c.name,
     en: c.en,
-    region: c.region,
+    trips: tripTags(c.slug),
     summary: c.summary,
     headLead: c.summary,
     stays: c.stays,
@@ -157,10 +164,9 @@ function walkedRecord(c: Country): CountryRecord {
     highlights: c.highlights,
     stayStreams,
     streamFloor: 0,
-    walkedNo: isWalkedCountry(c.slug) ? walkedNo : undefined,
+    walkedNo,
     modified: LASTMOD.country(c),
-    /* その国を数えている章。**新しい章から探す**（同じ国に2回入っていれば、あとの旅）。枝（イランまで歩く）も見る */
-    trip: [...CHAPTERS].reverse().find((x) => chapterCountrySlugs(x).includes(c.slug))?.name,
+    trip: mainTrip(c.slug),
   };
 }
 
@@ -205,6 +211,7 @@ function walkingRecord(slug: string): CountryRecord | undefined {
   return {
     slug,
     name: k.name,
+    trips: tripTags(slug),
     summary,
     headLead,
     stays: [{ from: k.entered, to: k.left }],
@@ -212,7 +219,7 @@ function walkingRecord(slug: string): CountryRecord | undefined {
     highlights: [],
     stayStreams: inTown ? [] : all,
     streamFloor: new Set(all.map((v) => v.videoId)).size,
-    /* 年表（`/travel` の `TripCountries`）と同じ番号。歩き終わった国の数の続き */
+    /* 年表（`/travel` の `TripList`）と同じ番号。歩き終わった国の数の続き */
     walkedNo: WALKED_DONE + i + 1,
     modified: all.map((v) => v.date).sort().at(-1),
     trip,
@@ -410,7 +417,6 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
      でないと、もう出た国の日数が毎日1ずつ増えつづける。 */
   const staying = r.stays.find((s) => !s.to);
   const days = closedDays(r.stays);
-  const isCountry = isWalkedCountry(r.slug);
   const art = countryMapArt(r.slug, r.name);
 
   /* 同じ日に同じ題名が2本あるぶんだけ、「その日の何本目か」を控える。
@@ -497,12 +503,7 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
       <Panel className="apass">
         <div className="apass-top">
           <CountryMap slug={r.slug} name={r.name} />
-          {/* スタンプは地図の右上に押す。紙に押した印なので、少し傾ける。
-
-              **国でない面には押さない。** 「イラン（国境まで）」は国境まで
-              歩いた区間で、入国していない（`content/walked.ts` の
-              `isWalkedCountry`）。**数えないと決めたものに順番を振ると、
-              押した印だけが別の数を言う。** */}
+          {/* スタンプは地図の右上に押す。紙に押した印なので、少し傾ける。 */}
           {r.walkedNo && (
             <span className="apass-stamp" aria-hidden>
               <b>{r.walkedNo}</b>
@@ -516,18 +517,27 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
             <Flag slug={r.slug} size={30} />
           </span>
           {r.en && <em>{r.en}</em>}
-          {r.region && <i>{r.region}</i>}
         </p>
 
-        {/* **国でない面では「入国／出国」と書かない。** 「イラン（国境まで）」は
-            国境まで歩いた区間で、入国していない。
-            **1か所を直したら、同じことを別の言い方で言っている場所を探す。** */}
+        {/* どの旅で行ったか。押すと、その旅の島へ（2つの旅に入った国は2枚）。
+            字は旅の名前だけ（「〈旅〉で行った」と説明を足さない。札の並びで読める） */}
+        {r.trips.length > 0 && (
+          <p className="apass-trips">
+            {r.trips.map((t) => (
+              <Link key={t.slug} className="chip" href={t.href} prefetch={false}>
+                <Icon name="island" size={20} />
+                {t.name}
+              </Link>
+            ))}
+          </p>
+        )}
+
         <dl className="apass-log">
           {r.stays.map((st, i) => (
             <div key={i}>
-              <dt>{isCountry ? "入国" : "はじまり"}</dt>
+              <dt>入国</dt>
               <dd>{fmt(st.from)}</dd>
-              <dt>{isCountry ? "出国" : "おわり"}</dt>
+              <dt>出国</dt>
               {/* 出国の欄が空いているのは「まだいる」とは限らない。
                   次の島へ渡った日で閉じる（`./parts.tsx`） */}
               <dd>{st.to ? fmt(st.to) : <StayOut slug={r.slug} />}</dd>

@@ -185,7 +185,8 @@ const STORY: Step[] = [
     go: "このアプリへ",
   },
   {
-    date: on("iran-border"),
+    /* 歩いたのは枝の旅「イランまで歩く」。国境は国ではないので、日付は旅から引く（#1355） */
+    date: chapterFrom("iran-walk"),
     kind: "travel",
     what: "アルメニアからイラン国境まで、380kmを歩いた",
     note: "10日間。帰りはヒッチハイクでエレバンへ",

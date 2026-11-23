@@ -103,6 +103,16 @@
         "type": 301
       },
       {
+        "source": "/travel/iran-border",
+        "destination": "/travel/armenia",
+        "type": 301
+      },
+      {
+        "source": "/map/iran-border",
+        "destination": "/travel/armenia",
+        "type": 301
+      },
+      {
         "source": "/map/:slug",
         "destination": "/travel/:slug",
         "type": 301

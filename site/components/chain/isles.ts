@@ -21,19 +21,14 @@ import { artOf } from "./shapes";
 import { chapterIsle } from "@/components/isle/spec";
 import { buildWorld, SQUASH } from "@/components/isle/world";
 import { CHAPTERS } from "@/content/chapters";
-import { chapterCountrySlugs } from "@/content/stayChapters";
-import { COUNTRIES } from "@/content/countries";
 import type { AtlasIsle } from "./diorama";
 
 export type { AtlasBuilding, AtlasIsle } from "./diorama";
 
 export function atlasIsles(): AtlasIsle[] {
   return CHAPTERS.map((c) => {
-    const regions = chapterCountrySlugs(c).flatMap((s) => {
-      const k = COUNTRIES.find((x) => x.slug === s);
-      return k ? [k.region as string] : [];
-    });
-    const art = artOf(c.slug, regions);
+    /* 地形は章の slug で決まる（`ISLAND_ART`）。国の地域からは引かない（`docs/spec/model.md` M-5） */
+    const art = artOf(c.slug);
     /* **章の島の面（`app/island/[chapter]/page.tsx`）と同じ1本で建てる**（`chapterIsle`）。
        前はここだけ「始まっていない島で、旅の予定が入っている島は `nordicSpec`、ほかは
        `isleSpec`」と自分で振り分けていて、いまいる島はトップ（`/`）へ渡るので

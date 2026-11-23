@@ -4,7 +4,7 @@
  *
  * **いつどこに居たか（滞在）は、ここに書かない。** 滞在の表（`content/stays.ts`）が持ち主で、
  * `COUNTRIES[].stays` と `AHEAD_COUNTRIES` はそこから引く（#1275）。ここが持つのは国の記録だけ
- * （名前・旗・地方・何カ国目・紹介・見どころ）。
+ * （名前・旗・何カ国目・紹介・見どころ）。
  */
 import { STAYS } from "./stays";
 
@@ -15,7 +15,15 @@ export type Country = {
   name: string;
   en: string;
   flag: string;
-  region: "ヨーロッパ" | "中東・アフリカ" | "コーカサス";
+  /**
+   * **地域は持たない**（`docs/spec/model.md` M-5。国を束ねる語彙は「旅」だけ）。どの旅で行ったかは
+   * 滞在から引く（`content/stayChapters.ts` の `tripsOfCountry`）。
+   *
+   * @deprecated **値はどの国にも入らない。** 型に残してあるのは、表紙の島（`components/isle/cover.ts`。
+   * 別の担当が触っている）がまだ1か所 `.region` を読んでいるから（読んでも空で、島の形は `ISLAND_ART` から決まる）。
+   * そこが外れたら、この欄ごと消す
+   */
+  region?: string;
   order: number;
   /** その国の滞在。**`content/stays.ts` から引く**（ここに書かない） */
   stays: { from: string; to: string; cities: string[] }[];
@@ -32,7 +40,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "フランス",
     en: "France",
     flag: "🇫🇷",
-    region: "ヨーロッパ",
     order: 1,
     summary:
       "配信のいちばん最初の国。「日本語を話したい」というタイトルで始まった。半年後にもう一度戻ってきて、今度は南仏まで下りていった。",
@@ -48,7 +55,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "オランダ",
     en: "Netherlands",
     flag: "🇳🇱",
-    region: "ヨーロッパ",
     order: 2,
     summary: "運河のクルーズから配信した。まだ配信を始めて2週間の頃。",
     highlights: [{ title: "クルーズなう", note: "船の上から少しだけ", date: "2024-11-07", videoId: "9d5fKfP0XCU" }],
@@ -58,7 +64,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "ベルギー",
     en: "Belgium",
     flag: "🇧🇪",
-    region: "ヨーロッパ",
     order: 3,
     summary: "1度目は「暇や！」と言っていた。2度目のリエージュで、ワッフル発祥の焼きたてにたどり着いた。",
     highlights: [
@@ -71,7 +76,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "ハンガリー",
     en: "Hungary",
     flag: "🇭🇺",
-    region: "ヨーロッパ",
     order: 4,
     summary: "「クソ陽キャな国」と言い切った国。寒さにやられながらも最高だと言っていた。",
     highlights: [
@@ -84,7 +88,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "オーストリア",
     en: "Austria",
     flag: "🇦🇹",
-    region: "ヨーロッパ",
     order: 5,
     summary: "「一生住みたい」と言った街で、スリにも遭った。卵を茹でながら喋る配信が定番になった時期。",
     highlights: [
@@ -98,7 +101,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "スロバキア",
     en: "Slovakia",
     flag: "🇸🇰",
-    region: "ヨーロッパ",
     order: 6,
     summary: "通過するように立ち寄った国。",
     highlights: [{ title: "スロバキアに行くので", note: "チャンネル登録してください回", date: "2024-12-02", videoId: "SkOXq_X94zg" }],
@@ -108,7 +110,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "チェコ",
     en: "Czechia",
     flag: "🇨🇿",
-    region: "ヨーロッパ",
     order: 7,
     summary: "夜景が綺麗すぎた国。ここでアラサーになった。",
     highlights: [
@@ -121,7 +122,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "ドイツ",
     en: "Germany",
     flag: "🇩🇪",
-    region: "ヨーロッパ",
     order: 8,
     summary: "ベルリンの壁を並走し、変な髪型にされ、スイーツをお裾分けした。3ヶ月後にケルンでヨーロッパ編を締めた。",
     highlights: [
@@ -135,7 +135,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "イギリス",
     en: "United Kingdom",
     flag: "🇬🇧",
-    region: "ヨーロッパ",
     order: 9,
     summary:
       "2ヶ月かけて縦断した、いちばん長く滞在した国。幽霊ホステル、ネズミホステル、一生に一度の嵐。ここで配信が毎日のリズムになった。",
@@ -152,7 +151,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "トルコ",
     en: "Türkiye",
     flag: "🇹🇷",
-    region: "中東・アフリカ",
     order: 10,
     summary: "ヨーロッパを出て最初の国。アヤソフィア、ブルーモスク、グランドバザール。「ウザすぎる」と言いながら結局14日いた。",
     highlights: [
@@ -166,7 +164,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "キプロス",
     en: "Cyprus",
     flag: "🇨🇾",
-    region: "中東・アフリカ",
     order: 11,
     summary: "ヨーロッパ最後の分断都市ニコシア。エジプトの後にもう一度寄って「一ヶ月ぶりのヨーロッパに涙が止まらない」と言っていた。",
     highlights: [
@@ -180,7 +177,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "エジプト",
     en: "Egypt",
     flag: "🇪🇬",
-    region: "中東・アフリカ",
     order: 12,
     summary:
       "着いた初日からトラブルだらけ、詐欺にも遭った。それでもGWの5日間ぶっ通しの「エジプト祭り」でピラミッドから王家の谷、アブ・シンベルまで走り抜けた1ヶ月。",
@@ -197,7 +193,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "ヨルダン",
     en: "Jordan",
     flag: "🇯🇴",
-    region: "中東・アフリカ",
     order: 13,
     summary:
       "ペトラ遺跡で限界まで歩き、死海に浮かび、大家族に飯を食わせてもらった国。ここで「みんなで外食の悩みを解決するアプリを作ろう」が始まった。",
@@ -213,7 +208,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "アラブ首長国連邦",
     en: "UAE",
     flag: "🇦🇪",
-    region: "中東・アフリカ",
     order: 14,
     summary: "着いた瞬間に携帯が壊れた国。サウナのような暑さの中、白モスクとローカル飯とビーチを駆け足で回った。",
     highlights: [
@@ -226,7 +220,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "アゼルバイジャン",
     en: "Azerbaijan",
     flag: "🇦🇿",
-    region: "コーカサス",
     order: 15,
     summary:
       "「天国です」と言って入った国。親日すぎるし物価も安い。ここで「もくもくアプリ作り」配信が生まれ、アプリ作りが配信の柱になった。",
@@ -242,7 +235,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "ジョージア",
     en: "Georgia",
     flag: "🇬🇪",
-    region: "コーカサス",
     order: 16,
     /* **いつ読んでも合う字にする。** 「いまもここにいる。」と書いてあったので、
        北欧へ出発した日から、この国の面も「いまどこ」の面も嘘になった。
@@ -265,7 +257,6 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "アルメニア",
     en: "Armenia",
     flag: "🇦🇲",
-    region: "コーカサス",
     order: 17,
     summary:
       "「わけあるめーにぁ」の国。ここからGW企画でイラン国境まで12日間歩いた。帰りはヒッチハイクでエレバンに戻ってきた。",
@@ -278,35 +269,13 @@ const COUNTRY_RECORDS: CountryRecord[] = [
       { title: "友達ともめるショートが100万再生", note: "エレバンで報告", date: "2026-05-19", videoId: "2u4HfAvQdsI" },
     ],
   },
-  {
-    slug: "iran-border",
-    name: "イラン（国境まで）",
-    en: "Iran border",
-    flag: "🇮🇷",
-    region: "コーカサス",
-    order: 18,
-    summary:
-      "「怖いイメージを変えたいので、一緒にご飯を食べにイランまで歩く」というGW企画。アルタシャトから10日間、約380kmを歩いて国境にたどり着いた。",
-    highlights: [
-      { title: "1日目 アルタシャト 23キロ", note: "12時スタート", date: "2026-04-29", videoId: "M11XX1oeng8" },
-      { title: "8日目 タテフ 29キロ", note: "山の中をひたすら", date: "2026-05-06", videoId: "8A-2mqkoAYs" },
-      { title: "最終日 メグリ 70キロ", note: "ゴール1時間前の配信もある", date: "2026-05-08", videoId: "TFiFG8lrcpA" },
-      { title: "帰路ヒッチハイク①", note: "12日目、ヒッチハイクでエレバンに帰る", date: "2026-05-10", videoId: "rHUoWeMPa1o" },
-    ],
-  },
-  /* ここから下の6カ国は北欧周遊（2026-09-12 〜 09-27）。
-     **`region` は6つとも「ヨーロッパ」。** 「北欧」を足すこともできるが、
-     `region` は `/map` の年表を地図の寄せボタン（`route.json` の `chapters`）に
-     結ぶ鍵で（`app/travel/page.tsx` の `CHAPTER_OF`）、あちらに無い名前を作ると
-     **どの段にも入らず、6カ国が年表から黙って消える。**
-     地方の名前としてもバルト三国からスウェーデンまでヨーロッパで間違いではない。 */
+  /* ここから下の6カ国は北欧周遊（2026-09-12 〜 09-27）。 */
   {
     slug: "poland",
     name: "ポーランド",
     en: "Poland",
     flag: "🇵🇱",
-    region: "ヨーロッパ",
-    order: 19,
+    order: 18,
     summary:
       "ヒッチハイクの旅が始まった国。夜の便でカトヴィツェに降りて、そこから先はぜんぶ人の車。1台目はロータリーをぐるぐる回り、野宿を覚悟したところでカメラマンが停まってくれた。",
     highlights: [
@@ -329,8 +298,7 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "リトアニア",
     en: "Lithuania",
     flag: "🇱🇹",
-    region: "ヨーロッパ",
-    order: 20,
+    order: 19,
     summary:
       "旧市街ごと世界遺産の街で、初めて動かない日を取った国。着いた晩はギラ（ビールのようでコーラのような飲みもの）で乾杯した。",
     highlights: [
@@ -353,8 +321,7 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "ラトビア",
     en: "Latvia",
     flag: "🇱🇻",
-    region: "ヨーロッパ",
-    order: 21,
+    order: 20,
     summary:
       "1日に6台乗り継いだ国。1本目がいきなり目的地まで行くと言うので、ぬるすぎるとあえて途中で降りた。城を2つ見て、暗くなってからリガに入った。",
     highlights: [
@@ -377,8 +344,7 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "エストニア",
     en: "Estonia",
     flag: "🇪🇪",
-    region: "ヨーロッパ",
-    order: 22,
+    order: 21,
     summary:
       "この旅で最後の1台が降ろしてくれた国。リガを出る朝にシムが壊れ、バスに乗り遅れ、それでも掲げた札に10分で車が止まった。",
     highlights: [
@@ -395,8 +361,7 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "フィンランド",
     en: "Finland",
     flag: "🇫🇮",
-    region: "ヨーロッパ",
-    order: 23,
+    order: 22,
     summary:
       "船で入って、船で出た国。朝10時に着いて、その日の夕方にはもう次の船に乗っていた。前日のどしゃ降りで死んだ充電まわりを、街で買い直した。",
     highlights: [
@@ -419,8 +384,7 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "スウェーデン",
     en: "Sweden",
     flag: "🇸🇪",
-    region: "ヨーロッパ",
-    order: 24,
+    order: 23,
     /* **出国の日を空けたままにしない。** 空欄は「まだ、いる」と読まれる。
        焼き込みの側はもっと直接で、`python/build_on_this_day.py` と
        `python/build_country_stats.py` は空欄を `9999-12-31` と読む。つまり
@@ -452,16 +416,14 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     ],
   },
   /* ここから下の3カ国はバルカン諸国周遊（`content/chapters.ts` の `balkans`。2026-09-28 から）。
-     歩き終わったので `AHEAD_COUNTRIES` から移した（2026-11-22、#664）。**`region` は北欧と同じ
-     「ヨーロッパ」**——`/travel` の年表の段と地図の寄せボタンを結ぶ鍵なので、新しい名前を作らない
-     （北欧の6カ国の注）。滞在の日と街の決めかたは `content/stays.ts` のバルカンの行の注。 */
+     歩き終わったので `AHEAD_COUNTRIES` から移した（2026-11-22、#664）。
+     滞在の日と街の決めかたは `content/stays.ts` のバルカンの行の注。 */
   {
     slug: "albania",
     name: "アルバニア",
     en: "Albania",
     flag: "🇦🇱",
-    region: "ヨーロッパ",
-    order: 25,
+    order: 24,
     summary:
       "北欧から飛んで、首都ティラナに2週間とどまった国。史上最悪のホステルで始まり、スマホを盗まれて取り返し、髭剃りを盗まれて市場で買い直した。それでも出る朝には、変な人が多いけど憎めない国だと言っていた。",
     highlights: [
@@ -508,8 +470,7 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "北マケドニア",
     en: "North Macedonia",
     flag: "🇲🇰",
-    region: "ヨーロッパ",
-    order: 26,
+    order: 25,
     /* 着いたのは 2026-10-12（配信「北マケドニア共和国ついたでーーー」。アルバニアからバスで7時間）。
        出たのは 11-12 の朝7時のバスで、その日はブルガリアの1日 */
     summary:
@@ -558,8 +519,7 @@ const COUNTRY_RECORDS: CountryRecord[] = [
     name: "ブルガリア",
     en: "Bulgaria",
     flag: "🇧🇬",
-    region: "ヨーロッパ",
-    order: 27,
+    order: 26,
     /* 着いたのは 2026-11-12。**本人の知らせを待たずに、配信から読んだ日**——11-12 14:35 JST の
        「ブルガリアいきます」はスコピエのバス停から始まり、同じ日の 20:29 JST（ソフィア 13:29）に
        「ブルガリアついたんやけど」が始まる。日本の暦でも現地の暦でも 11-12。
@@ -641,6 +601,11 @@ function checkStays(): void {
       throw new Error(`content/stays.ts: ${s.country} は国の記録があるので name を書かない（記録の名前を引く）`);
     if (!known.has(s.country) && !s.name)
       throw new Error(`content/stays.ts: ${s.country} は国の記録が無いので name が要る`);
+    /* 国の表に国でないものを置かない（`docs/spec/model.md` M-17）。前は国境まで歩いた区間（`iran-border`）が
+       国の行として居て、数えるところ全部が「国境は数えない」の決まりを別々に持っていた（#1355）。
+       国境の街はその国の街（`cities`）に、歩いたことは枝の旅に書く */
+    if (s.country.endsWith("-border"))
+      throw new Error(`content/stays.ts: ${s.country} は国ではない（国境の区間は国の街と旅に書く。M-17）`);
   }
 }
 checkStays();
@@ -743,14 +708,3 @@ export const countryNameBySlug = (slug: string): { slug: string; name: string } 
 export const AHEAD_COUNTRIES: { slug: string; name: string; entered: string }[] = STAYS.flatMap((s) =>
   s.name ? [{ slug: s.country, name: s.name, entered: s.from }] : [],
 );
-
-/**
- * 「歩いた国」に数えてよい slug か。**`iran-border` は国ではない。**
- *
- * 「イラン（国境まで）」は国境まで歩いた区間で、入国はしていない。
- * `python/stays.py` の `is_country` と**同じ決めかた**にしてある——
- * あちらが焼き込みの数（`COUNTRIES_WALKED`）を決め、こちらが画面の数を決めるので、
- * 片方だけ違う読み方をすると**同じ面の上と下で数が1つずれる。**
- * 実際にそうなっていた（表紙と `/now` が 20、`/map` の章の合計が 21）。
- */
-export const isWalkedCountry = (slug: string) => !slug.endsWith("-border");

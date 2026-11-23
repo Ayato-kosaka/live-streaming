@@ -3,6 +3,7 @@ import { ISLE_CHAPTERS, ISLE_STREAM_CHAPTERS, chapterHref } from "@/components/c
 import { ISLAND_PATH, ISLAND_LABEL } from "@/content/chapters";
 import { ALL_APPS } from "@/content/apps";
 import { COUNTRIES } from "@/content/countries";
+import { tripsOfCountry } from "@/content/stayChapters";
 import { TRAVEL_LABEL, TRAVEL_PLACES, publicArticles, publicCities, travelCity, travelHref, travelPage } from "@/content/travel";
 import { articleOf } from "@/content/travel/articles";
 import { LEGENDS } from "@/content/legends";
@@ -143,7 +144,8 @@ export const SHELVES: Shelf[] = [
       href,
       name: c.name,
       note: c.summary,
-      q: q(c.name, c.en, c.slug, c.region, c.stays.flatMap((s) => s.cities).join(" ")),
+      /* 束ねる語彙は旅の名前（「北欧周遊」で探しても国が出る。`docs/spec/model.md` M-5） */
+      q: q(c.name, c.en, c.slug, tripsOfCountry(c.slug).map((t) => t.name).join(" "), c.stays.flatMap((s) => s.cities).join(" ")),
     })),
   },
   {

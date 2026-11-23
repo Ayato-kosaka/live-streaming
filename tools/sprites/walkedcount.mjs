@@ -83,13 +83,12 @@ const staysSrc = readFileSync(repoPath("site/content/stays.ts"), "utf8");
    いた。どちらも書き方が変わるだけで黙って減る——そして**減ったぶんは
    「ほしい数」から消える**ので、画面の数と食い違わず緑が出る。 */
 
-/** 歩き終わった国。**`-border` は国ではない**（`python/stays.py` の `is_country`） */
+/** 歩き終わった国。国の表には国だけが居る（`docs/spec/model.md` M-17。`content/countries.ts` が読み込んだときに止める） */
 const DONE = must(
   readArray(src, "COUNTRY_RECORDS", { keys: ["slug"], idKey: "slug" }),
   "countries.ts の COUNTRY_RECORDS",
 )
-  .map((r) => r.slug)
-  .filter((s) => !s.endsWith("-border"));
+  .map((r) => r.slug);
 /** いま歩いている旅の国と、入った日（滞在の表の、`name` を持つ行。`content/countries.ts` の `AHEAD_COUNTRIES` と同じ引きかた） */
 const AHEAD = must(
   readArray(staysSrc, "STAYS", { keys: ["country", "name", "from"], idKey: "country" }),
@@ -146,7 +145,7 @@ function itineraryMatches() {
   const flags = readFileSync(repoPath("site/components/ui/Flag.tsx"), "utf8");
   for (const a of AHEAD) {
     if (done.has(a.slug)) bad.push(`${a.slug} は歩き終わっているのに AHEAD_COUNTRIES に残っている`);
-    // `albania: {` も `"iran-border": {` も拾う
+    // `albania: {` も `"north-macedonia": {` も拾う
     else if (!new RegExp(`^\\s*"?${a.slug}"?:`, "m").test(flags)) bad.push(`${a.slug} の旗が Flag.tsx にない`);
   }
   return bad;
