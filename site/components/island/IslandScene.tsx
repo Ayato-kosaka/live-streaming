@@ -737,8 +737,9 @@ const DRESSING: Item[] = [
   // 伝説の企画(丘の館): 記念碑
   { n: "statue", x: P.legends.x - 62, y: P.legends.y + 16, s: 54 },
   { n: "statue-head", x: P.legends.x + 66, y: P.legends.y + 20, s: 40 },
-  // これから: たきぎ(旅立ちの支度)
-  { n: "log", x: P.next.x + 40, y: P.next.y + 18, s: 14 },
+  /* 企画のテントが建っていた所（296, 548。#1277 で軒を畳んだ）。たきぎと茂みは残して、
+     軒の跡を空き地にしない */
+  { n: "log", x: 336, y: 566, s: 14 },
   // あやとのこと(あやとの家): 庭の丸太
   { n: "log", x: P.friends.x - 44, y: P.friends.y + 6, s: 15 },
   { n: "log", x: P.friends.x + 46, y: P.friends.y + 10, s: 15, flip: true },
@@ -758,7 +759,7 @@ const DRESSING: Item[] = [
 const DRESS_DECO: Deco[] = [
   { k: "stump", x: P.kitchen.x + 52, y: P.kitchen.y + 20, s: 20 },
   { k: "shroom", x: P.kitchen.x + 74, y: P.kitchen.y + 34, s: 16 },
-  { k: "bush", x: P.next.x - 44, y: P.next.y + 14, s: 20 },
+  { k: "bush", x: 252, y: 562, s: 20 },
   { k: "rock", x: 300, y: 906, s: 12 },
   { k: "rock", x: POND.x + 56, y: POND.y + 16, s: 16 },
 ];
@@ -910,7 +911,6 @@ const ROUTES: Route[] = [
   { a: foot("streams", 34), b: foot("apps"), bend: -32 },
   { a: foot("streams", 34), b: foot("board", 8), bend: 24 },
   { a: foot("streams", 34), b: foot("now", 10), bend: -16 },
-  { a: foot("now", 10), b: foot("next", 10), bend: 20 },
   { a: foot("kitchen"), b: foot("map", 6), bend: -18 },
   { a: foot("apps"), b: foot("friends", 10), bend: 24 },
   // 丘の館は高台の上。道を丘の上まで引くと、崖の面に土が塗られたように見える。

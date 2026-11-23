@@ -70,6 +70,21 @@ export function jstDay(iso: string): string | null {
   return `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
 }
 
+/**
+ * その日（`YYYY-MM-DD`）まであと何日か。過ぎていればマイナス。日付が無ければ `null`。
+ *
+ * **「今日」は日本時間で切る。** 島の日付はどこも日本時間の暦日で決まっている（配信が22時から）。
+ * UTC で切ると、毎日 00:00〜09:00 JST のあいだ「今日」が前の日を指す——北欧への出発（04:30 JST）が
+ * まるごとその窓に入って、表紙が過ぎた企画を今日として出していた。
+ */
+export function daysUntil(date: string | undefined, today = new Date()): number | null {
+  if (!date) return null;
+  const j = jstNow(today);
+  const t = Date.UTC(j.y, j.m - 1, j.d);
+  const [y, m, d] = date.split("-").map(Number);
+  return Math.round((Date.UTC(y, m - 1, d) - t) / 86400000);
+}
+
 /** 日本時間で n 日ずらした日付（YYYY-MM-DD）。きのう作った料理を引くのに使う。 */
 export function jstShift(now: Date, days: number): string {
   const j = jstNow(now);
@@ -127,7 +142,6 @@ export function spanText(mins: number): string {
  * chapters の `looseStartNow` を読むので、置いたままだと chapters ⇄ nightly の
  * 輪になって、読み込む順によっては落ちる（`lib/builtAt.ts` に経緯がある）。
  *
- * 呼ぶ側は、いままでどおりここから読んでよい（`content/plans.ts` も同じく
- * ここを通して配っている）。
+ * 呼ぶ側は、いままでどおりここから読んでよい。
  */
 export { BUILT_AT } from "./builtAt";

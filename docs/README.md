@@ -61,7 +61,6 @@
 | `docs/nordic-depart.md` | 仕様 | 北欧の旅の、出発前・最中・あと | 北欧の旅だけ |
 | `docs/nordic-photos.md` | 仕様 | その日の写真と、埋め込むキャラクター | 有効 |
 | `docs/island-concept.md` | 仕様 | 何のための島か。入口と道は `spec/` が正 | 有効 |
-| `docs/island-plan-drafts.md` | 仕様 | 企画のページを視聴者さんと作る（畳んだ道） | 廃止予定（#1277） |
 
 ## 4. 決定
 

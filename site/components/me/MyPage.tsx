@@ -5,10 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   getMyCards,
   getMyStickies,
-  getNextPlans,
-  loadMyPlans,
-  myPlans,
-  type NextPlan,
   type Sticky,
 } from "@/lib/api";
 import { useAuth, withRead } from "@/lib/auth";
@@ -41,7 +37,7 @@ import SignIn from "@/components/live/SignIn";
  *
  * ## 溜まっても背が変わらない形にする
  *
- * 付箋も企画もカードも、来てくれるほど増える。前は3つとも独立した紙で
+ * 付箋もカードも、来てくれるほど増える。前は独立した紙で
  * 縦に積んであったので、**貼った人ほど下が遠くなる**面だった。
  * 札で切り替えて、同時に1つしか出さない（`MyStuff`）。
  */
@@ -49,11 +45,11 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
   /* 自分が誰か（`me`）は島じゅうで1回だけ引く。読み直しも向こうが持っている
      （`lib/auth.tsx`）。ここで別に引くと、机と数字で答えが割れる。 */
   const { user, token, signOut, me, meRead, owner, reloadMe } = useAuth();
-  /** 付箋と企画。**待っている・読めた・読めなかったの3つを別に持つ** */
+  /** 付箋。**待っている・読めた・読めなかったの3つを別に持つ** */
   const [stickies, setStickies] = useState<Bag<Sticky>>({ st: "wait" });
-  const [plans, setPlans] = useState<Bag<NextPlan>>({ st: "wait" });
-  /* カードはここで引いて持つ。**この面は付箋・企画・カードを、札1つで
-     まとめて読み直す**ので、3つとも同じ `Bag` に揃えておく。 */
+  /* カードはここで引いて持つ。**この面は付箋とカードを、札1つで
+     まとめて読み直す**ので、どちらも同じ `Bag` に揃えておく。
+     企画のタブは畳んだ（#1277。視聴者さんが企画を出す道は 2026-10-01 に畳んであり、声は付箋1つで受ける） */
   const [cards, setCards] = useState<Bag<ShownCard>>({ st: "wait" });
 
   const load = useCallback(async () => {
@@ -62,7 +58,6 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
       /* 合言葉が取れない＝ログインの道具そのものが降りてこなかった。
          これも「読めなかった」で、0枚ではない */
       setStickies({ st: "down" });
-      setPlans({ st: "down" });
       setCards({ st: "down" });
       return;
     }
@@ -71,31 +66,6 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
       setStickies({ st: "ok", list: r.notes });
     } catch {
       setStickies({ st: "down" });
-    }
-    try {
-      /* 企画は2つに分かれる（#133）。**ログインして出したぶんはサーバーが絞る。**
-         誰でも読める一覧は持ち主を返さなくなったので、こちらで
-         「これは誰の」を組み立てる道はもう無い。
-
-         **ログインする前に、この端末から出したぶんも自分のもの。**
-         そちらは端末の控え（`myPlans`）でしか分からないので、
-         誰でも読める一覧から拾って足す。持ち主のいるもの（`byLogin`）は、
-         端末の印では直せないので混ぜない。 */
-      const [mineList, all] = await Promise.all([
-        withRead(loadMyPlans(t)),
-        withRead(getNextPlans(200)),
-      ]);
-      const ids = myPlans();
-      const had = new Set(mineList.map((p) => p.id));
-      const list = [
-        ...mineList,
-        ...all.plans.filter((p) => !p.byLogin && ids.has(p.id) && !had.has(p.id)),
-      ];
-      // 2つの口から来たものを1つの並びにする。新しいものが上
-      list.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
-      setPlans({ st: "ok", list });
-    } catch {
-      setPlans({ st: "down" });
     }
     try {
       /* **絞るのはサーバー。** 自分のぶんだけが降りてくるので、
@@ -115,7 +85,6 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
   /** 「もう一度よみこむ」。**この面が引くもの全部を、まとめて読み直す。** */
   const retry = useCallback(() => {
     setStickies({ st: "wait" });
-    setPlans({ st: "wait" });
     setCards({ st: "wait" });
     reloadMe();
     load();
@@ -180,10 +149,8 @@ export default function MyPage({ planDays }: { planDays: PlanDays }) {
 
       <MyStuff
         stickies={stickies}
-        plans={plans}
         cards={myCards}
         planDays={planDays}
-        uid={user.uid}
         hasChannel={!!me?.channelId}
         onRetry={retry}
         quiet={meDown}

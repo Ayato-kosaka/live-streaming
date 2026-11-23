@@ -41,7 +41,7 @@ import { UPDATES } from "@/content/updates";
  * ## 付けない面
  *
  * 表紙・`/about`・`/now`・`/board`・`/friends`・旅の面（`/nordic/*` `/bulgaria` …）・章の島
- * （`/island/<章>`）・`/atlas`・`/map`・`/streams`・`/all`・`/goods*`・`/cards`・`/next`・`/privacy`。
+ * （`/island/<章>`）・`/atlas`・`/map`・`/streams`・`/all`・`/goods*`・`/cards`・`/privacy`。
  * **中身がいつ変わったかを、データが持っていない。** 旅の面の日付は「その日のこと」で
  * あって「その日に書いた」ではないし、表紙の直近の配信は画面が出てから取りにいく。
  * 分からない面には `undefined` を返す（＝ `<lastmod>` を書かない）。嘘の日付より、無いほうがよい。

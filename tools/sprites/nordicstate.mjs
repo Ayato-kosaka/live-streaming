@@ -61,7 +61,6 @@ const PAGES = [
   ["day1", "/nordic/day/1.html"],
   ["day4", "/nordic/day/4.html"],
   ["day9", "/nordic/day/9.html"],
-  ["next", "/next.html"],
   ["top", "/index.html"],
 ];
 

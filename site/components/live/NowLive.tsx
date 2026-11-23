@@ -3,8 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { getState, type IslandCurrent } from "@/lib/api";
 import { NOW_FALLBACK, LINKS } from "@/content/site";
-import { planDaysLeft, planPhase, type PlanPhase } from "@/content/plans";
-import { leadPlan } from "@/lib/leadPlan";
+import { daysUntil } from "@/lib/nightly";
+import { leadPlan, phaseOf, type Phase } from "@/lib/leadPlan";
 import { placeCountry } from "@/content/place";
 import Icon from "@/components/ui/IconCore";
 import Flag from "@/components/ui/Flag";
@@ -96,7 +96,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
   const [now, setNow] = useState<Date | null>(null);
   /** 便りを書いた日からの日数。画面が出るまでは出さない（焼き込みの日数を見せない） */
   const [ago, setAgo] = useState<string | null>(null);
-  const [next, setNext] = useState<{ title: string; days: number | null; phase: PlanPhase } | null>(
+  const [next, setNext] = useState<{ title: string; href: string; days: number | null; phase: Phase } | null>(
     null,
   );
   /** いまいる国に、今日で何日目か。画面が出るまでは出さない（焼き込みの日数を見せない） */
@@ -141,7 +141,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
          もう行ってきた北欧旅を返すので「行ってきた／ヒッチハイクで北欧へ」が
          25日ぶん出ていた（#673）。 */
       const p = leadPlan(now);
-      setNext(p ? { title: p.title, days: planDaysLeft(p, now), phase: planPhase(p, now) } : null);
+      setNext(p ? { title: p.title, href: p.href, days: daysUntil(p.date, now), phase: phaseOf(p, now) } : null);
       setStay(stayNow(now));
       setTravel(travelNow(now));
     };
@@ -311,7 +311,7 @@ export default function NowLive({ letter, children }: { letter?: boolean; childr
               </Link>
             )}
             {next && (
-              <Link prefetch={false} className="tile" href="/next">
+              <Link prefetch={false} className="tile" href={next.href}>
                 {/* しらせの合図はサイト全体でこのベル1種類。予定の入口には必ず付ける */}
                 <span className="tile-mark">
                   <NoticeBell size={32} />

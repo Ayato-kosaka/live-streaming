@@ -465,7 +465,7 @@ IDは `/cards/mine` から取れる）。**チャンネルIDのハッシュに�
 `components/ui/HashJump.tsx` が追いかけて送る。あやとの言葉（2026-09-10）:
 「あお文字おしても food wine fest が見れない」。
 
-引くのは**日付から**（`content/planDays.ts` の `PLAN_BY_DAY`。配列で返る）。
+引くのは**日付から**（`lib/cardDays.ts` の `DAY_BRIEFS`。その日の企画・旅の1日・居た所が配列で返る。#1277 の前は `content/planDays.ts`）。
 カードは `streamEventId` も持っているが、**そちらは札にしない。**
 1枚の写真は1つの企画にしか付かないので、それで引くと同じ日のほかの企画が消える。
 **企画の無い日のカードは、そもそも空**（2章）。
@@ -683,7 +683,7 @@ IDは `/cards/mine` から取れる）。**チャンネルIDのハッシュに�
 | 絵の突き合わせ・写真とカードを合わせる・置き方 | `site/components/cards/cards.ts` |
 | 焼く（合成・寸法・縮める） | `site/components/nordic/stamp.ts` |
 | 見た目の決まり | `site/app/css/cards.css` |
-| 企画の表 | `site/content/planDays.ts` の `PLAN_BY_DAY` |
+| その日の札 | `site/lib/cardDays.ts` の `DAY_BRIEFS`（企画の表・北欧の旅程・滞在の表から） |
 | `#` で送られたところまで運ぶ | `site/components/ui/HashJump.tsx` |
 | 写真を貼る（日付 → 企画を選ぶ。**企画が無くても貼れる**。あやとだけ） | `site/components/nordic/PhotoPost.tsx` |
 | 写真を配信に結ぶ（0時またぎ） | 口は `POST /streamevents/images/{id}` の `videoIds`。**画面はまだ無い** |

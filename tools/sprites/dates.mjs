@@ -41,7 +41,6 @@ const SPOTS = [
   ["/now.html", [".now-place", ".np-word", ".tiles", ".chips", ".nowc-head", ".pap-sec h2"]],
   ["/nordic.html", [".tnow-count", ".tnow-pair", ".tnow-act.is-main", ".ndayr"]],
   ["/about.html", [".now-place", ".np-word"]],
-  ["/next.html", [".nextup-count", ".plan-when", ".pc-count"]],
   ["/atlas.html", [".isles-now", ".isle-days"]],
 ];
 

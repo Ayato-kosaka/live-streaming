@@ -23,7 +23,7 @@ import { apply } from "./asme.mjs";
 
 const PORT = process.env.SPORT || 4141;
 const admin = process.env.ADMIN === "1";
-const PAGES = (process.env.PAGES || "/me,/cards,/board,/next,/nordic/photos").split(",");
+const PAGES = (process.env.PAGES || "/me,/cards,/board,/nordic/photos").split(",");
 
 const b = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",

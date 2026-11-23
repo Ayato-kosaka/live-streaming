@@ -18,9 +18,9 @@
  *
  * ## 数えないもの（`EXCUSE`）
  *
- * 告知の札（`content/plans.ts`・`content/themes.ts`・`content/projects.ts` の `notice`）の `href` は、
- * 企画の面（`/next`）を畳む W3（#1277）が告知の札ごと畳む。それまで名指しで外す。
- * **外した字が無くなったら、ここから消す**（消し忘れは下に「もう要らない」と出る）。
+ * 外すときは字を名指しし、理由を書く。**外した字が無くなったら赤くなる**（決定の記録 0013）。
+ * W3（#1277）で告知の札の `href` が消えたので、いまは外すものが無い。
+ * 掲示板のお題（`content/themes.ts` の `href`）は種類の表ではないので、ここでは数えていない（`model.md` 8章の M-6）。
  *
  * ## 対照
  *
@@ -52,11 +52,8 @@ const TABLES = [
 /** 名前の字で街を引いていないかを見る置き場（面・部品・表・札） */
 const JOIN_DIRS = ["app", "components", "lib", "content"];
 
-/** 数えない字。`[ファイル, 字, 理由]` */
-const EXCUSE = [
-  ["content/projects.ts", '"/travel/georgia"', "告知の札（ジョージアバイバイ）。W3（#1277）が告知の札ごと畳む"],
-  ["content/projects.ts", '"/about"', "告知の札（海外出発二周年）。W3（#1277）が告知の札ごと畳む"],
-];
+/** 数えない字。`[ファイル, 字, 理由]`。告知の札の2つは W3（#1277）で札ごと消えたので、いまは空 */
+const EXCUSE = [];
 
 const HREF = /\bhref\s*:\s*(["'`])\/[^"'`]*\1/g;
 const ROSTER = /\b(CITIES|TRAVEL_CITIES|publicCities|cityRow)\b/;
@@ -83,7 +80,6 @@ ok("表の道の字を数える", count("content/stays.ts", 'const A = [{ guide:
 ok("注の中の道は数えない", count("content/stays.ts", '/* href: "/travel/x" */ const A = 1;').hrefs.length === 0);
 ok("道の型からの道（hrefOf）は数えない", count("content/stays.ts", 'const h = hrefOf("/travel/<国>", "x");').hrefs.length === 0);
 ok("表でないファイルの道は数えない", count("app/x.tsx", '<a href="/kitchen">').hrefs.length === 0);
-ok("外した字は数えない", count("content/projects.ts", 'notice: { href: "/about" }').hrefs.length === 0);
 ok(
   "名前の字で街を引く所を数える（前の国の面の形）",
   count("app/travel/record.tsx", "guide: publicCities(country).find((t) => t.name === name),").names.length === 1,
@@ -119,8 +115,13 @@ for (const f of files) {
   hrefs += got.hrefs.length;
   names += got.names.length;
 }
+/* 外した字が消えたら赤くする（決定の記録 0013）。外しが残ると、次に同じ字を書いた日に素通りする */
+let stale = 0;
 for (const [f, s, why] of EXCUSE) {
-  if (!readFileSync(join(SITE, f), "utf8").includes(s)) console.log(`  （もう要らない外し: ${f} の ${s}。${why}）`);
+  if (!readFileSync(join(SITE, f), "utf8").includes(s)) {
+    console.log(`  もう要らない外し: ${f} の ${s}（${why}）。EXCUSE から消す`);
+    stale++;
+  }
 }
 console.log(`表 ${TABLES.length}本・置き場 ${files.length}本を見た。道の字 ${hrefs}・名前の字 ${names}（外した字 ${EXCUSE.length}）`);
-process.exit(hrefs || names ? 1 : 0);
+process.exit(hrefs || names || stale ? 1 : 0);

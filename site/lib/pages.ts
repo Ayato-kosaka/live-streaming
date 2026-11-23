@@ -157,10 +157,8 @@ const MEMBERS: Record<Route, Member> = {
   "/me/roulette": { listed: false, pages: () => one("/me/roulette", "ルーレットの操作") },
   "/cards/import": { listed: false, pages: () => one("/cards/import", "写真をまとめて登録") },
   "/roulette": { listed: false, pages: () => one("/roulette", "ルーレット") },
-  /* 廃止予定の2枚は、畳む PR（`/next` は #1277、`/now` は #1278）で、仕様の表・種類の表と一緒にここから消える */
-  "/next": { listed: true, pages: () => one("/next", "企画") },
-  /* 視聴者さんが企画を出す道を畳んで、いまは `/board` へ送るだけの1枚（`robots: index: false`） */
-  "/next/new": { listed: false, pages: () => one("/next/new", "企画のページを作る") },
+  /* 廃止予定の1枚は、畳む PR（#1278）で、仕様の表・種類の表と一緒にここから消える。
+     `/next` と `/next/new` は #1277 で畳んだ（`/board` へ 301。索引にも出さない） */
   "/now": { listed: true, pages: () => one("/now", "いまどこ") },
   "/nordic/photos": { listed: false, pages: () => one("/nordic/photos", "旅の写真") },
 };

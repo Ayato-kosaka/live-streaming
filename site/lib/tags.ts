@@ -82,7 +82,7 @@ const tripSpan = (c: Chapter): Span | undefined => (c.from ? { from: c.from, to:
 
 /**
  * 月の期間。**ふりかえりの面が数えている期間**（前の月末配信の日〜その月の月末配信の前日。`content/months.ts` の頭）。
- * 面の無い月は暦のひと月（`docs/spec/model.md` 3章「月」）
+ * 面の無い月は暦のひと月（`docs/spec/model.md` 3章「月」・決定の記録 0016）
  */
 const monthSpan = (key: string): Span => {
   const rec = MONTHS.find((m) => m.key === key);

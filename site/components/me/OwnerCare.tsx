@@ -2,21 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  PLAN_STATUS_NAME,
-  archiveNextPlan,
   archiveSticky,
   dropStickyPic,
-  getArchivedPlans,
   getArchivedStickies,
-  getNextPlans,
   getSeenStickies,
   getStickies,
   getWaitingStickies,
   replySticky,
   seenSticky,
-  setPlanStatus,
-  type NextPlan,
-  type PlanStatus,
   type Sticky,
 } from "@/lib/api";
 import { useAuth, withRead, type Read } from "@/lib/auth";
@@ -522,174 +515,6 @@ function StickyRow({
       {err && (
         <p className="err">
           <Icon name="alert" size={13} /> いま送れませんでした。もう一度押してください。
-        </p>
-      )}
-    </li>
-  );
-}
-
-/**
- * 企画の段を動かす。
- *
- * 提案 → これから → やった。「これから」に上げるときは、Git 側の企画の id を
- * 結び付ける。**結び付けないと、板に出た提案と、実際に立っているページが、
- * 画面の上で他人のまま**になる（掲示板の道具と同じ決まり）。
- */
-export function PlanCare() {
-  const { token } = useAuth();
-  const [bin, setBin] = useState(false);
-
-  /* 出ているぶんと、しまったぶん。**同じ器で読む**ので、札を切り替えると
-     そのまま読み直しになる（`StickyCare` と同じ）。 */
-  const read1 = useCallback(async () => {
-    if (!bin) return (await getNextPlans(200)).plans;
-    const t = await withRead(token());
-    if (!t) throw new Error("no-token");
-    return (await getArchivedPlans(t)).plans;
-  }, [bin, token]);
-  const { list: plans, read, setList: setPlans, reload } = useCare(read1);
-
-  return (
-    <>
-      {/* **数を言ってよいのは、読めたときだけ。** 読めなかった日は
-          「読んでいます…」とも言わない（下の札と食い違う）。 */}
-      {read !== "down" && (
-        <p className="mp-now">
-          {read === "ok" && plans ? <>いま <b>{plans.length}</b> 件</> : "読んでいます…"}
-        </p>
-      )}
-      {read === "down" ?
-        /* 読みに行けなかった。**「まだ1件もありません。」とは別の顔にする。** */
-        <ReadAgain what={bin ? "しまったもの" : "企画"} onRetry={reload} /> :
-      plans === null ? (
-        <div className="wait is-row" aria-hidden>
-          <span />
-          <span />
-        </div>
-      ) : plans.length === 0 ? (
-        <p className="muted">{bin ? "しまったものはありません。" : "まだ1件もありません。"}</p>
-      ) : (
-        /* 1件が「題・札・段の欄・id の欄・押しどころ2つ」の6段ある。
-           付箋と同じ理由で4件（`StickyCare`）。 */
-        <Longer items={plans} first={4} step={12} unit="件" className="mp-care">
-          {(p) => (
-            <PlanRow
-              key={p.id}
-              plan={p}
-              stowed={bin}
-              onChanged={(next) =>
-                setPlans((cur) => cur?.map((x) => (x.id === p.id ? next : x)) ?? cur)
-              }
-              onStowed={() => setPlans((cur) => cur?.filter((x) => x.id !== p.id) ?? cur)}
-            />
-          )}
-        </Longer>
-      )}
-      <div className="mp-care-acts">
-        {/* 札を切り替えるだけ。読み直しは `useCare` が受け持つ */}
-        <button className="nt-obtn" onClick={() => setBin((v) => !v)}>
-          {bin ? "出ているものに戻る" : "しまったものを見る"}
-        </button>
-      </div>
-    </>
-  );
-}
-
-function PlanRow({
-  plan,
-  stowed,
-  onChanged,
-  onStowed,
-}: {
-  plan: NextPlan;
-  stowed: boolean;
-  onChanged: (p: NextPlan) => void;
-  onStowed: () => void;
-}) {
-  const { token } = useAuth();
-  const [status, setStatus] = useState<PlanStatus>(plan.status);
-  const [planId, setPlanId] = useState(plan.planId ?? "");
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState(false);
-
-  const move = async () => {
-    const t = await token();
-    if (!t) return;
-    setBusy(true);
-    setErr(false);
-    try {
-      const r = await setPlanStatus(plan.id, status, planId.trim(), t);
-      onChanged(r.plan);
-    } catch {
-      setErr(true);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const stow = async () => {
-    const t = await token();
-    if (!t) return;
-    setBusy(true);
-    setErr(false);
-    try {
-      await archiveNextPlan(plan.id, !stowed, t);
-      onStowed();
-    } catch {
-      setErr(true);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <li>
-      <p className="mp-care-text">{plan.title || "（題なし）"}</p>
-      {/* 段・出した人・さんせい。付箋の足元と同じ作り（札にしない）。 */}
-      <p className="mp-note-foot">
-        <span>いま {PLAN_STATUS_NAME[plan.status]}</span>
-        {plan.by && <span>{plan.by}</span>}
-        {plan.hearts > 0 && <span>さんせい {plan.hearts}</span>}
-      </p>
-      {/* 欄は板（`.dform`）の上に置く。**`.nph-post-row` は `.dform` の中でしか
-          成り立たない。** 添えの字を欄の上に積むのも（`.dform label`）、欄を
-          彫るのも（`.dform input/select`）あちらが持っているので、板の外に
-          置くと、ブラウザ既定の白い箱とシステムの字が、すぐ上の付箋の返事
-          （`.bin`）の隣に並ぶ。投げ銭の紐付け（`.dform mp-donor-form`）が
-          同じ形の道具なので、作業台もそちらにそろえる。 */}
-      <div className="dform mp-care-form">
-        <label className="nph-post-row">
-          <span>どの段へ</span>
-          <select value={status} onChange={(e) => setStatus(e.target.value as PlanStatus)}>
-            {(Object.keys(PLAN_STATUS_NAME) as PlanStatus[]).map((s) => (
-              <option key={s} value={s}>
-                {PLAN_STATUS_NAME[s]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="nph-post-row">
-          <span>ページの id</span>
-          <input
-            type="text"
-            value={planId}
-            maxLength={40}
-            placeholder="nordic / iran-walk。空で外す"
-            onChange={(e) => setPlanId(e.target.value)}
-          />
-        </label>
-      </div>
-      <div className="mp-care-acts">
-        <button className="mp-send is-small" disabled={busy} onClick={move}>
-          {busy ? "動かしています…" : "動かす"}
-        </button>
-        <button className="mp-send is-small is-quiet" disabled={busy} onClick={stow}>
-          {stowed ? "もどす" : "しまう"}
-        </button>
-      </div>
-      {err && (
-        <p className="err">
-          <Icon name="alert" size={13} /> いま動かせませんでした。もう一度押してください。
         </p>
       )}
     </li>

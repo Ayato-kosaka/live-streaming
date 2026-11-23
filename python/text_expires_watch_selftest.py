@@ -90,7 +90,7 @@ export const _PLANT_PLAN = [
   {
     id: "plant",
     date: "2026-12-01",
-    note: "島を出る予定。",
+    lead: "島を出る予定。",
   },
 ];
 '''
@@ -180,14 +180,15 @@ def main() -> int:
     quote = planted / "content" / "onThisDay.ts"
     quote.write_text(quote.read_text(encoding="utf-8") + f"\nexport const _PLANT = [{QUOTE_LINE}];\n", encoding="utf-8")
     # 企画の本にも仕込む（字ではなく、すぐ上の欄から日を取る足）
-    plans = planted / "content" / "plans.ts"
+    # 日を持つお題の本（前は告知の札の表 `plans.ts`。#1277 で畳んだ）
+    plans = planted / "content" / "themes.ts"
     plans.write_text(plans.read_text(encoding="utf-8") + PLAN_PLANT, encoding="utf-8")
     projects = planted / "content" / "projects.ts"
     projects.write_text(projects.read_text(encoding="utf-8") + PROJECT_PLANT, encoding="utf-8")
 
     hits, _ = _run(planted)
     mine = [h for h in hits if "_plant" in h.path]
-    plan_hit = [h for h in hits if h.path.endswith("plans.ts") and h.text.startswith("島を出る")]
+    plan_hit = [h for h in hits if h.path.endswith("themes.ts") and h.text.startswith("島を出る")]
     check("仕込みを置いた面から拾った数", len(mine), len(PLANT))
     check("企画の本の仕込みを、上の欄の日で拾った", [h.expires for h in plan_hit], [PLAN_DAY])
     proj_in = [h for h in hits if h.path.endswith("projects.ts") and h.text.startswith("中で島を出る")]
@@ -212,7 +213,7 @@ def main() -> int:
             # 「これから起きる言い方」を見ないと、過去の事実まで拾う
             check("BREAK=forward で過去の事実まで拾う", len(b_mine) > len(PLANT), True)
         elif leg == "carryblock":
-            got = [h for h in broke if h.path.endswith("plans.ts") and h.text.startswith("島を出る")]
+            got = [h for h in broke if h.path.endswith("themes.ts") and h.text.startswith("島を出る")]
             check("BREAK=carryblock で、上の欄から取る仕込みが落ちる", len(got), 0)
         elif leg == "notice":
             got = [h for h in broke if h.path.endswith("projects.ts") and h.text.startswith("外で島を出る")]

@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import Longer from "@/components/ui/Longer";
 import CardOne from "./CardOne";
 import CardSheet from "./CardSheet";
-import { soloGroup, type PlanDays, type ShownCard } from "./cards";
+import { briefsOn, soloGroup, type PlanDays, type ShownCard } from "./cards";
 
 /**
  * その人のカードを並べて、押したら**持って帰れる紙**を開く。
@@ -49,7 +49,7 @@ export default function CardPeek({
 }: {
   /** 並べるカード。**新しい順で渡ってくるので並べ直さない** */
   cards: ShownCard[];
-  /** 日付 → その日の企画。`content/plans.ts` の表 */
+  /** その日の札の表（`lib/cardDays.ts`） */
   planDays: PlanDays;
   /** はじめに出す枚数 */
   first: number;
@@ -65,7 +65,7 @@ export default function CardPeek({
           <CardOne
             key={c.id}
             card={c}
-            plans={planDays[c.day]}
+            plans={briefsOn(planDays, c.day)}
             showName={false}
             onOpen={() => setOpen(c)}
           />
@@ -74,7 +74,7 @@ export default function CardPeek({
       {open && (
         <CardSheet
           group={soloGroup(open)}
-          plans={planDays[open.day]}
+          plans={briefsOn(planDays, open.day)}
           startIcon={open.icon}
           onClose={close}
         />

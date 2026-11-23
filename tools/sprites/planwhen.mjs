@@ -5,8 +5,9 @@
  *
  * 静的書き出しなのでビルドした日の答えが焼かれている（`CLAUDE.md`）。
  * 画面が出てから数え直しているかどうかは、**時計を進めないと分からない。**
- * 見るのは `/next`（企画の一覧）と `/board`（付箋の宛先の棚）の2枚で、
- * どちらも同じ `planPhase` を見ているはずのところ。
+ * 見るのは `/board`（付箋の宛先の棚）。前は `/next`（企画の一覧）も見ていたが、
+ * 企画の面は畳んで `/board` へ 301 にした（#1277）。棚は結んだ企画の日で「これから」と「行ってきた」に分かれる
+ * （`site/content/themes.ts` の `groupOf`）。
  */
 import { chromium } from "playwright-core";
 import { offline } from "./route.mjs";
@@ -43,7 +44,6 @@ for (const iso of DATES) {
   const p = await ctx.newPage();
   console.log(`■ ${iso.slice(0, 10)}`);
   for (const [name, path, sel] of [
-    ["/next  企画の一覧", "/next.html", null],
     ["/board 付箋の棚", "/board.html", null],
   ]) {
     await p.goto(`http://localhost:${SPORT}${path}`, { waitUntil: "load", timeout: 60000 });
