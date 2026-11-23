@@ -264,6 +264,7 @@ PAGES: dict[str, str] = {
     "tirana-airport.ts": "ティラナ空港からバスで市街へ出てきたの記事（/travel/albania/tirana/airport）の、一言と場面のリンク",
     "tirana-hostel.ts": "ティラナのホステルで2回盗まれたの記事（/travel/albania/tirana/hostel）の、一言と場面のリンク",
     "yerevan-sevan.ts": "セヴァン湖に行ってきたの記事（/travel/armenia/yerevan/sevan）の、一言と場面のリンク",
+    "yerevan-bus.ts": "エレバンの市バスに乗ってきたの記事（/travel/armenia/yerevan/bus）の、一言と場面のリンク",
     "sofia-yogurt.ts": "ソフィアで本場のヨーグルトを探してきたの記事（/travel/bulgaria/sofia/yogurt）の、一言と場面のリンク",
     # 国の面の「この国であったこと」に添える1〜2行（焼くのは `python/stream_digest.py`）
     "streamDigest.ts": "配信1本の1〜2行（/travel/<国> の「この国であったこと」）",

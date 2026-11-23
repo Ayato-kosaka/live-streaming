@@ -22,6 +22,7 @@ import { ARTICLE as TIRANA_GJELLTORE } from "./albania/tirana-gjelltore";
 import { ARTICLE as TIRANA_AIRPORT } from "./albania/tirana-airport";
 import { ARTICLE as TIRANA_HOSTEL } from "./albania/tirana-hostel";
 import { ARTICLE as YEREVAN_SEVAN } from "./armenia/yerevan-sevan";
+import { ARTICLE as YEREVAN_BUS } from "./armenia/yerevan-bus";
 
 /**
  * 記事（`/travel/<国>/<街>/<話>`）の中身（焼いたもの）の名簿。鍵は `<国>/<街>/<話>`。
@@ -54,6 +55,7 @@ const ARTICLES: Record<string, GuideArticle> = {
   "albania/tirana/airport": TIRANA_AIRPORT,
   "albania/tirana/hostel": TIRANA_HOSTEL,
   "armenia/yerevan/sevan": YEREVAN_SEVAN,
+  "armenia/yerevan/bus": YEREVAN_BUS,
 };
 
 /** 記事の中身。**無ければ書き出しを止める**（名簿に在るのに中身の無い記事を黙って出さない） */
