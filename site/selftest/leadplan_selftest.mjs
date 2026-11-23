@@ -50,6 +50,8 @@ const CONTENT = join(SITE, "content");
 
 /** 組み立てる本体。**落ちることを確かめる写しだけ、ここを差し替える。** */
 const LEAD_SRC = process.env.LEAD_TS || join(LIB, "leadPlan.ts");
+/** 居場所の引きかた（［いまここ］［つぎ］と名刺の「いま」）。`lib/leadPlan.ts` から分けた（#1278） */
+const STAY_SRC = process.env.STAY_TS || join(LIB, "stayHere.ts");
 
 const BREAK_HINT = `わざと壊して、ここが落ちることを見るには:
 
@@ -59,20 +61,20 @@ const BREAK_HINT = `わざと壊して、ここが落ちることを見るには
   LEAD_TS=/tmp/lead-old.ts node site/selftest/leadplan_selftest.mjs
 
   # 2) 名刺の「いま」を［いまここ］から引かない（前の受け皿の字に戻す）→ 8 が落ちる
-  sed 's|place: stayHere(today, rows)?.place ?? ""|place: "世界のどこか"|' site/lib/leadPlan.ts > /tmp/lead-here.ts
-  LEAD_TS=/tmp/lead-here.ts node site/selftest/leadplan_selftest.mjs
+  sed 's|place: stayHere(today, rows)?.place ?? ""|place: "世界のどこか"|' site/lib/stayHere.ts > /tmp/stay-here.ts
+  STAY_TS=/tmp/stay-here.ts node site/selftest/leadplan_selftest.mjs
 
   # 3) 企画の期間を読まない（始まった日1日で終わる）→ 3 の「期間の中の日に、いま」が落ちる
   sed 's|...(p.range && p.range\\[1\\] > p.date ? { until: p.range\\[1\\] } : {}),||' site/lib/leadPlan.ts > /tmp/lead-range.ts
   LEAD_TS=/tmp/lead-range.ts node site/selftest/leadplan_selftest.mjs
 
   # 4) ［いまここ］を「終わりの空いた行」で引く → 5b の「つぎの行が先に足されても」が落ちる
-  sed 's|const s = pick(open) ?? pick(came);|const s = rows.find((x) => !x.to);|' site/lib/leadPlan.ts > /tmp/lead-open.ts
-  LEAD_TS=/tmp/lead-open.ts node site/selftest/leadplan_selftest.mjs
+  sed 's|const s = pick(open) ?? pick(came);|const s = rows.find((x) => !x.to);|' site/lib/stayHere.ts > /tmp/stay-open.ts
+  STAY_TS=/tmp/stay-open.ts node site/selftest/leadplan_selftest.mjs
 
   # 5) ［いまここ］を日付で閉じる → 5b の「日付が過ぎただけでは消えない」が落ちる
-  sed 's|const s = pick(open) ?? pick(came);|const s = pick(open);|' site/lib/leadPlan.ts > /tmp/lead-close.ts
-  LEAD_TS=/tmp/lead-close.ts node site/selftest/leadplan_selftest.mjs`;
+  sed 's|const s = pick(open) ?? pick(came);|const s = pick(open);|' site/lib/stayHere.ts > /tmp/stay-close.ts
+  STAY_TS=/tmp/stay-close.ts node site/selftest/leadplan_selftest.mjs`;
 
 if (process.argv.includes("--hint")) {
   console.log(BREAK_HINT);
@@ -82,7 +84,7 @@ if (process.argv.includes("--hint")) {
 /* ------------------------------------------------------------------ 組み立て
    本物の木をそのまま組み立てる（`@/…` は tsconfig の paths で引き、require のときに差し替える）。
    **本体は写しを置かずに本物を持ち込む**——写しを置くと、本体を直したのに確かめが古いまま通る。
-   落ちることを確かめる写し（`LEAD_TS`）だけ、1本ずつ組み立て直して差し替える。
+   落ちることを確かめる写し（`LEAD_TS` `STAY_TS`）だけ、1本ずつ組み立て直して差し替える。
    `lib/leadPlan.ts` が滞在の表と国の記録まで読むようになったので（#1276）、
    前の「隣に並べてから組む」形では、並べる本数を足すたびにここが古くなる。 */
 const WORK = mkdtempSync(join(tmpdir(), "leadplan-src-"));
@@ -134,6 +136,7 @@ function swap(src, rel) {
   copyFileSync(join(WORK, `${name}.js`), join(OUT, `${rel}.js`));
 }
 swap(LEAD_SRC, "lib/leadPlan");
+swap(STAY_SRC, "lib/stayHere");
 
 const orig = Module._resolveFilename;
 Module._resolveFilename = function (request, ...rest) {

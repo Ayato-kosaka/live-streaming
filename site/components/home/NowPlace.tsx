@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { BUILT_AT } from "@/lib/builtAt";
-import { hereNow, type HereNow } from "@/lib/leadPlan";
+import { hereNow, type HereNow } from "@/lib/stayHere";
 
 /**
  * 名刺（表紙）と `/about` の「いま ◯◯」。**字は滞在の表、押した先はいまの旅の島**（#1278）。
@@ -30,7 +30,7 @@ import { hereNow, type HereNow } from "@/lib/leadPlan";
  * 画面が出たら今日で引き直し、1分ごとに数え直す（表紙の `NextUp` と同じ拍。
  * 国を移った日に、同じ表紙の上と下が別の国を言わないように）。
  *
- * 引きかたは `lib/leadPlan.ts` の `hereNow`（見張りは `site/selftest/leadplan_selftest.mjs` の 8）。
+ * 引きかたは `lib/stayHere.ts` の `hereNow`（見張りは `site/selftest/leadplan_selftest.mjs` の 8）。
  */
 function useHere(): HereNow {
   const [here, setHere] = useState<HereNow>(() => hereNow(BUILT_AT));
