@@ -425,6 +425,10 @@ def main() -> int:
     names = {c["name"] for c in countries.values()}
     # 街が2つ以上ある滞在は、議事録の場所で街を決める（冒頭の docstring）
     places = read_places()
+    # **0本は「議事録が無い」ではなく「読めていない」**（置き場が動いた・チェックアウトが薄い）。
+    # 黙って題名に戻ると、エレバンの欄が27本から5本へ静かに縮む
+    if not places:
+        raise ValueError(f"議事録の場所の行が1本も読めない（{STREAMS} が無い？）")
     logger.info("議事録・facts の場所の行 %d 本", len(places))
     # 街の欄が0本になると画面は「配信はのこっていない」と言い切る。
     # 本当に0なのか、拾えていないだけなのかは目で見ないと分からないので、必ず残す。

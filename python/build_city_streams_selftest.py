@@ -27,6 +27,8 @@ BigQuery も YouTube も引かない。**この箱で回る。**
 `BREAK=<足>` を当てると、その足を外した形で同じ差し込みを焼く。**対照**として、
 足を外すたびにどれかの判定が落ちることを、ここで毎回確かめる（`docs/island-standards.md` §15）。
 
+議事録の置き場から1本も読めない晩は、題名に戻って焼かずに止まる（ここも毎回当てる）。
+
 最後の「本物の議事録」は、いまあるガイドの記事が引く回を本物の議事録・滞在の表で当てる。
 エレバンの記事（`claude/yerevan-guide`）がセヴァン湖の欄から2本を引き、
 「明日は13時からセヴァン湖」の回はエレバンで撮ったもの、という実物。
@@ -105,7 +107,8 @@ def broken(legs: set[str]):
                                          "last_named", "pick")}
     try:
         if "place" in legs:
-            bcs.read_places = lambda root=None: {}
+            # 空にすると「1本も読めない」の止め金が先に止めるので、どの回にも当たらない1行だけ返す
+            bcs.read_places = lambda root=None: {"（どの回でもない）": "テスト国・ミナト"}
         if "title" in legs:
             bcs.named_in_title = lambda title, cities: []
         if "elsewhere" in legs:
@@ -176,6 +179,24 @@ def run(legs: set[str]) -> list[tuple[str, bool, str]]:
         return judge(bake(Path(td)))
 
 
+def empty() -> list[tuple[str, bool, str]]:
+    """議事録の置き場が空なら、題名に戻って焼かずに止まる（エレバンの欄が27本から5本へ静かに縮む形）。"""
+    with tempfile.TemporaryDirectory() as td:
+        keep = (bcs.STREAMS, bcs.OUT_TS, sys.argv)
+        rows = Path(td) / "rows.json"
+        rows.write_text(json.dumps([{"st": "", "d": "2026-01-02", "video_id": "aaaaaaaaaa1", "title": "x"}]),
+                        encoding="utf-8")
+        try:
+            bcs.STREAMS, bcs.OUT_TS = Path(td) / "streams", Path(td) / "out.ts"
+            sys.argv = ["build_city_streams", "--rows", str(rows)]
+            bcs.main()
+            return [("議事録が1本も読めないときは止まる", False, "焼けてしまった")]
+        except ValueError as e:
+            return [("議事録が1本も読めないときは止まる", "1本も読めない" in str(e), str(e)[:40])]
+        finally:
+            bcs.STREAMS, bcs.OUT_TS, sys.argv = keep
+
+
 def real() -> list[tuple[str, bool, str]]:
     """本物の議事録と滞在の表で、記事が引く回の街を当てる（行は議事録の頭の題名から組む）。"""
     countries = bcs.read_stays()
@@ -226,7 +247,7 @@ def main() -> int:
         # 対照として呼ばれた。足を外した形の結果だけ返す
         return 1 if bad else 0
 
-    bad += show("2. 本物の議事録で、記事が引く回", real())
+    bad += show("2. 本物の議事録で、記事が引く回", real() + empty())
 
     # 3. 対照。足を1本ずつ外して、どれかの判定が落ちること
     print("3. 対照（足を1本ずつ外すと落ちる）")
