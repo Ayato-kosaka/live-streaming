@@ -1,0 +1,602 @@
+{
+  "ja": "イスタンブール",
+  "items": {
+    "guidebook": "python/data/guide/turkey/istanbul/guidebook.json"
+  },
+  "ec2_dir": "/home/ubuntu/chatgpt/istanbul",
+  "style": "editorial",
+  "style_ref": ".claude/skills/chatgpt-image/guide/bulgaria/sofia-style.webp",
+  "scene": "Scene: Istanbul, Turkey, on a clear evening shortly before sunset, in warm, low golden light. Seen from the water across the mouth of the Golden Horn, the long ridge of the old city's hills rises on the far shore and fills the middle of the picture. On the skyline, faithful to the two photos, the great domes and minarets overlap: on the left Hagia Sophia, a huge, heavy, pinkish-ochre building with a wide, low central dome on massive buttresses and four slim pencil-shaped minarets at its corners; a little to the right and behind it the Blue Mosque (Sultan Ahmed Mosque), a soft grey-blue cascade of half-domes and small domes rising to one great central dome, with six slender white pencil minarets. Around and below them, the pale old houses, cypresses and trees of the hillside step down to the shore in soft warm haze. The lower part of the picture is the wide, calm sea, softly reflecting the warm sky and the domes in long gold ripples; one white Istanbul passenger ferry with a dark funnel crosses the water in the middle distance on the right side, with a few seagulls above it. Keep the lowest fifth of the picture open, calm water with nothing in it. A calm, simple pale apricot and soft blue evening sky fills the upper part.",
+  "title": {
+    "name": "イスタンブール",
+    "label": "観光ガイド",
+    "catch": "「文明の十字路」と称えられた街",
+    "kicker": "トルコ"
+  },
+  "cover": {
+    "v": 1,
+    "bias": 0.5,
+    "file": "イスタンブール-観光ガイド",
+    "title": {
+      "x": 0.04,
+      "y": 0.955,
+      "anchor": "bl",
+      "scale": 0.8
+    },
+    "alt": "夕方の海ごしに見る、アヤソフィアとブルーモスクの丸屋根とミナレットが重なる旧市街の丘。手前の海を渡る白い連絡船。イスタンブールの絵",
+    "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。アヤソフィアとブルーモスクは写真を形の手本として渡した（写真のふりはさせない）。下は海、上は空。3:2 で描かせて 16:9 に切った。字なし",
+    "photos": [
+      "site/public/guide/turkey/istanbul/photos/hagia-sophia-mars-2013-22d15ac0-500.webp",
+      "site/public/guide/turkey/istanbul/photos/exterior-of-sultan-ahmed-i-mosqu-e4c4690b-500.webp"
+    ]
+  },
+  "cover_tall": {
+    "v": 1,
+    "bias": 0.5,
+    "file": "イスタンブール-観光ガイド-縦",
+    "title": {
+      "x": 0.5,
+      "y": 0.955,
+      "anchor": "bc",
+      "scale": 1.1
+    },
+    "alt": "夕方の海ごしに見る、アヤソフィアとブルーモスクの丸屋根とミナレット。海を渡る白い連絡船。イスタンブールの絵",
+    "note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+    "photos": [
+      "site/public/guide/turkey/istanbul/photos/hagia-sophia-mars-2013-22d15ac0-500.webp",
+      "site/public/guide/turkey/istanbul/photos/exterior-of-sultan-ahmed-i-mosqu-e4c4690b-500.webp"
+    ]
+  },
+  "areamap": {
+    "v": 1,
+    "layout": "layout1.png",
+    "file": "イスタンブール-見どころマップ-地区分け",
+    "ratio": 0.8,
+    "sizes": [
+      1200,
+      800
+    ],
+    "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: every shoreline, all of the water, the parks, the main roads and the three district colors must stay where they are in the layout, and each landmark sits exactly on its numbered dot. Hagia Sophia (1) and the Blue Mosque (2) stand close together side by side at the eastern tip of the old city peninsula in the yellow district at the lower left; the Grand Bazaar (3) is a little to the west of them; the Galata Bridge (4) crosses the mouth of the Golden Horn; the Galata Tower (5) and the red tram (6) are in the lavender district at the top; the Maiden's Tower (7) stands in the water just off the Asian shore on the right; the Kadıköy ferry pier (8) is on the Asian shore at the lower right. Keep every icon small so that it fits on its own dot and does not cover its neighbours. Leave the middle of each district calm and empty (only the wash and the roads): names will be placed there later. ",
+    "prompt": "Paint an illustrated sightseeing map of central Istanbul, Turkey, as a tall portrait image (2:3, 1024x1536), using the attached layout as the exact base. North is up. Keep every shoreline, all of the water, the green parks, the main roads and the three colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove shores or districts. The layout has very many small streets: simplify them into a light, sparse network of the main roads only. This is a calm, clean picture map: do NOT draw any houses, buildings, rooftops, trees, people, cars or other boats. The land between the roads stays flat warm cream paper with a faint watercolor texture; parks are flat soft green watercolor washes; the water (the narrow Golden Horn inlet between the old city and Beyoğlu, the wide Bosphorus strait running down the right between Europe and Asia, and the Sea of Marmara across the bottom) is broad, calm, soft blue watercolor water and takes up a large part of the picture; roads are clean cream-white ribbons. Paint the three districts as flat translucent watercolor washes in their own colors from the layout (warm yellow for the old city peninsula at the lower left, soft lavender for Beyoğlu across the Golden Horn at the top, soft pink for the Asian side across the Bosphorus on the right), with gently darker soft edges, so the roads inside them stay visible. At each numbered dark dot in the layout, draw ONE small cute illustrated landmark (about 6% of the image width; Hagia Sophia and the Blue Mosque may be about 8%), standing exactly on its dot with a soft contact shadow; do NOT draw the numbers or the dots themselves: 1 Hagia Sophia (a huge pinkish-ochre building with a wide low central dome on heavy buttresses and four slim pencil minarets at its corners); 2 the Blue Mosque (a grey-blue cascade of small domes rising to one big central dome, with six slender white pencil minarets); 3 the Grand Bazaar (a long low covered market hall with rows of many small lead-grey domes and an arched gateway); 4 the Galata Bridge (a short, low, flat bridge over the water with a row of tiny fishing rods along its rail); 5 the Galata Tower (a tall round stone tower with a pointed grey cone roof); 6 the nostalgic tram of İstiklal Avenue (one small old-fashioned red-and-cream tram car); 7 the Maiden's Tower (a small white tower with a lead-grey cone roof on a tiny islet in the water); 8 the Kadıköy ferry pier (a small pale pier building with a little clock tower and one tiny white ferry beside it). These eight landmarks are the only drawn objects on the map.",
+    "alt": "イスタンブールの見どころマップ（地区分け）。旧市街・ベイオール・アジア側の3つの地区を色で分け、名前を書いた絵地図。アヤソフィア・ブルーモスク・グランドバザール・ガラタ橋・ガラタ塔・イスティクラル通りのトラム・乙女の塔・カドゥキョイの船着き場の目印の絵と名前つき",
+    "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・海・公園・3つの地区の色・目印8か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。ボスポラス海峡の北・バラット・プリンスィズ諸島は地図の外（矢印）",
+    "bbox": {
+      "west": 28.952,
+      "east": 29.034,
+      "south": 40.97,
+      "north": 41.063
+    },
+    "districts": [
+      {
+        "id": "oldcity",
+        "color": "#ffd98a",
+        "poly": [
+          [
+            41.0195,
+            28.956
+          ],
+          [
+            41.0195,
+            28.976
+          ],
+          [
+            41.0165,
+            28.988
+          ],
+          [
+            41.008,
+            28.987
+          ],
+          [
+            41.003,
+            28.978
+          ],
+          [
+            41.006,
+            28.956
+          ]
+        ]
+      },
+      {
+        "id": "beyoglu",
+        "color": "#d9ccf5",
+        "poly": [
+          [
+            41.04,
+            28.982
+          ],
+          [
+            41.04,
+            28.988
+          ],
+          [
+            41.034,
+            28.99
+          ],
+          [
+            41.024,
+            28.983
+          ],
+          [
+            41.023,
+            28.972
+          ],
+          [
+            41.029,
+            28.97
+          ]
+        ]
+      },
+      {
+        "id": "asian",
+        "color": "#ffc4d2",
+        "poly": [
+          [
+            41.028,
+            29.013
+          ],
+          [
+            41.028,
+            29.02
+          ],
+          [
+            41.0,
+            29.035
+          ],
+          [
+            40.985,
+            29.032
+          ],
+          [
+            40.986,
+            29.024
+          ],
+          [
+            40.996,
+            29.019
+          ],
+          [
+            41.012,
+            29.013
+          ]
+        ]
+      }
+    ],
+    "marks": [
+      {
+        "n": 1,
+        "what": "アヤソフィア",
+        "lat": 41.008505,
+        "lon": 28.980011
+      },
+      {
+        "n": 2,
+        "what": "スルタンアフメット・モスク（ブルーモスク）",
+        "lat": 41.005409,
+        "lon": 28.976813
+      },
+      {
+        "n": 3,
+        "what": "グランドバザール",
+        "lat": 41.010954,
+        "lon": 28.968022
+      },
+      {
+        "n": 4,
+        "what": "ガラタ橋",
+        "lat": 41.0198,
+        "lon": 28.9733
+      },
+      {
+        "n": 5,
+        "what": "ガラタ塔",
+        "lat": 41.025641,
+        "lon": 28.974213
+      },
+      {
+        "n": 6,
+        "what": "イスティクラル通りの赤いトラム",
+        "lat": 41.0336,
+        "lon": 28.9778
+      },
+      {
+        "n": 7,
+        "what": "乙女の塔",
+        "lat": 41.021049,
+        "lon": 29.004132
+      },
+      {
+        "n": 8,
+        "what": "カドゥキョイの船着き場",
+        "lat": 40.992908,
+        "lon": 29.022868
+      }
+    ],
+    "title": {
+      "name": "イスタンブール",
+      "label": "見どころマップ"
+    },
+    "names": [
+      {
+        "id": "ayasofya",
+        "label": [
+          "アヤソフィア"
+        ],
+        "x": 0.42,
+        "y": 0.6
+      },
+      {
+        "id": "blue",
+        "label": [
+          "ブルーモスク"
+        ],
+        "x": 0.3,
+        "y": 0.68
+      },
+      {
+        "id": "bazaar",
+        "label": [
+          "グランドバザール"
+        ],
+        "x": 0.2,
+        "y": 0.58
+      },
+      {
+        "id": "galatabridge",
+        "label": [
+          "ガラタ橋"
+        ],
+        "x": 0.18,
+        "y": 0.44
+      },
+      {
+        "id": "galata",
+        "label": [
+          "ガラタ塔"
+        ],
+        "x": 0.42,
+        "y": 0.4
+      },
+      {
+        "id": "istiklal",
+        "label": [
+          "イスティクラル通り"
+        ],
+        "x": 0.48,
+        "y": 0.27
+      },
+      {
+        "id": "maiden",
+        "label": [
+          "乙女の塔"
+        ],
+        "x": 0.75,
+        "y": 0.42
+      },
+      {
+        "id": "kadikoy",
+        "label": [
+          "カドゥキョイ"
+        ],
+        "x": 0.82,
+        "y": 0.86
+      }
+    ],
+    "areas": [
+      {
+        "id": "oldcity",
+        "name": "旧市街",
+        "label": [
+          "旧市街"
+        ],
+        "local": "Sultanahmet / Fatih",
+        "color": "#ffd98a",
+        "x": 0.2,
+        "y": 0.66,
+        "source": [
+          "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+          "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB"
+        ]
+      },
+      {
+        "id": "beyoglu",
+        "name": "ベイオール",
+        "label": [
+          "ベイオール"
+        ],
+        "local": "Beyoğlu",
+        "color": "#d9ccf5",
+        "x": 0.3,
+        "y": 0.3,
+        "source": [
+          "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+          "https://en.wikivoyage.org/wiki/Istanbul/Galata"
+        ]
+      },
+      {
+        "id": "asian",
+        "name": "アジア側",
+        "label": [
+          "アジア側"
+        ],
+        "local": "Anadolu Yakası",
+        "color": "#ffc4d2",
+        "x": 0.85,
+        "y": 0.62,
+        "source": [
+          "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+          "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+          "https://en.wikipedia.org/wiki/Maiden%27s_Tower"
+        ]
+      }
+    ],
+    "beyond": [
+      {
+        "id": "dolmabahce",
+        "name": "ドルマバフチェ宮殿・ボスポラス海峡",
+        "local": "Dolmabahçe Sarayı / Boğaziçi",
+        "lat": 41.039167,
+        "lon": 29.000556,
+        "source": [
+          "https://en.wikipedia.org/wiki/Dolmabah%C3%A7e_Palace"
+        ],
+        "x": 0.8,
+        "y": 0.1,
+        "dir": "ne"
+      },
+      {
+        "id": "balat",
+        "name": "バラット・ピエール・ロティの丘",
+        "local": "Balat / Pierre Loti Tepesi",
+        "lat": 41.0295,
+        "lon": 28.9487,
+        "source": [
+          "https://en.wikivoyage.org/wiki/Istanbul/Golden_Horn"
+        ],
+        "x": 0.1,
+        "y": 0.2,
+        "dir": "nw"
+      },
+      {
+        "id": "islands",
+        "name": "プリンスィズ諸島",
+        "local": "Adalar",
+        "lat": 40.8578,
+        "lon": 29.12,
+        "source": [
+          "https://en.wikipedia.org/wiki/Princes%27_Islands"
+        ],
+        "x": 0.85,
+        "y": 0.95,
+        "dir": "se"
+      }
+    ],
+    "base": {
+      "by": "© OpenStreetMap contributors",
+      "licence": "https://www.openstreetmap.org/copyright"
+    }
+  },
+  "food": {
+    "model": "bulgaria/sofia:food-shopska-salata",
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし",
+    "items": {
+      "doner": {
+        "desc": "Turkish döner dürüm: a thick wrap of thin lavaş flatbread rolled tightly around shaved, juicy, browned döner meat with sliced tomato, onion with red sumac and parsley, cut in half on a plain plate so that the filling shows, with two small pickled green peppers beside it.",
+        "alt": "削いだ肉を薄いパンで巻いたドネル・ケバブのデュリュム"
+      },
+      "iskender": {
+        "desc": "Turkish İskender kebab: thin slices of döner meat laid over small cubes of pide bread on a plain oval plate, covered with glossy red tomato sauce and a drizzle of golden melted butter, with a big spoonful of thick white yogurt on the side, one grilled tomato and one long grilled green pepper.",
+        "alt": "パンの上の薄い肉に、トマトのソースと溶かしバター。横にヨーグルトのイスケンデル・ケバブ"
+      },
+      "adana": {
+        "desc": "Turkish Adana kebab: two long, flat, hand-shaped kebabs of spicy minced lamb (reddish brown with dark grill marks, about 25 cm long) lying on a thin lavaş flatbread on a plain plate (the meat already slid off the skewers, no skewers in the picture), with one charred grilled tomato, two charred long green peppers and a little heap of sliced red onion with sumac and parsley.",
+        "alt": "細長いひき肉のアダナ・ケバブに、焼いたトマトと青唐辛子"
+      },
+      "kofte": {
+        "desc": "Turkish köfte: five or six small, oval, flat grilled meatballs with dark grill marks on a plain plate, beside a small bowl of piyaz (white bean salad with thin slices of red onion, chopped parsley and quarters of boiled egg), and one grilled long green pepper.",
+        "alt": "焼いた小判形のキョフテと、白いんげんのサラダ"
+      },
+      "lahmacun": {
+        "desc": "Turkish lahmacun: one large, very thin round flatbread (about 30 cm across) with a thin layer of red spiced minced-meat topping baked on, crisp and lightly charred at the edges, on a plain round plate, with three wedges of lemon and a small bunch of fresh flat-leaf parsley beside it.",
+        "alt": "ひき肉を薄くのせた丸いラフマジュンに、レモンとパセリ"
+      },
+      "pide": {
+        "desc": "Turkish pide bread: one large, round, flat loaf of soft Turkish pide (about 30 cm across), golden-brown and glossy on top with a lattice of finger-pressed dimples, sprinkled with black nigella seeds and white sesame, on a plain wooden board, with one piece torn off beside it showing the soft white crumb.",
+        "alt": "ごまと黒いニゲラの種をのせた、平たく丸いピデ"
+      },
+      "manti": {
+        "desc": "Turkish mantı: a shallow plain bowl full of tiny folded dumplings (each smaller than a fingertip), covered with white garlic yogurt and drizzled with glossy red butter sauce with paprika, sprinkled with dried mint and red pepper flakes.",
+        "alt": "小さなマントゥに、ヨーグルトと赤いバターのソース"
+      },
+      "sarma": {
+        "desc": "Turkish yaprak sarma: ten or twelve thin, finger-sized rolls of dark-green grape leaves stuffed with rice, glossy with olive oil, lined up neatly on a plain oval plate, with two wedges of lemon.",
+        "alt": "ぶどうの葉で細く巻いたヤプラック・サルマ"
+      },
+      "mercimek": {
+        "desc": "Turkish mercimek çorbası: a deep plain bowl of smooth, creamy orange red-lentil soup, drizzled on top with a swirl of red paprika butter and a pinch of dried mint, with two wedges of lemon and a piece of bread beside it.",
+        "alt": "オレンジ色のレンズ豆のスープ、メルジメッキ・チョルバス。レモンを添えて"
+      },
+      "kahvalti": {
+        "desc": "A Turkish breakfast (kahvaltı) seen from above: many small plain dishes spread over the table — white cheese, yellow kaşar cheese, black and green olives, sliced tomatoes and cucumbers, honey with clotted cream (kaymak), cherry jam, a boiled egg, a small pan of menemen (scrambled eggs with tomato and peppers) — with a sesame simit, and one small tulip-shaped glass of deep red tea on a small saucer.",
+        "alt": "小皿がたくさん並ぶトルコの朝ごはん、カフヴァルトゥ。チューリップ形のグラスの紅茶"
+      },
+      "balik-ekmek": {
+        "desc": "Turkish balık ekmek: a half loaf of crusty white bread split open and filled with a whole grilled mackerel fillet (silvery skin, browned), thinly sliced red onion and green lettuce, lying on a plain plate, with a wedge of lemon and a small shaker of red pepper flakes.",
+        "alt": "焼いたサバと玉ねぎ・葉野菜を挟んだサバサンド"
+      },
+      "midye": {
+        "desc": "Turkish midye dolma: eight or nine black mussels on a plain plate, each shell opened and filled with spiced rice (studded with currants and pine nuts), arranged in a circle, with two wedges of lemon in the middle; one shell is opened flat to show the stuffing.",
+        "alt": "殻にごはんを詰めたミディエ・ドルマに、レモン"
+      },
+      "simit": {
+        "desc": "Turkish simit: two or three big, thin, ring-shaped breads (about 15 cm across) with a crisp dark-golden crust thickly covered with toasted sesame seeds, stacked loosely on a plain plate, one broken in half to show the soft inside.",
+        "alt": "ごまをまぶした輪の形のパン、スィミット"
+      },
+      "kumpir": {
+        "desc": "Turkish kumpir: one huge baked potato split open in its foil wrapping on a plain plate, the inside mashed with butter and melted kaşar cheese, piled high with many colorful toppings in small heaps — sweetcorn, green and black olives, red pickled cabbage, chopped pickles, peas, sliced sausage and a squiggle of mayonnaise and ketchup.",
+        "alt": "割った焼きじゃがいもに色とりどりの具をのせたクンピル"
+      },
+      "islak": {
+        "desc": "Turkish ıslak hamburger (wet burger): six small, soft, round burger buns soaked glossy and orange-red with a garlicky tomato sauce, packed tightly side by side in a small steaming glass display box with a metal frame; one burger lifted out onto a small plain plate in front.",
+        "alt": "ソースでしっとりした小さなハンバーガーが並ぶ、ガラスのケース"
+      },
+      "baklava": {
+        "desc": "Turkish baklava: eight square pieces of baklava arranged on a plain plate, each made of many paper-thin golden flaky pastry layers glistening with syrup, topped with bright green ground pistachio; one piece cut so the layers show from the side.",
+        "alt": "緑のピスタチオをのせた、四角いバクラヴァ"
+      },
+      "lokum": {
+        "desc": "Turkish delight (lokum): a small heap of soft cubes in several pastel colors (rose pink, pale yellow, white, light green) dusted all over with white powdered sugar, on a small plain plate, a few cut open to show pistachios inside.",
+        "alt": "粉砂糖をまぶした、色とりどりの四角いロクム"
+      },
+      "kunefe": {
+        "desc": "Turkish künefe: one round, flat, golden-orange pastry of crisp shredded kadayıf threads baked with soft white cheese inside, glistening with syrup, in a small round copper pan, sprinkled with bright green chopped pistachio; a wedge lifted out shows the cheese stretching.",
+        "alt": "細い糸の生地でチーズを挟んで焼いたキュネフェに、刻んだピスタチオ"
+      },
+      "dondurma": {
+        "desc": "Turkish dondurma: one crisp waffle cone holding a large, thick, slightly glossy scoop of white stretchy Turkish ice cream, standing upright in a simple metal cone holder on the table, with a few crushed pistachios on top.",
+        "alt": "コーンにのった白いトルコのアイス、ドンドゥルマ"
+      },
+      "sutlac": {
+        "desc": "Turkish fırın sütlaç: one small round brown unglazed earthenware bowl of creamy white rice pudding with a burnt, caramelized golden-brown top, a little ground cinnamon dusted on one side, and a teaspoon beside it.",
+        "alt": "表面を焼いた素焼きの器のライスプディング、スュトラッチ"
+      },
+      "cay": {
+        "desc": "Turkish tea: one small, clear, tulip-shaped tea glass full of deep ruby-red tea on a small round saucer with a tiny spoon and two sugar cubes, and beside it a double-stacked Turkish teapot (çaydanlık).",
+        "alt": "受け皿にのったチューリップ形のグラスの紅茶と、角砂糖"
+      },
+      "kahve": {
+        "desc": "Turkish coffee: one small white porcelain cup with a tiny handle, full of dark coffee with a thick light-brown foam on top, on a small saucer, with a small glass of water and one cube of Turkish delight beside it.",
+        "alt": "小さなカップのトルココーヒーと、水のグラス"
+      },
+      "ayran": {
+        "desc": "Turkish ayran: one tall glass of cold white yogurt drink with a thick frothy foam head overflowing a little at the rim, on the table, with a small copper cup beside it.",
+        "alt": "泡の立った白いヨーグルトの飲み物、アイラン"
+      },
+      "boza": {
+        "desc": "Turkish boza: one plain glass of thick, creamy, pale yellow-beige fermented millet drink, dusted with ground cinnamon on top, with a small dish of roasted chickpeas (leblebi) beside it.",
+        "alt": "シナモンを振った、とろりとした黄色い飲み物のボザ"
+      },
+      "salep": {
+        "desc": "Turkish salep: one plain cup of hot, thick, creamy white milk drink with a little steam rising, dusted with ground cinnamon on top, on a small saucer.",
+        "alt": "シナモンを振った、湯気の立つ白い飲み物のサーレプ"
+      },
+      "raki": {
+        "desc": "Turkish rakı: one tall slim glass of rakı turned milky white after adding water, a second tall slim glass of water beside it, and a small glass water carafe, with a small plate of white cheese and melon cubes; no bottle.",
+        "alt": "水を足して白く濁ったラクの細長いグラスと、水の瓶"
+      }
+    }
+  },
+  "buy": {
+    "model": "bulgaria/sofia:buy-rose-oil",
+    "note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムとペシテマルは品そのもの）。瓶・袋・箱は字なし",
+    "items": {
+      "lokum": {
+        "desc": "A gift box of Turkish delight (lokum): an open shallow rectangular box with NO label or letters, neatly filled with rows of soft pastel-colored cubes (rose pink, white, pale green) dusted with white powdered sugar, its plain lid leaning beside it.",
+        "alt": "粉砂糖をまぶしたロクムを詰めた、お土産の箱"
+      },
+      "akide": {
+        "desc": "Turkish akide şekeri: one clear glass jar with a glass lid and NO label, filled with small glossy hard candies in many bright colors (red, yellow, green, white with stripes), a few candies spilled on the table in front.",
+        "alt": "色とりどりの小さな飴、アキデ・シェケリを入れたガラスの瓶"
+      },
+      "kahve": {
+        "desc": "Turkish coffee to take home: one plain brown paper bag of very finely ground coffee with NO label, folded open to show the fine powder, and beside it a small copper cezve (a little long-handled coffee pot) and a small coffee cup.",
+        "alt": "トルココーヒーの粉の袋と、柄の長い小さな鍋"
+      },
+      "baklava": {
+        "desc": "A take-home box of baklava: an open flat cardboard tray box with NO label or letters, neatly packed with rows of small square and rolled baklava pieces, golden and glistening, topped with bright green pistachio.",
+        "alt": "バクラヴァをきれいに並べて詰めた持ち帰りの箱"
+      },
+      "cay": {
+        "desc": "Turkish black tea to take home: one plain kraft-paper bag of loose black tea leaves with NO label, open at the top to show the dark leaves, and beside it one empty clear tulip-shaped tea glass on a small saucer.",
+        "alt": "紅茶の茶葉の袋と、チューリップ形のグラス"
+      },
+      "spice": {
+        "desc": "Turkish spices and dried fruit: several small, neat, cone-shaped heaps of colorful ground spices in small plain bowls (deep red pul biber, dark red sumac, bright yellow turmeric, green dried mint), beside a small pile of dried golden apricots and dried figs.",
+        "alt": "山に盛った色とりどりのスパイスと、干したあんずといちじく"
+      },
+      "kilim": {
+        "fix": "The kilim itself is the subject and the only textile in the picture; nothing under it. ",
+        "desc": "A Turkish kilim: one flat-woven rug folded into a neat stack on the table, showing bold geometric patterns (diamonds and hooked motifs) in deep red, navy blue, cream and a little ochre, with short fringe at one end.",
+        "alt": "赤と紺の幾何学の模様の、平織りのキリム"
+      },
+      "pestemal": {
+        "fix": "The peshtemals themselves are the subject and the only textile in the picture; nothing under them. ",
+        "desc": "Turkish peştemal hammam towels: three thin, flat-woven cotton towels folded and stacked, each with simple stripes in a different color (turquoise and white, red and white, grey and white), with knotted fringes at the ends.",
+        "alt": "縞模様の薄い綿の布、ペシテマルを畳んで重ねて"
+      },
+      "iznik": {
+        "desc": "An İznik-style ceramic plate: one round white plate standing upright, hand-painted with flowing tulips, carnations and leaves in cobalt blue, turquoise, bright tomato red and green, with a small matching bowl in front.",
+        "alt": "青と赤の花の模様を描いた白地の皿"
+      },
+      "raki": {
+        "desc": "One tall, slim, clear glass bottle of rakı with NO label (the liquor is colorless and clear), with one tall slim empty glass beside it.",
+        "alt": "透明な酒、ラクの細長い瓶"
+      }
+    }
+  },
+  "do": {
+    "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。ボスポラス海峡の岸・グランドバザール・地下宮殿・乙女の塔・プリンスィズ諸島・スレイマニエ・モスクは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+    "shape": "card43",
+    "items": {
+      "bosphorus": {
+        "ja": "ボスポラス海峡クルーズ",
+        "desc": "a cruise on the Bosphorus strait in Istanbul; the wide strait and its shores are the hero. Composition: from the open upper deck at the stern of a white passenger ferry, looking ahead up the broad blue strait; one small person seen from behind leans on the white railing in the lower left foreground. On the left shore, a white baroque waterfront mosque with two slim minarets and a long row of pale waterfront mansions; further on, on a green hillside, the grey stone towers and walls of an old fortress; across the strait in the distance, a huge, long suspension bridge spans from shore to shore. Light: bright late-morning sun, crisp and clear, with sparkling water. Palette: deep sapphire and turquoise water, white, warm stone grey and fresh green hills.",
+        "alt": "連絡船の甲板から見る、岸のモスクと丘の上の城塞、海峡に架かる大きな吊り橋。手すりにもたれる小さな後ろ姿の絵",
+        "photos": [
+          "site/public/guide/turkey/istanbul/photos/ortakoy-mosque-and-bosphorus-bri-2fbfcb03-500.webp",
+          "site/public/guide/turkey/istanbul/photos/rumelihisar-8393629929-edf287c2-500.webp"
+        ]
+      },
+      "hammam": {
+        "ja": "ハマムでアカスリ",
+        "desc": "a traditional Turkish bath (hammam) in Istanbul; the warm marble room and the light are the hero. Composition: inside a round, domed hot room of pale veined marble, seen at eye level; in the middle, a large raised octagonal marble platform (the göbek taşı), warm and wet; around the walls, small marble basins with brass taps and arched niches. The dome above is pierced by many small star-shaped and round glass openings, and soft shafts of daylight fall through the rising steam onto the marble. One small person seen from behind, wrapped from the waist in a plain striped cloth, sits at the edge of the platform. Light: hazy, soft beams of daylight through thick steam. Palette: warm ivory and honey marble, pale gold light, soft aqua-grey shadows.",
+        "alt": "丸屋根の天窓から光が差す、湯気の立つ大理石の浴場。中央の温めた大理石の台に座る小さな人影の絵"
+      },
+      "bazaar": {
+        "ja": "グランドバザールでお土産探し",
+        "desc": "shopping in the Grand Bazaar (Kapalıçarşı) in Istanbul; the long vaulted market street is the hero. Composition: a deep one-point perspective down a long covered street under a high arched, painted ceiling with cream and pale blue patterns, faithful to the photo; dozens of colorful mosaic glass lamps hang from the ceiling and glow; on both sides, small shops spill out with stacks of painted ceramic bowls, copper pots, piles of folded patterned textiles and glittering lamps. In the middle of the street, one small person seen from behind walks away from us, looking at the shops. Light: dim and warm, lit by the glowing lamps, with a little cool daylight from small windows high above. Palette: jewel tones of ruby, amber and turquoise glass, warm gold, cream and soft blue ceiling.",
+        "alt": "色ガラスのランプが下がる、アーチの天井が続くグランドバザールの通り。店先を歩く小さな後ろ姿の絵",
+        "photos": [
+          "site/public/guide/turkey/istanbul/photos/istanbul-grand-bazaar-5510599079-0714fe93-500.webp"
+        ]
+      },
+      "balik": {
+        "ja": "エミノニュでサバサンド",
+        "desc": "eating a grilled-mackerel sandwich (balık ekmek) by the water at Eminönü in Istanbul; the sandwich in the hand is the hero. Composition: a close view at the water's edge: in the lower foreground, one hand holds up a half loaf of crusty bread filled with a grilled mackerel fillet, sliced red onion and green lettuce, partly wrapped in plain paper. Behind it, slightly out of focus, the blue water of the Golden Horn with a few seagulls, and on the hill across the water the great domes and four slender minarets of a big Ottoman mosque, faithful to the photo, on the skyline. Light: warm late-afternoon sun from the side, glinting on the water. Palette: warm golden bread and silvery fish, deep teal water, soft lilac-grey hills and pale sky.",
+        "alt": "岸で手に持った、焼いたサバと野菜を挟んだサバサンド。うしろに金角湾と丘の上のモスクの丸屋根の絵",
+        "photos": [
+          "site/public/guide/turkey/istanbul/photos/suleymaniye-mosque-february-2013-620e8f2c-500.webp"
+        ]
+      },
+      "cistern": {
+        "ja": "地下宮殿のメドゥーサ",
+        "desc": "a visit to the Basilica Cistern underground in Istanbul; the forest of columns in the dark is the hero. Composition: a vast, dim underground hall with rows and rows of tall marble columns under brick arches, receding into darkness, each standing in still, shallow, mirror-like water that reflects them; in the foreground on the right, at the base of a column, a huge carved stone Medusa head lies sideways, faithful to the photo, half in the water. A raised wooden walkway with a low rail runs along the left, and one small person seen from behind stands on it, looking at the head. Light: dark, with warm amber spotlights at the base of the columns and soft reflections in the water. Palette: deep umber and charcoal shadows, warm amber and copper light, cool teal reflections.",
+        "alt": "水面に映る大理石の柱の列が暗がりの奥まで続く地下宮殿。横向きのメドゥーサの顔の石と、木の通路に立つ小さな人の絵",
+        "photos": [
+          "site/public/guide/turkey/istanbul/photos/basilica-cistern-medusa-head-bf685db1-500.webp"
+        ]
+      },
+      "ferry": {
+        "ja": "フェリーでアジア側へ",
+        "desc": "crossing to the Asian side by ferry in Istanbul; the open water, the gulls and the far shore are the hero. Composition: from the side of a passenger ferry, a white railing runs diagonally across the lower foreground, and many white seagulls fly close alongside, wings spread. Beyond the choppy blue water, on the far shore, the soft hills of the Asian side with pale houses, and on a tiny islet just off the shore the small white Maiden's Tower with its grey cone roof, faithful to the photo, small in the distance. One hand rests on the railing at the lower right, holding a small tulip-shaped glass of tea. Light: soft, slightly hazy afternoon light with sun glitter on the waves. Palette: cool aqua and steel blue, white gulls, warm sandy hills.",
+        "alt": "連絡船の手すりと、並んで飛ぶカモメ。向こう岸の丘の街並みと、小さく見える乙女の塔の絵",
+        "photos": [
+          "site/public/guide/turkey/istanbul/photos/maiden-tower-istanbul-p1100204-201b077c-500.webp"
+        ]
+      },
+      "kebab": {
+        "ja": "本場のケバブ",
+        "desc": "eating real kebab at a traditional kebab restaurant in Istanbul; the food and the craft are the hero. Composition: in the upper left background, a tall vertical rotating spit of stacked, browned meat glowing in front of the red-hot grill, and the hands of a cook (only his white sleeves and hands) shaving thin slices off it with a long knife. In the lower right foreground, on a plain plate on a dark wooden table, a plate of İskender kebab: thin slices of meat over cubes of bread, glossy red tomato sauce, a drizzle of melted butter and a big spoonful of white yogurt beside it. Light: warm, glowing orange light from the grill, the rest of the room dim. Palette: deep amber, rich brown and tomato red, with creamy white yogurt.",
+        "alt": "縦の串で焼いた肉を職人が削ぐ手元と、皿のイスケンデル・ケバブの絵"
+      },
+      "islands": {
+        "ja": "プリンスィズ諸島へ日帰り",
+        "desc": "a day trip to the Princes' Islands (Büyükada) off Istanbul; the quiet island lane is the hero. Composition: a gently climbing lane under tall umbrella pines, lined with large old wooden Ottoman mansions with white and pastel painted walls, wooden balconies and gardens with bougainvillea, faithful to the photo; on the left, between the pines, a glimpse of the blue sea and, far away on the horizon, the long faint silhouette of the big city. One small person seen from behind walks up the lane, with a bicycle leaning against a garden wall. No cars. Light: warm, dappled early-afternoon sun through the pines. Palette: deep pine green, sea blue, pastel white and pink of the houses, warm sandy lane.",
+        "alt": "松の丘に古い木造の屋敷が並ぶ島の坂道。海の向こうに大きな街の影と、坂を歩く小さな後ろ姿の絵",
+        "photos": [
+          "site/public/guide/turkey/istanbul/photos/buyukada-of-prince-islands-in-is-16b2dd86-500.webp"
+        ]
+      }
+    }
+  }
+}
