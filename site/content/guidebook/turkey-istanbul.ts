@@ -1791,7 +1791,14 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
     "maps": "https://www.google.com/maps/search/?api=1&query=B%C3%BCy%C3%BCkada+%C4%B0stanbul&hl=ja",
     "km": 21
    }
-  ]
+  ],
+  "map": {
+   "mid": "18_UNS6v0rRg0ZCyiuwNh7kq2rYbEhew",
+   "title": "イスタンブール｜見たいもの",
+   "ll": "41.0155,28.9840",
+   "z": 13,
+   "pins": 23
+  }
  },
  "eat": {
   "kinds": [
@@ -2728,7 +2735,14 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
     ],
     "roman": "Vefa Bozacısı"
    }
-  ]
+  ],
+  "map": {
+   "mid": "1pqWgs0E7ORjHve2u05CQ71URWEfc6Ag",
+   "title": "イスタンブール｜食べたいもの",
+   "ll": "41.0209,28.9918",
+   "z": 12,
+   "pins": 9
+  }
  },
  "buy": {
   "items": [
@@ -3047,7 +3061,14 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
     "roman": "Kurukahveci Mehmet Efendi",
     "km": 4.3
    }
-  ]
+  ],
+  "map": {
+   "mid": "1xfkj6Rp9txoSsF0NNij7dPqYCZeuP-M",
+   "title": "イスタンブール｜買いたいもの",
+   "ll": "41.0079,28.9993",
+   "z": 12,
+   "pins": 4
+  }
  },
  "videos": {
   "streams": {
@@ -3700,6 +3721,6 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-24",
- "hash": "068363b077076f10"
+ "hash": "9076fc9b87d0e811"
 }
 /* END GUIDE */;
