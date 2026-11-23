@@ -43,8 +43,8 @@ export const CITIES: CityRow[] = [
   { country: "serbia", slug: "belgrade", name: "ベオグラード" },
   /* 行った街（2026-09-28〜10-11）。2026-11-23 に、運営が本番の390幅・型の数・記事を見て公開前の印を外した */
   { country: "albania", slug: "tirana", name: "ティラナ" },
-  /* 行った街（2025-03-30〜04-13）。過ぎた国なので付箋と島の板は無い。noindex のまま出して、運営が確かめてから外す */
-  { country: "turkey", slug: "istanbul", name: "イスタンブール", draft: true },
+  /* 行った街（2025-03-30〜04-13）。過ぎた国なので付箋と島の板は無い。運営が本番の390幅・型の数・見張りを見て公開前の印を外した */
+  { country: "turkey", slug: "istanbul", name: "イスタンブール" },
 ];
 
 /** 名簿の街。無ければ `undefined` */

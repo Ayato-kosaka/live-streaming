@@ -1085,6 +1085,7 @@ PRESETS = {
         "jsonld:/travel/serbia/belgrade=Article+ItemList+FAQPage",
         # ティラナ（行った街。2026-11-23 に街と記事6本の公開前の印を外した。街はソフィアと同じ線、記事は Article）
         "jsonld:/travel/albania/tirana=Article+ItemList+FAQPage",
+        "jsonld:/travel/turkey/istanbul=Article+ItemList+FAQPage",
         "jsonld:/travel/albania/tirana/walk=Article", "jsonld:/travel/albania/tirana/sufllaqe=Article",
         "jsonld:/travel/albania/tirana/airport=Article", "jsonld:/travel/albania/tirana/hostel=Article",
         "jsonld:/travel/albania/tirana/gjelltore=Article", "jsonld:/travel/albania/tirana/mosque=Article",
