@@ -1166,11 +1166,18 @@ def audio_cfg(p: dict, style: dict) -> dict:
 # 割ってよい所は qa/linebreak.py の1か所で決め、ここではそれより細かく割らない。入らなければ字を小さくする
 
 
-def split_candidates(text: str, n: int, ch: list[str] | None = None) -> list[list[str]]:
-    """text を割ってよい所（chunks_of）で n 行に割る、すべての割り方（行末の「、」「。」は落とす）。"""
+def split_candidates(text: str, n: int, ch: list[str] | None = None, keep_tail: bool = False) -> list[list[str]]:
+    """text を割ってよい所（chunks_of）で n 行に割る、すべての割り方（行末の「、」「。」は落とす）。
+
+    1行のときも行末の「、」「。」は落とす（字幕と同じ扱い）。前は1行だけ元の字のまま返していて、
+    【大】の字が1行に収まると「うわ、まっずい。」「1Lしか無い。」と行末に「。」が出た（#1403 の温泉 v5・ボザ v9、
+    2026-11-23 の main）。2行に割れば落ちるので、同じ字が幅しだいで「。」付きになったり無しになったりしていた。
+    keep_tail は題の札の行だけ（題の行末の「、」は、1行に収まるときは前のまま描く）。
+    """
     ch = ch or chunks_of(text)
     if n == 1:
-        return [[text]]
+        one = text if keep_tail else text.rstrip("、。").strip()
+        return [[one]] if one else []
     if len(ch) < n:
         return []
     out = []
@@ -1188,7 +1195,7 @@ def split_candidates(text: str, n: int, ch: list[str] | None = None) -> list[lis
 
 def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w: float, max_lines: int = 2,
               wrap_below: int = 0, step: int = 2, fold_floor: int = 0,
-              fixed: list[str] | None = None) -> tuple[list[str], int]:
+              fixed: list[str] | None = None, keep_tail: bool = False) -> tuple[list[str], int]:
     """text を幅 max_w に収める（行と大きさ）。字幅は字間（tracking）と縁・発光の広がりまで入れて見積もる。
 
     縮めるより先に折る: 1行で wrap_below 以上に出せるなら1行。出せないなら2行（割ってよい所のうち、
@@ -1225,7 +1232,7 @@ def fit_lines(text: str, lk: dict, fpath: Path, size: int, min_size: int, max_w:
         results = []
         for n in range(1, max(1, nmax) + 1):
             top = None
-            for c in split_candidates(text, n, ch):
+            for c in split_candidates(text, n, ch, keep_tail):
                 s = best(c)
                 # 同じ大きさなら、行の幅がそろう割り方（読む目が戻りやすい）
                 if s is not None and (top is None or s > top[0] or (s == top[0] and _spread(c, lk, fpath, s) < top[2])):
@@ -1290,7 +1297,7 @@ def title_card_img(text: str, st: dict, style: dict, drawn: list | None = None,
             lk_fit = {k: v for k, v in lk.items() if k != "glow"}
             top = max(ls.get("min_size", 40), ls["size"] - shrink)
             lines, size = fit_lines(part, lk_fit, fpath, top, min(top, ls.get("min_size", 40)), inner,
-                                    ls.get("max_lines", 2), min(top, ls.get("wrap_below", 0)))
+                                    ls.get("max_lines", 2), min(top, ls.get("wrap_below", 0)), keep_tail=True)
             if drawn is not None:
                 drawn.extend(lines)
             if hl:

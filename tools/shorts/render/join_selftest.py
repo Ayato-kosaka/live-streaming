@@ -31,6 +31,12 @@
 | `center` | 「苦手やってん……」を描いた絵の、字の左右の空きが「苦手やってん…」と同じ（±2px）。測る送り（`advance`）と描く送りが食い違うと、字が絵の中で片寄る |
 | `same` | 続けて書かない字（「…」「ー」「—」が1つずつ）は、直しを切った描き方と1バイトも変わらない |
 | `telop` | テロップ（`telop_card`）でも「ーー」が1本・「……」の空きがそろう・続けて書かない字は変わらない |
+| `tail` | 【大】の見た目と感情の字幕の見た目（様式3つ＋型の様式 `presets/food.json`・`presets/try.json`）で、行末に「。」「、」を描かない（1行に収まるときも）。「！」は残す |
+
+`tail` だけは続けて書く字の話ではないが、字を描く見た目の全部を本物の `fit_lines` に通す所がここなので、ここに足した。
+温泉 v5・ボザ v9 の本番（#1403、2026-11-23）で、【大】の「うわ、まっずい。」「1Lしか無い。」の行末に「。」が出た
+（字幕の見た目では消える）。`render.py` の `split_candidates` が、2行以上に割るときだけ行末の「、」「。」を落とし、
+1行に収まるときは元の字のまま返していた。題の札の行だけは前のまま（`keep_tail`。1行に収まる題の「、」は描く）。
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
 
@@ -52,6 +58,11 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 BREAK = os.environ.get("BREAK", "")
 STYLES = ("style.json", "style_p3.json", "style_v3.json")
+# tail の足だけは型の様式も見る（【大】の taste_good・taste_bad・jump_word は型の様式にしか無い）。
+# ほかの足に足すと、続けて書く字の測りが型の様式の見た目にも広がるので、ここでは足さない
+TAIL_STYLES = STYLES + ("presets/food.json", "presets/try.json")
+TAIL_DROP = ("うわ、まっずい。", "1Lしか無い。", "甘くてドロドロしてて。", "おお、ちょっと待って。すっごい強い匂いすんで。")
+TAIL_KEEP = ("めちゃくちゃうまい！", "あちあちちあちちちちち！")
 GREEN = "#00FF00"
 BASE = "苦手やってん"
 SAME_TEXT = "苦手…ラーメンたべた—！ほんま―"   # 続けて書く字が1つずつ（続かない）
@@ -86,6 +97,10 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
              {"dots", "lines", "center"}, "描くときに継ぎ目の送りを直さない"),
     "telop": ("render.py", "                if shown and TL.has_join(shown):\n", "                if False:\n",
               {"telop"}, "テロップでは続けて書く字をそのまま描く"),
+    "tail": ("render.py",
+             "        one = text if keep_tail else text.rstrip(\"、。\").strip()\n",
+             "        one = text\n",
+             {"tail"}, "1行に収まる【大】・感情の字幕の行末の「。」「、」を落とさない"),
     "telop_order": ("render.py",
                     "                    for pc, px in zip(ps, xs):\n"
                     "                        d.text((px, y + asc + dy), pc, font=f, anchor=\"ls\", fill=stroke_fill,\n"
@@ -115,7 +130,9 @@ def style_fonts() -> set[str]:
             for x in v:
                 walk(x)
 
-    for s in STYLES:
+    for s in TAIL_STYLES:
+        if not (HERE / s).exists():
+            continue
         st = json.loads((HERE / s).read_text(encoding="utf-8"))
         names |= {v for k, v in (st.get("fonts") or {}).items() if not k.startswith("_")}
         walk(st)
@@ -145,6 +162,8 @@ def make_src(dst: Path, cut: str | None) -> None:
     for p in HERE.glob("*.json"):
         shutil.copy(p, dst / p.name)
     shutil.copytree(HERE / "flags", dst / "flags")
+    if (HERE / "presets").is_dir():
+        shutil.copytree(HERE / "presets", dst / "presets")
     (dst.parent / "qa").mkdir(exist_ok=True)
     shutil.copy(HERE.parent / "qa" / "linebreak.py", dst.parent / "qa" / "linebreak.py")
     if cut:
@@ -173,12 +192,14 @@ def load(src: Path):
 
 # ---------------------------------------------------------------- 見た目の全部
 
-def looks(R, TL, src: Path) -> list[dict]:
+def looks(R, TL, src: Path, styles: tuple[str, ...] = STYLES) -> list[dict]:
     """様式3つの、字を描く見た目の全部（中身が同じものは1つ）。描くときの大きさと幅は render.py と同じ所から取る。"""
     out, seen = [], set()
-    for sname in STYLES:
+    for sname in styles:
+        if not (src / sname).exists():
+            continue
         style = R.load_style(sname, src)
-        tag = sname.removesuffix(".json")
+        tag = sname.removesuffix(".json").removeprefix("presets/")
         cands = []
         for key in ("caption", "note", "title"):
             st = style[key]
@@ -424,12 +445,36 @@ def leg_telop(R, TL, Ls) -> list[tuple[str, bool]]:
     return out
 
 
-LEGS = {"dots": leg_dots, "lines": leg_lines, "center": leg_center, "same": leg_same, "telop": leg_telop}
+TAIL_LOOKS: list[dict] = []
+
+
+def leg_tail(R, TL, Ls) -> list[tuple[str, bool]]:
+    """【大】と感情の字幕の見た目で、行末の「。」「、」を描かない（「！」は残す）。見た目ごとに1つの判定。"""
+    out = []
+    for L in TAIL_LOOKS:
+        bad = []
+        for t in TAIL_DROP + TAIL_KEEP:
+            lines, _ = fit(R, L, t)
+            if not lines or any(ln.endswith(("。", "、")) for ln in lines):
+                bad.append(f"「{'｜'.join(lines)}」")
+            elif t in TAIL_KEEP and not lines[-1].endswith("！"):
+                bad.append(f"「！」が消えた「{'｜'.join(lines)}」")
+        one = sum(1 for t in TAIL_DROP if len(fit(R, L, t)[0]) == 1)
+        out.append((f"{L['name']}: 行末の句点 {len(bad)}（1行に収まった字 {one}/{len(TAIL_DROP)}）"
+                    + (f" {' / '.join(bad[:3])}" if bad else ""), not bad))
+    if not out:
+        out.append(("【大】・感情の字幕の見た目が1つも無い", False))
+    return out
+
+
+LEGS = {"dots": leg_dots, "lines": leg_lines, "center": leg_center, "same": leg_same, "telop": leg_telop,
+        "tail": leg_tail}
 
 
 def run_legs(src: Path, quiet: bool) -> tuple[list[str], int]:
     R, TL = load(src)
     Ls = looks(R, TL, src)
+    TAIL_LOOKS[:] = [L for L in looks(R, TL, src, TAIL_STYLES) if L["name"].split(":", 1)[1].startswith(("big.", "moods."))]
     if not quiet:
         print(f"見た目 {len(Ls)} 個（{' / '.join(STYLES)}）")
     failed, checked = [], 0
