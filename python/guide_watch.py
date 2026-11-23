@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | 額 | 面に出た額（円・デナール・ユーロ…）が、`verify` の無い facts の行に在る。値段の表と料理の額は、**その行の場面（動画と秒）の facts の行の額**と同じ。合計の額は、**同じ表・同じ行に並んだ額の足し算**のときだけ通す | facts（`streams/**/*.facts.json`） |
 | 一言 | 吹き出し（`data-quote="ayato"`）が**全部**場面のリンクの中に在り、リンクの動画と秒が、その一言を持つ facts の行の `t` と同じ。チャットが出どころの行（`via`）の字は引かない。吹き出しの外に本人の一言を「」で置かない | facts |
-| 口調 | 案内鳥の字（一言・配信の題を除いた本文と、`<title>`・`description`）に、説明口調の語と画面の仕組みの説明が0 | `docs/guide-design.md` 5-1・CLAUDE.md「画面で、システムの仕様を説明しない」 |
+| 口調 | 案内鳥の字（一言・配信の題・外の出どころの題を除いた本文と、`<title>`・`description`）に、説明口調の語と画面の仕組みの説明が0 | `docs/guide-design.md` 5-1・CLAUDE.md「画面で、システムの仕様を説明しない」 |
 | 節の一言 | 本人の一言は**節（`<section>`）に1つまで** | `docs/island-misses.md` #323 の決めごと2 |
 | 場面 | 行った人の話（`data-went`）は場面のリンクを**1つだけ**持つ（値段の表の行・測った値の始まりと終わりは数えない）。外の事実（`data-src`）の中に場面のリンクを置かない | #323 の決めごと2（一文ごとにリンクを付けない） |
 | 出どころ | 外の事実（`data-src`）が、出どころのリンク（https・YouTube 以外）と見た日（`<time datetime>`）を持つ | `docs/country-guide.md` 1-2・#323 の決めごと1 |
@@ -39,7 +39,8 @@
 
 スコピエの面は、前のハブ（`components/travel/Guide.tsx`・`article.tg`）からガイドブック型（`article.gb`）へ移った。
 目印は同じものを部品に持たせてある——骨組みの入れ物は `data-src`（`parts.tsx` の `Ext`）、行った箱は `data-went`
-（`Videos.tsx` の `WentBox`）、一言は場面の札の中の `data-quote="ayato"`、動画の題は `data-quote="title"`。
+（`Videos.tsx` の `WentBox`）、一言は場面の札の中の `data-quote="ayato"`、動画の題は `data-quote="title"`、
+外の出どころの題（リンクの字）は `data-quote="src"`（`parts.tsx` の `SrcLine`・`Sources.tsx`・記事の `ExtLine` と出どころの一覧）。
 足したのは2つ。
 
 - **合計の額**: 「あやとの1日」の表は、内訳（facts の行の額）の下に日ごとの合計を出す。合計そのものは facts に無いので、
@@ -54,6 +55,15 @@
 - 場面のリンクは `https://www.youtube.com/watch?v=<id>&t=<秒>s`（`scene.ts`）
 - 額は `guide_facts.money_in`（字幕を読む道具と同じ単位の表 `python/data/guide/cities.json`）で拾う。
   外の出どころの行（`.tg-ext`）の額は、その出どころが正なので facts とは突き合わせない
+
+## 2026-11-23 に、外の出どころの題を口調から外した
+
+ベオグラードの面（#1365）が「本文に説明口調『おすすめ』」で赤くなった。出どころは案内鳥の字ではなく、
+出どころのリンクの字——NEWT「セルビア・ベオグラード旅行におすすめの観光地11選！」と、地球の歩き方「セルビアのおすすめ観光スポット10選！…」。
+他人の記事の題をそのまま引いたもので、配信の題と同じ扱いが正しい。飛ばすのは**印（`data-quote="src"`）の付いた外へのリンクの字だけ**。
+同じ外の事実の箱（`data-src`）の中でも、案内鳥が書いた地の文は今までどおり全部読む（箱ごと飛ばすと、地の文の「おすすめ」が素通りする。
+`mutation_drill.py` の当て先）。赤の1行が NEWT だけだったのは、口調の赤を**語ごとに1行**にまとめ、最初に出た所だけを添えていたから
+（地球の歩き方の題も同じ1行に畳まれていた。VELTRA の題は材料の中だけで、面には出ていない）。いまは何か所あったかも添える。
 
 対照は `python/guide_watch_selftest.py`（足を1本ずつ抜いて、その足だけが赤くなるか）。
 """
@@ -204,6 +214,15 @@ def is_went(n: Node) -> bool:
 def verbatim(n: Node) -> bool:
     """配信の題（そのまま出す。island-design 1章の例外）。埋め込みの題と、配信の一覧"""
     return n.attrs.get("data-quote") == "title" or "tg-vids" in n.cls()
+
+
+def ext_title(n: Node) -> bool:
+    """外の出どころの題（出どころのリンクの字）。他人の記事の題をそのまま引いたもの（「〜おすすめ10選」）。
+    **リンクの字だけ。** 印（`data-quote="src"`）が付いていても、外（https・YouTube 以外）へのリンクでなければ案内鳥の字として読む。
+    リンクを入れている行・外の事実の箱（`data-src`）は飛ばさない——中の地の文は案内鳥が書いた字"""
+    href = html.unescape(n.attrs.get("href", ""))
+    return (n.tag == "a" and n.attrs.get("data-quote") == "src"
+            and href.startswith("https://") and "youtube.com" not in href)
 
 
 # ---------------------------------------------------------------- facts
@@ -418,17 +437,26 @@ def check_sections(art: Node, r: Report) -> None:
 def check_tone(art: Node, head: dict, r: Report) -> None:
     def skip(n: Node) -> bool:
         # 本人の一言と配信の題は、案内鳥の字ではない
-        return (is_quote(n) or verbatim(n)) and "scope" not in BREAK
+        if (is_quote(n) or verbatim(n)) and "scope" not in BREAK:
+            return True
+        # 外の出どころの題も、他人の字（2026-11-23。#1365）
+        return ext_title(n) and "srctitle" not in BREAK
 
     parts = [("本文", art.text(skip=skip, sep=SEP)), ("題", head.get("title", "")), ("description", head.get("description", ""))]
     for where, s in parts:
         r.seen["字"] += len(s.replace(SEP, ""))
         if "tone" not in BREAK:
             for m in sorted({m.group() for m in TONE.finditer(s)}):
-                r.ng("口調", f"{where}に説明口調「{m}」: …{around(s, m)}…")
+                r.ng("口調", f"{where}に説明口調「{m}」{times(s, m)}: …{around(s, m)}…")
         if "mech" not in BREAK:
             for m in sorted({m.group() for m in MECH.finditer(s)}):
-                r.ng("口調", f"{where}に画面の仕組みの説明「{m}」: …{around(s, m)}…")
+                r.ng("口調", f"{where}に画面の仕組みの説明「{m}」{times(s, m)}: …{around(s, m)}…")
+
+
+def times(s: str, w: str) -> str:
+    """同じ語が何か所あったか。赤は語ごとに1行で、添えるのは最初の1か所だけなので、残りが畳まれたことを字で出す"""
+    n = s.count(w)
+    return f"（{n}か所。最初の1か所）" if n > 1 else ""
 
 
 def around(s: str, w: str, n: int = 18) -> str:

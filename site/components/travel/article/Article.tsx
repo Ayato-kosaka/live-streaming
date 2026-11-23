@@ -322,7 +322,10 @@ export function Pairs({ pairs }: { pairs: { head: string; text: string }[] }) {
   );
 }
 
-/** 外の出どころの1行。押せる所は出どころの名前だけ。**`tg-ext` は見張りの印**（額を facts と突き合わせない） */
+/**
+ * 外の出どころの1行。押せる所は出どころの名前だけ。**`tg-ext` は見張りの印**（額を facts と突き合わせない）。
+ * 名前のリンクの `data-quote="src"` も見張りの印（外の記事の題は他人の字なので、口調の見張りが飛ばす）
+ */
 export function ExtLine({ e }: { e: Ext }) {
   return (
     <p className="tg-ext ta-ext">
@@ -331,7 +334,7 @@ export function ExtLine({ e }: { e: Ext }) {
           「（」が行末に1字だけ残った */}
       <span className="ta-ext-src">
         （
-        <a href={e.src} target="_blank" rel="noopener noreferrer">
+        <a href={e.src} target="_blank" rel="noopener noreferrer" data-quote="src">
           {e.name}
         </a>
         ・<time dateTime={e.seen}>{jpDate(e.seen)}</time>に見た）
@@ -418,7 +421,7 @@ export function Sources({ ext }: { ext: Ext[] }) {
         <li>値段・本人の一言・場面は、あやとの YouTube の配信</li>
         {ext.map((e) => (
           <li key={e.src}>
-            <a href={e.src} target="_blank" rel="noopener noreferrer">
+            <a href={e.src} target="_blank" rel="noopener noreferrer" data-quote="src">
               {e.name}
             </a>
             （<time dateTime={e.seen}>{jpDate(e.seen)}</time>に見た）

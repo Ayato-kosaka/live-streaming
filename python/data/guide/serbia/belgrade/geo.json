@@ -1,0 +1,317 @@
+{
+ "kalemegdan": {
+  "q": "Beogradska tvrđava",
+  "lat": 44.823502,
+  "lon": 20.449765,
+  "name": "Београдска тврђава",
+  "osm": "https://www.openstreetmap.org/way/450824126",
+  "type": "castle",
+  "addr": "Београдска тврђава, Вука Бојовића, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Ce"
+ },
+ "knez": {
+  "q": "Knez Mihailova, Beograd",
+  "lat": 44.816397,
+  "lon": 20.45861,
+  "name": "Кнеза Михаила",
+  "osm": "https://www.openstreetmap.org/way/23671224",
+  "type": "pedestrian",
+  "addr": "Кнеза Михаила, Скадарлија, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centrală, "
+ },
+ "sava": {
+  "q": "Hram Svetog Save",
+  "lat": 44.798045,
+  "lon": 20.469188,
+  "name": "Храм Светог Саве",
+  "osm": "https://www.openstreetmap.org/way/89808919",
+  "type": "place_of_worship",
+  "addr": "Храм Светог Саве, 2a, Крушедолска, Београд (Врачар), Градска општина Врачар, Belgrad, Serbia Centrală, 11167, Serbia"
+ },
+ "skadarlija": {
+  "q": "Skadarska, Beograd",
+  "lat": 44.818099,
+  "lon": 20.464758,
+  "name": "Скадарска",
+  "osm": "https://www.openstreetmap.org/way/392994845",
+  "type": "pedestrian",
+  "addr": "Скадарска, Скадарлија, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centrală, 1100"
+ },
+ "republic": {
+  "q": "Trg republike, Beograd",
+  "lat": 44.816222,
+  "lon": 20.460295,
+  "name": "Трг републике",
+  "osm": "https://www.openstreetmap.org/node/6760759093",
+  "type": "square",
+  "addr": "Трг републике, Скадарлија, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centrală, "
+ },
+ "nmuseum": {
+  "q": "Narodni muzej Srbije",
+  "lat": 44.816789,
+  "lon": 20.459645,
+  "name": "Народни музеј Србије",
+  "osm": "https://www.openstreetmap.org/way/23067279",
+  "type": "museum",
+  "addr": "Народни музеј Србије, 1a, Трг републике, Скадарлија, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, "
+ },
+ "tesla": {
+  "q": "Muzej Nikole Tesle",
+  "lat": 44.805105,
+  "lon": 20.4707,
+  "name": "Музеј Николе Тесле",
+  "osm": "https://www.openstreetmap.org/node/12845103007",
+  "type": "museum",
+  "addr": "Музеј Николе Тесле, 51, Крунска, Крунски венац, Београд (Врачар), Градска општина Врачар, Belgrad, Serbia Centrală, 1100"
+ },
+ "yugoslavia": {
+  "q": "Muzej Jugoslavije",
+  "lat": 44.788019,
+  "lon": 20.452314,
+  "name": "Музеј Југославије",
+  "osm": "https://www.openstreetmap.org/way/603893007",
+  "type": "museum",
+  "addr": "Музеј Југославије, 6, Михаила Мике Јанковића, Топчидерско брдо, МЗ Четврти Јули, Београд (Савски венац), Belgrad, Serbia"
+ },
+ "stmark": {
+  "q": "Crkva Svetog Marka, Beograd",
+  "lat": 44.810449,
+  "lon": 20.468929,
+  "name": "Црква Светог Марка",
+  "osm": "https://www.openstreetmap.org/way/113034470",
+  "type": "place_of_worship",
+  "addr": "Црква Светог Марка, 17, Светог Марка, МЗ Ташмајдан, Београд (Палилула), Градска општина Палилула, Belgrad, Serbia Centra"
+ },
+ "assembly": {
+  "q": "Dom Narodne skupštine",
+  "lat": 44.811727,
+  "lon": 20.465932,
+  "name": "Дом Народне скупштине Републике Србије",
+  "osm": "https://www.openstreetmap.org/relation/15463164",
+  "type": "government",
+  "addr": "Дом Народне скупштине Републике Србије, 13, Трг Николе Пашића, Лондон, Београд (Стари град), Belgrad, Градска општина Ст"
+ },
+ "ljubica": {
+  "q": "Konak kneginje Ljubice",
+  "lat": 44.817105,
+  "lon": 20.452235,
+  "name": "Конак кнегиње Љубице",
+  "osm": "https://www.openstreetmap.org/way/38575518",
+  "type": "museum",
+  "addr": "Конак кнегиње Љубице, 8, Кнеза Симе Марковића, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgra"
+ },
+ "bajrakli": {
+  "q": "Bajrakli džamija",
+  "lat": 44.822057,
+  "lon": 20.457349,
+  "name": "Бајракли џамија",
+  "osm": "https://www.openstreetmap.org/way/392368105",
+  "type": "place_of_worship",
+  "addr": "Бајракли џамија, 11a, Господар Јевремова, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Se"
+ },
+ "ruzica": {
+  "q": "Crkva Ružica",
+  "lat": 44.8255,
+  "lon": 20.451296,
+  "name": "Црква Ружица",
+  "osm": "https://www.openstreetmap.org/way/89572129",
+  "type": "place_of_worship",
+  "addr": "Црква Ружица, 1, Калемегдан доњи град, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbi"
+ },
+ "pobednik": {
+  "q": "Pobednik, Beograd",
+  "lat": 44.823028,
+  "lon": 20.447706,
+  "name": "Победник",
+  "osm": "https://www.openstreetmap.org/way/1294683903",
+  "type": "memorial",
+  "addr": "Победник, Мало силазно степениште, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centrală, "
+ },
+ "military": {
+  "q": "Vojni muzej, Beograd",
+  "lat": 44.821919,
+  "lon": 20.449806,
+  "name": "Војни музеј",
+  "osm": "https://www.openstreetmap.org/relation/9466610",
+  "type": "museum",
+  "addr": "Војни музеј, 9, Калемегдан горњи град, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbi"
+ },
+ "zemun": {
+  "q": "Zemunski kej",
+  "lat": 44.849309,
+  "lon": 20.411248,
+  "name": "Кеј ослобођења",
+  "osm": "https://www.openstreetmap.org/way/24843758",
+  "type": "pedestrian",
+  "addr": "Кеј ослобођења, Гардош, Београд (Земун), Градска општина Земун, Belgrad, Serbia Centrală, 11182, Serbia"
+ },
+ "ada": {
+  "q": "Ada Ciganlija",
+  "lat": 44.784437,
+  "lon": 20.381037,
+  "name": "Ада Циганлија",
+  "osm": "https://www.openstreetmap.org/relation/14675466",
+  "type": "peninsula",
+  "addr": "Ада Циганлија, Градска општина Чукарица, Belgrad, Serbia Centrală, Serbia"
+ },
+ "msu": {
+  "q": "Muzej savremene umetnosti, Beograd",
+  "lat": 44.819594,
+  "lon": 20.4424,
+  "name": "Музеј савремене уметности",
+  "osm": "https://www.openstreetmap.org/way/36005092",
+  "type": "museum",
+  "addr": "Музеј савремене уметности, 10, Ушће, Градска општина Нови Београд, Belgrad, Serbia Centrală, 11070, Serbia"
+ },
+ "zoo": {
+  "q": "Beo zoo vrt",
+  "lat": 44.825851,
+  "lon": 20.453607,
+  "name": "Бео зоо врт",
+  "osm": "https://www.openstreetmap.org/way/33517093",
+  "type": "zoo",
+  "addr": "Бео зоо врт, 8, Вука Бојовића, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centra"
+ },
+ "ethno": {
+  "q": "Etnografski muzej, Beograd",
+  "lat": 44.819873,
+  "lon": 20.456459,
+  "name": "Етнографски музеј",
+  "osm": "https://www.openstreetmap.org/way/38575527",
+  "type": "museum",
+  "addr": "Етнографски музеј, Студентски трг, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Ce"
+ },
+ "petrovaradin": {
+  "q": "Petrovaradinska tvrđava",
+  "lat": 45.252155,
+  "lon": 19.863828,
+  "name": "Петроварадинска тврђава",
+  "osm": "https://www.openstreetmap.org/way/152795360",
+  "type": "castle",
+  "addr": "Петроварадинска тврђава, 100, Стари Мајур, МЗ Петроварадин, Петроварадин, Град Нови Сад, Јужнобачки управни округ, Voivo"
+ },
+ "karlovci": {
+  "q": "Sremski Karlovci",
+  "lat": 45.203046,
+  "lon": 19.933834,
+  "name": "Carloviț",
+  "osm": "https://www.openstreetmap.org/relation/1649677",
+  "type": "administrative",
+  "addr": "Carloviț, Јужнобачки управни округ, Voivodina, 21205, Serbia"
+ },
+ "dorcol": {
+  "q": "Dorćol",
+  "lat": 44.822631,
+  "lon": 20.461478,
+  "name": "Дорћол",
+  "osm": "https://www.openstreetmap.org/node/1486059453",
+  "type": "quarter",
+  "addr": "Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centrală, 11000, Serbia"
+ },
+ "trisesira": {
+  "q": "Tri šešira, Skadarska",
+  "lat": 44.818149,
+  "lon": 20.464616,
+  "name": "Три шешира",
+  "osm": "https://www.openstreetmap.org/way/150590534",
+  "type": "restaurant",
+  "addr": "Три шешира, 29, Скадарска, Скадарлија, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbi"
+ },
+ "sesirmoj": {
+  "q": "Šešir moj, Skadarska",
+  "lat": 44.817597,
+  "lon": 20.463938,
+  "name": "Шешир мој",
+  "osm": "https://www.openstreetmap.org/node/1634938018",
+  "type": "restaurant",
+  "addr": "Шешир мој, 21, Скадарска, Скадарлија, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia"
+ },
+ "dvajelena": {
+  "q": "Dva jelena, Skadarska",
+  "lat": 44.817496,
+  "lon": 20.464101,
+  "name": "Два јелена",
+  "osm": "https://www.openstreetmap.org/node/1634937968",
+  "type": "restaurant",
+  "addr": "Два јелена, Скадарска, Скадарлија, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Ce"
+ },
+ "walter": {
+  "q": "Walter, Strahinjića Bana",
+  "lat": 44.820983,
+  "lon": 20.462679,
+  "name": "Валтер",
+  "osm": "https://www.openstreetmap.org/node/3030604566",
+  "type": "restaurant",
+  "addr": "Валтер, 57, Страхињића Бана, Скадарлија, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Ser"
+ },
+ "rakiabar": {
+  "q": "Terazije 42, Beograd",
+  "lat": 44.811159,
+  "lon": 20.461604,
+  "name": "Terazije 42, Beograd",
+  "osm": "https://www.openstreetmap.org/way/392696064",
+  "type": "apartments",
+  "addr": "42, Теразије, Лондон, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centrală, 11102, Serbia"
+ },
+ "maxi": {
+  "q": "Maxi, Beograd",
+  "lat": 44.793743,
+  "lon": 20.505044,
+  "name": "Maxi",
+  "osm": "https://www.openstreetmap.org/way/103256672",
+  "type": "supermarket",
+  "addr": "Maxi, 297, Булевар краља Александра, Цветкова пијаца, МЗ Врачарско поље, Београд (Звездара), Градска општина Звездара, B"
+ },
+ "embassy": {
+  "q": "Trešnjinog cveta 13, Beograd",
+  "lat": 44.825551,
+  "lon": 20.418793,
+  "name": "Амбасада Јапана",
+  "osm": "https://www.openstreetmap.org/relation/8813142",
+  "type": "diplomatic",
+  "addr": "Амбасада Јапана, 13, Трешњиног цвета, МЗ Икарус, Градска општина Нови Београд, Belgrad, Serbia Centrală, 11000, Serbia"
+ },
+ "gardos": {
+  "q": "Gardoš, Zemun",
+  "lat": 44.848124,
+  "lon": 20.410728,
+  "name": "Гардош",
+  "osm": "https://www.openstreetmap.org/node/11582139369",
+  "type": "neighbourhood",
+  "addr": "Гардош, Београд (Земун), Градска општина Земун, Belgrad, Serbia Centrală, 11182, Serbia"
+ },
+ "saran": {
+  "q": "Šaran Zemun",
+  "lat": 44.848189,
+  "lon": 20.412915,
+  "name": "Шаран",
+  "osm": "https://www.openstreetmap.org/way/403186070",
+  "type": "restaurant",
+  "addr": "Шаран, 53a, Његошева, Гардош, Београд (Земун), Градска општина Земун, Belgrad, Serbia Centrală, 11182, Serbia"
+ },
+ "hlebikifle": {
+  "q": "Hleb & Kifle",
+  "lat": 44.814461,
+  "lon": 20.457234,
+  "name": "Хлеб & Кифле",
+  "osm": "https://www.openstreetmap.org/node/13175631361",
+  "type": "bakery",
+  "addr": "Хлеб & Кифле, Зелени венац, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centrală,"
+ },
+ "znak": {
+  "q": "Znak pitanja, Beograd",
+  "lat": 44.817673,
+  "lon": 20.45256,
+  "name": "Кафана „?”",
+  "osm": "https://www.openstreetmap.org/way/394705975",
+  "type": "restaurant",
+  "addr": "Кафана „?”, 6, Краља Петра, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centrală,"
+ },
+ "idea": {
+  "q": "Idea, Dorćol, Beograd",
+  "lat": 44.823284,
+  "lon": 20.459883,
+  "name": "IDEA",
+  "osm": "https://www.openstreetmap.org/node/5077027000",
+  "type": "convenience",
+  "addr": "IDEA, 40, Цара Душана, Дорћол, Београд (Стари град), Belgrad, Градска општина Стари град, Belgrad, Serbia Centrală, 1115"
+ }
+}

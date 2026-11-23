@@ -31,6 +31,7 @@
 | `mech` | 口調: 画面の仕組みの説明 | 「配信から抜き出し」 |
 | `sep` | 落ちすぎ: 要素の境目で字をくっつけない | 「1:12:40」＋「円は」を 40円 と読む |
 | `scope` | 落ちすぎ: 一言と配信の題は案内鳥の字ではない | 一言の中の「できます」 |
+| `srctitle` | 落ちすぎ: 外の出どころの題（`data-quote="src"` のリンクの字）は案内鳥の字ではない（#1365） | 出どころの題の「おすすめ」 |
 | `blind` | 本文（`article.tg`）が無い面を「0件」にしない | 本文の無い面が通る |
 | `many` | 節の一言: 本人の一言は節に1つまで（#323） | 1節に一言が2つ |
 | `perline` | 場面: 行った話の場面のリンクは1本（一文ごとに付けない） | 話の中に場面が2本 |
@@ -68,7 +69,7 @@ ROOT = Path(__file__).resolve().parents[1]
 # 抜いたときに赤くなってよい足。落ちすぎの守り（sep・scope）を抜くと、きれいな面（clean）も一緒に赤くなる。
 # 合計の通る面（sum）も、境目の字をくっつけて読むと内訳の額が読めなくなるので、sep を抜くと一緒に赤くなる
 EXPECT = {"sep": {"sep", "clean", "sum"}, "scope": {"scope", "clean"}}
-LEGS = ["verify", "unbacked", "row", "nolink", "sec", "chat", "bare", "tone", "mech", "sep", "scope", "blind",
+LEGS = ["verify", "unbacked", "row", "nolink", "sec", "chat", "bare", "tone", "mech", "sep", "scope", "srctitle", "blind",
         "many", "perline", "wentlink", "extscene", "nosrc", "sum", "floor", "drawn"]
 FAILED: list[tuple[str, str]] = []   # (足, 確かめの名前)
 CHECKED = 0
@@ -240,6 +241,30 @@ e = run(page(answer="配信から抜き出しました。"))
 ok("mech", "地の文に画面の仕組みの説明 → 落ちる", any("仕組みの説明" in x for x in e), True)
 e = run(page(desc="確かめが要る額は出していません。"))
 ok("mech", "description にも同じ見張り", any(x.startswith("[口調] description") for x in e), True)
+
+
+def ext_titles(body: str) -> str:
+    """外の事実の箱に、出どころの題を3つの出かたで（窓の終わりの `SrcLine`・面の終わりの一覧・記事の `ExtLine`）。
+    題は他人の記事の題（「〜おすすめ〜選」）。`body` は同じ箱の中の、案内鳥が書いた地の文"""
+    return ('<div class="gb-ext" data-src="">'
+            f'<p>{body}</p>'
+            '<p class="gb-src"><span>出どころ</span>'
+            '<a data-quote="src" href="https://newt.example/srb/mag-1" target="_blank">NEWT「ベオグラード旅行におすすめの観光地11選！」</a>'
+            '<i><time datetime="2026-11-22">11/22</time>に見た</i></p></div>'
+            '<ul class="gb-src-list"><li><a data-quote="src" href="https://arukikata.example/webmagazine/1/">'
+            '地球の歩き方「セルビアのおすすめ観光スポット10選！」</a><i>arukikata.example/webmagazine/1/</i></li></ul>'
+            '<p class="tg-ext ta-ext">城壁は18世紀に建て直された。<span class="ta-ext-src">（'
+            '<a data-quote="src" href="https://veltra.example/guide/1">VELTRA「セルビア観光のおすすめスポット14選！」</a>・'
+            '<time datetime="2026-11-22">11/22</time>に見た）</span></p>')
+
+
+# 外の記事の題は他人の字（配信の題と同じ扱い）。飛ばすのはリンクの字だけで、同じ箱の地の文は読む（#1365）
+# 比べるのは、題を足す前の同じ面の口調（`scope` を抜いた回は、元の面の配信の題も赤くなる。題のぶんだけ増えないこと）
+e = run(page(extra=ext_titles("城塞は2つの川の合流を見下ろす丘に建つ。")))
+ok("srctitle", "出どころの題（リンクの字）に「おすすめ」→ 落ちない", legs_of(e, "口調"), legs_of(run(page()), "口調"))
+e = run(page(extra=ext_titles("城塞は、夕方に行くのがおすすめ。")))
+ok("tone", "出どころの題と同じ箱の地の文に「おすすめ」→ 落ちる（飛ばすのはリンクの字だけ）",
+   any("説明口調「おすすめ」" in x and "夕方" in x for x in legs_of(e, "口調")), True)
 
 
 # ---------------------------------------------------------------- 4-2. 節の一言・場面・出どころ（#323）
