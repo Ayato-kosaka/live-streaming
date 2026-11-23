@@ -304,18 +304,18 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "bulgaria", city: "sofia", slug: "hotspring", crumb: "温泉の蛇口" },
   /* ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
   { country: "bulgaria", city: "sofia", slug: "nevsky", crumb: "ネフスキー大聖堂" },
-  /* ティラナの中心を歩いて回ってきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "albania", city: "tirana", slug: "walk", crumb: "中心を歩いた日", draft: true },
-  /* ティラナでスフラキとケバブを食べ比べてきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "albania", city: "tirana", slug: "sufllaqe", crumb: "スフラキ", draft: true },
-  /* ティラナの大きなモスクに入ってきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "albania", city: "tirana", slug: "mosque", crumb: "大きなモスク", draft: true },
-  /* ティラナの大衆食堂でミートボールのスープを食べてきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "albania", city: "tirana", slug: "gjelltore", crumb: "大衆食堂ジェルトレ", draft: true },
-  /* ティラナ空港からバスで市街へ出てきた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "albania", city: "tirana", slug: "airport", crumb: "空港から市街へ", draft: true },
-  /* ティラナのホステルで2回盗まれた（#1228。マトカ渓谷と同じ型）。ティラナの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "albania", city: "tirana", slug: "hostel", crumb: "ホステルの盗難", draft: true },
+  /* ティラナの中心を歩いて回ってきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "walk", crumb: "中心を歩いた日" },
+  /* ティラナでスフラキとケバブを食べ比べてきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "sufllaqe", crumb: "スフラキ" },
+  /* ティラナの大きなモスクに入ってきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "mosque", crumb: "大きなモスク" },
+  /* ティラナの大衆食堂でミートボールのスープを食べてきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "gjelltore", crumb: "大衆食堂ジェルトレ" },
+  /* ティラナ空港からバスで市街へ出てきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "airport", crumb: "空港から市街へ" },
+  /* ティラナのホステルで2回盗まれた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "hostel", crumb: "ホステルの盗難" },
   /* セヴァン湖に行ってきた【2026年5月】（#1228。マトカ渓谷と同じ型）。エレバンの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
   { country: "armenia", city: "yerevan", slug: "sevan", crumb: "セヴァン湖", draft: true },
   /* エレバンの市バスに乗ってきた【2026年5月】（#1228。マトカ渓谷と同じ型）。エレバンの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
