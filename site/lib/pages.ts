@@ -68,7 +68,8 @@ const MEMBERS: Record<Route, Member> = {
   },
   "/months": {
     listed: true,
-    pages: () => one("/months", "月ごとのふりかえり", { crumb: "ふりかえり", lastmod: LASTMOD.months(MONTHS) }),
+    /* パンくずも見出しと同じ字（前はパンくずだけ「ふりかえり」だった。#1279） */
+    pages: () => one("/months", "月ごとのふりかえり", { lastmod: LASTMOD.months(MONTHS) }),
   },
   "/months/<月>": {
     listed: true,
@@ -125,12 +126,12 @@ const MEMBERS: Record<Route, Member> = {
   },
   "/island": { listed: true, pages: () => one("/island", ISLAND_LABEL) },
   "/island/<旅>": { listed: true, pages: () => ISLE_CHAPTERS.map((c) => ({ path: chapterHref(c), name: c.name })) },
-  "/island/<旅>/day/<日>": { listed: true, pages: () => DAY_PAGES.map((d) => ({ path: dayHref(d), name: `北欧 ${dayName(d)}` })) },
+  "/island/<旅>/day/<日>": { listed: true, pages: () => DAY_PAGES.map((d) => ({ path: dayHref(d), name: `北欧 ${dayName(d)}`, crumb: dayName(d) })) },
   "/island/<旅>/guide": { listed: true, pages: () => one(NORDIC_GUIDE_HREF, "旅のしおり") },
   "/island/<旅>/streams": {
     listed: true,
     pages: () =>
-      ISLE_STREAM_CHAPTERS.map((c) => ({ path: `/island/${c.slug}/streams`, name: `${c.name}の配信`, lastmod: LASTMOD.chapterStreams(c.slug) })),
+      ISLE_STREAM_CHAPTERS.map((c) => ({ path: `/island/${c.slug}/streams`, name: `${c.name}の配信`, crumb: "配信", lastmod: LASTMOD.chapterStreams(c.slug) })),
   },
   "/kitchen": { listed: true, pages: () => one("/kitchen", "作った料理", { lastmod: LASTMOD.kitchen() }) },
   "/kitchen/<料理>": {
@@ -158,8 +159,7 @@ const MEMBERS: Record<Route, Member> = {
   "/cards/import": { listed: false, pages: () => one("/cards/import", "写真をまとめて登録") },
   "/roulette": { listed: false, pages: () => one("/roulette", "ルーレット") },
   /* `/next` と `/next/new` は #1277 で畳んだ（`/board` へ 301）。`/now` は #1278 で畳んだ（`/` へ 301）。
-     どちらも索引に出さない。残る廃止予定は下の控え1枚 */
-  "/nordic/photos": { listed: false, pages: () => one("/nordic/photos", "旅の写真") },
+     `/nordic/photos` は #1279 で面を消した（`/cards` へ 301。`firebase.json`）。廃止予定の道は、もう無い */
 };
 
 type Built = { pages: (Page & { route: Route; listed: boolean })[]; byPath: Map<string, Page & { route: Route; listed: boolean }> };

@@ -165,6 +165,5 @@ erDiagram
 | 条 | いま | 直す issue |
 | --- | --- | --- |
 | M-5 | 表紙の島（`components/isle/cover.ts`）が `Country.region` を1か所読む。値はどの国にも入っていないので空を読むだけ。読む所が外れたら型の欄（`content/countries.ts`）ごと消す | #1276 |
-| M-6 | `Theme.href`（掲示板のお題の行き先。17行）の直書き。W10 では掲示板の宛先の表に手を入れていない（`site/selftest/hrefkey_selftest.mjs` が数える表にも入っていない） | 未定 |
 | 札 | カードの札（その日に居た国と街）が無い。引きかたは `lib/tags.ts` の `stayOn` | 未定 |
 | 配信1回 | 表が無い。videoId が7つの焼き込みに別々に出る | 未定（足すときは `/feature-design`） |

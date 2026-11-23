@@ -45,10 +45,12 @@ const byDay = (() => {
 
 /**
  * 滞在の札の行き先。案内の面が街のガイドならそこ（ソフィア・ブカレスト）、それ以外は国の面。
- * **名前の字で街を当てない**（M-6）——案内の面の道（`guide.href`）と、国の slug だけで引く。
+ * **字で街を当てない**（M-6）——滞在の案内の街の鍵（`guide.city`）と国の slug で、街の名簿から引く。
+ * 前は案内の面の道（`guide.href`）と街の面の道を字で突き合わせていた（#1279）。
  */
 const stayHref = (s: (typeof STAYS)[number]): string | undefined =>
-  TRAVEL_CITIES.find((c) => c.href === s.guide?.href)?.href ?? travelPlace(s.country)?.href;
+  (s.guide?.city ? TRAVEL_CITIES.find((c) => c.country === s.country && c.slug === s.guide!.city)?.href : undefined) ??
+  travelPlace(s.country)?.href;
 
 const stays: StaySpan[] = STAYS.flatMap((s) => {
   const href = stayHref(s);

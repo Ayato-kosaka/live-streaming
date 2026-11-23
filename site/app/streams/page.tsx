@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import Link from "next/link";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import { SayRoom } from "@/components/ui/Say";
 import { say } from "@/content/nights";
 import { STREAM_TYPES } from "@/content/streamTypes";
@@ -44,7 +45,7 @@ const NUM: Record<string, { n: React.ReactNode; cap: string }> = {
 export default function StreamsPage() {
   const s = STATS_FALLBACK;
   return (
-    <PageShell crumbs={[{ label: "配信" }]}>
+    <PageShell crumbs={crumbsOf("/streams")}>
       {/* h1 は場所の名前にそろえる（`docs/island-world.md` 7.5）。
           「どんな配信をしてるか」は問いなので、すぐ下の1行で受ける。 */}
       <PageHead
