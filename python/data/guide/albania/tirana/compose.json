@@ -1,7 +1,7 @@
 {
  "_meta": {
   "何か": "ティラナのガイドブックの面（/travel/albania/tirana）の組み立て。材料（guidebook.json）にあるのは事実で、ここにあるのは選びかたと並べかただけ。焼くのは python/guidebook_bake.py",
-  "行った": "行った街。カード・話・一言は、行った担当が facts から足す（ここでは空）",
+  "行った": "行った街。カードはその日のあやと島カード（札の絵には使わず、窓の中の行った箱に）。話（story）は facts の行をつないだあやとの一人称（docs/guide-blog.md）で、記事のある品は要約だけ（article）。一言は節に1つ",
   "どんな街": "問いは日本語の頁がティラナを語る2つ（材料の about.why_src）。前の街の問いを写していない",
   "題": "「ティラナ観光ガイド」が頭（docs/island-misses.md #332・#333）"
  },
@@ -26,9 +26,200 @@
  "cover": {
   "catch": 0
  },
- "cards": {},
- "say": {},
- "items": {},
+ "cards": {
+  "stairs": {
+   "id": "9kuxxZoz0kenWevKYRbQ",
+   "day": "2026-10-03",
+   "alt": "大階段。白い階段を上る人と、青い空（2026年10月3日）"
+  },
+  "sunset": {
+   "id": "cpzoBQPQ3wATVmpRWq7b",
+   "day": "2026-10-03",
+   "alt": "大階段の上から見た、日の沈むころの街と公園（2026年10月3日）"
+  },
+  "church": {
+   "id": "nxoZwmgveKoNLSaYAND8",
+   "day": "2026-10-03",
+   "alt": "正教会の入口。白い壁に青いアーチと十字架（2026年10月3日）"
+  },
+  "shelter": {
+   "id": "iC0oDrfDx4NCxXFjzXaH",
+   "day": "2026-10-03",
+   "alt": "シェルター。丸い屋根のコンクリートの入口（2026年10月3日）"
+  },
+  "mosque": {
+   "id": "I02gybuSviif0Zc69Usq",
+   "day": "2026-09-29",
+   "alt": "大きなモスクの外。高い塔と丸屋根（2026年9月29日）"
+  },
+  "sufllaqe": {
+   "id": "USzbtXe3VuMreeA5OF6T",
+   "day": "2026-09-30",
+   "alt": "料理通りの店のスフラキ。紙に包まれて、ポテトがのぞく（2026年9月30日）"
+  },
+  "soup": {
+   "id": "rqVwTLuYBsiuJfztIdZk",
+   "day": "2026-10-07",
+   "alt": "ジェルトレのミートボールのスープ（2026年10月7日）"
+  }
+ },
+ "say": {
+  "see": "pyramid",
+  "todo": "byrek",
+  "eat": "qofte"
+ },
+ "items": {
+  "see/skanderbeg": {
+   "story": {
+    "text": "広場には赤い旗と、顔のように見えるビル。15世紀の統治者をたたえる像と見比べても、全然似ていませんでした。",
+    "facts": [
+     "hK0SwIeAxg0@1230#place",
+     "hK0SwIeAxg0@1470#fact",
+     "hK0SwIeAxg0@1620#quote"
+    ]
+   },
+   "article": "walk"
+  },
+  "see/cathedral": {
+   "card": "church",
+   "story": {
+    "text": "広場から歩いて3分。思っていた以上に立派で、見たことのない形の教会でした。",
+    "facts": [
+     "hK0SwIeAxg0@1920#move",
+     "hK0SwIeAxg0@3300#place"
+    ]
+   },
+   "article": "walk"
+  },
+  "see/bunkart2": {
+   "card": "shelter",
+   "story": {
+    "text": "教会から歩いて4分ほど。中は有料だったので、入らずに帰りました。",
+    "facts": [
+     "hK0SwIeAxg0@1950#move",
+     "hK0SwIeAxg0@5310#fact"
+    ]
+   },
+   "article": "walk"
+  },
+  "see/pyramid": {
+   "card": "sunset",
+   "story": {
+    "text": "白い大階段の上からは、この日に見た教会やモスクが見えました。日が奥の山に隠れたあと、空が赤く染まりました。",
+    "facts": [
+     "hK0SwIeAxg0@10950#place",
+     "hK0SwIeAxg0@11070#fact",
+     "hK0SwIeAxg0@11460#fact"
+    ]
+   },
+   "article": "walk"
+  },
+  "see/namazgah": {
+   "card": "mosque",
+   "story": {
+    "text": "大きなモスクの中に入って、お祈りをしてみました。カーペットがきれいでした。入り口は女性用と男性用で別です。",
+    "facts": [
+     "-XSFRIeEpSw@8160#place",
+     "-XSFRIeEpSw@8250#fact",
+     "-XSFRIeEpSw@8400#fact"
+    ]
+   },
+   "article": "mosque"
+  },
+  "todo/bunkart": {
+   "card": "shelter",
+   "story": {
+    "text": "シェルターまで行きましたが、中は有料だったので、入らずに帰りました。",
+    "facts": [
+     "hK0SwIeAxg0@5310#fact"
+    ]
+   },
+   "article": "walk"
+  },
+  "todo/pyramid": {
+   "card": "stairs",
+   "story": {
+    "text": "白い階段と青い空。上まで登ると、飛行機雲が6本も見えました。",
+    "facts": [
+     "hK0SwIeAxg0@10950#place",
+     "hK0SwIeAxg0@11400#fact"
+    ]
+   },
+   "article": "walk"
+  },
+  "todo/byrek": {
+   "story": {
+    "text": "ジェラート屋とパン屋がやたらと多い街です。公園で食べたパイは、長ねぎのような野菜がぎっしり詰まっていました。",
+    "facts": [
+     "-XSFRIeEpSw@3240#fact",
+     "zjHZucyfrq8@2670#food"
+    ]
+   }
+  },
+  "eat/sufllaqe": {
+   "card": "sufllaqe",
+   "story": {
+    "text": "料理通りの店のスフラキは、かなり大きくて540円ぐらい。ビッグマックを100点とすると、115点ぐらいです。",
+    "facts": [
+     "cpOZCgtD4GI@1380#food",
+     "cpOZCgtD4GI@1920#price",
+     "cpOZCgtD4GI@2070#food"
+    ]
+   },
+   "article": "sufllaqe"
+  },
+  "eat/qofte": {
+   "card": "soup",
+   "story": {
+    "text": "大衆食堂ジェルトレで、牛肉のミートボールのスープを食べました。ミートボールは一口の大きさで、ハンバーグのような味です。",
+    "facts": [
+     "3zGkoi8FuwM@3780#food",
+     "3zGkoi8FuwM@4200#food"
+    ]
+   },
+   "article": "gjelltore"
+  },
+  "eat/byrek": {
+   "story": {
+    "text": "パン屋でほうれん草のパイを買うと、200円と言われたのに157円でした。公園で食べたパイは、長ねぎのような野菜がぎっしりで、うまかったです。",
+    "facts": [
+     "zjHZucyfrq8@2040#food",
+     "zjHZucyfrq8@2670#food"
+    ]
+   }
+  },
+  "eat/kafe": {
+   "story": {
+    "text": "カフェでマキアートを頼むと、大きなカップのカフェラテではなく、エスプレッソのようなものが出てきて苦かったです。地元のコーヒー屋では、コーヒーと水で140円でした。",
+    "facts": [
+     "HjSLfg57t7E@1860#food",
+     "da7K3qD5NmI@4200#price"
+    ]
+   }
+  },
+  "guide/airport": {
+   "story": {
+    "text": "着いた夜は空港の床で寝ましたが、寒くてほとんど眠れませんでした。市街へ向かうバスは400レク、約800円で、調べた額と同じでした。",
+    "facts": [
+     "HjSLfg57t7E@540#caution",
+     "HjSLfg57t7E@690#price"
+    ]
+   },
+   "article": "airport"
+  },
+  "guide/safety": {
+   "story": {
+    "text": "泊まったホステルで、1週間に2回、物を盗まれました。料理中に椅子に置いたカバンの携帯と、寝ている間のポーチです。街では、歩道の信号が青でも車が突っ込んでくることがあります。",
+    "facts": [
+     "yGEacTlskmY@600#caution",
+     "XKpFeM0mQ2I@480#caution",
+     "xNWJQCt3SLc@660#caution",
+     "2zJMCF5TfJ8@1775#caution"
+    ]
+   },
+   "article": "hostel"
+  }
+ },
  "about": {
   "hero": {
    "q": "スカンデルベグって誰？",

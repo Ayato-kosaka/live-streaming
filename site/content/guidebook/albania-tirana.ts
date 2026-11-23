@@ -247,7 +247,31 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
      "url": "https://www.openstreetmap.org/way/1562005169",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "date": "2026-10-03",
+    "scene": {
+     "v": "hK0SwIeAxg0",
+     "t": 5310,
+     "date": "2026-10-03"
+    },
+    "pic": {
+     "src": "/travel/albania/tirana/shelter-960.webp",
+     "small": "/travel/albania/tirana/shelter-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "シェルター。丸い屋根のコンクリートの入口（2026年10月3日）",
+     "kind": "card",
+     "date": "2026-10-03"
+    },
+    "story": [
+     "シェルターまで行きましたが、中は有料だったので、入らずに帰りました。"
+    ],
+    "more": {
+     "href": "/travel/albania/tirana/walk",
+     "title": "ティラナの中心を歩いて回ってきた【2026年10月】"
+    }
+   }
   },
   {
    "id": "pyramid",
@@ -273,7 +297,31 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikivoyage.org/wiki/Tirana",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "date": "2026-10-03",
+    "scene": {
+     "v": "hK0SwIeAxg0",
+     "t": 10950,
+     "date": "2026-10-03"
+    },
+    "pic": {
+     "src": "/travel/albania/tirana/stairs-960.webp",
+     "small": "/travel/albania/tirana/stairs-480.webp",
+     "w": 960,
+     "h": 1280,
+     "alt": "大階段。白い階段を上る人と、青い空（2026年10月3日）",
+     "kind": "card",
+     "date": "2026-10-03"
+    },
+    "story": [
+     "白い階段と青い空。上まで登ると、飛行機雲が6本も見えました。"
+    ],
+    "more": {
+     "href": "/travel/albania/tirana/walk",
+     "title": "ティラナの中心を歩いて回ってきた【2026年10月】"
+    }
+   }
   },
   {
    "id": "dajti",
@@ -341,7 +389,19 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
    ],
    "eat": [
     "byrek"
-   ]
+   ],
+   "went": {
+    "date": "2026-09-28",
+    "scene": {
+     "v": "zjHZucyfrq8",
+     "t": 2700,
+     "date": "2026-09-28"
+    },
+    "story": [
+     "ジェラート屋とパン屋がやたらと多い街です。公園で食べたパイは、長ねぎのような野菜がぎっしり詰まっていました。"
+    ],
+    "say": "うまい。見かけ通りの味。"
+   }
   },
   {
    "id": "fergese",
@@ -522,6 +582,21 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-10-03",
+     "scene": {
+      "v": "hK0SwIeAxg0",
+      "t": 1230,
+      "date": "2026-10-03"
+     },
+     "story": [
+      "広場には赤い旗と、顔のように見えるビル。15世紀の統治者をたたえる像と見比べても、全然似ていませんでした。"
+     ],
+     "more": {
+      "href": "/travel/albania/tirana/walk",
+      "title": "ティラナの中心を歩いて回ってきた【2026年10月】"
+     }
+    },
     "geo": {
      "lat": 41.328144,
      "lon": 19.818434
@@ -669,6 +744,30 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-10-03",
+     "scene": {
+      "v": "hK0SwIeAxg0",
+      "t": 5310,
+      "date": "2026-10-03"
+     },
+     "pic": {
+      "src": "/travel/albania/tirana/shelter-960.webp",
+      "small": "/travel/albania/tirana/shelter-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "シェルター。丸い屋根のコンクリートの入口（2026年10月3日）",
+      "kind": "card",
+      "date": "2026-10-03"
+     },
+     "story": [
+      "教会から歩いて4分ほど。中は有料だったので、入らずに帰りました。"
+     ],
+     "more": {
+      "href": "/travel/albania/tirana/walk",
+      "title": "ティラナの中心を歩いて回ってきた【2026年10月】"
+     }
+    },
     "geo": {
      "lat": 41.327022,
      "lon": 19.819551
@@ -761,6 +860,31 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-10-03",
+     "scene": {
+      "v": "hK0SwIeAxg0",
+      "t": 11220,
+      "date": "2026-10-03"
+     },
+     "pic": {
+      "src": "/travel/albania/tirana/sunset-960.webp",
+      "small": "/travel/albania/tirana/sunset-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "大階段の上から見た、日の沈むころの街と公園（2026年10月3日）",
+      "kind": "card",
+      "date": "2026-10-03"
+     },
+     "story": [
+      "白い大階段の上からは、この日に見た教会やモスクが見えました。日が奥の山に隠れたあと、空が赤く染まりました。"
+     ],
+     "more": {
+      "href": "/travel/albania/tirana/walk",
+      "title": "ティラナの中心を歩いて回ってきた【2026年10月】"
+     },
+     "say": "この空がデフォルトです"
+    },
     "geo": {
      "lat": 41.323019,
      "lon": 19.821589
@@ -847,6 +971,30 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-10-03",
+     "scene": {
+      "v": "hK0SwIeAxg0",
+      "t": 3300,
+      "date": "2026-10-03"
+     },
+     "pic": {
+      "src": "/travel/albania/tirana/church-960.webp",
+      "small": "/travel/albania/tirana/church-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "正教会の入口。白い壁に青いアーチと十字架（2026年10月3日）",
+      "kind": "card",
+      "date": "2026-10-03"
+     },
+     "story": [
+      "広場から歩いて3分。思っていた以上に立派で、見たことのない形の教会でした。"
+     ],
+     "more": {
+      "href": "/travel/albania/tirana/walk",
+      "title": "ティラナの中心を歩いて回ってきた【2026年10月】"
+     }
+    },
     "geo": {
      "lat": 41.326495,
      "lon": 19.817412
@@ -890,6 +1038,30 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2026-09-29",
+     "scene": {
+      "v": "-XSFRIeEpSw",
+      "t": 8160,
+      "date": "2026-09-29"
+     },
+     "pic": {
+      "src": "/travel/albania/tirana/mosque-960.webp",
+      "small": "/travel/albania/tirana/mosque-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "大きなモスクの外。高い塔と丸屋根（2026年9月29日）",
+      "kind": "card",
+      "date": "2026-09-29"
+     },
+     "story": [
+      "大きなモスクの中に入って、お祈りをしてみました。カーペットがきれいでした。入り口は女性用と男性用で別です。"
+     ],
+     "more": {
+      "href": "/travel/albania/tirana/mosque",
+      "title": "ティラナの大きなモスクに入ってきた【2026年9〜10月】"
+     }
+    },
     "geo": {
      "lat": 41.325722,
      "lon": 19.824243
@@ -1887,7 +2059,32 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "url": "https://wolt.com/en/alb/tirana/restaurant/restorant-tymi",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-10-07",
+     "scene": {
+      "v": "3zGkoi8FuwM",
+      "t": 3845,
+      "date": "2026-10-07"
+     },
+     "pic": {
+      "src": "/travel/albania/tirana/soup-960.webp",
+      "small": "/travel/albania/tirana/soup-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "ジェルトレのミートボールのスープ（2026年10月7日）",
+      "kind": "card",
+      "date": "2026-10-07"
+     },
+     "story": [
+      "大衆食堂ジェルトレで、牛肉のミートボールのスープを食べました。ミートボールは一口の大きさで、ハンバーグのような味です。"
+     ],
+     "more": {
+      "href": "/travel/albania/tirana/gjelltore",
+      "title": "ティラナの大衆食堂でミートボールのスープを食べてきた【2026年10月】"
+     },
+     "say": "ミートボー[ミートボール]っていう言葉にやられました"
+    }
    },
    {
     "id": "speca",
@@ -2042,7 +2239,18 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Albania",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-09-28",
+     "scene": {
+      "v": "zjHZucyfrq8",
+      "t": 2670,
+      "date": "2026-09-28"
+     },
+     "story": [
+      "パン屋でほうれん草のパイを買うと、200円と言われたのに157円でした。公園で食べたパイは、長ねぎのような野菜がぎっしりで、うまかったです。"
+     ]
+    }
    },
    {
     "id": "sufllaqe",
@@ -2086,7 +2294,31 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Albania",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-09-28",
+     "scene": {
+      "v": "cpOZCgtD4GI",
+      "t": 1380,
+      "date": "2026-09-30"
+     },
+     "pic": {
+      "src": "/travel/albania/tirana/sufllaqe-960.webp",
+      "small": "/travel/albania/tirana/sufllaqe-480.webp",
+      "w": 960,
+      "h": 1280,
+      "alt": "料理通りの店のスフラキ。紙に包まれて、ポテトがのぞく（2026年9月30日）",
+      "kind": "card",
+      "date": "2026-09-30"
+     },
+     "story": [
+      "料理通りの店のスフラキは、かなり大きくて540円ぐらい。ビッグマックを100点とすると、115点ぐらいです。"
+     ],
+     "more": {
+      "href": "/travel/albania/tirana/sufllaqe",
+      "title": "ティラナでスフラキとケバブを食べ比べてきた【2026年9〜10月】"
+     }
+    }
    },
    {
     "id": "petulla",
@@ -2316,7 +2548,18 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Albania",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-09-28",
+     "scene": {
+      "v": "HjSLfg57t7E",
+      "t": 1860,
+      "date": "2026-09-28"
+     },
+     "story": [
+      "カフェでマキアートを頼むと、大きなカップのカフェラテではなく、エスプレッソのようなものが出てきて苦かったです。地元のコーヒー屋では、コーヒーと水で140円でした。"
+     ]
+    }
    },
    {
     "id": "caj-mali",
@@ -3033,7 +3276,22 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Tirana_International_Airport_N%C3%ABn%C3%AB_Tereza",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-09-28",
+     "scene": {
+      "v": "HjSLfg57t7E",
+      "t": 540,
+      "date": "2026-09-28"
+     },
+     "story": [
+      "着いた夜は空港の床で寝ましたが、寒くてほとんど眠れませんでした。市街へ向かうバスは400レク、約800円で、調べた額と同じでした。"
+     ],
+     "more": {
+      "href": "/travel/albania/tirana/airport",
+      "title": "ティラナ空港からバスで市街へ出てきた【2026年9月】"
+     }
+    }
    },
    {
     "id": "transit",
@@ -3065,7 +3323,18 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "url": "https://dajtiekspres.com/getting-here/",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-10-03",
+     "scene": {
+      "v": "hK0SwIeAxg0",
+      "t": 6060,
+      "date": "2026-10-03"
+     },
+     "story": [
+      "中心の見どころは全部近くにあって、バスを使わずに歩いて回れました。市バスに乗った日は、人に聞いて教わったイエローバスの2番へ。車内で兄さんがお金を受け取って、切符をくれました。"
+     ]
+    }
    },
    {
     "id": "pay",
@@ -3111,7 +3380,18 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_196.html",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-09-28",
+     "scene": {
+      "v": "-XSFRIeEpSw",
+      "t": 5520,
+      "date": "2026-09-29"
+     },
+     "story": [
+      "支払いは現金ばかりの国だと感じました。カフェで最初は現金のみと言われましたが、粘るとカードリーダーが出てきて、カードで払えました。"
+     ]
+    }
    },
    {
     "id": "sim",
@@ -3139,7 +3419,18 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Tirana_International_Airport_N%C3%ABn%C3%AB_Tereza",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-09-28",
+     "scene": {
+      "v": "HjSLfg57t7E",
+      "t": 4320,
+      "date": "2026-09-28"
+     },
+     "story": [
+      "事前に買ったヨーロッパ用のSIMにはアルバニアが入っていなくて、使えませんでした。SIMを買うのは現金でした。"
+     ]
+    }
    },
    {
     "id": "safety",
@@ -3179,7 +3470,22 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Tirana",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2026-10-02",
+     "scene": {
+      "v": "XKpFeM0mQ2I",
+      "t": 480,
+      "date": "2026-10-05"
+     },
+     "story": [
+      "泊まったホステルで、1週間に2回、物を盗まれました。料理中に椅子に置いたカバンの携帯と、寝ている間のポーチです。街では、歩道の信号が青でも車が突っ込んでくることがあります。"
+     ],
+     "more": {
+      "href": "/travel/albania/tirana/hostel",
+      "title": "ティラナのホステルで2回盗まれた【2026年10月】"
+     }
+    }
    },
    {
     "id": "phrases",
@@ -3323,7 +3629,18 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikipedia.org/wiki/Time_in_Albania",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "date": "2026-09-29",
+    "scene": {
+     "v": "-XSFRIeEpSw",
+     "t": 150,
+     "date": "2026-09-29"
+    },
+    "story": [
+     "9月の終わりから10月の初めは、朝から晩までずっと晴れていました。気温は26度ぐらいで、半袖で過ごせる暑さ。雨が降り出したのは、10月8日でした。"
+    ]
+   }
   },
   "budget": {
    "rows": [],
@@ -3620,6 +3937,6 @@ export const TIRANA: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "61dec4cc35f3a189"
+ "hash": "b4fec831539d405d"
 }
 /* END GUIDE */;
