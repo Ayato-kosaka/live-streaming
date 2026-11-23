@@ -40,15 +40,18 @@ curl -s "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=<id>
 
 ## 1. キャラクター（最優先）
 
-### 1-1. 投げ銭してくれた人を、2つの出どころから集める
+### 1-1. 投げ銭してくれた人を、3つの出どころ（スパチャ・Doneru・島の投げ銭）から集める
 
 **BigQuery だけ見ない。当日ぶんは入っていない。** ここで えびっち を落とした。
+**島の投げ銭（島の `/tip`。#1405）は BigQuery に1件も入らない。** 台帳と受け取りの書類にしか無い。
 
 | 出どころ | 何のぶん | どう引くか |
 | --- | --- | --- |
 | BigQuery `chat_messages`（`event_type='PAID'`） | **前の晩まで** | ここから直に引く |
 | BigQuery `doneru_donations` | **前の晩まで** | 同上 |
 | Firestore `streamChatMessages` | **今日のぶん** | `characters_gap` で**数だけ** |
+| 台帳 `islandTips`（`source: island`。島の投げ銭） | **前の晩まで** | `characters_gap` で**数だけ**（BigQuery には無い） |
+| Firestore `islandSiteTips`（島の投げ銭の受け取り） | **今日のぶん** | 同上（台帳にまだ居ない人だけ。テストの支払い・返金は数えない） |
 
 BigQuery はこのセッションから直に引ける（`execute_sql_readonly` /
 projectId `live-streaming-d3cac`）。**Actions を通さないので、公開のログに残らない。**
@@ -69,15 +72,19 @@ WHERE DATE(donated_at) >= '2026-09-11' ORDER BY d DESC
 
 ⚠ 時刻の欄は **`published_at`**。`timestamp` という列は無い。
 
-当日ぶんは `characters_gap` で数える。
+当日ぶんと島の投げ銭は `characters_gap` で数える。
 
     Actions > 管理スクリプトを実行 > script = characters_gap / ARGS = {"days": 14}
 
-読むのは3行だけ:
+読むのは4行だけ:
 
 - `Firestore（配信中のぶん）: 投げ銭らしい行から N人。うち BigQuery にまだ居ないのが M人`
   → **M が 0 なら、今日出してくれた人は全員すでに BigQuery が知っている人。**
     名前を引き直さなくていい。
+- `島の投げ銭（台帳＋今日の受け取り）: I人（うち今日のぶんだけの人 J人）`
+  → 島で投げた人。**名前は BigQuery の SQL では引けない**（台帳にしか無い）。
+    島で投げられるのは YouTube のチャンネルを結んだ人だけなので、いつも channelId で当たる。
+    下の「まだ無い K人」にはこの人たちも入っている
 - `調べた人数 … / **まだ無い K人**` → K が 0 でなければ、その人を探す
 - `名前でしか当たらなかった L人` → L が 0 でなければ `characters_link` を回す
 

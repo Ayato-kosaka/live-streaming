@@ -435,6 +435,22 @@ let FUND_GOT = (() => {
 })();
 /** 時刻のわからない控え（GAS から移したぶん）。**並びに出ない** */
 const GOT_NOTIME = { count: 13, yen: 3000 };
+/**
+ * 島の投げ銭（#1405。島の `/tip` で受ける Stripe の投げ銭）。**`FUNDISLAND=1` のときだけ混ぜる。**
+ *
+ * 本番は 2026-11-23 に入ったばかりで、本番の支払いは0件（鍵がまだ無い）。
+ * **既定は本番と同じ0件**にしておく（差し込みに本番と違う値を置くと、直っていない
+ * ものが直って見える）。島の行の出かたを撮るときだけ足す。名前も本文も作り物。
+ * 書類IDは Checkout Session の形（`cs_live_…`）。
+ */
+const ISLAND_GOT = [
+  { id: "cs_live_fake0001", kind: "island", at: "2026-09-24T22:31:00+09:00",
+    day: "2026-09-24", yen: 2000, who: "しまのひと", text: "島から投げてみました" },
+  { id: "cs_live_fake0002", kind: "island", at: "2026-09-24T21:05:00+09:00",
+    day: "2026-09-24", yen: 1000, who: "ゆずたつ", text: "" },
+];
+/** 島の投げ銭の焼き直し（`fund.box.island`）。上の2件の合計。どれも目標の期間内 */
+const ISLAND_YEN = ISLAND_GOT.reduce((a, g) => a + g.yen, 0);
 /** リアルタイムを測るための印。1回だけ「いま届いた」を作る */
 let FEED_START = 0;
 let FEED_SENT = 0;
@@ -789,9 +805,13 @@ export async function apply(ctx, opts = {}) {
             spends: [], more: false, next: null, goals: [],
           });
         }
-        const b = box();
+        const isl = opts.fundisland ?? process.env.FUNDISLAND === "1";
+        const b0 = box();
+        /* 島の投げ銭は焼き直しの `island`（本物は `tip.ts` の `islandYenOf`）。
+           **「いま」は `GET /fund` と同じ1本**（起点 ＋ スパチャの半分 ＋ 島 ＋ Doneru） */
+        const b = b0 ? { ...b0, island: isl ? ISLAND_YEN : 0 } : null;
         const dn = down ? null : FUND_DONERU;
-        const total = b && dn !== null ? b.start + b.superchat + dn : null;
+        const total = b && dn !== null ? b.start + b.superchat + b.island + dn : null;
         const nowGoal = FUND_GOALS.find((g) => !g.to);
         /* 内訳。**足し引きが必ず「いま」に戻る**のは本物と同じ（開始時点が
            残差）。期間内の数は、本番の実測に合わせてある
@@ -804,10 +824,12 @@ export async function apply(ctx, opts = {}) {
             .reduce((a, x) => a + x.yen, 0);
           const scIn = 12140;
           const dnIn = 40600;
-          const start = total - scIn - dnIn + spendIn;
+          // 島の投げ銭は全部、目標が始まったあと（2026-11-23 から）
+          const ilIn = b.island;
+          const start = total - scIn - dnIn - ilIn + spendIn;
           split = {
-            start, superchat: scIn, doneru: dnIn, spend: spendIn,
-            total: start + scIn + dnIn - spendIn,
+            start, superchat: scIn, doneru: dnIn, island: ilIn, spend: spendIn,
+            total: start + scIn + dnIn + ilIn - spendIn,
             donationsAsOf: "2026-09-24",
           };
         }
@@ -849,7 +871,9 @@ export async function apply(ctx, opts = {}) {
         const n = Math.min(Number(u.searchParams.get("limit") || 15), 120);
         const since = u.searchParams.get("since");
         const before = u.searchParams.get("before");
-        let all = [...FUND_GOT].sort((a, b2) => b2.at.localeCompare(a.at));
+        const isl = opts.fundisland ?? process.env.FUNDISLAND === "1";
+        let all = [...FUND_GOT, ...(isl ? ISLAND_GOT : [])]
+          .sort((a, b2) => b2.at.localeCompare(a.at));
         if (since) all = all.filter((g) => g.at > since);
         if (before) all = all.filter((g) => g.at < before);
         const got = all.slice(0, n);
@@ -863,7 +887,7 @@ export async function apply(ctx, opts = {}) {
       /* もう一度出す。**本物と同じで、送られてきた字は返さない**
          （台帳の1件から組む）。同じ1件を続けて頼むと `already`。 */
       if (path === "/fund/replay" && m === "POST") {
-        const row = FUND_GOT.find(
+        const row = [...FUND_GOT, ...ISLAND_GOT].find(
           (g) => g.id === body.id && g.kind === body.kind);
         if (!row) {
           return r.fulfill({ status: 404, contentType: "application/json",

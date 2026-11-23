@@ -1405,8 +1405,11 @@
   background: var(--paper);
 }
 /* ドネは左に細い帯。**色を2つ使わない**——同じ並びの中で、どちらから
-   来たかだけが違う（字でも「ドネ」と出る。色だけに頼らない）。 */
+   来たかだけが違う（字でも「ドネ」と出る。色だけに頼らない）。
+   島の投げ銭（#1405）は同じ色の**縫い目の帯**。3つ目の色を足さずに、
+   スパチャ（帯なし）ともドネ（帯）とも見分けられる。字でも「島の投げ銭」と出る */
 .fd-got > li.is-doneru { border-left: 4px solid var(--frame-dark); }
+.fd-got > li.is-island { border-left: 4px dashed var(--frame-dark); }
 
 .fd-gothead {
   display: flex;
@@ -1487,7 +1490,7 @@
   color: var(--ink-2);
 }
 
-/* いまの目標に対する内訳。**足し引きが必ず「いま」に戻る5行。** */
+/* いまの目標に対する内訳。**足し引きが必ず「いま」に戻る5行**と、「いま」の1行。 */
 .fd-split {
   margin: 0 0 var(--sp-4);
   padding: var(--sp-3);

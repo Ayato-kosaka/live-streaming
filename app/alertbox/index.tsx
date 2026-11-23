@@ -52,7 +52,9 @@ import {
 } from "./matching.utils";
 import { speak } from "./tts.utils";
 import { getMainTextStyle, getSubMessageStyle } from "./styles.utils";
-import { DoneruConnector, YouTubeConnector } from "./connectors";
+import { DoneruConnector, IslandTipConnector, YouTubeConnector } from "./connectors";
+/* 出どころの読み方（既定は どねる・YouTube・島 の3つ。`connectors/sources.ts`） */
+import { parseSourceParam } from "./connectors/sources";
 import {
   getAlertboxWss,
   getAlertboxCharacters,
@@ -364,29 +366,6 @@ export default function AlertBox() {
      `components/DeadMark.tsx` に書いてある。
      **理由はログにだけ残す**（`sendLog`）。 */
   const [dead, setDead] = useState<"init" | "no-k" | "wss" | null>(null);
-
-  /**
-   * Parse source parameter to determine which connectors to use
-   * @returns Array of connector types to initialize
-   */
-  const parseSourceParam = (sourceParam?: string | string[]): string[] => {
-    // Handle array case (shouldn't happen but for safety)
-    const source = Array.isArray(sourceParam) ? sourceParam[0] : sourceParam;
-
-    if (!source) {
-      // Default: both connectors
-      return ["doneru", "youtube"];
-    }
-
-    // Split by comma and normalize
-    const sources = source
-      .split(",")
-      .map((s) => s.trim().toLowerCase())
-      .filter((s) => s === "doneru" || s === "youtube");
-
-    // If invalid or empty, default to both
-    return sources.length > 0 ? sources : ["doneru", "youtube"];
-  };
 
   const enabledSources = useMemo(
     () => parseSourceParam(params.source),
@@ -834,6 +813,20 @@ export default function AlertBox() {
       const cleanup = youtubeConnector.start(handleNotification, handleError);
       cleanupFunctions.push(cleanup);
       sendLog("AlertBox", sessionId, "youtubeConnectorStarted");
+    }
+
+    /* 島で受けた投げ銭（決定の記録 0017・#1405）。`islandAlertFeed/{合言葉}` を Firestore のリアルタイム購読で読む（約1秒）。
+       **ほかの口（`/alertbox/{k}/*`）には頼らない。** 合言葉が `islandUsers` に無い（テスト用の合言葉）晩は、名簿・額・
+       どねるの口が 404 でも、1枚さえあれば出る。出しかたは Doneru の donation と同じ（同じ7段・豚に全額）。
+       こけた理由は `islandFeedError` に残す（SDK が購読を終わらせたときだけ鳴る。付け直しは 5 秒から倍で、上限 5 分） */
+    if (enabledSources.includes("island")) {
+      const island = new IslandTipConnector(alertboxId);
+      cleanupFunctions.push(
+        island.start(handleNotification, (error) =>
+          sendLog("AlertBox", sessionId, "islandFeedError", { error: error.message })
+        )
+      );
+      sendLog("AlertBox", sessionId, "islandConnectorStarted");
     }
 
     // 通知画像のプリフェッチ（体感を滑らかに）

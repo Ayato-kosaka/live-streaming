@@ -69,3 +69,32 @@ export function travelArticles(site) {
 
 /** 索引が記事の名簿（公開してよい記事だけ）を読んでいるか */
 export const sitemapReadsArticles = (sitemapSrc) => /\bpublicArticles\(|\bTRAVEL_ARTICLES\b/.test(sitemapSrc);
+
+/**
+ * 面の印の付いた企画（`content/projects.ts` の `book`。M-8）。`draft` は下書きの印（M-33。行は `content/projectDrafts.ts` の `DRAFT_PROJECTS` に居る）。
+ *
+ * 面は道が固定（`app/legends/<企画>/page.tsx`）だが、`robots` は面に字で書かず、表の印から決まる
+ * （`content/legends/index.ts` の `bookRobots`）。だから「検索に出さないと自分で言っている面か」は表の印で読む。
+ * 出すときは印を1つ外すだけで、面の名簿（`lib/pages.ts`）が `BOOK_PROJECTS` を読んでいれば索引に在る（`sitemapReadsBooks`）。
+ */
+export function legendBooks(site) {
+  const src = readFileSync(join(site, "content", "projects.ts"), "utf8");
+  /* 出ている企画（`PROJECTS`）と下書きの企画（`DRAFT_PROJECTS`）の2つの並び。下書きの並びは空のこともある */
+  const rows = [
+    ...must(readArray(src, "PROJECTS", { keys: ["slug", "book", "draft"] }), "content/projects.ts の PROJECTS"),
+    ...drafts(readArray(readFileSync(join(site, "content", "projectDrafts.ts"), "utf8"), "DRAFT_PROJECTS", { keys: ["slug", "book", "draft"] })),
+  ];
+  return rows.filter((r) => r.book === "true").map((r) => ({ route: `/legends/${r.slug}`, draft: r.draft === "true" }));
+}
+
+/** 下書きの並び。**空でよい**（出す日に行が `PROJECTS` へ移る）が、読み落としは止める（`must` と同じ 2） */
+function drafts(got) {
+  if (got.missed !== 0) {
+    console.log(`::error::content/projects.ts の DRAFT_PROJECTS を ${got.missed}件 読み落としました（名乗り ${got.declared} / 読めた ${got.rows.length}）`);
+    process.exit(2);
+  }
+  return got.rows;
+}
+
+/** 面の名簿が、面の印の付いた企画を読んでいるか */
+export const sitemapReadsBooks = (sitemapSrc) => /\bBOOK_PROJECTS\b/.test(sitemapSrc);

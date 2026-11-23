@@ -18,6 +18,19 @@ import Icon from "@/components/ui/IconCore";
  * じぶんのこと（`/me`）で、そこへは看板の自分のアイコンから1タップで着く。
  * ここが持つのは**入る道だけ**にする。
  */
+/**
+ * 押す前に言っておく1枚。**島でログインのボタンを出すところは、どこもこれを出す**
+ * （投げ銭の `/tip` も。同じ意味の字を2か所に書かない。`docs/island-standards.md` 33.1）。
+ */
+export function SignInWarn() {
+  return (
+    <p className="signin-warn">
+      Google の画面に移ります。<b>「このアプリは確認されていません」</b>と出たら、
+      「詳細」→「あやと島（安全ではないページ）に移動」。
+    </p>
+  );
+}
+
 export default function SignIn({ compact = false }: { compact?: boolean }) {
   const { user, signIn, error, busy } = useAuth();
   const [open, setOpen] = useState(false);
@@ -86,10 +99,7 @@ export default function SignIn({ compact = false }: { compact?: boolean }) {
             ここに足す（入る理由は、この一覧にしか書いていない） */}
         <li>付箋に絵を貼れる</li>
       </ul>
-      <p className="signin-warn">
-        Google の画面に移ります。<b>「このアプリは確認されていません」</b>と出たら、
-        「詳細」→「あやと島（安全ではないページ）に移動」。
-      </p>
+      <SignInWarn />
       <button ref={go} className="signin-go" onClick={() => void signIn()} disabled={busy}>
         {busy ? "つないでいます…" : "YouTubeでログイン"}
       </button>
