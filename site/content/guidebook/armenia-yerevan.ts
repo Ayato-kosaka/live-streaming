@@ -45,7 +45,7 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
     "id": "history",
     "icon": "ruins",
     "q": "歴史は？",
-    "a": "紀元前782年、ウラルトゥ王国がこの丘にエレブニの要塞を築いた。エレバンの名前はエレブニから来ている。",
+    "a": "紀元前782年、ウラルトゥ王国がエレブニの要塞を築いた。エレバンの名前はエレブニから来ている。",
     "src": [
      {
       "name": "Wikipedia「Erebuni Fortress」",
@@ -86,7 +86,7 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
     "id": "pink",
     "icon": "plaza",
     "q": "なぜピンクシティ？",
-    "a": "街のまん中の建物は、ピンクや黄色の凝灰岩で建てた。濃さのちがうピンクの石から「ピンクシティ」と呼ばれる。",
+    "a": "共和国広場の建物は、ピンクや黄色の凝灰岩で建てた。濃さのちがうピンクの凝灰岩から「ピンクシティ」と呼ばれる。",
     "src": [
      {
       "name": "Wikipedia「Republic Square, Yerevan」",
@@ -1811,7 +1811,14 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
     "maps": "https://www.google.com/maps/search/?api=1&query=Noravank+Monastery+Areni&hl=ja",
     "km": 82
    }
-  ]
+  ],
+  "map": {
+   "mid": "1zMbxaSaOM8CckwwCOhLgnGuK0MyB_Y4",
+   "title": "エレバン｜見たいもの",
+   "ll": "40.1813,44.5069",
+   "z": 13,
+   "pins": 25
+  }
  },
  "eat": {
   "kinds": [
@@ -2438,7 +2445,7 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
      "lang": "hy",
      "roman": "Gata"
     },
-    "body": "アルメニアの甘いパン。町や地方で形が違う。中にバターと砂糖と小麦粉の詰め物を入れたものが多い。",
+    "body": "アルメニアの甘いパン。町や地方で形が違う。よく食べられるコリツは、小麦粉・バター・砂糖の詰め物を入れる。",
     "facts": [
      {
       "label": "どこで",
@@ -2539,14 +2546,13 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
     "facts": [
      {
       "label": "どこで",
-      "text": "カラス（郷土料理のチェーン）・オスト（ラフマジョとハチャプリ）・アート・ランチ（食堂）"
+      "text": "カラス（郷土料理のチェーン）・オスト（ラフマジョとハチャプリ）"
      }
     ],
     "maps": "https://www.google.com/maps/search/?api=1&query=Tan+%D4%B5%D6%80%D6%87%D5%A1%D5%B6&hl=ja",
     "places": [
      "karas",
-     "ost",
-     "artlunch"
+     "ost"
     ],
     "kinds": [
      "drinks"
@@ -2784,7 +2790,14 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
     ],
     "roman": "Ponchikanots"
    }
-  ]
+  ],
+  "map": {
+   "mid": "12CdSOmdLz2BDfKIfq_OccAYYpznri5k",
+   "title": "エレバン｜食べたいもの",
+   "ll": "40.1704,44.4911",
+   "z": 12,
+   "pins": 8
+  }
  },
  "buy": {
   "items": [
@@ -3080,7 +3093,14 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
     ],
     "roman": "Ponchikanots"
    }
-  ]
+  ],
+  "map": {
+   "mid": "192RePTKUWItbmvLapDuKpaaYo6r-Llg",
+   "title": "エレバン｜買いたいもの",
+   "ll": "40.1788,44.5170",
+   "z": 13,
+   "pins": 3
+  }
  },
  "videos": {
   "streams": {
@@ -3367,7 +3387,7 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
      },
      {
       "local": {
-       "text": "Կներե՛ք",
+       "text": "Կներեք",
        "lang": "hy",
        "roman": "knereq",
        "kana": "クネレク"
@@ -3385,7 +3405,7 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
      },
      {
       "local": {
-       "text": "Սա ի՞նչ արժե",
+       "text": "Սա ինչ արժե",
        "lang": "hy",
        "roman": "sa inch arzhe",
        "kana": "サ・インチ・アルジェ？"
@@ -3741,6 +3761,6 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "f76b7471d97768c2"
+ "hash": "0491506b54800700"
 }
 /* END GUIDE */;
