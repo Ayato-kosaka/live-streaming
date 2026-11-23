@@ -1,0 +1,560 @@
+{
+ "ja": "エレバン",
+ "items": {
+  "guidebook": "python/data/guide/armenia/yerevan/guidebook.json"
+ },
+ "ec2_dir": "/home/ubuntu/chatgpt/yerevan",
+ "style": "editorial",
+ "style_ref": ".claude/skills/chatgpt-image/guide/bulgaria/sofia-style.webp",
+ "scene": "Scene: Yerevan, the capital of Armenia, on a clear late afternoon. The wide, open Republic Square seen from its south side: a broad oval of pale stone paving in the foreground and middle ground, with a long rectangular fountain pool. Around the square stand grand neoclassical buildings built of rosy-pink and warm honey-yellow tuff stone, with tall arcades of round arches and carved stone details; on one side, the Government House with its slim, square clock tower rising above the arcades. Far beyond the city, floating above the pale haze in the sky, the huge snow-capped cone of Mount Ararat with its smaller sister peak beside it. A few tiny cheerful people stroll across the wide square. A calm, simple pale sky fills the upper part.",
+ "title": {
+  "name": "エレバン",
+  "label": "観光ガイド",
+  "catch": "「ピンクシティ」と称えられた街",
+  "kicker": "アルメニア"
+ },
+ "cover": {
+  "v": 1,
+  "bias": 0.5,
+  "file": "エレバン-観光ガイド",
+  "title": {
+   "x": 0.04,
+   "y": 0.955,
+   "anchor": "bl",
+   "scale": 0.85
+  },
+  "alt": "晴れた午後の、ピンクと黄色の石の建物と時計塔の政府庁舎に囲まれた共和国広場。空の向こうに雪をかぶったアララト山。エレバンの絵",
+  "note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。共和国広場は写真を形の手本として渡した。下は広場の石畳、上は空とアララト山。3:2 で描かせて 16:9 に切った。字なし",
+  "photos": [
+   "site/public/guide/armenia/yerevan/photos/yerevan-republic-square-armenia-150da468-500.webp"
+  ]
+ },
+ "cover_tall": {
+  "v": 1,
+  "bias": 0.5,
+  "file": "エレバン-観光ガイド-縦",
+  "title": {
+   "x": 0.5,
+   "y": 0.955,
+   "anchor": "bc",
+   "scale": 1.2
+  },
+  "alt": "晴れた午後の、ピンクと黄色の石の建物に囲まれた共和国広場と、空の向こうの雪のアララト山。エレバンの絵",
+  "note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "photos": [
+   "site/public/guide/armenia/yerevan/photos/yerevan-republic-square-armenia-150da468-500.webp"
+  ]
+ },
+ "areamap": {
+  "v": 1,
+  "layout": "layout1.png",
+  "file": "エレバン-見どころマップ-地区分け",
+  "ratio": 0.8,
+  "sizes": [
+   1200,
+   800
+  ],
+  "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: every road, every park, the river and the two district colors must stay where they are in the layout, and each landmark sits exactly on its numbered dot. Republic Square (1) and the Blue Mosque (2) are in the pink district in the lower middle; the Opera House (3) is at the bottom of the lavender district in the middle; the Cascade (4) climbs the hill above it, and the Mother Armenia statue (5) stands on the hilltop at the upper right. Keep every icon small so that it fits on its own dot and does not cover its neighbours. Leave the bottom of the pink district and the east part of the lavender district calm and empty (only the wash and the roads): names will be placed there later. ",
+  "prompt": "Paint an illustrated sightseeing map of central Yerevan, Armenia, as a tall portrait image (2:3, 1024x1536), using the attached layout as the exact base. North is up. Keep every white road, every green park, the river and the two colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove roads, the river or districts. This is a calm, clean picture map: do NOT draw any houses, buildings, rooftops, trees, people or cars. The blocks between the roads stay flat warm cream paper with a faint rosy-apricot tint (the color of Yerevan's pink tuff stone) and a faint watercolor texture; parks are flat soft green watercolor washes; the Hrazdan River winds along the left (west) side in its green gorge as a narrow, calm, soft blue watercolor stream; roads are clean cream-white ribbons. Paint the two districts as flat translucent watercolor washes in their own colors from the layout (soft pink for the Republic Square area in the lower middle, soft lavender for the Cascade area in the upper middle and upper right), with gently darker soft edges, so the roads inside them stay visible. At each numbered dark dot in the layout, draw ONE small cute illustrated landmark (about 7% of the image width; Republic Square and the Cascade may be about 12%), standing exactly on its dot with a soft contact shadow; do NOT draw the numbers or the dots themselves: 1 Republic Square (an oval stone square with a rectangular fountain pool, framed on one side by a rosy-pink tuff arcaded building with a slim square clock tower); 2 the Blue Mosque (a small mosque with one turquoise-blue tiled dome and one slender blue-tiled minaret); 3 the Opera House (a round, pale cream-pink stone theatre with a low drum and columned porches); 4 the Cascade (a giant white limestone stairway climbing the hill in wide terraces with small fountains); 5 the Mother Armenia statue (a tall dark copper statue of a woman holding a sword horizontally across her body, on a tall pale stone pedestal on the hilltop). These five landmarks are the only drawn objects on the map.",
+  "alt": "エレバンの見どころマップ（地区分け）。共和国広場周辺・カスケード周辺の2つの地区を色で分け、名前を書いた絵地図。共和国広場・ブルーモスク・オペラ座・カスケード・母なるアルメニア像の目印の絵と名前つき",
+  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・2つの地区の色・目印5か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。地の色はエレバンの凝灰岩の淡いばら色。虐殺記念館・エレブニ要塞・エレバン湖と日帰りの町は地図の外（縁の矢印）",
+  "bbox": {
+   "west": 44.4925,
+   "east": 44.5285,
+   "south": 40.1622,
+   "north": 40.2034
+  },
+  "districts": [
+   {
+    "id": "republic",
+    "color": "#ffc4d2",
+    "poly": [
+     [
+      40.183,
+      44.504
+     ],
+     [
+      40.183,
+      44.517
+     ],
+     [
+      40.1795,
+      44.523
+     ],
+     [
+      40.1712,
+      44.523
+     ],
+     [
+      40.17,
+      44.5085
+     ],
+     [
+      40.1745,
+      44.503
+     ]
+    ]
+   },
+   {
+    "id": "cascade",
+    "color": "#d9ccf5",
+    "poly": [
+     [
+      40.197,
+      44.519
+     ],
+     [
+      40.197,
+      44.5285
+     ],
+     [
+      40.1905,
+      44.5285
+     ],
+     [
+      40.1845,
+      44.5205
+     ],
+     [
+      40.1845,
+      44.51
+     ],
+     [
+      40.1905,
+      44.509
+     ]
+    ]
+   }
+  ],
+  "marks": [
+   {
+    "n": 1,
+    "what": "共和国広場",
+    "lat": 40.178026,
+    "lon": 44.512877
+   },
+   {
+    "n": 2,
+    "what": "ブルーモスク",
+    "lat": 40.177883,
+    "lon": 44.50556
+   },
+   {
+    "n": 3,
+    "what": "オペラ座",
+    "lat": 40.185749,
+    "lon": 44.515063
+   },
+   {
+    "n": 4,
+    "what": "カスケード",
+    "lat": 40.1915,
+    "lon": 44.5157
+   },
+   {
+    "n": 5,
+    "what": "母なるアルメニア像",
+    "lat": 40.195155,
+    "lon": 44.524674
+   }
+  ],
+  "title": {
+   "name": "エレバン",
+   "label": "見どころマップ"
+  },
+  "names": [
+   {
+    "id": "republic",
+    "label": [
+     "共和国広場"
+    ],
+    "x": 0.566,
+    "y": 0.7
+   },
+   {
+    "id": "bluemosque",
+    "label": [
+     "ブルーモスク"
+    ],
+    "x": 0.363,
+    "y": 0.7
+   },
+   {
+    "id": "opera",
+    "label": [
+     "オペラ座"
+    ],
+    "x": 0.627,
+    "y": 0.47
+   },
+   {
+    "id": "cascade",
+    "label": [
+     "カスケード"
+    ],
+    "x": 0.642,
+    "y": 0.31
+   },
+   {
+    "id": "mother",
+    "label": [
+     "母なる",
+     "アルメニア像"
+    ],
+    "x": 0.86,
+    "y": 0.2
+   }
+  ],
+  "areas": [
+   {
+    "id": "republic",
+    "name": "共和国広場周辺",
+    "label": [
+     "共和国広場周辺"
+    ],
+    "local": "Hanrapetutyan hraparak",
+    "color": "#ffc4d2",
+    "x": 0.6,
+    "y": 0.8,
+    "source": [
+     "https://www.veltra.com/jp/europe/armenia/a/188787",
+     "https://www.travel.co.jp/guide/matome/3139/"
+    ]
+   },
+   {
+    "id": "cascade",
+    "name": "カスケード周辺",
+    "label": [
+     "カスケード周辺"
+    ],
+    "local": "Kaskad",
+    "color": "#d9ccf5",
+    "x": 0.8,
+    "y": 0.36,
+    "source": [
+     "https://jp.trip.com/moments/yerevan-21357/",
+     "https://www.travel.co.jp/guide/matome/3139/"
+    ]
+   }
+  ],
+  "beyond": [
+   {
+    "id": "genocide",
+    "name": "虐殺記念館",
+    "local": "Tsitsernakaberd",
+    "dir": "w",
+    "x": 0.0,
+    "y": 0.4,
+    "lat": 40.185718,
+    "lon": 44.489184,
+    "source": [
+     "https://en.wikipedia.org/wiki/Tsitsernakaberd"
+    ]
+   },
+   {
+    "id": "etchmiadzin",
+    "name": "エチミアジン",
+    "local": "Ejmiatsni Mayr tachar",
+    "dir": "w",
+    "x": 0.0,
+    "y": 0.56,
+    "lat": 40.16184,
+    "lon": 44.291116,
+    "source": [
+     "https://en.wikipedia.org/wiki/Etchmiadzin_Cathedral"
+    ]
+   },
+   {
+    "id": "yerevanlake",
+    "name": "エレバン湖",
+    "local": "Yerevanyan lich",
+    "dir": "sw",
+    "x": 0.0,
+    "y": 0.78,
+    "lat": 40.161597,
+    "lon": 44.478547,
+    "source": [
+     "https://en.wikipedia.org/wiki/Yerevan_Lake"
+    ]
+   },
+   {
+    "id": "sevanavank",
+    "name": "セヴァン湖",
+    "local": "Sevanavank",
+    "dir": "ne",
+    "x": 1.0,
+    "y": 0.36,
+    "lat": 40.563984,
+    "lon": 45.010808,
+    "source": [
+     "https://en.wikipedia.org/wiki/Sevanavank"
+    ]
+   },
+   {
+    "id": "garni",
+    "name": "ガルニ・ゲガルド",
+    "local": "Garnii tachar",
+    "dir": "e",
+    "x": 1.0,
+    "y": 0.57,
+    "lat": 40.112341,
+    "lon": 44.730219,
+    "source": [
+     "https://en.wikipedia.org/wiki/Temple_of_Garni"
+    ]
+   },
+   {
+    "id": "erebuni",
+    "name": "エレブニ要塞",
+    "local": "Erebuni",
+    "dir": "se",
+    "x": 1.0,
+    "y": 0.72,
+    "lat": 40.140305,
+    "lon": 44.538147,
+    "source": [
+     "https://en.wikipedia.org/wiki/Erebuni_Fortress"
+    ]
+   },
+   {
+    "id": "noravank",
+    "name": "ノラヴァンク",
+    "local": "Noravank",
+    "dir": "se",
+    "x": 1.0,
+    "y": 0.865,
+    "lat": 39.684823,
+    "lon": 45.233039,
+    "source": [
+     "https://en.wikipedia.org/wiki/Noravank"
+    ]
+   },
+   {
+    "id": "khorvirap",
+    "name": "ホル・ヴィラップ",
+    "local": "Khor Virap",
+    "dir": "s",
+    "x": 0.3,
+    "y": 1.0,
+    "lat": 39.878388,
+    "lon": 44.57635,
+    "source": [
+     "https://en.wikipedia.org/wiki/Khor_Virap"
+    ]
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  }
+ },
+ "food": {
+  "model": "bulgaria/sofia:food-shopska-salata",
+  "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布は描かせない（あやと 2026-11-19）。瓶は字なし",
+  "items": {
+   "khorovats": {
+    "desc": "Armenian khorovats (barbecue): a generous plate of chunky charcoal-grilled pork pieces with dark grill marks, beside whole grilled, slightly charred aubergines, tomatoes and long green peppers, with a few rings of raw red onion and a sprig of fresh herbs on top.",
+    "alt": "炭火で焼いた肉の塊と、焼いたなす・トマト・ピーマン、輪切りの玉ねぎのホロヴァツ"
+   },
+   "kebab": {
+    "desc": "Armenian kebab (lula kebab): two long, finger-thick grilled minced-meat kebabs with grill marks, lying on a sheet of thin soft lavash flatbread on a plate, with sliced raw red onion dusted with red sumac and a few sprigs of fresh parsley and purple basil.",
+    "alt": "細長いひき肉の串焼き2本と、薄いパン・玉ねぎ・香草のキャバブ"
+   },
+   "lavash": {
+    "desc": "Armenian lavash: several very large, paper-thin soft flatbreads, pale with light golden-brown blistered spots, folded into loose quarters and stacked in a soft pile on a wooden board.",
+    "alt": "折りたたんで重ねた、大きくて薄いパンのラヴァシュ"
+   },
+   "dolma": {
+    "desc": "Armenian dolma: a plate of small, neat rolls of grape leaves stuffed with minced meat and rice, glossy olive green, arranged in rows, with a small bowl of thick white yogurt with a little crushed garlic beside them.",
+    "alt": "ぶどうの葉で包んだ小さな包みが並ぶ皿と、白いヨーグルトのドルマ"
+   },
+   "khash": {
+    "desc": "Armenian khash: a deep ceramic bowl of steaming, milky-white broth with a piece of boiled beef foot in it, beside a small dish of crushed garlic, a few radishes and green herbs, and a pile of dry, crisp broken pieces of lavash.",
+    "alt": "白いスープの深い鉢と、にんにく・乾いた薄いパンのハシュ"
+   },
+   "harissa": {
+    "desc": "Armenian harissa: a bowl of thick, smooth porridge of whole wheat and shredded chicken slowly cooked into a creamy pale beige paste, with a pool of golden melted butter in the middle.",
+    "alt": "とろりとした麦の粥に、溶かしバターをかけたハリサ"
+   },
+   "spas": {
+    "desc": "Armenian spas: a bowl of warm, creamy white yogurt soup with whole wheat grains, topped with chopped fresh green herbs (cilantro, dill and mint) and a pinch of dried mint.",
+    "alt": "白いヨーグルトのスープに、麦と緑の香草をのせたスパス"
+   },
+   "lahmajo": {
+    "desc": "Armenian lahmajo: a round, very thin, crisp baked flatbread topped with a thin layer of red spiced minced meat with tomato and pepper, with two lemon wedges and a few parsley leaves beside it.",
+    "alt": "丸く薄い生地に赤いひき肉をのせて焼いたラフマジョと、レモンのくし切り"
+   },
+   "khachapuri": {
+    "desc": "khachapuri as eaten in Yerevan: a round, flat, golden-baked bread filled with melted white cheese, cut into wedges, the cheese stretching where one wedge is pulled slightly away.",
+    "alt": "とろけたチーズの入った、まるいパンのハチャプリ"
+   },
+   "shaurma": {
+    "desc": "Yerevan-style shaurma: a long, tightly rolled wrap of thin lavash, cut in half on a plate to show the cross-section: sliced grilled meat, thin crispy matchstick fried potatoes, pickles, tomato and a white garlic sauce.",
+    "alt": "薄いパンで巻いた細長いシャウルマの断面。肉と細いじゃがいも、野菜"
+   },
+   "zhingyalov": {
+    "desc": "Armenian zhingyalov hats: two thin, flat, oval flatbreads baked on a griddle, with lots of finely chopped green wild herbs showing through the thin dough, one cut open to show the bright green filling.",
+    "alt": "刻んだ緑の香草がたっぷり透ける、平たく焼いたジンガロフ・ハツ"
+   },
+   "manti": {
+    "desc": "Armenian oven-baked manti: a small round metal baking dish of many tiny open-topped, boat-shaped dumplings filled with minced meat, baked golden and crisp at the edges, with a white garlic yogurt sauce and a little red tomato broth.",
+    "alt": "焼き皿に並ぶ小さな舟形のマンティと、ヨーグルトのソース"
+   },
+   "kufta": {
+    "desc": "Armenian kufta: a large, very smooth, pale pounded-beef meat roll cut into thick round slices on a plate, glistening with melted butter, with a few thin slices of onion.",
+    "alt": "なめらかな大きな肉団子の輪切りに、溶かしバターをかけたキュフタ"
+   },
+   "ghapama": {
+    "desc": "Armenian ghapama: a whole small orange pumpkin roasted until glossy, cut open into wedges on a plate to show the filling of rice cooked with dried apricots, raisins, dates and walnuts, drizzled with honey.",
+    "alt": "丸ごと焼いたかぼちゃを切り分けたガパマ。米とドライフルーツと木の実の詰め物"
+   },
+   "sujukh": {
+    "desc": "Armenian sujukh: a long, thin, flat, dark red-brown air-dried spiced beef sausage, partly cut into thin round slices on a wooden board, the slices showing a deep red inside.",
+    "alt": "薄く切った、赤黒くて細長い干したソーセージのスジュフ"
+   },
+   "matnakash": {
+    "desc": "Armenian matnakash: a large oval soft leavened bread with a shiny golden-brown crust patterned with parallel finger-pressed grooves, one piece torn off to show the soft fluffy white crumb.",
+    "alt": "指で筋をつけた、金色の皮の楕円のマトナカシュ"
+   },
+   "matsun": {
+    "desc": "Armenian matsun: a small unglazed terracotta clay pot full of thick, set, glossy white yogurt, with a spoon lifting a firm scoop out of it.",
+    "alt": "素焼きの器に入った、白くて固めのヨーグルトのマツン"
+   },
+   "gata": {
+    "desc": "Armenian gata: a round, flat sweet pastry with a shiny golden top decorated with a pressed pattern, one wedge cut out to show the inside with a layer of sweet buttery crumbly filling.",
+    "alt": "模様を押した、丸くて平たい甘いパンのガタと、切り口の詰め物の層"
+   },
+   "ponchik": {
+    "desc": "Armenian ponchik: three round, golden fried doughnuts dusted with powdered sugar, one broken open to show a thick creamy yellow custard filling.",
+    "alt": "粉砂糖をかけた揚げパンのポンチクと、割った断面のカスタード"
+   },
+   "apricot": {
+    "desc": "Armenian apricots: a small heap of fresh, ripe orange apricots, one cut in half showing its stone, beside a little pile of dried orange apricots.",
+    "alt": "オレンジ色の生のあんずと、干したあんず"
+   },
+   "tan": {
+    "desc": "Armenian tan: a tall glass of cold, white, slightly frothy salted yogurt drink, beside a plain glass bottle of it with NO label and no writing.",
+    "alt": "白い飲み物のタンを注いだグラスと、瓶"
+   },
+   "brandy": {
+    "desc": "Armenian brandy: a round tulip-shaped brandy snifter with a little deep amber brandy glowing in the light, beside a dark glass bottle with NO label and no writing.",
+    "alt": "琥珀色のブランデーを注いだふくらんだグラスと、瓶"
+   },
+   "areni": {
+    "desc": "Armenian Areni red wine: a stemmed glass of deep ruby red wine, beside a bunch of small dark purple grapes.",
+    "alt": "深い赤のアレニのワインのグラスと、ぶどうの房"
+   },
+   "oghi": {
+    "desc": "Armenian oghi (fruit vodka): a small slim shot glass of crystal-clear spirit, beside a small clear glass carafe of it with NO label, and a few dark purple-black mulberries.",
+    "alt": "透きとおった果物のウォッカ、オギの小さなグラスと桑の実"
+   }
+  }
+ },
+ "buy": {
+  "model": "bulgaria/sofia:buy-rose-oil",
+  "note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（じゅうたんは品そのもの）。瓶・箱・包みは字なし",
+  "items": {
+   "brandy": {
+    "desc": "a bottle of Armenian brandy filled with deep amber brandy, standing in an open plain dark-red gift box; the bottle and the box have NO label, no logo and no writing.",
+    "alt": "箱に入った琥珀色のアルメニアのブランデーの瓶"
+   },
+   "wine": {
+    "desc": "a dark glass bottle of Armenian red wine with NO label and no writing, standing beside two fresh green grape leaves.",
+    "alt": "アレニの赤ワインの瓶と、ぶどうの葉"
+   },
+   "carpet": {
+    "desc": "a small Armenian hand-woven carpet in deep red and navy blue with a bold geometric pattern, mostly rolled up, with one corner unrolled flat to show the woven pattern and a short fringe.",
+    "alt": "巻いた赤と紺の手織りのじゅうたんと、広げた模様の角"
+   },
+   "khachkar": {
+    "desc": "a small souvenir khachkar: a small upright rectangular slab of pinkish-grey tuff stone, carved in relief with a cross standing on a rosette, surrounded by fine interlaced knotwork patterns.",
+    "alt": "十字と細かな組みひもの模様を彫った、小さな石の板のハチュカル"
+   },
+   "duduk": {
+    "desc": "an Armenian duduk: a short, warm reddish-brown apricot-wood flute with eight finger holes along the top, lying with its wide, flat cane double reed beside it.",
+    "alt": "あんずの木の茶色く短い縦笛のドゥドゥクと、平たいリード"
+   },
+   "driedfruit": {
+    "desc": "a heap of Armenian dried fruits in a small shallow wooden bowl: orange dried apricots, dried peaches, dark prunes, and dried peaches stuffed with walnuts.",
+    "alt": "干したあんず・桃・プルーンと、くるみを詰めた干し桃"
+   },
+   "ttulavash": {
+    "desc": "Armenian fruit leather (ttu lavash): several thin, translucent sheets of dried fruit purée in deep red (plum) and orange (apricot), rolled into tubes, with one sheet partly unrolled.",
+    "alt": "薄く干した赤と橙の果物の板を、くるくる巻いたトゥトゥ・ラヴァシュ"
+   },
+   "jam": {
+    "desc": "two small glass jars of Armenian jam with plain lids and NO labels: one of whole green-black young walnuts in dark syrup, one of bright orange sea-buckthorn berries; one jar is open with a small spoon.",
+    "alt": "黒いくるみの実のジャムと、橙のサジーのジャムの小瓶"
+   },
+   "chocolate": {
+    "desc": "a small pile of individually wrapped candies in colorful twisted wrappers with simple patterns, and a bar of dark chocolate partly unwrapped from plain paper; NO brand names, no logos and no writing anywhere.",
+    "alt": "包み紙の色とりどりの飴と、板チョコレート"
+   }
+  }
+ },
+ "do": {
+  "note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。カスケード・ヴェルニサージュ・ガルニ神殿・ホル・ヴィラップ・エチミアジン大聖堂・セヴァナヴァンクは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+  "shape": "card43",
+  "items": {
+   "cascade": {
+    "ja": "大階段カスケード",
+    "desc": "the view from the top of the Cascade in Yerevan, a giant white limestone stairway; the city view is the hero. Composition: from the highest terrace, looking down the long, wide white stone stairway with its stepped terraces, small fountains and flower beds, onto a city of rosy-pink and honey-colored stone buildings spreading far below; on the far horizon, floating above the haze, the huge snow-capped cone of Mount Ararat. One small person seen from behind stands at the top railing in the lower right foreground, looking out. Light: late afternoon, warm low golden sun from the right, long soft shadows on the steps. Palette: white limestone, rosy pink and apricot, with a cool blue-violet mountain and pale sky.",
+    "alt": "上の段から、白い大階段カスケードと噴水のテラス、ピンクの街と遠くの雪のアララト山を見下ろす、小さな人の後ろ姿の絵",
+    "photos": [
+     "site/public/guide/armenia/yerevan/photos/yerevan-cascade-of-yerevan-armen-172fee4d-500.webp"
+    ]
+   },
+   "khorovats": {
+    "ja": "炭火のホロヴァツ",
+    "desc": "an Armenian khorovats barbecue; the food and the fire are the hero. Composition: a close, low view over a long metal charcoal grill (mangal) with glowing embers, on which lie long flat skewers of chunky pork and skewers of whole aubergines, tomatoes and green peppers, their skins blistering; a little smoke curls up. At the left, on a wooden board, a soft stack of thin lavash flatbread, and two hands tearing off a piece of lavash. Light: evening, the embers glow orange and light the meat and the hands from below; the background falls into warm dusk. Palette: ember orange and charcoal black, with aubergine purple, tomato red and pepper green.",
+    "alt": "炭火の上に並ぶ肉となす・トマト・ピーマンの串と、重ねたラヴァシュをちぎる手元の絵"
+   },
+   "brandy": {
+    "ja": "ブランデーの熟成庫",
+    "desc": "the aging cellar of an old Armenian brandy distillery; the atmosphere is the hero. Composition: a long, low vaulted cellar of rough stone, with rows of old dark oak barrels stacked on both sides receding into the distance; in the right foreground, on top of a barrel, one round brandy snifter of glowing amber brandy. Far down the aisle between the barrels, one small person seen from behind walks away. Light: dim, warm lamplight from small hanging lamps, pools of light on the vault, deep soft shadows. Palette: amber and honey gold, deep oak brown and warm stone grey.",
+    "alt": "石の熟成庫に並ぶ古い樽と、琥珀色のブランデーを注いだグラス。樽のあいだを歩く小さな後ろ姿の絵"
+   },
+   "vernissage": {
+    "ja": "ヴェルニサージュの青空市",
+    "desc": "the Vernissage, Yerevan's open-air weekend market in a park; the crafts are the hero. Composition: a close view from above at a stall on the ground: red and deep-blue hand-woven carpets spread on the pavement, carved wooden backgammon boards with inlaid patterns, small carved stone crosses and copper pots; in the lower middle, two hands lift a carved wooden backgammon board to look at it. Behind, more stalls and the trunks of park trees, softly blurred. Light: fresh morning sun through the leaves, dappled light and shadow over the carpets. Palette: carpet red and indigo, walnut brown, copper, with fresh leaf green.",
+    "alt": "公園の青空市ヴェルニサージュ。地面に広げた赤い手織りのじゅうたん、木彫りのバックギャモンの盤、石の十字架の細工と、品を手に取る手元の絵",
+    "photos": [
+     "site/public/guide/armenia/yerevan/photos/vernissage-in-yerevan-9a7f6d02-500.webp"
+    ]
+   },
+   "garni": {
+    "ja": "ガルニ神殿",
+    "desc": "the Temple of Garni, a small Greco-Roman temple in Armenia; the temple and the gorge are the hero. Composition: the temple stands on the edge of a high cliff, faithful to the photo: a tall stone podium with a wide flight of steps, a ring of grey basalt Ionic columns and a low triangular pediment; to the right, the cliff drops into a deep green river gorge whose far wall is made of tall hexagonal basalt columns like organ pipes. One small person seen from behind climbs the wide steps of the temple. Light: bright clear midday, crisp shadows under the columns. Palette: warm grey basalt and honey stone, deep green gorge, clear cobalt-blue sky.",
+    "alt": "渓谷の崖の上に立つ、柱の並ぶ石のガルニ神殿と、渓谷の壁の六角の石の柱。石の段を上る小さな後ろ姿の絵",
+    "photos": [
+     "site/public/guide/armenia/yerevan/photos/garni-temple-front-view-2026-5a243e28-500.webp",
+     "site/public/guide/armenia/yerevan/photos/symphony-of-stones-armenia-2e5059f1-500.webp"
+    ]
+   },
+   "khorvirap": {
+    "ja": "ホル・ヴィラップとアララト山",
+    "desc": "Khor Virap monastery in front of Mount Ararat; the mountain is the hero. Composition: a wide view across a flat green and golden plain; in the middle ground, on a small rocky hill, the monastery, faithful to the photo: a ring of stone walls with a small church with a pointed conical dome; behind it, filling most of the sky, the enormous snow-covered Mount Ararat with its smaller cone, Little Ararat, to the left. In the foreground, on a path through the fields, one tiny person seen from behind looks toward the mountain. Light: early morning, the snow glows soft pink in the first sun, the plain is still in cool shadow. Palette: soft rose and pale gold, cool sky blue and lilac shadows.",
+    "alt": "丘の上の石のホル・ヴィラップ修道院と、その向こうにそびえる雪のアララト山。手前の平原に小さな人の絵",
+    "photos": [
+     "site/public/guide/armenia/yerevan/photos/khor-virap-monastery-and-mount-a-a8e0597d-500.webp"
+    ]
+   },
+   "etchmiadzin": {
+    "ja": "エチミアジン大聖堂",
+    "desc": "Etchmiadzin Cathedral, the oldest cathedral in the world; the cathedral is the hero. Composition: seen from the front-left across a wide, calm courtyard of stone paving and lawn: an ancient cathedral of grey-ochre stone, faithful to the photo, with a central drum topped by a pointed conical dome and, over the entrance, a multi-tiered bell tower with small arches; a few tall trees at the sides. One small person seen from behind walks along the paved path toward the entrance. Light: soft late afternoon, long gentle shadows across the courtyard. Palette: warm grey-ochre stone, soft green lawn and trees, a pale warm sky.",
+    "alt": "とがった屋根の古い石のエチミアジン大聖堂と前の広い庭。入口へ向かう小さな後ろ姿の絵",
+    "photos": [
+     "site/public/guide/armenia/yerevan/photos/etchmiadzin-cathedral-2024-c50c0ddc-500.webp"
+    ]
+   },
+   "sevan": {
+    "ja": "セヴァン湖の修道院",
+    "desc": "Sevanavank monastery above Lake Sevan; the lake is the hero. Composition: from the path on the ridge of a narrow peninsula, looking past two small churches of dark grey-brown stone with pointed conical domes, faithful to the photo, out over a vast, deep blue mountain lake that fills most of the picture, with bare golden-brown mountains on the far shore. One small person seen from behind stands on the path at the lower left, looking out over the water. Light: crisp bright day, a fresh breeze, small white clouds, the water sparkling. Palette: deep lake blue and turquoise, dry golden grass, dark tuff stone.",
+    "alt": "青いセヴァン湖に突き出た半島の上の、黒っぽい石の小さな修道院。湖を見下ろす小さな後ろ姿の絵",
+    "photos": [
+     "site/public/guide/armenia/yerevan/photos/sevanavank-on-1-09-23-22-b6009454-500.webp"
+    ]
+   }
+  }
+ }
+}
