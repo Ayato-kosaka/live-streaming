@@ -158,6 +158,8 @@ const MEMBERS: Record<Route, Member> = {
   "/me/roulette": { listed: false, pages: () => one("/me/roulette", "ルーレットの操作") },
   "/cards/import": { listed: false, pages: () => one("/cards/import", "写真をまとめて登録") },
   "/roulette": { listed: false, pages: () => one("/roulette", "ルーレット") },
+  /* 島の投げ銭（#1405）。**公開するまで、島のどこからも繋がない**（面は `robots: index: false`） */
+  "/tip": { listed: false, pages: () => one("/tip", "あやとに投げ銭") },
   /* `/next` と `/next/new` は #1277 で畳んだ（`/board` へ 301）。`/now` は #1278 で畳んだ（`/` へ 301）。
      `/nordic/photos` は #1279 で面を消した（`/cards` へ 301。`firebase.json`）。廃止予定の道は、もう無い */
 };

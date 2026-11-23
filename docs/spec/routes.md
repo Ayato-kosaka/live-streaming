@@ -74,6 +74,7 @@
 | `/me/roulette` | 道具（ルーレットの操作） | 建物の外 | 現行 |
 | `/cards/import` | 道具（写真の取り込み） | 建物の外 | 現行 |
 | `/roulette` | 道具（配信に映す盤） | 建物の外 | 現行 |
+| `/tip` | 道具（投げ銭） | 建物の外 | 現行 |
 <!-- routes:end -->
 
 廃止予定の行は、畳んだ PR で消す。`/next` と `/next/new` は #1277 で畳み、`/board` へ 301。`/now`（いまどこ）は #1278 で畳み、`/` へ 301（`docs/adr/0006-fold-next-and-now.md`）。`/nordic/photos` は #1279 で控えの面を消し、`/cards` への 301（`firebase.json`）だけにした。

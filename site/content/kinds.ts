@@ -64,6 +64,7 @@ export const KINDS = [
   { route: "/me/roulette", kind: "道具（ルーレットの操作）", entrance: "建物の外", state: "現行" },
   { route: "/cards/import", kind: "道具（写真の取り込み）", entrance: "建物の外", state: "現行" },
   { route: "/roulette", kind: "道具（配信に映す盤）", entrance: "建物の外", state: "現行" },
+  { route: "/tip", kind: "道具（投げ銭）", entrance: "建物の外", state: "現行" },
 ] as const satisfies readonly KindRow[];
 
 /** 道の型（表に在るものだけ） */
