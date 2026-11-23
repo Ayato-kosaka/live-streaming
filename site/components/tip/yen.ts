@@ -6,15 +6,13 @@
  * （`docs/island-db.md` 3.3b）。画面の検査は押せるかどうかを決める親切で、外れた額はサーバーが 400 で断る。
  */
 
-/** 投げ銭の幅。`GET /state` の `limits` のうち、投げ銭の3つ */
-export type TipLimits = {
-  /** 1回のいちばん小さい額（円）。入力欄の初期値もこれ */
-  tipYenMin: number;
-  /** 1回のいちばん大きい額（円） */
-  tipYenMax: number;
-  /** メッセージの字数 */
-  tipMessageMax: number;
-};
+import type { IslandLimits } from "@/lib/api";
+
+/**
+ * 投げ銭の幅。`GET /state` の `limits` のうち、投げ銭の3つ。
+ * 欄の名前は `IslandLimits`（`site/lib/api.ts`）が決める。ここで同じ名前を書き直すと2か所に戻る
+ */
+export type TipLimits = Pick<IslandLimits, "tipYenMin" | "tipYenMax" | "tipMessageMax">;
 
 /**
  * 押すと額が入るボタン（あやと 2026-11-23。決定の記録 0017 の4）。

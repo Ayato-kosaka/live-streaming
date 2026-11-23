@@ -174,8 +174,12 @@
 
 #### `limits` — 字の長さは、ここが正（2026-10-13）
 
-`{note, reply, name, link, planTitle}`。**定数だけで、人を指す値は1つも入らない**
+`{note, reply, name, link, planTitle, tipYenMin, tipYenMax, tipMessageMax}`。**定数だけで、人を指す値は1つも入らない**
 （だから CDN にも焼いてよい）。
+
+`tip` で始まる3つは、島で受ける投げ銭（13章）の**額の幅と字数**で、正は `functions/src/tip.ts`
+（`TIP_YEN_MIN`・`TIP_YEN_MAX`・`TIP_MESSAGE_MAX`）。`tipYenMax` はあやとの決めた上限ではなく、
+Stripe の1回の上限（13章）。`/tip` の画面は3つそろって届くまで払わせない（`site/components/tip/yen.ts` の `tipLimitsOf`）。
 
 画面は長いあいだ同じ数字を自分で持っていた——`site/components/live/Notes.tsx` の
 `const MAX = 120;` に「**サーバー側の `MAX_NOTE_LEN` と同じ**」と書き添えて。
@@ -878,6 +882,8 @@ node functions/selftest/api_trust_selftest.mjs
 - `message` に禁止ワード（`islandFundConfig/tip.ngWords`。Doneru の禁止ワードを写したもの）が入っていれば 400 `{"error":"ng word"}`。払う前に直せるように、ここで断る。知らせを受けたときにも当て、当たればアラートにはメッセージを出さない（名前と額だけ）
 - チャンネルを結んでいない人は 403（`{"error":"channel required"}`）。画面は「チャンネルを結ぶ」へ案内する
 - 1人1日に作れる支払い画面は100枚まで（`takeQuota`。投げ銭の額の上限ではなく、口を叩きすぎないための栓）
+- 最小額・上限・字数は `GET /state` の `limits`（`tipYenMin`・`tipYenMax`・`tipMessageMax`）で画面に配る。画面は数字を持たない（1章 `limits`）
+- Stripe の鍵（`STRIPE_SECRET_KEY`・`STRIPE_WEBHOOK_SECRET`）が無いあいだは、2本とも 503 `{"error":"tip not configured"}`。鍵は GitHub Secrets から Functions を配るときに `.env` へ書く（空なら書かない）
 
 ### `/stripe/webhook` が守ること
 
