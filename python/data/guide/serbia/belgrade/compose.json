@@ -1,0 +1,151 @@
+{
+ "_meta": {
+  "何か": "ベオグラードのガイドブックの面（/travel/serbia/belgrade）の組み立て。材料（guidebook.json）にあるのは事実で、ここにあるのは選びかたと並べかただけ。焼くのは python/guidebook_bake.py",
+  "行く前": "行っていない街なので、カード・話・一言は無い（行ったら足す）",
+  "どんな街": "問いは日本語の頁がベオグラードを語る3つ（材料の about.why_src）。前の街の問いを写していない",
+  "題": "「ベオグラード観光ガイド」が頭（docs/island-misses.md #332・#333）"
+ },
+ "title": "ベオグラード観光ガイド【2026年】見どころマップ・やりたいこと・グルメ｜セルビア",
+ "description": {
+  "text": "セルビアの首都ベオグラードの観光ガイド。見どころマップと、やりたいこと{todo}つ（要塞から見る2つの川の合流、聖サヴァ大聖堂、テスラ博物館、ノヴィ・サドへの日帰り）、チェヴァプチチとカイマク。",
+  "facts": []
+ },
+ "persona": [
+  "バルカンを安く周る20〜30代の個人旅行者。ブカレストやソフィアから、ベオグラードに何日寄って何をするか決めかねている（いちばん大事な読み手）",
+  "ノヴィ・サドへの日帰りも、ベオグラードからまとめて計画したい人",
+  "冬（11〜2月）に行くので、寒さと、屋内で楽しめる博物館や食事が気になる人"
+ ],
+ "terms": [
+  "ベオグラード 観光",
+  "ベオグラード 見どころ",
+  "ベオグラード 地図",
+  "ベオグラード 観光 モデルコース",
+  "ベオグラード グルメ"
+ ],
+ "published": "2026-11-22",
+ "cover": {
+  "catch": 0
+ },
+ "cards": {},
+ "say": {},
+ "items": {},
+ "about": {
+  "history": {
+   "q": "歴史は？",
+   "icon": "castle"
+  },
+  "tesla": {
+   "q": "テスラとの関係は？",
+   "icon": "idea"
+  },
+  "night": {
+   "q": "夜はどんな街？",
+   "icon": "night"
+  }
+ },
+ "areas": {
+  "zemun": {
+   "color": "#bfe3f5",
+   "plan": [
+    1,
+    1,
+    1
+   ]
+  },
+  "kalemegdan": {
+   "color": "#ffd98a",
+   "plan": [
+    2,
+    1,
+    1
+   ]
+  },
+  "knez": {
+   "color": "#d9ccf5",
+   "plan": [
+    2,
+    2,
+    1
+   ]
+  },
+  "skadarlija": {
+   "color": "#ffc4d2",
+   "plan": [
+    3,
+    2,
+    1
+   ]
+  },
+  "sava": {
+   "color": "#c8e6c9",
+   "plan": [
+    2,
+    3,
+    2
+   ]
+  }
+ },
+ "summary": {
+  "season": {
+   "icon": "sun",
+   "value": "4〜10月",
+   "lead": "平年の最高気温が19〜30℃",
+   "to": "#guide-season"
+  },
+  "safety": {
+   "icon": "key",
+   "value": "スリに注意",
+   "lead": "バスと観光地の人混みで",
+   "to": "#guide-safety"
+  },
+  "budget": {
+   "icon": "wallet",
+   "label": "乗り物の目安",
+   "value": "市内は無料",
+   "lead": "バス・トラム・トロリーバス",
+   "to": "#budget"
+  },
+  "transit": {
+   "icon": "bus",
+   "value": "トラム11系統",
+   "lead": "地下鉄はまだ無い。バスが中心",
+   "to": "#guide-transit"
+  }
+ },
+ "guides": {
+  "airport": {
+   "icon": "plane",
+   "lead": "無料の72番か、ミニバスA1で中心へ"
+  },
+  "transit": {
+   "icon": "bus",
+   "lead": "市内のバスとトラムは無料"
+  },
+  "pay": {
+   "icon": "currency",
+   "lead": "通貨はディナール。カードも使える"
+  },
+  "sim": {
+   "icon": "sim",
+   "lead": "携帯の会社は3つ。4Gが広い"
+  },
+  "safety": {
+   "icon": "key",
+   "lead": "人混みのスリに注意"
+  },
+  "phrases": {
+   "icon": "phrase"
+  }
+ },
+ "season": {
+  "lead": "歩きやすいのは4〜10月"
+ },
+ "pack": {
+  "passport": "passport",
+  "cash": "coin",
+  "warm": "jacket",
+  "bottle": "bottle",
+  "insurance": "firstaid",
+  "translate": "phrase"
+ }
+}

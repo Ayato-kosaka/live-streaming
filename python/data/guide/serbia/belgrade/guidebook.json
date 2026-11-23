@@ -1,0 +1,7240 @@
+{
+ "_meta": {
+  "何か": "ベオグラードを「ガイドブック型の街の面」（/travel/serbia/belgrade）にするための材料。行く前の街（facts は無い）。焼くのは python/guidebook_bake.py",
+  "見張り": "python3 python/guide_book_check.py serbia/belgrade（出どころの無い事実・座標の無い店・枠の外の座標）。マイマップの CSV も同じ道具が書く（--mymaps）",
+  "出どころ": "事実を持つ欄には src（https と見た日）。座標は OpenStreetMap（Nominatim）。値段と「いまも」は2024年以降の出どころ（Wikivoyage の各項目は2025年11月以降の更新・店の献立は2025〜2026年）。確かめきれないものは unknown へ",
+  "行った": "まだ行っていない（移る日は未定）。went は全部 false。行ったあとは配信の facts に結ぶ（スコピエの形）",
+  "円": "円は 1ユーロ＝117.6412ディナール（セルビア国立銀行の2026年11月20日の中間レート）・174.35円（同じ日の欧州中央銀行の参照レート）で直し、10円で丸めた",
+  "地図": "多角形（range.polygon）は、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない。ユーゴスラビア博物館・アダ・ツィガンリヤ・新ベオグラードは見どころマップの外（矢印）",
+  "rank": "見たいものの rank は、初めての人に向けた見どころの大きさ（1 が定番）",
+  "選んだ問い": "どんな街の問いは、日本語の頁がベオグラードを語る3つ——要塞と2つの川の合流（戦いの歴史）・ニコラ・テスラ・ナイトライフ（about.why_src。地球の歩き方・NEWT）。前の街の問いは写していない",
+  "キャッチ": "型3（『愛称』と称えられた街）を先に当てたが、日本の旅行者が使う愛称が見つからなかった。手本は「アルプスに抱かれた 中世の街 ザルツブルク」（型2）。「白い町」は日本語版 Wikipedia の「市名はセルビア語で『白い町』の意味」から",
+  "呼び名": "聖サヴァ大聖堂は VELTRA・旅行記の字（日本語版 Wikipedia は「聖サワ大聖堂」、地球の歩き方は「聖サヴァ教会」）。クネズ・ミハイロ通りは外務省の「クネズミハイロ通り」に中黒を入れた形"
+ },
+ "city": {
+  "key": "serbia/belgrade",
+  "name": "ベオグラード",
+  "town": "belgrade",
+  "pre_trip": true,
+  "local": {
+   "text": "Beograd",
+   "lang": "sr",
+   "roman": "Beograd",
+   "src": [
+    {
+     "name": "Wikipedia（日本語）「ベオグラード」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%83%99%E3%82%AA%E3%82%B0%E3%83%A9%E3%83%BC%E3%83%89",
+     "seen": "2026-11-22"
+    }
+   ]
+  }
+ },
+ "rate": {
+  "text": "1ディナールは約1.48円。セルビア・ディナール（RSD）は、1ユーロ＝117.6412ディナール（セルビア国立銀行の2026年11月20日の中間レート）と、1ユーロ＝174.35円（同じ日の欧州中央銀行の参照レート）で直した。",
+  "src": [
+   {
+    "name": "kurs.resenje.org「EUR 2026-11-20」（セルビア国立銀行の公式の中間レート 第222号の写し）",
+    "url": "https://kurs.resenje.org/api/v1/currencies/eur/rates/2026-11-20",
+    "seen": "2026-11-22"
+   },
+   {
+    "name": "欧州中央銀行（ユーロの参照レート。2026年11月20日）",
+    "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+    "seen": "2026-11-22"
+   }
+  ],
+  "unit": "ディナール",
+  "eur_local": 117.6412,
+  "eur_jpy": 174.35,
+  "date": "2026-11-20"
+ },
+ "cover": {
+  "catch": [
+   {
+    "text": "ドナウとサヴァに抱かれた白い町",
+    "type": "型2（決まった動詞＋呼び名。手本「アルプスに抱かれた 中世の街 ザルツブルク」）。型3を先に当てたが、日本で知られた愛称が見つからなかった（英語版 Wikipedia の「White Phoenix」は日本で知られていない。docs/guide-copy.md 6章の6）",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ベオグラード」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%99%E3%82%AA%E3%82%B0%E3%83%A9%E3%83%BC%E3%83%89",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikipedia「Belgrade Fortress」",
+      "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "text": "戦いの歴史を物語る白い町",
+    "type": "型2（物語る。手本は地球の歩き方の「何世紀にもわたる戦いの歴史を物語る場所」）",
+    "src": [
+     {
+      "name": "地球の歩き方「セルビアの基本情報と観光ガイド」",
+      "url": "https://www.arukikata.co.jp/area/rs/",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "NEWT「セルビア・ベオグラード旅行におすすめの観光地11選！」",
+      "url": "https://newt.net/srb/mag-9081158317",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikipedia（日本語）「ベオグラード」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%99%E3%82%AA%E3%82%B0%E3%83%A9%E3%83%BC%E3%83%89",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "text": "白い町、ベオグラードへ",
+    "type": "型5（呼び名、名前＋へ。手本「光の国、スウェーデンへ」）",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ベオグラード」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%99%E3%82%AA%E3%82%B0%E3%83%A9%E3%83%BC%E3%83%89",
+      "seen": "2026-11-22"
+     }
+    ]
+   }
+  ],
+  "photo": {
+   "file": "P037152-661920 - Belgrade fortress stand at the downtown of Belgrade.jpg",
+   "by": "Oliver Bunic",
+   "lic": "CC BY 4.0",
+   "page": "https://commons.wikimedia.org/wiki/File:P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg",
+   "alt": "川の合流を見下ろす高台に、石の城壁が続くベオグラード要塞",
+   "w": 5514,
+   "src": [
+    {
+     "name": "Wikimedia Commons（ファイルのページ）",
+     "url": "https://commons.wikimedia.org/wiki/File:P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg",
+     "seen": "2026-11-22"
+    }
+   ],
+   "thumbs": {
+    "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg/250px-P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg",
+    "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg/500px-P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg",
+    "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg/960px-P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg"
+   }
+  }
+ },
+ "about": {
+  "cards": [
+   {
+    "key": "history",
+    "title": "要塞と合流点",
+    "text": "名前は「白い町」の意味。ドナウ川とサヴァ川の合流点の崖に要塞が立ち、要塞をめぐる戦いは100回を超える。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「ベオグラード」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%83%99%E3%82%AA%E3%82%B0%E3%83%A9%E3%83%BC%E3%83%89",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "地球の歩き方「セルビアの基本情報と観光ガイド」",
+      "url": "https://www.arukikata.co.jp/area/rs/",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "NEWT「セルビア・ベオグラード旅行におすすめの観光地11選！」",
+      "url": "https://newt.net/srb/mag-9081158317",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "tesla",
+    "title": "ニコラ・テスラ",
+    "text": "空港の名前にもなった、セルビアを代表する偉人。市内のニコラ・テスラ博物館が、テスラの眠る場所。",
+    "src": [
+     {
+      "name": "地球の歩き方「セルビアのおすすめ観光スポット10選！歴史と自然の宝庫を巡る」",
+      "url": "https://www.arukikata.co.jp/webmagazine/272443/",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikipedia「Nikola Tesla Museum」",
+      "url": "https://en.wikipedia.org/wiki/Nikola_Tesla_Museum",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "night",
+    "title": "夜の街",
+    "text": "古い町の雰囲気と、新しいナイトライフの両方を楽しめる街。サヴァ川とドナウ川の岸には、船のバーやクラブが並ぶ。",
+    "src": [
+     {
+      "name": "地球の歩き方「セルビアの基本情報と観光ガイド」",
+      "url": "https://www.arukikata.co.jp/area/rs/",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   }
+  ],
+  "why_src": [
+   {
+    "name": "地球の歩き方「セルビアの基本情報と観光ガイド」",
+    "url": "https://www.arukikata.co.jp/area/rs/",
+    "seen": "2026-11-22",
+    "words": "ベオグラード要塞は、ドナウ川とサヴァ川が交わる場所…何世紀にもわたる戦いの歴史を物語る場所・古代の雰囲気と近代的なナイトライフ"
+   },
+   {
+    "name": "地球の歩き方「セルビアのおすすめ観光スポット10選！歴史と自然の宝庫を巡る」",
+    "url": "https://www.arukikata.co.jp/webmagazine/272443/",
+    "seen": "2026-11-22",
+    "words": "ニコラ・テスラ博物館・空港の名前…セルビアを代表する偉人"
+   },
+   {
+    "name": "NEWT「セルビア・ベオグラード旅行におすすめの観光地11選！」",
+    "url": "https://newt.net/srb/mag-9081158317",
+    "seen": "2026-11-22",
+    "words": "要塞をめぐって勃発した戦いの数は100回を超え・ナイトライフ"
+   }
+  ],
+  "areas": [
+   {
+    "key": "kalemegdan",
+    "name": "カレメグダン周辺",
+    "local": {
+     "text": "Kalemegdan",
+     "roman": "Kalemegdan",
+     "src": [
+      {
+       "name": "Wikipedia「Belgrade Fortress」",
+       "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "tone": {
+     "text": "2つの川の合流を見下ろす崖の上の要塞と公園。中に博物館や動物園があり、夕暮れの眺めが美しい。",
+     "src": [
+      {
+       "name": "Wikipedia「Belgrade Fortress」",
+       "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "地球の歩き方「セルビアの基本情報と観光ガイド」",
+       "url": "https://www.arukikata.co.jp/area/rs/",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "center": {
+     "lat": 44.823502,
+     "lon": 20.449765,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Београдска тврђава」",
+       "url": "https://www.openstreetmap.org/way/450824126",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       44.8275,
+       20.4465
+      ],
+      [
+       44.8275,
+       20.455
+      ],
+      [
+       44.823,
+       20.4555
+      ],
+      [
+       44.8205,
+       20.453
+      ],
+      [
+       44.82,
+       20.448
+      ],
+      [
+       44.823,
+       20.4455
+      ]
+     ],
+     "how": "ベオグラード要塞の点のまわりに、勝利者の像・軍事博物館・動物園を囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Београдска тврђава」",
+       "url": "https://www.openstreetmap.org/way/450824126",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "OpenStreetMap「Бео зоо врт」",
+       "url": "https://www.openstreetmap.org/way/33517093",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "ベオグラード要塞",
+      "local": "Beogradska tvrđava",
+      "lat": 44.823502,
+      "lon": 20.449765,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Београдска тврђава」",
+        "url": "https://www.openstreetmap.org/way/450824126",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "name": "勝利者の像",
+      "local": "Pobednik",
+      "lat": 44.823028,
+      "lon": 20.447706,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Победник」",
+        "url": "https://www.openstreetmap.org/way/1294683903",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "地球の歩き方「セルビアのおすすめ観光スポット10選！歴史と自然の宝庫を巡る」",
+      "url": "https://www.arukikata.co.jp/webmagazine/272443/",
+      "seen": "2026-11-22",
+      "words": "カレメグダン公園【ベオグラード】（目印＋周辺。docs/guide-copy.md 5章の2）"
+     },
+     {
+      "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+      "seen": "2026-11-22",
+      "words": "カレメグダン公園"
+     }
+    ]
+   },
+   {
+    "key": "knez",
+    "name": "クネズ・ミハイロ通り周辺",
+    "local": {
+     "text": "Knez Mihailova",
+     "roman": "Knez Mihailova",
+     "src": [
+      {
+       "name": "Wikipedia「Knez Mihailova Street」",
+       "url": "https://en.wikipedia.org/wiki/Knez_Mihailova_Street",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "tone": {
+     "text": "要塞から共和国広場へ延びる歩行者天国の目抜き通り。博物館やモスク、古い地区のドルチョルもすぐそば。",
+     "src": [
+      {
+       "name": "Wikipedia「Knez Mihailova Street」",
+       "url": "https://en.wikipedia.org/wiki/Knez_Mihailova_Street",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "center": {
+     "lat": 44.816397,
+     "lon": 20.45861,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Кнеза Михаила」",
+       "url": "https://www.openstreetmap.org/way/23671224",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       44.8235,
+       20.4558
+      ],
+      [
+       44.8235,
+       20.4628
+      ],
+      [
+       44.8165,
+       20.463
+      ],
+      [
+       44.814,
+       20.46
+      ],
+      [
+       44.815,
+       20.452
+      ],
+      [
+       44.8185,
+       20.4515
+      ]
+     ],
+     "how": "クネズ・ミハイロ通り・共和国広場・国立博物館・民族学博物館・バイラクリ・モスクを囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Кнеза Михаила」",
+       "url": "https://www.openstreetmap.org/way/23671224",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "OpenStreetMap「Трг републике」",
+       "url": "https://www.openstreetmap.org/node/6760759093",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "クネズ・ミハイロ通り",
+      "local": "Knez Mihailova",
+      "lat": 44.816397,
+      "lon": 20.45861,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Кнеза Михаила」",
+        "url": "https://www.openstreetmap.org/way/23671224",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "name": "共和国広場",
+      "local": "Trg republike",
+      "lat": 44.816222,
+      "lon": 20.460295,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Трг републике」",
+        "url": "https://www.openstreetmap.org/node/6760759093",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+      "seen": "2026-11-22",
+      "words": "クネズミハイロ通り（目印＋周辺）"
+     }
+    ]
+   },
+   {
+    "key": "skadarlija",
+    "name": "スカダルリヤ",
+    "local": {
+     "text": "Skadarlija",
+     "roman": "Skadarlija",
+     "src": [
+      {
+       "name": "Wikipedia「Skadarlija」",
+       "url": "https://en.wikipedia.org/wiki/Skadarlija",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "tone": {
+     "text": "石畳の坂道に、生演奏の流れる古いカファナが並ぶボヘミアン地区。",
+     "src": [
+      {
+       "name": "Wikipedia「Skadarlija」",
+       "url": "https://en.wikipedia.org/wiki/Skadarlija",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikipedia（日本語）「スカダルリヤ」",
+       "url": "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%83%80%E3%83%AB%E3%83%AA%E3%83%A4",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "center": {
+     "lat": 44.818099,
+     "lon": 20.464758,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Скадарска」",
+       "url": "https://www.openstreetmap.org/way/392994845",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       44.8192,
+       20.4632
+      ],
+      [
+       44.8192,
+       20.4662
+      ],
+      [
+       44.817,
+       20.4662
+      ],
+      [
+       44.8168,
+       20.4632
+      ]
+     ],
+     "how": "スカダルスカ通りと、トリ・シェシラ・シェシル・モイを囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Скадарска」",
+       "url": "https://www.openstreetmap.org/way/392994845",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "OpenStreetMap「Три шешира」",
+       "url": "https://www.openstreetmap.org/way/150590534",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "トリ・シェシラ",
+      "local": "Tri šešira",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "Wikipedia（日本語）「スカダルリヤ」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%83%80%E3%83%AB%E3%83%AA%E3%83%A4",
+      "seen": "2026-11-22",
+      "words": "スカダルリヤ（地名で呼ぶ。docs/guide-copy.md 5章の1）"
+     }
+    ]
+   },
+   {
+    "key": "sava",
+    "name": "聖サヴァ大聖堂周辺",
+    "local": {
+     "text": "Hram Svetog Save",
+     "roman": "Hram Svetog Save",
+     "src": [
+      {
+       "name": "Wikipedia「Church of Saint Sava」",
+       "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Sava",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "tone": {
+     "text": "白い大聖堂の立つ丘。北へ少し歩くと、ニコラ・テスラ博物館がある。",
+     "src": [
+      {
+       "name": "Wikipedia「Church of Saint Sava」",
+       "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Sava",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "center": {
+     "lat": 44.798045,
+     "lon": 20.469188,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Храм Светог Саве」",
+       "url": "https://www.openstreetmap.org/way/89808919",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       44.8065,
+       20.4685
+      ],
+      [
+       44.8065,
+       20.4725
+      ],
+      [
+       44.7965,
+       20.4715
+      ],
+      [
+       44.7965,
+       20.467
+      ]
+     ],
+     "how": "聖サヴァ大聖堂とニコラ・テスラ博物館を囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Храм Светог Саве」",
+       "url": "https://www.openstreetmap.org/way/89808919",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "OpenStreetMap「Музеј Николе Тесле」",
+       "url": "https://www.openstreetmap.org/node/12845103007",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "聖サヴァ大聖堂",
+      "local": "Hram Svetog Save",
+      "lat": 44.798045,
+      "lon": 20.469188,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Храм Светог Саве」",
+        "url": "https://www.openstreetmap.org/way/89808919",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "name": "ニコラ・テスラ博物館",
+      "local": "Muzej Nikole Tesle",
+      "lat": 44.805105,
+      "lon": 20.4707,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Музеј Николе Тесле」",
+        "url": "https://www.openstreetmap.org/node/12845103007",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "VELTRA「セルビア観光のおすすめスポット14選！」",
+      "url": "https://www.veltra.com/jp/guide/international/spot-international/36278/",
+      "seen": "2026-11-22",
+      "words": "聖サヴァ大聖堂（目印＋周辺）"
+     },
+     {
+      "name": "地球の歩き方「セルビアのおすすめ観光スポット10選！歴史と自然の宝庫を巡る」",
+      "url": "https://www.arukikata.co.jp/webmagazine/272443/",
+      "seen": "2026-11-22",
+      "words": "聖サヴァ教会"
+     }
+    ]
+   },
+   {
+    "key": "zemun",
+    "name": "ゼムン",
+    "local": {
+     "text": "Zemun",
+     "roman": "Zemun",
+     "src": [
+      {
+       "name": "Wikipedia「Zemun」",
+       "url": "https://en.wikipedia.org/wiki/Zemun",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "tone": {
+     "text": "ドナウ川の岸の古い町。丘の上に塔が立ち、川沿いに散歩道と魚料理の店が続く。",
+     "src": [
+      {
+       "name": "Wikipedia「Zemun」",
+       "url": "https://en.wikipedia.org/wiki/Zemun",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "center": {
+     "lat": 44.848124,
+     "lon": 20.410728,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Гардош」",
+       "url": "https://www.openstreetmap.org/node/11582139369",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       44.852,
+       20.406
+      ],
+      [
+       44.852,
+       20.415
+      ],
+      [
+       44.844,
+       20.417
+      ],
+      [
+       44.844,
+       20.407
+      ]
+     ],
+     "how": "ガルドシュの丘・ガルドシュの塔・ゼムン河岸を囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Гардош」",
+       "url": "https://www.openstreetmap.org/node/11582139369",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "OpenStreetMap「Кеј ослобођења」",
+       "url": "https://www.openstreetmap.org/way/24843758",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "ガルドシュの塔",
+      "local": "Kula na Gardošu",
+      "lat": 44.848124,
+      "lon": 20.410728,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Гардош」",
+        "url": "https://www.openstreetmap.org/node/11582139369",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "Wikipedia（日本語）「ゼムン」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%BC%E3%83%A0%E3%83%B3",
+      "seen": "2026-11-22",
+      "words": "ゼムン（地名で呼ぶ）"
+     }
+    ]
+   }
+  ]
+ },
+ "todo": [
+  {
+   "key": "kalemegdan",
+   "town": "belgrade",
+   "title": "要塞から2つの川の合流を眺めたい！",
+   "head": "サヴァ川がドナウ川に注ぐ崖の上の公園",
+   "points": {
+    "what": [
+     {
+      "text": "ベオグラード要塞とカレメグダン公園を歩き、崖の上からサヴァ川とドナウ川の合流を見下ろす。",
+      "src": [
+       {
+        "name": "Wikipedia「Belgrade Fortress」",
+        "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+        "seen": "2026-11-22"
+       },
+       {
+        "name": "地球の歩き方「セルビアのおすすめ観光スポット10選！歴史と自然の宝庫を巡る」",
+        "url": "https://www.arukikata.co.jp/webmagazine/272443/",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "紀元前3世紀にケルト人の部族スコルディスキが築いた「シンギドゥヌム」が街の始まり。のちにローマの軍団が、合流点の丘に陣を置いた。",
+      "src": [
+       {
+        "name": "Wikipedia「Belgrade Fortress」",
+        "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "要塞をめぐる戦いは100回を超え、壊されるたびに直されてきた。",
+      "src": [
+       {
+        "name": "NEWT「セルビア・ベオグラード旅行におすすめの観光地11選！」",
+        "url": "https://newt.net/srb/mag-9081158317",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "1979年に国の特に重要な文化財になった、街でいちばん人が訪れる名所。",
+      "src": [
+       {
+        "name": "Wikipedia「Belgrade Fortress」",
+        "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "要塞と公園には24時間、ただで入れる。中に軍事博物館・教会・動物園がある。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "崖の上からは、合流点と、その先の大戦争島（ヴェリコ・ラトノ島）が見える。",
+      "src": [
+       {
+        "name": "Wikipedia「Belgrade Fortress」",
+        "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "夕暮れどきの眺めがとくに美しい。",
+      "src": [
+       {
+        "name": "地球の歩き方「セルビアの基本情報と観光ガイド」",
+        "url": "https://www.arukikata.co.jp/area/rs/",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "money": [
+     {
+      "text": "要塞の中の軍事博物館は大人350ディナール。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "観光案内所は、要塞の入口のそばのクネズ・ミハイロ通り56番、市立図書館の中。毎日9〜20時。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "カレメグダン公園の人混みでは、スリの被害が多い。バッグは体の前に抱える。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Belgrade Fortress」",
+     "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "地球の歩き方「セルビアのおすすめ観光スポット10選！歴史と自然の宝庫を巡る」",
+     "url": "https://www.arukikata.co.jp/webmagazine/272443/",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "NEWT「セルビア・ベオグラード旅行におすすめの観光地11選！」",
+     "url": "https://newt.net/srb/mag-9081158317",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikivoyage「Belgrade」",
+     "url": "https://en.wikivoyage.org/wiki/Belgrade",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "地球の歩き方「セルビアの基本情報と観光ガイド」",
+     "url": "https://www.arukikata.co.jp/area/rs/",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+     "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+     "seen": "2026-11-22"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "kalemegdan",
+     "pobednik",
+     "military",
+     "zoo"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   },
+   "marks": [
+    {
+     "kind": "price",
+     "text": "入るのは無料",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "cevapi",
+   "town": "belgrade",
+   "title": "本場のチェヴァプチチを食べたい！",
+   "head": "炭火で焼いた棒のひき肉に、カイマクと玉ねぎ",
+   "points": {
+    "what": [
+     {
+      "text": "ひき肉を棒の形にして焼いたチェヴァプチチ（チェヴァピ）を、平たいパンと一緒に食べる。",
+      "src": [
+       {
+        "name": "Wikipedia「Ćevapi」",
+        "url": "https://en.wikipedia.org/wiki/%C4%86evapi",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "セルビアとボスニア・ヘルツェゴヴィナの国の料理とされる。5〜10本を皿か平たいパンにのせ、刻んだ玉ねぎ・カイマクを添えることが多い。",
+      "src": [
+       {
+        "name": "Wikipedia「Ćevapi」",
+        "url": "https://en.wikipedia.org/wiki/%C4%86evapi",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "南の町レスコヴァツの炭火焼きの料理は、移り住んだ人たちと一緒にベオグラードに入り、いちばん売れる料理になった。",
+      "src": [
+       {
+        "name": "Wikipedia「Serbian cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "チェーン店のワルテルでは、牛肉のチェヴァピ125gに半分の平たいパンをつけて565ディナール（2026年10月の献立）。",
+      "src": [
+       {
+        "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+        "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "スカダルリヤのトリ・シェシラでは「トリ・シェシラのチェヴァピ」が1,240ディナール。",
+      "src": [
+       {
+        "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+        "url": "https://trisesira.rs/jelovnik/",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [
+     {
+      "text": "ワルテルでカイマク70gを足すと200ディナール。",
+      "src": [
+       {
+        "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+        "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "シェシル・モイの献立は、チェヴァピにフライドポテトを添えて1,250ディナール、カイマクつきで1,380ディナール。",
+      "src": [
+       {
+        "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+        "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Ćevapi」",
+     "url": "https://en.wikipedia.org/wiki/%C4%86evapi",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikipedia「Serbian cuisine」",
+     "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+     "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+     "url": "https://trisesira.rs/jelovnik/",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+     "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+     "seen": "2026-11-22"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "skadarlija"
+    ],
+    "eat": [
+     "cevapi",
+     "kajmak",
+     "pljeskavica"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   },
+   "marks": [
+    {
+     "kind": "price",
+     "text": "565ディナールから",
+     "src": [
+      {
+       "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+       "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "skadarlija",
+   "town": "belgrade",
+   "title": "石畳のスカダルリヤで夕食したい！",
+   "head": "生演奏の流れる老舗の食堂（カファナ）が並ぶ通り",
+   "points": {
+    "what": [
+     {
+      "text": "石畳の通りスカダルリヤの、伝統料理の食堂（カファナ）で夕食をとる。",
+      "src": [
+       {
+        "name": "Wikipedia「Skadarlija」",
+        "url": "https://en.wikipedia.org/wiki/Skadarlija",
+        "seen": "2026-11-22"
+       },
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "ベオグラードのボヘミアン地区で、「ベオグラードのモンマルトル」とも呼ばれる。",
+      "src": [
+       {
+        "name": "Wikipedia（日本語）「スカダルリヤ」",
+        "url": "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%83%80%E3%83%AB%E3%83%AA%E3%83%A4",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "1901年に宿屋「ダルダネリ」が取り壊されると、そこに居ついていた作家や俳優が、スカダルリヤの宿屋やカファナに移ってきた。",
+      "src": [
+       {
+        "name": "Wikipedia（日本語）「スカダルリヤ」",
+        "url": "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%83%80%E3%83%AB%E3%83%AA%E3%83%A4",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "1864年に開いたトリ・シェシラ（3つの帽子）は、2022年の時点で、スカダルリヤでいちばん古いいまも営むカファナ。",
+      "src": [
+       {
+        "name": "Wikipedia「Skadarlija」",
+        "url": "https://en.wikipedia.org/wiki/Skadarlija",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "夜は多くの店が、民謡やタンブリツァの生演奏とともにセルビアの料理を出す。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [
+     {
+      "text": "トリ・シェシラの献立では、チェヴァピ1,240ディナール、カラジョルジェヴァ・シュニツラ1,680ディナール。",
+      "src": [
+       {
+        "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+        "url": "https://trisesira.rs/jelovnik/",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "シェシル・モイの献立では、ムチュカリツァ1,350ディナール、バクラヴァ650ディナール（2025年4月）。",
+      "src": [
+       {
+        "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+        "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "スカダルリヤは、カレメグダンに次いで街で2番目に人が訪れる名所。",
+      "src": [
+       {
+        "name": "Wikipedia「Skadarlija」",
+        "url": "https://en.wikipedia.org/wiki/Skadarlija",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Skadarlija」",
+     "url": "https://en.wikipedia.org/wiki/Skadarlija",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikivoyage「Belgrade」",
+     "url": "https://en.wikivoyage.org/wiki/Belgrade",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikipedia（日本語）「スカダルリヤ」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%83%80%E3%83%AB%E3%83%AA%E3%83%A4",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+     "url": "https://trisesira.rs/jelovnik/",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+     "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+     "seen": "2026-11-22"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "skadarlija"
+    ],
+    "eat": [
+     "karadjordjeva",
+     "sopska",
+     "rakija"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "sava",
+   "town": "belgrade",
+   "title": "聖サヴァ大聖堂の金のモザイクを見たい！",
+   "head": "正教会の聖堂では世界で4番目の大きさ",
+   "points": {
+    "what": [
+     {
+      "text": "聖サヴァ大聖堂に入り、金色のモザイクで覆われた丸屋根と、地下の聖堂を見る。",
+      "src": [
+       {
+        "name": "Wikipedia「Church of Saint Sava」",
+        "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Sava",
+        "seen": "2026-11-22"
+       },
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "セルビア正教会の最初の大主教で国の守護聖人、聖サヴァにささげた聖堂。1594年にオスマン帝国が聖サヴァの遺骸を焼いたと伝わる場所に建てた。",
+      "src": [
+       {
+        "name": "Wikipedia「Church of Saint Sava」",
+        "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Sava",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "1935年に建て始め、外は2004年、中は2020年にようやくできた。",
+      "src": [
+       {
+        "name": "Wikipedia「Church of Saint Sava」",
+        "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Sava",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "中を覆うモザイクはおよそ1万5,000平方メートルで、キリスト教の世界でいちばん広い。丸屋根の中央には、キリストの昇天を描いた1,230平方メートルのモザイク。",
+      "src": [
+       {
+        "name": "Wikipedia「Church of Saint Sava」",
+        "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Sava",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "毎日8〜20時に開いていて、入るのは無料。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "正面の入口から下りた地下の聖堂は、明るく磨かれた広い空間で、壁一面に新しいイコンが並ぶ。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [
+     {
+      "text": "地下の聖堂と上の聖堂では、ふだんから礼拝が行われている。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Church of Saint Sava」",
+     "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Sava",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikivoyage「Belgrade」",
+     "url": "https://en.wikivoyage.org/wiki/Belgrade",
+     "seen": "2026-11-22"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "sava"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   },
+   "marks": [
+    {
+     "kind": "price",
+     "text": "入るのは無料",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "tesla",
+   "town": "belgrade",
+   "title": "テスラ博物館で放電の実験を見たい！",
+   "head": "電気の発明家テスラの眠る、小さな博物館",
+   "points": {
+    "what": [
+     {
+      "text": "ニコラ・テスラ博物館で、英語のガイドについてテスラの遺品と発明の模型を見て、実験の実演を見る。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "テスラ（1856〜1943年）は、交流の電気・無線・交流のモーターに大きな仕事を残した。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "博物館はテスラの一生と仕事を伝える場所で、テスラの眠る場所でもある。資料は2003年にユネスコの「世界の記憶」に登録された。",
+      "src": [
+       {
+        "name": "Wikipedia「Nikola Tesla Museum」",
+        "url": "https://en.wikipedia.org/wiki/Nikola_Tesla_Museum",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "ベオグラードの空港の名前も、ベオグラード・ニコラ・テスラ空港。",
+      "src": [
+       {
+        "name": "地球の歩き方「セルビアのおすすめ観光スポット10選！歴史と自然の宝庫を巡る」",
+        "url": "https://www.arukikata.co.jp/webmagazine/272443/",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "英語のガイドの見学は毎正時に始まり、実験の実演がある。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "場所はクルンスカ通り51番。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "月曜は10〜18時、火〜日曜は10〜20時。混む時間には長い列ができる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "money": [
+     {
+      "text": "英語のガイドの見学は800ディナールで、現金だけ。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "tips": [],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikivoyage「Belgrade」",
+     "url": "https://en.wikivoyage.org/wiki/Belgrade",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikipedia「Nikola Tesla Museum」",
+     "url": "https://en.wikipedia.org/wiki/Nikola_Tesla_Museum",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "地球の歩き方「セルビアのおすすめ観光スポット10選！歴史と自然の宝庫を巡る」",
+     "url": "https://www.arukikata.co.jp/webmagazine/272443/",
+     "seen": "2026-11-22"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "tesla"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   },
+   "marks": [
+    {
+     "kind": "price",
+     "text": "800ディナール",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "riblja",
+   "town": "belgrade",
+   "title": "ドナウの川辺で魚のスープを食べたい！",
+   "head": "ゼムンの川沿いの店で、パプリカの効いた一杯",
+   "points": {
+    "what": [
+     {
+      "text": "ゼムンのドナウ川沿いの魚料理の店で、魚のスープ（リブリャ・チョルバ）を食べる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "ドナウ川とサヴァ川の合流点にあるベオグラードは、川魚の料理の長い歴史を持つ。とくにゼムンの川沿いの店で、魚のスープや魚の煮込みを出す。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "魚のスープは、パプリカで味をつけたパンノニア地方の料理。",
+      "src": [
+       {
+        "name": "Wikipedia「Serbian cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "ゼムンは1934年にベオグラードに入るまで別の町だった。",
+      "src": [
+       {
+        "name": "Wikipedia「Zemun」",
+        "url": "https://en.wikipedia.org/wiki/Zemun",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "ゼムン河岸の魚料理の店シャランでは、骨を抜いた鯉の切り身の入った魚のスープ（0.5リットル）が1,120ディナール（2025年11月の献立）。",
+      "src": [
+       {
+        "name": "Restoran Šaran「Meni」（2025年11月の献立。PDF）",
+        "url": "https://saran.co.rs/Menu/%C5%A0aran%20Meni%20srpski%20nov%202025.pdf",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "同じ店の、ナマズか鯉の魚のパプリカ煮込みは3,200ディナール。",
+      "src": [
+       {
+        "name": "Restoran Šaran「Meni」（2025年11月の献立。PDF）",
+        "url": "https://saran.co.rs/Menu/%C5%A0aran%20Meni%20srpski%20nov%202025.pdf",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "シャランは月曜が休み。火・水曜は15時〜0時、木〜日曜は13時〜翌1時。",
+      "src": [
+       {
+        "name": "Restoran Šaran「Meni」（店の頁。営業時間）",
+        "url": "https://saran.co.rs/meni/",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "money": [],
+    "tips": [
+     {
+      "text": "中心のスカダルリヤのトリ・シェシラの献立にも、魚のスープがある（460ディナール）。",
+      "src": [
+       {
+        "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+        "url": "https://trisesira.rs/jelovnik/",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikivoyage「Belgrade」",
+     "url": "https://en.wikivoyage.org/wiki/Belgrade",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikipedia「Serbian cuisine」",
+     "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikipedia「Zemun」",
+     "url": "https://en.wikipedia.org/wiki/Zemun",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Restoran Šaran「Meni」（2025年11月の献立。PDF）",
+     "url": "https://saran.co.rs/Menu/%C5%A0aran%20Meni%20srpski%20nov%202025.pdf",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Restoran Šaran「Meni」（店の頁。営業時間）",
+     "url": "https://saran.co.rs/meni/",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+     "url": "https://trisesira.rs/jelovnik/",
+     "seen": "2026-11-22"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "zemun",
+     "gardos"
+    ],
+    "eat": [
+     "riblja"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "burek",
+   "town": "belgrade",
+   "title": "朝ごはんにブレクを食べたい！",
+   "head": "薄い生地を重ねて焼いたパイに、飲むヨーグルト",
+   "points": {
+    "what": [
+     {
+      "text": "パン屋で、チーズや肉を薄い生地で包んで焼いたブレクを買い、朝ごはんにする。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "ブレクは、チーズ・肉・ほうれん草・じゃがいもを薄い生地で包んだパイ。飲むヨーグルトと食べるのが昔からの食べかた。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "ブレクやギバニツァのような薄い生地のパイは、セルビアのふつうの朝ごはん。",
+      "src": [
+       {
+        "name": "Wikipedia「Serbian cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "パン屋（ペカラ）は街のどこにでもあり、朝早くから夜遅くまで開いている。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "パン屋のチェーンのフレブ・イ・キフレには、チーズや肉の「おばあちゃんのピタ」が並ぶ。",
+      "src": [
+       {
+        "name": "Hleb & Kifle「Пите」（店のネットの品書き）",
+        "url": "https://hlebikifle.rs/kategorija-proizvoda/pite/",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "トリ・シェシラでは、手で巻いた窯焼きのチーズのピタに発酵乳（キセロ・ムレコ）を添えて560ディナール。2人前の前菜の盛り合わせ（2,490ディナール）には自家製のブレクが入る。",
+      "src": [
+       {
+        "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+        "url": "https://trisesira.rs/jelovnik/",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikivoyage「Belgrade」",
+     "url": "https://en.wikivoyage.org/wiki/Belgrade",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikipedia「Serbian cuisine」",
+     "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Hleb & Kifle「Пите」（店のネットの品書き）",
+     "url": "https://hlebikifle.rs/kategorija-proizvoda/pite/",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+     "url": "https://trisesira.rs/jelovnik/",
+     "seen": "2026-11-22"
+    }
+   ],
+   "went": false,
+   "links": {
+    "eat": [
+     "burek",
+     "pita",
+     "gibanica"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "novi-sad",
+   "town": "novi-sad",
+   "title": "ノヴィ・サドへ日帰りしたい！",
+   "head": "高速列車で36分。ドナウ河畔の要塞の町",
+   "points": {
+    "what": [
+     {
+      "text": "セルビアで2番目に大きな街ノヴィ・サドへ日帰りで行き、ドナウ川を見下ろすペトロヴァラディン要塞に登る。",
+      "src": [
+       {
+        "name": "Wikipedia「Novi Sad」",
+        "url": "https://en.wikipedia.org/wiki/Novi_Sad",
+        "seen": "2026-11-22"
+       },
+       {
+        "name": "Wikivoyage「Novi Sad」",
+        "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "ノヴィ・サドは、文化の中心として「セルビアのアテネ」と呼ばれてきた。2022年の欧州文化首都。",
+      "src": [
+       {
+        "name": "Wikipedia「Novi Sad」",
+        "url": "https://en.wikipedia.org/wiki/Novi_Sad",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "ペトロヴァラディン要塞は「ドナウのジブラルタル」と呼ばれる要塞。時計塔は、長い針が時、短い針が分を指す。",
+      "src": [
+       {
+        "name": "Wikipedia「Petrovaradin Fortress」",
+        "url": "https://en.wikipedia.org/wiki/Petrovaradin_Fortress",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "ベオグラードとノヴィ・サドのあいだは高速の線になり、途中で止まらない高速列車「ソコ」なら36分ほど。",
+      "src": [
+       {
+        "name": "Wikivoyage「Novi Sad」",
+        "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "2026年7月の時点で、ノヴィ・サド駅は屋根の崩落のあとの修理で閉まっていて、列車は川向こうのペトロヴァラディン駅に止まる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Novi Sad」",
+        "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "バスは15分おきに出ていて、速い便で90分。",
+      "src": [
+       {
+        "name": "Wikivoyage「Novi Sad」",
+        "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [
+     {
+      "text": "列車の切符は、ソコが697ディナール、普通の列車が469ディナール。",
+      "src": [
+       {
+        "name": "Wikivoyage「Novi Sad」",
+        "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "ノヴィ・サドからドナウ川を下ったスレムスキ・カルロヴツィは、博物館・教会・画廊の多い小さな町。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Novi Sad」",
+     "url": "https://en.wikipedia.org/wiki/Novi_Sad",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikivoyage「Novi Sad」",
+     "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikipedia「Petrovaradin Fortress」",
+     "url": "https://en.wikipedia.org/wiki/Petrovaradin_Fortress",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikivoyage「Belgrade」",
+     "url": "https://en.wikivoyage.org/wiki/Belgrade",
+     "seen": "2026-11-22"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "petrovaradin",
+     "karlovci"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   },
+   "marks": [
+    {
+     "kind": "price",
+     "text": "列車697ディナール",
+     "src": [
+      {
+       "name": "Wikivoyage「Novi Sad」",
+       "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "see": [
+  {
+   "key": "kalemegdan",
+   "town": "belgrade",
+   "name": "ベオグラード要塞（カレメグダン公園）",
+   "local": {
+    "text": "Beogradska tvrđava / Kalemegdan",
+    "roman": "Beogradska tvrdjava / Kalemegdan",
+    "src": [
+     {
+      "name": "Wikipedia「Belgrade Fortress」",
+      "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "サヴァ川とドナウ川の合流を見下ろす崖の上の要塞と公園。紀元前3世紀にケルト人の部族が築いた砦に始まり、のちにローマの軍団が陣を置いた。街でいちばん人が訪れる名所。",
+    "src": [
+     {
+      "name": "Wikipedia「Belgrade Fortress」",
+      "url": "https://en.wikipedia.org/wiki/Belgrade_Fortress",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.823502,
+   "lon": 20.449765,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Београдска тврђава」",
+     "url": "https://www.openstreetmap.org/way/450824126",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "入る",
+     "text": "24時間、ただで入れる。中に軍事博物館・教会・動物園がある",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Kalemegdan+Beograd&hl=ja",
+   "links": {
+    "todo": [
+     "kalemegdan"
+    ]
+   },
+   "photo": {
+    "file": "P037152-661920 - Belgrade fortress stand at the downtown of Belgrade.jpg",
+    "by": "Oliver Bunic",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg",
+    "alt": "川の合流を見下ろす高台に、石の城壁が続くベオグラード要塞",
+    "w": 5514,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg/250px-P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg/500px-P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg/960px-P037152-661920_-_Belgrade_fortress_stand_at_the_downtown_of_Belgrade.jpg"
+    }
+   }
+  },
+  {
+   "key": "knez",
+   "town": "belgrade",
+   "name": "クネズ・ミハイロ通り",
+   "local": {
+    "text": "Knez Mihailova",
+    "roman": "Knez Mihailova",
+    "src": [
+     {
+      "name": "Wikipedia「Knez Mihailova Street」",
+      "url": "https://en.wikipedia.org/wiki/Knez_Mihailova_Street",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "カレメグダンから共和国広場へ延びる、長さ1kmの歩行者と買い物の目抜き通り。1870年代の終わりに建った屋敷が並び、1964年に街で初めての「通りごとの文化財」になった。",
+    "src": [
+     {
+      "name": "Wikipedia「Knez Mihailova Street」",
+      "url": "https://en.wikipedia.org/wiki/Knez_Mihailova_Street",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.816397,
+   "lon": 20.45861,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Кнеза Михаила」",
+     "url": "https://www.openstreetmap.org/way/23671224",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "気をつける",
+     "text": "人混みで、気づかないうちにバッグを開けられる被害が多い",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Knez+Mihailova+Beograd&hl=ja",
+   "photo": {
+    "file": "Knez Mihailova Street (October 2026, 1).jpg",
+    "by": "DKjellby",
+    "lic": "CC0",
+    "page": "https://commons.wikimedia.org/wiki/File:Knez_Mihailova_Street_(October_2026,_1).jpg",
+    "alt": "石畳の歩行者天国に、古い建物と店が並ぶクネズ・ミハイロ通り",
+    "w": 3023,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Knez_Mihailova_Street_(October_2026,_1).jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Knez_Mihailova_Street_%28October_2026%2C_1%29.jpg/250px-Knez_Mihailova_Street_%28October_2026%2C_1%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Knez_Mihailova_Street_%28October_2026%2C_1%29.jpg/500px-Knez_Mihailova_Street_%28October_2026%2C_1%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Knez_Mihailova_Street_%28October_2026%2C_1%29.jpg/960px-Knez_Mihailova_Street_%28October_2026%2C_1%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "sava",
+   "town": "belgrade",
+   "name": "聖サヴァ大聖堂",
+   "local": {
+    "text": "Hram Svetog Save",
+    "roman": "Hram Svetog Save",
+    "src": [
+     {
+      "name": "Wikipedia「Church of Saint Sava」",
+      "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Sava",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "セルビアの守護聖人、聖サヴァにささげた正教会の聖堂で、正教会の聖堂では世界で4番目の大きさ。1935年に建て始め、外は2004年、中の金色のモザイクは2020年にできた。",
+    "src": [
+     {
+      "name": "Wikipedia「Church of Saint Sava」",
+      "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Sava",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.798045,
+   "lon": 20.469188,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Храм Светог Саве」",
+     "url": "https://www.openstreetmap.org/way/89808919",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "開いている時間",
+     "text": "毎日8〜20時。入るのは無料",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Hram+Svetog+Save+Beograd&hl=ja",
+   "links": {
+    "todo": [
+     "sava"
+    ]
+   },
+   "photo": {
+    "file": "Hram svetog save beograd 0005 (edited).jpg",
+    "by": "Npps90",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Hram_svetog_save_beograd_0005_(edited).jpg",
+    "alt": "白い壁と緑の丸屋根の聖サヴァ大聖堂",
+    "w": 4319,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Hram_svetog_save_beograd_0005_(edited).jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Hram_svetog_save_beograd_0005_%28edited%29.jpg/250px-Hram_svetog_save_beograd_0005_%28edited%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Hram_svetog_save_beograd_0005_%28edited%29.jpg/500px-Hram_svetog_save_beograd_0005_%28edited%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Hram_svetog_save_beograd_0005_%28edited%29.jpg/960px-Hram_svetog_save_beograd_0005_%28edited%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "skadarlija",
+   "town": "belgrade",
+   "name": "スカダルリヤ",
+   "local": {
+    "text": "Skadarlija",
+    "roman": "Skadarlija",
+    "src": [
+     {
+      "name": "Wikipedia「Skadarlija」",
+      "url": "https://en.wikipedia.org/wiki/Skadarlija",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "石畳の坂道に古いカファナ（伝統料理の食堂）が並ぶ、ベオグラードのボヘミアン地区。「ベオグラードのモンマルトル」とも呼ばれ、1967年から保護されている。",
+    "src": [
+     {
+      "name": "Wikipedia「Skadarlija」",
+      "url": "https://en.wikipedia.org/wiki/Skadarlija",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikipedia（日本語）「スカダルリヤ」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%83%80%E3%83%AB%E3%83%AA%E3%83%A4",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.818099,
+   "lon": 20.464758,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Скадарска」",
+     "url": "https://www.openstreetmap.org/way/392994845",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Skadarlija+Beograd&hl=ja",
+   "links": {
+    "todo": [
+     "skadarlija"
+    ]
+   },
+   "photo": {
+    "file": "Skadarska street.jpg",
+    "by": "Erwan Martin",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Skadarska_street.jpg",
+    "alt": "石畳の坂道の両側に、テラス席の並ぶスカダルリヤ",
+    "w": 3648,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Skadarska_street.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Skadarska_street.jpg/250px-Skadarska_street.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Skadarska_street.jpg/500px-Skadarska_street.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c9/Skadarska_street.jpg/960px-Skadarska_street.jpg"
+    }
+   }
+  },
+  {
+   "key": "republic",
+   "town": "belgrade",
+   "name": "共和国広場",
+   "local": {
+    "text": "Trg republike",
+    "roman": "Trg republike",
+    "src": [
+     {
+      "name": "Wikipedia「Republic Square (Belgrade)」",
+      "url": "https://en.wikipedia.org/wiki/Republic_Square_(Belgrade)",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "国立博物館・国立劇場と、ミハイロ公の騎馬像の立つ街の中心の広場。ミハイロ公は、オスマン帝国の兵をベオグラードから退かせる話し合いをした人。",
+    "src": [
+     {
+      "name": "Wikipedia「Republic Square (Belgrade)」",
+      "url": "https://en.wikipedia.org/wiki/Republic_Square_(Belgrade)",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.816222,
+   "lon": 20.460295,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Трг републике」",
+     "url": "https://www.openstreetmap.org/node/6760759093",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Trg+republike+Beograd&hl=ja",
+   "photo": {
+    "file": "Republic Square (27420599076).jpg",
+    "by": "Erik Cleves Kristensen",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Republic_Square_(27420599076).jpg",
+    "alt": "共和国広場。ミハイロ公の騎馬像と、後ろの国立博物館",
+    "w": 3058,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Republic_Square_(27420599076).jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Republic_Square_%2827420599076%29.jpg/250px-Republic_Square_%2827420599076%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Republic_Square_%2827420599076%29.jpg/500px-Republic_Square_%2827420599076%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Republic_Square_%2827420599076%29.jpg/960px-Republic_Square_%2827420599076%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "nmuseum",
+   "town": "belgrade",
+   "name": "国立博物館",
+   "local": {
+    "text": "Narodni muzej Srbije",
+    "roman": "Narodni muzej Srbije",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of Serbia」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_Serbia",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "1844年にできた、ベオグラードでいちばん大きく古い博物館。収蔵品は40万点を超え、旧石器・古代・中世・近代に分けて見せる。",
+    "src": [
+     {
+      "name": "Wikipedia「National Museum of Serbia」",
+      "url": "https://en.wikipedia.org/wiki/National_Museum_of_Serbia",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.816789,
+   "lon": 20.459645,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Народни музеј Србије」",
+     "url": "https://www.openstreetmap.org/way/23067279",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "大人300ディナール。日曜は無料。入口は横のヴァセ・チャラピチャ通り",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Narodni+muzej+Srbije+Beograd&hl=ja",
+   "photo": {
+    "file": "National Museum of Serbia (DSC04612).jpg",
+    "by": "Simon Legner ( User:simon04 )",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:National_Museum_of_Serbia_(DSC04612).jpg",
+    "alt": "共和国広場に面した、丸屋根の国立博物館の正面",
+    "w": 5789,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:National_Museum_of_Serbia_(DSC04612).jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/National_Museum_of_Serbia_%28DSC04612%29.jpg/250px-National_Museum_of_Serbia_%28DSC04612%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/National_Museum_of_Serbia_%28DSC04612%29.jpg/500px-National_Museum_of_Serbia_%28DSC04612%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/National_Museum_of_Serbia_%28DSC04612%29.jpg/960px-National_Museum_of_Serbia_%28DSC04612%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "tesla",
+   "town": "belgrade",
+   "name": "ニコラ・テスラ博物館",
+   "local": {
+    "text": "Muzej Nikole Tesle",
+    "roman": "Muzej Nikole Tesle",
+    "src": [
+     {
+      "name": "Wikipedia「Nikola Tesla Museum」",
+      "url": "https://en.wikipedia.org/wiki/Nikola_Tesla_Museum",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "発明家ニコラ・テスラの一生と仕事を伝える科学の博物館で、テスラの眠る場所。16万点を超える資料を持ち、テスラの資料は2003年にユネスコの「世界の記憶」に登録された。",
+    "src": [
+     {
+      "name": "Wikipedia「Nikola Tesla Museum」",
+      "url": "https://en.wikipedia.org/wiki/Nikola_Tesla_Museum",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.805105,
+   "lon": 20.4707,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Музеј Николе Тесле」",
+     "url": "https://www.openstreetmap.org/node/12845103007",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "見学",
+     "text": "英語のガイドの見学は毎正時に始まり、実験の実演がある。800ディナールで現金だけ",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzej+Nikole+Tesle+Beograd&hl=ja",
+   "links": {
+    "todo": [
+     "tesla"
+    ]
+   },
+   "photo": {
+    "file": "Genčićeva kuća 6.jpg",
+    "by": "Dungodung",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Gen%C4%8Di%C4%87eva_ku%C4%87a_6.jpg",
+    "alt": "ニコラ・テスラ博物館の入る、白い2階建ての屋敷",
+    "w": 4000,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Gen%C4%8Di%C4%87eva_ku%C4%87a_6.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Gen%C4%8Di%C4%87eva_ku%C4%87a_6.jpg/250px-Gen%C4%8Di%C4%87eva_ku%C4%87a_6.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Gen%C4%8Di%C4%87eva_ku%C4%87a_6.jpg/500px-Gen%C4%8Di%C4%87eva_ku%C4%87a_6.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Gen%C4%8Di%C4%87eva_ku%C4%87a_6.jpg/960px-Gen%C4%8Di%C4%87eva_ku%C4%87a_6.jpg"
+    }
+   }
+  },
+  {
+   "key": "yugoslavia",
+   "town": "belgrade",
+   "name": "ユーゴスラビア博物館（花の家）",
+   "local": {
+    "text": "Muzej Jugoslavije",
+    "roman": "Muzej Jugoslavije",
+    "src": [
+     {
+      "name": "Wikipedia「Museum of Yugoslavia」",
+      "url": "https://en.wikipedia.org/wiki/Museum_of_Yugoslavia",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ユーゴスラビアの歴史と、大統領チトーの一生を伝える博物館。敷地の「花の家」に、チトーと妻ヨヴァンカが眠る。年に12万人が訪れる、セルビアでいちばん人の来る博物館。",
+    "src": [
+     {
+      "name": "Wikipedia「Museum of Yugoslavia」",
+      "url": "https://en.wikipedia.org/wiki/Museum_of_Yugoslavia",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikipedia「House of Flowers (mausoleum)」",
+      "url": "https://en.wikipedia.org/wiki/House_of_Flowers_(mausoleum)",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.788019,
+   "lon": 20.452314,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Музеј Југославије」",
+     "url": "https://www.openstreetmap.org/way/603893007",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "火〜日曜10〜18時。大人600ディナール",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    {
+     "label": "行きかた",
+     "text": "トロリーバス40番か41番",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzej+Jugoslavije+Beograd&hl=ja",
+   "photo": {
+    "file": "Muzej Jugoslavije 003.jpg",
+    "by": "Ванилица",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Muzej_Jugoslavije_003.jpg",
+    "alt": "緑の丘に立つ、ユーゴスラビア博物館の建物",
+    "w": 3456,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Muzej_Jugoslavije_003.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Muzej_Jugoslavije_003.jpg/250px-Muzej_Jugoslavije_003.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Muzej_Jugoslavije_003.jpg/500px-Muzej_Jugoslavije_003.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Muzej_Jugoslavije_003.jpg/960px-Muzej_Jugoslavije_003.jpg"
+    }
+   }
+  },
+  {
+   "key": "stmark",
+   "town": "belgrade",
+   "name": "聖マルコ教会",
+   "local": {
+    "text": "Crkva Svetog Marka",
+    "roman": "Crkva Svetog Marka",
+    "src": [
+     {
+      "name": "Wikipedia「Church of Saint Mark, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Mark,_Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "タシュマイダン公園に立つ、セルビア・ビザンティン様式の正教会の教会。1931〜1940年に建ち、中にドゥシャン王の墓がある。外の形はグラチャニツァ修道院を手本にした。",
+    "src": [
+     {
+      "name": "Wikipedia「Church of Saint Mark, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Church_of_Saint_Mark,_Belgrade",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.810449,
+   "lon": 20.468929,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Црква Светог Марка」",
+     "url": "https://www.openstreetmap.org/way/113034470",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "開いている時間",
+     "text": "毎日7〜19時",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Crkva+Svetog+Marka+Beograd&hl=ja",
+   "photo": {
+    "file": "Crkva svetog Marka, Beograd (St. Mark's Church, Belgrade).jpg",
+    "by": "Petar Milošević",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Crkva_svetog_Marka,_Beograd_(St._Mark%27s_Church,_Belgrade).jpg",
+    "alt": "赤と黄色の縞の壁の聖マルコ教会",
+    "w": 4780,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Crkva_svetog_Marka,_Beograd_(St._Mark%27s_Church,_Belgrade).jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Crkva_svetog_Marka%2C_Beograd_%28St._Mark%27s_Church%2C_Belgrade%29.jpg/250px-Crkva_svetog_Marka%2C_Beograd_%28St._Mark%27s_Church%2C_Belgrade%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Crkva_svetog_Marka%2C_Beograd_%28St._Mark%27s_Church%2C_Belgrade%29.jpg/500px-Crkva_svetog_Marka%2C_Beograd_%28St._Mark%27s_Church%2C_Belgrade%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Crkva_svetog_Marka%2C_Beograd_%28St._Mark%27s_Church%2C_Belgrade%29.jpg/960px-Crkva_svetog_Marka%2C_Beograd_%28St._Mark%27s_Church%2C_Belgrade%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "assembly",
+   "town": "belgrade",
+   "name": "国会議事堂",
+   "local": {
+    "text": "Dom Narodne skupštine",
+    "roman": "Dom Narodne skupstine",
+    "src": [
+     {
+      "name": "Wikipedia「House of the National Assembly, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/House_of_the_National_Assembly,_Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "1907〜1936年に建った、ネオ・バロック様式の議会の建物。ニコラ・パシッチ広場に立ち、向かいに大統領の住む新宮殿と、市庁舎の旧宮殿がある。",
+    "src": [
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikipedia「House of the National Assembly, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/House_of_the_National_Assembly,_Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.811727,
+   "lon": 20.465932,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Дом Народне скупштине Републике Србије」",
+     "url": "https://www.openstreetmap.org/relation/15463164",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Dom+Narodne+skup%C5%A1tine+Beograd&hl=ja",
+   "photo": {
+    "file": "Дом Народне Скупштине Србије.jpg",
+    "by": "Boris Dimitrov",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:%D0%94%D0%BE%D0%BC_%D0%9D%D0%B0%D1%80%D0%BE%D0%B4%D0%BD%D0%B5_%D0%A1%D0%BA%D1%83%D0%BF%D1%88%D1%82%D0%B8%D0%BD%D0%B5_%D0%A1%D1%80%D0%B1%D0%B8%D1%98%D0%B5.jpg",
+    "alt": "緑の丸屋根の国会議事堂と、前の広場",
+    "w": 4614,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:%D0%94%D0%BE%D0%BC_%D0%9D%D0%B0%D1%80%D0%BE%D0%B4%D0%BD%D0%B5_%D0%A1%D0%BA%D1%83%D0%BF%D1%88%D1%82%D0%B8%D0%BD%D0%B5_%D0%A1%D1%80%D0%B1%D0%B8%D1%98%D0%B5.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/%D0%94%D0%BE%D0%BC_%D0%9D%D0%B0%D1%80%D0%BE%D0%B4%D0%BD%D0%B5_%D0%A1%D0%BA%D1%83%D0%BF%D1%88%D1%82%D0%B8%D0%BD%D0%B5_%D0%A1%D1%80%D0%B1%D0%B8%D1%98%D0%B5.jpg/250px-%D0%94%D0%BE%D0%BC_%D0%9D%D0%B0%D1%80%D0%BE%D0%B4%D0%BD%D0%B5_%D0%A1%D0%BA%D1%83%D0%BF%D1%88%D1%82%D0%B8%D0%BD%D0%B5_%D0%A1%D1%80%D0%B1%D0%B8%D1%98%D0%B5.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/%D0%94%D0%BE%D0%BC_%D0%9D%D0%B0%D1%80%D0%BE%D0%B4%D0%BD%D0%B5_%D0%A1%D0%BA%D1%83%D0%BF%D1%88%D1%82%D0%B8%D0%BD%D0%B5_%D0%A1%D1%80%D0%B1%D0%B8%D1%98%D0%B5.jpg/500px-%D0%94%D0%BE%D0%BC_%D0%9D%D0%B0%D1%80%D0%BE%D0%B4%D0%BD%D0%B5_%D0%A1%D0%BA%D1%83%D0%BF%D1%88%D1%82%D0%B8%D0%BD%D0%B5_%D0%A1%D1%80%D0%B1%D0%B8%D1%98%D0%B5.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/%D0%94%D0%BE%D0%BC_%D0%9D%D0%B0%D1%80%D0%BE%D0%B4%D0%BD%D0%B5_%D0%A1%D0%BA%D1%83%D0%BF%D1%88%D1%82%D0%B8%D0%BD%D0%B5_%D0%A1%D1%80%D0%B1%D0%B8%D1%98%D0%B5.jpg/960px-%D0%94%D0%BE%D0%BC_%D0%9D%D0%B0%D1%80%D0%BE%D0%B4%D0%BD%D0%B5_%D0%A1%D0%BA%D1%83%D0%BF%D1%88%D1%82%D0%B8%D0%BD%D0%B5_%D0%A1%D1%80%D0%B1%D0%B8%D1%98%D0%B5.jpg"
+    }
+   }
+  },
+  {
+   "key": "ljubica",
+   "town": "belgrade",
+   "name": "リュビツァ妃の邸宅",
+   "local": {
+    "text": "Konak kneginje Ljubice",
+    "roman": "Konak kneginje Ljubice",
+    "src": [
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "ミロシュ・オブレノヴィチ公の妃リュビツァのために1830年に建った屋敷。1979年から市立博物館の分館で、オスマン風からヨーロッパ風へ移る19世紀の建築と家具を見せる。",
+    "src": [
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.817105,
+   "lon": 20.452235,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Конак кнегиње Љубице」",
+     "url": "https://www.openstreetmap.org/way/38575518",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "火〜土曜10〜17時、日曜10〜14時。大人200ディナール",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Konak+kneginje+Ljubice+Beograd&hl=ja",
+   "photo": {
+    "file": "Konak knjeginje Ljubice 2.JPG",
+    "by": "Original uploader was Goldfinger at sr.wikipedia",
+    "lic": "CC BY-SA 3.0 rs",
+    "page": "https://commons.wikimedia.org/wiki/File:Konak_knjeginje_Ljubice_2.JPG",
+    "alt": "白い壁に赤い瓦屋根の、リュビツァ妃の邸宅",
+    "w": 2816,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Konak_knjeginje_Ljubice_2.JPG",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Konak_knjeginje_Ljubice_2.JPG/250px-Konak_knjeginje_Ljubice_2.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Konak_knjeginje_Ljubice_2.JPG/500px-Konak_knjeginje_Ljubice_2.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Konak_knjeginje_Ljubice_2.JPG/960px-Konak_knjeginje_Ljubice_2.JPG"
+    }
+   }
+  },
+  {
+   "key": "bajrakli",
+   "town": "belgrade",
+   "name": "バイラクリ・モスク",
+   "local": {
+    "text": "Bajrakli džamija",
+    "roman": "Bajrakli dzamija",
+    "src": [
+     {
+      "name": "Wikipedia「Bajrakli Mosque, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Bajrakli_Mosque,_Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "1575年ごろに建ったモスク。オスマン帝国の時代に街に273あったモスクのうち、残っているのはここだけ。名前はトルコ語で「旗のある」。",
+    "src": [
+     {
+      "name": "Wikipedia「Bajrakli Mosque, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Bajrakli_Mosque,_Belgrade",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.822057,
+   "lon": 20.457349,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Бајракли џамија」",
+     "url": "https://www.openstreetmap.org/way/392368105",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Bajrakli+d%C5%BEamija+Beograd&hl=ja",
+   "photo": {
+    "file": "Spoljašnost Bajrakli džamije 02.JPG",
+    "by": "Missty011",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Spolja%C5%A1nost_Bajrakli_d%C5%BEamije_02.JPG",
+    "alt": "石の壁と細い塔（ミナレット）のバイラクリ・モスク",
+    "w": 1936,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Spolja%C5%A1nost_Bajrakli_d%C5%BEamije_02.JPG",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Spolja%C5%A1nost_Bajrakli_d%C5%BEamije_02.JPG/250px-Spolja%C5%A1nost_Bajrakli_d%C5%BEamije_02.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Spolja%C5%A1nost_Bajrakli_d%C5%BEamije_02.JPG/500px-Spolja%C5%A1nost_Bajrakli_d%C5%BEamije_02.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Spolja%C5%A1nost_Bajrakli_d%C5%BEamije_02.JPG/960px-Spolja%C5%A1nost_Bajrakli_d%C5%BEamije_02.JPG"
+    }
+   }
+  },
+  {
+   "key": "pobednik",
+   "town": "belgrade",
+   "name": "勝利者の像（ポベドニク）",
+   "local": {
+    "text": "Pobednik",
+    "roman": "Pobednik",
+    "src": [
+     {
+      "name": "Wikipedia「Pobednik」",
+      "url": "https://en.wikipedia.org/wiki/Pobednik",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "要塞の上に立つ、高さ14mの記念の像。彫刻家イヴァン・メシュトロヴィチの作。",
+    "src": [
+     {
+      "name": "Wikipedia「Pobednik」",
+      "url": "https://en.wikipedia.org/wiki/Pobednik",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.823028,
+   "lon": 20.447706,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Победник」",
+     "url": "https://www.openstreetmap.org/way/1294683903",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Pobednik+Beograd&hl=ja",
+   "links": {
+    "todo": [
+     "kalemegdan"
+    ]
+   },
+   "photo": {
+    "file": "Pobednik (The Victor, Belgrade).jpg",
+    "by": "Petar Milošević",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Pobednik_(The_Victor,_Belgrade).jpg",
+    "alt": "高い柱の上に立つ勝利者の像",
+    "w": 3217,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Pobednik_(The_Victor,_Belgrade).jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Pobednik_%28The_Victor%2C_Belgrade%29.jpg/250px-Pobednik_%28The_Victor%2C_Belgrade%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Pobednik_%28The_Victor%2C_Belgrade%29.jpg/500px-Pobednik_%28The_Victor%2C_Belgrade%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Pobednik_%28The_Victor%2C_Belgrade%29.jpg/960px-Pobednik_%28The_Victor%2C_Belgrade%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "military",
+   "town": "belgrade",
+   "name": "軍事博物館",
+   "local": {
+    "text": "Vojni muzej",
+    "roman": "Vojni muzej",
+    "src": [
+     {
+      "name": "Wikipedia「Military Museum, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Military_Museum,_Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "要塞の中にある、1878年にできた軍事の博物館。ローマの剣やかぶと、セルビアの騎士の重い鎧から、近代の銃まで3,000点を超える品を持つ。",
+    "src": [
+     {
+      "name": "Wikipedia「Military Museum, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Military_Museum,_Belgrade",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.821919,
+   "lon": 20.449806,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Војни музеј」",
+     "url": "https://www.openstreetmap.org/relation/9466610",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "火〜日曜10〜17時。大人350ディナール",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Vojni+muzej+Beograd&hl=ja",
+   "links": {
+    "todo": [
+     "kalemegdan"
+    ]
+   },
+   "photo": {
+    "file": "Свјетлопис Војног музеја у Биограду.jpg",
+    "by": "Andrija12345678",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%B2%D1%98%D0%B5%D1%82%D0%BB%D0%BE%D0%BF%D0%B8%D1%81_%D0%92%D0%BE%D1%98%D0%BD%D0%BE%D0%B3_%D0%BC%D1%83%D0%B7%D0%B5%D1%98%D0%B0_%D1%83_%D0%91%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D0%B4%D1%83.jpg",
+    "alt": "要塞の中の軍事博物館の建物と、前に並ぶ大砲",
+    "w": 3000,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%B2%D1%98%D0%B5%D1%82%D0%BB%D0%BE%D0%BF%D0%B8%D1%81_%D0%92%D0%BE%D1%98%D0%BD%D0%BE%D0%B3_%D0%BC%D1%83%D0%B7%D0%B5%D1%98%D0%B0_%D1%83_%D0%91%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D0%B4%D1%83.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/%D0%A1%D0%B2%D1%98%D0%B5%D1%82%D0%BB%D0%BE%D0%BF%D0%B8%D1%81_%D0%92%D0%BE%D1%98%D0%BD%D0%BE%D0%B3_%D0%BC%D1%83%D0%B7%D0%B5%D1%98%D0%B0_%D1%83_%D0%91%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D0%B4%D1%83.jpg/250px-%D0%A1%D0%B2%D1%98%D0%B5%D1%82%D0%BB%D0%BE%D0%BF%D0%B8%D1%81_%D0%92%D0%BE%D1%98%D0%BD%D0%BE%D0%B3_%D0%BC%D1%83%D0%B7%D0%B5%D1%98%D0%B0_%D1%83_%D0%91%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D0%B4%D1%83.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/%D0%A1%D0%B2%D1%98%D0%B5%D1%82%D0%BB%D0%BE%D0%BF%D0%B8%D1%81_%D0%92%D0%BE%D1%98%D0%BD%D0%BE%D0%B3_%D0%BC%D1%83%D0%B7%D0%B5%D1%98%D0%B0_%D1%83_%D0%91%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D0%B4%D1%83.jpg/500px-%D0%A1%D0%B2%D1%98%D0%B5%D1%82%D0%BB%D0%BE%D0%BF%D0%B8%D1%81_%D0%92%D0%BE%D1%98%D0%BD%D0%BE%D0%B3_%D0%BC%D1%83%D0%B7%D0%B5%D1%98%D0%B0_%D1%83_%D0%91%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D0%B4%D1%83.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/%D0%A1%D0%B2%D1%98%D0%B5%D1%82%D0%BB%D0%BE%D0%BF%D0%B8%D1%81_%D0%92%D0%BE%D1%98%D0%BD%D0%BE%D0%B3_%D0%BC%D1%83%D0%B7%D0%B5%D1%98%D0%B0_%D1%83_%D0%91%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D0%B4%D1%83.jpg/960px-%D0%A1%D0%B2%D1%98%D0%B5%D1%82%D0%BB%D0%BE%D0%BF%D0%B8%D1%81_%D0%92%D0%BE%D1%98%D0%BD%D0%BE%D0%B3_%D0%BC%D1%83%D0%B7%D0%B5%D1%98%D0%B0_%D1%83_%D0%91%D0%B8%D0%BE%D0%B3%D1%80%D0%B0%D0%B4%D1%83.jpg"
+    }
+   }
+  },
+  {
+   "key": "zemun",
+   "town": "belgrade",
+   "name": "ゼムン",
+   "local": {
+    "text": "Zemun",
+    "roman": "Zemun",
+    "src": [
+     {
+      "name": "Wikipedia「Zemun」",
+      "url": "https://en.wikipedia.org/wiki/Zemun",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ドナウ川の右岸の古い町で、1934年にベオグラードに入った。ガルドシュの丘の東に、散歩と食事の店の並ぶゼムン河岸が続く。",
+    "src": [
+     {
+      "name": "Wikipedia「Zemun」",
+      "url": "https://en.wikipedia.org/wiki/Zemun",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.849309,
+   "lon": 20.411248,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Кеј ослобођења」",
+     "url": "https://www.openstreetmap.org/way/24843758",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Zemunski+kej+Beograd&hl=ja",
+   "links": {
+    "todo": [
+     "riblja"
+    ]
+   },
+   "photo": {
+    "file": "Zemun panorama from Gardoš tower.jpg",
+    "by": "Petar Milošević",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Zemun_panorama_from_Gardo%C5%A1_tower.jpg",
+    "alt": "ガルドシュの塔から見た、赤い屋根の並ぶゼムンの町とドナウ川",
+    "w": 9168,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Zemun_panorama_from_Gardo%C5%A1_tower.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Zemun_panorama_from_Gardo%C5%A1_tower.jpg/250px-Zemun_panorama_from_Gardo%C5%A1_tower.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Zemun_panorama_from_Gardo%C5%A1_tower.jpg/500px-Zemun_panorama_from_Gardo%C5%A1_tower.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Zemun_panorama_from_Gardo%C5%A1_tower.jpg/960px-Zemun_panorama_from_Gardo%C5%A1_tower.jpg"
+    }
+   }
+  },
+  {
+   "key": "gardos",
+   "town": "belgrade",
+   "name": "ガルドシュの塔",
+   "local": {
+    "text": "Kula na Gardošu",
+    "roman": "Kula na Gardosu",
+    "src": [
+     {
+      "name": "Wikipedia「Gardoš Tower」",
+      "url": "https://en.wikipedia.org/wiki/Gardo%C5%A1_Tower",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ゼムンのガルドシュの丘に立つ、高さ36mの塔。ハンガリー人の定住千年を祝って1896年に建てた7つの記念碑の1つで、いちばん南のもの。",
+    "src": [
+     {
+      "name": "Wikipedia「Gardoš Tower」",
+      "url": "https://en.wikipedia.org/wiki/Gardo%C5%A1_Tower",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.848124,
+   "lon": 20.410728,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Гардош」",
+     "url": "https://www.openstreetmap.org/node/11582139369",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Kula+Gardo%C5%A1+Zemun+Beograd&hl=ja",
+   "links": {
+    "todo": [
+     "riblja"
+    ]
+   },
+   "photo": {
+    "file": "Belgrad (Zemun) - Kula Sibinjanin Janka.jpg",
+    "by": "Stefan Didam - Schmallenberg",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Belgrad_(Zemun)_-_Kula_Sibinjanin_Janka.jpg",
+    "alt": "れんがの壁と尖った屋根のガルドシュの塔",
+    "w": 1637,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Belgrad_(Zemun)_-_Kula_Sibinjanin_Janka.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Belgrad_%28Zemun%29_-_Kula_Sibinjanin_Janka.jpg/250px-Belgrad_%28Zemun%29_-_Kula_Sibinjanin_Janka.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Belgrad_%28Zemun%29_-_Kula_Sibinjanin_Janka.jpg/500px-Belgrad_%28Zemun%29_-_Kula_Sibinjanin_Janka.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Belgrad_%28Zemun%29_-_Kula_Sibinjanin_Janka.jpg/960px-Belgrad_%28Zemun%29_-_Kula_Sibinjanin_Janka.jpg"
+    }
+   }
+  },
+  {
+   "key": "ada",
+   "town": "belgrade",
+   "name": "アダ・ツィガンリヤ",
+   "local": {
+    "text": "Ada Ciganlija",
+    "roman": "Ada Ciganlija",
+    "src": [
+     {
+      "name": "Wikipedia「Ada Ciganlija」",
+      "url": "https://en.wikipedia.org/wiki/Ada_Ciganlija",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "サヴァ川の島をつないで半島にした、湖と浜のある憩いの場。夏は1日に10万人を超える人が来て、「ベオグラードの海」と呼ばれる。",
+    "src": [
+     {
+      "name": "Wikipedia「Ada Ciganlija」",
+      "url": "https://en.wikipedia.org/wiki/Ada_Ciganlija",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.784437,
+   "lon": 20.381037,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Ада Циганлија」",
+     "url": "https://www.openstreetmap.org/relation/14675466",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Ada+Ciganlija+Beograd&hl=ja",
+   "photo": {
+    "file": "Sava Lake (Савско језеро).jpg",
+    "by": "Zvonko at English Wikipedia ; Transfer was made by User:Mifter .",
+    "lic": "PD",
+    "page": "https://commons.wikimedia.org/wiki/File:Sava_Lake_(%D0%A1%D0%B0%D0%B2%D1%81%D0%BA%D0%BE_%D1%98%D0%B5%D0%B7%D0%B5%D1%80%D0%BE).jpg",
+    "alt": "木々に囲まれた、サヴァ湖の静かな水面",
+    "w": 567,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Sava_Lake_(%D0%A1%D0%B0%D0%B2%D1%81%D0%BA%D0%BE_%D1%98%D0%B5%D0%B7%D0%B5%D1%80%D0%BE).jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Sava_Lake_%28%D0%A1%D0%B0%D0%B2%D1%81%D0%BA%D0%BE_%D1%98%D0%B5%D0%B7%D0%B5%D1%80%D0%BE%29.jpg/250px-Sava_Lake_%28%D0%A1%D0%B0%D0%B2%D1%81%D0%BA%D0%BE_%D1%98%D0%B5%D0%B7%D0%B5%D1%80%D0%BE%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Sava_Lake_%28%D0%A1%D0%B0%D0%B2%D1%81%D0%BA%D0%BE_%D1%98%D0%B5%D0%B7%D0%B5%D1%80%D0%BE%29.jpg/500px-Sava_Lake_%28%D0%A1%D0%B0%D0%B2%D1%81%D0%BA%D0%BE_%D1%98%D0%B5%D0%B7%D0%B5%D1%80%D0%BE%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "msu",
+   "town": "belgrade",
+   "name": "現代美術館",
+   "local": {
+    "text": "Muzej savremene umetnosti",
+    "roman": "Muzej savremene umetnosti",
+    "src": [
+     {
+      "name": "Wikipedia「Museum of Contemporary Art, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Museum_of_Contemporary_Art,_Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "1958年にできた、20世紀からの美術の美術館。1965年から新ベオグラードのいまの建物で、3万5,000点を超える作品を持つ。",
+    "src": [
+     {
+      "name": "Wikipedia「Museum of Contemporary Art, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Museum_of_Contemporary_Art,_Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.819594,
+   "lon": 20.4424,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Музеј савремене уметности」",
+     "url": "https://www.openstreetmap.org/way/36005092",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "水〜月曜11〜19時。大人600ディナール",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Muzej+savremene+umetnosti+Beograd&hl=ja",
+   "photo": {
+    "file": "Beograd - Muzej Savremene Umetnosti (MoCAB) (crop).jpg",
+    "by": "Fred Romero",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Beograd_-_Muzej_Savremene_Umetnosti_(MoCAB)_(crop).jpg",
+    "alt": "白い角ばった箱を重ねたような現代美術館の建物",
+    "w": 4870,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Beograd_-_Muzej_Savremene_Umetnosti_(MoCAB)_(crop).jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Beograd_-_Muzej_Savremene_Umetnosti_%28MoCAB%29_%28crop%29.jpg/250px-Beograd_-_Muzej_Savremene_Umetnosti_%28MoCAB%29_%28crop%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Beograd_-_Muzej_Savremene_Umetnosti_%28MoCAB%29_%28crop%29.jpg/500px-Beograd_-_Muzej_Savremene_Umetnosti_%28MoCAB%29_%28crop%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Beograd_-_Muzej_Savremene_Umetnosti_%28MoCAB%29_%28crop%29.jpg/960px-Beograd_-_Muzej_Savremene_Umetnosti_%28MoCAB%29_%28crop%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "zoo",
+   "town": "belgrade",
+   "name": "ベオグラード動物園",
+   "local": {
+    "text": "Beo zoo vrt",
+    "roman": "Beo zoo vrt",
+    "src": [
+     {
+      "name": "Wikipedia「Belgrade Zoo」",
+      "url": "https://en.wikipedia.org/wiki/Belgrade_Zoo",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "カレメグダン公園の中に1936年にできた動物園。210種・およそ800頭の動物がいる、セルビアでいちばん大きな動物園。",
+    "src": [
+     {
+      "name": "Wikipedia「Belgrade Zoo」",
+      "url": "https://en.wikipedia.org/wiki/Belgrade_Zoo",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.825851,
+   "lon": 20.453607,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Бео зоо врт」",
+     "url": "https://www.openstreetmap.org/way/33517093",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "大人700ディナール。4〜10月は8〜20時半、11〜3月は8〜17時",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Beo+zoo+vrt+Beograd&hl=ja",
+   "photo": {
+    "file": "Beli lav Belgrade zoo.JPG",
+    "by": "Petar Milošević",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Beli_lav_Belgrade_zoo.JPG",
+    "alt": "ベオグラード動物園の白いライオン",
+    "w": 3648,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Beli_lav_Belgrade_zoo.JPG",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Beli_lav_Belgrade_zoo.JPG/250px-Beli_lav_Belgrade_zoo.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Beli_lav_Belgrade_zoo.JPG/500px-Beli_lav_Belgrade_zoo.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Beli_lav_Belgrade_zoo.JPG/960px-Beli_lav_Belgrade_zoo.JPG"
+    }
+   }
+  },
+  {
+   "key": "ethno",
+   "town": "belgrade",
+   "name": "民族学博物館",
+   "local": {
+    "text": "Etnografski muzej",
+    "roman": "Etnografski muzej",
+    "src": [
+     {
+      "name": "Wikipedia「Ethnographic Museum, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Ethnographic_Museum,_Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "バルカンでも古い博物館の1つ。セルビアの民族衣装・道具・昔の暮らしを広く見せる。",
+    "src": [
+     {
+      "name": "Wikipedia「Ethnographic Museum, Belgrade」",
+      "url": "https://en.wikipedia.org/wiki/Ethnographic_Museum,_Belgrade",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.819873,
+   "lon": 20.456459,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Етнографски музеј」",
+     "url": "https://www.openstreetmap.org/way/38575527",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "入場",
+     "text": "木〜火曜10〜20時。大人200ディナール",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Etnografski+muzej+Beograd&hl=ja",
+   "photo": {
+    "file": "Musée ethnographique de Belgrade.jpg",
+    "by": "Original uploader was en:User:BoskoM at en.wikipedia Own work",
+    "lic": "PD",
+    "page": "https://commons.wikimedia.org/wiki/File:Mus%C3%A9e_ethnographique_de_Belgrade.jpg",
+    "alt": "学生広場に面した、民族学博物館の建物",
+    "w": 486,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Mus%C3%A9e_ethnographique_de_Belgrade.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Mus%C3%A9e_ethnographique_de_Belgrade.jpg/250px-Mus%C3%A9e_ethnographique_de_Belgrade.jpg"
+    }
+   }
+  },
+  {
+   "key": "dorcol",
+   "town": "belgrade",
+   "name": "ドルチョル",
+   "local": {
+    "text": "Dorćol",
+    "roman": "Dorcol",
+    "src": [
+     {
+      "name": "Wikipedia「Dorćol」",
+      "url": "https://en.wikipedia.org/wiki/Dor%C4%87ol",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "モスクのあたりからドナウ川の岸まで下る、街でいちばん古く残る地区。名前はトルコ語の「4つの道」から。2000年代から、店と画廊が増えた。",
+    "src": [
+     {
+      "name": "Wikipedia「Dorćol」",
+      "url": "https://en.wikipedia.org/wiki/Dor%C4%87ol",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 44.822631,
+   "lon": 20.461478,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Дорћол」",
+     "url": "https://www.openstreetmap.org/node/1486059453",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Dor%C4%87ol+Beograd&hl=ja",
+   "photo": {
+    "file": "Rue Cara Dušanova à Belgrade.jpg",
+    "by": "en:User:BoskoM",
+    "lic": "PD",
+    "page": "https://commons.wikimedia.org/wiki/File:Rue_Cara_Du%C5%A1anova_%C3%A0_Belgrade.jpg",
+    "alt": "ドルチョルの、古い建物の並ぶツァラ・ドゥシャナ通り",
+    "w": 650,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Rue_Cara_Du%C5%A1anova_%C3%A0_Belgrade.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Rue_Cara_Du%C5%A1anova_%C3%A0_Belgrade.jpg/250px-Rue_Cara_Du%C5%A1anova_%C3%A0_Belgrade.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Rue_Cara_Du%C5%A1anova_%C3%A0_Belgrade.jpg/500px-Rue_Cara_Du%C5%A1anova_%C3%A0_Belgrade.jpg"
+    }
+   }
+  },
+  {
+   "key": "petrovaradin",
+   "town": "novi-sad",
+   "name": "ペトロヴァラディン要塞（ノヴィ・サド）",
+   "local": {
+    "text": "Petrovaradinska tvrđava",
+    "roman": "Petrovaradinska tvrdjava",
+    "src": [
+     {
+      "name": "Wikipedia「Petrovaradin Fortress」",
+      "url": "https://en.wikipedia.org/wiki/Petrovaradin_Fortress",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ノヴィ・サドの対岸、ドナウ川の右岸に立つ稜堡の要塞で、「ドナウのジブラルタル」と呼ばれる。いまの南の部分の礎石は1692年。時計塔の針は、長い針が時、短い針が分を指す。",
+    "src": [
+     {
+      "name": "Wikipedia「Petrovaradin Fortress」",
+      "url": "https://en.wikipedia.org/wiki/Petrovaradin_Fortress",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 45.252155,
+   "lon": 19.863828,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Петроварадинска тврђава」",
+     "url": "https://www.openstreetmap.org/way/152795360",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "ベオグラードから高速列車「ソコ」で36分ほど",
+     "src": [
+      {
+       "name": "Wikivoyage「Novi Sad」",
+       "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Petrovaradinska+tvr%C4%91ava+Novi+Sad&hl=ja",
+   "links": {
+    "todo": [
+     "novi-sad"
+    ]
+   },
+   "photo": {
+    "file": "Petrovaradin Fortress (Péterváradi vár, Peterwardein).JPG",
+    "by": "Pudelek (Marcin Szala)",
+    "lic": "CC BY-SA 3.0 rs",
+    "page": "https://commons.wikimedia.org/wiki/File:Petrovaradin_Fortress_(P%C3%A9terv%C3%A1radi_v%C3%A1r,_Peterwardein).JPG",
+    "alt": "ドナウ川の岸の上に続く、ペトロヴァラディン要塞の城壁",
+    "w": 3740,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Petrovaradin_Fortress_(P%C3%A9terv%C3%A1radi_v%C3%A1r,_Peterwardein).JPG",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Petrovaradin_Fortress_%28P%C3%A9terv%C3%A1radi_v%C3%A1r%2C_Peterwardein%29.JPG/250px-Petrovaradin_Fortress_%28P%C3%A9terv%C3%A1radi_v%C3%A1r%2C_Peterwardein%29.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Petrovaradin_Fortress_%28P%C3%A9terv%C3%A1radi_v%C3%A1r%2C_Peterwardein%29.JPG/500px-Petrovaradin_Fortress_%28P%C3%A9terv%C3%A1radi_v%C3%A1r%2C_Peterwardein%29.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Petrovaradin_Fortress_%28P%C3%A9terv%C3%A1radi_v%C3%A1r%2C_Peterwardein%29.JPG/960px-Petrovaradin_Fortress_%28P%C3%A9terv%C3%A1radi_v%C3%A1r%2C_Peterwardein%29.JPG"
+    }
+   }
+  },
+  {
+   "key": "karlovci",
+   "town": "sremski-karlovci",
+   "name": "スレムスキ・カルロヴツィ",
+   "local": {
+    "text": "Sremski Karlovci",
+    "roman": "Sremski Karlovci",
+    "src": [
+     {
+      "name": "Wikipedia「Sremski Karlovci」",
+      "url": "https://en.wikipedia.org/wiki/Sremski_Karlovci",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "ノヴィ・サドからドナウ川を下った小さな町。ハプスブルク帝国の時代にセルビア正教会の座が置かれ、1848年の革命のときはセルビア人の政治と文化の中心だった。博物館・教会・画廊が多い。",
+    "src": [
+     {
+      "name": "Wikipedia「Sremski Karlovci」",
+      "url": "https://en.wikipedia.org/wiki/Sremski_Karlovci",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 45.203046,
+   "lon": 19.933834,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Carloviț」",
+     "url": "https://www.openstreetmap.org/relation/1649677",
+     "seen": "2026-11-22"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Sremski+Karlovci&hl=ja",
+   "links": {
+    "todo": [
+     "novi-sad"
+    ]
+   },
+   "photo": {
+    "file": "Vidikovac Sremski Karlovci 8295 10.jpg",
+    "by": "Ванилица",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Vidikovac_Sremski_Karlovci_8295_10.jpg",
+    "alt": "丘から見下ろした、スレムスキ・カルロヴツィの町並みと教会",
+    "w": 3456,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Vidikovac_Sremski_Karlovci_8295_10.jpg",
+      "seen": "2026-11-22"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Vidikovac_Sremski_Karlovci_8295_10.jpg/250px-Vidikovac_Sremski_Karlovci_8295_10.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Vidikovac_Sremski_Karlovci_8295_10.jpg/500px-Vidikovac_Sremski_Karlovci_8295_10.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Vidikovac_Sremski_Karlovci_8295_10.jpg/960px-Vidikovac_Sremski_Karlovci_8295_10.jpg"
+    }
+   }
+  }
+ ],
+ "eat": {
+  "kinds": [
+   {
+    "key": "local",
+    "name": "セルビアの料理"
+   },
+   {
+    "key": "quick",
+    "name": "安く手早く"
+   },
+   {
+    "key": "sweets",
+    "name": "甘いもの"
+   },
+   {
+    "key": "drinks",
+    "name": "飲み物"
+   }
+  ],
+  "items": [
+   {
+    "key": "cevapi",
+    "name": "チェヴァプチチ（棒の形の焼いたひき肉）",
+    "local": {
+     "text": "Ćevapi",
+     "roman": "Ćevapi",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ひき肉を棒の形にして焼いた料理で、セルビアの国の料理とされる。5〜10本を皿か平たいパンにのせ、刻んだ玉ねぎ・カイマクを添えることが多い。",
+     "src": [
+      {
+       "name": "Wikipedia「Ćevapi」",
+       "url": "https://en.wikipedia.org/wiki/%C4%86evapi",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "walter",
+      "name": "ワルテル ストラヒニチャ・バナ通り店（チェヴァピ）",
+      "local": "Walter",
+      "area": "knez",
+      "lat": 44.820983,
+      "lon": 20.462679,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Валтер」",
+        "url": "https://www.openstreetmap.org/node/3030604566",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "チェヴァピのチェーン。市の中の店の献立に、牛肉のチェヴァピ125gと半分の平たいパンで565ディナール（2026年10月）。",
+       "src": [
+        {
+         "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+         "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Walter「Kompakt meni」（店ごとの献立の表。ストラヒニチャ・バナ通りの店は「Centralni」）",
+         "url": "https://walter.rs/meni/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Валтер」",
+         "url": "https://www.openstreetmap.org/node/3030604566",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Walter+Beograd&hl=ja"
+     },
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     },
+     {
+      "key": "znak",
+      "name": "カファナ「？」（ズナク・ピタニャ）",
+      "local": "Znak pitanja",
+      "area": "kalemegdan",
+      "lat": 44.817673,
+      "lon": 20.45256,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Кафана „?”」",
+        "url": "https://www.openstreetmap.org/way/394705975",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "店の頁が「ベオグラードでいちばん古い店」と書くカファナ。チェヴァピから、酢漬けキャベツの鶏ももの煮込み・プロヤ・菓子まで出す。",
+       "src": [
+        {
+         "name": "Kafana Znak Pitanja「Najstarija kafana u Beogradu」（店の頁。2026年4月17日更新）",
+         "url": "https://www.znakpitanja.rs/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Znak+pitanja+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "ひき肉は豚か牛。ワルテルの献立では牛肉だけ。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+       "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "pljeskavica",
+    "name": "プリェスカヴィツァ（セルビア風ハンバーグ）",
+    "local": {
+     "text": "Pljeskavica",
+     "roman": "Pljeskavica",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ひき肉に香辛料で味をつけて平たく焼いた、セルビアの国の料理の1つ。皿か平たいパンにのせ、玉ねぎを添える。",
+     "src": [
+      {
+       "name": "Wikipedia「Pljeskavica」",
+       "url": "https://en.wikipedia.org/wiki/Pljeskavica",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "walter",
+      "name": "ワルテル ストラヒニチャ・バナ通り店（チェヴァピ）",
+      "local": "Walter",
+      "area": "knez",
+      "lat": 44.820983,
+      "lon": 20.462679,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Валтер」",
+        "url": "https://www.openstreetmap.org/node/3030604566",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "チェヴァピのチェーン。市の中の店の献立に、牛肉のチェヴァピ125gと半分の平たいパンで565ディナール（2026年10月）。",
+       "src": [
+        {
+         "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+         "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Walter「Kompakt meni」（店ごとの献立の表。ストラヒニチャ・バナ通りの店は「Centralni」）",
+         "url": "https://walter.rs/meni/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Валтер」",
+         "url": "https://www.openstreetmap.org/node/3030604566",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Walter+Beograd&hl=ja"
+     },
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "もとは豚・牛・羊のひき肉を合わせる。ワルテルとシェシル・モイの献立では牛肉。",
+     "src": [
+      {
+       "name": "Wikipedia「Pljeskavica」",
+       "url": "https://en.wikipedia.org/wiki/Pljeskavica",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+       "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+       "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "karadjordjeva",
+    "name": "カラジョルジェヴァ・シュニツラ（カイマク入りのカツ）",
+    "local": {
+     "text": "Karađorđeva šnicla",
+     "roman": "Karađorđeva šnicla",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "巻いた子牛・豚・鶏の肉にカイマクを詰め、衣をつけて揚げたカツ。タルタルソースとレモンを添える。1956〜1957年にチトーの料理人が思いついたとされる。",
+     "src": [
+      {
+       "name": "Wikipedia「Karađorđeva šnicla」",
+       "url": "https://en.wikipedia.org/wiki/Kara%C4%91or%C4%91eva_%C5%A1nicla",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "シェシル・モイの献立では、豚のエスカロープ（1,450ディナール）。",
+     "src": [
+      {
+       "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+       "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "sarma",
+    "name": "サルマ（ロールキャベツ）",
+    "local": {
+     "text": "Sarma",
+     "roman": "Sarma",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "酢漬けのキャベツ・ふだん草・ぶどうの葉で、米とひき肉を包んだ料理。セルビアの国の料理の1つ。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "ひき肉は豚か牛。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "paprike",
+    "name": "プニェネ・パプリケ（ピーマンの肉詰め）",
+    "local": {
+     "text": "Punjene paprike",
+     "roman": "Punjene paprike",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ピーマンに米とひき肉を詰めた料理。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "ひき肉の種類は店や家で違う（料理の説明は「米とひき肉」まで）。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "pasulj",
+    "name": "パスリ（豆の煮込み）",
+    "local": {
+     "text": "Pasulj",
+     "roman": "Pasulj",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "白いんげんなどの豆を煮込んだスープ。冬、とくにクリスマスのころによく食べる。",
+     "src": [
+      {
+       "name": "Wikipedia「Pasulj」",
+       "url": "https://en.wikipedia.org/wiki/Pasulj",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "walter",
+      "name": "ワルテル ストラヒニチャ・バナ通り店（チェヴァピ）",
+      "local": "Walter",
+      "area": "knez",
+      "lat": 44.820983,
+      "lon": 20.462679,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Валтер」",
+        "url": "https://www.openstreetmap.org/node/3030604566",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "チェヴァピのチェーン。市の中の店の献立に、牛肉のチェヴァピ125gと半分の平たいパンで565ディナール（2026年10月）。",
+       "src": [
+        {
+         "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+         "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Walter「Kompakt meni」（店ごとの献立の表。ストラヒニチャ・バナ通りの店は「Centralni」）",
+         "url": "https://walter.rs/meni/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Валтер」",
+         "url": "https://www.openstreetmap.org/node/3030604566",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Walter+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "燻製のベーコン・ソーセージ・豚の足を入れることが多い。",
+     "src": [
+      {
+       "name": "Wikipedia「Pasulj」",
+       "url": "https://en.wikipedia.org/wiki/Pasulj",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "prebranac",
+    "name": "プレブラナツ（豆の重ね焼き）",
+    "local": {
+     "text": "Prebranac",
+     "roman": "Prebranac",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "豆のキャセロール。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "シェシル・モイの献立では「セルビアの豆」（580ディナール）。肉が入るかは書いていない。",
+     "src": [
+      {
+       "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+       "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "muckalica",
+    "name": "ムチュカリツァ（焼いた肉の煮込み）",
+    "local": {
+     "text": "Mućkalica",
+     "roman": "Mućkalica",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "炭火で焼いた肉と野菜を煮込んだ辛いシチュー。名前は「混ぜる」という意味の言葉から。レスコヴァツ風がいちばん知られる。",
+     "src": [
+      {
+       "name": "Wikipedia「Mućkalica」",
+       "url": "https://en.wikipedia.org/wiki/Mu%C4%87kalica",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "肉は店や地方で違う。トリ・シェシラの献立は「レスコヴァツ風」（1,280ディナール）。",
+     "src": [
+      {
+       "name": "Wikipedia「Mućkalica」",
+       "url": "https://en.wikipedia.org/wiki/Mu%C4%87kalica",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+       "url": "https://trisesira.rs/jelovnik/",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "riblja",
+    "name": "リブリャ・チョルバ（魚のスープ）",
+    "local": {
+     "text": "Riblja čorba",
+     "roman": "Riblja čorba",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "パプリカで味をつけた魚のスープで、パンノニア地方の料理。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "saran",
+      "name": "シャラン（ゼムン河岸の魚料理）",
+      "local": "Šaran",
+      "area": "zemun",
+      "lat": 44.848189,
+      "lon": 20.412915,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шаран」",
+        "url": "https://www.openstreetmap.org/way/403186070",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "ゼムン河岸の魚料理の店。2025年11月の献立に魚のスープと魚のパプリカ煮込み。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Restoran Šaran「Meni」（2025年11月の献立。PDF）",
+         "url": "https://saran.co.rs/Menu/%C5%A0aran%20Meni%20srpski%20nov%202025.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0aran+Beograd&hl=ja"
+     },
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "シャランの献立では、骨を抜いた鯉の切り身が入る（1,120ディナール）。",
+     "src": [
+      {
+       "name": "Restoran Šaran「Meni」（2025年11月の献立。PDF）",
+       "url": "https://saran.co.rs/Menu/%C5%A0aran%20Meni%20srpski%20nov%202025.pdf",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "kajmak",
+    "name": "カイマク（乳脂のクリーム）",
+    "local": {
+     "text": "Kajmak",
+     "roman": "Kajmak",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "生乳をゆっくり煮てから弱火で2時間ほど温め、表面にできる乳脂を集めたクリーム。",
+     "src": [
+      {
+       "name": "Wikipedia「Kaymak」",
+       "url": "https://en.wikipedia.org/wiki/Kaymak",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     },
+     {
+      "key": "walter",
+      "name": "ワルテル ストラヒニチャ・バナ通り店（チェヴァピ）",
+      "local": "Walter",
+      "area": "knez",
+      "lat": 44.820983,
+      "lon": 20.462679,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Валтер」",
+        "url": "https://www.openstreetmap.org/node/3030604566",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "チェヴァピのチェーン。市の中の店の献立に、牛肉のチェヴァピ125gと半分の平たいパンで565ディナール（2026年10月）。",
+       "src": [
+        {
+         "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+         "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Walter「Kompakt meni」（店ごとの献立の表。ストラヒニチャ・バナ通りの店は「Centralni」）",
+         "url": "https://walter.rs/meni/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Валтер」",
+         "url": "https://www.openstreetmap.org/node/3030604566",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Walter+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "ajvar",
+    "name": "アイバル（赤ピーマンのペースト）",
+    "local": {
+     "text": "Ajvar",
+     "roman": "Ajvar",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "焼いた赤ピーマンを主に作るペースト。甘いもの・ピリ辛・とても辛いものがある。",
+     "src": [
+      {
+       "name": "Wikipedia「Ajvar」",
+       "url": "https://en.wikipedia.org/wiki/Ajvar",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     },
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "walter",
+      "name": "ワルテル ストラヒニチャ・バナ通り店（チェヴァピ）",
+      "local": "Walter",
+      "area": "knez",
+      "lat": 44.820983,
+      "lon": 20.462679,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Валтер」",
+        "url": "https://www.openstreetmap.org/node/3030604566",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "チェヴァピのチェーン。市の中の店の献立に、牛肉のチェヴァピ125gと半分の平たいパンで565ディナール（2026年10月）。",
+       "src": [
+        {
+         "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+         "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Walter「Kompakt meni」（店ごとの献立の表。ストラヒニチャ・バナ通りの店は「Centralni」）",
+         "url": "https://walter.rs/meni/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Валтер」",
+         "url": "https://www.openstreetmap.org/node/3030604566",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Walter+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "urnebes",
+    "name": "ウルネベス（チーズと唐辛子のペースト）",
+    "local": {
+     "text": "Urnebes",
+     "roman": "Urnebes",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "白いチーズとカイマクに辛い唐辛子を混ぜたペースト。名前は「めちゃくちゃ」という意味。ニシュと南セルビアの名物。",
+     "src": [
+      {
+       "name": "Wikipedia「Urnebes」",
+       "url": "https://en.wikipedia.org/wiki/Urnebes",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     },
+     {
+      "key": "walter",
+      "name": "ワルテル ストラヒニチャ・バナ通り店（チェヴァピ）",
+      "local": "Walter",
+      "area": "knez",
+      "lat": 44.820983,
+      "lon": 20.462679,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Валтер」",
+        "url": "https://www.openstreetmap.org/node/3030604566",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "チェヴァピのチェーン。市の中の店の献立に、牛肉のチェヴァピ125gと半分の平たいパンで565ディナール（2026年10月）。",
+       "src": [
+        {
+         "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+         "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Walter「Kompakt meni」（店ごとの献立の表。ストラヒニチャ・バナ通りの店は「Centralni」）",
+         "url": "https://walter.rs/meni/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Валтер」",
+         "url": "https://www.openstreetmap.org/node/3030604566",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Walter+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "sopska",
+    "name": "ショプスカ・サラダ",
+    "local": {
+     "text": "Šopska salata",
+     "roman": "Šopska salata",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "トマト・きゅうり・玉ねぎのサラダに、白いチーズをのせる。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     },
+     {
+      "key": "saran",
+      "name": "シャラン（ゼムン河岸の魚料理）",
+      "local": "Šaran",
+      "area": "zemun",
+      "lat": 44.848189,
+      "lon": 20.412915,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шаран」",
+        "url": "https://www.openstreetmap.org/way/403186070",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "ゼムン河岸の魚料理の店。2025年11月の献立に魚のスープと魚のパプリカ煮込み。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Restoran Šaran「Meni」（2025年11月の献立。PDF）",
+         "url": "https://saran.co.rs/Menu/%C5%A0aran%20Meni%20srpski%20nov%202025.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0aran+Beograd&hl=ja"
+     },
+     {
+      "key": "walter",
+      "name": "ワルテル ストラヒニチャ・バナ通り店（チェヴァピ）",
+      "local": "Walter",
+      "area": "knez",
+      "lat": 44.820983,
+      "lon": 20.462679,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Валтер」",
+        "url": "https://www.openstreetmap.org/node/3030604566",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "チェヴァピのチェーン。市の中の店の献立に、牛肉のチェヴァピ125gと半分の平たいパンで565ディナール（2026年10月）。",
+       "src": [
+        {
+         "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+         "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Walter「Kompakt meni」（店ごとの献立の表。ストラヒニチャ・バナ通りの店は「Centralni」）",
+         "url": "https://walter.rs/meni/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Валтер」",
+         "url": "https://www.openstreetmap.org/node/3030604566",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Walter+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "cvarci",
+    "name": "チュヴァルツィ（豚の脂かす）",
+    "local": {
+     "text": "Čvarci",
+     "roman": "Čvarci",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": true,
+    "what": {
+     "text": "豚の脂を溶かしてラードを作るときに残る、かりかりの脂かす。",
+     "src": [
+      {
+       "name": "Wikipedia「Čvarci」",
+       "url": "https://en.wikipedia.org/wiki/%C4%8Cvarci",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "burek",
+    "name": "ブレク（薄い生地のパイ）",
+    "local": {
+     "text": "Burek",
+     "roman": "Burek",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "チーズ・肉・ほうれん草・じゃがいもを薄い生地で包んで焼いたパイ。飲むヨーグルトと食べるのが昔からの食べかた。",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "中身はチーズ・肉・ほうれん草・じゃがいもなど。肉の種類は確かめていない。",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "pita",
+    "name": "ピタ（チーズや肉のパイ）",
+    "local": {
+     "text": "Pita",
+     "roman": "Pita",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "薄い生地のパイは、セルビアの朝ごはんの定番。パン屋のフレブ・イ・キフレには、チーズ・肉・さくらんぼ・りんごの「おばあちゃんのピタ」が並ぶ。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Hleb & Kifle「Пите」（店のネットの品書き）",
+       "url": "https://hlebikifle.rs/kategorija-proizvoda/pite/",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "hlebikifle",
+      "name": "フレブ・イ・キフレ ゼレニ・ヴェナツ店（パン屋）",
+      "local": "Hleb & Kifle",
+      "area": "knez",
+      "lat": 44.814461,
+      "lon": 20.457234,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Хлеб & Кифле」",
+        "url": "https://www.openstreetmap.org/node/13175631361",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "パン屋のチェーン。品書きにチーズ・肉・さくらんぼ・りんごの「おばあちゃんのピタ」。",
+       "src": [
+        {
+         "name": "Hleb & Kifle「Пите」（店のネットの品書き）",
+         "url": "https://hlebikifle.rs/kategorija-proizvoda/pite/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Хлеб & Кифле」",
+         "url": "https://www.openstreetmap.org/node/13175631361",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Hleb+%26+Kifle+Beograd&hl=ja"
+     },
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "フレブ・イ・キフレには肉のピタもある（肉の種類は品書きに無い）。",
+     "src": [
+      {
+       "name": "Hleb & Kifle「Пите」（店のネットの品書き）",
+       "url": "https://hlebikifle.rs/kategorija-proizvoda/pite/",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "gibanica",
+    "name": "ギバニツァ（チーズと卵のパイ）",
+    "local": {
+     "text": "Gibanica",
+     "roman": "Gibanica",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "カッテージチーズと卵を、薄い生地と重ねて焼いたパイ。1818年のヴク・カラジッチのセルビア語の辞書にも出てくる。",
+     "src": [
+      {
+       "name": "Wikipedia「Gibanica」",
+       "url": "https://en.wikipedia.org/wiki/Gibanica",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "proja",
+    "name": "プロヤ（とうもろこしのパン）",
+    "local": {
+     "text": "Proja",
+     "roman": "Proja",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "とうもろこしの粉で焼くパンで、セルビアの国の料理の1つ。朝ごはんに食べることが多い。",
+     "src": [
+      {
+       "name": "Wikipedia「Proja」",
+       "url": "https://en.wikipedia.org/wiki/Proja",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     },
+     {
+      "key": "znak",
+      "name": "カファナ「？」（ズナク・ピタニャ）",
+      "local": "Znak pitanja",
+      "area": "kalemegdan",
+      "lat": 44.817673,
+      "lon": 20.45256,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Кафана „?”」",
+        "url": "https://www.openstreetmap.org/way/394705975",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "店の頁が「ベオグラードでいちばん古い店」と書くカファナ。チェヴァピから、酢漬けキャベツの鶏ももの煮込み・プロヤ・菓子まで出す。",
+       "src": [
+        {
+         "name": "Kafana Znak Pitanja「Najstarija kafana u Beogradu」（店の頁。2026年4月17日更新）",
+         "url": "https://www.znakpitanja.rs/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Znak+pitanja+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "palacinke",
+    "name": "パラチンケ（クレープ）",
+    "local": {
+     "text": "Palačinke",
+     "roman": "Palačinke",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "チョコレート・ジャム・くるみなどを包んだクレープ。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "krempita",
+    "name": "クレムピタ（カスタードのケーキ）",
+    "local": {
+     "text": "Krempita",
+     "roman": "Krempita",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "カスタードとクリームを重ねたケーキ。トリ・シェシラの献立では「ベオグラードのクレムピタ」。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+       "url": "https://trisesira.rs/jelovnik/",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "baklava",
+    "name": "バクラヴァ",
+    "local": {
+     "text": "Baklava",
+     "roman": "Baklava",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "薄い生地を重ねて刻んだナッツを挟み、シロップか蜂蜜で甘くした菓子。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "sesirmoj",
+      "name": "シェシル・モイ（スカダルリヤのカファナ）",
+      "local": "Šešir moj",
+      "area": "skadarlija",
+      "lat": 44.817597,
+      "lon": 20.463938,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Шешир мој」",
+        "url": "https://www.openstreetmap.org/node/1634938018",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "スカダルリヤ通り21番のカファナ。楽団が舟歌などを演奏し、セルビアの料理を出す。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Šešir moj「Jelovnik / Menu」（2025年4月の献立。PDF）",
+         "url": "https://www.sesirmoj.rs/_files/ugd/adcb74_2977c0d7fa2642af95c635540b811fd6.pdf",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=%C5%A0e%C5%A1ir+moj+Beograd&hl=ja"
+     },
+     {
+      "key": "walter",
+      "name": "ワルテル ストラヒニチャ・バナ通り店（チェヴァピ）",
+      "local": "Walter",
+      "area": "knez",
+      "lat": 44.820983,
+      "lon": 20.462679,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Валтер」",
+        "url": "https://www.openstreetmap.org/node/3030604566",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "チェヴァピのチェーン。市の中の店の献立に、牛肉のチェヴァピ125gと半分の平たいパンで565ディナール（2026年10月）。",
+       "src": [
+        {
+         "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+         "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Walter「Kompakt meni」（店ごとの献立の表。ストラヒニチャ・バナ通りの店は「Centralni」）",
+         "url": "https://walter.rs/meni/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Валтер」",
+         "url": "https://www.openstreetmap.org/node/3030604566",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Walter+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "tufahije",
+    "name": "トゥファヒヤ（くるみ入りの煮りんご）",
+    "local": {
+     "text": "Tufahije",
+     "roman": "Tufahije",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "くるみを詰めたりんごを、砂糖の入った湯で煮た菓子。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "vanilice",
+    "name": "ヴァニリツェ（バニラのクッキー）",
+    "local": {
+     "text": "Vanilice",
+     "roman": "Vanilice",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "バニラのクッキー。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "rakija",
+    "name": "ラキヤ（果物の蒸留酒）",
+    "local": {
+     "text": "Rakija",
+     "roman": "Rakija",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "果物から作る蒸留酒で、アルコールはふつう40%。すもものシュリヴォヴィツァ・マルメロのドゥニェヴァチャ・洋なしのヴィリャモヴカ・あんずのカイシエヴァチャ・ぶどうのロザがある。",
+     "src": [
+      {
+       "name": "Wikipedia「Rakia」",
+       "url": "https://en.wikipedia.org/wiki/Rakia",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     },
+     {
+      "key": "walter",
+      "name": "ワルテル ストラヒニチャ・バナ通り店（チェヴァピ）",
+      "local": "Walter",
+      "area": "knez",
+      "lat": 44.820983,
+      "lon": 20.462679,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Валтер」",
+        "url": "https://www.openstreetmap.org/node/3030604566",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "チェヴァピのチェーン。市の中の店の献立に、牛肉のチェヴァピ125gと半分の平たいパンで565ディナール（2026年10月）。",
+       "src": [
+        {
+         "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+         "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Walter「Kompakt meni」（店ごとの献立の表。ストラヒニチャ・バナ通りの店は「Centralni」）",
+         "url": "https://walter.rs/meni/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Валтер」",
+         "url": "https://www.openstreetmap.org/node/3030604566",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Walter+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "note": {
+     "text": "トリ・シェシラの献立では30mlで380〜430ディナール。ワルテルのラキヤは30mlで335ディナール。",
+     "src": [
+      {
+       "name": "Tri šešira「Karta pića」（店のネットの飲み物の献立）",
+       "url": "https://trisesira.rs/karta-pica/",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Walter「Kompakt meni — Centralni」（市の中の店の献立。2026年10月の PDF）",
+       "url": "https://kopakt-menus.walter.rs/SR/Kompakt-Walter-Centralni-SR.pdf",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "kafa",
+    "name": "ドマチャ・カファ（セルビアのコーヒー）",
+    "local": {
+     "text": "Domaća kafa",
+     "roman": "Domaća kafa",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "朝ごはんの前に、昔ながらのコーヒー（ドマチャ・カファ）かエスプレッソを飲む人が多い。ほかの淹れかたを頼まなければ、セルビア風（トルコ風）のコーヒーが出てくる。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "pivo",
+    "name": "セルビアのビール",
+    "local": {
+     "text": "Pivo",
+     "roman": "Pivo",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "ビールはこのごろ人気で、昔からのラキヤやワインをしのぐほど飲まれている。",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "note": {
+     "text": "トリ・シェシラの献立では、イェレンの生ビール0.5リットルが420〜460ディナール。",
+     "src": [
+      {
+       "name": "Tri šešira「Karta pića」（店のネットの飲み物の献立）",
+       "url": "https://trisesira.rs/karta-pica/",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   },
+   {
+    "key": "prokupac",
+    "name": "プロクパツ（セルビアの赤ワイン）",
+    "local": {
+     "text": "Prokupac",
+     "roman": "Prokupac",
+     "src": [
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "セルビアの赤ワインのぶどう。新鮮さと黒い果実の香りで知られる。",
+     "src": [
+      {
+       "name": "Wikipedia「Prokupac」",
+       "url": "https://en.wikipedia.org/wiki/Prokupac",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "trisesira",
+      "name": "トリ・シェシラ（スカダルリヤのカファナ）",
+      "local": "Tri šešira",
+      "area": "skadarlija",
+      "lat": 44.818149,
+      "lon": 20.464616,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Три шешира」",
+        "url": "https://www.openstreetmap.org/way/150590534",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "1864年に開いた、スカダルリヤでいちばん古いいまも営むカファナ（2022年の時点）。献立に炭火焼き・魚のスープ・菓子。",
+       "src": [
+        {
+         "name": "Wikipedia「Skadarlija」",
+         "url": "https://en.wikipedia.org/wiki/Skadarlija",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Tri šešira「Jelovnik」（店のネットの献立）",
+         "url": "https://trisesira.rs/jelovnik/",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Tri+%C5%A1e%C5%A1ira+Beograd&hl=ja"
+     }
+    ],
+    "went": false,
+    "note": {
+     "text": "トリ・シェシラの献立では、ルビン醸造所のプロクパツがグラス（0.15リットル）600〜680ディナール。",
+     "src": [
+      {
+       "name": "Tri šešira「Karta pića」（店のネットの飲み物の献立）",
+       "url": "https://trisesira.rs/karta-pica/",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "buy": {
+  "items": [
+   {
+    "key": "rakija",
+    "name": "ラキヤの瓶",
+    "local": {
+     "text": "Rakija",
+     "roman": "Rakija",
+     "src": [
+      {
+       "name": "Wikipedia「Rakia」",
+       "url": "https://en.wikipedia.org/wiki/Rakia",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "what": {
+     "text": "果物から作る蒸留酒。すもものシュリヴォヴィツァ・マルメロのドゥニェヴァチャなどがある。乾杯は「ジヴェリ！」。",
+     "src": [
+      {
+       "name": "Wikipedia「Rakia」",
+       "url": "https://en.wikipedia.org/wiki/Rakia",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "alcohol": true,
+    "stores": [
+     {
+      "key": "rakiabar",
+      "name": "ラキヤ・バーの土産の店（テラズィイェ通り）",
+      "local": "Rakia bar Gift shop",
+      "area": "knez",
+      "lat": 44.811159,
+      "lon": 20.461604,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Terazije 42, Beograd」",
+        "url": "https://www.openstreetmap.org/way/392696064",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "テラズィイェ通り42番の土産の店。ラキヤの瓶と、昔の作りかたのアイバル・ジャムを置く。",
+       "src": [
+        {
+         "name": "Rakia bar「RAKIA BAR - Gift shop」（土産の店の頁）",
+         "url": "https://shop.rakiabar.com/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Rakia bar「Rakije」（土産の店の品書き）",
+         "url": "https://shop.rakiabar.com/rakije.html",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Rakia+bar+Gift+shop+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "medovaca",
+    "name": "メドヴァチャ（蜂蜜のラキヤ）",
+    "local": {
+     "text": "Medovača",
+     "roman": "Medovaca",
+     "src": [
+      {
+       "name": "Rakia bar「RAKIA BAR - Gift shop」（土産の店の頁）",
+       "url": "https://shop.rakiabar.com/",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "what": {
+     "text": "蜂蜜を合わせたラキヤ。ラキヤ・バーの土産の店では、焼いた土の瓶に入れて売る。",
+     "src": [
+      {
+       "name": "Rakia bar「RAKIA BAR - Gift shop」（土産の店の頁）",
+       "url": "https://shop.rakiabar.com/",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "alcohol": true,
+    "stores": [
+     {
+      "key": "rakiabar",
+      "name": "ラキヤ・バーの土産の店（テラズィイェ通り）",
+      "local": "Rakia bar Gift shop",
+      "area": "knez",
+      "lat": 44.811159,
+      "lon": 20.461604,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Terazije 42, Beograd」",
+        "url": "https://www.openstreetmap.org/way/392696064",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "テラズィイェ通り42番の土産の店。ラキヤの瓶と、昔の作りかたのアイバル・ジャムを置く。",
+       "src": [
+        {
+         "name": "Rakia bar「RAKIA BAR - Gift shop」（土産の店の頁）",
+         "url": "https://shop.rakiabar.com/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Rakia bar「Rakije」（土産の店の品書き）",
+         "url": "https://shop.rakiabar.com/rakije.html",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Rakia+bar+Gift+shop+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "ajvar",
+    "name": "アイバルの瓶詰め",
+    "local": {
+     "text": "Ajvar",
+     "roman": "Ajvar",
+     "src": [
+      {
+       "name": "Wikipedia「Ajvar」",
+       "url": "https://en.wikipedia.org/wiki/Ajvar",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "what": {
+     "text": "焼いた赤ピーマンを主に作るペースト。甘いもの・ピリ辛・とても辛いものがある。",
+     "src": [
+      {
+       "name": "Wikipedia「Ajvar」",
+       "url": "https://en.wikipedia.org/wiki/Ajvar",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "rakiabar",
+      "name": "ラキヤ・バーの土産の店（テラズィイェ通り）",
+      "local": "Rakia bar Gift shop",
+      "area": "knez",
+      "lat": 44.811159,
+      "lon": 20.461604,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Terazije 42, Beograd」",
+        "url": "https://www.openstreetmap.org/way/392696064",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "テラズィイェ通り42番の土産の店。ラキヤの瓶と、昔の作りかたのアイバル・ジャムを置く。",
+       "src": [
+        {
+         "name": "Rakia bar「RAKIA BAR - Gift shop」（土産の店の頁）",
+         "url": "https://shop.rakiabar.com/",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Rakia bar「Rakije」（土産の店の品書き）",
+         "url": "https://shop.rakiabar.com/rakije.html",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Rakia+bar+Gift+shop+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "plazma",
+    "name": "プラズマ（ビスケット）",
+    "local": {
+     "text": "Plazma",
+     "roman": "Plazma",
+     "src": [
+      {
+       "name": "Wikipedia「Plazma (biscuit)」",
+       "url": "https://en.wikipedia.org/wiki/Plazma_(biscuit)",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "what": {
+     "text": "バンビ社のやわらかいビスケットで、1967年に出た。砕いて重ねた「プラズマのケーキ」もある。",
+     "src": [
+      {
+       "name": "Wikipedia「Plazma (biscuit)」",
+       "url": "https://en.wikipedia.org/wiki/Plazma_(biscuit)",
+       "seen": "2026-11-22"
+      },
+      {
+       "name": "Wikipedia「Serbian cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Serbian_cuisine",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "idea",
+      "name": "イデア ツァラ・ドゥシャナ通り店（スーパー）",
+      "local": "Idea",
+      "area": "dorcol",
+      "lat": 44.823284,
+      "lon": 20.459883,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「IDEA」",
+        "url": "https://www.openstreetmap.org/node/5077027000",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "セルビアのおもなスーパーのチェーンの1つ。店の頁で、プラズマ300gを2つ買うと袋がもらえる売り出しをしている。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Idea「Plazma」（スーパーの売り出しの頁）",
+         "url": "https://www.idea.rs/Aktuelno/Plazma",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「IDEA」",
+         "url": "https://www.openstreetmap.org/node/5077027000",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Idea+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "eurocrem",
+    "name": "エウロクレム（2色のチョコクリーム）",
+    "local": {
+     "text": "Eurocrem",
+     "roman": "Eurocrem",
+     "src": [
+      {
+       "name": "Wikipedia「Eurocrem」",
+       "url": "https://en.wikipedia.org/wiki/Eurocrem",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "what": {
+     "text": "茶と白の2色の、ヘーゼルナッツとココアのスプレッド。ベオグラードの南のゴルニ・ミラノヴァツの工場で作り、ユーゴスラビアでいちばん人気の品だった。",
+     "src": [
+      {
+       "name": "Wikipedia「Eurocrem」",
+       "url": "https://en.wikipedia.org/wiki/Eurocrem",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "maxi",
+      "name": "マクシ（スーパー）",
+      "local": "Maxi",
+      "area": "vracar",
+      "lat": 44.793743,
+      "lon": 20.505044,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Maxi」",
+        "url": "https://www.openstreetmap.org/way/103256672",
+        "seen": "2026-11-22"
+       }
+      ],
+      "why": {
+       "text": "セルビアのおもなスーパーのチェーンの1つ。ネットの品書きにエウロクレム。",
+       "src": [
+        {
+         "name": "Wikivoyage「Belgrade」",
+         "url": "https://en.wikivoyage.org/wiki/Belgrade",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "Maxi「Krem Eurocrem činija 500g」（スーパーのネットの品書き）",
+         "url": "https://www.maxi.rs/Slatki-i-slani-konditori/Chokoladni-proizvodi/Kremovi-i-proizvodi-sa-kremom/Krem-Eurocrem-cinija-500g/p/7175886",
+         "seen": "2026-11-22"
+        },
+        {
+         "name": "OpenStreetMap「Maxi」",
+         "url": "https://www.openstreetmap.org/way/103256672",
+         "seen": "2026-11-22"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Maxi+Beograd&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "smoki",
+    "name": "スモキ（ピーナッツ味のスナック）",
+    "local": {
+     "text": "Smoki",
+     "roman": "Smoki",
+     "src": [
+      {
+       "name": "Wikipedia「Smoki」",
+       "url": "https://en.wikipedia.org/wiki/Smoki",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "what": {
+     "text": "ピーナッツ味の、ふくらませたとうもろこしのスナック。1972年にゼムンで生まれた、南東ヨーロッパで初めての品。",
+     "src": [
+      {
+       "name": "Wikipedia「Smoki」",
+       "url": "https://en.wikipedia.org/wiki/Smoki",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "opanci",
+    "name": "オパンツィ（革の伝統の靴）",
+    "local": {
+     "text": "Opanci",
+     "roman": "Opanci",
+     "src": [
+      {
+       "name": "Wikipedia「Opanak」",
+       "url": "https://en.wikipedia.org/wiki/Opanak",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "what": {
+     "text": "革で作った、ひもの無い農民の伝統の靴。セルビアでは、つま先の角のような形で産地が分かる。",
+     "src": [
+      {
+       "name": "Wikipedia「Opanak」",
+       "url": "https://en.wikipedia.org/wiki/Opanak",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "pirot",
+    "name": "ピロトのキリム（織物の敷物）",
+    "local": {
+     "text": "Pirotski ćilim",
+     "roman": "Pirotski cilim",
+     "src": [
+      {
+       "name": "Wikipedia「Pirot carpet」",
+       "url": "https://en.wikipedia.org/wiki/Pirot_carpet",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "what": {
+     "text": "南東セルビアの町ピロトで織られてきた、平織りの敷物。セルビアの国の象徴の1つとされる。",
+     "src": [
+      {
+       "name": "Wikipedia「Pirot carpet」",
+       "url": "https://en.wikipedia.org/wiki/Pirot_carpet",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "prokupac",
+    "name": "プロクパツのワイン",
+    "local": {
+     "text": "Prokupac",
+     "roman": "Prokupac",
+     "src": [
+      {
+       "name": "Wikipedia「Prokupac」",
+       "url": "https://en.wikipedia.org/wiki/Prokupac",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "what": {
+     "text": "セルビアの赤ワインのぶどうプロクパツのワイン。新鮮さと黒い果実の香りで知られ、近年は質の高いワインに使われている。",
+     "src": [
+      {
+       "name": "Wikipedia「Prokupac」",
+       "url": "https://en.wikipedia.org/wiki/Prokupac",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    "alcohol": true,
+    "stores": [],
+    "went": false
+   }
+  ]
+ },
+ "basics": {
+  "summary": [
+   {
+    "key": "season",
+    "title": "旬の季節",
+    "text": "平年の最高気温が19〜30℃になるのは4〜10月。11月は12.2℃、12月は6.1℃まで下がる。",
+    "src": [
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "safety",
+    "title": "治安",
+    "text": "スリや置き引きが多い。とくにバスの中・観光地・飲食店・大きな商業施設で。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "budget",
+    "title": "予算",
+    "text": "市内のバス・トラム・トロリーバスは無料（列車と、E番の急行バスは別）。",
+    "src": [
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "transit",
+    "title": "移動",
+    "text": "バスが中心で、トラムは11系統、トロリーバスは7系統。地下鉄はまだ無い。",
+    "src": [
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   }
+  ],
+  "guide": [
+   {
+    "key": "airport",
+    "title": "空港から市内へ",
+    "points": [
+     {
+      "text": "ベオグラード・ニコラ・テスラ空港（BEG）は、市の中心から西へ18km。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "72番のバスは無料で、30分おきに新ベオグラードの駅を通ってゼレニ・ヴェナツまで約50分。5時〜23時半。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "ミニバスA1は、バスターミナルを通ってスラヴィヤ広場まで約30分。400ディナール（約590円）か4ユーロを運転手に払う（2026年1月）。夜も走る。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "タクシーは配車アプリか電話で呼ぶのがいちばん安全。到着ロビーで待っているタクシーは悪質なものが多い。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "transit",
+    "title": "市内の乗り物",
+    "points": [
+     {
+      "text": "市内のバス・トラム・トロリーバスは無料。列車と、E番の急行バスは別。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "タクシーは国の決めた料金で、初乗り270ディナール、1kmごとに96〜125ディナール、待ちは1分20ディナール。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "タクシーは、屋根に市の紋章と番号の札があり、ナンバーが TX で終わるものに乗る。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "pay",
+    "title": "払いかたとチップ",
+    "points": [
+     {
+      "text": "通貨はディナール（RSD）。1ディナールは約1.48円（2026年11月20日）。",
+      "src": [
+       {
+        "name": "Wikipedia「Serbian dinar」",
+        "url": "https://en.wikipedia.org/wiki/Serbian_dinar",
+        "seen": "2026-11-22"
+       },
+       {
+        "name": "kurs.resenje.org「EUR 2026-11-20」（セルビア国立銀行の公式の中間レート 第222号の写し）",
+        "url": "https://kurs.resenje.org/api/v1/currencies/eur/rates/2026-11-20",
+        "seen": "2026-11-22"
+       },
+       {
+        "name": "欧州中央銀行（ユーロの参照レート。2026年11月20日）",
+        "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "セルビアは EU とユーロ圏に入っていないが、銀行のカードはふつうに使える。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "空港の両替所のレートは公式のレートから5%以内で、悪くない。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "タクシーのチップは、喜ばれるが要らない。荷物の料金はメーターに入っている。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "sim",
+    "title": "ネットと SIM",
+    "points": [
+     {
+      "text": "携帯の会社は A1・mts・Yettel の3つ。街と幹線道路は4Gで、大きな街では5Gも始まった。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "配車アプリは SMS で電話番号を確かめるので、携帯の会社によっては届かないことがある。",
+      "src": [
+       {
+        "name": "Wikivoyage「Belgrade」",
+        "url": "https://en.wikivoyage.org/wiki/Belgrade",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "safety",
+    "title": "治安のコツ",
+    "points": [
+     {
+      "text": "クネズ・ミハイロ通りやカレメグダン公園、大きなショッピングモールの人混みで、気づかないうちにバッグを開けられる被害がある。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "バスで数人に不自然に体を寄せられ、揺れに乗じてバッグを開けられた例がある。混んだ車両は避ける。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "リュックや肩掛けのバッグは、体の前に抱える。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+        "seen": "2026-11-22"
+       }
+      ]
+     },
+     {
+      "text": "政治の課題をめぐるデモが続いている。デモには近寄らない。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+        "seen": "2026-11-22"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "phrases",
+    "title": "セルビア語のひとこと",
+    "phrases": [
+     {
+      "local": "Dobar dan",
+      "roman": "dobar dan",
+      "kana": "ドバル・ダン",
+      "ja": "こんにちは"
+     },
+     {
+      "local": "Hvala",
+      "roman": "hvala",
+      "kana": "フヴァラ",
+      "ja": "ありがとう"
+     },
+     {
+      "local": "Molim",
+      "roman": "molim",
+      "kana": "モリム",
+      "ja": "お願いします"
+     },
+     {
+      "local": "Da",
+      "roman": "da",
+      "kana": "ダ",
+      "ja": "はい"
+     },
+     {
+      "local": "Ne",
+      "roman": "ne",
+      "kana": "ネ",
+      "ja": "いいえ"
+     },
+     {
+      "local": "Izvinite",
+      "roman": "izvinite",
+      "kana": "イズヴィニテ",
+      "ja": "すみません"
+     },
+     {
+      "local": "Koliko ovo košta?",
+      "roman": "koliko ovo kosta",
+      "kana": "コリコ・オヴォ・コシュタ？",
+      "ja": "これはいくらですか？"
+     },
+     {
+      "local": "Račun, molim",
+      "roman": "racun molim",
+      "kana": "ラチュン・モリム",
+      "ja": "お勘定をお願いします"
+     },
+     {
+      "local": "Živeli!",
+      "roman": "ziveli",
+      "kana": "ジヴェリ！",
+      "ja": "乾杯！"
+     },
+     {
+      "local": "Doviđenja",
+      "roman": "dovidjenja",
+      "kana": "ドヴィジェニャ",
+      "ja": "さようなら"
+     }
+    ],
+    "phrases_src": [
+     {
+      "name": "Wikivoyage「Serbian phrasebook」",
+      "url": "https://en.wikivoyage.org/wiki/Serbian_phrasebook",
+      "seen": "2026-11-22"
+     }
+    ]
+   }
+  ],
+  "budget": {
+   "days": [],
+   "extras": [
+    {
+     "label": "空港のミニバスA1",
+     "local": "400",
+     "yen": "590",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    {
+     "label": "タクシーの初乗り",
+     "local": "270",
+     "yen": "400",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    {
+     "label": "タクシー1kmごと",
+     "local": "96〜125",
+     "yen": "140〜190",
+     "src": [
+      {
+       "name": "Wikivoyage「Belgrade」",
+       "url": "https://en.wikivoyage.org/wiki/Belgrade",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    {
+     "label": "高速列車ソコ（ノヴィ・サドまで）",
+     "local": "697",
+     "yen": "1,030",
+     "src": [
+      {
+       "name": "Wikivoyage「Novi Sad」",
+       "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    {
+     "label": "普通の列車（ノヴィ・サドまで）",
+     "local": "469",
+     "yen": "700",
+     "src": [
+      {
+       "name": "Wikivoyage「Novi Sad」",
+       "url": "https://en.wikivoyage.org/wiki/Novi_Sad",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ]
+  },
+  "packing": [
+   {
+    "key": "passport",
+    "text": "パスポート。いつも持ち歩くよう言われていて、私服の警察官に見せることもある。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "cash",
+    "text": "少しのディナールの現金。テスラ博物館の見学は現金だけ。",
+    "src": [
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "warm",
+    "text": "冬の上着。12月の平年の最低気温は0.5℃、1月は-0.7℃。",
+    "src": [
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "bottle",
+    "text": "水のボトル。水道水は飲める。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "insurance",
+    "text": "海外旅行の保険。セルビア政府は、2万ユーロ以上の医療費をまかなう保険を勧めている。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+      "seen": "2026-11-22"
+     }
+    ]
+   },
+   {
+    "key": "translate",
+    "text": "翻訳のアプリ。英語はよく通じるが、病院には外国語の通じない人もいる。",
+    "src": [
+     {
+      "name": "Wikivoyage「Belgrade」",
+      "url": "https://en.wikivoyage.org/wiki/Belgrade",
+      "seen": "2026-11-22"
+     }
+    ]
+   }
+  ],
+  "climate": {
+   "where": "ベオグラード（平年値）",
+   "src": [
+    {
+     "name": "Wikivoyage「Belgrade」",
+     "url": "https://en.wikivoyage.org/wiki/Belgrade",
+     "seen": "2026-11-22"
+    },
+    {
+     "name": "Wikipedia「Belgrade」",
+     "url": "https://en.wikipedia.org/wiki/Belgrade",
+     "seen": "2026-11-22"
+    }
+   ],
+   "months": [
+    {
+     "month": "1月",
+     "high": 5.2,
+     "low": -0.7,
+     "rain_mm": 47.9
+    },
+    {
+     "month": "2月",
+     "high": 7.8,
+     "low": 0.6,
+     "rain_mm": 43.5
+    },
+    {
+     "month": "3月",
+     "high": 13.1,
+     "low": 4.2,
+     "rain_mm": 48.7
+    },
+    {
+     "month": "4月",
+     "high": 18.9,
+     "low": 8.8,
+     "rain_mm": 51.5
+    },
+    {
+     "month": "5月",
+     "high": 23.6,
+     "low": 13.2,
+     "rain_mm": 72.3
+    },
+    {
+     "month": "6月",
+     "high": 27.1,
+     "low": 16.7,
+     "rain_mm": 95.6
+    },
+    {
+     "month": "7月",
+     "high": 29.3,
+     "low": 18.4,
+     "rain_mm": 66.5
+    },
+    {
+     "month": "8月",
+     "high": 29.7,
+     "low": 18.5,
+     "rain_mm": 55.1
+    },
+    {
+     "month": "9月",
+     "high": 24.3,
+     "low": 14.1,
+     "rain_mm": 58.6
+    },
+    {
+     "month": "10月",
+     "high": 18.7,
+     "low": 9.4,
+     "rain_mm": 54.8
+    },
+    {
+     "month": "11月",
+     "high": 12.2,
+     "low": 5.1,
+     "rain_mm": 49.6
+    },
+    {
+     "month": "12月",
+     "high": 6.1,
+     "low": 0.5,
+     "rain_mm": 54.8
+    }
+   ]
+  },
+  "emergency": {
+   "numbers": [
+    {
+     "no": "192",
+     "what": "警察",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    {
+     "no": "193",
+     "what": "消防",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+       "seen": "2026-11-22"
+      }
+     ]
+    },
+    {
+     "no": "194",
+     "what": "救急",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+       "seen": "2026-11-22"
+      }
+     ]
+    }
+   ],
+   "embassy": {
+    "name": "在セルビア日本国大使館",
+    "exists": true,
+    "address": "Trešnjinog cveta 13, Novi Beograd",
+    "tel": "（市外局番011）301-2800",
+    "url": "https://www.yu.emb-japan.go.jp/itprtop_ja/index.html",
+    "text": "新ベオグラードに日本の大使館がある。開館は8時半から17時で、夜と休日は緊急の電話に回る。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+      "seen": "2026-11-22"
+     },
+     {
+      "name": "OpenStreetMap「Амбасада Јапана」",
+      "url": "https://www.openstreetmap.org/relation/8813142",
+      "seen": "2026-11-22"
+     }
+    ],
+    "lat": 44.825551,
+    "lon": 20.418793,
+    "coord_src": [
+     {
+      "name": "OpenStreetMap「Амбасада Јапана」",
+      "url": "https://www.openstreetmap.org/relation/8813142",
+      "seen": "2026-11-22"
+     }
+    ],
+    "maps": "https://www.google.com/maps/search/?api=1&query=Ambasada+Japana+Beograd&hl=ja"
+   },
+   "water": {
+    "text": "水道水は飲めるが、とくに山あいでは硬い。市販のミネラルウォーターを飲むこともすすめられている。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（セルビア 安全対策基礎データ。2026年3月16日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html",
+      "seen": "2026-11-22"
+     }
+    ]
+   }
+  },
+  "holidays": {
+   "text": "2月15日は国の日（スレテニェ）。1804年の第一次セルビア蜂起の始まりと、1835年の最初の近代の憲法を記念する。",
+   "src": [
+    {
+     "name": "Wikipedia「Statehood Day (Serbia)」",
+     "url": "https://en.wikipedia.org/wiki/Statehood_Day_(Serbia)",
+     "seen": "2026-11-22"
+    }
+   ]
+  },
+  "time": {
+   "text": "セルビアは中央ヨーロッパ時間（UTC+1）で、日本より8時間遅い。3月の最終日曜から10月の最終日曜までは夏時間（UTC+2）で7時間遅い。",
+   "src": [
+    {
+     "name": "Wikipedia「Time in Serbia」",
+     "url": "https://en.wikipedia.org/wiki/Time_in_Serbia",
+     "seen": "2026-11-22"
+    }
+   ]
+  }
+ },
+ "unknown": [
+  {
+   "what": "ノヴィ・サド駅がいま開いているか",
+   "why": "Wikivoyage は2026年7月の時点で屋根の崩落のあとの修理で閉まっていると書くが、開く日が見つからない"
+  },
+  {
+   "what": "博物館（国立博物館・ユーゴスラビア博物館・軍事博物館・テスラ博物館）の入場料と開館時間",
+   "why": "Wikivoyage の2025年11月の値しか確かめていない。各館の公式の頁は見ていない"
+  },
+  {
+   "what": "テスラ博物館の英語の見学で、いまも実験の実演があるか",
+   "why": "Wikivoyage（2025年11月）の記述だけ"
+  },
+  {
+   "what": "空港のミニバスA1の値段と、72番・600番のバスが無料のままか",
+   "why": "Wikivoyage の2026年1月の値。市の乗り物の無料の範囲は変わりうる"
+  },
+  {
+   "what": "カファナ「？」（ズナク・ピタニャ）のいまの献立と値段",
+   "why": "店の頁の献立の PDF は2020年のもので、開けなかった（404）。料理は店の頁の紹介文（2026年4月）からだけ結んだ"
+  },
+  {
+   "what": "シャランの住所",
+   "why": "店の頁は「Kej Oslobođenja 53」、OpenStreetMap は「Njegoševa 53a」。座標は OpenStreetMap"
+  },
+  {
+   "what": "トリ・シェシラの飲み物の献立に、同じ品の値段が2通りある理由",
+   "why": "ラキヤが380〜395と420〜430、生ビールが420と460。どちらの値段か分からないので幅で書いた"
+  },
+  {
+   "what": "ワルテルのストラヒニチャ・バナ通りの店の献立が「Centralni」か",
+   "why": "店ごとの献立の表で「Centralni」の欄に並んでいるのを見ただけ"
+  },
+  {
+   "what": "スモキ・オパンツィ・ピロトのキリム・プロクパツのワインを買える店",
+   "why": "店の名前と、いまも置いていることを書いた品書きが見つからない（スーパーのネットの品書きは画面が出てから読む形で、この箱から読めなかった）"
+  },
+  {
+   "what": "サルマ・ピーマンの肉詰め・ギバニツァ・トゥファヒヤ・ヴァニリツェを出す店",
+   "why": "献立の読めた店には載っていなかった。ドヴァ・イェレナ（スカダルリヤ）の2026年の献立は https で開けないので、店に結んでいない"
+  },
+  {
+   "what": "勝利者の像が立った年",
+   "why": "英語版 Wikipedia の表の日付（1928年10月7日）が、立った日か工事の始まりか読み取れない"
+  }
+ ],
+ "shorts": {
+  "src": [
+   {
+    "name": "site/content/shorts.ts の balkans の章（チャンネルのショートのタブから焼いたもの）",
+    "url": "https://www.youtube.com/channel/UCCwutAH6ieHNvdyJAfSld7w/shorts",
+    "seen": "2026-11-22"
+   }
+  ],
+  "items": []
+ }
+}
