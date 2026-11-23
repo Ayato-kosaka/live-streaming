@@ -479,6 +479,19 @@ def ng_lines(r: gf.Result) -> list[str]:
     return [f"[{c}] {'頭' if i is None else f'#{i}'}: {msg}" for i, c, msg in r.ng]
 
 
+def keep_unflagged(said: list, bad: set[int], got: list) -> list:
+    """直しの返事が、NG の無い項目まで落としていたら戻す。
+
+    「全体を同じ形で返す」と頼んでも、直した項目だけを返してくることがある（2026-11-22 のティラナ最終日。
+    19件のうち NG の1件だけが返り、18件が黙って消えて「項目 1件・落とした 0」で置かれた）。
+    NG の無い項目より返ってきた数が少なければ、NG の無い項目は残すものとして足し戻す
+    """
+    ok = [x for k, x in enumerate(said) if k not in bad]
+    if len(got) >= len(ok):
+        return got
+    return ok + [x for x in got if x not in ok]
+
+
 def drop_ng(m: Material, table: dict, items: list) -> tuple[list, Counter, gf.Result]:
     """NG の付いた項目を落とす。落とすと隣の項目の「近くの額」が変わるので、NG が無くなるまで繰り返す。"""
     dropped: Counter = Counter()
@@ -545,7 +558,7 @@ def extract_one(root: Path, table: dict, stem: str, a) -> dict:
     if m.chars <= SMALL:
         spans = [(0, m.last)]
     else:
-        budget = min(PICK_MAX, int((m.last + gf.BIN) * PICK_SHARE))
+        budget = min(a.pick_max * 60 if a.pick_max else PICK_MAX, int((m.last + gf.BIN) * PICK_SHARE))
         pp = pick_prompt(m, budget)
         if leaks(pp, m.names):
             rec["note"] = f"窓を選ばせる1枚に伏せ残し（{'・'.join(leaks(pp, m.names))}）。呼ばない"
@@ -591,7 +604,8 @@ def extract_one(root: Path, table: dict, stem: str, a) -> dict:
         got = ask(fp, SCHEMA, f"fix{k + 1}")
         if got is None:
             break
-        said = [clean(x) for x in got.get("items") or []]
+        said = keep_unflagged(said, {i for i, _, _ in r.ng if i is not None},
+                              [clean(x) for x in got.get("items") or []])
         items = m.restore(said)
         rec["new_trips"] = sorted(set(rec["new_trips"]) | set(got.get("new_trips") or []))
         r = check_items(m, table, items)
@@ -656,6 +670,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--effort", default=None, help="low / medium / high（省くと既定）")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--jobs", type=int, default=1, help=f"並べて回す本数（{JOBS_MAX}まで）")
+    # 見どころを何か所も歩いた長い回は、60分の窓では足りない（2026-10-03 のティラナ 3:25 が、60分で場所1つ・105分で6つ）
+    ap.add_argument("--pick-max", type=int, default=None, help=f"選ばせる窓の合計の上限（分。省くと {PICK_MAX // 60}）")
     ap.add_argument("--no-write", action="store_true", help="streams/ に置かない（控えだけ）")
     ap.add_argument("--force", action="store_true", help="もう在る .facts.json を作り直す")
     ap.add_argument("--prompt-only", action="store_true", help="1枚を組んで控えに置くだけ（呼ばない）")
