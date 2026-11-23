@@ -305,7 +305,7 @@ def said(c: Check, s, where: str, need_video: bool, need_text: bool = False):
     if has_v and not (isinstance(s["videoId"], str) and VIDEO.match(s["videoId"])):
         c.no(where, f"11字の動画 id でない: {s.get('videoId')!r}")
     if has_t and not (isinstance(s["at"], str) and AT.match(s["at"])):
-        c.no(where, f"時刻の形（4:11:30）でない: {s.get('at')!r}")
+        c.no(where, f"時刻の形（H:MM:SS）でない: {s.get('at')!r}")
 
 
 def decimals(x) -> int:
