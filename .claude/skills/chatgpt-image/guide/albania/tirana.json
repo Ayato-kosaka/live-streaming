@@ -209,8 +209,8 @@
     "label": [
      "スカンデルベグ像"
     ],
-    "x": 0.289,
-    "y": 0.344
+    "x": 0.235,
+    "y": 0.33
    },
    {
     "id": "ethem",
@@ -218,8 +218,8 @@
      "エトヘム・ベイ",
      "モスクと時計塔"
     ],
-    "x": 0.628,
-    "y": 0.362
+    "x": 0.665,
+    "y": 0.345
    },
    {
     "id": "cathedral",
@@ -227,32 +227,32 @@
      "キリスト",
      "復活大聖堂"
     ],
-    "x": 0.237,
-    "y": 0.439
+    "x": 0.195,
+    "y": 0.44
    },
    {
     "id": "market",
     "label": [
      "屋根付き市場"
     ],
-    "x": 0.677,
-    "y": 0.293
+    "x": 0.86,
+    "y": 0.25
    },
    {
     "id": "pyramid",
     "label": [
      "ピラミッド"
     ],
-    "x": 0.557,
-    "y": 0.619
+    "x": 0.57,
+    "y": 0.635
    },
    {
     "id": "cafe",
     "label": [
      "カフェ通り"
     ],
-    "x": 0.319,
-    "y": 0.705
+    "x": 0.31,
+    "y": 0.715
    }
   ],
   "areas": [
@@ -265,8 +265,8 @@
     ],
     "local": "Sheshi Skënderbej",
     "color": "#ffd98a",
-    "x": 0.711,
-    "y": 0.452,
+    "x": 0.67,
+    "y": 0.445,
     "source": [
      "https://www.veltra.com/jp/yokka/article/things-to-do-in-albania-tirana/",
      "https://www.veltra.com/jp/guide/international/spot-international/36187/"
@@ -280,8 +280,8 @@
     ],
     "local": "Pazari i Ri",
     "color": "#d9ccf5",
-    "x": 0.838,
-    "y": 0.194,
+    "x": 0.72,
+    "y": 0.17,
     "source": [
      "https://en.wikipedia.org/wiki/New_Bazaar,_Tirana"
     ]
@@ -294,8 +294,8 @@
     ],
     "local": "Blloku",
     "color": "#ffc4d2",
-    "x": 0.362,
-    "y": 0.797,
+    "x": 0.33,
+    "y": 0.79,
     "source": [
      "https://en.wikipedia.org/wiki/Ish-Blloku",
      "https://en.wikivoyage.org/wiki/Tirana"
