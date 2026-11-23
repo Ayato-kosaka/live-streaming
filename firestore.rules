@@ -186,6 +186,27 @@ service cloud.firestore {
        という決めは #202 でも生きている（`docs/nordic-fund.md`）。 */
     match /islandTips/{docId} { allow read, write: if false; }
 
+    /* 島で受けた投げ銭(#1405。決定の記録 0017)。**ここも絶対に開けない。**
+       上の台帳と同じく、誰がいくら出したかとメッセージが1件ずつ入っている。
+       uid とチャンネルIDまで並ぶ。書くのは Stripe の知らせを受けた口
+       （Admin SDK）だけ、読むのは毎晩の焼き直しだけ。 */
+    match /islandSiteTips/{docId} { allow read, write: if false; }
+
+    /* アラート画面がリアルタイムで購読する1枚(#1405)。書類IDが**配信の合言葉**
+       （32桁の16進）。OBS はログインできないので `get` だけ開ける
+       （上の monthlyReview と同じ形。`docs/island-standards.md` 29.4）。
+         - **`list` は閉じる。** 開けると合言葉ごと全部の1枚が引ける。
+           合言葉を知っていることが鍵なので、1件ずつしか読ませない
+         - **書きは閉じる。** 書くのは Stripe の知らせを受けた口だけ。
+           開けると、誰でも配信に好きな名前と額を出せる
+       中に入るのは配信に出す名前・額・メッセージ・時刻だけ（uid も
+       チャンネルIDも Stripe の ID も入れない）。 */
+    match /islandAlertFeed/{docId} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if false;
+    }
+
     /* チャンネルIDと名前・プロフィール写真の辞書(#190・#202)。
        名前も写真も YouTube で公開されているものだが、**ここには
        配信に来た2,200人ぶんが並んでいる。** 「誰が来ているか」の

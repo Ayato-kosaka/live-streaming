@@ -311,6 +311,12 @@ async function run(breaks) {
     return {...box, dbHits: d.hits, netHits: n.hits};
   };
 
+  /* 島の投げ銭（#1405）を決めるところ（`tip.ts` の `islandYenOf`）。
+     **ここが見るのは Doneru の鍵だけ**なので、「本番の支払いが1件も無い」
+     として 0 を返す偽物を渡す。欄が無いときの本物の決め方は
+     `tip_selftest.mjs` が本物のルータで見る。 */
+  const TIP = {islandYenOf: async (v) => v ?? 0};
+
   /**
    * `GET /fund` を1回ぶん動かす。
    * @param {object} b 組み立てたもの
@@ -324,10 +330,11 @@ async function run(breaks) {
       data: () => ({fund: {box: boxValue, people: 58}}),
     };
     await new Function(
-      "doneruNow", "STATE_DOC", "doneruAsOf", "boxOf", "res", "method", "path",
+      "doneruNow", "STATE_DOC", "doneruAsOf", "boxOf", "tip_1", "res",
+      "method", "path",
       `return (async () => { ${fund} })();`,
     )(
-      b.doneruNow, {get: async () => snap}, b.doneruAsOf, b.boxOf,
+      b.doneruNow, {get: async () => snap}, b.doneruAsOf, b.boxOf, TIP,
       res, "GET", "/fund",
     );
     return seen;
@@ -416,11 +423,11 @@ async function run(breaks) {
       const {res, seen} = fakeRes();
       const snap = {exists: true, data: () => ({fund: {box: boxValue}})};
       await new Function(
-        "doneruNow", "STATE_DOC", "boxOf", "alertboxExists",
+        "doneruNow", "STATE_DOC", "boxOf", "alertboxExists", "tip_1",
         "firebase_functions_1", "res", "method", "path",
         `return (async () => { ${abfund} })();`,
       )(
-        b.doneruNow, {get: async () => snap}, b.boxOf, async () => true,
+        b.doneruNow, {get: async () => snap}, b.boxOf, async () => true, TIP,
         {logger}, res, "GET", "/alertbox/0123456789abcdef0123456789abcdef/fund",
       );
       return seen;
