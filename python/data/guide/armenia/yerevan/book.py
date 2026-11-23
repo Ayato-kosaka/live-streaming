@@ -236,7 +236,7 @@ see = [
     {"key": "sevanavank", "town": "sevan-lake", "name": "セヴァナヴァンク（セヴァン修道院）", "local": loc("Սևանավանք", "Sevanavank", "sevv"),
      "rank": 1, "what": t("セヴァン湖の北西の半島に建つ修道院で、874年にできた。もとは島だったが、スターリンの時代に湖の水を抜いて水面が約20m下がり、半島になった。", "sevv"),
      "went": False, **at("sevanavank"), "info": [], "maps": maps("Sevanavank", "sevan-lake"), "links": {"todo": ["sevan"]},
-     "photo": photo("sevanavank", "湖の半島に建つ石の修道院")},
+     "photo": photo("sevanavank", "セヴァナヴァンクの壁にはめ込まれた、十字と組みひもを彫った古い石")},
     {"key": "noravank", "town": "noravank", "name": "ノラヴァンク修道院", "local": loc("Նորավանք", "Noravank", "nora"),
      "rank": 2, "what": t("エレバンから122km、アマグ川の細い渓谷にある13世紀の修道院。向かいの赤い崖と、壁から突き出た石の階段で上る2階建ての教会で知られる。", "nora", "tj"),
      "went": False, **at("noravank"),

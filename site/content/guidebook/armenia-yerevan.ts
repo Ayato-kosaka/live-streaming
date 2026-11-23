@@ -1759,7 +1759,7 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
      "small": "/guide/armenia/yerevan/photos/sevanavank-on-1-09-23-22-b6009454-500.webp",
      "w": 960,
      "h": 1280,
-     "alt": "湖の半島に建つ石の修道院",
+     "alt": "セヴァナヴァンクの壁にはめ込まれた、十字と組みひもを彫った古い石",
      "kind": "photo",
      "credit": {
       "by": "Anastasiya Lvova (1988–)",
@@ -4046,6 +4046,6 @@ export const YEREVAN: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "3bade7913e7b4dcf"
+ "hash": "65affa1f360040b1"
 }
 /* END GUIDE */;
