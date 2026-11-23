@@ -385,7 +385,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | どねID とチャンネルの対応 | Firestore `islandDonors` | 毎朝の種＋あやとが手で結ぶ | 投げ銭台帳の `channelId` | **手で結んだぶんは戻らない** |
 | 手で書くコンテンツ | Git `site/content/*.ts` | 人（レビューあり） | 島の全ページ | Git に履歴がある |
 | **スタンプに乗せることば** | Firestore `islandStampLine.lines` | 本人（`POST /stampline/mine`）だった。**2026-10-14 に口を閉じた**（#860）。いまは管理の道具（`python/admin/stamp_line_*.py`）だけ | LINE スタンプを作るとき（2026-10-13 に申請済み。公開の面には出さない） | **戻らない。** 人の字。**閉じたあとも記録として残す** |
-| ~~いまいる場所・書き置き~~ | ~~Firestore `island/state.current`~~ | — | — | **読む面も書く口も無い**（#1278・#1281）。居場所は滞在の表（`site/content/stays.ts`）。書類には古い字が残っている（`nordic_depart.yml` だけがまだ書ける） |
+| ~~いまいる場所・書き置き~~ | ~~Firestore `island/state.current`~~ | — | — | **読む面も書く口も無い**（#1278・#1281）。居場所は滞在の表（`site/content/stays.ts`）。書類には古い字が残っている。書く道も #1389 で無くなる |
 
 ### 3.2 写し（正から作り直せる。壊れても焼き直せばよい）
 
@@ -516,8 +516,9 @@ Viewers 表の列は `name` / `Emoji` / `Icon` / `videoUrl` の4つで、
 居場所は滞在の表（`site/content/stays.ts`）が持つ（`spec/model.md` M-20・M-30）。
 `GET /island-api/state` も `current` を返さない。
 
-書類には古い字が残っている。書けるのは `nordic_depart.yml`（北欧の出発の
-ワークフロー。旅が終わって動いていない）が呼ぶ `python/island_set_current.py` だけ。
+書類には古い字が残っている。最後の書き手だった北欧の出発のボタン
+（`nordic_depart.yml` の1段と `python/island_set_current.py`）も、#1389（#1281 のワークフロー分の PR）
+で外す。**それが入れば、`current` を書く道は無くなる。**
 
 ## 4. 置き場ごとの詳細
 
