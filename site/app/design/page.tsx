@@ -19,7 +19,7 @@ export const metadata: Metadata = share({
 const FLAGS = [
   "france", "netherlands", "belgium", "germany", "austria", "czech", "slovakia",
   "hungary", "uk", "turkey", "cyprus", "egypt", "jordan", "uae", "azerbaijan",
-  "georgia", "armenia", "iran-border",
+  "georgia", "armenia",
   "poland", "lithuania", "latvia", "estonia", "finland", "sweden",
   "denmark", "norway",
   "albania",

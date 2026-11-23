@@ -94,7 +94,8 @@ ROUTE = {
     "Azerbaijan": "azerbaijan",
     "Georgia": "georgia",
     "Armenia": "armenia",
-    "Iran": "iran-border",
+    # **イランは塗らない。** 国境の街メグリ（アルメニア）まで歩いて、入国はしていない。前は
+    # "Iran" を `iran-border` という国の slug に結んで、歩いた国と同じ塗りにしていた（#1355）
     # 北欧周遊（2026-09-12 〜 09-27）。`ORDER` の 19〜24 と1対1。
     # **オーランド（Åland）は入れない。** フィンランドの自治領だが、
     # ヘルシンキ→ストックホルムの夜行船が脇を通っただけで降りていない。
@@ -716,7 +717,9 @@ CITIES = [
     ("goris", "ゴリス", 46.3400, 39.5100, "armenia", "stop"),
     ("tatev", "タテフ", 46.2500, 39.3800, "armenia", "stop"),
     ("kapan", "カパン", 46.4050, 39.2010, "armenia", "stop"),
-    ("meghri", "メグリ（国境）", 46.2400, 38.9000, "iran-border", "hub"),
+    # メグリはアルメニアの街（イランとの国境の手前）。**国の印（hub）は立てない**——アルメニアの印は
+    # エレバン。前は国でない `iran-border` の印をここに立てて、地図に「18カ国目」が1つ多く出ていた（#1355）
+    ("meghri", "メグリ（国境）", 46.2400, 38.9000, "armenia", "stop"),
     # 北欧周遊。**泊まった街だけ**（`content/countries.ts` の `stays` と同じ並び）。
     # カトヴィツェは夜中に着いた空港なので `stop`、ピンはワルシャワに立てる。
     ("katowice", "カトヴィツェ", 19.0238, 50.2649, "poland", "stop"),
@@ -816,30 +819,14 @@ LEGS = [
 ORDER = [
     "france", "netherlands", "belgium", "hungary", "austria", "slovakia",
     "czech", "germany", "uk", "turkey", "cyprus", "egypt", "jordan",
-    "uae", "azerbaijan", "georgia", "armenia", "iran-border",
+    "uae", "azerbaijan", "georgia", "armenia",
     "poland", "lithuania", "latvia", "estonia", "finland", "sweden",
     "albania", "north-macedonia", "bulgaria",
 ]
 
-# 章。地図を寄せるときの範囲（経度緯度）。
-#
-# 名前は「◯◯編」ではなく地方の名前だけにする。ボタンは4つ並ぶので、
-# 「編」を付けると 390px の画面で2行に折り返す。しかも画面の言葉は
-# 「上のボタンで地図を寄せられます」なので、章立てではなく寄せ先の名前。
-# 中東はエジプトを含む（前は「中東・アフリカ編」だった）。地図を見れば
-# どこまで入っているかは見えるので、名前は短いほうを取る。
-CHAPTERS = [
-    ("all", "ぜんぶ", LON_MIN, LON_MAX, LAT_MIN, LAT_MAX),
-    # **北欧の6カ国はここに入る。** `content/countries.ts` の `region` が
-    # 6つとも「ヨーロッパ」で、`/map` の年表はこの id で段を作っている
-    # （`app/travel/page.tsx` の `CHAPTER_OF`）。**ボタンと段は同じ表から出るので、
-    # 段に居る国がボタンの枠の外にいると、押した先にその国が写らない。**
-    # 前は東 22.5 / 北 58.6 で、ヴィリニュス(25.3E) リガ(24.1E) タリン(24.8E)
-    # ヘルシンキ(24.9E, 60.2N) が**4つとも枠の外**だった。
-    ("europe", "ヨーロッパ", -8.0, 27.0, 41.0, 61.5),
-    ("mideast", "中東", 23.0, 56.0, 21.0, 43.0),
-    ("caucasus", "コーカサス", 38.0, 51.5, 37.6, 44.4),
-]
+# **地図を寄せる枠は焼かない。** 前はここに「章」（ヨーロッパ・中東・コーカサス）の枠を持っていて、
+# `/travel` の年表もこの章で段を作っていた。国を束ねる語彙は旅だけにしたので（`docs/spec/model.md` M-5、
+# `docs/adr/0007-group-by-trip.md`）、寄せる枠は画面が旅の国の点から組む（`components/atlas/WorldRoute.tsx` の `TRIP_BOX`）。
 
 # 国ごとの寄り地図。(slug, 経度min, 経度max, 緯度min, 緯度max)
 # 国の輪から自動で出すと、フランスの海外県やイギリスの島まで入って
@@ -862,7 +849,6 @@ ZOOM = {
     "azerbaijan": (44.4, 51.0, 38.2, 42.2),
     "georgia": (39.8, 47.0, 40.8, 43.8),
     "armenia": (43.2, 47.2, 38.6, 41.4),
-    "iran-border": (44.4, 48.6, 38.0, 40.4),
     # 北欧の6カ国。**世界1枚の枠（`LAT_MAX`）とは関係が無い。** 寄りの地図は
     # 世界地図を拡大したものではなく、この範囲で投影し直したものなので、
     # ここは「旅の中身が見える範囲」だけで決める（表の他の国と同じ）。
@@ -1322,31 +1308,6 @@ def main(only: set[str] | None = None) -> None:
         }
         for nm, lon, lat, size, rot in SEA_LABELS
     ]
-
-    # 章。画面はひとつの SVG を CSS で寄せて見せるので、
-    # どの章も世界1枚と同じ縦横比に揃えておく必要がある。
-    # 揃っていないと、寄せたときに上下か左右がはみ出して切れる。
-    want = view_w / view_h
-    out["chapters"] = []
-    for cid, label, a, b, c, d in CHAPTERS:
-        px0, py0 = project(a, d)
-        px1, py1 = project(b, c)
-        w, h = px1 - px0, py1 - py0
-        if w / h < want:
-            nw = h * want
-            px0 -= (nw - w) / 2
-            w = nw
-        else:
-            nh = w / want
-            py0 -= (nh - h) / 2
-            h = nh
-        # 画面の外へはみ出したぶんは中へ押し戻す。海しかない余白を見せない。
-        px0 = max(0.0, min(view_w - w, px0))
-        py0 = max(0.0, min(view_h - h, py0))
-        out["chapters"].append({
-            "id": cid, "label": label,
-            "box": [round(px0), round(py0), round(w), round(h)],
-        })
 
     out["scale"] = scale_of(project, LON_MIN, LON_MAX, LAT_MIN, LAT_MAX)
 

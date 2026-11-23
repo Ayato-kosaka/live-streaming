@@ -238,9 +238,9 @@ export function isleSpec(c: Chapter, prev?: Neighbour, next?: Neighbour): IsleSp
      章の `countries` だけを見ていたので、アルバニアを歩いて北マケドニアに居る日に
      「0カ国 歩いた」と出ていた。 */
   const countries = chapterCountries(c);
-  /* **地形は、記録のある国だけで決める。** 歩いている最中の国に地方を持たせると、
-     国に入った日に島の形が黙って変わる（`chapterCountries` の注）。 */
-  const art = artOf(c.slug, countries.flatMap((k) => (k.region ? [k.region] : [])));
+  /* **地形は章の slug で決まる**（`components/chain/shapes.ts` の `ISLAND_ART`）。国の地域からは引かない
+     ——地域は種類ではない（`docs/spec/model.md` M-5） */
+  const art = artOf(c.slug);
   const streams = CHAPTER_STREAMS[c.slug] ?? [];
   const legends = legendsOf(c);
   const places: IslePlaceSpec[] = [];

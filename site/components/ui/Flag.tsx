@@ -202,7 +202,6 @@ const FLAGS: Record<string, Spec> = {
     ],
   },
   armenia: { k: "h", bands: ["#d90012", "#0033a0", "#f2a800"] },
-  "iran-border": { k: "h", bands: ["#239f40", "#ffffff", "#da0000"] },
 
   // --- いま歩いている国 ---
   // 赤は #e41e20。アルバニアの旗の規格色（Pantone 186）を RGB に直した値で、

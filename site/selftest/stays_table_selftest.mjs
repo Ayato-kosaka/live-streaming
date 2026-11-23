@@ -14,7 +14,8 @@
  *
  * ## 見ているもの
  *
- * 滞在の表の写しに、**架空の国の行を1行だけ**足す（ほかのファイルは触らない）。
+ * 滞在の表の写しで、**いまの行（終わりの空いた行）を着く日で閉じて、架空の国の行を1行だけ**足す
+ * （ほかのファイルは触らない。国を移った日に人がやることと同じ。`content/stays.ts` の頭）。
  * 着く日はいまの最後の行の翌日か今日の遅いほう。案内の面も付ける。その写しで:
  *
  *  1. **型が通る**（`tsc`。本物の表で出る文句より増えない・表の写しに文句が出ない）
@@ -25,6 +26,9 @@
  *  6. **毎晩の焼き直し**（`python/stays.py` の `chapter_stays()`）が、その国の滞在を出す
  *  7. 章で回った国の引きかたが、**TS（`content/stayChapters.ts` の `chapterCountrySlugs`）と Python（`stays.chapter_countries`）で
  *     同じ答え**（本物の表と写しの両方で）
+ *  8. **旅と滞在の不変条件（M-10〜M-12）**が本物の表で通り（`tripProblems` が空）、壊した表では外れたと言う
+ *     （本線の旅に隙間・枝の旅が親からはみ出す・滞在が重なる・滞在がどの旅にも入らない）。
+ *     **重なった行を足した表は、読み込んだときに書き出しが止まる**（前のイラン国境の行の形）
  *
  * ## 対照（落ちることを見る）
  *
@@ -86,13 +90,28 @@ const nextDay = (d, n = 1) => new Date(Date.parse(`${d}T00:00:00Z`) + n * 86400_
 const jstToday = new Date(Date.now() + 9 * 3600_000).toISOString().slice(0, 10);
 const ON = [nextDay(lastFrom), jstToday].sort().at(-1);
 
+/** いまの行（終わりの空いた行）。足す行の着く日で閉じる——開いたまま足すと M-12（重なり）で止まる */
+const openRow = ROWS.find((r) => r.f.to === "");
+if (!openRow) stop("content/stays.ts に終わりの空いた行が無い（足す前に閉じる行が見つからない）");
+const openSrc = STAYS_SRC.slice(openRow.at, openRow.end);
+/* 行の場所と「終わりが空」は tsread が読んだもの（`openRow`）。ここは字を1か所差し替えるだけなので、
+   正規表現で表を読まない（`tools/sprites/tsread_selftest.mjs` の 4 が数える） */
+const closedSrc = openSrc.replace('to: ""', `to: "${ON}"`);
+if (closedSrc === openSrc) stop("終わりの空いた行の `to: \"\"` に当たらない（閉じる仕込みを直す）");
 const FAKE = "zz-island";
 const FAKE_HREF = "/travel/zz-island";
 /** 足す1行。**ほかのファイルは触らない** */
 const ROW =
   `  { country: "${FAKE}", name: "架空の国", cities: [], from: "${ON}", to: "",\n` +
   `    guide: { name: "架空の国・みやこ", href: "${FAKE_HREF}", lead: "確かめのための国", icon: "mountain" } },`;
-const WITH_ROW = STAYS_SRC.slice(0, CLOSE_AT) + ROW + "\n" + STAYS_SRC.slice(CLOSE_AT);
+/** 表の終わりの `]` の前に行を足す（いまの行を閉じた写しの上で） */
+const CLOSED = STAYS_SRC.slice(0, openRow.at) + closedSrc + STAYS_SRC.slice(openRow.end);
+const SHIFT = closedSrc.length - openSrc.length;
+const WITH_ROW = CLOSED.slice(0, CLOSE_AT + SHIFT) + ROW + "\n" + CLOSED.slice(CLOSE_AT + SHIFT);
+
+/** アルメニアの滞在の中に、別の国の行を重ねた表（前のイラン国境の行と同じ形）。読み込んだときに M-12 で止まるはず */
+const OVERLAP_ROW = `  { country: "georgia", cities: [], from: "2026-04-29", to: "2026-05-08" },`;
+const WITH_OVERLAP = STAYS_SRC.slice(0, CLOSE_AT) + OVERLAP_ROW + "\n" + STAYS_SRC.slice(CLOSE_AT);
 
 /** 記録のある国（ブルガリア）の行を抜いた表。国の表が読み込んだときに止まるはず */
 const bg = ROWS.find((r) => r.f.country === "bulgaria");
@@ -207,11 +226,13 @@ print(json.dumps({
 const base = build("base", STAYS_SRC, { walkedBreak: BREAK === "walked" });
 const fake = build("fake", WITH_ROW, { walkedBreak: BREAK === "walked" });
 const nobg = build("nobg", WITHOUT_BG);
+const lap = build("lap", WITH_OVERLAP);
 
 try {
   const B = load(base);
   const F = load(fake);
   const N = load(nobg);
+  const L = load(lap);
   if (B.error) stop(`本物の表で組み立てたものが読めない: ${B.error}`);
   if (F.error) stop(`1行足した表で組み立てたものが読めない: ${F.error}`);
   console.log(`# 足した行: ${FAKE}（${ON} 着、いまの最後の行は ${lastFrom} 着）`);
@@ -265,6 +286,33 @@ try {
     const ts = Object.fromEntries(m.chapters.CHAPTERS.map((c) => [c.slug, m.stayChapters.chapterCountrySlugs(c)]));
     check(`7. ${label}で、章の国が TS と Python で同じ`, JSON.stringify(ts) === JSON.stringify(p.chapters),
       `TS ${JSON.stringify(ts)} / Python ${JSON.stringify(p.chapters)}`);
+  }
+
+  // ---- 8. 旅と滞在の不変条件（M-10〜M-12） ----
+  {
+    const { tripProblems } = B.stayChapters;
+    const CH = B.chapters.CHAPTERS;
+    const ST = req(join(base.out, "content", "stays.js")).STAYS;
+    const today = jstToday;
+    const real = tripProblems(CH, ST, today);
+    check("8. 本物の表で、旅と滞在の不変条件が通る", real.length === 0, real.join(" / "));
+    const fakeSt = req(join(fake.out, "content", "stays.js")).STAYS;
+    const fk = tripProblems(CH, fakeSt, today);
+    check("8. 国を移った写し（いまの行を閉じて1行足す）でも通る", fk.length === 0, fk.join(" / "));
+    /** 壊した表を当てて、その条の名前で外れたと言うか */
+    const breaks = [
+      ["M-10", "本線の旅のあいだに1日の隙間", CH.map((c) => (c.slug === "middle-east" ? { ...c, from: nextDay(c.from) } : c)), ST],
+      ["M-10", "本線の最後の旅が閉じて、今日までが空く", CH.map((c) => (!c.branchOf && !c.to && c.from ? { ...c, to: nextDay(today, -3) } : c)), ST],
+      ["M-11", "枝の旅が親の旅からはみ出す", CH.map((c) => (c.branchOf ? { ...c, to: "2026-09-30" } : c)), ST],
+      ["M-12", "滞在が重なる（アルメニアの中に別の行）", CH, [...ST, { country: "georgia", cities: [], from: "2026-04-29", to: "2026-05-08" }]],
+      ["M-12", "滞在がどの本線の旅にも入らない（最初の旅より前）", CH, [...ST, { country: "france", cities: [], from: "2024-10-01", to: "2024-10-05" }]],
+    ];
+    for (const [rule, label, ch, st] of breaks) {
+      const got = tripProblems(ch, st, today);
+      check(`8. 対照: ${label} → ${rule} で外れる`, got.some((x) => x.startsWith(`${rule}:`)), got.join(" / ") || "何も言わない");
+    }
+    check("8. 対照: 重なった行を足した表は、読み込んだときに止まる（書き出しが止まる）",
+      !!L.error && /M-12/.test(L.error), L.error ?? "止まらなかった");
   }
 
   // ---- 対照 ----

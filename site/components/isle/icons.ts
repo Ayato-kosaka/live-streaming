@@ -68,7 +68,7 @@ export const ISLE_ICONS: Record<string, Record<string, string>> = {
      - この島のこと … 道ばたの標石（里程標）。歩いた章なので、建物ではなく石
      - となりの島へ … 櫂。桟橋を組むほどの岸ではない
      - 歩いた国 … 板1枚の道標。**旗の並ぶ道しるべは、1カ国には大げさ**
-       （この章の `countries` は `iran-border` の1つだけ） */
+       （この章で回った国はアルメニアの1つだけ） */
   "iran-walk": {
     facts: "statue-head",
     pier: "canoe-paddle",

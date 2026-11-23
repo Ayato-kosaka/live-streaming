@@ -37,7 +37,7 @@ const SLUGS = (process.env.SLUGS || "").split(",").filter(Boolean);
 const ALL = [
   "france", "netherlands", "belgium", "hungary", "austria", "slovakia", "czech",
   "germany", "uk", "turkey", "cyprus", "egypt", "jordan", "uae", "azerbaijan",
-  "georgia", "armenia", "iran-border",
+  "georgia", "armenia",
   "poland", "lithuania", "latvia", "estonia", "finland", "sweden",
 ];
 
