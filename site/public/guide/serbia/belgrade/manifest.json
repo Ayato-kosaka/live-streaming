@@ -49,7 +49,7 @@
   "h": 1500,
   "alt": "ベオグラードの見どころマップ（地区分け）。カレメグダン周辺・クネズ・ミハイロ通り周辺・スカダルリヤ・聖サヴァ大聖堂周辺の4つの地区を色で分け、北西のゼムンへの向きと名前を書いた絵地図。ベオグラード要塞・バイラクリ・モスク・共和国広場・スカダルリヤ・国会議事堂・テスラ博物館・聖サヴァ大聖堂の目印の絵と名前つき",
   "kind": "ai",
-  "prompt_note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・4つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。ゼムン（北西4km）は地図の外なので、左上の縁に向きと道のりを添えた札で焼いた（面の地区の札と揃えるため）。ユーゴスラビア博物館は地図の外（矢印）",
+  "prompt_note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・4つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。ゼムン（北西4km）は地図の外なので、左上の縁に向きと道のりを添えた札で焼いた（面の地区の札と揃えるため）。ユーゴスラビア博物館は地図の外",
   "baked": true,
   "areas": [
    {
@@ -61,7 +61,7 @@
     "local": "Kalemegdan",
     "color": "#ffd98a",
     "x": 0.3,
-    "y": 0.255,
+    "y": 0.272,
     "source": [
      "https://www.arukikata.co.jp/webmagazine/272443/",
      "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html"
@@ -79,7 +79,7 @@
     "local": "Knez Mihailova",
     "color": "#d9ccf5",
     "x": 0.36,
-    "y": 0.39,
+    "y": 0.395,
     "source": [
      "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html"
     ],
@@ -95,7 +95,7 @@
     "local": "Skadarlija",
     "color": "#ffc4d2",
     "x": 0.75,
-    "y": 0.253,
+    "y": 0.262,
     "source": [
      "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%83%80%E3%83%AB%E3%83%AA%E3%83%A4"
     ],
@@ -129,7 +129,7 @@
     "local": "Zemun",
     "color": "#bfe3f5",
     "x": 0.13,
-    "y": 0.155,
+    "y": 0.152,
     "source": [
      "https://ja.wikipedia.org/wiki/%E3%82%BC%E3%83%A0%E3%83%B3"
     ],
@@ -143,21 +143,7 @@
    "south": 44.7925,
    "north": 44.8325
   },
-  "beyond": [
-   {
-    "id": "yugoslavia",
-    "name": "ユーゴスラビア博物館（花の家）",
-    "local": "Muzej Jugoslavije",
-    "lat": 44.788019,
-    "lon": 20.452314,
-    "source": [
-     "https://en.wikipedia.org/wiki/Museum_of_Yugoslavia"
-    ],
-    "x": 0.36,
-    "y": 0.95,
-    "dir": "s"
-   }
-  ],
+  "beyond": [],
   "base": {
    "by": "© OpenStreetMap contributors",
    "licence": "https://www.openstreetmap.org/copyright"
