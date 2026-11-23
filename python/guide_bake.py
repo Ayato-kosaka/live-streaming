@@ -306,7 +306,7 @@ class Baker:
         if not mine and not lent:
             self.errors.append(f"{where}: 写真「{key}」が台本の photos にも commons にも無い")
             return None
-        base = f"/travel/{self.key}/{key}"
+        base = f"{photo_base(self.key)}/{key}"
         files = {w: PUBLIC / f"{base.lstrip('/')}-{w}.webp" for w in WIDTHS}
         missing = [str(f.relative_to(ROOT)) for f in files.values() if not f.exists()]
         if missing:
@@ -404,6 +404,13 @@ def _save(im, out: Path, k: str, crop=None) -> None:
         im.resize((w2, h), Image.LANCZOS).save(out / f"{k}-{w}.webp", "WEBP", quality=72, method=6)
 
 
+def photo_base(key: str) -> str:
+    """写真の置き場（面から見た道）。**街の鍵でも記事の鍵（`<国>/<街>/<話>`）でも、街の置き場ひとつ**。
+    面（`Baker.photo`）は街の鍵で読むので、取る側が記事の鍵のまま置くと `/<街>/<話>/` の下に落ちて、
+    面からは無いことになる（2026-11-23 ティラナの記事6本で、手で移した）。読む側と置く側で同じこれを使う"""
+    return "/travel/" + "/".join(key.split("/")[:2])
+
+
 def fetch_photos(key: str, root: Path = ROOT, only_commons: bool = False) -> int:
     from io import BytesIO
 
@@ -415,7 +422,7 @@ def fetch_photos(key: str, root: Path = ROOT, only_commons: bool = False) -> int
     if not photos and not lent:
         print("::error::台本に photos も commons も無い")
         return 2
-    out = root / "site/public/travel" / key
+    out = root / "site/public" / photo_base(key).lstrip("/")
     out.mkdir(parents=True, exist_ok=True)
     bad = 0
     if photos:

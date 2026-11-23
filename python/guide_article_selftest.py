@@ -20,6 +20,7 @@
 | `sum` | 足し算の合計の字を、部品の和と違う額にする | 見るとき |
 | `rowlink` | 表の行から場面のリンクを外す（額の無い行） | 見るとき |
 | 確かめが要る額 | 本文に、`verify` の行にしか無い額 | 見るとき（`guide_watch` の足） |
+| 写真の置き場 | 記事の鍵（`<国>/<街>/<話>`）で `--photos` を回す | 置いた先が、面の読む `/travel/<国>/<街>/` でない |
 
 `BREAK` の名前が付いている足は、**その守りを抜くと同じ崩しが通ってしまう**ことまで見る
 （落ちたのがその足のおかげだと分かるように。§15「対照は、足の数だけ用意する」）。
@@ -175,6 +176,31 @@ ok("確かめが要る行にしか無い額", (code, "確かめが要る行" in 
 
 code, out = look(page().replace('class="tg ta"', 'class="ta"'))
 ok("本文（article.tg）の無い面を通さない", code, 2)
+
+# 写真の置き場: 記事の鍵（`<国>/<街>/<話>`）で取っても、面が読む街の置き場に落ちる（2026-11-23 ティラナ）。
+# 外に出ないよう、Commons から取る口を小さな絵に差し替え、置き場は一時の root に向ける
+def fetched_into(key: str) -> list[str]:
+    from PIL import Image
+    gb = ga.gb
+    buf = io.BytesIO()
+    Image.new("RGB", (40, 30), (200, 180, 120)).save(buf, "PNG")
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        sp = root / "python/data/guide" / f"{key}.json"
+        sp.parent.mkdir(parents=True)
+        sp.write_text(json.dumps({"commons": {"pic": {"file": "Example.jpg", "w": 40}}}), encoding="utf-8")
+        get, sleep = gb._get, gb.time.sleep
+        gb._get, gb.time.sleep = (lambda url: buf.getvalue()), (lambda s: None)
+        try:
+            quiet(gb.fetch_photos, key, root=root, only_commons=True)
+        finally:
+            gb._get, gb.time.sleep = get, sleep
+        return sorted(str(f.relative_to(root)) for f in (root / "site/public").rglob("*.webp"))
+
+
+got = fetched_into(KEY)
+ok("記事の鍵で取った写真が、面の読む街の置き場に落ちる", got,
+   [f"site/public/travel/north-macedonia/skopje/pic-{w}.webp" for w in sorted(ga.gb.WIDTHS)])
 
 print(f"見た {seen} 通り・落ちた {bad}")
 if not seen:
