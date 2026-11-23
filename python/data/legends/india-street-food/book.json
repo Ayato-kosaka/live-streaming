@@ -1,0 +1,606 @@
+{
+ "slug": "india-street-food",
+ "updated": "2026-11-23",
+ "dishes": [
+  {
+   "id": "vada-pav",
+   "name": "ヴァダパオ",
+   "region": "west",
+   "city": "ムンバイ"
+  },
+  {
+   "id": "pav-bhaji",
+   "name": "パオバジ",
+   "region": "west",
+   "city": "ムンバイ"
+  },
+  {
+   "id": "misal-pav",
+   "name": "ミサル・パオ",
+   "region": "west",
+   "city": "ムンバイ"
+  },
+  {
+   "id": "gujarati-thali",
+   "name": "グジャラート・ターリー",
+   "region": "west",
+   "city": "ムンバイ"
+  },
+  {
+   "id": "berry-pulao",
+   "name": "ベリー・プラオ",
+   "region": "west",
+   "city": "ムンバイ"
+  },
+  {
+   "id": "bhel-puri",
+   "name": "ベルプリ",
+   "region": "west",
+   "city": "ムンバイ"
+  },
+  {
+   "id": "pani-puri-mumbai",
+   "name": "パニプリ",
+   "region": "west",
+   "city": "ムンバイ"
+  },
+  {
+   "id": "bun-maska-irani-chai",
+   "name": "ブンマスカとイラニ・チャイ",
+   "region": "west",
+   "city": "ムンバイ"
+  },
+  {
+   "id": "keema-pav",
+   "name": "キーマパオ",
+   "region": "west",
+   "city": "ムンバイ"
+  },
+  {
+   "id": "goan-fish-thali",
+   "name": "フィッシュ・ターリー",
+   "region": "west",
+   "city": "ゴア"
+  },
+  {
+   "id": "pork-vindaloo",
+   "name": "ポーク・ヴィンダルー",
+   "region": "west",
+   "city": "ゴア"
+  },
+  {
+   "id": "choris-pao",
+   "name": "チョリス・パオ",
+   "region": "west",
+   "city": "ゴア"
+  },
+  {
+   "id": "ros-omelette",
+   "name": "ロス・オムレツ",
+   "region": "west",
+   "city": "ゴア"
+  },
+  {
+   "id": "chicken-xacuti",
+   "name": "チキン・シャクティ",
+   "region": "west",
+   "city": "ゴア"
+  },
+  {
+   "id": "bebinca",
+   "name": "ベビンカ",
+   "region": "west",
+   "city": "ゴア"
+  },
+  {
+   "id": "appam-stew",
+   "name": "アッパムとシチュー",
+   "region": "south",
+   "city": "コーチ"
+  },
+  {
+   "id": "karimeen-pollichathu",
+   "name": "カリミーン・ポリチャトゥ",
+   "region": "south",
+   "city": "コーチ"
+  },
+  {
+   "id": "beef-fry-parotta",
+   "name": "ビーフ・フライとパロッタ",
+   "region": "south",
+   "city": "コーチ"
+  },
+  {
+   "id": "thalassery-biryani",
+   "name": "タラッセリーのビリヤニ",
+   "region": "south",
+   "city": "コーチ"
+  },
+  {
+   "id": "puttu-kadala",
+   "name": "プットゥとカダラ・カレー",
+   "region": "south",
+   "city": "コーチ"
+  },
+  {
+   "id": "kerala-sadya",
+   "name": "サディヤ",
+   "region": "south",
+   "city": "コーチ"
+  },
+  {
+   "id": "kappa-meen-curry",
+   "name": "カッパとミーン・カレー",
+   "region": "south",
+   "city": "コーチ"
+  },
+  {
+   "id": "pazham-pori",
+   "name": "パザム・ポリ",
+   "region": "south",
+   "city": "コーチ"
+  },
+  {
+   "id": "kari-dosai",
+   "name": "カリ・ドーサイ",
+   "region": "south",
+   "city": "マドゥライ"
+  },
+  {
+   "id": "bun-parotta",
+   "name": "ブン・パロッタ",
+   "region": "south",
+   "city": "マドゥライ"
+  },
+  {
+   "id": "kothu-parotta",
+   "name": "コットゥ・パロッタ",
+   "region": "south",
+   "city": "マドゥライ"
+  },
+  {
+   "id": "jigarthanda",
+   "name": "ジガルタンダ",
+   "region": "south",
+   "city": "マドゥライ"
+  },
+  {
+   "id": "murugan-idli",
+   "name": "イドリ",
+   "region": "south",
+   "city": "マドゥライ"
+  },
+  {
+   "id": "banana-leaf-meals",
+   "name": "ミールス",
+   "region": "south",
+   "city": "チェンナイ"
+  },
+  {
+   "id": "idli-sambar-chennai",
+   "name": "サンバル・イドリ",
+   "region": "south",
+   "city": "チェンナイ"
+  },
+  {
+   "id": "filter-coffee",
+   "name": "フィルター・コーヒー",
+   "region": "south",
+   "city": "チェンナイ"
+  },
+  {
+   "id": "chicken-65",
+   "name": "チキン65",
+   "region": "south",
+   "city": "チェンナイ"
+  },
+  {
+   "id": "atho",
+   "name": "アト",
+   "region": "south",
+   "city": "チェンナイ"
+  },
+  {
+   "id": "chettinad-chicken",
+   "name": "チェティナード・チキン",
+   "region": "south",
+   "city": "チェンナイ"
+  },
+  {
+   "id": "ambur-biryani",
+   "name": "アンブールのビリヤニ",
+   "region": "south",
+   "city": "チェンナイ"
+  },
+  {
+   "id": "hyderabadi-biryani",
+   "name": "ハイデラバードのビリヤニ",
+   "region": "south",
+   "city": "ハイデラバード"
+  },
+  {
+   "id": "haleem",
+   "name": "ハリーム",
+   "region": "south",
+   "city": "ハイデラバード"
+  },
+  {
+   "id": "irani-chai-osmania",
+   "name": "イラニ・チャイとオスマニア・ビスケット",
+   "region": "south",
+   "city": "ハイデラバード"
+  },
+  {
+   "id": "nihari-paya-hyderabad",
+   "name": "マライ・パヤ",
+   "region": "south",
+   "city": "ハイデラバード"
+  },
+  {
+   "id": "benne-masala-dosa",
+   "name": "ベンネ・マサラ・ドーサ",
+   "region": "south",
+   "city": "ベンガルール"
+  },
+  {
+   "id": "kathi-roll",
+   "name": "カティ・ロール",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "puchka",
+   "name": "プチュカ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "jhalmuri",
+   "name": "ジャルムリ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "kochuri-alur-torkari",
+   "name": "コチュリとアルール・トルカリ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "kolkata-biryani",
+   "name": "コルカタのビリヤニ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "mutton-chaap",
+   "name": "マトン・チャープ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "kosha-mangsho",
+   "name": "コシャ・マンショ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "pice-hotel-thali",
+   "name": "パイス・ホテルの魚定食",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "shorshe-maach",
+   "name": "ショルシェ・マーチ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "rosogolla",
+   "name": "ロショゴッラ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "nolen-gur-sandesh",
+   "name": "ノレン・グルのションデシュ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "mishti-doi",
+   "name": "ミシュティ・ドイ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "tiretta-chinese-breakfast",
+   "name": "チャイナタウンの朝ごはん",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "chilli-chicken-tangra",
+   "name": "チリチキン",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "bhaar-chai",
+   "name": "素焼きのカップのチャイ",
+   "region": "east",
+   "city": "コルカタ"
+  },
+  {
+   "id": "tamatar-chaat",
+   "name": "タマタル・チャート",
+   "region": "north",
+   "city": "バラナシ"
+  },
+  {
+   "id": "kachori-sabzi-varanasi",
+   "name": "カチョリ・サブジとジャレビ",
+   "region": "north",
+   "city": "バラナシ"
+  },
+  {
+   "id": "malaiyo",
+   "name": "マライヨ",
+   "region": "north",
+   "city": "バラナシ"
+  },
+  {
+   "id": "banarasi-paan",
+   "name": "バナラシ・パーン",
+   "region": "north",
+   "city": "バラナシ"
+  },
+  {
+   "id": "blue-lassi",
+   "name": "ブルー・ラッシー",
+   "region": "north",
+   "city": "バラナシ"
+  },
+  {
+   "id": "galouti-kebab",
+   "name": "ガラウティ・カバブ",
+   "region": "north",
+   "city": "ラクナウ"
+  },
+  {
+   "id": "lucknow-biryani",
+   "name": "ラクナウのビリヤニ",
+   "region": "north",
+   "city": "ラクナウ"
+  },
+  {
+   "id": "nihari-kulcha-lucknow",
+   "name": "ニハリとクルチャ",
+   "region": "north",
+   "city": "ラクナウ"
+  },
+  {
+   "id": "makhan-malai",
+   "name": "マッカン・マライ",
+   "region": "north",
+   "city": "ラクナウ"
+  },
+  {
+   "id": "basket-chaat",
+   "name": "バスケット・チャート",
+   "region": "north",
+   "city": "ラクナウ"
+  },
+  {
+   "id": "bedai-jalebi",
+   "name": "ベダイとジャレビ",
+   "region": "north",
+   "city": "アーグラ"
+  },
+  {
+   "id": "agra-petha",
+   "name": "ペタ",
+   "region": "north",
+   "city": "アーグラ"
+  },
+  {
+   "id": "chole-bhature",
+   "name": "チョレ・バトゥレ",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "paratha-old-delhi",
+   "name": "パラータ",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "golgappa",
+   "name": "ゴルガッパ",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "dahi-bhalla",
+   "name": "ダヒ・バッラ",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "daulat-ki-chaat",
+   "name": "ダウラット・キ・チャート",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "nagori-halwa-bedmi",
+   "name": "ナゴリ・ハルワとベドミ・プーリー",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "kulfi-kuremal",
+   "name": "クルフィ",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "mutton-korma-karims",
+   "name": "マトン・コルマ",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "butter-chicken-moti-mahal",
+   "name": "バターチキン",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "gajar-halwa",
+   "name": "ガジャル・カ・ハルワ",
+   "region": "north",
+   "city": "デリー"
+  },
+  {
+   "id": "pyaaz-kachori",
+   "name": "ピャーズ・カチョリ",
+   "region": "north",
+   "city": "ジャイプル"
+  },
+  {
+   "id": "dal-baati-churma",
+   "name": "ダール・バーティ・チュルマ",
+   "region": "north",
+   "city": "ジャイプル"
+  },
+  {
+   "id": "amritsari-kulcha",
+   "name": "アムリトサリ・クルチャ",
+   "region": "north",
+   "city": "アムリトサル"
+  },
+  {
+   "id": "golden-temple-langar",
+   "name": "黄金寺院のランガル",
+   "region": "north",
+   "city": "アムリトサル"
+  },
+  {
+   "id": "amritsari-fish",
+   "name": "アムリトサリ・フィッシュ",
+   "region": "north",
+   "city": "アムリトサル"
+  },
+  {
+   "id": "lassi-amritsar",
+   "name": "ラッシー",
+   "region": "north",
+   "city": "アムリトサル"
+  },
+  {
+   "id": "dal-makhani-kesar",
+   "name": "ダル・マカニ",
+   "region": "north",
+   "city": "アムリトサル"
+  },
+  {
+   "id": "sarson-saag-makki-roti",
+   "name": "サルソン・ダ・サーグとマッキ・ディ・ロティ",
+   "region": "north",
+   "city": "アムリトサル"
+  },
+  {
+   "id": "kottu-roti",
+   "name": "コットゥ・ロティ",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "egg-hopper",
+   "name": "エッグ・ホッパー",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "string-hoppers",
+   "name": "ストリング・ホッパー",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "rice-and-curry",
+   "name": "ライス・アンド・カリー",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "isso-wade",
+   "name": "イッソ・ワデー",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "short-eats",
+   "name": "ショート・イーツ",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "lamprais",
+   "name": "ランプライス",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "pol-roti",
+   "name": "ポル・ロティ",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "srilanka-biryani",
+   "name": "スリランカのビリヤニ",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "watalappan",
+   "name": "ワタラッパン",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "ministry-of-crab",
+   "name": "マッドクラブ",
+   "region": "srilanka",
+   "city": "コロンボ"
+  },
+  {
+   "id": "ceylon-tea",
+   "name": "セイロン・ティー",
+   "region": "srilanka",
+   "city": "キャンディ"
+  },
+  {
+   "id": "ambul-thiyal",
+   "name": "アンブル・ティヤル",
+   "region": "srilanka",
+   "city": "ゴール"
+  },
+  {
+   "id": "jaffna-crab-curry",
+   "name": "ジャフナ・クラブ・カレー",
+   "region": "srilanka",
+   "city": "ジャフナ"
+  },
+  {
+   "id": "rio-ice-cream",
+   "name": "リオ・アイスクリーム",
+   "region": "srilanka",
+   "city": "ジャフナ"
+  }
+ ]
+}
