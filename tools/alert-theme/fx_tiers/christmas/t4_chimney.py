@@ -85,10 +85,12 @@ class Scene(Stage):
         self.stars = np.stack([R.random(n) * W, R.random(n) ** 1.3 * 1000, R.random(n), R.random(n), R.random(n)], -1)
         self.keep = self.thin_keep()
         # 雪は奥・中・手前の3段（大きさと速さを変える。手前は front。滞在 3秒で 1・2・3 回めぐる）
-        self.snow_far = Loop(170, 4102, cycles=(1, 1))
-        self.snow_mid = Loop(90, 4108, cycles=(2, 2))
-        self.near = Loop(34, 4103, cycles=(3, 3))
-        self.flake = {r: self.soft_dot(r) for r in (1.3, 2.3, 5.5)}
+        self.snow_far = Loop(200, 4102, cycles=(1, 1))
+        self.snow_mid = Loop(150, 4108, cycles=(2, 2))
+        self.near = Loop(84, 4103, cycles=(3, 3))
+        self.flake = {r: self.soft_dot(r) for r in (1.6, 2.7, 3.0, 6.5)}
+        # 手前をゆっくり昇る金と白のぼけ玉（front。滞在の輪で1めぐり）
+        self.bok = Loop(12, 4111, cycles=(1, 1))
         self.dust = Loop(60, 4104, cycles=(1, 2))
         # 夜空のきらめく星（大きな十字の星。夜空の上の 2/3 に）
         R = np.random.default_rng(4109)
@@ -314,6 +316,15 @@ class Scene(Stage):
         kd = np.sin(np.pi * a3) ** 1.5 * (0.2 + 0.6 * dd.r[:, 3] ** 2) * tw * ease(ramp(Ti, 1.4, 2.4)) * out_k * calm
         sp_f.add_screen(x, y, GOLD[None] * kd[:, None])
         sp_f.into(front)
+        bk = ease(ramp(Ti, 1.6, 2.6)) * out_k
+        for j in range(self.bok.n):
+            rr = self.bok.r[j]
+            a1 = self.bok.age(c)[j]
+            x = (rr[0] * 1.1 - 0.05) * W + 30 * math.sin(6.283 * (a1 + rr[1]))
+            y = H * (0.95 - 0.8 * a1) - rr[2] * 120
+            kk = math.sin(math.pi * a1) ** 2 * (0.07 + 0.07 * rr[3]) * bk
+            spr = self.kit.bokeh_spr(26 + rr[4] * 40, j % 3, [GOLD, WHITE, GOLD * 0.7 + WHITE * 0.4][j % 3], 6 + rr[5] * 6)
+            fxv.stamp(front.L, spr, x, y, kk)
         if intro:
             rv = T - self.REVEAL
             if 0 <= rv < 0.9:
@@ -335,8 +346,8 @@ class Scene(Stage):
 
     def snowfall(self, c, back, front, amb, thin):
         """箱ぜんぶに降る雪（奥・中は back、手前は front）。全部 Loop の周期で書くので、滞在の継ぎ目でつながる"""
-        for g, r, k_, fall, sway, cv in ((self.snow_far, 1.3, 0.5, 1300, 14, back), (self.snow_mid, 2.3, 0.68, 1340, 24, back),
-                                          (self.near, 5.5, 0.42, 1420, 40, front)):
+        for g, r, k_, fall, sway, cv in ((self.snow_far, 1.6, 0.55, 1300, 14, back), (self.snow_mid, 3.0, 0.7, 1340, 24, back),
+                                          (self.near, 6.5, 0.5, 1420, 40, front)):
             a = g.age(c)
             x = g.r[:, 0] * W + sway * np.sin(6.283 * (a * 2 + g.r[:, 1]))
             y = -30 + a * fall
@@ -444,7 +455,7 @@ class Scene(Stage):
             sp_f.add_screen(x[near], y[near], (WHITE * 1.1)[None] * kd[near, None] * 0.6, coc=4.0)
             for j in range(0, len(x), 3):
                 if kd[j] > 0.05:
-                    fxv.stamp(back.L, self.flake[2.3 if j % 2 else 5.5], float(x[j]), float(y[j]), float(kd[j]) * 0.7)
+                    fxv.stamp(back.L, self.flake[2.7 if j % 2 else 6.5], float(x[j]), float(y[j]), float(kd[j]) * 0.7)
         # 金の粉が口から噴水のように噴き出して、きらめきながら落ちる
         if 0 <= age < 1.3:
             g = self.gold_v
