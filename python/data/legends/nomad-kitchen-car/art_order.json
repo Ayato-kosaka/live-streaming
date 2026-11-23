@@ -157,7 +157,7 @@
   }
  ],
  "photos": {
-  "rule": "キッチンカーの実際の様子の写真の候補（Wikimedia Commons。public domain・CC0・CC BY・CC BY-SA だけ）。運営が 2026-11-23 に 500px の縮小で、人の顔・店の名前・ロゴが分からないことを見た。絵担当は 960px で見直し、4〜8枚を photos.json に選ぶ（checked に見た日）。面に添えるのは撮った人と許諾だけ",
+  "rule": "キッチンカーの実際の様子の写真の候補（Wikimedia Commons。public domain・CC0・CC BY・CC BY-SA だけ）。運営が 2026-11-23 に 500px の縮小で、人の顔・店の名前・ロゴが分からないことを見た5枚。車や扉の字が店の名前・所在地・連絡先として読めるものは候補に入れない。絵担当は 960px で見直し、4〜8枚を photos.json に選ぶ（checked に見た日）。面に添えるのは撮った人と許諾だけ",
   "candidates": [
    {
     "id": "brussels-waffle-van",
@@ -198,14 +198,6 @@
     "lic": "CC BY-SA 2.0",
     "taken": "2009-08-06",
     "note": "ポルトガルのファロの揚げ菓子の屋台（閉まっている）。字は料理の一般の名前だけ。人なし"
-   },
-   {
-    "id": "dresden-three-wheeler",
-    "page": "https://commons.wikimedia.org/wiki/File:Tempo_Hanseat.jpg",
-    "by": "Fotostudio Štěpán Bartoš",
-    "lic": "CC BY-SA 3.0",
-    "taken": "2007-06-23",
-    "note": "ドレスデンの古い三輪の販売車。人なし。扉の丸い印が店のロゴかを 960px で見る"
    }
   ]
  }

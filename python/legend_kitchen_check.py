@@ -15,11 +15,11 @@
 ## 何を数えるか
 
 1. **形** — 欄は型にあるものだけ。知らない欄が1つでもあれば落ちる（ひと月の収支や実現度の欄は、これで入らない）
-2. **数** — 景色5・売るもの5・食べ物5・中身10〜30・場所3〜5・外装と内装4組・車4・暮らしの課題46・題30・お題6・進み具合6 ほか
+2. **数** — 景色5・売るもの5・食べ物5・中身10〜30・場所3〜5・外装と内装4〜8組・車4・暮らしの課題46・題30・お題6・進み具合6 ほか
 3. **鍵** — id は英小文字とハイフンで、同じ並びの中で一意。指す先（食べ物・中身・場所・スプライト・島の国の面）が在る
 4. **出どころ** — 数を持つ入れ物は `src`（https）か `est`（見立ての欄の名前）を持つ。1つの `src` に同じ URL を2回書かない
-5. **言い切りの字** — 見出し・目標・表紙の注・働くための手続きの1文は型の字と1字も違わない。名前の決まった並び
-   （景色・食べ物・外装・車・買うか借りるか・お題）も型の字のまま
+5. **言い切りの字** — 見出し・目標・表紙の注・働くための手続きの1文・ルートと許可の地の文は型の字と1字も違わない。
+   名前の決まった並び（景色・食べ物・外装の先頭4組・車・買うか借りるか・お題）も型の字のまま
 6. **字の形** — 一行の字に読点と括弧の強め（“”『』「」）を置かない。名前に「数＋つの」の呼び名を作らない（`docs/guide-copy.md`
    6章の12）。% の字は確かめた事実の中だけ（実現度の数を出さない）。「あと◯日」を書かない
 7. **絵の注文書** — 景色・食べ物・車・外装と内装の id と並びが本と同じ。字と布と顔を描かせない頼み。絵地図の枠に線と地名が入る。
@@ -66,8 +66,9 @@ EXACT = {
     "meta.goal": "2027年の秋ごろの開始を目標に進めている（2026年11月）",
     "cover.note": "2026年11月に調べた範囲では、キッチンカーでヨーロッパを一周した例は見つからなかった",
     "issues.work.text": "ヨーロッパは国ごとに、外国人が働いてよいかの決まりが違う。いくつか道を調べ、2026年11月、そのうち1本に手応えが出た",
-    "route.said.text": "ポルトガルから北欧、ギリシャのあたりまで",
-    "issues.permit.said.text": "1つめの国で売りながら、次の国の許可を取りに行く",
+    # あやとの字そのものではないので、本人の言葉の枠（「」）で引かず、案内鳥の地の文として持つ
+    "route.plan.text": "あやとの例は、ポルトガルから北欧、ギリシャのあたりまで",
+    "issues.permit.plan.text": "あやとの考えは、1つめの国で売りながら、次の国の許可を取りに行くこと",
 }
 QUOTES = ["world-first", "dream"]
 LABELS = [("portugal", "ポルトガル"), ("nordic", "北欧"), ("greece", "ギリシャ")]
@@ -77,6 +78,7 @@ FOODS = [("taiyaki", "たい焼き"), ("takoyaki", "たこ焼き"), ("crepe", "�
 NO_SIM = {"pizza"}
 PICKS = [(1, "taiyaki"), (2, "takoyaki"), (3, "crepe"), (3, "waffle"), (3, "pizza")]
 LOOKS = [("nordic", "北欧風"), ("majolica", "イタリアのマジョリカ焼き"), ("azulejo", "ポルトガルのタイル"), ("wa", "和風")]
+LOOKS_MAX = 8      # 5組目からは、あやとが ChatGPT で描いて渡した絵の組（#1418 本文2章の5）
 MAJOLICA_ROOM = "サンスーシ宮殿の花の部屋"
 VEHICLES = [("small-van", "小さい車"), ("box-van", "窓口つきの箱バン"), ("campervan-tent", "キャンピングバン＋テントの屋台"),
             ("camper-trailer", "キャンピングカー＋販売トレーラー")]
@@ -84,7 +86,7 @@ FIRST_VEHICLE = "box-van"
 BUY_OR_RENT = [("buy", "買う"), ("rent", "借りる")]
 INPUTS = ["price", "sold", "cost", "fee-fixed", "fee-share", "gas-kg", "drive-km"]
 DEFAULT_INPUT = "drive-km"
-FIXED = ["lpg_eur_kg", "diesel_eur_l", "l_per_100km"]
+FIXED = ["lpg_eur_kg", "diesel_eur_l", "l_per_100km", "power_eur_kwh", "vat_pct"]
 SAY = ["bake", "crowd", "loss", "thin", "pricey", "unknown", "good"]
 LAYERS = ["before", "food", "place", "gear"]
 WEIGHTS = {"light", "mid", "heavy", "heaviest"}
@@ -111,8 +113,9 @@ SHAPE = {
     "rate": ({"jpy_per_eur", "date", "src"}, set()),
     "meta": ({"title", "description", "h1", "sub", "goal"}, set()),
     "cover": ({"quotes", "note"}, set()),
-    "quote": ({"id", "text", "date", "videoId", "at"}, set()),
-    "route": ({"said", "line", "labels", "countries"}, set()),
+    "quote": ({"id", "text", "date"}, {"videoId", "at"}),
+    "route": ({"plan", "line", "labels", "countries"}, set()),
+    "plan": ({"text", "date"}, set()),
     "point": ({"lat", "lon"}, set()),
     "label": ({"id", "name", "lat", "lon"}, set()),
     "said": ({"date"}, {"text", "videoId", "at"}),
@@ -123,7 +126,7 @@ SHAPE = {
     "idea": ({"id", "name", "food", "from", "date"}, set()),
     "food": ({"id", "name", "unit", "sim", "per_hour", "price", "cost", "dough", "pack", "machine", "energy", "src", "est"},
              {"seen"}),
-    "energy": ({"kind", "text", "gas_kg_h"}, set()),
+    "energy": ({"kind", "text", "gas_kg_h", "elec_kw"}, set()),
     "filling": ({"id", "name", "foods", "cost", "known", "allergens", "flags", "from", "src", "est"}, {"sprite", "seen"}),
     "place": ({"id", "name", "fee", "hours", "buyers", "src", "est"}, {"seen"}),
     "sim": ({"food", "fillings", "price", "place", "say"}, set()),
@@ -137,7 +140,7 @@ SHAPE = {
     "fixedv": ({"value", "src"}, {"est", "seen"}),
     "issues": ({"as_of", "work", "permit", "life"}, set()),
     "work": ({"text"}, set()),
-    "permit": ({"said", "layers", "compare"}, set()),
+    "permit": ({"plan", "layers", "compare"}, set()),
     "layer": ({"id", "title", "text", "weight", "src"}, {"seen"}),
     "compare": ({"id", "label", "japan", "europe", "src"}, {"seen"}),
     "life": ({"n", "id", "group", "title", "plan", "stars"}, {"src", "seen"}),
@@ -379,11 +382,12 @@ def check_book(c: Check, b: dict):
         for k, q in enumerate(qs):
             if shape(c, q, "quote", f"cover.quotes[{k}]"):
                 text(c, q["text"], f"cover.quotes[{k}].text")
-                said(c, {x: q[x] for x in ("date", "videoId", "at")}, f"cover.quotes[{k}]", True)
+                # 場面のリンク（videoId・at）は無くてよい（日付だけで引く）。持つなら両方
+                said(c, {x: q[x] for x in ("date", "videoId", "at") if x in q}, f"cover.quotes[{k}]", False)
     exact = {"meta.h1": m.get("h1"), "meta.goal": m.get("goal"), "cover.note": cv.get("note"),
              "issues.work.text": ((b["issues"] or {}).get("work") or {}).get("text"),
-             "route.said.text": ((b["route"] or {}).get("said") or {}).get("text"),
-             "issues.permit.said.text": (((b["issues"] or {}).get("permit") or {}).get("said") or {}).get("text")}
+             "route.plan.text": ((b["route"] or {}).get("plan") or {}).get("text"),
+             "issues.permit.plan.text": (((b["issues"] or {}).get("permit") or {}).get("plan") or {}).get("text")}
     for k, v in exact.items():
         if v != EXACT[k]:
             c.no(k, f"型の字と違う: {v!r}")
@@ -391,7 +395,8 @@ def check_book(c: Check, b: dict):
     # ---- ルートと景色
     r = b["route"]
     if shape(c, r, "route", "route"):
-        said(c, r["said"], "route.said", False, True)
+        if shape(c, r["plan"], "plan", "route.plan"):
+            date(c, r["plan"]["date"], "route.plan.date")
         count(c, "route.line", len(r["line"]), COUNTS["route.line"])
         for k, p in enumerate(r["line"]):
             if shape(c, p, "point", f"route.line[{k}]"):
@@ -415,7 +420,7 @@ def check_book(c: Check, b: dict):
     for k, v in enumerate(b["views"]):
         if shape(c, v, "view", f"views[{k}]"):
             one_line(c, v["lead"], f"views[{k}].lead", 30, 0)
-            said(c, v["said"], f"views[{k}].said", True)
+            said(c, v["said"], f"views[{k}].said", False)
 
     # ---- 売るもの
     foods = b["foods"]
@@ -441,6 +446,8 @@ def check_book(c: Check, b: dict):
                 c.no(w + ".energy", f"kind が {e['kind']!r}（電気かガス）")
             elif not is_num(e["gas_kg_h"]) or (e["kind"] == "電気") != (e["gas_kg_h"] == 0):
                 c.no(w + ".energy", "gas_kg_h は電気なら 0、ガスなら 0 より大きい数")
+            elif not is_num(e["elec_kw"]) or (e["kind"] == "電気") != (e["elec_kw"] > 0) or e["elec_kw"] < 0:
+                c.no(w + ".energy", "elec_kw は電気なら 0 より大きい数（kW）、ガスなら 0")
         src_or_est(c, f, w, {"per_hour", "price", "cost", "dough", "pack", "gas_kg_h"})
     menu = b["menu"]
     if shape(c, menu, "menu", "menu"):
@@ -540,9 +547,15 @@ def check_book(c: Check, b: dict):
             for k2, v in say.items():
                 one_line(c, v, f"sim.say.{k2}", 40, 6)
 
-    # ---- 外装と内装・車
-    fixed_list(c, b["looks"], LOOKS, "looks")
-    for k, x in enumerate(b["looks"]):
+    # ---- 外装と内装・車（先頭の4組は型のとおり。5組目からは、あやとが描いて渡した絵の組を足してよい）
+    looks = b["looks"] if isinstance(b["looks"], list) else []
+    fixed_list(c, looks[:len(LOOKS)], LOOKS, "looks の先頭")
+    count(c, "looks", len(looks), (len(LOOKS), LOOKS_MAX))
+    ids(c, looks, "looks")
+    for k, x in enumerate(looks):
+        if k >= len(LOOKS) and isinstance(x, dict):
+            text(c, x.get("name"), f"looks[{k}].name")
+            coined(c, x.get("name"), f"looks[{k}].name")
         w = f"looks[{k}]"
         if not shape(c, x, "look", w):
             continue
@@ -614,6 +627,8 @@ def check_book(c: Check, b: dict):
                     srcs(c, v, w)
                     if "est" in v and (not isinstance(v["est"], list) or any(e != "value" for e in v["est"])):
                         c.no(w, "est は value だけ")
+                    if k2 == "vat_pct" and is_num(v["value"]) and not v["value"] < 100:
+                        c.no(w, "付加価値税の % が100以上")
         # 2つのシミュレーションは同じ1匹から始める: その1匹の値が、つまみの幅に入ること
         if isinstance(sim, dict) and sim.get("place") in pl and "price" in lim:
             p = sim.get("price")
@@ -634,7 +649,8 @@ def check_book(c: Check, b: dict):
         shape(c, iss["work"], "work", "issues.work")
         pm = iss["permit"]
         if shape(c, pm, "permit", "issues.permit"):
-            said(c, pm["said"], "issues.permit.said", False, True)
+            if shape(c, pm["plan"], "plan", "issues.permit.plan"):
+                date(c, pm["plan"]["date"], "issues.permit.plan.date")
             c.counts.append(("issues.permit.layers", f"{len(pm['layers'])}/{len(LAYERS)}"))
             if [x.get("id") for x in pm["layers"] if isinstance(x, dict)] != LAYERS:
                 c.no("issues.permit.layers", f"id と並びは {LAYERS}")
@@ -713,8 +729,8 @@ def check_book(c: Check, b: dict):
         last = k == len(pg) - 1
         if last and "said" in x:
             c.no(w, "このページの行は場面を持たない")
-        if not last:
-            sd = x.get("said")
+        if not last and "said" in x:   # 場面のリンクは無くてよい（日付だけの行）。持つなら {videoId, at}
+            sd = x["said"]
             if not (isinstance(sd, dict) and set(sd) == {"videoId", "at"}):
                 c.no(w, "said は {videoId, at}")
             else:

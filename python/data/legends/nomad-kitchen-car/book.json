@@ -11,7 +11,7 @@
  },
  "meta": {
   "title": "ノマドキッチンカープロジェクト【キッチンカーでヨーロッパ一周】",
-  "description": "キッチンカーでたい焼きを売りながらヨーロッパを一周する企画の計画。ルートと景色、売るもの、外装と内装、1日の収益、ヨーロッパで売るための課題を、出どころつきでまとめた。2027年の秋ごろの開始を目標に進めている（2026年11月）。",
+  "description": "キッチンカーでたい焼きを売りながらヨーロッパを一周する企画。ルートと景色のイメージ、メニュー開発と1日の収益のシミュレーション、3Dで外装と内装の着せ替え、課題一覧を載せた。2027年の秋ごろの開始を目標に進めている（2026年11月）。",
   "h1": "ノマドキッチンカープロジェクト",
   "sub": "キッチンカーでたい焼きを売りながらヨーロッパを一周する",
   "goal": "2027年の秋ごろの開始を目標に進めている（2026年11月）"
@@ -21,23 +21,19 @@
    {
     "id": "world-first",
     "text": "世界初の、世界初",
-    "date": "2026-11-09",
-    "videoId": "WiSPWzjqZZA",
-    "at": "2:02:30"
+    "date": "2026-11-09"
    },
    {
     "id": "dream",
     "text": "夢の夢の夢のプロジェクト",
-    "date": "2026-11-21",
-    "videoId": "A_cJ9CNM0G8",
-    "at": "4:11:30"
+    "date": "2026-11-21"
    }
   ],
   "note": "2026年11月に調べた範囲では、キッチンカーでヨーロッパを一周した例は見つからなかった"
  },
  "route": {
-  "said": {
-   "text": "ポルトガルから北欧、ギリシャのあたりまで",
+  "plan": {
+   "text": "あやとの例は、ポルトガルから北欧、ギリシャのあたりまで",
    "date": "2026-11-23"
   },
   "line": [
@@ -164,7 +160,7 @@
   {
    "id": "sea-town",
    "title": "海が見える町",
-   "lead": "坂の上から海が見える小さな町",
+   "lead": "坂道の先に広がる青い入り江",
    "said": {
     "date": "2026-11-21",
     "videoId": "A_cJ9CNM0G8",
@@ -184,7 +180,7 @@
   {
    "id": "local-spot",
    "title": "地元の穴場",
-   "lead": "観光の本に載らない景色を探す",
+   "lead": "ガイドブックに載らない景色を探す",
    "said": {
     "date": "2026-11-21",
     "videoId": "A_cJ9CNM0G8",
@@ -194,11 +190,9 @@
   {
    "id": "italy-seaside",
    "title": "イタリアの海辺",
-   "lead": "海辺で冷たいコーラも売りたい",
+   "lead": "ここでコーラを売りたい",
    "said": {
-    "date": "2026-11-08",
-    "videoId": "qAXRe3qQyvo",
-    "at": "3:08:30"
+    "date": "2026-11-08"
    }
   }
  ],
@@ -241,19 +235,19 @@
    },
    {
     "id": "cute",
-    "text": "魚の形がかわいくて見た目で足が止まる"
+    "text": "知らない人が見てもかわいい魚の形"
    },
    {
     "id": "known-fillings",
-    "text": "チョコやバナナやイチゴなら食べる前に中身が分かる"
+    "text": "チョコやバナナやイチゴなら食べる前から味の想像がつく"
    },
    {
     "id": "anko-tako",
-    "text": "あんこやたこは中身が分からず買うのをためらわれる"
+    "text": "あんこやたこは中身が分からず買うハードルが上がる"
    },
    {
     "id": "made-by-japanese",
-    "text": "日本の形のお菓子を日本人が焼くので自然に見える"
+    "text": "日本人が作っているとアピールできるお菓子"
    }
   ],
   "ideas": [
@@ -280,7 +274,7 @@
    },
    {
     "id": "taiyaki-parfait",
-    "name": "魚の口からクリームが出るたい焼きのパフェ",
+    "name": "魚の口からアイスクリームが出るたい焼きのパフェ",
     "food": "taiyaki",
     "from": "ayato",
     "date": "2026-11-22"
@@ -295,6 +289,13 @@
    {
     "id": "dessert-takoyaki",
     "name": "イチゴやチョコを入れたデザートのたこ焼き",
+    "food": "takoyaki",
+    "from": "ayato",
+    "date": "2026-11-21"
+   },
+   {
+    "id": "pizza-takoyaki",
+    "name": "ピザ風のたこ焼き",
     "food": "takoyaki",
     "from": "ayato",
     "date": "2026-11-21"
@@ -321,22 +322,8 @@
     "date": "2026-11-21"
    },
    {
-    "id": "winged-taiyaki",
-    "name": "羽根つきの大きなたい焼き",
-    "food": "taiyaki",
-    "from": "viewer",
-    "date": "2026-11-21"
-   },
-   {
     "id": "sausage-takoyaki",
     "name": "ウインナーとケチャップのたこ焼き",
-    "food": "takoyaki",
-    "from": "viewer",
-    "date": "2026-11-21"
-   },
-   {
-    "id": "pizza-takoyaki",
-    "name": "ピザ風のたこ焼き",
     "food": "takoyaki",
     "from": "viewer",
     "date": "2026-11-21"
@@ -361,8 +348,8 @@
     60
    ],
    "price": [
-    2.6,
-    4.5
+    2.0,
+    3.6
    ],
    "cost": [
     0.2,
@@ -380,12 +367,13 @@
    "energy": {
     "kind": "電気",
     "text": "3.2kW（イベントの16Aの電源1口に1台）",
-    "gas_kg_h": 0
+    "gas_kg_h": 0,
+    "elec_kw": 3.2
    },
    "src": [
     "https://glovoapp.com/kk/bg/sofia/stores/taiyaki-spot-sof",
-    "https://www.ubereats.com/fr-en/store/taiyaki-paris/WoqY_0cXSLiceaux1ej_dQ",
-    "https://www.timeout.pt/lisboa/pt/noticias/nos-anjos-este-cafe-serve-uma-especialidade-de-taiwan-e-e-bem-doce-091725",
+    "https://www.speisekarte.de/berlin/restaurant/mr_melon_pan/speisekarte",
+    "https://www.expats.cz/czech-news/article/taiyaki-bar-a-japanese-ice-cream-spot-debuts-in-prague",
     "https://maxima.com/de/digitales-waffeleisen-taiyaki-fischform-5-stueck.html",
     "https://server.maximakitchenequipment.com/maxima/maxima-manuals/09374182_UM.pdf",
     "https://www.supermarktcheck.de/aldi-nord/sortiment/mehl/",
@@ -424,11 +412,12 @@
     0.05,
     0.12
    ],
-   "machine": "たこ焼きの鉄板（28穴を2枚）とCEの印のあるガスこんろ",
+   "machine": "たこ焼きの鉄板（28穴を2枚）とCEマークのあるガスこんろ",
    "energy": {
     "kind": "ガス",
     "text": "ガス 約0.26kg/時",
-    "gas_kg_h": 0.26
+    "gas_kg_h": 0.26,
+    "elec_kw": 0
    },
    "src": [
     "https://www.sortiraparis.com/en/where-to-eat-in-paris/restaurant/articles/291509-moemachi-small-takoyaki-shop-on-the-trail",
@@ -467,11 +456,12 @@
     0.03,
     0.08
    ],
-   "machine": "ガスのクレープ焼き（鉄板は直径40cm）",
+   "machine": "ガスのクレープ焼き器（鉄板は40×40cm）",
    "energy": {
     "kind": "ガス",
     "text": "ガス 最大約0.47kg/時（6.04kW）",
-    "gas_kg_h": 0.47
+    "gas_kg_h": 0.47,
+    "elec_kw": 0
    },
    "src": [
     "https://www.stuttgarter-zeitung.de/lokales/esslingen/weihnachtsmarkt-esslingen-was-kosten-gluehwein-und-schwaebische-pizza-es-herrscht-so-eine-stimmung-78880896.html",
@@ -511,18 +501,19 @@
     0.05,
     0.15
    ],
-   "machine": "ガスのワッフル焼き（2枚の鉄・40kg）",
+   "machine": "ガスのワッフル焼き器（焼き型2組・40kg）",
    "energy": {
     "kind": "ガス",
     "text": "ガス 最大約0.41kg/時（5.24kW）",
-    "gas_kg_h": 0.41
+    "gas_kg_h": 0.41,
+    "elec_kw": 0
    },
    "src": [
     "https://www.restaupro.com/pdf/produit_fiche_19046.pdf",
-    "https://www.berliner-kurier.de/berlin/gluehwein-bratwurst-so-teuer-sind-weihnachtsmaerkte-in-berlin-li.10006924",
     "https://www.youtube.com/watch?v=A_cJ9CNM0G8&t=13710s"
    ],
    "est": [
+    "price",
     "cost",
     "dough",
     "pack",
@@ -558,7 +549,8 @@
    "energy": {
     "kind": "ガス",
     "text": "ガス 最大1.35kg/時（24kW）",
-    "gas_kg_h": 1.35
+    "gas_kg_h": 1.35,
+    "elec_kw": 0
    },
    "src": [
     "https://www.speisekarte.de/ingolstadt-donau/restaurant/apizz_pizzawagen_foodtruck_ingolstadt/speisekarte",
@@ -799,7 +791,7 @@
     "乳"
    ],
    "flags": [],
-   "from": "viewer",
+   "from": "ayato",
    "sprite": "food-cheese",
    "src": [],
    "est": [
@@ -900,7 +892,7 @@
  "places": [
   {
    "id": "town-market",
-   "name": "街の市",
+   "name": "青空市場",
    "fee": {
     "kind": "fixed",
     "eur": [
@@ -946,12 +938,12 @@
   },
   {
    "id": "winter-market",
-   "name": "冬の市",
+   "name": "クリスマスマーケット",
    "fee": {
     "kind": "fixed",
     "eur": [
      13,
-     117
+     227
     ]
    },
    "hours": 8,
@@ -969,7 +961,7 @@
   },
   {
    "id": "japan-fest",
-   "name": "日本の祭り",
+   "name": "日本文化のイベント",
    "fee": {
     "kind": "fixed",
     "eur": [
@@ -986,6 +978,7 @@
     "https://www.visitduesseldorf.de/_Resources/Persistent/3966c6f550da854645695fa79ab32cb90107cb56/Informationen-Teilnahme-Zelt_2026.pdf"
    ],
    "est": [
+    "fee",
     "buyers"
    ]
   }
@@ -1013,19 +1006,19 @@
   {
    "id": "nordic",
    "name": "北欧風",
-   "lead": "白地に赤と藍の草花を並べた帯",
+   "lead": "白い車体に赤と藍のチューリップが咲く",
    "interior": {
     "name": "北欧風の内装",
-    "lead": "白木の内壁に草花の帯を薄く入れる"
+    "lead": "肩の高さに草花の帯を通した白木の壁"
    }
   },
   {
    "id": "majolica",
    "name": "イタリアのマジョリカ焼き",
-   "lead": "白地にレモンと花を描いた焼き物の絵付け",
+   "lead": "黄・青・緑の3色で描いたレモンと花",
    "interior": {
     "name": "サンスーシ宮殿の花の部屋",
-    "lead": "黄色の壁に花と果物と鳥を色で塗った木彫り",
+    "lead": "黄色の壁に色を塗った花と果物と鳥の木彫り",
     "src": [
      "https://de.wikipedia.org/wiki/Schloss_Sanssouci",
      "https://www.deutsche-digitale-bibliothek.de/item/I2GDFFLJYWYQAC2A22EHWKMFSQOJOCZG"
@@ -1035,19 +1028,19 @@
   {
    "id": "azulejo",
    "name": "ポルトガルのタイル",
-   "lead": "藍と白の四角いタイルを敷き詰めた柄",
+   "lead": "藍と白のタイルで車体を包む",
    "interior": {
     "name": "ポルトガルのタイルの内装",
-    "lead": "台所の内壁だけを藍と白のタイルにする"
+    "lead": "壁の下半分だけを藍と白のタイルにする"
    }
   },
   {
    "id": "wa",
    "name": "和風",
-   "lead": "藍地に青海波と麻の葉の文様",
+   "lead": "藍に白く染め抜いた青海波と麻の葉",
    "interior": {
     "name": "和風の内装",
-    "lead": "木の内壁に青海波を薄く入れる"
+    "lead": "窓口に短い藍ののれんを掛ける"
    }
   }
  ],
@@ -1069,8 +1062,8 @@
     "what": "改造する前の中古のバン（オランダとドイツの掲載例）"
    },
    "license": "EUのB免許（総重量3,500kgまで）",
-   "good": "小さく停めやすく作る様子も見せられる",
-   "weak": "狭く寝床と台所が同じ箱になる",
+   "good": "小さくて停めやすい。自分で改造する様子も見せられる",
+   "weak": "狭い。寝床と台所が同じ箱になる",
    "first": false,
    "src": [
     "https://www.marktplaats.nl/q/hoogdak+bestelbus/",
@@ -1083,13 +1076,13 @@
    "price": {
     "eur": [
      7950,
-     34975
+     75630
     ],
-    "what": "中古の販売車（ドイツ・オランダ・ポルトガルの掲載例）"
+    "what": "中古の販売車の掲載例（オランダ・ドイツ・ポルトガル。ドイツは税別）"
    },
    "license": "EUのB免許（総重量3,500kgまで）",
-   "good": "売る設備がそろっていて窓口と看板が絵になる",
-   "weak": "寝床が無く古い車は排ガスの規制区域に入れない",
+   "good": "売る設備がそろっている。窓口と看板が絵になる",
+   "weak": "中古の販売車には寝床が無いので作り足す。古い車は排ガスの規制区域に入れない",
    "first": true,
    "src": [
     "https://www.truckscout24.de/transporter/gebraucht/verkaufswagen-food-truck",
@@ -1105,11 +1098,11 @@
      4999,
      81965
     ],
-    "what": "中古のキャンピングカーの掲載例（オランダ。中央値は約€31,000）。テントの屋台一式は別"
+    "what": "中古のキャンピングカーの掲載例（オランダ。1ページ目の真ん中の値は約€30,000）。テントの屋台一式は別"
    },
    "license": "EUのB免許（総重量3,500kgまで）",
-   "good": "寝床と店が別の箱でいちばん安く始められる",
-   "weak": "キッチンカーの絵が弱くテントを出せる場所が限られる",
+   "good": "寝床と店が分かれる。いちばん安く始められる",
+   "weak": "ひと目でキッチンカーと分かりにくい。テントを出せる場所が限られる",
    "first": false,
    "src": [
     "https://www.marktplaats.nl/q/buscamper/",
@@ -1128,7 +1121,7 @@
    },
    "license": "750kgを超えるトレーラーはEUのB96かBE（日本ではけん引免許）",
    "good": "住まいと店が別の箱になる",
-   "weak": "1人でのバックが難しく船や通行料が長さで高くなる",
+   "weak": "1人でのバックが難しい。船や通行料が長さで高くなる",
    "first": false,
    "src": [
     "https://www.marktplaats.nl/q/foodtruck/",
@@ -1141,7 +1134,7 @@
   {
    "id": "buy",
    "name": "買う",
-   "price": "中古の販売車は€7,950〜34,975の掲載例",
+   "price": "中古の販売車は€7,950〜75,630の掲載例（ドイツは税別）",
    "good": "改造も登録も思いどおりに決められる",
    "weak": "始めに大きなお金が要る",
    "src": [
@@ -1153,7 +1146,7 @@
   {
    "id": "rent",
    "name": "借りる",
-   "price": "キャンピングカーは1日€50〜220（ポルトガル）。販売車は1か月€9,000〜14,000（ドイツ・2021年）",
+   "price": "キャンピングカーは1日€50〜220（ポルトガル）。販売車は平日1日€950の例（ドイツ・2021年）",
    "good": "始めのお金が小さく下見の旅に向く",
    "weak": "国をまたぐことや改造や商売に使うことを禁じる貸し手が多い",
    "src": [
@@ -1168,11 +1161,11 @@
     "id": "price",
     "min": 2,
     "max": 8,
-    "step": 0.5,
+    "step": 0.1,
     "src": [
      "https://glovoapp.com/kk/bg/sofia/stores/taiyaki-spot-sof",
-     "https://www.ubereats.com/fr-en/store/taiyaki-paris/WoqY_0cXSLiceaux1ej_dQ",
-     "https://www.timeout.pt/lisboa/pt/noticias/nos-anjos-este-cafe-serve-uma-especialidade-de-taiwan-e-e-bem-doce-091725"
+     "https://www.speisekarte.de/berlin/restaurant/mr_melon_pan/speisekarte",
+     "https://www.expats.cz/czech-news/article/taiyaki-bar-a-japanese-ice-cream-spot-debuts-in-prague"
     ],
     "est": []
    },
@@ -1180,7 +1173,7 @@
     "id": "sold",
     "min": 10,
     "max": 150,
-    "step": 5,
+    "step": 1,
     "src": [],
     "est": [
      "max"
@@ -1190,7 +1183,7 @@
     "id": "cost",
     "min": 0.1,
     "max": 1.5,
-    "step": 0.05,
+    "step": 0.01,
     "src": [
      "https://www.supermarktcheck.de/aldi-nord/sortiment/mehl/",
      "https://www.aldi-sued.de/newsroom/alle-pressemitteilungen/marke-und-produkte/2026/gegen-den-trend--aldi-laesst-schokoladenpreise-schmelzen"
@@ -1203,7 +1196,7 @@
     "id": "fee-fixed",
     "min": 0,
     "max": 400,
-    "step": 10,
+    "step": 1,
     "src": [
      "https://www.nuernberg.de/imperia/md/maerkte/dokumente/gebuehrentarif.pdf",
      "https://www.bad-homburg.de/events/weihnachtsstadt/Weihnachtsstadt%202026/AVB_Weihnachtsmarkt%20Schloss_Winterzauber_Bad%20Homburg%202026.pdf"
@@ -1227,7 +1220,7 @@
     "id": "gas-kg",
     "min": 0,
     "max": 5,
-    "step": 0.5,
+    "step": 0.1,
     "src": [
      "https://www.ggmgastro.com/en-gb-eur/commercial-gas-crepe-maker-thermostatic-control-cgom5-plcgom6",
      "https://www.endoshoji.co.jp/catalog_v212/pdf/P1002.pdf"
@@ -1271,6 +1264,21 @@
     "src": [
      "https://www.promobil.de/weitere-ratgeber/so-testet-promobi-kraftstoff-verbrauch-diesel-wohnmobil/"
     ]
+   },
+   "power_eur_kwh": {
+    "value": 0.34,
+    "src": [
+     "https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_205/default/table?lang=en"
+    ]
+   },
+   "vat_pct": {
+    "value": 7,
+    "src": [
+     "https://europa.eu/youreurope/business/taxation/vat/vat-rules-rates/index_en.htm"
+    ],
+    "est": [
+     "value"
+    ]
    }
   }
  },
@@ -1280,8 +1288,8 @@
    "text": "ヨーロッパは国ごとに、外国人が働いてよいかの決まりが違う。いくつか道を調べ、2026年11月、そのうち1本に手応えが出た"
   },
   "permit": {
-   "said": {
-    "text": "1つめの国で売りながら、次の国の許可を取りに行く",
+   "plan": {
+    "text": "あやとの考えは、1つめの国で売りながら、次の国の許可を取りに行くこと",
     "date": "2026-11-23"
    },
    "layers": [
@@ -1298,7 +1306,7 @@
     {
      "id": "food",
      "title": "食べ物の登録",
-     "text": "EUの規則で、車1台を1つの施設として本拠の国の当局に届け出る。多くの国で審査のない届け出",
+     "text": "EUの規則で、車1台を1つの施設として、事業を登録した国の当局に届け出る。多くの国で審査のない届け出",
      "weight": "light",
      "src": [
       "https://www.legislation.gov.uk/eur/2004/852/article/6/adopted",
@@ -1309,7 +1317,7 @@
     {
      "id": "place",
      "title": "売る場所の許可",
-     "text": "自治体や主催者が場所ごとに出す。応募の締め切りが先に来る（オランダは8〜12週、ギリシャは30日以上の公募と約2か月）",
+     "text": "自治体や主催者が場所ごとに出す。許可が下りるまで時間がかかる（オランダは8〜12週、ギリシャは公募と約2か月）",
      "weight": "heavy",
      "src": [
       "https://business.gov.nl/starting-your-business/starting-situations/starting-a-food-truck-business/",
@@ -1332,7 +1340,7 @@
      "id": "food",
      "label": "食べ物",
      "japan": "保健所の審査つきの許可。車1台ごとに車を持ち込んで検査を受ける（有効は5年以上）",
-     "europe": "多くの国は審査のない届け出。本拠の国の当局へ出し、ほかのEUの国の登録をそのまま認める国もある",
+     "europe": "多くの国は審査のない届け出。事業を登録した国の当局へ出し、ほかのEUの国の登録をそのまま認める国もある",
      "src": [
       "https://laws.e-gov.go.jp/law/322AC0000000233",
       "https://www.hokeniryo1.metro.tokyo.lg.jp/shokuhin/kyokatodokede/files/jidousha_tebiki202610.pdf",
@@ -1379,7 +1387,7 @@
      "id": "cross",
      "label": "県や国をまたぐ",
      "japan": "許可を出した自治体の区域ごと。県をまたいで1枚で通るのは大阪府と和歌山県のあいだだけ（2026年3月の国の資料）",
-     "europe": "国によって扱いが逆。スウェーデンとフィンランドはEUの登録で足り、ポルトガルは届け出が要る",
+     "europe": "国によって扱いが分かれる。スウェーデンとフィンランドはEUの登録で足り、ポルトガルは届け出が要る",
      "src": [
       "https://www.mhlw.go.jp/content/001681567.pdf",
       "https://www.mhlw.go.jp/content/10906000/001666048.pdf",
@@ -1455,7 +1463,7 @@
     "id": "freeze",
     "group": "水",
     "title": "冬の凍結",
-    "plan": "冬は南で過ごし、タンクは車の中の側に置く",
+    "plan": "冬は南で過ごし、タンクは車の中に置く",
     "stars": 3
    },
    {
@@ -1490,7 +1498,7 @@
     "id": "baking-power",
     "group": "電気",
     "title": "焼く機械の電気",
-    "plan": "CEの印のある電気のたい焼き機をEUの店で買い、イベントの16Aの電源を借りる",
+    "plan": "CEマークのある電気のたい焼き機をEUの店で買い、イベントの16Aの電源を借りる",
     "stars": 3,
     "src": [
      "https://maxima.com/de/digitales-waffeleisen-taiyaki-fischform-5-stueck.html",
@@ -1520,7 +1528,7 @@
     "n": 15,
     "id": "gas-ce",
     "group": "ガス",
-    "title": "ガス機器のCEの印",
+    "title": "ガス機器のCEマーク",
     "plan": "ガスで使う機器はEUで買う",
     "stars": 3,
     "src": [
@@ -1666,7 +1674,7 @@
     "n": 28,
     "id": "tolls",
     "group": "道",
-    "title": "電子の通行料とヴィネット",
+    "title": "自動で払う通行料とヴィネット",
     "plan": "道順に合わせて買う",
     "stars": 1,
     "src": [
@@ -1938,11 +1946,7 @@
   {
    "date": "2026-11-09",
    "title": "名前が付いた",
-   "body": "ノマドキッチンカープロジェクトと名付けた",
-   "said": {
-    "videoId": "WiSPWzjqZZA",
-    "at": "2:02:30"
-   }
+   "body": "ノマドキッチンカープロジェクトと名付けた"
   },
   {
    "date": "2026-11-21",
@@ -1962,26 +1966,8 @@
  "log": [
   {
    "date": "2026-11-23",
-   "what": "実現度の数字を出さない",
-   "why": "難しいと分かればよく、無理なら配信で話して方向を変えるため",
-   "by": "ayato"
-  },
-  {
-   "date": "2026-11-23",
-   "what": "収益のシミュレーションを1日までにした",
-   "why": "1日にいくら残るかを見る形をあやとが選んだ",
-   "by": "ayato"
-  },
-  {
-   "date": "2026-11-23",
    "what": "外装と内装を北欧風・イタリアのマジョリカ焼き・ポルトガルのタイル・和風の4組にした",
    "why": "あやとがこの4つを挙げた",
-   "by": "ayato"
-  },
-  {
-   "date": "2026-11-23",
-   "what": "表紙をヨーロッパの海だと分かる絵にした",
-   "why": "あやとがヨーロッパの海だと分かる絵を求めた",
    "by": "ayato"
   },
   {
@@ -1992,33 +1978,9 @@
   },
   {
    "date": "2026-11-23",
-   "what": "付箋に貼られた絵は外装に使わない",
-   "why": "貼った人が思った使いかたより広くならないように",
-   "by": "ayato"
-  },
-  {
-   "date": "2026-11-23",
-   "what": "運営が採った視聴者さんの案を、メニューの候補に名前を出さずに載せる",
-   "why": "みんなで案を出し、決めるのはあやとのままにするため",
-   "by": "ayato"
-  },
-  {
-   "date": "2026-11-23",
    "what": "開始の目標を2027年の秋ごろにした",
    "why": "11月21日の配信で来年の秋を目標と話した",
    "by": "ayato"
-  },
-  {
-   "date": "2026-11-23",
-   "what": "世界初はあやとの言葉として引き、言い切らない",
-   "why": "一部が重なる先例があり、事実として言い切ると誤りになりうるため",
-   "by": "guide"
-  },
-  {
-   "date": "2026-11-23",
-   "what": "ルートは線だけを描き、時期と長さを書かない",
-   "why": "決まっていない時期を約束しないため",
-   "by": "guide"
   },
   {
    "date": "2026-11-23",
@@ -2029,13 +1991,7 @@
   {
    "date": "2026-11-23",
    "what": "たい焼き機は電気のものから考える",
-   "why": "EUの店で売られていて、CEの印を確かめられたのは電気のたい焼き機だけだったため",
-   "by": "guide"
-  },
-  {
-   "date": "2026-11-23",
-   "what": "数字は全部目安として出どころを添える",
-   "why": "仮の数字が事実と読まれないため",
+   "why": "EUの店で売られていて、CEマークを確かめられたのは電気のたい焼き機だけだったため",
    "by": "guide"
   },
   {
@@ -2189,7 +2145,7 @@
   {
    "id": "fr-card",
    "group": "permit",
-   "text": "フランスの移動商人のカードは30ユーロで4年有効。約15日〜1か月で届き、待つあいだは1か月の仮証明が出る",
+   "text": "フランスの移動販売の登録証は30ユーロで4年有効。約15日〜1か月で届き、待つあいだは1か月の仮証明が出る",
    "src": [
     "https://entreprendre.service-public.gouv.fr/vosdroits/F21856"
    ],
@@ -2229,7 +2185,7 @@
   {
    "id": "nl-market",
    "group": "permit",
-   "text": "オランダの街の市や年市は、主催者が許可を持っていれば出店者の許可が要らないことが多い",
+   "text": "オランダでは、市場に車を停めて売るには自治体の市場の許可が要る。路上の祭りや年に1度の市は、主催者が自治体の許可を持っていれば、出店者の許可は要らないことが多い",
    "src": [
     "https://business.gov.nl/starting-your-business/starting-situations/starting-a-food-truck-business/"
    ],
@@ -2378,7 +2334,7 @@
   {
    "id": "gear-taiyaki-ce",
    "group": "gear",
-   "text": "EUの店で売られているたい焼き機で、CEの印を確かめられたのは電気のもの（5匹焼き・3.2kW・21kg）だった",
+   "text": "EUの店で売られているたい焼き機で、CEマークを確かめられたのは電気のもの（5匹焼き・3.2kW・21kg）だった",
    "src": [
     "https://maxima.com/de/digitales-waffeleisen-taiyaki-fischform-5-stueck.html",
     "https://server.maximakitchenequipment.com/maxima/maxima-manuals/09374182_UM.pdf"
@@ -2409,7 +2365,7 @@
   {
    "id": "gear-japan-no-ce",
    "group": "gear",
-   "text": "日本の業務用のたい焼き機とたこ焼き器のカタログに、CEの印の記載は無い",
+   "text": "日本の業務用のたい焼き機とたこ焼き器のカタログに、CEマークの記載は無い",
    "src": [
     "https://www.endoshoji.co.jp/catalog_v212/pdf/P1005.pdf",
     "https://www.endoshoji.co.jp/catalog_v212/pdf/P1002.pdf"
@@ -2460,11 +2416,11 @@
   {
    "id": "mk-taiyaki-price",
    "group": "market",
-   "text": "ヨーロッパの店のたい焼きは1匹€2.6〜4.5",
+   "text": "ヨーロッパの店のたい焼きは1匹€2〜3.6の例（ソフィア・ベルリン・プラハ）",
    "src": [
     "https://glovoapp.com/kk/bg/sofia/stores/taiyaki-spot-sof",
-    "https://www.ubereats.com/fr-en/store/taiyaki-paris/WoqY_0cXSLiceaux1ej_dQ",
-    "https://www.timeout.pt/lisboa/pt/noticias/nos-anjos-este-cafe-serve-uma-especialidade-de-taiwan-e-e-bem-doce-091725"
+    "https://www.speisekarte.de/berlin/restaurant/mr_melon_pan/speisekarte",
+    "https://www.expats.cz/czech-news/article/taiyaki-bar-a-japanese-ice-cream-spot-debuts-in-prague"
    ],
    "seen": "2026-11-23",
    "grade": "二"
@@ -2483,7 +2439,7 @@
   {
    "id": "mk-nuremberg",
    "group": "market",
-   "text": "ニュルンベルクの週の市で1日だけ出す場所代は、売り場の前1mあたり€11.35",
+   "text": "ニュルンベルクの青空市場で1日だけ出す場所代は、売り場の前1mあたり€11.35。電気代は別",
    "src": [
     "https://www.nuernberg.de/imperia/md/maerkte/dokumente/gebuehrentarif.pdf"
    ],
@@ -2493,7 +2449,7 @@
   {
    "id": "mk-evora",
    "group": "market",
-   "text": "ポルトガルのエヴォラの冬の市（2025年）は、トレーラーの出店が15日間で€200",
+   "text": "ポルトガルのエヴォラのクリスマスマーケット（2025年）は、バーと揚げ菓子のトレーラーの出店が15日間で€200（税込）",
    "src": [
     "https://www.cm-evora.pt/wp-content/uploads/2025/11/Normas-de-Participacao-2025.pdf"
    ],
@@ -2503,7 +2459,7 @@
   {
    "id": "mk-bad-homburg",
    "group": "market",
-   "text": "ドイツのバート・ホンブルクの冬の市（2026年）は、小さなキッチンカーの枠が12日間で€1,320",
+   "text": "ドイツのバート・ホンブルクのクリスマスマーケット（2026年）は、キッチンカーの枠が12日間で税別€1,320（三輪の小型車）か€2,640（それより大きい車）。広告と電源の口の€80と電気代は別",
    "src": [
     "https://www.bad-homburg.de/events/weihnachtsstadt/Weihnachtsstadt%202026/AVB_Weihnachtsmarkt%20Schloss_Winterzauber_Bad%20Homburg%202026.pdf"
    ],
@@ -2513,7 +2469,7 @@
   {
    "id": "mk-xmas-deadline",
    "group": "market",
-   "text": "有名な冬の市の応募の締め切りは、前の年の12月31日（ミュンヘン）からその年の5月7日（ドレスデン）まで",
+   "text": "有名なクリスマスマーケットの応募の締め切りは、前の年の12月31日（ミュンヘン）からその年の5月7日（ドレスデン）まで",
    "src": [
     "https://stadt.muenchen.de/service/info/christkindlmarkt-genehmigung-fur-verkaufsstand/1081176/",
     "https://www.dresden.de/media/pdf/wirtschaft/markte/STM-2026-Ausschreibungstext.pdf"
@@ -2524,7 +2480,7 @@
   {
    "id": "mk-japan-fest",
    "group": "market",
-   "text": "デュッセルドルフの日本の祭りでは、キッチンカーの場所代が1㎡あたり€100（税別）",
+   "text": "デュッセルドルフの日本デーでは、キッチンカーの場所代が1㎡あたり€100（税別）",
    "src": [
     "https://www.visitduesseldorf.de/_Resources/Persistent/3966c6f550da854645695fa79ab32cb90107cb56/Informationen-Teilnahme-Zelt_2026.pdf"
    ],
@@ -2554,21 +2510,11 @@
   {
    "id": "vh-box-van-price",
    "group": "vehicle",
-   "text": "ドイツ・オランダ・ポルトガルの中古の販売車の掲載は€7,950〜34,975",
+   "text": "中古の販売車の掲載は、オランダの€7,950からドイツの€75,630（税別）まで",
    "src": [
     "https://www.truckscout24.de/transporter/gebraucht/verkaufswagen-food-truck",
     "https://www.marktplaats.nl/q/foodtruck/",
     "https://www.olx.pt/ads/q-food-truck/"
-   ],
-   "seen": "2026-11-23",
-   "grade": "確"
-  },
-  {
-   "id": "vh-camper-median",
-   "group": "vehicle",
-   "text": "オランダの中古のキャンピングカーの掲載は、中央値で約€31,000",
-   "src": [
-    "https://www.marktplaats.nl/q/buscamper/"
    ],
    "seen": "2026-11-23",
    "grade": "確"
