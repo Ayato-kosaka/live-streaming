@@ -150,6 +150,16 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
      "text": "食べたのは、子供用のような、とても低いベンチ。プレスしたパンがトーストのようで、ソースはビッグマックソースのような味です。前に食べたのは、ヨーグルトソースでした。"
     },
     {
+     "quote": {
+      "q": "ビッグマックソースみたいな感じで美味しい",
+      "at": {
+       "v": "yk-by7R7iPA",
+       "t": 3610,
+       "date": "2026-10-12"
+      }
+     }
+    },
+    {
      "photo": {
       "src": "/travel/albania/tirana/kebab-960.webp",
       "srcSet": "/travel/albania/tirana/kebab-480.webp 480w, /travel/albania/tirana/kebab-960.webp 960w",
@@ -158,16 +168,6 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
       "alt": "出発の日のケバブ。紙に包んで手に持ったところ（2026年10月12日）",
       "day": "2026-10-12",
       "v": "yk-by7R7iPA"
-     }
-    },
-    {
-     "quote": {
-      "q": "ビッグマックソースみたいな感じで美味しい",
-      "at": {
-       "v": "yk-by7R7iPA",
-       "t": 3610,
-       "date": "2026-10-12"
-      }
      }
     },
     {
@@ -183,6 +183,6 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
  ],
  "published": "2026-11-23",
  "updated": "2026-11-23",
- "hash": "db37637bdc0c28ea"
+ "hash": "d2e7799c952f971f"
 }
 /* END GUIDE */;
