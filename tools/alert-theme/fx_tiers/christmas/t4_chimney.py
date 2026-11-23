@@ -22,6 +22,16 @@
 あやとは、キャラ絵が出る前に上の帯（headroom 0.2 = 256px より上）へ。煙突の口を y 212 に置き、あやとは口から上だけを
 描く（腰から下は煙突の中。口の手前の雪を、あやとの上に重ねる）。`fx_hero.py` はあやとだけの層で、キャラ絵に隠れないかを数える。
 
+3回目（同じ日。あやと「1,000以上の演出も11月に比べてショボくない？」）: 11月の段4 は、登場は湖と崖の描いた全面の景色で、
+キャラ絵が出たあとも左右の崖・上の舟のまわり・下の水が厚く残って動く。12月は登場が夜空の色の板に屋根と煙突を貼っただけで、
+滞在は月と煙突と下の隅の家だけが薄く残っていた（縁の透明の平均 0.19。11月は 0.22）。
+- 背景を ChatGPT で描いた1枚の板（`plate.webp`: 星空・満月・左右の電飾のもみの木・雪の町の屋根。人も屋根の手前も煙突も無し。
+  一次確認の絵の構図）にする。登場は板が全面（屋根と煙突とあやとは手前に別の絵で、寄って写す）
+- 景色が引いたあとは、真ん中（キャラ絵と字の所）だけを抜いた額のように、上の星空と満月・左右のもみの木・下の町を厚く残す
+  （fx_check の THIN: 全体の透明の平均 0.2 以下・真ん中 0.03 以下は守る）。縁では、星が瞬き、流れ星が走り、窓と電飾が瞬き、
+  雪が降り、煙突の煙が昇る
+- 滞在のあやとを 11月の段4 の主役より小さくしない（煙突の口を 10px 下げ、あやとを 1.04 倍に）
+
 絵は一次確認を描いた会話の続きで描いた（`fx_art/christmas/t4/`）。あやとのポーズ絵3枚（ばんざい・手を振る2枚）は、
 同じ大きさの透明の地に、顔の位置をそろえて置いてある（切り替えても顔が跳ねない）。手を振る2枚は手のひらの傾きだけが違う。
 カメラは 2D の視差（近い屋根ほど大きく動く）で、景色の板を拡げて・ずらして写す。
@@ -33,19 +43,30 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+ME = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, ME)
 from fx_stage import *  # noqa: E402,F401,F403
 import fx_stage as fs  # noqa: E402
+from xmas_t345 import StarSky, plate_emit, plate_layer, shooting_stars  # noqa: E402
 
 ART = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "fx_art", "christmas", "t4")
 
-CX, MOUTH = 232.0, 212.0          # 煙突の口（手前の縁）の、落ち着いたあとの画面の位置
-H_AYATO = 299.0                   # あやとのポーズ絵（透明の地ごと）の高さ。顔の幅が 85px 前後
+CX, MOUTH = 232.0, 222.0          # 煙突の口（手前の縁）の、落ち着いたあとの画面の位置
+H_AYATO = 312.0                   # あやとのポーズ絵（透明の地ごと）の高さ。顔の幅が 89px 前後（11月の段4 の主役より小さくしない）
 A_CUT = 430 / 665                 # ポーズ絵の中で、煙突の口に来る高さ（ベルトのすぐ下）
 H_CHIM = 188.0                    # 煙突。口の幅が、あやとの腰より広くなる大きさ
 CHIM_MOUTH = 108 / 418            # 煙突の絵の中で、口の手前の縁の高さ
-RX, R_TOP, W_ROOF = 326.0, 272.0, 470.0    # 屋根（真ん中の x・絵の上の端の y・幅）。雪の上の面が煙突の下の 1/4 を隠す
-MOON = (560.0, 170.0, 170.0)      # 満月（x・y・直径）
-VW, VBOT = 900.0, 1278.0          # 町（幅・下の端）
+RX, R_TOP, W_ROOF = 326.0, 282.0, 470.0    # 屋根（真ん中の x・絵の上の端の y・幅）。雪の上の面が煙突の下の 1/4 を隠す
+# 背景の板（ChatGPT で描いた 1024×1536）を落ち着いたあとの画面へ写す倍率と、絵の (0,0) の居場所。
+# 板は箱より少し大きく（上 40px・左右 85px はみ出す）: 登場で板も少し寄る（視差 PLATE_P）ので、上の端が箱の中へ入らない
+PLATE_S, PLATE_X0, PLATE_Y0, PLATE_P = 0.87, -85.5, -40.0, 0.12
+PLATE_MOON = (0.73, 0.13, 0.20)   # 板の中の満月（中心の x・y の割合、直径の幅に対する割合）。描いた絵を測って入れる
+PW, PH = 1024, 1536               # 板の絵の寸法
+# キャラ絵が出たあとに残す額の、抜く四角（x0, x1, y0, y1, 角の半径, 溶かしの幅, 上・左右・下の濃さ）。thin_keep
+FRAME = (80.0, 640.0, 200.0, 1150.0, 90.0, 45.0, 0.95, 0.5, 0.95)
+# 流れ星（起きる秒・頭の始まり x, y・向き（度）・長さ・長さの秒）。上の帯（キャラ絵の箱より上）を走り、滞在の 3秒ごとにくり返す
+SHOOT = ((3.7, 700.0, 50.0, 168.0, 320.0, 0.6), (5.2, 380.0, 30.0, 160.0, 260.0, 0.55))
+MOON = (PLATE_X0 + PLATE_MOON[0] * PW * PLATE_S, PLATE_Y0 + PLATE_MOON[1] * PH * PLATE_S, PLATE_MOON[2] * PW * PLATE_S)
 POP = 1.3                         # すぽん！
 POP_TOP, POP_LAND = 1.47, 1.66    # 宙の頂と、口に戻って着地する秒
 SETTLE = (2.55, 2.95)             # カメラが引いて、屋根と煙突とあやとが上の帯へ縮む（キャラ絵が出る 3.0 の前に終える）
@@ -66,7 +87,11 @@ class Scene(Stage):
         a = lambda n: Art.load(os.path.join(ART, n + ".webp"))
         self.pop = a("ayato_pop")
         self.wave = [a("ayato_wave0"), a("ayato_wave1")]
-        self.chim, self.roof, self.moon, self.village = a("chimney"), a("roof"), a("moon"), a("village")
+        self.chim, self.roof = a("chimney"), a("roof")
+        # 背景の板（前掛けの RGBA）と、描かれた灯り（窓・電飾・街灯）
+        self.plate = load_rgba(os.path.join(ART, "plate.webp"))
+        assert self.plate.shape[:2] == (PH, PW), self.plate.shape
+        self.plate_win = fs.window_mask(self.plate)
         # 煙突の口の手前の雪だけ（あやとの腰の上に重ねる）。口は楕円なので、楕円の下の縁より下、雪のかさの下の端
         # （絵の 0.51）より上を残す。れんがまで含めると、屋根が隠しているはずの煙突の根もとが屋根の上に出た
         ch = self.chim.levels[0].copy()
@@ -78,7 +103,6 @@ class Scene(Stage):
         keep = np.clip((ys - edge[None, :]) / 2.0, 0, 1) * np.clip((0.52 * hh - ys) / (0.03 * hh), 0, 1)
         self.lip = Art(np.ascontiguousarray(ch * keep[..., None]))
         self.roof_win = fs.window_mask(self.roof.levels[0])
-        self.village_win = fs.window_mask(self.village.levels[0])
         # 夜空（上は深い紺、下ほど町の灯りで少し明るい）
         yy = np.arange(H, dtype=np.float32)[:, None] / H
         top, bot = np.float32([0.035, 0.05, 0.16]), np.float32([0.10, 0.13, 0.30])
@@ -96,6 +120,8 @@ class Scene(Stage):
         # 手前をゆっくり昇る金と白のぼけ玉（front。滞在の輪で1めぐり）
         self.bok = Loop(12, 4111, cycles=(1, 1))
         self.dust = Loop(60, 4104, cycles=(1, 2))
+        # 縁の夜空の星（上の帯と左右。キャラ絵が出たあとも瞬き続ける）
+        self.edge_sky = StarSky(4112, n=90, n_big=12, y0=20, y1=300)
         # 夜空のきらめく星（大きな十字の星。夜空の上の 2/3 に）
         R = np.random.default_rng(4109)
         self.sparkles = np.stack([40 + R.random(26) * 640, 30 + R.random(26) ** 1.2 * 820, R.random(26), R.random(26)], -1)
@@ -128,23 +154,23 @@ class Scene(Stage):
         return px + (x - CX) * s, py + (y - MOUTH) * s, s
 
     def thin_keep(self):
-        """景色が薄く引いたあとに残す縁（0〜1。画面の濃さに掛ける）。真ん中（キャラ絵と字の所）は 0。
-        - 上の帯: 煙突と満月は、その絵の形のまま残す（形で残さないと、まわりの夜空が四角や丸の暗い板になって浮いた）。
-          煙突の根もと（屋根に隠れた所）は下へ溶かす。屋根は残さない（雪の上の端だけ細く残すと、宙に浮いた雪の棚に見えた）。
-          夜空は上の端にごく薄く（濃くすると、配信の景色の上にぼやけた暗い帯が乗って見えた）
-        - 下の隅: 町の家々"""
+        """景色が薄く引いたあとに残す縁（0〜1。画面の濃さに掛ける）。真ん中（キャラ絵と字の所）を角の丸い四角に抜いた額。
+        - 上の帯（星空と満月）・下の帯（雪の町の屋根）は濃く、左右（電飾のもみの木）は半分。煙突と満月はその絵の形のまま残す
+        - 額の内側の四角（FRAME）は fx_check の THIN（全体の透明の平均 0.2 以下・真ん中 x 140〜580・y 300〜1100 は 0.03 以下）に
+          収まる所で、縁をいちばん厚くした（箱の縁の溶かしを掛けて 全体 0.17・真ん中の外 0.28。11月の段4 は 0.14・0.22）
+        前は上の端にごく薄い夜空だけを残した（濃い夜空の帯がぼやけた暗い帯に見えた）。描いた星空と月なら景色として見える"""
         yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
         sm = lambda v: v * v * (3 - 2 * v)
-        top = sm(np.clip((240 - yy) / 150, 0, 1)) * 0.16
+        x0, x1, y0, y1, rad, f, wt, ws, wb = FRAME
+        cx_, cy_ = np.clip(xx, x0 + rad, x1 - rad), np.clip(yy, y0 + rad, y1 - rad)
+        k = sm(np.clip((np.hypot(xx - cx_, yy - cy_) - rad) / f, 0, 1))
+        w = cv2.GaussianBlur(np.where(yy < y0 + rad, wt, np.where(yy > y1 - rad, wb, ws)).astype(np.float32), (0, 0), 40)
         cv = Canvas()  # 落ち着いたあと（カメラ 1 倍・ずれ 0）の形
         sprite(cv, self.chim, CX, MOUTH - CHIM_MOUTH * H_CHIM, H_CHIM, anchor=(0.5, 0.0))
-        chim = cv.A * sm(np.clip((322 - yy) / 34, 0, 1))
-        cv = Canvas()
-        sprite(cv, self.moon, MOON[0], MOON[1], MOON[2], anchor=(0.5, 0.5))
-        moon = cv.A
+        chim = cv.A * sm(np.clip((MOUTH + 110 - yy) / 34, 0, 1))
+        moon = sm(np.clip((MOON[2] * 0.5 + 6 - np.hypot(xx - MOON[0], yy - MOON[1])) / 12, 0, 1))
         shape = cv2.GaussianBlur(np.maximum(chim, moon), (0, 0), 1.0)
-        corner = np.maximum(*(sm(np.clip((300 - np.hypot(xx - cx, yy - H)) / 170, 0, 1)) for cx in (0.0, float(W)))) * 0.8
-        return np.maximum(np.maximum(top, shape), corner).astype(np.float32)
+        return np.maximum(k * w, shape).astype(np.float32)
 
     def thin_at(self, c):
         return ease(ramp(c.Ti, *self.THIN))
@@ -201,22 +227,28 @@ class Scene(Stage):
         sp_sky.add_screen(st[:, 0], st[:, 1], (WHITE * 1.1)[None] * (0.15 + 0.7 * tw * st[:, 4])[:, None]
                         * (on * sky_k)[:, None])
 
-        # ---- 満月（前兆で明るくなり、光の筋を落とす）
-        mx, my, ms = self.at(c, MOON[0], MOON[1], 0.0)
-        mk = ease(ramp(Ti, 0.1, 0.8)) * out_k
-        sprite(back, self.moon, mx, my, MOON[2] * ms, anchor=(0.5, 0.5), k=mk,
-               grade=np.float32([1.0, 0.97, 0.9]) * (0.75 + 0.25 * lit))
-        mg = (0.35 + 0.25 * lit + 0.12 * c.osc(1)) * mk
-        glow(back, mx, my, MOON[2] * 0.62, GOLD * 0.55 + WHITE * 0.25, 0.55 * mg)
-        glow(back, mx, my, MOON[2] * 1.3, GOLD * 0.25, 0.35 * mg)
-
-        # ---- 町（下の端。窓は前兆の終わりから灯る）
+        # ---- 背景の板（星空・満月・左右の電飾のもみの木・雪の町。前兆で上から降りてくる）。
+        # 登場で少しだけ寄る（視差 PLATE_P）。寄っているあいだは少しぼかして、手前の煙突とあやとを立たせる
+        z, csx, csy = self.cam(c)
+        pz = 1 + (z - 1) * PLATE_P
+        ox_, oy_ = CX + (csx - CX) * PLATE_P, MOUTH + (csy - MOUTH) * PLATE_P
+        X0, Y0, S_ = ox_ + (PLATE_X0 - CX) * pz, oy_ + (PLATE_Y0 - MOUTH) * pz, PLATE_S * pz
+        pr, pa = plate_layer(self.plate, X0, Y0, S_, blur=1.6 * (z - 1) / (START_ZOOM - 1))
+        kk = (drop * sky_k).astype(np.float32)
+        grade = np.float32([0.92, 0.94, 1.0]) * (0.7 + 0.3 * lit)
+        back.over((pr * grade * kk[..., None]).astype(np.float32), (pa * kk).astype(np.float32))
+        # 描かれた灯り（窓・軒の電球・もみの木の電飾・街灯）。前兆の終わりから左から順に灯り、滞在は瞬く
         vk = ease(ramp(Ti, 0.2, 0.9)) * out_k
-        vx, vy, vs = self.at(c, 360.0, VBOT, 0.06)
-        dst = sprite(back, self.village, vx, vy, VW * self.village.h / self.village.w * vs, k=vk,
-                     grade=np.float32([0.9, 0.92, 1.0]) * (0.7 + 0.3 * lit))
-        self.emit_on(back, self.village_win, dst, lambda yy, xx: np.clip((Ti - 0.5 - xx * 0.4) / 0.2, 0, 1)
-                     * (0.8 + 0.2 * np.sin(6.283 * (c.ph * 2 + xx * 9 + yy * 3))), 0.6 * vk)
+        plate_emit(back, self.plate_win, X0, Y0, S_, lambda yy, xx: np.clip((Ti - 0.5 - xx * 0.4) / 0.2, 0, 1)
+                   * (0.6 + 0.4 * np.sin(6.283 * (c.ph * 3 + xx * 11 + yy * 7)) ** 2), 0.75 * vk)
+
+        # ---- 満月（板の月。前兆で明るくなり、光の筋を落とす）
+        mx, my = X0 + PLATE_MOON[0] * PW * S_, Y0 + PLATE_MOON[1] * PH * S_
+        self.moon_now = (mx, my)
+        mk = ease(ramp(Ti, 0.1, 0.8)) * out_k
+        mg = (0.35 + 0.25 * lit + 0.12 * c.osc(1)) * mk
+        glow(back, mx, my, MOON[2] * 0.62, GOLD * 0.55 + WHITE * 0.25, 0.45 * mg)
+        glow(back, mx, my, MOON[2] * 1.3, GOLD * 0.25, 0.3 * mg)
 
         # ---- 屋根と煙突（真ん中から、カメラが引くと上の帯へ）
         rk = ease(ramp(Ti, 0.3, 0.75)) * out_k
@@ -247,6 +279,9 @@ class Scene(Stage):
             # 月のまわりの光は、形で残した月の外にも少し（光だけ）
             glow(back, mx, my, MOON[2] * 0.62, GOLD * 0.55 + WHITE * 0.25, 0.3 * mg * thin)
 
+        # ---- 縁の夜空: 上の帯の星が瞬き、流れ星が走る（キャラ絵が出たあとも。景色を引いたあとに足すので消えない）
+        self.edge_sky.draw(c, self.kit, back, sp_b, 0.8 * sky_k * thin)
+        shooting_stars(c, self.kit, back, sp_b, SHOOT, self.STAY, sky_k * (c.clip != "outro"))
         # ---- 夜空のきらめく星（大きな十字の星）。すぽん！のあと順にきらめき、滞在は上の帯の星だけが瞬き続ける
         for j, (x, y, r0, r1) in enumerate(self.sparkles):
             tw = max(0.0, math.sin(6.283 * (c.ph * (1 + int(r0 * 2)) + r1))) ** 3
@@ -417,7 +452,7 @@ class Scene(Stage):
             return
         T = c.T
         tau = np.linspace(0, 0.3, 700)
-        mx, my = MOON[0], MOON[1]
+        mx, my = self.moon_now
         for j in range(2):
             t0, dur = 0.5 + 0.12 * j, 0.78
             p = np.clip((T - tau - t0) / dur, 0, 1)

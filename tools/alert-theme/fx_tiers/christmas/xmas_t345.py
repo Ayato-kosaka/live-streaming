@@ -35,7 +35,7 @@ class StarSky:
             kk = kk + 1.3 * np.exp(-((d - wave[2] * 900) / 70) ** 2) * k
         sp.add_screen(p[:, 0], p[:, 1], (WHITE * 1.1)[None] * kk[:, None])
         for j, (x, y, r0, r1) in enumerate(self.big):
-            b = 0.15 + 0.6 * max(0.0, math.sin(2 * math.pi * (c.ph * (1 + int(r0 * 2)) + r1))) ** 4
+            b = 0.2 + 0.7 * max(0.0, math.sin(2 * math.pi * (c.ph * (1 + int(r0 * 2)) + r1))) ** 4
             if wave is not None and 0 <= wave[2] < 1.2:
                 b += 1.0 * math.exp(-((math.hypot(x - wave[0], y - wave[1]) - wave[2] * 900) / 80) ** 2)
             if b * k > 0.02:
@@ -113,3 +113,19 @@ def plate_layer(plate, x0, y0, s, rot=0.0, blur=0.0):
     if blur > 0.5:
         out = cv2.GaussianBlur(out, (0, 0), blur)
     return np.ascontiguousarray(out[..., :3]), np.ascontiguousarray(out[..., 3])
+
+
+def plate_emit(cv, win, x0, y0, s, on, k, col=None, small=2):
+    """描いた背景の板の灯り（window_mask）を、on(yy, xx)（0〜1 の格子。絵の割合）の濃さで光らせる。
+    絵の (0,0) が画面の (x0, y0)・s 倍（plate_layer と同じ写し方）。small: 灯りの格子を何分の1で計算するか（軽くする）"""
+    if k <= 0.003:
+        return
+    w = win[::small, ::small]
+    ih, iw = w.shape
+    yy = np.linspace(0, 1, ih, dtype=np.float32)[:, None]
+    xx = np.linspace(0, 1, iw, dtype=np.float32)[None, :]
+    col = GOLD * 0.9 + WHITE * 0.45 if col is None else col
+    em = (w * on(yy, xx))[..., None] * col * 0.75 * k
+    ss = s * small
+    M = np.float32([[ss, 0, x0], [0, ss, y0]])
+    cv.L += cv2.warpAffine(em.astype(np.float32), M, (W, H), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)

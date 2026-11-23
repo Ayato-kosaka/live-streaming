@@ -18,6 +18,14 @@
 （大きく見せる時間を取るため。登場の長さ 3.2 は同じ）。
 
 観覧車は輪を回さない（脚ごと描いた絵なので）。かわりに電球の灯りが輪を回り、金の光の筋が輪の上を走る。
+
+3回目（2026-11-23。あやと「2,000以上のキャラ出てからの背景もっと派手にしたい」）: 11月の段5 は、キャラ絵が出たあとも
+大聖堂と夕日の湖の描いた全面の景色が残る。12月は紫の夜空の色の板に、観覧車・屋台・メリーゴーランドの切り抜きを貼っただけで、
+平たく暗い板に見えた。
+- 背景を ChatGPT で描いた1枚の板（`plate.webp`: 灯りの観覧車・クリスマスマーケット・メリーゴーランド・星空。人は無し。
+  一次確認の絵の世界で、落ち着いたときの置き場に合わせた構図）にする。てっぺんの吊り金具に、あやとのゴンドラを下げる
+- 滞在は、電球が輪を回り、屋台とメリーゴーランドの灯りが瞬き、サーチライトが首を振り、夜空に花火が上がり、雪と紙吹雪が降る
+- 滞在のあやとを 11月の段5 の主役より小さくしない（高さ 210 → 216）
 """
 import math
 import os
@@ -30,16 +38,27 @@ sys.path.insert(0, os.path.join(ME, "..", ".."))
 sys.path.insert(0, ME)
 from fx_stage import *  # noqa: E402,F401,F403
 import fx_stage as fs  # noqa: E402
-from xmas_kit import burst, emit_masked, snowfall, soft_dot, trail  # noqa: E402
+from xmas_kit import burst, snowfall, soft_dot, trail  # noqa: E402
+from xmas_t345 import plate_emit, plate_layer  # noqa: E402
 
 ART = os.path.join(ME, "..", "..", "fx_art", "christmas", "t5")
 
 # 世界（落ち着いたあとの画面）の置き場
-HX, HY, H_HERO = 360.0, 14.0, 210.0     # あやとのゴンドラ（吊り輪の x・y・高さ）。揺れても下の端が 230 より上（上の帯）
-WCX, WCY, WR = 360.0, 344.0, 330.0      # 観覧車の輪（真ん中・半径）。てっぺんの吊り輪があやとのゴンドラ
-WHEEL_C = (0.5, 252 / 629)              # 観覧車の絵の中の輪の真ん中（割合）
+HX, H_HERO = 360.0, 216.0               # あやとのゴンドラ（吊り輪の x・高さ）。揺れても下の端が 256 より上（上の帯）
 MUG = (112 / 566, 150 / 800)            # あやとの絵の中のマグの口
-H_GOND = 200.0                          # ほかのゴンドラの高さ
+# 背景の板（ChatGPT で描いた 1024×1536）。板の中の観覧車の輪（真ん中の x・y の割合・半径の幅に対する割合）と、
+# いちばん上の吊り金具（x・y の割合）。描いた絵を測って入れる
+PW, PH = 1024, 1536
+P_WHEEL = (0.5, 0.27, 0.39)
+P_HANG = (0.5, 0.012)
+# 落ち着いたときの板の倍率と居場所: 板の吊り金具を (HX, 14) に。板は箱を覆う（幅 891・高さ 1336）
+PLATE_S = 0.87
+PLATE_X0 = HX - P_HANG[0] * PW * PLATE_S
+PLATE_Y0 = 14.0 - P_HANG[1] * PH * PLATE_S
+HY = PLATE_Y0 + P_HANG[1] * PH * PLATE_S
+WCX, WCY, WR = PLATE_X0 + P_WHEEL[0] * PW * PLATE_S, PLATE_Y0 + P_WHEEL[1] * PH * PLATE_S, P_WHEEL[2] * PW * PLATE_S
+# 花火（上がる秒・x・y・色）。夜空の上の隅と、観覧車の輪の外。滞在の 3秒ごとにくり返す
+FIREWORKS = ((3.35, 110.0, 150.0, "gold"), (4.15, 615.0, 110.0, "pink"), (4.95, 640.0, 470.0, "cyan"), (5.7, 85.0, 430.0, "gold"))
 SETTLE = (2.6, 2.95)
 START_ZOOM, START_X, START_Y = 2.7, 360.0, 330.0    # 登場のあいだ、ゴンドラを箱の真ん中に大きく（幅 56%。吊り輪が y 330）
 CHEERS = 1.0
@@ -55,14 +74,19 @@ class Scene(Stage):
     def setup(self):
         a = lambda n: Art.load(os.path.join(ART, n + ".webp"))
         self.mug, self.wave = a("ayato_mug"), a("ayato_wave")
-        self.wheel, self.gond, self.carousel, self.market = a("wheel"), a("gondola"), a("carousel"), a("market")
-        self.wheel_win = fs.window_mask(self.wheel.levels[0])
-        self.car_win = fs.window_mask(self.carousel.levels[0])
-        self.market_win = fs.window_mask(self.market.levels[0])
-        # 電球が輪を回る模様のための、観覧車の絵の中の角度
-        ih, iw = self.wheel_win.shape
+        # 背景の板（前掛けの RGBA）。上の端は溶かす（登場で寄ると板の上の端が箱の中へ入るので、その上の夜空とつなぐ）
+        self.plate = load_rgba(os.path.join(ART, "plate.webp"))
+        assert self.plate.shape[:2] == (PH, PW), self.plate.shape
+        fade = np.clip(np.arange(PH, dtype=np.float32) / 60.0, 0, 1)[:, None, None]
+        self.plate = np.ascontiguousarray(self.plate * fade)
+        self.plate_win = fs.window_mask(self.plate)
+        # 灯りの瞬き方を決める、板の中の観覧車からの角度と距離（2分の1の格子。plate_emit の small=2 と同じ）
+        ih, iw = self.plate_win[::2, ::2].shape
         yy, xx = np.mgrid[0:ih, 0:iw].astype(np.float32)
-        self.wheel_ang = (np.arctan2(yy - WHEEL_C[1] * ih, xx - WHEEL_C[0] * iw) / (2 * np.pi)) % 1.0
+        dx, dy = (xx / iw - P_WHEEL[0]) * PW, (yy / ih - P_WHEEL[1]) * PH
+        self.p_ang = ((np.arctan2(dy, dx) / (2 * np.pi)) % 1.0).astype(np.float32)
+        self.p_rad = (np.hypot(dx, dy) / (P_WHEEL[2] * PW)).astype(np.float32)
+        self.fw = {name: np.random.default_rng(5110 + k).random((40, 3)) for k, (_, _, _, name) in enumerate(FIREWORKS)}
         yy = np.arange(H, dtype=np.float32)[:, None] / H
         top, bot = VIOLET_SKY
         self.sky_col = np.broadcast_to(((1 - yy) * top + yy * bot)[:, None, :], (H, W, 3)).astype(np.float32).copy()
@@ -130,38 +154,36 @@ class Scene(Stage):
         st = self.stars
         tw = (0.5 + 0.5 * np.sin(2 * np.pi * (c.ph * (1 + (st[:, 2] * 3).astype(int)) + st[:, 3]))) ** 3
         sp_b.add_screen(st[:, 0], st[:, 1], (WHITE * 1.1)[None] * ((0.15 + 0.7 * tw * st[:, 4]) * sky_k)[:, None])
+
+        # ---- 背景の板（灯りの観覧車・マーケット・メリーゴーランド・星空）。観覧車とあやとのゴンドラと一緒に寄る（視差 1）。
+        # 寄っているあいだは、板を奥のぼけにする（大きく引き伸ばした絵の粗さを見せず、主役のゴンドラを立たせる）
+        pk = ease(ramp(Ti, 0.2, 0.75)) * out_k
+        X0, Y0, ps = self.at(c, PLATE_X0, PLATE_Y0, 1.0)
+        S_ = PLATE_S * ps
+        dof = 3.0 * (ps - 1)
+        pr, pa = plate_layer(self.plate, X0, Y0, S_, blur=dof)
+        grade = np.float32([0.95, 0.94, 1.0]) * (0.72 + 0.28 * lit)
+        back.over((pr * grade * pk).astype(np.float32), (pa * pk).astype(np.float32))
+        # 描かれた灯り: 観覧車の電球は輪を回り（てっぺんから順に灯る）、屋台とメリーゴーランドの灯りは瞬く
+        on_t = ease(ramp(Ti, 0.3, 0.9))
+        ang, rad = self.p_ang, self.p_rad
+        wheel = np.clip((1.12 - rad) / 0.06, 0, 1)
+        chase = np.clip(on_t * 1.6 - ((ang + 0.25) % 1.0), 0, 1) * (0.4 + 0.6 * np.sin(np.pi * ((ang * 14 - c.ph * 6) % 1.0)) ** 4)
+        plate_emit(back, self.plate_win, X0, Y0, S_, lambda yy, xx: wheel * chase * 1.3
+                   + (1 - wheel) * on_t * (0.55 + 0.45 * np.sin(6.283 * (c.ph * 3 + xx * 9 - yy * 4)) ** 2), 1.0 * pk)
+        wx, wy, ws = self.at(c, WCX, WCY, 1.0)
+
+        # ---- 遊園地のサーチライト（下から夜空を5本が首を振る。やわらかい光なので、焼いても軽い。滞在の輪の周期）。
+        # 板より後に足す（先に足すと、板の不透明な絵に覆われて消える）
+        self.searchlights(c, back, sky_k * ease(ramp(Ti, 0.5, 1.2)))
+
+        # ---- 夜空のきらめく星（板より後に。滞在の輪で瞬く）
         for j, (x, y, r0, r1) in enumerate(self.sparkles):
             tw1 = max(0.0, math.sin(6.283 * (c.ph * (1 + int(r0 * 2)) + r1))) ** 3
             fxv.stamp(back.L, self.kit.star["white" if j % 3 else "gold"], x, y, (0.2 + 0.6 * tw1) * sky_k)
 
-        # ---- 遊園地のサーチライト（下から夜空を5本が首を振る。やわらかい光なので、焼いても軽い。滞在の輪の周期）
-        self.searchlights(c, back, sky_k * ease(ramp(Ti, 0.5, 1.2)))
-
-        # ---- マーケットの屋台（下の端）とメリーゴーランド（右下）。動かない
-        mk = ease(ramp(Ti, 0.2, 0.8)) * out_k
-        dst = sprite(back, self.carousel, 590.0, 1150.0, 330.0, k=mk, grade=np.float32([0.95, 0.93, 1.0]) * (0.75 + 0.25 * lit))
-        emit_masked(back, self.car_win, dst, lambda yy, xx: 0.65 + 0.35 * np.sin(6.283 * (c.ph * 3 - xx * 4 + yy * 2)), 0.9 * mk)
-        dst = sprite(back, self.market, 360.0, 1282.0, 900.0 * self.market.h / self.market.w, k=mk,
-                     grade=np.float32([0.92, 0.92, 1.0]) * (0.75 + 0.25 * lit))
-        emit_masked(back, self.market_win, dst, lambda yy, xx: 0.75 + 0.25 * np.sin(6.283 * (c.ph * 2 + xx * 9 + yy * 3)), 0.7 * mk)
-
-        # ---- 観覧車（輪とほかのゴンドラ）。電球の灯りが輪を回る
-        wk = ease(ramp(Ti, 0.25, 0.7)) * out_k
-        wx, wy, ws = self.at(c, WCX, WCY, 1.0)
-        wh = 2 * WR * ws / (self.wheel.w / self.wheel.h)
-        # 寄っているあいだは、観覧車を奥のぼけにする（大きく引き伸ばした絵の粗さを見せず、主役のゴンドラを立たせる）
-        dof = 3.2 * (ws - 1)
-        dst = sprite(back, self.wheel, wx, wy - WHEEL_C[1] * wh, wh, anchor=(0.5, 0.0), k=wk, blur=dof,
-                     grade=np.float32([1.0, 0.96, 0.92]) * (0.75 + 0.25 * lit))
-        ang = self.wheel_ang
-        on_t = ease(ramp(Ti, 0.3, 0.9))
-        emit_masked(back, self.wheel_win, dst, lambda yy, xx: np.clip(on_t * 1.6 - ((ang + 0.25) % 1.0), 0, 1)
-                    * (0.45 + 0.55 * np.sin(np.pi * ((ang * 12 - c.ph * 6) % 1.0)) ** 4), 1.1 * wk)
-        for j in range(1, 6):
-            th = -math.pi / 2 + j * math.pi / 3
-            gx, gy, gs = self.at(c, WCX + WR * math.cos(th), WCY + WR * math.sin(th), 1.0)
-            sprite(back, self.gond, gx, gy, H_GOND * gs, anchor=(0.5, 0.02), rot=3 * math.sin(2 * math.pi * (c.ph + j * 0.17)), k=wk, blur=dof,
-                   grade=np.float32([0.95, 0.92, 0.95]) * (0.7 + 0.3 * lit))
+        # ---- 花火（夜空の上の隅と、観覧車の輪の外。滞在の輪でくり返す）
+        self.fireworks(c, back, sp_b, sky_k * ease(ramp(Ti, 1.0, 1.4)))
 
         # ---- あやとのゴンドラ（主役だけの層。てっぺんの吊り輪から下がる）
         hp = self.hero(c)
@@ -251,6 +273,33 @@ class Scene(Stage):
         out_b = over_rgba(back_glitter.finish(bloom=0.3, edge=self.edge), out_b)
         return out_b, self.finish_front(front, bloom=0.7)
 
+    def fireworks(self, c, cv, sp, k):
+        """花火（上がって、はじけて、金の粒が垂れて消える。1つ 1.3秒）"""
+        if k <= 0.003:
+            return
+        cols = {"gold": GOLD * 1.3 + WHITE * 0.3, "pink": PINK * 1.2 + WHITE * 0.3, "cyan": CYAN * 1.1 + WHITE * 0.4}
+        # 締めは滞在の頭の姿で止める（動きながら消えると、締めの短い予算で画質が落ちる。draw の頭の c.ph = 0 と同じ）
+        T = self.INTRO if c.clip == "outro" else c.T
+        for t0, x, y, name in FIREWORKS:
+            ages = [T - (t0 + n * self.STAY) for n in range(-2, 3) if t0 + n * self.STAY >= t0 - self.STAY]
+            for age in [a for a in ages if 0 <= a < 1.6]:
+                R = self.fw[name]
+                if age < 0.3:
+                    # 昇る光
+                    q = age / 0.3
+                    fxv.stamp(cv.L, self.kit.star["gold"], x, y + 160 * (1 - ease_out(q)), 0.6 * k)
+                    continue
+                a = age - 0.3
+                q = a / 1.3
+                ang = R[:, 0] * 2 * np.pi
+                d = (70 + 50 * R[:, 1]) * (1 - np.exp(-a * 4.0))
+                px, py = x + np.cos(ang) * d, y + np.sin(ang) * d * 0.9 + 60 * a * a
+                tw = 0.55 + 0.45 * np.sin(2 * np.pi * (a * 5 + R[:, 2]))
+                kd = (1 - q) ** 1.4 * tw * k
+                sp.add_screen(px, py, cols[name][None] * kd[:, None] * 1.4, coc=np.full(len(px), 1.4))
+                if a < 0.12:
+                    glow(cv, x, y, 34, cols[name] * 0.6, 0.8 * (1 - a / 0.12) * k)
+
     def searchlights(self, c, cv, k):
         """下の屋台のあたりから昇る光の柱が5本、首を振る（1本ずつ周期をずらす）"""
         if k <= 0.003:
@@ -272,7 +321,8 @@ class Scene(Stage):
             across = dx * math.cos(ang) - dy * math.sin(ang)
             wdt = 22 + 0.2 * np.clip(along, 0, None)
             beam = np.exp(-(across / wdt) ** 2) * np.clip(along / 120, 0, 1) * np.exp(-np.clip(along, 0, None) / 900)
-            out += beam[..., None] * col * 0.58
+            # 板（不透明の絵）の上に足すので弱く（前は空と観覧車のあいだに挟まって半分隠れていた。0.58 のままだと真ん中が白く飛んだ）
+            out += beam[..., None] * col * 0.2
         up = cv2.resize(out, (W, H), interpolation=cv2.INTER_CUBIC)
         cv.emit((np.clip(up, 0, None) * k).astype(np.float32))
 

@@ -117,7 +117,9 @@ class Scene(Stage):
         self.bok = Loop(24, 3403, cycles=(1, 1))
         self.glint = Loop(36, 3404, cycles=(2, 3))
         # front: 箱ぜんぶの夜空の星と、降る雪（奥の小さな雪・手前の大きな雪）
-        self.sky = StarSky(3408, n=150, n_big=20, y0=24, y1=1110)
+        self.sky = StarSky(3408, n=150, n_big=28, y0=24, y1=1110)
+        # 箱ぜんぶをゆっくり昇る、金と白のぼけ玉（front。滞在の輪で1めぐり）
+        self.fbok = Loop(9, 3412, cycles=(1, 1))
         self.fsnow_far = Loop(120, 3409, cycles=(1, 1))
         self.fsnow_near = Loop(36, 3410, cycles=(2, 2))
         self.flake = {r: soft_dot(r) for r in (1.6, 3.4)}
@@ -285,6 +287,14 @@ class Scene(Stage):
         snowfall(c, ((self.fsnow_far, self.flake[1.6], 0.55, 1330, 16, front, -30),
                      (self.fsnow_near, self.flake[3.4], 0.5, 1380, 34, front, -40)), snow_k)
         shooting_stars(c, self.kit, front, sp_f, SHOOT, self.STAY, sky_k * (c.clip != "outro"))
+        for j in range(self.fbok.n):
+            rr = self.fbok.r[j]
+            a1 = self.fbok.age(c)[j]
+            x = (rr[0] * 1.1 - 0.05) * W + 26 * math.sin(6.283 * (a1 + rr[1]))
+            y = H * (0.9 - 0.85 * a1) - rr[2] * 80
+            kk = math.sin(math.pi * a1) ** 2 * (0.05 + 0.05 * rr[3]) * snow_k
+            spr = self.kit.bokeh_spr(22 + rr[4] * 30, j % 3, [GOLD, WHITE * 0.8 + GOLD * 0.3, GOLD * 0.7 + WHITE * 0.4][j % 3], 6 + rr[5] * 5)
+            fxv.stamp(front.L, spr, x, y, kk)
         sp_f.into(front)
         return out, self.finish_front(front, bloom=0.6)
 
