@@ -28,7 +28,9 @@ import { guidebookOf } from "@/content/guidebook";
 import { readDrawn } from "@/content/guidebook/manifest";
 import { KINDS, kindOf, routeOf, type Route } from "@/content/kinds";
 import { LEGENDS } from "@/content/legends";
+import { bookOf } from "@/content/legends/index";
 import { MONTHS } from "@/content/months";
+import { BOOK_PROJECTS } from "@/content/projectDrafts";
 import { DAY_PAGES, NORDIC_GUIDE_HREF, dayHref, dayName } from "@/content/nordic";
 import { RECIPES } from "@/content/recipes";
 import { SITE } from "@/content/site";
@@ -48,7 +50,7 @@ export type Page = {
   lastmod?: string;
   /** 画像のサイトマップに載せる絵（面の主役の、島が描いた絵だけ） */
   images?: string[];
-  /** 面は書き出すが、索引には出さない（公開前の印の付いた街と記事） */
+  /** 面は書き出すが、索引には出さない（公開前の印の付いた街と記事・下書きの企画） */
   unlisted?: boolean;
 };
 
@@ -84,7 +86,11 @@ const MEMBERS: Record<Route, Member> = {
   "/legends": { listed: true, pages: () => one("/legends", "伝説の企画", { lastmod: LASTMOD.legends() }) },
   "/legends/<企画>": {
     listed: true,
-    pages: () => LEGENDS.map((l) => ({ path: `/legends/${l.slug}`, name: l.title, lastmod: LASTMOD.legend(l) })),
+    /* 伝説の企画と、面の印の付いた企画（M-8。始まる前から面を持つ）。**下書きの企画は、面は在るが索引に出さない**（M-33。`unlisted`） */
+    pages: () => [
+      ...LEGENDS.map((l) => ({ path: `/legends/${l.slug}`, name: l.title, lastmod: LASTMOD.legend(l) })),
+      ...BOOK_PROJECTS.map((p) => ({ path: `/legends/${p.slug}`, name: p.title, lastmod: bookOf(p.slug).book.updated, unlisted: p.draft })),
+    ],
   },
   "/travel": { listed: true, pages: () => one(TRAVEL, TRAVEL_LABEL) },
   "/travel/<国>": {

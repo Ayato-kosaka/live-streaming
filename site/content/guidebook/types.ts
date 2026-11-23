@@ -95,8 +95,8 @@ export type Went = {
   story?: string[];
 };
 
-/** 豚肉・アルコール。**好みではなく事実**。窓の中のアイコンで知らせて、選ぶのは読む人（札と一覧には出さない。#328） */
-export type Flags = { pork?: boolean; alcohol?: boolean };
+/** 豚肉・アルコール・牛肉（牛は企画の面のインド）。**好みではなく事実**。窓の中のアイコンで知らせて、選ぶのは読む人（札と一覧には出さない。#328） */
+export type Flags = { pork?: boolean; alcohol?: boolean; beef?: boolean };
 
 /**
  * 札の上の印。**3種類だけ**（あやと 2026-11-16「豚・酒も私の好みに偏ってて微妙。『ヨーグルト』とか『薔薇』とか

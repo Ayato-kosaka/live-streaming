@@ -9,7 +9,8 @@ import Sheet from "./Sheet";
 import { WentBox } from "./Videos";
 import { Credit, Ext, Facts, FlagMarks, LocalName, MapsLink, Marks, Picture, STAR, Sec, SrcLine, sheetId, shortName } from "./parts";
 
-type Kind = "see" | "eat" | "buy";
+/** 札の節。`dish` は企画の面の「食べるべき100品」（`components/legends/`。窓の id が `#dish-<id>`） */
+type Kind = "see" | "eat" | "buy" | "dish";
 
 /**
  * 5〜7 見たいもの・食べたいもの・買いたいもの。**写真の札の格子 → 押すと窓**と、**マイマップ**。
@@ -23,7 +24,23 @@ type Kind = "see" | "eat" | "buy";
  * （あやと 2026-11-16「豚・酒も私の好みに偏ってて微妙」「イラストのチップ要らない」・`docs/island-misses.md` #328）。
  * 一面に並ぶ札が全部押せるので、1枚ずつに厚みは付けない（`docs/island-design.md` 3章3の例外）。
  */
-export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; cols: 2 | 3; todo: Todo[] }) {
+export function Tiles({
+  kind,
+  items,
+  cols,
+  todo,
+  kicker = KICKER[kind],
+  stars = STAR,
+}: {
+  kind: Kind;
+  items: Item[];
+  cols: 2 | 3;
+  todo: Todo[];
+  /** 窓の題の上の小さな字と、札の読み上げの節の名前。街のガイドは節ごとに決まっている（`KICKER`）。企画の面は節の名前を渡す */
+  kicker?: string;
+  /** ★の言葉（`rank` の順）。街のガイドは「必見」から（`STAR`）。企画の面の料理は企画書の言葉（「必食」）を渡す */
+  stars?: readonly string[];
+}) {
   return (
     <>
       <ul className={`gb-tiles is-${cols}`}>
@@ -31,7 +48,7 @@ export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; 
           <li key={it.id} data-kinds={it.kinds?.join(" ")}>
             {/* 同じ名前の品が食べたいと買いたいの両方にある（ラキヤ・ヴラネツ）。読み上げの名前に節を入れて分ける。
                 字で足すと、見えない字が面の字に数えられる（`guidebook.mjs` の字の量）ので、名前で渡す */}
-            <a className="gb-tile" href={`#${sheetId(kind, it.id)}`} aria-label={tileName(kind, it)}>
+            <a className="gb-tile" href={`#${sheetId(kind, it.id)}`} aria-label={tileName(kicker, it)}>
               {/* どの札も遅れて読む。見たいものの節は面の半ば（390幅で y≈5,000）で、先に読ませると最初の1画面の代金に乗る（#944） */}
               <Picture
                 pic={it.pic}
@@ -50,26 +67,38 @@ export function Tiles({ kind, items, cols, todo }: { kind: Kind; items: Item[]; 
         ))}
       </ul>
       {items.map((it) => (
-        <ItemSheet key={it.id} kind={kind} it={it} todo={todo} />
+        <ItemSheet key={it.id} kind={kind} it={it} todo={todo} kicker={kicker} stars={stars} />
       ))}
     </>
   );
 }
 
-const KICKER: Record<Kind, string> = { see: "見たいもの", eat: "食べたいもの", buy: "買いたいもの" };
+const KICKER: Record<Kind, string | undefined> = { see: "見たいもの", eat: "食べたいもの", buy: "買いたいもの", dish: undefined };
 
 /** 札の読み上げの名前。名前・節・1行・印（札に見えているものと同じ。豚肉・アルコールは窓の中で読む） */
-function tileName(kind: Kind, it: Item) {
+function tileName(kicker: string | undefined, it: Item) {
   const marks = [...(it.marks ?? []).map((m) => m.text), it.went && "行った"].filter(Boolean);
-  return [`${shortName(it.name)}（${KICKER[kind]}）`, it.line, ...marks].filter(Boolean).join("・");
+  return [kicker ? `${shortName(it.name)}（${kicker}）` : shortName(it.name), it.line, ...marks].filter(Boolean).join("・");
 }
 
-function ItemSheet({ kind, it, todo }: { kind: Kind; it: Item; todo: Todo[] }) {
+function ItemSheet({
+  kind,
+  it,
+  todo,
+  kicker,
+  stars,
+}: {
+  kind: Kind;
+  it: Item;
+  todo: Todo[];
+  kicker?: string;
+  stars: readonly string[];
+}) {
   const ts = (it.todo ?? []).map((id) => todo.find((t) => t.id === id)).filter((t): t is Todo => !!t);
   return (
     <Sheet
       id={sheetId(kind, it.id)}
-      kicker={KICKER[kind]}
+      kicker={kicker}
       title={it.name}
       wide
       hero={
@@ -84,7 +113,7 @@ function ItemSheet({ kind, it, todo }: { kind: Kind; it: Item; todo: Todo[] }) {
         {it.rank && (
           <span className="gb-star">
             <b aria-hidden="true">{"★".repeat(4 - it.rank)}</b>
-            {STAR[it.rank]}
+            {stars[it.rank]}
           </span>
         )}
       </p>

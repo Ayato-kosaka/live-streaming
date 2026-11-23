@@ -46,11 +46,12 @@ export function phaseOf(a: Pick<Ahead, "date" | "until">, now: Date): Phase {
 }
 
 /**
- * 企画の押した先。**道を表に書かない**（M-6）。伝説の企画は `/legends/<slug>`。
- * 単発の企画は面を持たない（ADR 0004）ので、その企画に結んだお題（掲示板）へ。お題も無ければ掲示板の頭へ
+ * 企画の押した先。**道を表に書かない**（M-6）。伝説の企画と、面の印の付いた企画（M-8）は `/legends/<slug>`。
+ * 単発の企画は面を持たない（ADR 0004）ので、その企画に結んだお題（掲示板）へ。お題も無ければ掲示板の頭へ。
+ * 下書きの企画はここへ来ない（`PROJECTS` に入らない。M-33）
  */
 export function projectHref(p: Project): string {
-  if (isLegend(p)) return `/legends/${p.slug}`;
+  if (isLegend(p) || p.book) return `/legends/${p.slug}`;
   const t = THEMES.find((x) => x.project === p.slug);
   return t ? `/board#${t.id}` : "/board";
 }
