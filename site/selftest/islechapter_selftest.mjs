@@ -93,9 +93,9 @@
  * sed 's|      name: "ブルガリア・ソフィア",|&\n      to: "2026-11-19",|' site/content/stays.ts > /tmp/stays-hand.ts
  * STAYS_TS=/tmp/stays-hand.ts node site/selftest/islechapter_selftest.mjs
  *
- * # (l) 紙の板に、選びかたの写しを持たせる → 3b の「同じ式で選んでいる」が落ちる
- * sed 's|guideOn(items, new Date())|items.find((g) => g.from <= "9999") ?? null|' \
- *   site/components/live/GuideLink.tsx > /tmp/link-own.tsx
+ * # (l) 表紙の「これから」に、選びかたの写しを持たせる → 3b の「同じ式で選んでいる」が落ちる
+ * sed 's|const g = guideOn(guides, on);|const g = guides.find((x) => x.from <= "9999") ?? null;|' \
+ *   site/components/live/NextUp.tsx > /tmp/link-own.tsx
  * LINK_TSX=/tmp/link-own.tsx node site/selftest/islechapter_selftest.mjs
  *
  * # (m) いま居る国の案内を、滞在の表から丸ごと抜く（面は在るまま）→ 3 の「国の案内がある」が落ちる
@@ -112,7 +112,7 @@
  * 同じ答えになること（＝期間が重なっていないこと）を足した。
  *
  * **(d) は1度、空振りしていた。** `<b>{guide.name}</b>` を `app/page.tsx` から
- * 探していたが、その字は部品（`GuideLink.tsx`）のほうに在る。sed は当たらなくても
+ * 探していたが、その字は部品（前は `GuideLink.tsx`、いまは `NextUp.tsx`）のほうに在る。sed は当たらなくても
  * 黙って元の字を返すので、**壊していない写しで「落ちる」を確かめたつもり**になる。
  * 写しを作ったら、まず `diff` で1行変わっていることを見る。
  *
@@ -162,8 +162,9 @@ const COUNTRIES_SRC = process.env.COUNTRIES_TS || join(CONTENT, "countries.ts");
 const STAYS_SRC = process.env.STAYS_TS || join(CONTENT, "stays.ts");
 const COVER_SRC = process.env.COVER_TS || join(ISLE, "cover.ts");
 const GUIDEDAY_SRC = process.env.GUIDEDAY_TS || join(SITE, "lib", "guideDay.ts");
-/** 紙の板の部品。**字として読む**（選びかたの写しを持っていないか） */
-const LINK_SRC = process.env.LINK_TSX || join(SITE, "components", "live", "GuideLink.tsx");
+/** 表紙の「これから」の部品（前は「いま」の章の紙の板 `GuideLink.tsx`。#1276 で寄せた）。
+ *  **字として読む**（選びかたの写しを持っていないか） */
+const LINK_SRC = process.env.LINK_TSX || join(SITE, "components", "live", "NextUp.tsx");
 /** 面。**字として読む**（表を自前で持っていないか） */
 const PAGE_SRC = process.env.PAGE_TSX || join(SITE, "app", "island", "[chapter]", "page.tsx");
 /** トップの紙。同じく字として読む（国の名前を書き写していないか） */
@@ -522,7 +523,7 @@ if (guide?.href) {
   const homeSrc = readFileSync(HOME_SRC, "utf8");
   /* `guidesOf`（表ぜんぶ）でも通す。**滞在の期間で入れ替える面**は、
      どの国かを焼いた日で決められないので、表ぜんぶを部品へ渡して
-     画面が出てから選び直している（`components/live/GuideLink.tsx`）。
+     画面が出てから選び直している（`components/live/NextUp.tsx`）。
      見たいのは「紙が表から引いているか」なので、どちらの口でもよい。 */
   check(
     "トップの紙の1本が、案内の表から字を引いている",
@@ -697,7 +698,7 @@ if (!ROWS.length) {
   );
 
   /* (5) 境目ぜんぶと、ずっと先。**3つの口が、同じ日に同じ国を指す**
-     ——島の札の表（`guideOf`）・紙の板（`guideOn`。`GuideLink` が呼ぶ式）・表紙の板 */
+     ——島の札の表（`guideOf`）・紙の板（`guideOn`。表紙の「これから」の `NextUp` が呼ぶ式）・表紙の板 */
   const days = [...new Set([...marks.flatMap((m) => [addDays(m.e.on, -1), m.e.on]), TODAY, far])].sort();
   const points = days.flatMap((day) => [jst0(day), new Date(jst0(addDays(day, 1)).getTime() - 1)]);
   const off = points.flatMap((at) => {
@@ -747,9 +748,9 @@ if (!ROWS.length) {
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/^\s*\/\/.*$/gm, "");
   check(
-    "紙の板（GuideLink）が、島の札と同じ式（lib/guideDay.ts の guideOn）で選んでいる",
+    "表紙の「これから」（NextUp）が、島の札と同じ式（lib/guideDay.ts の guideOn）で選んでいる",
     /guideOn\s*\(/.test(linkSrc) && !/\.find\s*\(/.test(linkSrc),
-    "GuideLink.tsx が guideOn を呼んでいないか、自前の .find( を持っている",
+    "NextUp.tsx が guideOn を呼んでいないか、自前の .find( を持っている",
   );
 
   /* (7) 案内の面に、手で書いた期間が戻っていない。案内の面は滞在の表の行の `guide: { … }`
