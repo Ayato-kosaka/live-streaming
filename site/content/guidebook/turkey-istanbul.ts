@@ -278,12 +278,6 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikipedia.org/wiki/Beylerbeyi_Palace",
      "seen": "2026-11-23"
     }
-   ],
-   "marks": [
-    {
-     "kind": "price",
-     "text": "往復640リラ"
-    }
    ]
   },
   {
@@ -307,12 +301,6 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
      "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
      "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
      "seen": "2026-11-23"
-    }
-   ],
-   "marks": [
-    {
-     "kind": "price",
-     "text": "垢すり4,050リラ"
     }
    ]
   },
@@ -341,7 +329,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "date": "2025-04-08",
+    "scene": {
+     "v": "t0VuytEmnaI",
+     "t": 2040,
+     "date": "2025-04-08"
+    },
+    "story": [
+     "金銀財宝が売っていて、面白かったです。手織りの絨毯は、見る方向で色の濃さが変わるのを、実際に見て確かめました。今回は特に買うものはありませんでした。"
+    ]
+   }
   },
   {
    "id": "balik",
@@ -401,12 +400,6 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
      "seen": "2026-11-23"
     }
-   ],
-   "marks": [
-    {
-     "kind": "price",
-     "text": "昼1,500リラ"
-    }
    ]
   },
   {
@@ -417,7 +410,7 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
    "how": "カドゥキョイへの船は、ヨーロッパ側のエミノニュ・カラキョイ・ベシクタシュから出る。着いたら、魚市場（9時〜20時30分）と、牛の像から南へ延びる歩行者の通りバハリイェ通りへ。",
    "time": "",
    "money": "カドゥキョイとエミノニュの船は65.21リラ（約200円。2026年7月20日から）。",
-   "tip": "イスタンブールカードは、街角の小さな店や駅の機械で買え、現金かクレジットカードで足せる。",
+   "tip": "イスタンブールカードは、街角の小さな店や駅の券売機で買え、現金かクレジットカードで足せる。",
    "route": "",
    "see": [
     "kadikoy",
@@ -444,7 +437,23 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikivoyage.org/wiki/Istanbul",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "date": "2025-04-11",
+    "scene": {
+     "v": "UULcHjBHSJM",
+     "t": 3040,
+     "date": "2025-04-11"
+    },
+    "story": [
+     "地元の人も通勤に使うフェリーで、アジア側へ渡りました。船の上はめちゃくちゃ寒かったけれど、晴れた景色がよくて、この日にしてよかったです。"
+    ],
+    "more": {
+     "href": "/travel/turkey/istanbul/ferry",
+     "title": "フェリーでアジア側へ渡ってきた【2025年4月】"
+    },
+    "say": "マジで今日にしてよかった。…それだけで今日にした会[甲斐]があったわ。"
+   }
   },
   {
    "id": "kebab",
@@ -478,7 +487,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
     "doner",
     "iskender",
     "adana"
-   ]
+   ],
+   "went": {
+    "date": "2025-03-30",
+    "scene": {
+     "v": "UULcHjBHSJM",
+     "t": 8350,
+     "date": "2025-04-11"
+    },
+    "story": [
+     "アヤソフィア近くの観光客向けの店では、ケバブが350リラ、1,400円もしました。イギリスでも、そこまではしません。別の日に100gで頼んだケバブは800円ぐらいで、炭火焼きのような焦げ目があって、断然うまかったです。"
+    ]
+   }
   },
   {
    "id": "islands",
@@ -560,6 +580,21 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2025-04-03",
+     "scene": {
+      "v": "Far6D8kifM4",
+      "t": 2550,
+      "date": "2025-04-03"
+     },
+     "story": [
+      "ブルーモスクより先に行きました。前は大渋滞で道も狭く、最近まで無料だったのが、観光客が増えすぎて有料になったそうです。横から見ると、お城みたいでかっこよかったです。"
+     ],
+     "more": {
+      "href": "/travel/turkey/istanbul/blue",
+      "title": "ブルーモスクに入ってきた【2025年4月】"
+     }
+    },
     "geo": {
      "lat": 41.008505,
      "lon": 28.980011
@@ -617,6 +652,22 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2025-04-04",
+     "scene": {
+      "v": "x8Kbm9dDpYg",
+      "t": 3120,
+      "date": "2025-04-04"
+     },
+     "story": [
+      "入場は無料ですが、中に入る列は2時間待ちでした。次に行った雨の月曜日は、礼拝の時間で30分待ってから、靴を脱いで入りました。中は空いていて、猫もいました。"
+     ],
+     "more": {
+      "href": "/travel/turkey/istanbul/blue",
+      "title": "ブルーモスクに入ってきた【2025年4月】"
+     },
+     "say": "ちょっと本格的にすごいぞ、これ。"
+    },
     "geo": {
      "lat": 41.005384,
      "lon": 28.976853
@@ -794,6 +845,17 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2025-04-08",
+     "scene": {
+      "v": "t0VuytEmnaI",
+      "t": 2820,
+      "date": "2025-04-08"
+     },
+     "story": [
+      "4月なのに7〜9度ほどで、寒い日でした。金銀財宝が売っていて面白かったけれど、自分で買うなら欲しいものはあまりなく、今回は特に買うものはありませんでした。値切りは、やったことがありません。"
+     ]
+    },
     "geo": {
      "lat": 41.010954,
      "lon": 28.968022
@@ -850,6 +912,17 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2025-04-12",
+     "scene": {
+      "v": "nJzo0OMugaM",
+      "t": 970,
+      "date": "2025-04-12"
+     },
+     "story": [
+      "道が分からなくなりながら、入り口に着きました。食べ物の市場かと思ったら、おもちゃも売っていて、食べ物以外も多い。スパイス売り場には、ローズマリーやクローブがありました。値段の書いていない店が多かったです。"
+     ]
+    },
     "geo": {
      "lat": 41.016479,
      "lon": 28.970538
@@ -907,6 +980,21 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2025-04-05",
+     "scene": {
+      "v": "hhW0LTh3xIw",
+      "t": 7470,
+      "date": "2025-04-05"
+     },
+     "story": [
+      "近いので歩いて向かいましたが、坂がすごくて、トルコは登山だと思いました。入場は4,500円ほどで、見送りました。"
+     ],
+     "more": {
+      "href": "/travel/turkey/istanbul/galata",
+      "title": "新市街のガラタ塔まで歩いてきた【2025年4月】"
+     }
+    },
     "geo": {
      "lat": 41.025641,
      "lon": 28.974213
@@ -1435,6 +1523,21 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "seen": "2026-11-23"
      }
     ],
+    "went": {
+     "date": "2025-04-11",
+     "scene": {
+      "v": "UULcHjBHSJM",
+      "t": 2980,
+      "date": "2025-04-11"
+     },
+     "story": [
+      "アジア側でいちばん大きい街で、思っていたより近代的でした。パリっぽい店があって、市場の野菜は水を上げられていて、新鮮に見えました。"
+     ],
+     "more": {
+      "href": "/travel/turkey/istanbul/ferry",
+      "title": "フェリーでアジア側へ渡ってきた【2025年4月】"
+     }
+    },
     "geo": {
      "lat": 40.992908,
      "lon": 29.022868
@@ -2072,7 +2175,19 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://haciabdullah.com.tr/menu/",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-04-03",
+     "scene": {
+      "v": "Far6D8kifM4",
+      "t": 1380,
+      "date": "2025-04-03"
+     },
+     "story": [
+      "フォークを入れると、葉っぱの中に何か入っていました。食べてみるとぬめぬめしていて、初めての味。中身はふにゃふにゃのご飯で、ピクルスでお粥を包んだみたいです。思ったより癖がなくて、普通に美味しかったので、晩ごはんにすることにしました。"
+     ],
+     "say": "トルコ版寿司でした"
+    }
    },
    {
     "id": "mercimek",
@@ -2116,7 +2231,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-04-01",
+     "scene": {
+      "v": "Q2nn9RXxN7Q",
+      "t": 300,
+      "date": "2025-04-01"
+     },
+     "story": [
+      "泊まった宿の朝食は、ゆで卵1個、チーズ2種、ジャム3種、レタス、オリーブ、バゲット食べ放題。ただ朝8時から10時前までで、8時に起きるつもりが、起きたら12時でした。宿の周りの朝ごはんも安くてしっかりしていて、2週間ほど食べました。"
+     ]
+    }
    },
    {
     "id": "balik-ekmek",
@@ -2289,7 +2415,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://www.karakoygulluoglu.com/",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-04-05",
+     "scene": {
+      "v": "hhW0LTh3xIw",
+      "t": 4060,
+      "date": "2025-04-05"
+     },
+     "story": [
+      "目当ての有名店は閉まっていましたが、ピスタチオのバクラヴァを買って、手で食べました。めちゃくちゃ美味しいので、トルコに来たらぜひ食べてほしいです。"
+     ]
+    }
    },
    {
     "id": "lokum",
@@ -2391,7 +2528,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-04-09",
+     "scene": {
+      "v": "itQ8b_XeK0U",
+      "t": 3335,
+      "date": "2025-04-09"
+     },
+     "story": [
+      "店で食べてみなとアイスを出されて、食べようとすると引っこめられ、鼻をつつかれました。スモールで600円くらい。噛めるほどの弾力で、溶ける寸前のハイチュウのような食感です。溶けて落ちてこず、ネバネバ伸びる。1回慣れるとうまいです。"
+     ]
+    }
    },
    {
     "id": "sutlac",
@@ -2448,7 +2596,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-03-31",
+     "scene": {
+      "v": "Q2nn9RXxN7Q",
+      "t": 380,
+      "date": "2025-04-01"
+     },
+     "story": [
+      "トルコのチャイは、トルココーヒーと同じく美味しかったです。"
+     ]
+    }
    },
    {
     "id": "kahve",
@@ -2483,7 +2642,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-03-31",
+     "scene": {
+      "v": "Q2nn9RXxN7Q",
+      "t": 380,
+      "date": "2025-04-01"
+     },
+     "story": [
+      "トルココーヒーも、トルコのチャイも、美味しかったです。"
+     ]
+    }
    },
    {
     "id": "ayran",
@@ -2505,7 +2675,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-04-05",
+     "scene": {
+      "v": "hhW0LTh3xIw",
+      "t": 11950,
+      "date": "2025-04-05"
+     },
+     "story": [
+      "無糖のヨーグルトをさらさらにした味で、ラッシーより好きかもしれません。"
+     ]
+    }
    },
    {
     "id": "boza",
@@ -2908,7 +3089,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikipedia.org/wiki/Spice_Bazaar",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-04-12",
+     "scene": {
+      "v": "nJzo0OMugaM",
+      "t": 1265,
+      "date": "2025-04-12"
+     },
+     "story": [
+      "エジプシャン・バザールのスパイス売り場には、ローズマリーやクローブがありました。"
+     ]
+    }
    },
    {
     "id": "kilim",
@@ -2932,7 +3124,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Istanbul",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-04-08",
+     "scene": {
+      "v": "t0VuytEmnaI",
+      "t": 2040,
+      "date": "2025-04-08"
+     },
+     "story": [
+      "グランドバザールで、手織りの絨毯が、見る方向で色の濃さが変わるのを、実際に見て確かめました。"
+     ]
+    }
    },
    {
     "id": "pestemal",
@@ -3099,7 +3302,7 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
     "id": "budget",
     "icon": "wallet",
     "label": "乗り物の目安",
-    "value": "1回46.20リラ",
+    "value": "カードで乗る",
     "lead": "メトロ・トラム・バス",
     "to": "#budget"
    },
@@ -3142,7 +3345,22 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Istanbul",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-03-30",
+     "scene": {
+      "v": "6cRyzHIezD4",
+      "t": 185,
+      "date": "2025-03-30"
+     },
+     "story": [
+      "アジア寄りのサビハ・ギョクチェン空港に着いて、市街まで3時間ほど。帰りの空港は荷物検査が2回あって、ドライバーを取られました。"
+     ],
+     "more": {
+      "href": "/travel/turkey/istanbul/arrival",
+      "title": "イスタンブールに着いた日【2025年3月】"
+     }
+    }
    },
    {
     "id": "transit",
@@ -3152,7 +3370,7 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
     "parts": [
      {
       "h": "",
-      "text": "カードのイスタンブールカードは、街角の小さな店や駅の機械で買える。足すのは現金かクレジットカード。"
+      "text": "カードのイスタンブールカードは、街角の小さな店や駅の券売機で買える。足すのは現金かクレジットカード。"
      },
      {
       "h": "",
@@ -3183,7 +3401,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-03-30",
+     "scene": {
+      "v": "aUpMiuFhaMk",
+      "t": 1000,
+      "date": "2025-03-30"
+     },
+     "story": [
+      "電車は1回40リラ、約160円で、ヨーロッパより安い。イスタンブールカードを買って、チャージして使いました。トラムの駅には改札があってしっかりしていますが、乗る路線を間違えて、降りてやり直したこともあります。"
+     ]
+    }
    },
    {
     "id": "pay",
@@ -3224,7 +3453,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Istanbul",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-03-30",
+     "scene": {
+      "v": "aUpMiuFhaMk",
+      "t": 1400,
+      "date": "2025-03-30"
+     },
+     "story": [
+      "現金は、着いた日に300リラ、約1,200円を下ろしました。リラは日によって値動きが大きくて、店の手書きのメニューの値段が古いことがあります。値札は、ホワイトボードやシールで書き直せるようになっていました。"
+     ]
+    }
    },
    {
     "id": "sim",
@@ -3247,7 +3487,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Istanbul",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-04-04",
+     "scene": {
+      "v": "x8Kbm9dDpYg",
+      "t": 2260,
+      "date": "2025-04-04"
+     },
+     "story": [
+      "外を歩いているときは電波が安定していましたが、ブルーモスクの中に入ったころに電波がなくなりました。20GBのSIMが切れたときは、Wi-Fiをつないで復活しました。"
+     ]
+    }
    },
    {
     "id": "safety",
@@ -3287,7 +3538,22 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
       "url": "https://en.wikivoyage.org/wiki/Istanbul",
       "seen": "2026-11-23"
      }
-    ]
+    ],
+    "went": {
+     "date": "2025-03-31",
+     "scene": {
+      "v": "vbagkjbCw4Q",
+      "t": 420,
+      "date": "2025-03-31"
+     },
+     "story": [
+      "着いた初日に、公園で声をかけてきたおじさんについて行きました。親戚の絨毯屋とケバブ屋を回って、ビール代は全部こちらが払うと思われていて、最後は走って帰りました。"
+     ],
+     "more": {
+      "href": "/travel/turkey/istanbul/touts",
+      "title": "イスタンブールで声をかけてきたおじさんについて行った【2025年3月】"
+     }
+    }
    },
    {
     "id": "phrases",
@@ -3431,7 +3697,18 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
      "url": "https://en.wikipedia.org/wiki/Time_in_Turkey",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "date": "2025-03-30",
+    "scene": {
+     "v": "aUpMiuFhaMk",
+     "t": 185,
+     "date": "2025-03-30"
+    },
+    "story": [
+     "3月30日に着いた日は、日差しが強くて南国のような暑さでした。ところが4月7日は6度の土砂降りで、今まで感じた中でいちばん寒い日。4月のトルコは暑いと思っていたら、7〜9度ほどの寒い日もありました。"
+    ]
+   }
   },
   "budget": {
    "rows": [],
@@ -3721,6 +3998,6 @@ export const ISTANBUL: Guidebook = /* BEGIN GUIDE */
  },
  "published": "2026-11-23",
  "updated": "2026-11-24",
- "hash": "9076fc9b87d0e811"
+ "hash": "5346399e20731f9c"
 }
 /* END GUIDE */;

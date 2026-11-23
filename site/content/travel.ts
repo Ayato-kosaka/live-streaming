@@ -316,6 +316,16 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "albania", city: "tirana", slug: "airport", crumb: "空港から市街へ" },
   /* ティラナのホステルで2回盗まれた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
   { country: "albania", city: "tirana", slug: "hostel", crumb: "ホステルの盗難" },
+  /* ブルーモスクに入ってきた（#1228。マトカ渓谷と同じ型）。イスタンブールの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "turkey", city: "istanbul", slug: "blue", crumb: "ブルーモスク", draft: true },
+  /* 新市街のガラタ塔まで歩いてきた（#1228。マトカ渓谷と同じ型）。イスタンブールの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "turkey", city: "istanbul", slug: "galata", crumb: "ガラタ塔", draft: true },
+  /* フェリーでアジア側へ渡ってきた（#1228。マトカ渓谷と同じ型）。イスタンブールの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "turkey", city: "istanbul", slug: "ferry", crumb: "フェリーでアジア側へ", draft: true },
+  /* イスタンブールで声をかけてきたおじさんについて行った（#1228。マトカ渓谷と同じ型）。イスタンブールの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "turkey", city: "istanbul", slug: "touts", crumb: "声をかけてきた人", draft: true },
+  /* イスタンブールに着いた日（#1228。マトカ渓谷と同じ型）。イスタンブールの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
+  { country: "turkey", city: "istanbul", slug: "arrival", crumb: "着いた日", draft: true },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */
