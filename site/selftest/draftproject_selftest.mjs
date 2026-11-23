@@ -11,8 +11,8 @@
  * 索引・`/all`・llms.txt が読む。**足した時点で、ぜんぶに出る**。インド屋台飯100食（#1404）は
  * 「まだ動線をつなげるのは待ってほしい」（あやと 2026-11-23）ので、面は建てるが、どこからも引かない。
  *
- * 引く所ごとに印を見る作りにすると、引く所が増えた日に1か所だけ見落とす。だから島じゅうが読む `PROJECTS` から
- * 下書きの行を抜き、下書きまで読むのは面の名簿と面だけにした（`PROJECT_ROWS`・`BOOK_PROJECTS`）。
+ * 引く所ごとに印を見る作りにすると、引く所が増えた日に1か所だけ見落とす。だから下書きの行は、島じゅうが読む `PROJECTS` ではなく
+ * `DRAFT_PROJECTS` に置き、下書きまで読むのは面の名簿と面だけにした（`PROJECT_ROWS`・`BOOK_PROJECTS`）。
  * ここは、その形が崩れていないかを**本物の口で**見る。
  *
  * ## 何を見ているか
@@ -22,8 +22,8 @@
  *     島じゅうの企画（`PROJECTS`）・表紙の「これから」と便り（`AHEAD`・`upNext`・`aheadOn`）・伝説の丘と島の上と掲示板と表紙の棚
  *     （`LEGENDS`・`legendsOf`）・カードの日（`DAY_BRIEFS`）・お題（`THEMES`）・索引と `/all`（`listedPages`）・llms.txt
  *  3. 面は在る: 面の一覧（`pagesOf("/legends/<企画>")`）に、索引に出さない面として並ぶ。面の `robots` は `index: false`
- *  4. **対照**——同じ表の写しから `draft: true` だけを消して組み直すと、表紙の「これから」・索引・llms.txt に出て、
- *     `robots` が外れる（印1つで出る側へ倒れる。「何も見ていない緑」でないこと。`docs/island-standards.md` §15）
+ *  4. **対照**——同じ表の写しで、出す日の手順（`draft: true` を消して、行を `PROJECTS` へ移す）をして組み直すと、
+ *     表紙の「これから」・便り・索引・llms.txt に出て、`robots` が外れる（「何も見ていない緑」でないこと。`docs/island-standards.md` §15）
  *
  * 壊しかたは `--hint`。
  */
@@ -42,9 +42,10 @@ const PROJECTS_SRC = process.env.PROJECTS_TS || join(SITE, "content", "projects.
 
 const BREAK_HINT = `わざと壊して、ここが落ちることを見るには:
 
-  # 1) 島じゅうの企画に下書きを混ぜる（引く所ごとに印を見ない作りに戻る）→ 2 が落ちる
-  sed 's|PROJECT_ROWS.filter((p) => !p.draft)|PROJECT_ROWS|' site/content/projects.ts > /tmp/projects-all.ts
-  PROJECTS_TS=/tmp/projects-all.ts node site/selftest/draftproject_selftest.mjs
+  # 1) 表紙の「これから」が下書きまで読む（PROJECTS ではなく PROJECT_ROWS を引く）→ 2 が落ちる
+  cp site/lib/leadPlan.ts /tmp/lead.keep.ts
+  sed -i 's|...PROJECTS.map(ofProject)|...PROJECT_ROWS.map(ofProject)|; s|import { PROJECTS, |import { PROJECT_ROWS, PROJECTS, |' site/lib/leadPlan.ts
+  node site/selftest/draftproject_selftest.mjs; cp /tmp/lead.keep.ts site/lib/leadPlan.ts
 
   # 2) 面の名簿が面の印を読まない → 3 と 4 が落ちる
   sed 's|...BOOK_PROJECTS.map|...[].map|' site/lib/pages.ts > /tmp/pages.ts && cp site/lib/pages.ts /tmp/pages.keep.ts && cp /tmp/pages.ts site/lib/pages.ts
@@ -194,14 +195,16 @@ for (const p of drafts) {
 }
 
 // ------------------------------------------------------------------ 対照
-console.log("[4] 対照: 下書きの印だけを消した写しでは、出る側へ倒れる");
+console.log("[4] 対照: 出す日の手順（印を消して、行を PROJECTS へ移す）をした写しでは、出る側へ倒れる");
 const slug = drafts[0].slug;
-/* その行の `draft: true,` だけを消す（ほかの行の印に触らない） */
+/* その行（`{ … slug: "<slug>" … }`）を下書きの並びから切り出し、印を消して、島じゅうの並びの頭へ移す（ほかの行に触らない） */
 const at = realSrc.indexOf(`slug: "${slug}"`);
-const end = realSrc.indexOf("}", at);
-const cut = realSrc.slice(at, end);
-if (at < 0 || !/\n\s*draft: true,/.test(cut)) stop(`写しが作れない（${slug} の行に draft: true, が見つからない）`);
-const openSrc = realSrc.slice(0, at) + cut.replace(/\n\s*draft: true,/, "") + realSrc.slice(end);
+const begin = realSrc.lastIndexOf("{", at);
+const end = realSrc.indexOf("}", at) + 1;
+const row = realSrc.slice(begin, end);
+const head = "export const PROJECTS: Project[] = [";
+if (at < 0 || !/\n\s*draft: true,/.test(row) || !realSrc.includes(head)) stop(`写しが作れない（${slug} の行か、PROJECTS の頭が見つからない）`);
+const openSrc = (realSrc.slice(0, begin) + realSrc.slice(end).replace(/^,/, "")).replace(head, `${head}\n  ${row.replace(/\n\s*draft: true,/, "")},`);
 const open = load(build(openSrc));
 const shown = await where(open, slug);
 for (const want of ["島じゅうの企画（PROJECTS）", "表紙の「これから」（upNext）", "その日の便り（aheadOn）", "索引と /all（listedPages）", "llms.txt"]) {

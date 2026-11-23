@@ -71,7 +71,7 @@ export function travelArticles(site) {
 export const sitemapReadsArticles = (sitemapSrc) => /\bpublicArticles\(|\bTRAVEL_ARTICLES\b/.test(sitemapSrc);
 
 /**
- * 面の印の付いた企画（`content/projects.ts` の `PROJECT_ROWS` の `book`。M-8）。`draft` は下書きの印（M-33）。
+ * 面の印の付いた企画（`content/projects.ts` の `book`。M-8）。`draft` は下書きの印（M-33。行は `DRAFT_PROJECTS` に居る）。
  *
  * 面は道が固定（`app/legends/<企画>/page.tsx`）だが、`robots` は面に字で書かず、表の印から決まる
  * （`content/legends/index.ts` の `bookRobots`）。だから「検索に出さないと自分で言っている面か」は表の印で読む。
@@ -79,7 +79,11 @@ export const sitemapReadsArticles = (sitemapSrc) => /\bpublicArticles\(|\bTRAVEL
  */
 export function legendBooks(site) {
   const src = readFileSync(join(site, "content", "projects.ts"), "utf8");
-  const rows = must(readArray(src, "PROJECT_ROWS", { keys: ["slug", "book", "draft"] }), "content/projects.ts の PROJECT_ROWS");
+  /* 出ている企画（`PROJECTS`）と下書きの企画（`DRAFT_PROJECTS`）の2つの並び。下書きの並びは空のこともある */
+  const rows = [
+    ...must(readArray(src, "PROJECTS", { keys: ["slug", "book", "draft"] }), "content/projects.ts の PROJECTS"),
+    ...readArray(src, "DRAFT_PROJECTS", { keys: ["slug", "book", "draft"] }),
+  ];
   return rows.filter((r) => r.book === "true").map((r) => ({ route: `/legends/${r.slug}`, draft: r.draft === "true" }));
 }
 

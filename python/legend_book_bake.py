@@ -148,8 +148,13 @@ def price_text(p: dict, where: str) -> str:
         raise Bad(f"{where}: 値段（price）の欄が足りない") from None
     if cur not in CURRENCY:
         raise Bad(f"{where}: 通貨 {cur!r} を知らない（{sorted(CURRENCY)}）")
-    if not all(isinstance(x, int) and x > 0 for x in (lo, hi, ylo, yhi)) or lo > hi or ylo > yhi:
+    if not all(isinstance(x, int) and x >= 0 for x in (lo, hi, ylo, yhi)) or lo > hi or ylo > yhi:
         raise Bad(f"{where}: 値段の額が崩れている（{lo}〜{hi}・{ylo}〜{yhi}円）")
+    # タダで出す所（黄金寺院の無料食堂ランガル）。0 は「無料」と書き、換算は添えない
+    if hi == 0:
+        if yhi:
+            raise Bad(f"{where}: 現地の額が0なのに円の額がある（{ylo}〜{yhi}円）")
+        return "無料"
     if not isinstance(day, str) or not DAY.match(day):
         raise Bad(f"{where}: 換算した日（rate_date）が YYYY-MM-DD でない")
     amt = f"{lo:,}" if lo == hi else f"{lo:,}〜{hi:,}"

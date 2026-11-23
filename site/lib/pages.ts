@@ -28,6 +28,7 @@ import { guidebookOf } from "@/content/guidebook";
 import { readDrawn } from "@/content/guidebook/manifest";
 import { KINDS, kindOf, routeOf, type Route } from "@/content/kinds";
 import { LEGENDS } from "@/content/legends";
+import { bookOf } from "@/content/legends/index";
 import { MONTHS } from "@/content/months";
 import { BOOK_PROJECTS } from "@/content/projects";
 import { DAY_PAGES, NORDIC_GUIDE_HREF, dayHref, dayName } from "@/content/nordic";
@@ -88,7 +89,7 @@ const MEMBERS: Record<Route, Member> = {
     /* 伝説の企画と、面の印の付いた企画（M-8。始まる前から面を持つ）。**下書きの企画は、面は在るが索引に出さない**（M-33。`unlisted`） */
     pages: () => [
       ...LEGENDS.map((l) => ({ path: `/legends/${l.slug}`, name: l.title, lastmod: LASTMOD.legend(l) })),
-      ...BOOK_PROJECTS.map((p) => ({ path: `/legends/${p.slug}`, name: p.title, unlisted: p.draft })),
+      ...BOOK_PROJECTS.map((p) => ({ path: `/legends/${p.slug}`, name: p.title, lastmod: bookOf(p.slug).book.updated, unlisted: p.draft })),
     ],
   },
   "/travel": { listed: true, pages: () => one(TRAVEL, TRAVEL_LABEL) },
