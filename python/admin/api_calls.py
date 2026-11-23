@@ -136,8 +136,24 @@ def main() -> None:
             time.sleep(PAGE_WAIT)
         log.warning("頁の上限（%d）で切りました。数は下限です", pages)
 
+    if a.get("probe"):
+        # 何が残っているかの下見。直近2時間の、この口の行を種類ごとに数える
+        near = (datetime.now(timezone.utc) - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        kinds: Counter = Counter()
+        for e in pull(" AND ".join(base[:2] + [f'timestamp>="{near}"']), "desc", 200, 3):
+            h = e.get("httpRequest") or {}
+            ln = e.get("logName", "").rsplit("/", 1)[-1]
+            kinds[(ln, shape(urlparse(h.get("requestUrl", "")).path) if h else "—")] += 1
+        for (ln, p), n in kinds.most_common(30):
+            log.info("  %-40s %-30s %d", ln, p, n)
+        return
+
     # 窓の確かめ: この口に残っている、いちばん古い要求の行
-    oldest = next(iter(pull(" AND ".join(base), "asc", 1, 1)), None)
+    # （時刻の縛りが無いと既定の窓しか探さないので、数える窓と同じ頭を付ける）
+    oldest = next(
+        iter(pull(" AND ".join(base + [f'timestamp>="{since}"']), "asc", 1, 30)),
+        None,
+    )
     log.info(
         "残っている要求のログのいちばん古い行: %s（数える窓は %s から）",
         (oldest or {}).get("timestamp", "なし")[:19],
