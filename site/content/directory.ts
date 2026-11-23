@@ -226,6 +226,24 @@ export const SHELVES: Shelf[] = [
     ],
   },
   {
+    /* セルビア（ベオグラードのガイドを公開した。行く前の国で、国の面はまだ無い）。ルーマニアと同じく、国ごとに棚を立てる */
+    id: "serbia",
+    title: "セルビア",
+    /* **時点を言わない**（`docs/island-standards.md` 16章） */
+    note: "ドナウとサヴァに抱かれた白い町。首都はベオグラード",
+    items: [
+      {
+        href: travelCity("serbia", "belgrade").href,
+        name: "セルビア・ベオグラード",
+        note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・ことば",
+        q: q(
+          "セルビア serbia ベオグラード belgrade 要塞 カレメグダン kalemegdan 聖サヴァ大聖堂 テスラ tesla " +
+            "スカダルリヤ skadarlija ゼムン zemun ノヴィ・サド novi sad チェヴァプチチ ćevapi カイマク ディナール バルカン",
+        ),
+      },
+    ],
+  },
+  {
     /* ルーマニア（2026-11-20 にブカレストのガイドを公開した。国の面は入った日の 11-21 に建てた）。
        ブルガリアと同じく、国ごとに棚を立てる */
     id: "romania",

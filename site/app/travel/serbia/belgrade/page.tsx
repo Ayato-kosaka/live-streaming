@@ -12,6 +12,7 @@ import Toc, { tocOf } from "@/components/guidebook/Toc";
 import Todo from "@/components/guidebook/Todo";
 import Videos, { VideoLds } from "@/components/guidebook/Videos";
 import Writer from "@/components/travel/article/Writer";
+import StickyNotes from "@/components/live/Notes";
 import Icon from "@/components/ui/Icon";
 import PageShell from "@/components/ui/PageShell";
 import { GUIDE_BY, firstWent } from "@/content/guidebook/heading";
@@ -44,7 +45,7 @@ import "@/components/guidebook/guidebook.css";
  *
  * ## 公開
  *
- * 公開前（`content/travel.ts` の `draft: true`）。付いているあいだ、検索に載せない・索引と `/all` に並べない。
+ * 運営が型の数と見張りを見て公開前の印を外した（`content/travel.ts`）。
  */
 
 const G = BELGRADE;
@@ -97,6 +98,9 @@ export default function BelgradePage() {
         <Writer by={went ? GUIDE_BY.after : GUIDE_BY.before} went={went ? { city: G.name, from: went } : undefined} />
         <Sources g={g} drawn={usedDrawn} />
       </article>
+
+      {/* 付箋。ブカレストと同じ置き場所（面のいちばん下）。**宛先の id（`serbia`）は Firestore に入るので変えない**（`content/themes.ts`） */}
+      <StickyNotes theme="serbia" title="ベオグラードでこれやって" />
 
       <p className="gb-back">
         <Link prefetch={false} href="/">

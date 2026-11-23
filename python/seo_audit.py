@@ -1081,6 +1081,8 @@ PRESETS = {
         "jsonld:/travel/north-macedonia/skopje=Article+ItemList+FAQPage",
         # ブカレスト（2026-11-20 に公開前の印を外した。あやと「どんどん公開していいよ」。ソフィアと同じ線）
         "jsonld:/travel/romania/bucharest=Article+ItemList+FAQPage",
+        # ベオグラード（公開前の印を外した日に。ソフィアと同じ線）
+        "jsonld:/travel/serbia/belgrade=Article+ItemList+FAQPage",
         "jsonld-bad=0", "crumbs=jsonld", "time-plain<=1", "tools-noindex=all",
         # img-main-blank: 58 → 40（2026-11-18。国の面の配信の小さな絵に alt。#1296）
         "title-short<=0", "desc-short<=0", "img-main-blank<=40", "youtube-none<=0",

@@ -116,6 +116,8 @@ export const MACEDONIA_GROUP = "北マケドニアの旅";
 export const BULGARIA_GROUP = "ブルガリアの旅";
 /** ルーマニアの宛先を束ねる見出し（2026-11-20）。**時制を入れない**（上の北マケドニアと同じ理由） */
 export const ROMANIA_GROUP = "ルーマニアの旅";
+/** セルビアの宛先を束ねる見出し（2026-11-22）。**時制を入れない**（上の北マケドニアと同じ理由） */
+export const SERBIA_GROUP = "セルビアの旅";
 
 /**
  * 企画あての札を束ねる見出し。**日で行き先が変わるのは、この2つだけ。**
@@ -153,6 +155,18 @@ export const OTHER_GROUP = "そのほか";
  * 次も同じものがある。
  */
 export const THEMES: Theme[] = [
+  {
+    /* ベオグラード（2026-11-22 から。行く前の街）。**いちばん上に置く**——いま注文を受け付けている先が先頭、という決まり（下の注）。
+       **`id` は変えない**——付箋の宛先として Firestore に `serbia` で入る。国の slug と同じ字にした（ルーマニアと同じ持ち方） */
+    id: "serbia",
+    name: "ベオグラードでこれやって",
+    group: SERBIA_GROUP,
+    /* その話をしている面。この面 → 面のいちばん下の付箋、とブカレストと同じ道で辿れる */
+    href: "/travel/serbia/belgrade",
+    /* **時制を1文字も書かない**（`docs/island-standards.md` 16章） */
+    lead: "ベオグラードでやってほしいこと。紙に載っていないお店や道でも。",
+    placeholder: "例）スカダルリヤのカファナで、いちばん安いチェヴァピを頼んでほしい",
+  },
   {
     /* ブカレスト（2026-11-21 から）。**いちばん上に置く**——いま注文を受け付けている先が先頭、という決まり（下の注）。
        **`id` は変えない**——付箋の宛先として Firestore に `romania` で入る。国の slug と同じ字にした
@@ -608,6 +622,7 @@ export type Shelf = { group: string; themes: Theme[] };
  */
 const ORDER = [
   // **いま注文を受け付けている先が先頭**（`THEMES` の並びと同じ考え）
+  SERBIA_GROUP,
   ROMANIA_GROUP,
   BULGARIA_GROUP,
   MACEDONIA_GROUP,
