@@ -27,6 +27,9 @@
     {"label": "ティラナ 観光", "page": "/travel/albania/tirana", "queries": ["ティラナ 観光", "アルバニア ティラナ 観光"]},
     {"label": "ティラナ 見どころ／地図", "page": "/travel/albania/tirana", "queries": ["ティラナ 見どころ", "ティラナ 地図"]},
     {"label": "ティラナ 日帰り", "page": "/travel/albania/tirana", "queries": ["ティラナ 日帰り", "クルヤ 行き方"]},
+    {"label": "イスタンブール 観光", "page": "/travel/turkey/istanbul", "queries": ["イスタンブール 観光", "トルコ イスタンブール 観光"]},
+    {"label": "イスタンブール 見どころ／地図", "page": "/travel/turkey/istanbul", "queries": ["イスタンブール 見どころ", "イスタンブール 地図"]},
+    {"label": "イスタンブール グルメ", "page": "/travel/turkey/istanbul", "queries": ["イスタンブール グルメ", "トルコ料理 イスタンブール"]},
     {"label": "ブルガリア 観光", "page": "/travel/bulgaria", "queries": ["ブルガリア 観光", "ブルガリア 旅行"]}
   ],
   "image_contains": ["見どころマップ"],
@@ -40,6 +43,7 @@
     {"label": "ブカレスト", "path": "/travel/romania/bucharest", "kind": "guide", "head": "ブカレスト観光"},
     {"label": "ベオグラード", "path": "/travel/serbia/belgrade", "kind": "guide", "head": "ベオグラード観光"},
     {"label": "ティラナ", "path": "/travel/albania/tirana", "kind": "guide", "head": "ティラナ観光"},
+    {"label": "イスタンブール", "path": "/travel/turkey/istanbul", "kind": "guide", "head": "イスタンブール観光"},
     {"label": "スコピエの物価", "path": "/travel/north-macedonia/skopje/prices", "kind": "article", "head": "スコピエの物価"},
     {"label": "ソフィアの物価", "path": "/travel/bulgaria/sofia/prices", "kind": "article", "head": "ソフィアの物価"}
   ]

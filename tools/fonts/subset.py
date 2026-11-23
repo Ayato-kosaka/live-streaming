@@ -302,6 +302,7 @@ SOLO = [
     "travel/albania/tirana/mosque",
     "travel/albania/tirana/sufllaqe",
     "travel/albania/tirana/walk",
+    "travel/turkey/istanbul",
 ]
 
 

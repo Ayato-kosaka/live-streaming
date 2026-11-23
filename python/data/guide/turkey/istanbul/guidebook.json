@@ -1,0 +1,5888 @@
+{
+ "_meta": {
+  "何か": "イスタンブールを「ガイドブック型の街の面」（/travel/turkey/istanbul）にするための材料。行った街（2025-03-30〜04-13）。焼くのは python/guidebook_bake.py",
+  "見張り": "python3 python/guide_book_check.py turkey/istanbul（出どころの無い事実・座標の無い店・枠の外の座標）。マイマップの CSV も同じ道具が書く（--mymaps）",
+  "出どころ": "事実を持つ欄には src（https と見た日）。座標は OpenStreetMap（Nominatim）。値段と「いまも」は2024年以降の出どころ。確かめきれないものは unknown へ",
+  "行った": "行った街だが、ここは骨組みだけで went は全部 false。行った箱と記事は行った担当が streams の facts から肉付けする",
+  "店": "店に結ぶ品は、その店のいまのサイトの品書き・品の一覧（2026-11-23 に見た）に載っている品だけ",
+  "円": "円は 1ユーロ＝55.5788リラ・174.35円（2026年11月20日の欧州中央銀行の参照レート。1リラ＝約3.14円）で直し、10円で丸めた",
+  "地図": "多角形（range.polygon）は、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない。ドルマバフチェ宮殿より北のボスポラス海峡・バラット・ピエール・ロティの丘・プリンスィズ諸島は見どころマップの外（矢印）",
+  "rank": "見たいものの rank は、初めての人に向けた見どころの大きさ（1 が定番）",
+  "選んだ問い": "どんな街の問いは、日本語の頁と旅行のガイドがイスタンブールを語る、ヨーロッパとアジアにまたがる「文明の十字路」・東ローマとオスマンの二つの帝国の都・アヤソフィアの3つ（about.why_src）",
+  "キャッチの手本": "型3の手本は「『ドナウの真珠』と称えられる歴史都市ブダペスト」（docs/guide-copy.md 8章）。「文明の十字路」は Rick Steves の「a true crossroads of civilizations」と、日本語の頁がイスタンブールを語るヨーロッパとアジアにまたがる街の話から"
+ },
+ "city": {
+  "key": "turkey/istanbul",
+  "name": "イスタンブール",
+  "town": "istanbul",
+  "local": {
+   "text": "İstanbul",
+   "lang": "tr",
+   "roman": "Istanbul",
+   "src": [
+    {
+     "name": "Wikipedia（日本語）「イスタンブール」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+     "seen": "2026-11-23"
+    }
+   ]
+  }
+ },
+ "rate": {
+  "text": "1リラは約3.14円。トルコリラ（TRY）は変動相場で、円は1ユーロ＝55.5788リラ・174.35円（2026年11月20日の欧州中央銀行の参照レート）で直した。",
+  "src": [
+   {
+    "name": "欧州中央銀行（ユーロの参照レート）",
+    "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+    "seen": "2026-11-23"
+   }
+  ],
+  "unit": "リラ",
+  "eur_local": 55.5788,
+  "eur_jpy": 174.35,
+  "date": "2026-11-20"
+ },
+ "cover": {
+  "catch": [
+   {
+    "text": "「文明の十字路」と称えられた街",
+    "type": "型3（「愛称」と称えられる＋呼び名。手本「『ドナウの真珠』と称えられる歴史都市ブダペスト」）",
+    "src": [
+     {
+      "name": "Rick Steves「A Crossroads of Civilizations in Istanbul」",
+      "url": "https://www.ricksteves.com/watch-read-listen/read/articles/the-many-layers-of-istanbul",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "text": "東西の文明が息づく街",
+    "type": "型2（決まった動詞＋呼び名。手本「伝統と職人技が息づく古都フェズ」）",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "text": "二つの帝国の歴史を物語る街",
+    "type": "型2（決まった動詞＋呼び名。手本「歴史を語る王都」ブダペスト）",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "photo": {
+   "file": "Hagia Sophia Mars 2013.jpg",
+   "by": "Arild Vågen",
+   "lic": "CC BY-SA 3.0",
+   "page": "https://commons.wikimedia.org/wiki/File:Hagia_Sophia_Mars_2013.jpg",
+   "alt": "アヤソフィアの外観",
+   "w": 5514,
+   "src": [
+    {
+     "name": "Wikimedia Commons（ファイルのページ）",
+     "url": "https://commons.wikimedia.org/wiki/File:Hagia_Sophia_Mars_2013.jpg",
+     "seen": "2026-11-23"
+    }
+   ],
+   "thumbs": {
+    "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/250px-Hagia_Sophia_Mars_2013.jpg",
+    "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/500px-Hagia_Sophia_Mars_2013.jpg",
+    "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/960px-Hagia_Sophia_Mars_2013.jpg"
+   }
+  }
+ },
+ "about": {
+  "cards": [
+   {
+    "key": "crossroads",
+    "title": "文明の十字路",
+    "text": "ボスポラス海峡が市をヨーロッパ側とアジア側に分ける。東と西が出会う「文明の十字路」と呼ばれてきた。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Rick Steves「A Crossroads of Civilizations in Istanbul」",
+      "url": "https://www.ricksteves.com/watch-read-listen/read/articles/the-many-layers-of-istanbul",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "history",
+    "title": "二つの帝国の都",
+    "text": "330年に東ローマ帝国の都コンスタンティノープルに、1453年からはオスマン帝国の都。1923年に都はアンカラへ。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "ayasofya",
+    "title": "アヤソフィア",
+    "text": "537年に建った大聖堂。1453年にモスク、1935年に博物館になり、2020年にふたたびモスクになった。",
+    "src": [
+     {
+      "name": "Wikipedia「Hagia Sophia」",
+      "url": "https://en.wikipedia.org/wiki/Hagia_Sophia",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "why_src": [
+   {
+    "name": "Wikipedia（日本語）「イスタンブール」",
+    "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+    "seen": "2026-11-23",
+    "words": "ボスポラス海峡でヨーロッパ側とアジア側・コンスタンティノープル（330年）・オスマン帝国の首都（1453〜1923年）"
+   },
+   {
+    "name": "Rick Steves「A Crossroads of Civilizations in Istanbul」",
+    "url": "https://www.ricksteves.com/watch-read-listen/read/articles/the-many-layers-of-istanbul",
+    "seen": "2026-11-23",
+    "words": "where East meets West — a true crossroads of civilizations"
+   },
+   {
+    "name": "Wikipedia「Hagia Sophia」",
+    "url": "https://en.wikipedia.org/wiki/Hagia_Sophia",
+    "seen": "2026-11-23",
+    "words": "537年・1453年・1935年・2020年"
+   }
+  ],
+  "areas": [
+   {
+    "key": "oldcity",
+    "name": "旧市街",
+    "local": {
+     "text": "Sultanahmet / Fatih",
+     "roman": "Sultanahmet / Fatih",
+     "src": [
+      {
+       "name": "Wikipedia（日本語）「イスタンブール」",
+       "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "tone": {
+     "text": "アヤソフィア・ブルーモスク・トプカプ宮殿・地下宮殿が歩いて回れる距離に集まる一帯。北の金角湾の岸にグランドバザールとエジプシャン・バザール。",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikipedia（日本語）「イスタンブール」",
+       "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "center": {
+     "lat": 41.008505,
+     "lon": 28.980011,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Hagia Sofia din Istanbul」",
+       "url": "https://www.openstreetmap.org/way/109862851",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       41.0195,
+       28.956
+      ],
+      [
+       41.0195,
+       28.976
+      ],
+      [
+       41.0165,
+       28.988
+      ],
+      [
+       41.008,
+       28.987
+      ],
+      [
+       41.003,
+       28.978
+      ],
+      [
+       41.006,
+       28.956
+      ]
+     ],
+     "how": "スルタンアフメット広場のまわりの名所と、グランドバザール・エジプシャン・バザール・スレイマニエ・モスクを囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Hagia Sofia din Istanbul」",
+       "url": "https://www.openstreetmap.org/way/109862851",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Kapalı Çarşı」",
+       "url": "https://www.openstreetmap.org/way/303807317",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Süleymaniye Camii」",
+       "url": "https://www.openstreetmap.org/relation/1564032",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "アヤソフィア",
+      "local": "Ayasofya",
+      "lat": 41.008505,
+      "lon": 28.980011,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Hagia Sofia din Istanbul」",
+        "url": "https://www.openstreetmap.org/way/109862851",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "name": "グランドバザール",
+      "local": "Kapalıçarşı",
+      "lat": 41.010954,
+      "lon": 28.968022,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Kapalı Çarşı」",
+        "url": "https://www.openstreetmap.org/way/303807317",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+      "seen": "2026-11-23",
+      "words": "スルタンアフメット地区（旧市街）"
+     },
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23",
+      "words": "ファティ区（旧市街。かつてのコンスタンティノープルとほぼ一致）"
+     }
+    ]
+   },
+   {
+    "key": "beyoglu",
+    "name": "ベイオール",
+    "local": {
+     "text": "Beyoğlu",
+     "roman": "Beyoglu",
+     "src": [
+      {
+       "name": "Wikipedia（日本語）「イスタンブール」",
+       "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "tone": {
+     "text": "金角湾の北の側。ガラタ塔の坂から、イスティクラル通りがタクシム広場まで延びる。",
+     "src": [
+      {
+       "name": "Wikipedia（日本語）「イスタンブール」",
+       "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Istanbul/Galata」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "center": {
+     "lat": 41.033861,
+     "lon": 28.978167,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「İstiklal Caddesi」",
+       "url": "https://www.openstreetmap.org/way/485070951",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       41.04,
+       28.982
+      ],
+      [
+       41.04,
+       28.988
+      ],
+      [
+       41.034,
+       28.99
+      ],
+      [
+       41.024,
+       28.983
+      ],
+      [
+       41.023,
+       28.972
+      ],
+      [
+       41.029,
+       28.97
+      ]
+     ],
+     "how": "ガラタ塔・イスティクラル通り・タクシム広場を囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Galata Kulesi」",
+       "url": "https://www.openstreetmap.org/way/23236783",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「İstiklal Caddesi」",
+       "url": "https://www.openstreetmap.org/way/485070951",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Taksim Meydanı」",
+       "url": "https://www.openstreetmap.org/relation/4473230",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "ガラタ塔",
+      "local": "Galata Kulesi",
+      "lat": 41.025641,
+      "lon": 28.974213,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Galata Kulesi」",
+        "url": "https://www.openstreetmap.org/way/23236783",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "name": "タクシム広場",
+      "local": "Taksim Meydanı",
+      "lat": 41.037833,
+      "lon": 28.985017,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Taksim Meydanı」",
+        "url": "https://www.openstreetmap.org/relation/4473230",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23",
+      "words": "ベイオール区（金角湾の北側。旧ガラタ地区を含む）"
+     },
+     {
+      "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+      "seen": "2026-11-23",
+      "words": "タクシム地区(特にイスティクラル通り)"
+     }
+    ]
+   },
+   {
+    "key": "asian",
+    "name": "アジア側",
+    "local": {
+     "text": "Anadolu Yakası",
+     "roman": "Anadolu Yakasi",
+     "src": [
+      {
+       "name": "Wikipedia（日本語）「イスタンブール」",
+       "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "tone": {
+     "text": "ボスポラス海峡の東の岸。船着き場のカドゥキョイに市場の通りが広がり、ユスキュダルの沖に乙女の塔が立つ。",
+     "src": [
+      {
+       "name": "Wikipedia（日本語）「イスタンブール」",
+       "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Istanbul/Kadıköy」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikipedia「Maiden's Tower」",
+       "url": "https://en.wikipedia.org/wiki/Maiden%27s_Tower",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "center": {
+     "lat": 40.992908,
+     "lon": 29.022868,
+     "coord_src": [
+      {
+       "name": "OpenStreetMap「Kadıköy İskelesi」",
+       "url": "https://www.openstreetmap.org/way/560203763",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "range": {
+     "polygon": [
+      [
+       41.028,
+       29.003
+      ],
+      [
+       41.028,
+       29.02
+      ],
+      [
+       41.0,
+       29.035
+      ],
+      [
+       40.985,
+       29.032
+      ],
+      [
+       40.987,
+       29.017
+      ],
+      [
+       41.01,
+       29.006
+      ]
+     ],
+     "how": "カドゥキョイの船着き場と市場、ユスキュダルの沖の乙女の塔を囲んだおおよその範囲",
+     "src": [
+      {
+       "name": "OpenStreetMap「Kadıköy İskelesi」",
+       "url": "https://www.openstreetmap.org/way/560203763",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "OpenStreetMap「Kız Kulesi」",
+       "url": "https://www.openstreetmap.org/way/103821246",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "landmarks": [
+     {
+      "name": "カドゥキョイの船着き場",
+      "local": "Kadıköy İskelesi",
+      "lat": 40.992908,
+      "lon": 29.022868,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Kadıköy İskelesi」",
+        "url": "https://www.openstreetmap.org/way/560203763",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "name": "乙女の塔",
+      "local": "Kız Kulesi",
+      "lat": 41.021049,
+      "lon": 29.004132,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Kız Kulesi」",
+        "url": "https://www.openstreetmap.org/way/103821246",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "went": false,
+    "name_src": [
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23",
+      "words": "アジア側(アナトリア)・ユスキュダル区、カドゥキョイ区（アジア側の地区）"
+     }
+    ]
+   }
+  ]
+ },
+ "todo": [
+  {
+   "key": "bosphorus",
+   "town": "istanbul",
+   "title": "ボスポラス海峡をクルーズしたい！",
+   "head": "エミノニュからアナドル・カヴァウまで船で往復",
+   "points": {
+    "what": [
+     {
+      "text": "シェヒル・ハトラルの「ボスポラス海峡の長いツアー」の船で、エミノニュからアナドル・カヴァウまで行って帰る。",
+      "src": [
+       {
+        "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
+        "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "海峡はマルマラ海と黒海を結び、市をヨーロッパ側とアジア側に分ける。",
+      "src": [
+       {
+        "name": "Wikipedia（日本語）「イスタンブール」",
+        "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "岸にはドルマバフチェ宮殿・オルタキョイ・ルメリ・ヒサール・ベイレルベイ宮殿が並ぶ。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/European Bosphorus」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/European_Bosphorus",
+        "seen": "2026-11-23"
+       },
+       {
+        "name": "Wikipedia「Beylerbeyi Palace」",
+        "url": "https://en.wikipedia.org/wiki/Beylerbeyi_Palace",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "エミノニュ・ベシクタシュ・ユスキュダル・カンルジャ・サルイェル・ルメリ・カヴァウ・アナドル・カヴァウの7つの船着き場に寄る。毎日出る。",
+      "src": [
+       {
+        "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
+        "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "切符は船着き場の窓口か、シェヒル・ハトラルのネットで買う。行きと帰りに同じ切符を使う。",
+      "src": [
+       {
+        "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
+        "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "2026〜2027年の冬の時刻表では、エミノニュを10時35分に出て、アナドル・カヴァウに12時25分に着く。帰りは15時に出て、エミノニュに16時40分。休みを入れて約6時間。",
+      "src": [
+       {
+        "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
+        "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "money": [
+     {
+      "text": "往復は外国人640リラ（約2,010円）。",
+      "src": [
+       {
+        "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
+        "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "アナドル・カヴァウでは約2時間半、船が待つ。",
+      "src": [
+       {
+        "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
+        "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
+     "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia（日本語）「イスタンブール」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Istanbul/European Bosphorus」",
+     "url": "https://en.wikivoyage.org/wiki/Istanbul/European_Bosphorus",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Beylerbeyi Palace」",
+     "url": "https://en.wikipedia.org/wiki/Beylerbeyi_Palace",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "dolmabahce",
+     "ortakoy",
+     "rumeli",
+     "beylerbeyi"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   },
+   "marks": [
+    {
+     "kind": "price",
+     "text": "往復640リラ",
+     "src": [
+      {
+       "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
+       "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "hammam",
+   "town": "istanbul",
+   "title": "ハマムでアカスリしたい！",
+   "head": "1584年の浴場で、垢すりと泡の洗い",
+   "points": {
+    "what": [
+     {
+      "text": "昔ながらの浴場ハマムのチェンベルリタシュ・ハマムで、温めた大理石の台に横になり、垢すり（ケセ）と石けんの泡で洗ってもらう。",
+      "src": [
+       {
+        "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+        "url": "https://www.cemberlitashamami.com/en/",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "ヌルバヌ・スルタンの寄進で、ミマール・スィナンの時代の1584年にできた、男女2つの浴場を持つハマム。",
+      "src": [
+       {
+        "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+        "url": "https://www.cemberlitashamami.com/en/",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "ヴェズィルハン通り8番。コンスタンティヌスの記念柱の向かい。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "男湯と女湯に分かれ、同じ性の係の人が洗う。",
+      "src": [
+       {
+        "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+        "url": "https://www.cemberlitashamami.com/en/",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "毎日6時〜24時。",
+      "src": [
+       {
+        "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+        "url": "https://www.cemberlitashamami.com/en/",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "money": [
+     {
+      "text": "入浴だけは3,200リラ（57ユーロ）。垢すりと泡の洗い（15分）がつくと4,050リラ（72ユーロ）。",
+      "src": [
+       {
+        "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+        "url": "https://www.cemberlitashamami.com/en/",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "どの組にも腰に巻く布ペシテマルとサンダルがつく。タオル・石けん・シャンプー・着替えの小部屋も値段に入る。",
+      "src": [
+       {
+        "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+        "url": "https://www.cemberlitashamami.com/en/",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+     "url": "https://www.cemberlitashamami.com/en/",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+     "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "photo": {
+    "drawn": "do"
+   },
+   "marks": [
+    {
+     "kind": "price",
+     "text": "垢すり4,050リラ",
+     "src": [
+      {
+       "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+       "url": "https://www.cemberlitashamami.com/en/",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "bazaar",
+   "town": "istanbul",
+   "title": "グランドバザールでお土産探ししたい！",
+   "head": "61本の屋根つき通りに、4,000を超える店",
+   "points": {
+    "what": [
+     {
+      "text": "屋根のある大きな市場グランドバザールの通りを歩いて、お土産を探す。",
+      "src": [
+       {
+        "name": "Wikipedia「Grand Bazaar, Istanbul」",
+        "url": "https://en.wikipedia.org/wiki/Grand_Bazaar,_Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "1455〜1456年の冬に建て始めた市場で、1日に25万〜40万人が訪れる。",
+      "src": [
+       {
+        "name": "Wikipedia「Grand Bazaar, Istanbul」",
+        "url": "https://en.wikipedia.org/wiki/Grand_Bazaar,_Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "ロクムの店が多い。じゅうたんとキリムの店は、ブルーモスクの東のアラスタ・バザールのあたりにも集まる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "トラムT1のベヤズット駅。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "月〜土曜の9時〜19時。日曜と祝日は休み。",
+      "src": [
+       {
+        "name": "Wikipedia「Grand Bazaar, Istanbul」",
+        "url": "https://en.wikipedia.org/wiki/Grand_Bazaar,_Istanbul",
+        "seen": "2026-11-23"
+       },
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "money": [],
+    "tips": [
+     {
+      "text": "値段の交渉はふつうのこと。グランドバザールの値段はほかの所の倍で、地元の人は買いに来ない。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "エジプシャン・バザールの値段も、交渉したあとでも街のほかの所の倍。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Grand Bazaar, Istanbul」",
+     "url": "https://en.wikipedia.org/wiki/Grand_Bazaar,_Istanbul",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+     "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "bazaar",
+     "spice"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "balik",
+   "town": "istanbul",
+   "title": "エミノニュでサバサンドを食べたい！",
+   "head": "焼いた魚をパンに挟む、船着き場の名物",
+   "points": {
+    "what": [
+     {
+      "text": "サバなどの脂ののった魚を焼くか揚げて、野菜といっしょにトルコのパンに挟んだサンドイッチ「バルック・エキメッキ」を食べる。",
+      "src": [
+       {
+        "name": "Wikipedia「Balık ekmek」",
+        "url": "https://en.wikipedia.org/wiki/Bal%C4%B1k_ekmek",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "焼いた魚にトマト・香草・玉ねぎを合わせてパンに挟むのが、エミノニュの人気の軽食。",
+      "src": [
+       {
+        "name": "Wikipedia「Turkish cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "エミノニュの広場で、船の上で作って出すのが定番。",
+      "src": [
+       {
+        "name": "Wikipedia「Balık ekmek」",
+        "url": "https://en.wikipedia.org/wiki/Bal%C4%B1k_ekmek",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "エミノニュには、エミノニュ・バルック・エキメッキと、デニズ・ユルドゥズ・バルクチュの店がある。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [
+     {
+      "text": "いまは漁師が船から直に売ることは許されていない。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Balık ekmek」",
+     "url": "https://en.wikipedia.org/wiki/Bal%C4%B1k_ekmek",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Turkish cuisine」",
+     "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+     "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "galatabridge"
+    ],
+    "eat": [
+     "balik-ekmek"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "cistern",
+   "town": "istanbul",
+   "title": "地下宮殿のメドゥーサに会いたい！",
+   "head": "6世紀の貯水槽に、大理石の柱が336本",
+   "points": {
+    "what": [
+     {
+      "text": "地下の貯水槽「地下宮殿」に下りて、柱の森を歩き、メドゥーサの顔の柱の台を見る。",
+      "src": [
+       {
+        "name": "Wikipedia「Basilica Cistern」",
+        "url": "https://en.wikipedia.org/wiki/Basilica_Cistern",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "6世紀にユスティニアヌス1世の時代に造り、約8万立方メートルの水をためた。",
+      "src": [
+       {
+        "name": "Wikipedia「Basilica Cistern」",
+        "url": "https://en.wikipedia.org/wiki/Basilica_Cistern",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "メドゥーサの顔の台が2つある。どこから運んだかは分かっていない。",
+      "src": [
+       {
+        "name": "Wikipedia「Basilica Cistern」",
+        "url": "https://en.wikipedia.org/wiki/Basilica_Cistern",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "1963年のボンド映画「ロシアより愛をこめて」に出てくる。",
+      "src": [
+       {
+        "name": "Wikipedia「Basilica Cistern」",
+        "url": "https://en.wikipedia.org/wiki/Basilica_Cistern",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "イェレバタン通り1/3番。トラムT1のスルタンアフメット駅から260m。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [
+     {
+      "text": "毎日9時〜18時30分と、19時30分〜22時。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "money": [
+     {
+      "text": "大人は9時〜18時30分が1,500リラ（約4,710円）、19時30分〜22時が2,400リラ（約7,530円）。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "2020〜2022年の修復のあと、LEDの明かりとデジタルの展示「ダハ・デリネ（もっと深く）」で開き直した。",
+      "src": [
+       {
+        "name": "Wikipedia「Basilica Cistern」",
+        "url": "https://en.wikipedia.org/wiki/Basilica_Cistern",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Basilica Cistern」",
+     "url": "https://en.wikipedia.org/wiki/Basilica_Cistern",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+     "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "cistern"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   },
+   "marks": [
+    {
+     "kind": "price",
+     "text": "昼1,500リラ",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "ferry",
+   "town": "istanbul",
+   "title": "フェリーでアジア側へ渡りたい！",
+   "head": "カドゥキョイの魚市場まで、海峡を船で渡る",
+   "points": {
+    "what": [
+     {
+      "text": "船で、ヨーロッパ側からアジア側のカドゥキョイへ渡る。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Kadıköy」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "ボスポラス海峡が市をヨーロッパ側とアジア側に分け、住む人のおよそ3分の1がアジア側に暮らす。",
+      "src": [
+       {
+        "name": "Wikipedia（日本語）「イスタンブール」",
+        "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "カドゥキョイへの船は、ヨーロッパ側のエミノニュ・カラキョイ・ベシクタシュから出る。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Kadıköy」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "着いたら、魚市場（9時〜20時30分）と、牛の像から南へ延びる歩行者の通りバハリイェ通りへ。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul/Kadıköy」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [
+     {
+      "text": "カドゥキョイとエミノニュの船は65.21リラ（約200円。2026年7月20日から）。",
+      "src": [
+       {
+        "name": "sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」（2026年7月17日）",
+        "url": "https://haber.sol.org.tr/haber/istanbullunun-ulasim-masrafina-yeni-zam-tam-bilet-4620-tl-411809",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "イスタンブールカードは、街角の小さな店や駅の機械で買え、現金かクレジットカードで足せる。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikivoyage「Istanbul/Kadıköy」",
+     "url": "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia（日本語）「イスタンブール」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」（2026年7月17日）",
+     "url": "https://haber.sol.org.tr/haber/istanbullunun-ulasim-masrafina-yeni-zam-tam-bilet-4620-tl-411809",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikivoyage「Istanbul」",
+     "url": "https://en.wikivoyage.org/wiki/Istanbul",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "kadikoy",
+     "maiden"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "kebab",
+   "town": "istanbul",
+   "title": "本場のケバブを食べたい！",
+   "head": "縦の串で焼くドネルに、ヨーグルトのイスケンデル",
+   "points": {
+    "what": [
+     {
+      "text": "トルコのケバブを食べる。縦に回る串で焼いた肉を薄く削いだドネル・ケバブや、平たい鉄の串で焼くアダナ・ケバブ。",
+      "src": [
+       {
+        "name": "Wikipedia「Doner kebab」",
+        "url": "https://en.wikipedia.org/wiki/Doner_kebab",
+        "seen": "2026-11-23"
+       },
+       {
+        "name": "Wikipedia「Turkish cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "縦に回して焼く形は、ブルサが生まれた所とされることが多い。1850年代のブルサのイスケンデル・エフェンディの考えとされる。",
+      "src": [
+       {
+        "name": "Wikipedia「Doner kebab」",
+        "url": "https://en.wikipedia.org/wiki/Doner_kebab",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "イスケンデル・ケバブは、ドネルにヨーグルト・トマトのソース・バターをかけた料理で、ブルサ生まれ。",
+      "src": [
+       {
+        "name": "Wikipedia「Turkish cuisine」",
+        "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "イスケンデル・エフェンディの家の店ケバプチュ・イスケンデルは、イスタンブールではニシャンタシュのシャカユク通り67番に店がある。",
+      "src": [
+       {
+        "name": "Kebapçı İskender（店のサイト）",
+        "url": "https://www.iskender.com.tr/",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [],
+    "tips": [
+     {
+      "text": "ドネルは薄いパンで巻くと「デュリュム」になる。",
+      "src": [
+       {
+        "name": "Wikipedia「Doner kebab」",
+        "url": "https://en.wikipedia.org/wiki/Doner_kebab",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Doner kebab」",
+     "url": "https://en.wikipedia.org/wiki/Doner_kebab",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Wikipedia「Turkish cuisine」",
+     "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "Kebapçı İskender（店のサイト）",
+     "url": "https://www.iskender.com.tr/",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "eat": [
+     "doner",
+     "iskender",
+     "adana"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  },
+  {
+   "key": "islands",
+   "town": "istanbul",
+   "title": "プリンスィズ諸島へ日帰りしたい！",
+   "head": "馬車が電気の車に替わった、ビュユック島へ船で",
+   "points": {
+    "what": [
+     {
+      "text": "シェヒル・ハトラルの船で、マルマラ海のプリンスィズ諸島でいちばん大きいビュユック島へ渡り、島を歩く。",
+      "src": [
+       {
+        "name": "Wikipedia「Büyükada」",
+        "url": "https://en.wikipedia.org/wiki/B%C3%BCy%C3%BCkada",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "why": [
+     {
+      "text": "2020年まで島の乗り物は馬車だけだった。いまは電気の車に替わっている。",
+      "src": [
+       {
+        "name": "Wikipedia「Büyükada」",
+        "url": "https://en.wikipedia.org/wiki/B%C3%BCy%C3%BCkada",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "大きな丘ユジェテペの上に、聖ゲオルギオスのギリシャ正教の修道院がある。",
+      "src": [
+       {
+        "name": "Wikipedia「Büyükada」",
+        "url": "https://en.wikipedia.org/wiki/B%C3%BCy%C3%BCkada",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "how": [
+     {
+      "text": "ヨーロッパ側のエミノニュ・カバタシュ、アジア側のカドゥキョイ・ボスタンジュから、シェヒル・ハトラルの船が出る。",
+      "src": [
+       {
+        "name": "Wikipedia「Büyükada」",
+        "url": "https://en.wikipedia.org/wiki/B%C3%BCy%C3%BCkada",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "time": [],
+    "money": [
+     {
+      "text": "ボスタンジュと島の船は171.89リラ（約540円。2026年7月20日から）。",
+      "src": [
+       {
+        "name": "sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」（2026年7月17日）",
+        "url": "https://haber.sol.org.tr/haber/istanbullunun-ulasim-masrafina-yeni-zam-tam-bilet-4620-tl-411809",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "tips": [
+     {
+      "text": "トロツキーが1929年から1933年まで暮らした屋敷ヤナロス邸は、いまは廃墟。",
+      "src": [
+       {
+        "name": "Wikipedia「Büyükada」",
+        "url": "https://en.wikipedia.org/wiki/B%C3%BCy%C3%BCkada",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ],
+    "route": []
+   },
+   "src": [
+    {
+     "name": "Wikipedia「Büyükada」",
+     "url": "https://en.wikipedia.org/wiki/B%C3%BCy%C3%BCkada",
+     "seen": "2026-11-23"
+    },
+    {
+     "name": "sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」（2026年7月17日）",
+     "url": "https://haber.sol.org.tr/haber/istanbullunun-ulasim-masrafina-yeni-zam-tam-bilet-4620-tl-411809",
+     "seen": "2026-11-23"
+    }
+   ],
+   "went": false,
+   "links": {
+    "see": [
+     "buyukada"
+    ]
+   },
+   "photo": {
+    "drawn": "do"
+   }
+  }
+ ],
+ "see": [
+  {
+   "key": "ayasofya",
+   "town": "istanbul",
+   "name": "アヤソフィア",
+   "local": {
+    "text": "Ayasofya",
+    "roman": "Ayasofya",
+    "src": [
+     {
+      "name": "Wikipedia「Hagia Sophia」",
+      "url": "https://en.wikipedia.org/wiki/Hagia_Sophia",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "537年に東ローマ帝国のユスティニアヌス1世が建てた大聖堂。直径30メートルを超える丸屋根をのせる。1453年のコンスタンティノープルの陥落のあとモスクになり、1935年に博物館、2020年にふたたびモスクになった。1985年から世界遺産。",
+    "src": [
+     {
+      "name": "Wikipedia「Hagia Sophia」",
+      "url": "https://en.wikipedia.org/wiki/Hagia_Sophia",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.008505,
+   "lon": 28.980011,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Hagia Sofia din Istanbul」",
+     "url": "https://www.openstreetmap.org/way/109862851",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "アヤソフィア広場。トラムT1のスルタンアフメット駅から300m",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "見学",
+     "text": "いまも礼拝の場なので、礼拝の時間と服装に気をつける",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Ayasofya+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Hagia Sophia Mars 2013.jpg",
+    "by": "Arild Vågen",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Hagia_Sophia_Mars_2013.jpg",
+    "alt": "アヤソフィアの外観",
+    "w": 5514,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Hagia_Sophia_Mars_2013.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/250px-Hagia_Sophia_Mars_2013.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/500px-Hagia_Sophia_Mars_2013.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/960px-Hagia_Sophia_Mars_2013.jpg"
+    }
+   }
+  },
+  {
+   "key": "blue",
+   "town": "istanbul",
+   "name": "スルタンアフメット・モスク（ブルーモスク）",
+   "local": {
+    "text": "Sultan Ahmet Camii",
+    "roman": "Sultan Ahmet Camii",
+    "src": [
+     {
+      "name": "Wikipedia「Blue Mosque, Istanbul」",
+      "url": "https://en.wikipedia.org/wiki/Blue_Mosque,_Istanbul",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "スルタンのアフメト1世の命で1609年に建て始め、1617年にできたモスク。6本のミナレットが囲む。中は2万1,043枚のイズニックのタイルと、青の多い塗りの飾りで、これが「ブルーモスク」と呼ばれるわけの1つ。2023年4月に修復を終えて開き直した。",
+    "src": [
+     {
+      "name": "Wikipedia「Blue Mosque, Istanbul」",
+      "url": "https://en.wikipedia.org/wiki/Blue_Mosque,_Istanbul",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.005384,
+   "lon": 28.976853,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Sultanahmet Camii」",
+     "url": "https://www.openstreetmap.org/relation/18055570",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "トラムT1のスルタンアフメット駅から250m",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "入場",
+     "text": "無料。5〜10月は9時〜21時、11〜4月は9時〜19時",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Sultan+Ahmet+Camii+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Exterior of Sultan Ahmed I Mosque in Istanbul, Turkey 001.JPG",
+    "by": "Moonik",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul,_Turkey_001.JPG",
+    "alt": "スルタンアフメット・モスク（ブルーモスク）の外観",
+    "w": 2641,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul,_Turkey_001.JPG",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG/250px-Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG/500px-Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG/960px-Exterior_of_Sultan_Ahmed_I_Mosque_in_Istanbul%2C_Turkey_001.JPG"
+    }
+   }
+  },
+  {
+   "key": "topkapi",
+   "town": "istanbul",
+   "name": "トプカプ宮殿",
+   "local": {
+    "text": "Topkapı Sarayı",
+    "roman": "Topkapi Sarayi",
+    "src": [
+     {
+      "name": "Wikipedia「Topkapı Palace」",
+      "url": "https://en.wikipedia.org/wiki/Topkap%C4%B1_Palace",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "メフメト2世が、コンスタンティノープルの征服から6年後の1459年に建て始めた宮殿。オスマン帝国の政治の中心で、スルタンの住まいだった。1924年に博物館になった。4つの中庭とハレムがあり、宝物館にはスプーン職人のダイヤモンドとトプカプの短剣が並ぶ。",
+    "src": [
+     {
+      "name": "Wikipedia「Topkapı Palace」",
+      "url": "https://en.wikipedia.org/wiki/Topkap%C4%B1_Palace",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.01298,
+   "lon": 28.984066,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Topkapı Sarayı」",
+     "url": "https://www.openstreetmap.org/way/335415778",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "トラムT1のスルタンアフメット駅から650m",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "開いている日",
+     "text": "水〜月曜の9時〜17時（火曜は休み）",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "入場料",
+     "text": "宮殿・ハレム・アヤイリニの共通券で2,750リラ（約8,630円）",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Topkap%C4%B1+Saray%C4%B1+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Palacio de Topkapı, Estambul, Turquía, 2024-09-30, DD 90-92 HDR.jpg",
+    "by": "Diego Delso (1974–)",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Palacio_de_Topkap%C4%B1,_Estambul,_Turqu%C3%ADa,_2024-09-30,_DD_90-92_HDR.jpg",
+    "alt": "トプカプ宮殿の建物",
+    "w": 5482,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Palacio_de_Topkap%C4%B1,_Estambul,_Turqu%C3%ADa,_2024-09-30,_DD_90-92_HDR.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Palacio_de_Topkap%C4%B1%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-30%2C_DD_90-92_HDR.jpg/250px-Palacio_de_Topkap%C4%B1%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-30%2C_DD_90-92_HDR.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Palacio_de_Topkap%C4%B1%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-30%2C_DD_90-92_HDR.jpg/500px-Palacio_de_Topkap%C4%B1%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-30%2C_DD_90-92_HDR.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Palacio_de_Topkap%C4%B1%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-30%2C_DD_90-92_HDR.jpg/960px-Palacio_de_Topkap%C4%B1%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-30%2C_DD_90-92_HDR.jpg"
+    }
+   }
+  },
+  {
+   "key": "cistern",
+   "town": "istanbul",
+   "name": "地下宮殿（バシリカ・シスタン）",
+   "local": {
+    "text": "Yerebatan Sarnıcı",
+    "roman": "Yerebatan Sarnici",
+    "src": [
+     {
+      "name": "Wikipedia「Basilica Cistern」",
+      "url": "https://en.wikipedia.org/wiki/Basilica_Cistern",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "6世紀にユスティニアヌス1世の時代に造った地下の貯水槽。広さは約138メートル×65メートルで、高さ9メートルの大理石の柱336本が天井を支える。北西の隅の2本の柱の台には、メドゥーサの顔が彫られている。トルコ語の名前は「地下の宮殿」の意味。",
+    "src": [
+     {
+      "name": "Wikipedia「Basilica Cistern」",
+      "url": "https://en.wikipedia.org/wiki/Basilica_Cistern",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.008479,
+   "lon": 28.978383,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Yerebatan Sarnıcı」",
+     "url": "https://www.openstreetmap.org/node/11006008339",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "イェレバタン通り1/3番。トラムT1のスルタンアフメット駅から260m",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Yerebatan+Sarn%C4%B1c%C4%B1+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "cistern"
+    ]
+   },
+   "photo": {
+    "file": "Basilica Cistern - Medusa head.jpg",
+    "by": "Nan Palmero",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Basilica_Cistern_-_Medusa_head.jpg",
+    "alt": "地下宮殿の柱の台に彫られたメドゥーサの顔",
+    "w": 7952,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Basilica_Cistern_-_Medusa_head.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Basilica_Cistern_-_Medusa_head.jpg/250px-Basilica_Cistern_-_Medusa_head.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Basilica_Cistern_-_Medusa_head.jpg/500px-Basilica_Cistern_-_Medusa_head.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Basilica_Cistern_-_Medusa_head.jpg/960px-Basilica_Cistern_-_Medusa_head.jpg"
+    }
+   }
+  },
+  {
+   "key": "bazaar",
+   "town": "istanbul",
+   "name": "グランドバザール",
+   "local": {
+    "text": "Kapalıçarşı",
+    "roman": "Kapalicarsi",
+    "src": [
+     {
+      "name": "Wikipedia「Grand Bazaar, Istanbul」",
+      "url": "https://en.wikipedia.org/wiki/Grand_Bazaar,_Istanbul",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "1455〜1456年の冬に建て始めた屋根つきの市場。61本の屋根のある通りに4,000を超える店が並び、広さは3万700平方メートル。1日に25万〜40万人が訪れる。まん中の古い建物は、宝石と高い品を扱ったジェヴァーヒル・ベデステン。",
+    "src": [
+     {
+      "name": "Wikipedia「Grand Bazaar, Istanbul」",
+      "url": "https://en.wikipedia.org/wiki/Grand_Bazaar,_Istanbul",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.010954,
+   "lon": 28.968022,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Kapalı Çarşı」",
+     "url": "https://www.openstreetmap.org/way/303807317",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "トラムT1のベヤズット駅",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "開いている日",
+     "text": "月〜土曜の9時〜19時。日曜と祝日は休み",
+     "src": [
+      {
+       "name": "Wikipedia「Grand Bazaar, Istanbul」",
+       "url": "https://en.wikipedia.org/wiki/Grand_Bazaar,_Istanbul",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Kapal%C4%B1%C3%A7ar%C5%9F%C4%B1+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "bazaar"
+    ]
+   },
+   "photo": {
+    "file": "Istanbul - Grand Bazaar (55105990794).jpg",
+    "by": "Jorge Franganillo",
+    "lic": "CC BY 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Istanbul_-_Grand_Bazaar_(55105990794).jpg",
+    "alt": "グランドバザールの中の通り",
+    "w": 5958,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Istanbul_-_Grand_Bazaar_(55105990794).jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg/250px-Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg/500px-Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg/960px-Istanbul_-_Grand_Bazaar_%2855105990794%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "spice",
+   "town": "istanbul",
+   "name": "エジプシャン・バザール（スパイス・バザール）",
+   "local": {
+    "text": "Mısır Çarşısı",
+    "roman": "Misir Carsisi",
+    "src": [
+     {
+      "name": "Wikipedia「Spice Bazaar」",
+      "url": "https://en.wikipedia.org/wiki/Spice_Bazaar",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "エミノニュの市場。1660年にイェニ・モスクの一角として建て始めた。名前は「エジプトの市場」の意味で、建てるお金がエジプトの州の税から出たためとされる。85の店に、スパイス・ロクム・ドライフルーツ・ナッツが並ぶ。",
+    "src": [
+     {
+      "name": "Wikipedia「Spice Bazaar」",
+      "url": "https://en.wikipedia.org/wiki/Spice_Bazaar",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.016479,
+   "lon": 28.970538,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Mısır Çarşısı」",
+     "url": "https://www.openstreetmap.org/way/24234971",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "開いている時間",
+     "text": "毎日8時〜19時30分",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=M%C4%B1s%C4%B1r+%C3%87ar%C5%9F%C4%B1s%C4%B1+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "bazaar"
+    ]
+   },
+   "photo": {
+    "file": "Interior of Spice Bazaar (Misir Carsisi), Istanbul - Tarik Kaan Muslu.jpg",
+    "by": "Tarikkaanmuslu",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Interior_of_Spice_Bazaar_(Misir_Carsisi),_Istanbul_-_Tarik_Kaan_Muslu.jpg",
+    "alt": "エジプシャン・バザールの中",
+    "w": 4110,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Interior_of_Spice_Bazaar_(Misir_Carsisi),_Istanbul_-_Tarik_Kaan_Muslu.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg/250px-Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg/500px-Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg/960px-Interior_of_Spice_Bazaar_%28Misir_Carsisi%29%2C_Istanbul_-_Tarik_Kaan_Muslu.jpg"
+    }
+   }
+  },
+  {
+   "key": "galata",
+   "town": "istanbul",
+   "name": "ガラタ塔",
+   "local": {
+    "text": "Galata Kulesi",
+    "roman": "Galata Kulesi",
+    "src": [
+     {
+      "name": "Wikipedia「Galata Tower」",
+      "url": "https://en.wikipedia.org/wiki/Galata_Tower",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 1,
+   "what": {
+    "text": "ジェノヴァ人が14世紀に、ガラタの城壁のいちばん高い所に建てた塔。高さは屋根の先まで62.59メートルで、8階が展望のテラス。2020年10月6日に修復を終えて「ガラタ塔博物館」として開き直した。",
+    "src": [
+     {
+      "name": "Wikipedia「Galata Tower」",
+      "url": "https://en.wikipedia.org/wiki/Galata_Tower",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Istanbul/Galata」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.025641,
+   "lon": 28.974213,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Galata Kulesi」",
+     "url": "https://www.openstreetmap.org/way/23236783",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "メトロM2のシシハーネ駅から500m",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Galata」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "開いている時間",
+     "text": "毎日8時30分〜23時（最後の入場は22時）",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Galata」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Galata+Kulesi+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Galata Tower January 2015.JPG",
+    "by": "Martin Falbisoner",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Galata_Tower_January_2015.JPG",
+    "alt": "ガラタ塔",
+    "w": 2565,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Galata_Tower_January_2015.JPG",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Galata_Tower_January_2015.JPG/250px-Galata_Tower_January_2015.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Galata_Tower_January_2015.JPG/500px-Galata_Tower_January_2015.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Galata_Tower_January_2015.JPG/960px-Galata_Tower_January_2015.JPG"
+    }
+   }
+  },
+  {
+   "key": "suleymaniye",
+   "town": "istanbul",
+   "name": "スレイマニエ・モスク",
+   "local": {
+    "text": "Süleymaniye Camii",
+    "roman": "Suleymaniye Camii",
+    "src": [
+     {
+      "name": "Wikipedia「Süleymaniye Mosque」",
+      "url": "https://en.wikipedia.org/wiki/S%C3%BCleymaniye_Mosque",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "スレイマン1世の命で、宮廷の建築家ミマール・スィナンが建てたモスク。1550年に礎を置き、1557年に開いた。第3の丘の上に立ち、金角湾を広く見下ろす。オスマン帝国の時代のモスクでは市内でいちばん大きい。裏の墓地にスレイマン1世と妻ヒュッレムの廟がある。",
+    "src": [
+     {
+      "name": "Wikipedia「Süleymaniye Mosque」",
+      "url": "https://en.wikipedia.org/wiki/S%C3%BCleymaniye_Mosque",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.016229,
+   "lon": 28.963955,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Süleymaniye Camii」",
+     "url": "https://www.openstreetmap.org/relation/1564032",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "メトロM2のヴェズネジレル駅から750m",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "入場",
+     "text": "無料。土〜木曜は8時30分〜17時、金曜は8時30分〜13時30分",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=S%C3%BCleymaniye+Camii+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Süleymaniye Mosque February 2013 01.jpg",
+    "by": "Arild Vågen",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:S%C3%BCleymaniye_Mosque_February_2013_01.jpg",
+    "alt": "スレイマニエ・モスク",
+    "w": 6008,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:S%C3%BCleymaniye_Mosque_February_2013_01.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/S%C3%BCleymaniye_Mosque_February_2013_01.jpg/250px-S%C3%BCleymaniye_Mosque_February_2013_01.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/S%C3%BCleymaniye_Mosque_February_2013_01.jpg/500px-S%C3%BCleymaniye_Mosque_February_2013_01.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/S%C3%BCleymaniye_Mosque_February_2013_01.jpg/960px-S%C3%BCleymaniye_Mosque_February_2013_01.jpg"
+    }
+   }
+  },
+  {
+   "key": "hippodrome",
+   "town": "istanbul",
+   "name": "ヒッポドローム（スルタンアフメット広場）",
+   "local": {
+    "text": "Sultanahmet Meydanı",
+    "roman": "Sultanahmet Meydani",
+    "src": [
+     {
+      "name": "Wikipedia「Hippodrome of Constantinople」",
+      "url": "https://en.wikipedia.org/wiki/Hippodrome_of_Constantinople",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "東ローマ帝国の都の戦車競走の場で、街の社交の中心だった所。いまはスルタンアフメット広場。テオドシウス1世が390年にエジプトのカルナックから運んだオベリスク、デルフォイの蛇の柱、10世紀の切り石のオベリスクが残る。",
+    "src": [
+     {
+      "name": "Wikipedia「Hippodrome of Constantinople」",
+      "url": "https://en.wikipedia.org/wiki/Hippodrome_of_Constantinople",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.006516,
+   "lon": 28.975977,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Sultanahmet Meydanı」",
+     "url": "https://www.openstreetmap.org/way/25512790",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Sultanahmet+Meydan%C4%B1+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Obelisk of Theodosius, Hippodrome of Constantinople, Istanbul, Turkey (Ank Kumar) 02.jpg",
+    "by": "Ank Kumar",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Obelisk_of_Theodosius,_Hippodrome_of_Constantinople,_Istanbul,_Turkey_(Ank_Kumar)_02.jpg",
+    "alt": "ヒッポドロームのテオドシウスのオベリスク",
+    "w": 3376,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Obelisk_of_Theodosius,_Hippodrome_of_Constantinople,_Istanbul,_Turkey_(Ank_Kumar)_02.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Obelisk_of_Theodosius%2C_Hippodrome_of_Constantinople%2C_Istanbul%2C_Turkey_%28Ank_Kumar%29_02.jpg/250px-Obelisk_of_Theodosius%2C_Hippodrome_of_Constantinople%2C_Istanbul%2C_Turkey_%28Ank_Kumar%29_02.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Obelisk_of_Theodosius%2C_Hippodrome_of_Constantinople%2C_Istanbul%2C_Turkey_%28Ank_Kumar%29_02.jpg/500px-Obelisk_of_Theodosius%2C_Hippodrome_of_Constantinople%2C_Istanbul%2C_Turkey_%28Ank_Kumar%29_02.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Obelisk_of_Theodosius%2C_Hippodrome_of_Constantinople%2C_Istanbul%2C_Turkey_%28Ank_Kumar%29_02.jpg/960px-Obelisk_of_Theodosius%2C_Hippodrome_of_Constantinople%2C_Istanbul%2C_Turkey_%28Ank_Kumar%29_02.jpg"
+    }
+   }
+  },
+  {
+   "key": "archaeology",
+   "town": "istanbul",
+   "name": "イスタンブール考古学博物館",
+   "local": {
+    "text": "İstanbul Arkeoloji Müzeleri",
+    "roman": "Istanbul Arkeoloji Muzeleri",
+    "src": [
+     {
+      "name": "Wikipedia「Istanbul Archaeology Museums」",
+      "url": "https://en.wikipedia.org/wiki/Istanbul_Archaeology_Museums",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ギュルハネ公園とトプカプ宮殿のそばに並ぶ、3つの考古学の博物館。1891年に開き、館長のオスマン・ハムディ・ベイが作った。100万点を超える品を持ち、シドンの王の墓所から出た「アレキサンダー大王の石棺」が知られる。",
+    "src": [
+     {
+      "name": "Wikipedia「Istanbul Archaeology Museums」",
+      "url": "https://en.wikipedia.org/wiki/Istanbul_Archaeology_Museums",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.011699,
+   "lon": 28.981323,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「İstanbul Arkeoloji Müzeleri」",
+     "url": "https://www.openstreetmap.org/way/335374188",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "トラムT1のギュルハネ駅から350m",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "開いている時間",
+     "text": "毎日9時〜17時30分。入場料は大人15ユーロ（約2,620円）",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=%C4%B0stanbul+Arkeoloji+M%C3%BCzeleri&hl=ja",
+   "photo": {
+    "file": "Gate of Istanbul Archaeological Museums.jpg",
+    "by": "Antoloji",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Gate_of_Istanbul_Archaeological_Museums.jpg",
+    "alt": "イスタンブール考古学博物館の門",
+    "w": 4032,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Gate_of_Istanbul_Archaeological_Museums.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Gate_of_Istanbul_Archaeological_Museums.jpg/250px-Gate_of_Istanbul_Archaeological_Museums.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Gate_of_Istanbul_Archaeological_Museums.jpg/500px-Gate_of_Istanbul_Archaeological_Museums.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Gate_of_Istanbul_Archaeological_Museums.jpg/960px-Gate_of_Istanbul_Archaeological_Museums.jpg"
+    }
+   }
+  },
+  {
+   "key": "rustem",
+   "town": "istanbul",
+   "name": "リュステム・パシャ・モスク",
+   "local": {
+    "text": "Rüstem Paşa Camii",
+    "roman": "Rustem Pasa Camii",
+    "src": [
+     {
+      "name": "Wikipedia「Rüstem Pasha Mosque」",
+      "url": "https://en.wikipedia.org/wiki/R%C3%BCstem_Pasha_Mosque",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "大宰相リュステム・パシャのために、ミマール・スィナンが建てたモスク。1561〜1563年ごろの建物とされる。中の壁の多くを、花と幾何学の模様のイズニックのタイルが覆う。エジプシャン・バザールのそばで、店の並ぶ丸天井の上の高い台に建つ。",
+    "src": [
+     {
+      "name": "Wikipedia「Rüstem Pasha Mosque」",
+      "url": "https://en.wikipedia.org/wiki/R%C3%BCstem_Pasha_Mosque",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.017665,
+   "lon": 28.968699,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Rüstem Paşa Camii」",
+     "url": "https://www.openstreetmap.org/way/175518494",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "ハスルジュラル通り62番。トラムT1のエミノニュ駅から450m。入場は無料",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=R%C3%BCstem+Pa%C5%9Fa+Camii+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Rustem Pasha Mosque mihrab tiles DSCF2406.jpg",
+    "by": "R Prazeres",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Rustem_Pasha_Mosque_mihrab_tiles_DSCF2406.jpg",
+    "alt": "リュステム・パシャ・モスクのミフラーブのまわりのタイル",
+    "w": 2592,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Rustem_Pasha_Mosque_mihrab_tiles_DSCF2406.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Rustem_Pasha_Mosque_mihrab_tiles_DSCF2406.jpg/250px-Rustem_Pasha_Mosque_mihrab_tiles_DSCF2406.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Rustem_Pasha_Mosque_mihrab_tiles_DSCF2406.jpg/500px-Rustem_Pasha_Mosque_mihrab_tiles_DSCF2406.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Rustem_Pasha_Mosque_mihrab_tiles_DSCF2406.jpg/960px-Rustem_Pasha_Mosque_mihrab_tiles_DSCF2406.jpg"
+    }
+   }
+  },
+  {
+   "key": "istiklal",
+   "town": "istanbul",
+   "name": "イスティクラル通り",
+   "local": {
+    "text": "İstiklal Caddesi",
+    "roman": "Istiklal Caddesi",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul/Galata」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "タクシム広場からガラタサライ広場を通ってテュネル広場まで、約2キロの歩行者の通り。1992年に車が通れなくなり、新しく敷いた線路を1920年代の車両のノスタルジック・トラム（T2）が走る。",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul/Galata」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Istanbul」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.033861,
+   "lon": 28.978167,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「İstiklal Caddesi」",
+     "url": "https://www.openstreetmap.org/way/485070951",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "乗り物",
+     "text": "テュネル広場とカラキョイを結ぶ地下のケーブルカーF2（1875年から）",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Galata」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Istanbul」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=%C4%B0stiklal+Caddesi+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "NostalgicTramİstiklalAvenue.jpg",
+    "by": "CeeGee",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:NostalgicTram%C4%B0stiklalAvenue.jpg",
+    "alt": "イスティクラル通りを走るノスタルジック・トラム",
+    "w": 4928,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:NostalgicTram%C4%B0stiklalAvenue.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/NostalgicTram%C4%B0stiklalAvenue.jpg/250px-NostalgicTram%C4%B0stiklalAvenue.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/NostalgicTram%C4%B0stiklalAvenue.jpg/500px-NostalgicTram%C4%B0stiklalAvenue.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/NostalgicTram%C4%B0stiklalAvenue.jpg/960px-NostalgicTram%C4%B0stiklalAvenue.jpg"
+    }
+   }
+  },
+  {
+   "key": "galatabridge",
+   "town": "istanbul",
+   "name": "ガラタ橋",
+   "local": {
+    "text": "Galata Köprüsü",
+    "roman": "Galata Koprusu",
+    "src": [
+     {
+      "name": "Wikipedia「Galata Bridge」",
+      "url": "https://en.wikipedia.org/wiki/Galata_Bridge",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "金角湾をまたいで、エミノニュとカラキョイを結ぶ長さ490メートルの橋。いまの橋はこの場所の5代目で、1994年12月にできた。",
+    "src": [
+     {
+      "name": "Wikipedia「Galata Bridge」",
+      "url": "https://en.wikipedia.org/wiki/Galata_Bridge",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.020006,
+   "lon": 28.973121,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Galata Köprüsü」",
+     "url": "https://www.openstreetmap.org/way/280961352",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "歩いて",
+     "text": "エミノニュから橋を歩いてカラキョイ（ガラタ）の側へ渡れる",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Galata」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Galata+K%C3%B6pr%C3%BCs%C3%BC+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "balik"
+    ]
+   },
+   "photo": {
+    "file": "Fishermen on Galata Bridge.JPG",
+    "by": "Martin Falbisoner",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Fishermen_on_Galata_Bridge.JPG",
+    "alt": "ガラタ橋の釣り人たち",
+    "w": 4800,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Fishermen_on_Galata_Bridge.JPG",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Fishermen_on_Galata_Bridge.JPG/250px-Fishermen_on_Galata_Bridge.JPG",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Fishermen_on_Galata_Bridge.JPG/500px-Fishermen_on_Galata_Bridge.JPG",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Fishermen_on_Galata_Bridge.JPG/960px-Fishermen_on_Galata_Bridge.JPG"
+    }
+   }
+  },
+  {
+   "key": "dolmabahce",
+   "town": "istanbul",
+   "name": "ドルマバフチェ宮殿",
+   "local": {
+    "text": "Dolmabahçe Sarayı",
+    "roman": "Dolmabahce Sarayi",
+    "src": [
+     {
+      "name": "Wikipedia「Dolmabahçe Palace」",
+      "url": "https://en.wikipedia.org/wiki/Dolmabah%C3%A7e_Palace",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "スルタンのアブデュルメジト1世の命で1843〜1853年に建てた宮殿。ボスポラス海峡のヨーロッパ側の岸、ベシクタシュにある。285の部屋と46の広間を持ち、天井の金箔に14トンの金を使った。儀式の間には、750の灯りを持つ重さ4.5トンの世界でいちばん大きなクリスタルのシャンデリア。1938年11月10日の9時5分にアタテュルクがここで亡くなり、部屋の時計はその時刻のまま。",
+    "src": [
+     {
+      "name": "Wikipedia「Dolmabahçe Palace」",
+      "url": "https://en.wikipedia.org/wiki/Dolmabah%C3%A7e_Palace",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.038961,
+   "lon": 28.999773,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Dolmabahçe Sarayı」",
+     "url": "https://www.openstreetmap.org/way/24826707",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "開いている日",
+     "text": "火〜日曜の9時〜17時（月曜は休み）",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/European Bosphorus」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/European_Bosphorus",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Dolmabah%C3%A7e+Saray%C4%B1+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "bosphorus"
+    ]
+   },
+   "photo": {
+    "file": "Palacio de Dolmabahçe, Estambul, Turquía, 2024-09-28, DD 110.jpg",
+    "by": "Diego Delso (1974–)",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Palacio_de_Dolmabah%C3%A7e,_Estambul,_Turqu%C3%ADa,_2024-09-28,_DD_110.jpg",
+    "alt": "ドルマバフチェ宮殿",
+    "w": 7782,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Palacio_de_Dolmabah%C3%A7e,_Estambul,_Turqu%C3%ADa,_2024-09-28,_DD_110.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Palacio_de_Dolmabah%C3%A7e%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-28%2C_DD_110.jpg/250px-Palacio_de_Dolmabah%C3%A7e%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-28%2C_DD_110.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Palacio_de_Dolmabah%C3%A7e%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-28%2C_DD_110.jpg/500px-Palacio_de_Dolmabah%C3%A7e%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-28%2C_DD_110.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Palacio_de_Dolmabah%C3%A7e%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-28%2C_DD_110.jpg/960px-Palacio_de_Dolmabah%C3%A7e%2C_Estambul%2C_Turqu%C3%ADa%2C_2024-09-28%2C_DD_110.jpg"
+    }
+   }
+  },
+  {
+   "key": "ortakoy",
+   "town": "istanbul",
+   "name": "オルタキョイ・モスク",
+   "local": {
+    "text": "Ortaköy Camii",
+    "roman": "Ortakoy Camii",
+    "src": [
+     {
+      "name": "Wikipedia「Ortaköy Mosque」",
+      "url": "https://en.wikipedia.org/wiki/Ortak%C3%B6y_Mosque",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ボスポラス海峡の岸、ボスポラス橋のたもとに立つモスク。アブデュルメジト1世の命で、ドルマバフチェ宮殿と同じバルヤン家の父子が設計し、1854年か1856年ごろにできた。まわりのオルタキョイは、カフェが並ぶ地区で、具をたくさんのせた焼きじゃがいも「クンピル」の店がある。",
+    "src": [
+     {
+      "name": "Wikipedia「Ortaköy Mosque」",
+      "url": "https://en.wikipedia.org/wiki/Ortak%C3%B6y_Mosque",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikivoyage「Istanbul/European Bosphorus」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/European_Bosphorus",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.047287,
+   "lon": 29.026772,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Büyük Mecidiye Camii」",
+     "url": "https://www.openstreetmap.org/way/498861735",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Ortak%C3%B6y+Camii+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "bosphorus"
+    ]
+   },
+   "photo": {
+    "file": "Ortaköy Mosque and Bosphorus Bridge, March 2024 01.jpg",
+    "by": "Calistemon",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Ortak%C3%B6y_Mosque_and_Bosphorus_Bridge,_March_2024_01.jpg",
+    "alt": "オルタキョイ・モスクとボスポラス橋",
+    "w": 4608,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Ortak%C3%B6y_Mosque_and_Bosphorus_Bridge,_March_2024_01.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Ortak%C3%B6y_Mosque_and_Bosphorus_Bridge%2C_March_2024_01.jpg/250px-Ortak%C3%B6y_Mosque_and_Bosphorus_Bridge%2C_March_2024_01.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Ortak%C3%B6y_Mosque_and_Bosphorus_Bridge%2C_March_2024_01.jpg/500px-Ortak%C3%B6y_Mosque_and_Bosphorus_Bridge%2C_March_2024_01.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Ortak%C3%B6y_Mosque_and_Bosphorus_Bridge%2C_March_2024_01.jpg/960px-Ortak%C3%B6y_Mosque_and_Bosphorus_Bridge%2C_March_2024_01.jpg"
+    }
+   }
+  },
+  {
+   "key": "maiden",
+   "town": "istanbul",
+   "name": "乙女の塔（クズ・クレスィ）",
+   "local": {
+    "text": "Kız Kulesi",
+    "roman": "Kiz Kulesi",
+    "src": [
+     {
+      "name": "Wikipedia「Maiden's Tower」",
+      "url": "https://en.wikipedia.org/wiki/Maiden%27s_Tower",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "ボスポラス海峡の南の入口、アジア側のユスキュダルの岸から約200メートルの小島に立つ塔。1110年に皇帝アレクシオス1世が木の塔を建て、いまの石の塔は1763年のもの。2021年に修復を始め、2023年5月に開き直した。皇帝の娘が蛇にかまれる言い伝えがある。",
+    "src": [
+     {
+      "name": "Wikipedia「Maiden's Tower」",
+      "url": "https://en.wikipedia.org/wiki/Maiden%27s_Tower",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.021049,
+   "lon": 29.004132,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Kız Kulesi」",
+     "url": "https://www.openstreetmap.org/way/103821246",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "渡りかた",
+     "text": "岸との間を小舟が一日じゅう行き来する",
+     "src": [
+      {
+       "name": "Wikipedia「Maiden's Tower」",
+       "url": "https://en.wikipedia.org/wiki/Maiden%27s_Tower",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=K%C4%B1z+Kulesi+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Maiden tower, Istanbul (P1100204).jpg",
+    "by": "Matti Blume",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Maiden_tower,_Istanbul_(P1100204).jpg",
+    "alt": "乙女の塔",
+    "w": 4000,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Maiden_tower,_Istanbul_(P1100204).jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Maiden_tower%2C_Istanbul_%28P1100204%29.jpg/250px-Maiden_tower%2C_Istanbul_%28P1100204%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Maiden_tower%2C_Istanbul_%28P1100204%29.jpg/500px-Maiden_tower%2C_Istanbul_%28P1100204%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Maiden_tower%2C_Istanbul_%28P1100204%29.jpg/960px-Maiden_tower%2C_Istanbul_%28P1100204%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "kadikoy",
+   "town": "istanbul",
+   "name": "カドゥキョイの魚市場（バルック・パザル）",
+   "local": {
+    "text": "Kadıköy Balık Pazarı",
+    "roman": "Kadikoy Balik Pazari",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul/Kadıköy」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "アジア側のカドゥキョイの船着き場のそばの市場の通り。魚市場は新しい魚と海の幸が中心で、上の通りには香草の店や古本屋も並ぶ。",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul/Kadıköy」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.992908,
+   "lon": 29.022868,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Kadıköy İskelesi」",
+     "url": "https://www.openstreetmap.org/way/560203763",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "ヨーロッパ側のエミノニュ・カラキョイ・ベシクタシュから船が出る",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Kadıköy」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "開いている時間",
+     "text": "毎日9時〜20時30分",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Kadıköy」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Kad%C4%B1k%C3%B6y",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Kad%C4%B1k%C3%B6y+Bal%C4%B1k+Pazar%C4%B1+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "ferry"
+    ]
+   },
+   "photo": {
+    "file": "Kadıköy market stall, Istanbul.jpg",
+    "by": "Jwslubbock",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Kad%C4%B1k%C3%B6y_market_stall,_Istanbul.jpg",
+    "alt": "カドゥキョイの市場の店先",
+    "w": 5472,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Kad%C4%B1k%C3%B6y_market_stall,_Istanbul.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg/250px-Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg/500px-Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg/960px-Kad%C4%B1k%C3%B6y_market_stall%2C_Istanbul.jpg"
+    }
+   }
+  },
+  {
+   "key": "balat",
+   "town": "istanbul",
+   "name": "バラット",
+   "local": {
+    "text": "Balat",
+    "roman": "Balat",
+    "src": [
+     {
+      "name": "Wikipedia「Balat, Fatih」",
+      "url": "https://en.wikipedia.org/wiki/Balat,_Fatih",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "金角湾の西の岸の地区。昔はユダヤ人の暮らしの中心で、ギリシャ人やアルメニア人も住んだ。明るい色に塗り直した家が並び、2020年代に旅行者でいちばんにぎわう一帯の1つになった。15世紀に開いたアフリダ・シナゴーグがある。",
+    "src": [
+     {
+      "name": "Wikipedia「Balat, Fatih」",
+      "url": "https://en.wikipedia.org/wiki/Balat,_Fatih",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.032003,
+   "lon": 28.948293,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Balat Mahallesi」",
+     "url": "https://www.openstreetmap.org/relation/2463371",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Balat+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Colorful Balat houses.jpg",
+    "by": "Antoloji",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Colorful_Balat_houses.jpg",
+    "alt": "バラットの色とりどりの家",
+    "w": 3024,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Colorful_Balat_houses.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Colorful_Balat_houses.jpg/250px-Colorful_Balat_houses.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Colorful_Balat_houses.jpg/500px-Colorful_Balat_houses.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Colorful_Balat_houses.jpg/960px-Colorful_Balat_houses.jpg"
+    }
+   }
+  },
+  {
+   "key": "chora",
+   "town": "istanbul",
+   "name": "カーリエ・モスク（コーラ修道院）",
+   "local": {
+    "text": "Kariye Camii",
+    "roman": "Kariye Camii",
+    "src": [
+     {
+      "name": "Wikipedia「Chora Church」",
+      "url": "https://en.wikipedia.org/wiki/Chora_Church",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "ビザンティン末期のモザイクとフレスコ画で知られる、もとの教会。中の絵は、テオドロス・メトキテスがお金を出して1310〜1317年ごろに作らせた。1945年に博物館に決まり、2020年8月にモスクに戻って、2024年5月6日に礼拝の場として開いた。",
+    "src": [
+     {
+      "name": "Wikipedia「Chora Church」",
+      "url": "https://en.wikipedia.org/wiki/Chora_Church",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.031214,
+   "lon": 28.938955,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Kariye Camii」",
+     "url": "https://www.openstreetmap.org/relation/7614527",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Kariye+Camii+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Genealogy of Mary mosaic, Chora church, Istanbul.jpg",
+    "by": "Till Niermann",
+    "lic": "CC BY-SA 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Genealogy_of_Mary_mosaic,_Chora_church,_Istanbul.jpg",
+    "alt": "コーラ修道院のモザイク「聖母の系譜」",
+    "w": 5184,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Genealogy_of_Mary_mosaic,_Chora_church,_Istanbul.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Genealogy_of_Mary_mosaic%2C_Chora_church%2C_Istanbul.jpg/250px-Genealogy_of_Mary_mosaic%2C_Chora_church%2C_Istanbul.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Genealogy_of_Mary_mosaic%2C_Chora_church%2C_Istanbul.jpg/500px-Genealogy_of_Mary_mosaic%2C_Chora_church%2C_Istanbul.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Genealogy_of_Mary_mosaic%2C_Chora_church%2C_Istanbul.jpg/960px-Genealogy_of_Mary_mosaic%2C_Chora_church%2C_Istanbul.jpg"
+    }
+   }
+  },
+  {
+   "key": "pierreloti",
+   "town": "istanbul",
+   "name": "ピエール・ロティの丘",
+   "local": {
+    "text": "Piyer Loti Tepesi",
+    "roman": "Piyer Loti Tepesi",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul/Golden Horn」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/Golden_Horn",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "エユップにある、金角湾を見下ろす丘の上の屋外のカフェ。丘へはロープウェイが5分おきに出る。",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul/Golden Horn」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/Golden_Horn",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.053291,
+   "lon": 28.933368,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Pierre Loti Teleferik İstasyonu」",
+     "url": "https://www.openstreetmap.org/way/1311677944",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Pierre+Loti+Tepesi+%C4%B0stanbul&hl=ja",
+   "photo": {
+    "file": "Golden Horn panorama from Pierre Loti Hill.jpg",
+    "by": "Kurmanbek",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Golden_Horn_panorama_from_Pierre_Loti_Hill.jpg",
+    "alt": "ピエール・ロティの丘から見た金角湾",
+    "w": 6839,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Golden_Horn_panorama_from_Pierre_Loti_Hill.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Golden_Horn_panorama_from_Pierre_Loti_Hill.jpg/250px-Golden_Horn_panorama_from_Pierre_Loti_Hill.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Golden_Horn_panorama_from_Pierre_Loti_Hill.jpg/500px-Golden_Horn_panorama_from_Pierre_Loti_Hill.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Golden_Horn_panorama_from_Pierre_Loti_Hill.jpg/960px-Golden_Horn_panorama_from_Pierre_Loti_Hill.jpg"
+    }
+   }
+  },
+  {
+   "key": "rumeli",
+   "town": "istanbul",
+   "name": "ルメリ・ヒサール",
+   "local": {
+    "text": "Rumelihisarı",
+    "roman": "Rumelihisari",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul/European Bosphorus」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/European_Bosphorus",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "15世紀の前半に建った大きな城塞。第2ボスポラス橋のたもとにある。",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul/European Bosphorus」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/European_Bosphorus",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.084917,
+   "lon": 29.056712,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Rumeli Hisarı」",
+     "url": "https://www.openstreetmap.org/relation/7318154",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "開いている日",
+     "text": "9時〜17時（月曜は休み）",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/European Bosphorus」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/European_Bosphorus",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Rumelihisar%C4%B1+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "bosphorus"
+    ]
+   },
+   "photo": {
+    "file": "Rumelihisarı (8393629929).jpg",
+    "by": "Jorge Láscar from Australia",
+    "lic": "CC BY 2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Rumelihisar%C4%B1_(8393629929).jpg",
+    "alt": "ルメリ・ヒサール",
+    "w": 4223,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Rumelihisar%C4%B1_(8393629929).jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Rumelihisar%C4%B1_%288393629929%29.jpg/250px-Rumelihisar%C4%B1_%288393629929%29.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Rumelihisar%C4%B1_%288393629929%29.jpg/500px-Rumelihisar%C4%B1_%288393629929%29.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Rumelihisar%C4%B1_%288393629929%29.jpg/960px-Rumelihisar%C4%B1_%288393629929%29.jpg"
+    }
+   }
+  },
+  {
+   "key": "beylerbeyi",
+   "town": "istanbul",
+   "name": "ベイレルベイ宮殿",
+   "local": {
+    "text": "Beylerbeyi Sarayı",
+    "roman": "Beylerbeyi Sarayi",
+    "src": [
+     {
+      "name": "Wikipedia「Beylerbeyi Palace」",
+      "url": "https://en.wikipedia.org/wiki/Beylerbeyi_Palace",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 3,
+   "what": {
+    "text": "ボスポラス海峡のアジア側の岸に、スルタンのアブデュルアズィズのため1861〜1865年に建てた宮殿。設計はバルヤン家のサルキス・バルヤン。夏の住まいで、外国の元首を迎える場にも使い、フランスの皇后ウジェニーも訪れた。",
+    "src": [
+     {
+      "name": "Wikipedia「Beylerbeyi Palace」",
+      "url": "https://en.wikipedia.org/wiki/Beylerbeyi_Palace",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 41.042718,
+   "lon": 29.040036,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Beylerbeyi Sarayı」",
+     "url": "https://www.openstreetmap.org/way/61736367",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [],
+   "maps": "https://www.google.com/maps/search/?api=1&query=Beylerbeyi+Saray%C4%B1+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "bosphorus"
+    ]
+   },
+   "photo": {
+    "file": "Beylerbeyi Palace - wide.jpg",
+    "by": "Eusebius",
+    "lic": "CC BY 3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Beylerbeyi_Palace_-_wide.jpg",
+    "alt": "ベイレルベイ宮殿",
+    "w": 4595,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Beylerbeyi_Palace_-_wide.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Beylerbeyi_Palace_-_wide.jpg/250px-Beylerbeyi_Palace_-_wide.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Beylerbeyi_Palace_-_wide.jpg/500px-Beylerbeyi_Palace_-_wide.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Beylerbeyi_Palace_-_wide.jpg/960px-Beylerbeyi_Palace_-_wide.jpg"
+    }
+   }
+  },
+  {
+   "key": "buyukada",
+   "town": "istanbul",
+   "name": "ビュユック島（プリンスィズ諸島）",
+   "local": {
+    "text": "Büyükada",
+    "roman": "Buyukada",
+    "src": [
+     {
+      "name": "Wikipedia「Büyükada」",
+      "url": "https://en.wikipedia.org/wiki/B%C3%BCy%C3%BCkada",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "rank": 2,
+   "what": {
+    "text": "マルマラ海のプリンスィズ諸島でいちばん大きい島（約5.4平方キロメートル）。2020年まで乗り物は馬車だけで、馬は電気の車に替わった。大きな丘ユジェテペの上に、聖ゲオルギオスのギリシャ正教の修道院がある。トロツキーが1929年4月から1933年7月まで亡命して暮らした。",
+    "src": [
+     {
+      "name": "Wikipedia「Büyükada」",
+      "url": "https://en.wikipedia.org/wiki/B%C3%BCy%C3%BCkada",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   "went": false,
+   "lat": 40.856355,
+   "lon": 29.119037,
+   "coord_src": [
+    {
+     "name": "OpenStreetMap「Büyükada」",
+     "url": "https://www.openstreetmap.org/relation/7590784",
+     "seen": "2026-11-23"
+    }
+   ],
+   "info": [
+    {
+     "label": "行きかた",
+     "text": "ヨーロッパ側のエミノニュ・カバタシュ、アジア側のカドゥキョイ・ボスタンジュから、シェヒル・ハトラルの船が出る",
+     "src": [
+      {
+       "name": "Wikipedia「Büyükada」",
+       "url": "https://en.wikipedia.org/wiki/B%C3%BCy%C3%BCkada",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "maps": "https://www.google.com/maps/search/?api=1&query=B%C3%BCy%C3%BCkada+%C4%B0stanbul&hl=ja",
+   "links": {
+    "todo": [
+     "islands"
+    ]
+   },
+   "photo": {
+    "file": "Buyukada of Prince Islands in Istanbul.jpg",
+    "by": "Ozalphakan2",
+    "lic": "CC BY-SA 4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Buyukada_of_Prince_Islands_in_Istanbul.jpg",
+    "alt": "ビュユック島",
+    "w": 5810,
+    "src": [
+     {
+      "name": "Wikimedia Commons（ファイルのページ）",
+      "url": "https://commons.wikimedia.org/wiki/File:Buyukada_of_Prince_Islands_in_Istanbul.jpg",
+      "seen": "2026-11-23"
+     }
+    ],
+    "thumbs": {
+     "250": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Buyukada_of_Prince_Islands_in_Istanbul.jpg/250px-Buyukada_of_Prince_Islands_in_Istanbul.jpg",
+     "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Buyukada_of_Prince_Islands_in_Istanbul.jpg/500px-Buyukada_of_Prince_Islands_in_Istanbul.jpg",
+     "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Buyukada_of_Prince_Islands_in_Istanbul.jpg/960px-Buyukada_of_Prince_Islands_in_Istanbul.jpg"
+    }
+   }
+  }
+ ],
+ "eat": {
+  "kinds": [
+   {
+    "key": "local",
+    "name": "トルコの料理"
+   },
+   {
+    "key": "quick",
+    "name": "安く手早く"
+   },
+   {
+    "key": "sweets",
+    "name": "甘いもの"
+   },
+   {
+    "key": "drinks",
+    "name": "飲み物"
+   }
+  ],
+  "items": [
+   {
+    "key": "doner",
+    "name": "ドネル・ケバブ",
+    "local": {
+     "text": "Döner kebap",
+     "roman": "Döner kebap",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "縦に回る串で焼いた肉を、焼けたところから薄く削ぐ。パンに挟むか、薄いパンで巻いたデュリュムにする。",
+     "src": [
+      {
+       "name": "Wikipedia「Doner kebab」",
+       "url": "https://en.wikipedia.org/wiki/Doner_kebab",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "肉は羊・牛・鶏が多く、豚はまれ。",
+     "src": [
+      {
+       "name": "Wikipedia「Doner kebab」",
+       "url": "https://en.wikipedia.org/wiki/Doner_kebab",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "iskender",
+    "name": "イスケンデル・ケバブ",
+    "local": {
+     "text": "İskender kebap",
+     "roman": "İskender kebap",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ドネル・ケバブに、ヨーグルト・トマトのソース・バターをかけた料理。ブルサ生まれ。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "iskender",
+      "name": "ケバプチュ・イスケンデル ニシャンタシュ店（イスケンデル・ケバブ）",
+      "local": "Kebapçı İskender",
+      "area": "nisantasi",
+      "lat": 41.050933,
+      "lon": 28.994447,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Şakayık Sokağı」",
+        "url": "https://www.openstreetmap.org/way/24804839",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1867年にブルサでイスケンデル・ケバブを始めた家の店。イスタンブールの店はニシャンタシュのシャカユク通り67番。",
+       "src": [
+        {
+         "name": "Kebapçı İskender（店のサイト）",
+         "url": "https://www.iskender.com.tr/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Kebap%C3%A7%C4%B1+%C4%B0skender+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "トルコでは豚肉は一部の店にあるだけで、ふだんはあまり食べない（ムスリムが多いため）。肉の種類は店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "adana",
+    "name": "アダナ・ケバブ",
+    "local": {
+     "text": "Adana kebap",
+     "roman": "Adana kebap",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "手で刻んだ肉に唐辛子を混ぜ、平たい幅広の鉄の串に付けて焼くケバブ。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "トルコでは豚肉は一部の店にあるだけで、ふだんはあまり食べない（ムスリムが多いため）。肉の種類は店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "kofte",
+    "name": "キョフテ（トルコの肉団子）",
+    "local": {
+     "text": "Köfte",
+     "roman": "Köfte",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "トルコの肉料理の1つ。ハジュ・アブドゥッラーの献立には、焼いたキョフテとチーズ入りのキョフテがある。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Hacı Abdullah「Menü」（店のサイトの献立）",
+       "url": "https://haciabdullah.com.tr/menu/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "haciabdullah",
+      "name": "ハジュ・アブドゥッラー（トルコ料理の食堂）",
+      "local": "Hacı Abdullah",
+      "area": "beyoglu",
+      "lat": 41.035249,
+      "lon": 28.980314,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Haci Abdullah Lokantasi」",
+        "url": "https://www.openstreetmap.org/node/9066394617",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1888年からのトルコ料理の食堂。献立にぶどうの葉のサルマ・肉の煮込み・キョフテ・キュネフェ・スュトラッチ。酒は出さない。",
+       "src": [
+        {
+         "name": "Hacı Abdullah「Menü」（店のサイトの献立）",
+         "url": "https://haciabdullah.com.tr/menu/",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Istanbul/Galata」",
+         "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Hac%C4%B1+Abdullah+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "トルコでは豚肉は一部の店にあるだけで、ふだんはあまり食べない（ムスリムが多いため）。肉の種類は店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "lahmacun",
+    "name": "ラフマジュン（ひき肉をのせた薄いパン）",
+    "local": {
+     "text": "Lahmacun",
+     "roman": "Lahmacun",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local",
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "薄いパンの生地に、香辛料を混ぜたひき肉を薄くのせて焼く。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "トルコでは豚肉は一部の店にあるだけで、ふだんはあまり食べない（ムスリムが多いため）。肉の種類は店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "pide",
+    "name": "ピデ（平たいパン）",
+    "local": {
+     "text": "Pide",
+     "roman": "Pide",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "小麦粉で作る、平たく広いパン。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "トルコでは豚肉は一部の店にあるだけで、ふだんはあまり食べない（ムスリムが多いため）。肉の種類は店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "manti",
+    "name": "マントゥ（肉を包んだ小さな生地）",
+    "local": {
+     "text": "Mantı",
+     "roman": "Mantı",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ひき肉を包んで三角に折った小さな生地。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "pork_note": {
+     "text": "トルコでは豚肉は一部の店にあるだけで、ふだんはあまり食べない（ムスリムが多いため）。肉の種類は店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "sarma",
+    "name": "ヤプラック・サルマ（ぶどうの葉の包み）",
+    "local": {
+     "text": "Yaprak sarma",
+     "roman": "Yaprak sarma",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "ぶどうの葉で、肉と米を包む。ハジュ・アブドゥッラーの献立には、ぶどうの葉とキャベツのサルマがある。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Hacı Abdullah「Menü」（店のサイトの献立）",
+       "url": "https://haciabdullah.com.tr/menu/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "haciabdullah",
+      "name": "ハジュ・アブドゥッラー（トルコ料理の食堂）",
+      "local": "Hacı Abdullah",
+      "area": "beyoglu",
+      "lat": 41.035249,
+      "lon": 28.980314,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Haci Abdullah Lokantasi」",
+        "url": "https://www.openstreetmap.org/node/9066394617",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1888年からのトルコ料理の食堂。献立にぶどうの葉のサルマ・肉の煮込み・キョフテ・キュネフェ・スュトラッチ。酒は出さない。",
+       "src": [
+        {
+         "name": "Hacı Abdullah「Menü」（店のサイトの献立）",
+         "url": "https://haciabdullah.com.tr/menu/",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Istanbul/Galata」",
+         "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Hac%C4%B1+Abdullah+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "トルコでは豚肉は一部の店にあるだけで、ふだんはあまり食べない（ムスリムが多いため）。肉の種類は店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "mercimek",
+    "name": "メルジメッキ・チョルバス（レンズ豆のスープ）",
+    "local": {
+     "text": "Mercimek çorbası",
+     "roman": "Mercimek çorbası",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "レンズ豆のスープ。食堂の定番の料理の1つ。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "kahvalti",
+    "name": "カフヴァルトゥ（トルコの朝ごはん）",
+    "local": {
+     "text": "Kahvaltı",
+     "roman": "Kahvaltı",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "local"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "品数の多いトルコの朝ごはん。「カフヴァルトゥ」は「コーヒーの前」の意味。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "note": {
+     "text": "トマト・ピーマン・玉ねぎ・オリーブ油・卵で作る卵料理メネメンもある。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "balik-ekmek",
+    "name": "サバサンド（バルック・エキメッキ）",
+    "local": {
+     "text": "Balık ekmek",
+     "roman": "Balık ekmek",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "焼くか揚げた魚（多くはサバ）を、野菜といっしょにトルコのパンに挟む。エミノニュの名物。",
+     "src": [
+      {
+       "name": "Wikipedia「Balık ekmek」",
+       "url": "https://en.wikipedia.org/wiki/Bal%C4%B1k_ekmek",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "midye",
+    "name": "ミディエ・ドルマ（ムール貝の詰めもの）",
+    "local": {
+     "text": "Midye dolma",
+     "roman": "Midye dolma",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "詰めものをしたムール貝。揚げたムール貝もある。「ドルマ」は「詰めたもの」の意味。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false,
+    "note": {
+     "text": "バルックパザル小路では、揚げたムール貝（ミディエ・タヴァ）も食べられる。",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Galata」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "simit",
+    "name": "スィミット（ごまのパン）",
+    "local": {
+     "text": "Simit",
+     "roman": "Simit",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "ごまをまぶした輪の形のパン。街なかで売る軽食。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "kumpir",
+    "name": "クンピル（具だくさんの焼きじゃがいも）",
+    "local": {
+     "text": "Kumpir",
+     "roman": "Kumpir",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "焼いたじゃがいもに、カシャルのチーズとたくさんの具をのせる。オルタキョイの名物。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Istanbul/European Bosphorus」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/European_Bosphorus",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "islak",
+    "name": "ウスラック・ハンバーガー（濡れたハンバーガー）",
+    "local": {
+     "text": "Islak hamburger",
+     "roman": "Islak hamburger",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "quick"
+    ],
+    "alcohol": false,
+    "pork": null,
+    "what": {
+     "text": "香辛料で味を付けた肉のパテと、特製のソースを挟んだハンバーガー。タクシムのクズルカヤラルが考えた。",
+     "src": [
+      {
+       "name": "Kızılkayalar「Islak Hamburger」（店のサイト）",
+       "url": "https://kizilkayalar.com.tr/islak-hamburger/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "kizilkayalar",
+      "name": "クズルカヤラル タクシム店（ウスラック・ハンバーガー）",
+      "local": "Kızılkayalar",
+      "area": "beyoglu",
+      "lat": 41.036177,
+      "lon": 28.984678,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Kızılkayalar」",
+        "url": "https://www.openstreetmap.org/node/2982682484",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "「ウスラック・ハンバーガー」を考えた店で、1978年から。最初の店はタクシムのスラセルヴィレル通り2/C番。",
+       "src": [
+        {
+         "name": "Kızılkayalar「Islak Hamburger」（店のサイト）",
+         "url": "https://kizilkayalar.com.tr/islak-hamburger/",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Kızılkayalar「Taksim」（店のサイト）",
+         "url": "https://kizilkayalar.com.tr/taksim-detayli-sayfasi/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=K%C4%B1z%C4%B1lkayalar+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false,
+    "pork_note": {
+     "text": "トルコでは豚肉は一部の店にあるだけで、ふだんはあまり食べない（ムスリムが多いため）。肉の種類は店で確かめる。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   },
+   {
+    "key": "baklava",
+    "name": "バクラヴァ",
+    "local": {
+     "text": "Baklava",
+     "roman": "Baklava",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "ピスタチオかくるみで作る菓子。カラキョイ・ギュルルオウルの品の一覧には、ピスタチオ・くるみ・ヘーゼルナッツ・アーモンドのバクラヴァ。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Karaköy Güllüoğlu（店のサイトの品の一覧）",
+       "url": "https://www.karakoygulluoglu.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "gulluoglu",
+      "name": "カラキョイ・ギュルルオウル（バクラヴァ）",
+      "local": "Karaköy Güllüoğlu",
+      "area": "beyoglu",
+      "lat": 41.024885,
+      "lon": 28.980958,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Karaköy Güllüoğlu」",
+        "url": "https://www.openstreetmap.org/node/4548658690",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "カラキョイのケマンケシュ通り67番のバクラヴァの店。品の一覧はピスタチオ・くるみなどのバクラヴァと、カダイフ・ロクム。",
+       "src": [
+        {
+         "name": "Karaköy Güllüoğlu（店のサイトの品の一覧）",
+         "url": "https://www.karakoygulluoglu.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karak%C3%B6y+G%C3%BCll%C3%BCo%C4%9Flu+%C4%B0stanbul&hl=ja"
+     },
+     {
+      "key": "hafiz",
+      "name": "ハフズ・ムスタファ 1864（エミノニュの菓子店）",
+      "local": "Hafız Mustafa 1864",
+      "area": "oldcity",
+      "lat": 41.016011,
+      "lon": 28.97336,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Hafiz Mustafa 1864」",
+        "url": "https://www.openstreetmap.org/node/6324428785",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1864年の名を掲げる菓子の店。品の一覧はバクラヴァ・カダイフ・ケーキ・ムハッレビ（牛乳のプリン）・ロクム。",
+       "src": [
+        {
+         "name": "Hafız Mustafa 1864（店のサイトの品の一覧）",
+         "url": "https://www.hafizmustafa.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Haf%C4%B1z+Mustafa+1864+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "lokum",
+    "name": "ロクム（ターキッシュ・ディライト）",
+    "local": {
+     "text": "Lokum",
+     "roman": "Lokum",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "食後の消化のために食べられてきた菓子。ハジュ・ベキルは1777年からロクムを作る。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Hacı Bekir（店のサイト）",
+       "url": "https://www.hacibekir.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "hacibekir",
+      "name": "ハジュ・ベキル バフチェカプ店（ロクムの老舗）",
+      "local": "Ali Muhiddin Hacı Bekir",
+      "area": "oldcity",
+      "lat": 41.015791,
+      "lon": 28.973523,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Ali Muhiddin Hacı Bekir」",
+        "url": "https://www.openstreetmap.org/node/7303906185",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1777年にバフチェカプで開いた菓子の店。ロクム・アキデ（飴）・ヘルヴァを作る。バフチェカプの店は古い菓子屋として文化財に登録され、店そのものが「生きている博物館」。",
+       "src": [
+        {
+         "name": "Hacı Bekir（店のサイト）",
+         "url": "https://www.hacibekir.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ali+Muhiddin+Hac%C4%B1+Bekir+%C4%B0stanbul&hl=ja"
+     },
+     {
+      "key": "hafiz",
+      "name": "ハフズ・ムスタファ 1864（エミノニュの菓子店）",
+      "local": "Hafız Mustafa 1864",
+      "area": "oldcity",
+      "lat": 41.016011,
+      "lon": 28.97336,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Hafiz Mustafa 1864」",
+        "url": "https://www.openstreetmap.org/node/6324428785",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1864年の名を掲げる菓子の店。品の一覧はバクラヴァ・カダイフ・ケーキ・ムハッレビ（牛乳のプリン）・ロクム。",
+       "src": [
+        {
+         "name": "Hafız Mustafa 1864（店のサイトの品の一覧）",
+         "url": "https://www.hafizmustafa.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Haf%C4%B1z+Mustafa+1864+%C4%B0stanbul&hl=ja"
+     },
+     {
+      "key": "gulluoglu",
+      "name": "カラキョイ・ギュルルオウル（バクラヴァ）",
+      "local": "Karaköy Güllüoğlu",
+      "area": "beyoglu",
+      "lat": 41.024885,
+      "lon": 28.980958,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Karaköy Güllüoğlu」",
+        "url": "https://www.openstreetmap.org/node/4548658690",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "カラキョイのケマンケシュ通り67番のバクラヴァの店。品の一覧はピスタチオ・くるみなどのバクラヴァと、カダイフ・ロクム。",
+       "src": [
+        {
+         "name": "Karaköy Güllüoğlu（店のサイトの品の一覧）",
+         "url": "https://www.karakoygulluoglu.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karak%C3%B6y+G%C3%BCll%C3%BCo%C4%9Flu+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "kunefe",
+    "name": "キュネフェ（チーズの焼き菓子）",
+    "local": {
+     "text": "Künefe",
+     "roman": "Künefe",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "細い糸の生地カダイフで、溶けたチーズを挟んで焼く。ハジュ・アブドゥッラーの献立にある。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Hacı Abdullah「Menü」（店のサイトの献立）",
+       "url": "https://haciabdullah.com.tr/menu/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "haciabdullah",
+      "name": "ハジュ・アブドゥッラー（トルコ料理の食堂）",
+      "local": "Hacı Abdullah",
+      "area": "beyoglu",
+      "lat": 41.035249,
+      "lon": 28.980314,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Haci Abdullah Lokantasi」",
+        "url": "https://www.openstreetmap.org/node/9066394617",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1888年からのトルコ料理の食堂。献立にぶどうの葉のサルマ・肉の煮込み・キョフテ・キュネフェ・スュトラッチ。酒は出さない。",
+       "src": [
+        {
+         "name": "Hacı Abdullah「Menü」（店のサイトの献立）",
+         "url": "https://haciabdullah.com.tr/menu/",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Istanbul/Galata」",
+         "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Hac%C4%B1+Abdullah+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "dondurma",
+    "name": "ドンドゥルマ（トルコアイス）",
+    "local": {
+     "text": "Dondurma",
+     "roman": "Dondurma",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "「ガム・アイスクリーム」とも呼ばれるトルコのアイス。野生の蘭の根から取るサーレプを使うことがある。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "mado",
+      "name": "マド イスティクラル通りの店（トルコアイス）",
+      "local": "Mado",
+      "area": "beyoglu",
+      "lat": 41.03535,
+      "lon": 28.981602,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Mado」",
+        "url": "https://www.openstreetmap.org/node/5715720942",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1850年から続くというアイスの店。アイスは100種類近く。",
+       "src": [
+        {
+         "name": "MADO（店のサイト）",
+         "url": "https://www.mado.com.tr/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Mado+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "sutlac",
+    "name": "スュトラッチ（ライスプディング）",
+    "local": {
+     "text": "Sütlaç",
+     "roman": "Sütlaç",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "sweets"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "トルコのライスプディングで、牛乳の菓子の1つ。ハジュ・アブドゥッラーの献立にある。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Hacı Abdullah「Menü」（店のサイトの献立）",
+       "url": "https://haciabdullah.com.tr/menu/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "haciabdullah",
+      "name": "ハジュ・アブドゥッラー（トルコ料理の食堂）",
+      "local": "Hacı Abdullah",
+      "area": "beyoglu",
+      "lat": 41.035249,
+      "lon": 28.980314,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Haci Abdullah Lokantasi」",
+        "url": "https://www.openstreetmap.org/node/9066394617",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1888年からのトルコ料理の食堂。献立にぶどうの葉のサルマ・肉の煮込み・キョフテ・キュネフェ・スュトラッチ。酒は出さない。",
+       "src": [
+        {
+         "name": "Hacı Abdullah「Menü」（店のサイトの献立）",
+         "url": "https://haciabdullah.com.tr/menu/",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Istanbul/Galata」",
+         "url": "https://en.wikivoyage.org/wiki/Istanbul/Galata",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Hac%C4%B1+Abdullah+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "cay",
+    "name": "チャイ（トルコの紅茶）",
+    "local": {
+     "text": "Çay",
+     "roman": "Çay",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "トルコの人は、朝ごはんにも一日じゅうも紅茶（チャイ）を飲む。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "kahve",
+    "name": "トルココーヒー",
+    "local": {
+     "text": "Türk kahvesi",
+     "roman": "Türk kahvesi",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "煎りたての豆をごく細かい粉にし、水と砂糖とともに小さな鍋で泡が立つまでゆっくり温める。小さなカップに、水を1杯添えて出す。2013年にユネスコの無形文化遺産になった。",
+     "src": [
+      {
+       "name": "UNESCO「Turkish coffee culture and tradition」",
+       "url": "https://ich.unesco.org/en/RL/turkish-coffee-culture-and-tradition-00645",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "mehmetefendi",
+      "name": "クルカフヴェジ・メフメト・エフェンディ カドゥキョイ店（トルココーヒー）",
+      "local": "Kurukahveci Mehmet Efendi",
+      "area": "asian",
+      "lat": 40.990906,
+      "lon": 29.025167,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Kurukahveci Mehmet Efendi」",
+        "url": "https://www.openstreetmap.org/way/463482382",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "トルココーヒーの豆を煎って挽く店。本店はエミノニュのタフミス通りで、カドゥキョイとシルケジにも店がある。",
+       "src": [
+        {
+         "name": "Kurukahveci Mehmet Efendi（店のサイト）",
+         "url": "https://www.mehmetefendi.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Kurukahveci+Mehmet+Efendi+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "ayran",
+    "name": "アイラン（ヨーグルトの飲み物）",
+    "local": {
+     "text": "Ayran",
+     "roman": "Ayran",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "ヨーグルトから作る飲み物で、トルコでいちばんよく飲まれる冷たい飲み物。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "boza",
+    "name": "ボザ（冬の飲み物）",
+    "local": {
+     "text": "Boza",
+     "roman": "Boza",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "昔からの冬の飲み物。シナモンを添えて飲む。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [
+     {
+      "key": "vefa",
+      "name": "ヴェファ・ボザジュス（ボザの店）",
+      "local": "Vefa Bozacısı",
+      "area": "oldcity",
+      "lat": 41.015324,
+      "lon": 28.958419,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Vefa Bozacısı 1876」",
+        "url": "https://www.openstreetmap.org/node/5110342187",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "ボザ（冬の飲み物）を作る店。品の一覧にボザ・ぶどうの汁シュラ・ビネガー。",
+       "src": [
+        {
+         "name": "Vefa Bozacısı（店のサイト）",
+         "url": "https://www.vefa.com.tr/",
+         "seen": "2026-11-23"
+        },
+        {
+         "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+         "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Vefa+Bozac%C4%B1s%C4%B1+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "salep",
+    "name": "サーレプ（冬の飲み物）",
+    "local": {
+     "text": "Salep",
+     "roman": "Salep",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": false,
+    "pork": false,
+    "what": {
+     "text": "牛乳・バニラ・砂糖・でんぷんで作る、冬の飲み物。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "raki",
+    "name": "ラク（トルコの酒）",
+    "local": {
+     "text": "Rakı",
+     "roman": "Rakı",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "kinds": [
+     "drinks"
+    ],
+    "alcohol": true,
+    "pork": false,
+    "what": {
+     "text": "トルコでいちばん好まれている酒。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "stores": [],
+    "went": false
+   }
+  ]
+ },
+ "buy": {
+  "items": [
+   {
+    "key": "lokum",
+    "name": "ロクム（ターキッシュ・ディライト）",
+    "local": {
+     "text": "Lokum",
+     "roman": "Lokum",
+     "src": [
+      {
+       "name": "Hacı Bekir（店のサイト）",
+       "url": "https://www.hacibekir.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "トルコの菓子ロクム。ハジュ・ベキルは1777年からロクムを作り、オスマンの宮廷の菓子職人の長を3代つとめた。",
+     "src": [
+      {
+       "name": "Hacı Bekir（店のサイト）",
+       "url": "https://www.hacibekir.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "hacibekir",
+      "name": "ハジュ・ベキル バフチェカプ店（ロクムの老舗）",
+      "local": "Ali Muhiddin Hacı Bekir",
+      "area": "oldcity",
+      "lat": 41.015791,
+      "lon": 28.973523,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Ali Muhiddin Hacı Bekir」",
+        "url": "https://www.openstreetmap.org/node/7303906185",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1777年にバフチェカプで開いた菓子の店。ロクム・アキデ（飴）・ヘルヴァを作る。バフチェカプの店は古い菓子屋として文化財に登録され、店そのものが「生きている博物館」。",
+       "src": [
+        {
+         "name": "Hacı Bekir（店のサイト）",
+         "url": "https://www.hacibekir.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ali+Muhiddin+Hac%C4%B1+Bekir+%C4%B0stanbul&hl=ja"
+     },
+     {
+      "key": "hafiz",
+      "name": "ハフズ・ムスタファ 1864（エミノニュの菓子店）",
+      "local": "Hafız Mustafa 1864",
+      "area": "oldcity",
+      "lat": 41.016011,
+      "lon": 28.97336,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Hafiz Mustafa 1864」",
+        "url": "https://www.openstreetmap.org/node/6324428785",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1864年の名を掲げる菓子の店。品の一覧はバクラヴァ・カダイフ・ケーキ・ムハッレビ（牛乳のプリン）・ロクム。",
+       "src": [
+        {
+         "name": "Hafız Mustafa 1864（店のサイトの品の一覧）",
+         "url": "https://www.hafizmustafa.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Haf%C4%B1z+Mustafa+1864+%C4%B0stanbul&hl=ja"
+     },
+     {
+      "key": "gulluoglu",
+      "name": "カラキョイ・ギュルルオウル（バクラヴァ）",
+      "local": "Karaköy Güllüoğlu",
+      "area": "beyoglu",
+      "lat": 41.024885,
+      "lon": 28.980958,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Karaköy Güllüoğlu」",
+        "url": "https://www.openstreetmap.org/node/4548658690",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "カラキョイのケマンケシュ通り67番のバクラヴァの店。品の一覧はピスタチオ・くるみなどのバクラヴァと、カダイフ・ロクム。",
+       "src": [
+        {
+         "name": "Karaköy Güllüoğlu（店のサイトの品の一覧）",
+         "url": "https://www.karakoygulluoglu.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karak%C3%B6y+G%C3%BCll%C3%BCo%C4%9Flu+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "akide",
+    "name": "アキデ・シェケリ（昔ながらの飴）",
+    "local": {
+     "text": "Akide şekeri",
+     "roman": "Akide sekeri",
+     "src": [
+      {
+       "name": "Hacı Bekir（店のサイト）",
+       "url": "https://www.hacibekir.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "ハジュ・ベキルが1777年からロクム・ヘルヴァとともに作ってきた、昔ながらの飴。",
+     "src": [
+      {
+       "name": "Hacı Bekir（店のサイト）",
+       "url": "https://www.hacibekir.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "hacibekir",
+      "name": "ハジュ・ベキル バフチェカプ店（ロクムの老舗）",
+      "local": "Ali Muhiddin Hacı Bekir",
+      "area": "oldcity",
+      "lat": 41.015791,
+      "lon": 28.973523,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Ali Muhiddin Hacı Bekir」",
+        "url": "https://www.openstreetmap.org/node/7303906185",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1777年にバフチェカプで開いた菓子の店。ロクム・アキデ（飴）・ヘルヴァを作る。バフチェカプの店は古い菓子屋として文化財に登録され、店そのものが「生きている博物館」。",
+       "src": [
+        {
+         "name": "Hacı Bekir（店のサイト）",
+         "url": "https://www.hacibekir.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Ali+Muhiddin+Hac%C4%B1+Bekir+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "kahve",
+    "name": "トルココーヒーの粉",
+    "local": {
+     "text": "Türk kahvesi",
+     "roman": "Turk kahvesi",
+     "src": [
+      {
+       "name": "Kurukahveci Mehmet Efendi（店のサイト）",
+       "url": "https://www.mehmetefendi.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "ごく細かく挽いたトルココーヒーの粉。小さな鍋で煮出して飲む。トルココーヒーの文化は2013年にユネスコの無形文化遺産になった。",
+     "src": [
+      {
+       "name": "UNESCO「Turkish coffee culture and tradition」",
+       "url": "https://ich.unesco.org/en/RL/turkish-coffee-culture-and-tradition-00645",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Kurukahveci Mehmet Efendi（店のサイト）",
+       "url": "https://www.mehmetefendi.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "mehmetefendi",
+      "name": "クルカフヴェジ・メフメト・エフェンディ カドゥキョイ店（トルココーヒー）",
+      "local": "Kurukahveci Mehmet Efendi",
+      "area": "asian",
+      "lat": 40.990906,
+      "lon": 29.025167,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Kurukahveci Mehmet Efendi」",
+        "url": "https://www.openstreetmap.org/way/463482382",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "トルココーヒーの豆を煎って挽く店。本店はエミノニュのタフミス通りで、カドゥキョイとシルケジにも店がある。",
+       "src": [
+        {
+         "name": "Kurukahveci Mehmet Efendi（店のサイト）",
+         "url": "https://www.mehmetefendi.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Kurukahveci+Mehmet+Efendi+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "baklava",
+    "name": "バクラヴァ（持ち帰りの箱）",
+    "local": {
+     "text": "Baklava",
+     "roman": "Baklava",
+     "src": [
+      {
+       "name": "Karaköy Güllüoğlu（店のサイトの品の一覧）",
+       "url": "https://www.karakoygulluoglu.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "ピスタチオやくるみのバクラヴァ。ハフズ・ムスタファはネットでも売り、国の内外へ送る。",
+     "src": [
+      {
+       "name": "Karaköy Güllüoğlu（店のサイトの品の一覧）",
+       "url": "https://www.karakoygulluoglu.com/",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Hafız Mustafa 1864（店のサイトの品の一覧）",
+       "url": "https://www.hafizmustafa.com/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [
+     {
+      "key": "gulluoglu",
+      "name": "カラキョイ・ギュルルオウル（バクラヴァ）",
+      "local": "Karaköy Güllüoğlu",
+      "area": "beyoglu",
+      "lat": 41.024885,
+      "lon": 28.980958,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Karaköy Güllüoğlu」",
+        "url": "https://www.openstreetmap.org/node/4548658690",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "カラキョイのケマンケシュ通り67番のバクラヴァの店。品の一覧はピスタチオ・くるみなどのバクラヴァと、カダイフ・ロクム。",
+       "src": [
+        {
+         "name": "Karaköy Güllüoğlu（店のサイトの品の一覧）",
+         "url": "https://www.karakoygulluoglu.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Karak%C3%B6y+G%C3%BCll%C3%BCo%C4%9Flu+%C4%B0stanbul&hl=ja"
+     },
+     {
+      "key": "hafiz",
+      "name": "ハフズ・ムスタファ 1864（エミノニュの菓子店）",
+      "local": "Hafız Mustafa 1864",
+      "area": "oldcity",
+      "lat": 41.016011,
+      "lon": 28.97336,
+      "coord_src": [
+       {
+        "name": "OpenStreetMap「Hafiz Mustafa 1864」",
+        "url": "https://www.openstreetmap.org/node/6324428785",
+        "seen": "2026-11-23"
+       }
+      ],
+      "why": {
+       "text": "1864年の名を掲げる菓子の店。品の一覧はバクラヴァ・カダイフ・ケーキ・ムハッレビ（牛乳のプリン）・ロクム。",
+       "src": [
+        {
+         "name": "Hafız Mustafa 1864（店のサイトの品の一覧）",
+         "url": "https://www.hafizmustafa.com/",
+         "seen": "2026-11-23"
+        }
+       ]
+      },
+      "went": false,
+      "maps": "https://www.google.com/maps/search/?api=1&query=Haf%C4%B1z+Mustafa+1864+%C4%B0stanbul&hl=ja"
+     }
+    ],
+    "went": false
+   },
+   {
+    "key": "cay",
+    "name": "トルコの紅茶の茶葉",
+    "local": {
+     "text": "Çay",
+     "roman": "Cay",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "トルコの人が朝から一日じゅう飲む紅茶（チャイ）。お土産の定番の1つ。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Istanbul」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "spice",
+    "name": "スパイスとドライフルーツ",
+    "local": {
+     "text": "Baharat",
+     "roman": "Baharat",
+     "src": [
+      {
+       "name": "Wikipedia「Spice Bazaar」",
+       "url": "https://en.wikipedia.org/wiki/Spice_Bazaar",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "エジプシャン・バザールの85の店に、スパイス・ロクム・ドライフルーツ・ナッツが並ぶ。",
+     "src": [
+      {
+       "name": "Wikipedia「Spice Bazaar」",
+       "url": "https://en.wikipedia.org/wiki/Spice_Bazaar",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "kilim",
+    "name": "じゅうたん・キリム",
+    "local": {
+     "text": "Halı / Kilim",
+     "roman": "Hali / Kilim",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "トルコのじゅうたんと平織りのキリム。店はブルーモスクの東のアラスタ・バザールのあたりに多い。",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikivoyage「Istanbul」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "pestemal",
+    "name": "ペシテマル（ハマムの布）",
+    "local": {
+     "text": "Peştamal",
+     "roman": "Pestamal",
+     "src": [
+      {
+       "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+       "url": "https://www.cemberlitashamami.com/en/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "ハマムで体に巻く、昔ながらの布。",
+     "src": [
+      {
+       "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+       "url": "https://www.cemberlitashamami.com/en/",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "iznik",
+    "name": "イズニック・タイルの模様の陶器",
+    "local": {
+     "text": "İznik çinisi",
+     "roman": "Iznik cinisi",
+     "src": [
+      {
+       "name": "Wikipedia「Rüstem Pasha Mosque」",
+       "url": "https://en.wikipedia.org/wiki/R%C3%BCstem_Pasha_Mosque",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "ブルーモスクやリュステム・パシャ・モスクの壁を飾るイズニックのタイル。花と幾何学の模様が多い。",
+     "src": [
+      {
+       "name": "Wikipedia「Blue Mosque, Istanbul」",
+       "url": "https://en.wikipedia.org/wiki/Blue_Mosque,_Istanbul",
+       "seen": "2026-11-23"
+      },
+      {
+       "name": "Wikipedia「Rüstem Pasha Mosque」",
+       "url": "https://en.wikipedia.org/wiki/R%C3%BCstem_Pasha_Mosque",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": false,
+    "stores": [],
+    "went": false
+   },
+   {
+    "key": "raki",
+    "name": "ラクの瓶",
+    "local": {
+     "text": "Rakı",
+     "roman": "Raki",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "what": {
+     "text": "トルコでいちばん好まれている酒、ラク。",
+     "src": [
+      {
+       "name": "Wikipedia「Turkish cuisine」",
+       "url": "https://en.wikipedia.org/wiki/Turkish_cuisine",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    "alcohol": true,
+    "stores": [],
+    "went": false
+   }
+  ]
+ },
+ "basics": {
+  "summary": [
+   {
+    "key": "season",
+    "title": "旬の季節",
+    "text": "平年の最高気温が16〜28℃になるのは4〜10月。11〜1月は雨が多く、月に100mm前後降る。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "safety",
+    "title": "治安",
+    "text": "スルタンアフメット地区とタクシム地区（イスティクラル通り）で、夕方と夜にぼったくりバーの被害が多い。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "budget",
+    "title": "予算",
+    "text": "メトロ・トラム・バスはカードで1回46.20リラ（約140円。2026年7月20日から）。",
+    "src": [
+     {
+      "name": "sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」（2026年7月17日）",
+      "url": "https://haber.sol.org.tr/haber/istanbullunun-ulasim-masrafina-yeni-zam-tam-bilet-4620-tl-411809",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "transit",
+    "title": "移動",
+    "text": "観光にはトラムT1がいちばん便利。メトロ・船・ケーブルカーもイスタンブールカードで乗る。",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "guide": [
+   {
+    "key": "airport",
+    "title": "空港から市内へ",
+    "points": [
+     {
+      "text": "イスタンブール空港（IST）は市の北西30km。メトロM11が市内と結び、6時15分から0時15分まで走る。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "空港バスのハヴァイストは、アクサライのメトロ駅まで約90分。5.42ユーロ（2024年10月）。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "タクシーはスルタンアフメットまで約50km・約50分で、約27.92ユーロ（2024年10月）。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "アジア側のサビハ・ギョクチェン空港（SAW）は市の東30km。メトロM4でカドゥキョイまで約1時間。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "transit",
+    "title": "市内の乗り物",
+    "points": [
+     {
+      "text": "カードのイスタンブールカードは、街角の小さな店や駅の機械で買える。足すのは現金かクレジットカード。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "メトロ・トラム・バスは1回46.20リラ（2026年7月20日から）。",
+      "src": [
+       {
+        "name": "sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」（2026年7月17日）",
+        "url": "https://haber.sol.org.tr/haber/istanbullunun-ulasim-masrafina-yeni-zam-tam-bilet-4620-tl-411809",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "トラムT1はカバタシュからバージュラルまで。旧市街の名所の多くはこの沿線。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       },
+       {
+        "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "地下のケーブルカーF2（1875年から）が、カラキョイとイスティクラル通りを結ぶ。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "pay",
+    "title": "払いかたとチップ",
+    "points": [
+     {
+      "text": "通貨はトルコリラ（TRY）。1リラは約3.14円（2026年11月20日の参照レート）。",
+      "src": [
+       {
+        "name": "欧州中央銀行（ユーロの参照レート）",
+        "url": "https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "両替は銀行・大きなホテル・両替所で、米ドルとユーロができる。旅行者の多い地区には、日本円を両替できる所もある。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "両替は空港ではなく、街の銀行か両替所（ドヴィズ・ビュロス）で。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "ユーロと米ドルは旅行者の多い所では使えるが、リラしか受け取らない名所もある。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "sim",
+    "title": "ネットと SIM",
+    "points": [
+     {
+      "text": "トルコの携帯の会社はどこも 4G が使える。5G は一部の場所だけで、2026年に本格的に始まる見込み。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "広場とバスには無料の Wi-Fi がある。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "safety",
+    "title": "治安のコツ",
+    "points": [
+     {
+      "text": "夕方と夜、スルタンアフメット地区とタクシム地区（とくにイスティクラル通り）で、ぼったくりバーの被害が多い。知らない人に誘われた店には行かない。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "日本語で話しかけて親しくなり、高いじゅうたんを売りつける手口がある。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "流しのタクシーで、遠回りやメーターを消して高い料金を求められる例が多い。ホテルを通すか配車のアプリで呼び、メーターが動いているか確かめる。",
+      "src": [
+       {
+        "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+        "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+        "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "ブラシを落として拾わせ、「ただで」磨いたあとに高いお金を求める靴磨きがいる。払わない。",
+      "src": [
+       {
+        "name": "Wikivoyage「Istanbul」",
+        "url": "https://en.wikivoyage.org/wiki/Istanbul",
+        "seen": "2026-11-23"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "key": "phrases",
+    "title": "トルコ語のひとこと",
+    "phrases": [
+     {
+      "local": "Merhaba",
+      "roman": "merhaba",
+      "kana": "メルハバ",
+      "ja": "こんにちは"
+     },
+     {
+      "local": "Günaydın",
+      "roman": "gunaydin",
+      "kana": "ギュナイドゥン",
+      "ja": "おはようございます"
+     },
+     {
+      "local": "Teşekkür ederim",
+      "roman": "tesekkur ederim",
+      "kana": "テシェッキュル・エデリム",
+      "ja": "ありがとう"
+     },
+     {
+      "local": "Evet",
+      "roman": "evet",
+      "kana": "エヴェト",
+      "ja": "はい"
+     },
+     {
+      "local": "Hayır",
+      "roman": "hayir",
+      "kana": "ハユル",
+      "ja": "いいえ"
+     },
+     {
+      "local": "Afedersiniz",
+      "roman": "afedersiniz",
+      "kana": "アフェデルスィニズ",
+      "ja": "すみません"
+     },
+     {
+      "local": "Bakar mısınız?",
+      "roman": "bakar misiniz",
+      "kana": "バカル・ムスヌズ？",
+      "ja": "（店の人を呼ぶ）すみません"
+     },
+     {
+      "local": "Bu kaç para?",
+      "roman": "bu kac para",
+      "kana": "ブ・カチ・パラ？",
+      "ja": "これはいくらですか？"
+     },
+     {
+      "local": "Hesap lütfen",
+      "roman": "hesap lutfen",
+      "kana": "ヘサプ・リュトフェン",
+      "ja": "お勘定をお願いします"
+     },
+     {
+      "local": "Hoşçakalın",
+      "roman": "hoscakalin",
+      "kana": "ホシュチャカルン",
+      "ja": "さようなら（去る人が言う）"
+     }
+    ],
+    "phrases_src": [
+     {
+      "name": "Wikivoyage「Turkish phrasebook」",
+      "url": "https://en.wikivoyage.org/wiki/Turkish_phrasebook",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "budget": {
+   "days": [],
+   "extras": [
+    {
+     "label": "メトロ・トラム・バス1回",
+     "local": "46.20",
+     "yen": "140",
+     "src": [
+      {
+       "name": "sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」（2026年7月17日）",
+       "url": "https://haber.sol.org.tr/haber/istanbullunun-ulasim-masrafina-yeni-zam-tam-bilet-4620-tl-411809",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "船 カドゥキョイ〜エミノニュ",
+     "local": "65.21",
+     "yen": "200",
+     "src": [
+      {
+       "name": "sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」（2026年7月17日）",
+       "url": "https://haber.sol.org.tr/haber/istanbullunun-ulasim-masrafina-yeni-zam-tam-bilet-4620-tl-411809",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "船 ボスタンジュ〜島",
+     "local": "171.89",
+     "yen": "540",
+     "src": [
+      {
+       "name": "sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」（2026年7月17日）",
+       "url": "https://haber.sol.org.tr/haber/istanbullunun-ulasim-masrafina-yeni-zam-tam-bilet-4620-tl-411809",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "ボスポラス海峡の長いツアー（往復・外国人）",
+     "local": "640",
+     "yen": "2,010",
+     "src": [
+      {
+       "name": "e-Yaşam Rehberi「Şehir Hatları Uzun Boğaz Turu」（2026年9月7日更新）",
+       "url": "https://e-yasamrehberi.com/deniz_ulasimi/sehir-hatlari-uzun-bogaz-turu.htm",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "地下宮殿（昼）",
+     "local": "1,500",
+     "yen": "4,710",
+     "src": [
+      {
+       "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+       "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "label": "ハマム（垢すりと泡の洗いつき）",
+     "local": "4,050",
+     "yen": "12,710",
+     "src": [
+      {
+       "name": "Çemberlitaş Hamamı（浴場のサイト。料金の表）",
+       "url": "https://www.cemberlitashamami.com/en/",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ]
+  },
+  "packing": [
+   {
+    "key": "passport",
+    "text": "パスポート。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "cash",
+    "text": "少しのリラの現金。リラしか受け取らない名所もある。",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "scarf",
+    "text": "モスクに入るときの、きちんとした服。アヤソフィアはいまも礼拝の場で、服装に気をつける。",
+    "src": [
+     {
+      "name": "Wikivoyage「Istanbul/Sultanahmet-Old City」",
+      "url": "https://en.wikivoyage.org/wiki/Istanbul/Sultanahmet-Old_City",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "bottle",
+    "text": "水のボトル。水道水は飲めない。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "insurance",
+    "text": "海外旅行の保険。旅行者の食中毒が多く、腹痛・熱・下痢のときは医療機関へ。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   },
+   {
+    "key": "umbrella",
+    "text": "冬は傘。11〜1月は月に100mm前後の雨が降る。",
+    "src": [
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  ],
+  "climate": {
+   "where": "イスタンブール（平年値）",
+   "src": [
+    {
+     "name": "Wikipedia（日本語）「イスタンブール」",
+     "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+     "seen": "2026-11-23"
+    }
+   ],
+   "months": [
+    {
+     "month": "1月",
+     "high": 8.7,
+     "low": 2.9,
+     "rain_mm": 98.4
+    },
+    {
+     "month": "2月",
+     "high": 9.1,
+     "low": 2.8,
+     "rain_mm": 80.2
+    },
+    {
+     "month": "3月",
+     "high": 11.2,
+     "low": 3.9,
+     "rain_mm": 69.9
+    },
+    {
+     "month": "4月",
+     "high": 16.5,
+     "low": 7.7,
+     "rain_mm": 45.8
+    },
+    {
+     "month": "5月",
+     "high": 21.4,
+     "low": 12.0,
+     "rain_mm": 36.1
+    },
+    {
+     "month": "6月",
+     "high": 26.0,
+     "low": 16.0,
+     "rain_mm": 34.0
+    },
+    {
+     "month": "7月",
+     "high": 28.4,
+     "low": 18.5,
+     "rain_mm": 38.8
+    },
+    {
+     "month": "8月",
+     "high": 28.5,
+     "low": 18.7,
+     "rain_mm": 47.8
+    },
+    {
+     "month": "9月",
+     "high": 25.0,
+     "low": 15.5,
+     "rain_mm": 61.4
+    },
+    {
+     "month": "10月",
+     "high": 20.1,
+     "low": 12.0,
+     "rain_mm": 96.9
+    },
+    {
+     "month": "11月",
+     "high": 15.3,
+     "low": 8.5,
+     "rain_mm": 110.7
+    },
+    {
+     "month": "12月",
+     "high": 11.1,
+     "low": 5.3,
+     "rain_mm": 123.9
+    }
+   ]
+  },
+  "emergency": {
+   "numbers": [
+    {
+     "no": "112",
+     "what": "警察・救急・消防（2021年から全部112に統一）",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+       "seen": "2026-11-23"
+      }
+     ]
+    },
+    {
+     "no": "0212-317-4600",
+     "what": "在イスタンブール日本国総領事館",
+     "src": [
+      {
+       "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+       "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+       "seen": "2026-11-23"
+      }
+     ]
+    }
+   ],
+   "embassy": {
+    "name": "在イスタンブール日本国総領事館",
+    "exists": true,
+    "address": "Esentepe Mah. Büyükdere Cad. No:209, Tekfen Tower Kat:10, Şişli, İstanbul",
+    "tel": "0212-317-4600（国外からは +90 212-317-4600）",
+    "url": "https://www.istanbul.tr.emb-japan.go.jp/",
+    "text": "イスタンブールに日本の総領事館がある（大使館は首都アンカラ）。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "Wikipedia（日本語）「イスタンブール」",
+      "url": "https://ja.wikipedia.org/wiki/%E3%82%A4%E3%82%B9%E3%82%BF%E3%83%B3%E3%83%96%E3%83%BC%E3%83%AB",
+      "seen": "2026-11-23"
+     },
+     {
+      "name": "OpenStreetMap「Tekfen Tower」",
+      "url": "https://www.openstreetmap.org/way/905819810",
+      "seen": "2026-11-23"
+     }
+    ],
+    "lat": 41.081717,
+    "lon": 29.008513,
+    "coord_src": [
+     {
+      "name": "OpenStreetMap「Tekfen Tower」",
+      "url": "https://www.openstreetmap.org/way/905819810",
+      "seen": "2026-11-23"
+     }
+    ],
+    "maps": "https://www.google.com/maps/search/?api=1&query=Tekfen+Tower+%C4%B0stanbul&hl=ja"
+   },
+   "water": {
+    "text": "水道水は飲めない。飲むのは市販のボトルの水。",
+    "src": [
+     {
+      "name": "外務省 海外安全ホームページ（トルコ 安全対策基礎データ。2025年6月11日更新）",
+      "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_052.html",
+      "seen": "2026-11-23"
+     }
+    ]
+   }
+  },
+  "holidays": {
+   "text": "10月29日は共和国の宣言（1923年）を記念する共和国記念日で、前の日の午後も休み。ラマザン・バイラム（3日）とクルバン・バイラム（4日）は、イスラムの暦で毎年日付が動く。",
+   "src": [
+    {
+     "name": "Wikipedia「Public holidays in Turkey」",
+     "url": "https://en.wikipedia.org/wiki/Public_holidays_in_Turkey",
+     "seen": "2026-11-23"
+    }
+   ]
+  },
+  "time": {
+   "text": "トルコは一年じゅう UTC+3 で、日本より6時間遅い。夏時間は無い。",
+   "src": [
+    {
+     "name": "Wikipedia「Time in Turkey」",
+     "url": "https://en.wikipedia.org/wiki/Time_in_Turkey",
+     "seen": "2026-11-23"
+    }
+   ]
+  }
+ },
+ "unknown": [
+  {
+   "what": "アヤソフィアの入場料と、旅行者の入りかた（上の回廊）",
+   "why": "Wikivoyage は大人25ユーロと書くが日付が無い。ほかの頁は25〜27.5ユーロと食い違う"
+  },
+  {
+   "what": "トプカプ宮殿の入場料",
+   "why": "Wikivoyage の2,750リラ（共通券）は日付が無い"
+  },
+  {
+   "what": "地下宮殿の入場料",
+   "why": "Wikivoyage の1,500リラ・2,400リラは日付が無く、ほかの頁は1,300リラや38ユーロと食い違う"
+  },
+  {
+   "what": "ガラタ塔の入場料",
+   "why": "Wikivoyage は650リラ、ほかの頁は30ユーロと書き、いまの値段が分からない"
+  },
+  {
+   "what": "ドルマバフチェ宮殿・ルメリ・ヒサールの入場料",
+   "why": "Wikivoyage の値段（1,200リラ・130リラ）は日付が無く古いとみられる"
+  },
+  {
+   "what": "イスタンブール考古学博物館の入場料と、いま見られる館",
+   "why": "大人15ユーロは日付が無い。2025年10月の時点で、タイルのキオスクと古代オリエント博物館は閉まっていた"
+  },
+  {
+   "what": "ボスポラス海峡のツアーの値段と時刻",
+   "why": "出どころはシェヒル・ハトラルの公式ではなく、時刻表を写した頁（2026年9月7日更新）。公式の頁は開けなかった"
+  },
+  {
+   "what": "チェンベルリタシュ・ハマムの値段の日付",
+   "why": "浴場のサイトの料金に日付が無い（Wikivoyage は約2,000リラ・7時30分〜22時30分と書き、食い違う）"
+  },
+  {
+   "what": "カーリエ・モスクのモザイクがいま見られるか、旅行者の入場料",
+   "why": "2024年5月6日に礼拝の場として開いたことまでしか確かめられない。モザイクの一部は幕で覆われているとみられる"
+  },
+  {
+   "what": "乙女の塔へ渡る船の乗り場と値段",
+   "why": "「岸との間を小舟が一日じゅう行き来する」までしか確かめられない"
+  },
+  {
+   "what": "エミノニュのサバサンドの値段と、いまの売りかた",
+   "why": "Wikivoyage は「漁師が船から直に売ることは許されていない」と書き、Wikipedia は「船の上で作って出す」と書く。値段は見つからない"
+  },
+  {
+   "what": "イスタンブールカードの、カードそのものの値段",
+   "why": "2026年の値段を書いた出どころが見つからない"
+  },
+  {
+   "what": "ハジュ・アブドゥッラー・マド・ハフズ・ムスタファの、いまの店の場所",
+   "why": "店の座標は OpenStreetMap の点。店のサイトで支店の住所を確かめていない（ケバプチュ・イスケンデルは通りの点）"
+  }
+ ],
+ "shorts": {
+  "src": [
+   {
+    "name": "site/content/shorts.ts の章（チャンネルのショートのタブから焼いたもの）",
+    "url": "https://www.youtube.com/channel/UCCwutAH6ieHNvdyJAfSld7w/shorts",
+    "seen": "2026-11-23"
+   }
+  ],
+  "items": []
+ }
+}

@@ -1,0 +1,135 @@
+{
+ "_meta": {
+  "何か": "イスタンブールのガイドブックの面（/travel/turkey/istanbul）の組み立て。材料（guidebook.json）にあるのは事実で、ここにあるのは選びかたと並べかただけ。焼くのは python/guidebook_bake.py",
+  "行った": "行った街だが、カード・話・一言は行った担当が足す（ここは骨組み）",
+  "どんな街": "問いは日本語の頁と旅行のガイドがイスタンブールを語る3つ（材料の about.why_src）。前の街の問いを写していない",
+  "題": "「イスタンブール観光ガイド」が頭（docs/island-misses.md #332・#333）"
+ },
+ "title": "イスタンブール観光ガイド【2026年】見どころマップ・やりたいこと・グルメ｜トルコ",
+ "description": {
+  "text": "トルコの街イスタンブールの観光ガイド。見どころマップと、やりたいこと{todo}つ（ボスポラス海峡のクルーズ、ハマムのアカスリ、グランドバザール、サバサンド）、ケバブとバクラヴァ。",
+  "facts": []
+ },
+ "persona": [
+  "トルコやバルカンを安く回る20〜30代の個人旅行者。イスタンブールに何日いて、どこを回って何を食べるか決めかねている（いちばん大事な読み手）",
+  "乗り継ぎや短い滞在で、旧市街の名所とボスポラス海峡をまとめて回りたい人",
+  "ぼったくりや値段の交渉が心配で、安く済ませるコツを知りたい人"
+ ],
+ "terms": [
+  "イスタンブール 観光",
+  "イスタンブール 見どころ",
+  "イスタンブール 地図",
+  "イスタンブール 観光 モデルコース",
+  "イスタンブール グルメ"
+ ],
+ "published": "2026-11-23",
+ "cover": {
+  "catch": 0
+ },
+ "cards": {},
+ "say": {},
+ "items": {},
+ "about": {
+  "crossroads": {
+   "q": "なぜ「文明の十字路」？",
+   "icon": "bridge"
+  },
+  "history": {
+   "q": "どんな歴史？",
+   "icon": "castle"
+  },
+  "ayasofya": {
+   "q": "アヤソフィアって何？",
+   "icon": "mosque"
+  }
+ },
+ "areas": {
+  "oldcity": {
+   "color": "#ffd98a",
+   "plan": [
+    1,
+    2,
+    2
+   ]
+  },
+  "beyoglu": {
+   "color": "#d9ccf5",
+   "plan": [
+    1,
+    1,
+    2
+   ]
+  },
+  "asian": {
+   "color": "#ffc4d2",
+   "plan": [
+    3,
+    2,
+    1
+   ]
+  }
+ },
+ "summary": {
+  "season": {
+   "icon": "sun",
+   "value": "4〜10月",
+   "lead": "平年の最高気温が16〜28℃",
+   "to": "#guide-season"
+  },
+  "safety": {
+   "icon": "key",
+   "value": "ぼったくりに注意",
+   "lead": "旧市街とタクシムの夜のバー",
+   "to": "#guide-safety"
+  },
+  "budget": {
+   "icon": "wallet",
+   "label": "乗り物の目安",
+   "value": "1回46.20リラ",
+   "lead": "メトロ・トラム・バス",
+   "to": "#budget"
+  },
+  "transit": {
+   "icon": "tram",
+   "value": "トラムT1",
+   "lead": "旧市街の名所を結ぶ",
+   "to": "#guide-transit"
+  }
+ },
+ "guides": {
+  "airport": {
+   "icon": "plane",
+   "lead": "メトロM11かバスのハヴァイストで"
+  },
+  "transit": {
+   "icon": "tram",
+   "lead": "イスタンブールカードで乗る"
+  },
+  "pay": {
+   "icon": "currency",
+   "lead": "通貨はリラ。両替は街で"
+  },
+  "sim": {
+   "icon": "sim",
+   "lead": "4G はどの会社でも使える"
+  },
+  "safety": {
+   "icon": "key",
+   "lead": "ぼったくりバーと流しのタクシー"
+  },
+  "phrases": {
+   "icon": "phrase"
+  }
+ },
+ "season": {
+  "lead": "歩きやすいのは4〜10月"
+ },
+ "pack": {
+  "passport": "passport",
+  "cash": "coin",
+  "scarf": "shirt",
+  "bottle": "bottle",
+  "insurance": "firstaid",
+  "umbrella": "umbrella"
+ }
+}
