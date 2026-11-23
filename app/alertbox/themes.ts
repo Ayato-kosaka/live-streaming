@@ -212,6 +212,19 @@ export type CastleBankDef = {
 };
 
 /**
+ * 12月のクリスマスの貯金箱（#1034）。描くのは `season/bank/XmasBank.tsx`、部品の約束は `<dir>/<variant>.json`。
+ * 案3（`sleigh` ソリのプレゼント袋）と案4（`globe` スノードーム）の2つを、試し表示の `?bank=` で切り替える
+ * （あやと 2026-11-23「案3か案4で迷っている。出来上がったものを見せてほしい」）。選ばれたほうを `variant` にする
+ */
+export type XmasBankDef = {
+  kind: "xmas";
+  /** 部品と `<variant>.json` の置き場（公開側のパス） */
+  dir: string;
+  /** `?bank=` が無いときの案 */
+  variant: "sleigh" | "globe";
+};
+
+/**
  * 投げ銭の演出を動画で流す段の組（11月から。#1095）。**`tiers`（ふだんの段）とは別に持つ。**
  * 配信に出すのは `live` が true で `variant` が決まっているときだけ。それまでは `?fx=full` / `?fx=light` の旗が
  * 付いたページ（試し表示・録画・`/alert/perf`）でだけ、`tiers` の代わりにこちらの段で出す（`season/show/fxVideo.ts`）
@@ -241,6 +254,8 @@ export type SeasonTheme = {
   /** 絵の置き場（公開側のパス。`public/` の下） */
   dir: string;
   bank: {
+    /** コマの置き場（無ければ `dir`）。12月は貯金箱の部品と同じ `bank/` に置く */
+    dir?: string;
     /** コマの枚数（`bank-base-0..n-1.png` / `bank-fill-0..n-1.png`） */
     frames: number;
     /**
@@ -262,6 +277,10 @@ export type SeasonTheme = {
    * 下の `bank`（コマ送り。0% の絵に 100% の絵を下から溜める）に落ちる。それも読めなければ豚
    */
   castleBank?: CastleBankDef;
+  /**
+   * 12月の貯金箱（案を切り替えられる）。部品が読めなければ、下の `bank`（コマ送り）に落ちる。それも読めなければ豚
+   */
+  xmasBank?: XmasBankDef;
   /** 投げ銭の演出を動画で流す段の組。無ければ `tiers` だけ */
   fxVideo?: FxVideoDef;
   /**
@@ -854,6 +873,34 @@ export const THEMES: SeasonTheme[] = [
     fxVideo: { dir: "/alert/themes/castle/fx", live: true, variant: "full", tiers: CASTLE_FX_TIERS },
     finale: null,
   },
+  {
+    id: "christmas",
+    /* 12月。クリスマス（#1034）。**まだ配信に出さない**（`live: false`。`?theme=christmas` の試し表示だけ）。
+       貯金箱は案3（ソリのプレゼント袋）と案4（スノードーム）を `?bank=sleigh|globe` で見比べる（あやとが選ぶまで）。
+       投げ銭の演出7段（動画）は別の枝で作っていて、ここでは段は11月の城と同じ形の仮（1段・小物なし＝季節の外と同じ出し方） */
+    from: "2026-12-01T00:00",
+    until: "2027-01-01T00:00",
+    live: false,
+    dir: "/alert/themes/christmas",
+    xmasBank: { kind: "xmas", dir: "/alert/themes/christmas/bank", variant: "sleigh" },
+    bank: {
+      /* 部品が読めなかった日のコマ送り。スノードームの 0%（町が暗い）に 100%（全部灯る）を下から溜める。1枚なので送らない */
+      dir: "/alert/themes/christmas/bank",
+      frames: 1,
+      sequence: [[0, 60000]],
+      fallbackSize: { width: 640, height: 452 },
+    },
+    text: {
+      top: { color: "#FFF4DC", shadow: "#2A0A0C" },
+      /* いまの額はランタンの金色。地が何色でも読めるように、濃いワイン色の縁を付ける */
+      center: { color: "#FFD54A", shadow: "#2A0A0C" },
+      bottom: { color: "#FFF4DC", shadow: "#2A0A0C" },
+    },
+    fx: [],
+    slots: [],
+    tiers: [{ min: 0, accent: "#C62828", slots: 0, files: [], bats: 0, waves: 0 }],
+    finale: null,
+  },
 ];
 
 /** JST の `YYYY-MM-DDTHH:mm` を、いつの瞬間か（ms）に直す。 */
@@ -908,7 +955,7 @@ export const bankFrameUrl = (
   th: SeasonTheme,
   layer: "base" | "fill",
   i: number
-) => `${th.dir}/bank-${layer}-${i}.png`;
+) => `${th.bank.dir ?? th.dir}/bank-${layer}-${i}.png`;
 
 export const fxUrl = (th: SeasonTheme, file: string) => `${th.dir}/${file}`;
 

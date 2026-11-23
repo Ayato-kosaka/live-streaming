@@ -5,6 +5,7 @@ import type { Season } from "../../season/useSeason";
 import { ThemedGauge } from "../../season/ThemedGauge";
 import { KuroBank } from "../../season/bank/KuroBank";
 import { CastleBank } from "../../season/bank/CastleBank";
+import { XmasBank } from "../../season/bank/XmasBank";
 import { useStableWindow } from "../../season/useBoxSize";
 
 export type PiggyGaugeProps = {
@@ -84,6 +85,24 @@ export const PiggyGauge: React.FC<PiggyGaugeProps> = ({
     );
     /* 絵を重ねる貯金箱（11月のブラン城）。0%・100% の城の絵は上のコマ（bank）を使い、ピポ・旗・字の台は
        CastleBank が自分で読む。読めなければ、コマ送り（0% に 100% を下から溜める）に落ちる */
+    /* 12月の貯金箱（案3 ソリのプレゼント袋 / 案4 スノードーム。`?bank=` で切り替え）。部品は XmasBank が自分で読む。
+       読めなければ、コマ送り（スノードームの 0% に 100% を下から溜める）に落ちる */
+    const xb = season.theme.xmasBank;
+    if (xb) {
+      return (
+        <View style={styles.container}>
+          <XmasBank
+            theme={season.theme}
+            def={xb}
+            currentAmount={currentAmount}
+            targetAmount={targetAmount}
+            label={label}
+            alertPending={!!alertPending}
+            fallback={themed}
+          />
+        </View>
+      );
+    }
     const cb = season.theme.castleBank;
     if (cb) {
       return (
