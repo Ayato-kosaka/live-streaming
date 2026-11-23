@@ -1,0 +1,100 @@
+{
+  "site": "https://ayato-arigato.com",
+  "startedAt": "2026-11-23T21:30:09.165Z",
+  "rounds": [
+    {
+      "yen": 100,
+      "outcome": "checkout 200"
+    }
+  ],
+  "controls": {
+    "ng": {
+      "status": 400,
+      "error": "ng word",
+      "url": false,
+      "toStripe": 0,
+      "shown": true
+    },
+    "yen99": {
+      "status": 400,
+      "error": "bad yen",
+      "url": false,
+      "toStripe": 0,
+      "disabled": true
+    }
+  },
+  "checks": [
+    {
+      "name": "試しの人が島の住人に出ない",
+      "ok": true,
+      "detail": "住人 1→1人・ためしの名前 0件"
+    },
+    {
+      "name": "対照: 禁止ワード → 払う前に 400 ng word",
+      "ok": true,
+      "detail": "400 ng word・Stripe へ 0回・面の1行 出た"
+    },
+    {
+      "name": "対照: 額 99 → 400（面は押せない）",
+      "ok": true,
+      "detail": "400 bad yen・Stripe へ 0回・面のボタン 押せない"
+    },
+    {
+      "name": "¥100: アラートに名前・額・メッセージが出た",
+      "ok": false,
+      "detail": "checkout 200"
+    },
+    {
+      "name": "¥100: 払ってから 5 秒以内",
+      "ok": false,
+      "detail": "—"
+    },
+    {
+      "name": "¥100: islandSiteTips が livemode: false・額が合う",
+      "ok": false,
+      "detail": "書かれていない"
+    },
+    {
+      "name": "テストのアラートの seq が回数ぶん増えた",
+      "ok": false,
+      "detail": "+0（払えた 0回）"
+    },
+    {
+      "name": "本番の豚（fund.box.island）が動かない",
+      "ok": true,
+      "detail": "同じ"
+    },
+    {
+      "name": "GET /island-api/fund の総額が動かない",
+      "ok": true,
+      "detail": "同じ"
+    },
+    {
+      "name": "台帳 islandTips に入らない",
+      "ok": true,
+      "detail": "1728→1728件（島 0→0）"
+    },
+    {
+      "name": "本番の支払い（livemode: true）が増えない",
+      "ok": true,
+      "detail": "0→0件"
+    },
+    {
+      "name": "本番のアラートの1枚が動かない",
+      "ok": true,
+      "detail": "同じ"
+    },
+    {
+      "name": "試しの人が残っていない（islandUsers・Auth）",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "stopped": null,
+  "notes": [
+    "本番の合言葉: 1本（値は出さない）",
+    "テスト用の合言葉を作って書いた"
+  ],
+  "finishedAt": "2026-11-23T21:30:32.721Z",
+  "code": 1
+}
