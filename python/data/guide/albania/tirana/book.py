@@ -7,8 +7,9 @@
 座標は同じ置き場の `geo.json`、借りた写真の欄は `photos.json`（どちらも同じ道具の `geo` `photo` で足す）。
 **JSON を手で直さない。** ここを直して build する。
 
-ティラナは「行った」街（2026-09-28〜10-11）。ここは骨組み（外の出どころの事実）だけで、`went` は全部 false。
-行った箱と記事は、行った担当が配信の facts から肉付けする（`.claude/skills/city-guide/briefs/articles.md`）。
+ティラナは「行った」街（2026-09-28〜10-12）。骨組み（外の出どころの事実）のあとに、行った担当が配信の facts から
+行った箱を肉付けしている（下の「行った」。`.claude/skills/city-guide/briefs/articles.md`）。厚い所は記事
+（`python/data/guide/albania/tirana/<話>.json`）にして、窓には要約と「続きを読む」だけを残す。
 店に結ぶ品は、その店のいまの品書き（Wolt の配達の品書き。2026-11-23 に見た）に載っている品だけ。
 """
 
@@ -533,12 +534,107 @@ unknown = [
     {"what": "クルヤのパノラマのレストラン", "why": "Wikivoyage の店の点と OpenStreetMap のホテル「Panorama」の点が約200mずれている"},
 ]
 
+# ------------------------------------------------------------------ 行った（配信の facts。行った担当が足す）
+# ティラナに居たのは 2026-09-28〜10-12 の17本。facts は `streams/2026/<月>/<stem>.facts.json`（`python/guide_facts.py`）。
+# **ガイドの品にだけ肉付けする**（facts から品を作らない）。骨組みの字（出どころつき）には混ぜず、行った箱に入る字だけを持つ。
+# 配信で名前を言っていない所を品に結んだものは、何で結んだかを書いておく:
+#   - 大きなモスク（09-29）→ ナマズガー・モスク: その日のカードの外観（高い塔と丸屋根）
+#   - 正教会（10-03）→ キリスト復活大聖堂: その日のカード（白い壁に青いアーチの入口）
+#   - シェルター（10-03）→ バンクアート2: 10-02 に「地下シェルター…バンクアート2」と言って翌日の行き先に入れ、中は有料だった
+#   - 大階段（10-03）→ ピラミッド: 10-02 に「ピラミッドがさっき見てたやつも」と大階段の候補をピラミッドと結び、その日のカードが白い階段
+# 結ばなかったもの: 市場（10-04。どの市場かを言っていない）・人造湖（雨で行かなかった）・旧市街（城の中。品が無い）
+
+import json as _json
+
+
+def _days() -> dict:
+    """動画の id → 配信の日（MM-DD）。facts.json の date_local（見張りの ref と同じ物差し）"""
+    out = {}
+    for p in sorted((ROOT / "streams").glob("*/*/*.facts.json")):
+        d = _json.loads(p.read_text(encoding="utf-8"))
+        out[d["video_id"]] = d["date_local"][5:]
+    return out
+
+
+_DAY = _days()
+
+
+def fx(fid: str) -> dict:
+    """facts の行の結び（`<動画>@<秒>#<種類>`）を、材料の形（ref・url つき）にする"""
+    v, rest = fid.split("@")
+    t, kind = rest.split("#")
+    t = int(t)
+    if v not in _DAY:
+        raise BookError(f"facts の行「{fid}」の配信が streams に無い")
+    return {"id": fid, "ref": f"{_DAY[v]} {t // 3600}:{t % 3600 // 60:02d}:{t % 60:02d}", "video": v, "t": t, "kind": kind,
+            "url": f"https://www.youtube.com/watch?v={v}&t={t}s"}
+
+
+def went(xs: list, key: str, ids: list, scene: str) -> None:
+    """品（鍵）に行った行と場面を付ける。場面は結んだ行のどれか（一言に選ぶ品は、一言の行）"""
+    x = next((x for x in xs if x["key"] == key), None)
+    if x is None or scene not in ids:
+        raise BookError(f"行った: 品「{key}」が無いか、場面「{scene}」が結んだ行に無い")
+    x["went"] = {"facts": [fx(i) for i in ids]}
+    sc = fx(scene)
+    x["scene"] = {"id": sc["id"], "video": sc["video"], "t": sc["t"], "url": sc["url"]}
+
+
+WALK = "hK0SwIeAxg0"  # 10-03 広場・正教会・シェルター・旧市街・大階段を歩いた回
+went(see, "skanderbeg", [f"{WALK}@1230#place", f"{WALK}@1470#fact", f"{WALK}@1620#quote", f"{WALK}@1680#caution"],
+     f"{WALK}@1230#place")
+went(see, "cathedral", [f"{WALK}@1920#move", f"{WALK}@3300#place", f"{WALK}@3450#fact", f"{WALK}@3690#fact"], f"{WALK}@3300#place")
+went(see, "bunkart2", [f"{WALK}@1950#move", f"{WALK}@5310#fact"], f"{WALK}@5310#fact")
+went(see, "pyramid", [f"{WALK}@10950#place", f"{WALK}@11070#fact", f"{WALK}@11220#quote", f"{WALK}@11400#fact", f"{WALK}@11460#fact"],
+     f"{WALK}@11220#quote")
+went(see, "namazgah", ["-XSFRIeEpSw@8160#place", "-XSFRIeEpSw@8250#fact", "-XSFRIeEpSw@8400#fact"], "-XSFRIeEpSw@8160#place")
+
+went(todos, "bunkart", [f"{WALK}@1950#move", f"{WALK}@5310#fact"], f"{WALK}@5310#fact")
+went(todos, "pyramid", [f"{WALK}@10950#place", f"{WALK}@11400#fact", f"{WALK}@11460#fact"], f"{WALK}@10950#place")
+went(todos, "byrek", ["zjHZucyfrq8@2040#food", "zjHZucyfrq8@2670#food", "zjHZucyfrq8@2700#quote", "-XSFRIeEpSw@3240#fact"],
+     "zjHZucyfrq8@2700#quote")
+
+went(eat_items, "sufllaqe", ["zjHZucyfrq8@4710#food", "cpOZCgtD4GI@1050#place", "cpOZCgtD4GI@1320#food", "cpOZCgtD4GI@1380#food",
+                             "cpOZCgtD4GI@1920#price", "cpOZCgtD4GI@2070#food", "cpOZCgtD4GI@2370#fact", "xNWJQCt3SLc@2910#food",
+                             "xNWJQCt3SLc@3930#food", "xNWJQCt3SLc@4170#food", "yk-by7R7iPA@2880#price", "yk-by7R7iPA@3605#food"],
+     "cpOZCgtD4GI@1380#food")
+went(eat_items, "qofte", ["3zGkoi8FuwM@3780#food", "3zGkoi8FuwM@3810#food", "3zGkoi8FuwM@3845#quote", "3zGkoi8FuwM@4200#food",
+                          "3zGkoi8FuwM@4530#price"], "3zGkoi8FuwM@3845#quote")
+went(eat_items, "byrek", ["zjHZucyfrq8@2040#food", "zjHZucyfrq8@2670#food"], "zjHZucyfrq8@2670#food")
+went(eat_items, "kafe", ["HjSLfg57t7E@1860#food", "da7K3qD5NmI@3900#caution", "da7K3qD5NmI@4200#price", "da7K3qD5NmI@4230#food"],
+     "HjSLfg57t7E@1860#food")
+
+
+def own(key: str, text: str, ids: list) -> None:
+    """基本情報の札に、行った人の話を1つ足す（出どころの無い、facts だけを持つ字。行った箱に入る）"""
+    g = next(g for g in basics["guide"] if g["key"] == key)
+    g["points"].append({"text": text, "facts": [fx(i) for i in ids]})
+
+
+own("airport", "着いた夜は、宿代を浮かせようと空港の床で寝ました。寒くてほとんど眠れず、どれがバスか分からないまま、"
+               "なんとか市街へ向かうバスに乗れました。運賃は400レク、約800円でした。",
+    ["HjSLfg57t7E@540#caution", "HjSLfg57t7E@360#move", "HjSLfg57t7E@690#price"])
+own("transit", "中心の見どころは全部近くにあって、バスを使わずに歩いて回れました。市バスに乗った日は、人に聞いて教わったイエローバスの2番へ。"
+               "車内で兄さんがお金を受け取って、切符をくれました。",
+    [f"{WALK}@6060#move", "yk-by7R7iPA@965#move"])
+own("pay", "支払いは現金ばかりの国だと感じました。カフェで最初は現金のみと言われましたが、粘るとカードリーダーが出てきて、カードで払えました。",
+    ["-XSFRIeEpSw@5520#fact", "HjSLfg57t7E@2490#caution"])
+own("sim", "事前に買ったヨーロッパ用のSIMにはアルバニアが入っていなくて、使えませんでした。SIMを買うのは現金でした。",
+    ["HjSLfg57t7E@4320#caution", "zjHZucyfrq8@1680#fact"])
+own("safety", "泊まったホステルで、カバンを椅子に置いたまま料理をしていたら、カバンの中の携帯を盗まれました。寝ている間にポーチも盗まれて、"
+              "1週間で2回目。歩道の信号が青でも、車が突っ込んでくることがあります。",
+    ["XKpFeM0mQ2I@480#caution", "xNWJQCt3SLc@660#caution", "yGEacTlskmY@600#caution", "2zJMCF5TfJ8@1775#caution"])
+basics["autumn"] = {"text": "9月の終わりから10月の初めは、朝から晩までずっと晴れていました。気温は26度ぐらいで、半袖で過ごせる暑さ。"
+                            "雨が降り出したのは、10月8日でした。",
+                    "facts": [fx(i) for i in ["-XSFRIeEpSw@150#fact", "cpOZCgtD4GI@660#fact", "2zJMCF5TfJ8@1925#fact",
+                                              "0BqO781Gq2Q@4140#fact"]]}
+
 book = {
     "_meta": {
         "何か": "ティラナを「ガイドブック型の街の面」（/travel/albania/tirana）にするための材料。行った街（2026-09-28〜10-11）。焼くのは python/guidebook_bake.py",
         "見張り": "python3 python/guide_book_check.py albania/tirana（出どころの無い事実・座標の無い店・枠の外の座標）。マイマップの CSV も同じ道具が書く（--mymaps）",
         "出どころ": "事実を持つ欄には src（https と見た日）。座標は OpenStreetMap（Nominatim）。値段と「いまも」は2024年以降の出どころ。確かめきれないものは unknown へ",
-        "行った": "行った街だが、ここは骨組みだけで went は全部 false。行った箱と記事は行った担当が streams の facts から肉付けする",
+        "行った": "行った街（2026-09-28〜10-12）。went は配信の facts の行だけを持つ（台本の「行った」の段。名前を言っていない所を品に結んだ理由もそこ）。骨組みの字には混ぜない",
         "店": "店に結ぶ品は、その店のいまの品書き（Wolt の配達の品書き。2026-11-23 に見た）に載っている品だけ。値段は配達の値段",
         "円": "円は 1ユーロ＝89.78レク・100円＝51.52レク（2026年11月20日のアルバニア銀行の公式レート。1レク＝約1.941円）で直し、10円で丸めた",
         "地図": "多角形（range.polygon）は、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない。グランドパーク・ダイティ山・クルヤ・ベラト・ドゥラスは見どころマップの外（矢印）",
@@ -566,7 +662,7 @@ book = {
 compose = {
     "_meta": {
         "何か": "ティラナのガイドブックの面（/travel/albania/tirana）の組み立て。材料（guidebook.json）にあるのは事実で、ここにあるのは選びかたと並べかただけ。焼くのは python/guidebook_bake.py",
-        "行った": "行った街。カード・話・一言は、行った担当が facts から足す（ここでは空）",
+        "行った": "行った街。カードはその日のあやと島カード（札の絵には使わず、窓の中の行った箱に）。話（story）は facts の行をつないだあやとの一人称（docs/guide-blog.md）で、記事のある品は要約だけ（article）。一言は節に1つ",
         "どんな街": "問いは日本語の頁がティラナを語る2つ（材料の about.why_src）。前の街の問いを写していない",
         "題": "「ティラナ観光ガイド」が頭（docs/island-misses.md #332・#333）",
     },
@@ -581,9 +677,62 @@ compose = {
     "terms": ["ティラナ 観光", "ティラナ 見どころ", "ティラナ 地図", "アルバニア ティラナ 観光", "ティラナ 日帰り"],
     "published": "2026-11-23",
     "cover": {"catch": 0},
-    "cards": {},
-    "say": {},
-    "items": {},
+    "cards": {
+        "stairs": {"id": "9kuxxZoz0kenWevKYRbQ", "day": "2026-10-03", "alt": "大階段。白い階段を上る人と、青い空（2026年10月3日）"},
+        "sunset": {"id": "cpzoBQPQ3wATVmpRWq7b", "day": "2026-10-03", "alt": "大階段の上から見た、日の沈むころの街と公園（2026年10月3日）"},
+        "church": {"id": "nxoZwmgveKoNLSaYAND8", "day": "2026-10-03", "alt": "正教会の入口。白い壁に青いアーチと十字架（2026年10月3日）"},
+        "shelter": {"id": "iC0oDrfDx4NCxXFjzXaH", "day": "2026-10-03", "alt": "シェルター。丸い屋根のコンクリートの入口（2026年10月3日）"},
+        "mosque": {"id": "I02gybuSviif0Zc69Usq", "day": "2026-09-29", "alt": "大きなモスクの外。高い塔と丸屋根（2026年9月29日）"},
+        "sufllaqe": {"id": "USzbtXe3VuMreeA5OF6T", "day": "2026-09-30", "alt": "料理通りの店のスフラキ。紙に包まれて、ポテトがのぞく（2026年9月30日）"},
+        "soup": {"id": "rqVwTLuYBsiuJfztIdZk", "day": "2026-10-07", "alt": "ジェルトレのミートボールのスープ（2026年10月7日）"},
+    },
+    "say": {"see": "pyramid", "todo": "byrek", "eat": "qofte"},
+    "items": {
+        "see/skanderbeg": {"story": {"text": "広場には赤い旗と、顔のように見えるビル。15世紀の統治者をたたえる像と見比べても、全然似ていませんでした。",
+                                     "facts": ["hK0SwIeAxg0@1230#place", "hK0SwIeAxg0@1470#fact", "hK0SwIeAxg0@1620#quote"]},
+                           "article": "walk"},
+        "see/cathedral": {"card": "church",
+                          "story": {"text": "広場から歩いて3分。思っていた以上に立派で、見たことのない形の教会でした。",
+                                    "facts": ["hK0SwIeAxg0@1920#move", "hK0SwIeAxg0@3300#place"]},
+                          "article": "walk"},
+        "see/bunkart2": {"card": "shelter",
+                         "story": {"text": "教会から歩いて4分ほど。中は有料だったので、入らずに帰りました。",
+                                   "facts": ["hK0SwIeAxg0@1950#move", "hK0SwIeAxg0@5310#fact"]},
+                         "article": "walk"},
+        "see/pyramid": {"card": "sunset",
+                        "story": {"text": "白い大階段の上からは、この日に見た教会やモスクが見えました。日が奥の山に隠れたあと、空が赤く染まりました。",
+                                  "facts": ["hK0SwIeAxg0@10950#place", "hK0SwIeAxg0@11070#fact", "hK0SwIeAxg0@11460#fact"]},
+                        "article": "walk"},
+        "see/namazgah": {"card": "mosque",
+                         "story": {"text": "大きなモスクの中に入って、お祈りをしてみました。カーペットがきれいでした。入り口は女性用と男性用で別です。",
+                                   "facts": ["-XSFRIeEpSw@8160#place", "-XSFRIeEpSw@8250#fact", "-XSFRIeEpSw@8400#fact"]},
+                         "article": "mosque"},
+        "todo/bunkart": {"card": "shelter",
+                         "story": {"text": "シェルターまで行きましたが、中は有料だったので、入らずに帰りました。",
+                                   "facts": ["hK0SwIeAxg0@5310#fact"]},
+                         "article": "walk"},
+        "todo/pyramid": {"card": "stairs",
+                         "story": {"text": "白い階段と青い空。上まで登ると、飛行機雲が6本も見えました。",
+                                   "facts": ["hK0SwIeAxg0@10950#place", "hK0SwIeAxg0@11400#fact"]},
+                         "article": "walk"},
+        "todo/byrek": {"story": {"text": "ジェラート屋とパン屋がやたらと多い街です。公園で食べたパイは、長ねぎのような野菜がぎっしり詰まっていました。",
+                                 "facts": ["-XSFRIeEpSw@3240#fact", "zjHZucyfrq8@2670#food"]}},
+        "eat/sufllaqe": {"card": "sufllaqe",
+                         "story": {"text": "料理通りの店のスフラキは、かなり大きくて540円ぐらい。ビッグマックを100点とすると、115点ぐらいです。",
+                                   "facts": ["cpOZCgtD4GI@1380#food", "cpOZCgtD4GI@1920#price", "cpOZCgtD4GI@2070#food"]},
+                         "article": "sufllaqe"},
+        "eat/qofte": {"card": "soup",
+                      "story": {"text": "大衆食堂ジェルトレで、牛肉のミートボールのスープを食べました。ミートボールは一口の大きさで、ハンバーグのような味です。",
+                                "facts": ["3zGkoi8FuwM@3780#food", "3zGkoi8FuwM@4200#food"]},
+                      "article": "gjelltore"},
+        "eat/byrek": {"story": {"text": "パン屋でほうれん草のパイを買うと、200円と言われたのに157円でした。公園で食べたパイは、長ねぎのような野菜がぎっしりで、うまかったです。",
+                                "facts": ["zjHZucyfrq8@2040#food", "zjHZucyfrq8@2670#food"]}},
+        "eat/kafe": {"story": {"text": "カフェでマキアートを頼むと、大きなカップのカフェラテではなく、エスプレッソのようなものが出てきて苦かったです。地元のコーヒー屋では、コーヒーと水で140円でした。",
+                               "facts": ["HjSLfg57t7E@1860#food", "da7K3qD5NmI@4200#price"]}},
+        "guide/airport": {"story": {"text": "着いた夜は空港の床で寝ましたが、寒くてほとんど眠れませんでした。市街へ向かうバスは400レク、約800円で、調べた額と同じでした。",
+                                    "facts": ["HjSLfg57t7E@540#caution", "HjSLfg57t7E@690#price"]},
+                          "article": "airport"},
+    },
     "about": {"hero": {"q": "スカンデルベグって誰？", "icon": "statue"}, "isolation": {"q": "共産主義の時代は？", "icon": "tunnel"}},
     "areas": {"skanderbeg": {"color": "#ffd98a", "plan": [2, 1, 2]}, "pazari": {"color": "#d9ccf5", "plan": [3, 1, 1]},
               "blloku": {"color": "#ffc4d2", "plan": [1, 2, 2]}},
