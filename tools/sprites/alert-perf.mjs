@@ -35,6 +35,8 @@
  * どねるの WebSocket（`routeWebSocket`）・YouTube Data API（空のチャットを `--yt-poll` ms ごとに返す）・キャラ絵の CDN。
  * スプレッドシートへのログ（`EXPO_PUBLIC_GAS_LOG_API_URL`）は書き出しに鍵が無いので手元の 404 に落ちるが、**回数は数える**。
  * 配りは firebase.json の headers と同じ（絵と動画は `max-age=3600`、Range に答える）。PRISM の縮み方（`prism.mjs`）を入れる。
+ * 島の投げ銭の購読（Firestore の WebChannel。#1405）も手元の偽物が受ける（`firestoreFake`）。1枚は「まだ無い」で返すので、
+ * 面は控えるだけで何も出さない。数えるのは「つなぎっぱなしが何本か・待機中に新しく開いた要求」（行 `req.firestore`）。
  * 名簿は3人の偽物（名前は「テスト1〜3」・絵は `--char`）。**視聴者さんの名前も本物のキャラ絵も使わない。**
  *
  * ## 対照（`--fault`。見張りが「落ちるときに落ちる」かを見る）
@@ -50,9 +52,13 @@
  * 終了コード: 0 = 懸念なし / 1 = 懸念あり（`--combine` では、対照が懸念ありに変わらなかった） / 2 = 測れなかった
  */
 import { createServer } from "node:http";
+import { createServer as createHttps } from "node:https";
+import { execFileSync } from "node:child_process";
 import { readFile, stat } from "node:fs/promises";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { extname, join, normalize, resolve } from "node:path";
+import { gzipSync } from "node:zlib";
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -84,6 +90,8 @@ const LINES = {
   kbPerHour: 1024,
   /** YouTube を API の間隔より何倍まで叩いてよいか（読み直しの1回ぶんの揺れ） */
   ytOver: 1.15,
+  /** 島の投げ銭の購読（Firestore）が、待機中に新しく開いてよい要求（つなぎっぱなしの1本は数えない） */
+  fsReopenPerHour: 1,
   jank: 3,
   headFrameMs: 200,
   dropped: 0.05,
@@ -139,6 +147,15 @@ function rows(r) {
       row("net.up", "回線: 面が上りに出す山（配信の上りと取り合う分）", `${fmt(n.peakUp / 1024, 1)} KB/秒・合計 ${fmt(n.totalUp / 1024, 0)} KB`, `上りの ${LINES.upShare * 100}% 以内`,
         n.up ? n.peakUp > n.up * LINES.upShare : null, n.up ? `上りの上限 ${fmt(n.up / 1024, 0)} KB/秒` : "");
     }
+    const J = A.js;
+    if (J) {
+      /* 書き出しの大きさ（#1405 で Firestore の SDK を `import()` で足した。増えた分を master と並べて読むための行。線は引かない）。
+         縮めては gzip（Hosting が配るときの形に近い）。開いて読んだ分は、アラートの面が開いてから持ち切るまでに取りにいった JS */
+      const kb = (b) => fmt(b / 1024, 0);
+      row("net.js", "回線: JS（書き出しの `_expo/static/js`）",
+        `開いて読んだ ${kb(J.read.raw)} KB（縮めて ${kb(J.read.gz)} KB・${J.read.n} 本）／書き出しの全部 ${kb(J.all.raw)} KB（縮めて ${kb(J.all.gz)} KB・${J.all.n} 本）`,
+        "（参考。master と比べる）", null, J.read.names.join(" "));
+    }
   }
   if (r.parts.includes("idle") && A) {
     const I = A.idle;
@@ -186,7 +203,8 @@ function rows(r) {
       /* 線を引くのは**面が自分で決めて叩く分**（もう一度出して・名簿・ログ…）。YouTube は API が返す pollingIntervalMillis に
          従う決まり（`connectors/YouTubeConnector.ts`）で、回数はこちらで決めない。そちらは「API の言うとおりか」を別の行で見る
          （前は合わせて 360 回/時の線を引いていて、API の間隔が 5 秒の日は YouTube だけで 1,440 回/時になり、何を直しても赤だった） */
-      const own = Object.entries(q.byCat).filter(([c]) => !c.startsWith("youtube"));
+      /* Firestore（島の投げ銭の購読）も面が決めて叩くものではない（SDK がつなぎっぱなしを持つ）。下の行 `req.firestore` で別に見る */
+      const own = Object.entries(q.byCat).filter(([c]) => !c.startsWith("youtube") && !c.startsWith("firestore"));
       const parts = own.sort((a, b) => b[1].n - a[1].n).map(([c, v]) => `${c} ${fmt(v.n / q.hours, 0)}`).join("・") || "なし";
       const n = own.reduce((a, [, v]) => a + v.n, 0) / q.hours;
       const kb = own.reduce((a, [, v]) => a + v.up + v.down, 0) / 1024 / q.hours;
@@ -201,6 +219,17 @@ function rows(r) {
         `読み ${fmt(ytN, 0)} 回/時・下見 ${fmt(ytPre.n / q.hours, 0)} 回/時・${fmt((yt.up + yt.down + ytPre.up + ytPre.down) / 1024 / q.hours, 0)} KB/時`,
         `読みが API の間隔（${q.ytPoll}ms → ${fmt(ytWant, 0)} 回/時）の ${LINES.ytOver} 倍以内`, ytN > ytWant * LINES.ytOver,
         "pollingIntervalMillis は YouTube が決める。こちらが縮めて叩いていないかだけを見る。下見（CORS の preflight）は Authorization を付けて読むぶん、読みと同じ数だけ付く");
+      /* 島の投げ銭の購読（#1405・決定の記録 0017）。足してよいのは「つなぎっぱなしの1本」だけで、待機中に新しく開く要求は増やさない。
+         面が購読を始めた（`islandConnectorStarted`）のに1本もつながっていなければ懸念（書き出しの塊が落ちない・SDK が落ちた） */
+      const f = q.fs;
+      const fsN = (q.byCat.firestore?.n ?? 0) + (q.byCat["firestore:下見"]?.n ?? 0);
+      if (!f?.started) row("req.firestore", "待機中の通信: 島の投げ銭の購読（Firestore）", "購読していない（島の投げ銭を受けない書き出し）", "—", null);
+      else
+        row("req.firestore", "待機中の通信: 島の投げ銭の購読（Firestore のつなぎっぱなし）",
+          `つなぎっぱなし ${f.open} 本・待機中に新しく開いた要求 ${fmt(fsN / q.hours, 1)} 回/時・下り ${fmt(f.idleDown / 1024 / q.hours, 1)} KB/時`,
+          `つなぎっぱなし 1 本・新しく開く要求 ${LINES.fsReopenPerHour} 回/時 以下`, f.open !== 1 || fsN / q.hours > LINES.fsReopenPerHour,
+          `握手 ${f.handshakes} 回・下りを開いた ${f.backs} 回（開いてから終わりまで）。下りはサーバーの noop（30 秒ごと。本物と同じ間）。` +
+            "noop を流さずに偽の時計だけ進めると、SDK は 45 秒ごとに開き直す（約 80 回/時。手元で確かめた）");
     }
   }
   if (r.parts.includes("long") && B) {
@@ -411,12 +440,110 @@ async function serve() {
   return { base: `http://127.0.0.1:${srv.address().port}`, close: () => srv.close() };
 }
 
+/* ------------------------------------------------------------------ 島の投げ銭の購読（Firestore）の偽物 */
+
+/* 島の投げ銭は、アラートの面が Firestore の SDK で `islandAlertFeed/{合言葉}` をリアルタイムに購読する（#1405・決定の記録 0017）。
+   SDK は WebChannel（`/google.firestore.v1.Firestore/Listen/channel`）で、握手の POST を1本と、下りをつなぎっぱなしにする
+   GET（backchannel）を1本開く。サーバーは握手の答えで keepalive の間（30 秒）を言い、その間ごとに noop を流す。
+   SDK は 1.5 倍（45 秒）何も来なければ、下りを切って開き直す。ここは同じことを手元でやる:
+
+   - ブラウザに `firestore.googleapis.com` を手元の https（その場で作る自己署名）へ向けさせる（`--host-resolver-rules` と
+     `ignoreHTTPSErrors`）。route で受けると答えを1回で返すしかなく、つなぎっぱなしにできない
+   - 1枚は「まだ無い」で返す（面は控えるだけで何も出さない）。投げ銭の演出は今までどおり どねるの口から流す
+   - noop は本物の時計で 30 秒ごと（開き方 A）と、偽の時計を進めた 25 秒ごと（開き方 B。`tick`）。偽の時計だけ進めて noop を
+     流さないと、SDK は 45 秒（偽）ごとに開き直し、待機の通信が約 80 回/時に見える（手元で確かめた。本物では起きない形）
+   - 数えるのは CDP（要求ごと）。ここは答えるだけ */
+const FS_KEEPALIVE_MS = 30000;
+async function firestoreFake() {
+  const dir = mkdtempSync(join(tmpdir(), "alert-perf-fs-"));
+  execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", join(dir, "key.pem"), "-out", join(dir, "cert.pem"),
+    "-days", "2", "-subj", "/CN=firestore.googleapis.com"], { stdio: "ignore" });
+  /* WebChannel の1塊は「長さ\n本文」。長さは字の数なので、ASCII の外は \u で書いてバイトと字を揃える */
+  const chunk = (arr) => {
+    const p = JSON.stringify(arr).replace(/[\u0080-\uffff]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
+    return `${p.length}\n${p}`;
+  };
+  const sessions = new Map();
+  const S = { handshakes: 0, backs: 0 };
+  let n = 0;
+  const srv = createHttps({ key: readFileSync(join(dir, "key.pem")), cert: readFileSync(join(dir, "cert.pem")) }, (req, res) => {
+    const u = new URL(req.url, "https://firestore.googleapis.com");
+    const q = u.searchParams;
+    const head = { "content-type": "text/plain; charset=utf-8", "cache-control": "no-cache, no-store",
+      "access-control-allow-origin": req.headers.origin || "*", "access-control-allow-credentials": "true" };
+    let body = "";
+    req.on("data", (d) => (body += d));
+    req.on("end", () => {
+      if (req.method === "OPTIONS") return void res.writeHead(204, { ...head, "access-control-allow-headers": "*", "access-control-allow-methods": "GET, POST" }).end();
+      if (!u.pathname.endsWith("/Listen/channel") || q.get("TYPE") === "terminate") return void res.writeHead(200, head).end();
+      const sid = q.get("SID");
+      if (req.method === "POST" && !sid) {
+        /* 握手。最初の1通（addTarget）が本文に乗っている。その targetId で答える */
+        let tid = null;
+        try {
+          tid = JSON.parse(new URLSearchParams(body).get("req0___data__") ?? "{}").addTarget?.targetId ?? null;
+        } catch {
+          // 読めなければ答えない（下りで何も流さない）
+        }
+        const id = `perf-${++n}`;
+        sessions.set(id, { aid: 0, tid, started: false, back: null });
+        S.handshakes++;
+        return void res.writeHead(200, head).end(chunk([[0, ["c", id, "", 8, 14, FS_KEEPALIVE_MS]]]));
+      }
+      const s = sessions.get(sid);
+      if (!s) return void res.writeHead(400, head).end();
+      if (req.method === "POST") return void res.writeHead(200, head).end(chunk([1, s.aid, 0]));
+      /* 下り。つなぎっぱなしにする。開き直されたら、続きから流す（ADD は1回だけ） */
+      S.backs++;
+      res.writeHead(200, head);
+      s.back = res;
+      res.on("close", () => {
+        if (s.back === res) s.back = null;
+      });
+      if (s.started || s.tid == null) return;
+      s.started = true;
+      const tok = Buffer.from(`perf-${Date.now()}`).toString("base64");
+      const at = new Date().toISOString();
+      res.write(chunk([
+        [++s.aid, [{ targetChange: { targetChangeType: "ADD", targetIds: [s.tid] } }]],
+        [++s.aid, [{ targetChange: { targetChangeType: "CURRENT", targetIds: [s.tid], resumeToken: tok, readTime: at } }]],
+        [++s.aid, [{ targetChange: { resumeToken: tok, readTime: at } }]],
+      ]));
+    });
+  });
+  await new Promise((r) => srv.listen(0, "127.0.0.1", r));
+  const noop = () => {
+    for (const s of sessions.values()) if (s.back) s.back.write(chunk([[++s.aid, ["noop"]]]));
+  };
+  const iv = setInterval(noop, FS_KEEPALIVE_MS);
+  let since = 0;
+  return {
+    port: srv.address().port,
+    S,
+    /** 偽の時計を `ms` 進めた（開き方 B）。25 秒ごとに noop（本物の 30 秒より早め。届くまでの本物の時間のぶん） */
+    tick(ms) {
+      since += ms;
+      if (since >= FS_KEEPALIVE_MS - 5000) {
+        since = 0;
+        noop();
+      }
+    },
+    close() {
+      clearInterval(iv);
+      for (const s of sessions.values()) s.back?.end();
+      srv.close();
+    },
+  };
+}
+/** main で立てる（開き方 B が偽の時計を進めるたびに `tick` を呼ぶ） */
+let FS = null;
+
 /* 面の中の見張り。**数えるだけで、面の動きは変えない**（数える道具が rAF や setInterval を足すと、それ自体が数に入るので、
    こちらの輪は差し替える前の本物で回す）。ログは要る出来事だけ持つ（長時間で、こちらの控えがヒープを太らせないように） */
 const PERF = (fault) => `(() => {
   const W = window;
   const P = (W.__perf = { raf: 0, to: 0, ivFires: 0, iv: new Map(), pend: new Set(), urls: new Map(), made: 0, freed: 0, logs: [], nlog: 0, loaf: [], fr: null });
-  const KEEP = new Set(["mount", "initSuccess", "fxHeld", "fxPlan", "fxPrepLate", "fxVideoFailed", "notificationReceived", "notificationDisplayed"]);
+  const KEEP = new Set(["mount", "initSuccess", "fxHeld", "fxPlan", "fxPrepLate", "fxVideoFailed", "notificationReceived", "notificationDisplayed", "islandConnectorStarted", "islandFeedError"]);
   const rAF = W.requestAnimationFrame.bind(W), sT = W.setTimeout.bind(W), cT = W.clearTimeout.bind(W), sI = W.setInterval.bind(W), cI = W.clearInterval.bind(W);
   P.realRaf = rAF; P.realInterval = sI; P.realClearInterval = cI;
   W.requestAnimationFrame = function (cb) { P.raf++; return rAF(cb); };
@@ -580,6 +707,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** 口の名前（数えるときの括り） */
 function catOf(u) {
+  if (u.startsWith("https://firestore.googleapis.com/")) return "firestore";
   if (u.includes("/island-api/alertbox/")) return u.match(/\/island-api\/alertbox\/[0-9a-f]+\/([a-z-]+)/)?.[1] ?? "island";
   if (u.includes("googleapis.com/youtube")) return "youtube";
   if (u.includes("script.google") || /\/undefined(\?|$)/.test(u)) return "sheet";
@@ -591,7 +719,8 @@ function catOf(u) {
 }
 
 async function setup(browser, { clock = false, net = null, scale = dpr }) {
-  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: scale });
+  /* ignoreHTTPSErrors は、手元の偽の Firestore（自己署名）に向けるため。ほかの口は http か route で受けている */
+  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: scale, ignoreHTTPSErrors: true });
   if (clock) await ctx.clock.install();
   await prism(ctx);
   const yt = (u) => {
@@ -608,6 +737,8 @@ async function setup(browser, { clock = false, net = null, scale = dpr }) {
       if (r.request().method() === "OPTIONS") return r.fulfill({ status: 204, headers: cors });
       return r.fulfill({ contentType: "application/json", headers: cors, body: JSON.stringify(yt(u)) });
     }
+    /* Firestore は route で答えない（つなぎっぱなしにできない）。ブラウザの名前解決で手元の偽物へ行く（firestoreFake） */
+    if (u.startsWith("https://firestore.googleapis.com/") && FS) return r.continue();
     return u.startsWith("http://127.0.0.1") || u.startsWith("data:") || u.startsWith("blob:") ? r.continue() : r.abort();
   });
   const S = { sock: null, pings: 0 };
@@ -622,7 +753,7 @@ async function setup(browser, { clock = false, net = null, scale = dpr }) {
   await cdp.send("Performance.enable");
   if (net) await cdp.send("Network.emulateNetworkConditions", net);
   /* 要求ごとの上り（URL・見出し・本文の概算）と、1秒ごとの下り */
-  const N = { t0: null, reqs: [], down: new Map(), up: new Map(), phase: "open", themeName: null };
+  const N = { t0: null, reqs: [], down: new Map(), up: new Map(), phase: "open", themeName: null, fsIdleDown: 0 };
   cdp.on("Network.requestWillBeSent", (e) => {
     if (N.t0 == null) N.t0 = e.timestamp;
     const u = e.request.url;
@@ -633,7 +764,8 @@ async function setup(browser, { clock = false, net = null, scale = dpr }) {
     /* 下見（CORS の preflight）は口の名前に「:下見」を付けて分ける。YouTube は Authorization を付けて読むので、読みのたびに
        下見が1本付く（本物でも同じ。googleapis.com は max-age 3600 を返すが、控えの鍵は URL ごとで、pageToken が毎回替わる） */
     const pre = e.initiator?.type === "preflight" || e.type === "Preflight";
-    N.reqs.push({ id: e.requestId, cat: catOf(u) + (pre ? ":下見" : ""), t: e.timestamp, up, down: 0, phase: N.phase });
+    const cat = catOf(u);
+    N.reqs.push({ id: e.requestId, cat: cat + (pre ? ":下見" : ""), t: e.timestamp, up, down: 0, phase: N.phase, done: false, path: cat === "app" ? new URL(u).pathname : null });
     const th = u.match(/\/alert\/themes\/([^/]+)\/fx\//)?.[1];
     if (th) N.themeName = th;
   });
@@ -648,7 +780,15 @@ async function setup(browser, { clock = false, net = null, scale = dpr }) {
     N.down.set(s, (N.down.get(s) ?? 0) + b);
     const q = byId(e.requestId);
     if (q) q.down += b;
+    /* 島の投げ銭の購読の下り（つなぎっぱなしの1本に、待機中に流れてくる noop）。要求は開いたときの phase で括るので、ここで足す */
+    if (q?.cat === "firestore" && N.phase === "idle") N.fsIdleDown += b;
   });
+  const end = (e) => {
+    const q = byId(e.requestId);
+    if (q) q.done = true;
+  };
+  cdp.on("Network.loadingFinished", end);
+  cdp.on("Network.loadingFailed", end);
   const bcdp = await browser.newBrowserCDPSession();
   return { ctx, page, cdp, bcdp, S, N };
 }
@@ -694,6 +834,28 @@ async function mem(env) {
   const s = await page.evaluate(() => window.__perf.snap());
   const p = await procs(bcdp);
   return { heap: h.usedSize, nodes: dom.nodes, listeners: dom.jsEventListeners, videos: v.result.value, ...s, rss: p.rss };
+}
+
+/** 書き出しの JS の大きさ（素と gzip）。`read` は面が取りにいった分、`all` は `_expo/static/js` の全部 */
+function jsSizes(paths) {
+  const size = (f) => {
+    try {
+      const b = readFileSync(f);
+      return { raw: b.length, gz: gzipSync(b).length };
+    } catch {
+      return null;
+    }
+  };
+  const sum = (files) => files.reduce((a, f) => {
+    const z = size(f);
+    return z ? { raw: a.raw + z.raw, gz: a.gz + z.gz, n: a.n + 1 } : a;
+  }, { raw: 0, gz: 0, n: 0 });
+  const uniq = [...new Set(paths)].filter((p) => p.endsWith(".js"));
+  const read = sum(uniq.map((p) => normalize(join(dist, p))).filter((f) => f.startsWith(dist)));
+  const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : e.name.endsWith(".js") ? [join(d, e.name)] : []));
+  const root = join(dist, "_expo/static/js");
+  const all = existsSync(root) ? sum(walk(root)) : { raw: 0, gz: 0, n: 0 };
+  return { read: { ...read, names: uniq.map((p) => p.split("/").pop()) }, all };
 }
 
 const logsSince = (page, t) => page.evaluate((x) => window.__perf.logs.filter((l) => l.t >= x), t);
@@ -785,6 +947,7 @@ async function openRun(browser, base) {
       series: down,
     };
     out.theme = N.themeName;
+    out.js = jsSizes(N.reqs.filter((q) => q.cat === "app" && q.path).map((q) => q.path));
     if (parts.includes("idle")) {
       N.phase = "idle";
       const a = await page.evaluate(() => window.__perf.snap());
@@ -882,6 +1045,7 @@ async function longRun(browser, base) {
       const p0 = S.pings;
       for (let t = 0; t < gap; t += step) {
         await page.clock.runFor(step);
+        FS?.tick(step);
         await sleep(20);
       }
       await sleep(500);
@@ -904,6 +1068,7 @@ async function longRun(browser, base) {
       const p0 = S.pings;
       for (let t = 0; t < gap; t += step) {
         await page.clock.runFor(step);
+        FS?.tick(step);
         await sleep(20);
       }
       await sleep(500);
@@ -928,7 +1093,11 @@ async function longRun(browser, base) {
       total.up += q.up;
       total.down += q.down;
     }
-    out.req = { hours: idleMs / 3600e3, byCat, total, pings, ytPoll };
+    const started = await page.evaluate(() => window.__perf.logs.some((l) => l.event === "islandConnectorStarted"));
+    out.req = {
+      hours: idleMs / 3600e3, byCat, total, pings, ytPoll,
+      fs: { started, open: N.reqs.filter((q) => q.cat === "firestore" && !q.done).length, idleDown: N.fsIdleDown, handshakes: FS?.S.handshakes ?? 0, backs: FS?.S.backs ?? 0 },
+    };
   } catch (e) {
     out.err = String(e).slice(0, 300);
   } finally {
@@ -939,7 +1108,11 @@ async function longRun(browser, base) {
 
 async function main() {
   const srv = await serve();
-  const browser = await chromium.launch({ executablePath: exe, args: ["--no-sandbox", "--no-proxy-server", "--autoplay-policy=no-user-gesture-required"] });
+  FS = await firestoreFake();
+  const browser = await chromium.launch({
+    executablePath: exe,
+    args: ["--no-sandbox", "--no-proxy-server", "--autoplay-policy=no-user-gesture-required", `--host-resolver-rules=MAP firestore.googleapis.com 127.0.0.1:${FS.port}`],
+  });
   console.log(`${prismNote()}・回線 ${netName}・対照 ${fault}・測る ${parts.join(",")}`);
   const r = { tool: "alert-perf", fault, parts, netName, size: `${W}×${H}`, dpr, prism: prismNote(), commit: process.env.GIT_SHA || null, errs: [] };
   try {
@@ -956,6 +1129,7 @@ async function main() {
   } finally {
     await browser.close();
     srv.close();
+    FS.close();
   }
   r.rows = rows(r);
   const unknown = r.rows.some((x) => x.concern == null && x.value === "測れなかった");
