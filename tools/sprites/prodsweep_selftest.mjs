@@ -245,7 +245,8 @@ console.log("4. 面の一覧は、手で並べていない");
      `/roulette` は配信に映る面で、sitemap には載っていない */
   const real = staticAppPaths().paths;
   check("本物の site/app から 20本以上出る", real.length >= 20, `${real.length}本`);
-  for (const p of ["/roulette", "/me", "/me/desk", "/me/roulette", "/design", "/nordic/photos"]) {
+  /* `/nordic/photos` は #1279 で面を消した（301 だけ）。一覧に居ないのが正しい */
+  for (const p of ["/roulette", "/me", "/me/desk", "/me/roulette", "/design"]) {
     check(`sitemap に無い ${p} が一覧に居る`, real.includes(p), real.join(" "));
   }
 }

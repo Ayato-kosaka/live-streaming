@@ -134,7 +134,7 @@ const ARRAYS = [
   ["site/content/projects.ts", "PROJECTS", "slug", "manifest / heroicon / nextempty"],
   ["site/content/streamTypes.ts", "STREAM_TYPES", "slug", "manifest / heroicon"],
   // 焼き込みではないが、**同じ形の危うさ**を持っていたので一緒に寄せた
-  ["site/components/island/layout.ts", "PLACES", "id", "here_selftest"],
+  ["site/components/island/layout.ts", "PLACES", "id", "here_selftest / navband"],
 ];
 
 /** 表の本（`Record<string, X>`）。鍵の数だけ見る */
