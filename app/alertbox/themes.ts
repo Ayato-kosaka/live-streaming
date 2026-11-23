@@ -877,7 +877,7 @@ export const THEMES: SeasonTheme[] = [
     id: "christmas",
     /* 12月。クリスマス（#1034）。**まだ配信に出さない**（`live: false`。`?theme=christmas` の試し表示だけ）。
        貯金箱は案3（ソリのプレゼント袋）と案4（スノードーム）を `?bank=sleigh|globe` で見比べる（あやとが選ぶまで）。
-       投げ銭の演出7段（動画）は別の枝で作っていて、ここでは段は11月の城と同じ形の仮（1段・小物なし＝季節の外と同じ出し方） */
+       投げ銭の演出7段は動画（`public/alert/themes/christmas/fx/`。11月の城と同じ形）。`tiers` の1段は旗 `?fx=off` のときだけ */
     from: "2026-12-01T00:00",
     until: "2027-01-01T00:00",
     live: false,
@@ -899,6 +899,10 @@ export const THEMES: SeasonTheme[] = [
     fx: [],
     slots: [],
     tiers: [{ min: 0, accent: "#C62828", slots: 0, files: [], bats: 0, waves: 0 }],
+    /* 段の切れ目・色・字・キャラ絵の上の空きは11月と同じ（字はハロウィン2版目のまま。#1079）。
+       **段7（1万円〜）は仮**: 12月の段7（黒と赤の王子）は描き直し中なので、manifest の段7 は11月の城の段7 の動画の写し。
+       絵が決まって焼けば、`alert_fx_render.yml` の place が置き換える */
+    fxVideo: { dir: "/alert/themes/christmas/fx", live: true, variant: "full", tiers: CASTLE_FX_TIERS },
     finale: null,
   },
 ];

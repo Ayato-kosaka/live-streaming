@@ -109,14 +109,18 @@ function loadParts(dir: string, variant: XmasVariant): Promise<Loaded | null> {
   return p;
 }
 
-/** URL の旗（`?bank=` は試し表示でなくても効く。テーマが `live: false` のあいだは試し表示でしか出ないので） */
-function urlParam(name: string): string | null {
+/**
+ * 試し表示（`?preview=`）のときだけ効く、案の切り替え `?bank=sleigh|globe`。配信の URL では効かない
+ * （配信に出すのはテーマの既定の案だけ。OBS の URL に旗が残っていても、選んでいない案が出ない）
+ */
+function previewBank(): string | null {
   if (typeof window === "undefined" || !window.location) return null;
-  return new URLSearchParams(window.location.search).get(name);
+  const q = new URLSearchParams(window.location.search);
+  return q.get("preview") ? q.get("bank") : null;
 }
 
 export const XmasBank: React.FC<Props> = (props) => {
-  const variant = pickVariant(urlParam("bank"), props.def.variant);
+  const variant = pickVariant(previewBank(), props.def.variant);
   const [parts, setParts] = useState<Loaded | null | undefined>(undefined);
   useEffect(() => {
     let alive = true;

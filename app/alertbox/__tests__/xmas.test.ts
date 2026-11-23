@@ -71,9 +71,18 @@ describe("1. 期間と、配信に出すか", () => {
     expect(themeAt(jst("2026-12-31T23:59:00"), on)?.id).toBe("christmas");
     expect(themeAt(jst("2027-01-01T00:00:00"), on)).toBeNull();
   });
-  it("段は仮（1段・小物なし）。段の動画は別の枝が足す", () => {
-    expect(xmas.tiers).toHaveLength(1);
-    expect(xmas.fxVideo).toBeUndefined();
+  it("演出7段は動画（字・切れ目は11月と同じ）。段7 は11月の城の段7 の写しの仮（manifest に段1〜7 と主役の帯がある）", () => {
+    const castle = THEMES.find((t) => t.id === "castle")!;
+    expect(xmas.fxVideo?.dir).toBe("/alert/themes/christmas/fx");
+    expect(xmas.fxVideo?.tiers).toBe(castle.fxVideo!.tiers);
+    const man = JSON.parse(readFileSync(join(PUB, xmas.fxVideo!.dir, "manifest.json"), "utf-8"));
+    expect(Object.keys(man.tiers).sort()).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
+    expect(Object.keys(man.heroBands).sort()).toEqual(["1", "2", "3", "4", "5", "6", "7"]);
+    for (const e of Object.values(man.tiers) as { variants: { full: Record<string, Record<string, string> | null> } }[])
+      for (const layer of Object.values(e.variants.full))
+        for (const f of Object.values(layer ?? {})) expect(existsSync(join(PUB, xmas.fxVideo!.dir, f))).toBe(true);
+    const castleMan = JSON.parse(readFileSync(join(PUB, castle.fxVideo!.dir, "manifest.json"), "utf-8"));
+    expect(man.tiers["7"]).toEqual(castleMan.tiers["7"]);
   });
   it("コマ送り（部品が読めない日）は bank/ のスノードームの 0%・100%。ほかのテーマのコマの置き場は変わらない", () => {
     expect(bankFrameUrl(xmas, "base", 0)).toBe("/alert/themes/christmas/bank/bank-base-0.png");
