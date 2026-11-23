@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { PageHead } from "@/components/ui/PageShell";
+/* `PageShell` からではなく軽い1枚から読む。あちらはソフィアのガイドブックまで束に連れてくる（`components/ui/PageHead.tsx`） */
+import { PageHead } from "@/components/ui/PageHead";
 import { Stat } from "@/components/ui/Bits";
 import Flag from "@/components/ui/Flag";
 import Fold from "@/components/ui/Fold";
