@@ -56,7 +56,7 @@ rows = [
     ("kitchenTalk.ts",    "—", str(num(r'^  "', "kitchenTalk")) + "品ぶん"),
     ("countries.ts",      last("countries"), ""),
     ("cityStreams.ts",    last("cityStreams"), ""),
-    ("legends.ts",        last("legends"), ""),
+    ("projects.ts",       last("projects"), ""),  # 企画の表（伝説はその印。`legends.ts` は面の形に組むだけ）
     ("legendDays.ts",     last("legendDays"), ""),
     ("voices.ts",         last("voices"), ""),
     ("shorts.ts",         last("shorts"), ""),
@@ -178,7 +178,7 @@ PYEOF
 #### 選んだら hero を焼く。**やらないと面が 404 になる**
 
 何を焼くかは `manifest.mjs` の `heroNames()` が決めている——`recipes.ts` /
-`legends.ts` / `streamTypes.ts` の `icon:` を読んで `hero/<名前>` を焼く。
+`projects.ts`（伝説の印が付いた企画） / `streamTypes.ts` の `icon:` を読んで `hero/<名前>` を焼く。
 だから **先に `recipes.ts` へ書いてから**回す。
 
 ```bash

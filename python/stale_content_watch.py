@@ -290,7 +290,6 @@ class Book:
 KEY_OF: dict[str, tuple] = {
     "recipes.ts": (("RECIPES", "slug"),),
     "kitchenTalk.ts": (("KITCHEN_TALK",),),
-    "legends.ts": (("LEGENDS", "slug"),),
     "legendDays.ts": (("LEGEND_DAYS",),),
     # **名簿。** Firestore の `islandCharacter` そのものが毎晩ここに焼かれる
     # （`residents.ts` の頭に「並んでいるのは、キャラクターの名簿そのもの」と
@@ -340,6 +339,14 @@ KEY_FN = {
     # （`KEY_OF` は欄を1つしか取れない）。字を読むのは `ts_read` の1本のまま。
     "chapters.ts": lambda src: [
         r["slug"] for r in read_chapters(src).rows if r["from"]
+    ],
+    # 企画の表。**伝説の印が付いた行だけ**を鍵にする（`legendDays.ts` の上流）。
+    # 伝説は企画に付く印で、別の表を持たない（`docs/spec/model.md` M-3）。印の無い企画
+    # （祭り・節目）は `legendDays.ts` に焼かないので、ここを全行にすると消しようのない赤になる
+    "projects.ts": lambda src: [
+        r["slug"]
+        for r in ts_read.read_array(src, "PROJECTS", keys=("slug", "legend")).rows
+        if r["legend"] == "true"
     ],
 }
 
@@ -439,9 +446,9 @@ BOOKS: dict[str, Book] = {
     ),
     "legendDays.ts": Book(
         MACHINE_HUMAN, KEYS, 0,
-        "`legends.ts` の伝説ぜんぶに1件ずつ要る。日付も持っているが、それは伝説の配信の日"
+        "企画の表（`projects.ts`）の伝説ぜんぶに1件ずつ要る。日付も持っているが、それは伝説の配信の日"
         "なので、**新しい伝説が足されたのに焼いていない**ほうが先に出る鍵で見る",
-        upstream="legends.ts",
+        upstream="projects.ts",
     ),
     "characterBox.ts": Book(
         MACHINE, KEYS, 0,
@@ -578,9 +585,10 @@ BOOKS: dict[str, Book] = {
         "章（島）の区切り。2年で10章、間隔の中央値は126日。**日数で細かく測れる相手ではない**"
         "ので、240日は「1年近く章が動いていない」を拾うだけの床",
     ),
-    "legends.ts": Book(
+    "projects.ts": Book(
         HUMAN, LATEST, 300,
-        "どれを伝説と呼ぶか。2年で9つ、実測の空きは最大222日。ここも床でしかない。"
+        "企画の表（伝説はその印。`docs/spec/model.md` M-3）。どれを伝説と呼ぶかは人が決める。"
+        "2年で伝説9つ、実測の空きは最大222日。ここも床でしかない。"
         "**足したのに焼いていない**ほうは `legendDays.ts` の鍵が先に拾う。"
         "**床なので、章が1つまるごと抜けても緑になる**——"
         "終わった旅に伝説が1枚も無いことは `python/upkeep_watch.py` の"
@@ -625,6 +633,11 @@ BOOKS: dict[str, Book] = {
              "——焼くほうが名指しで断って 2 で止まる",
     ),
     # --- 見ない。理由つき ---
+    "legends.ts": Book(
+        DERIVED, SKIP, 0,
+        "伝説の企画を面の形に組むだけの口（`projects.ts` の印の付いた行。北欧の数は旅程から数える）。"
+        "表を持たないので、古くなるのは上流の `projects.ts` のほう",
+    ),
     "plans.ts": Book(
         HUMAN, SKIP, 0,
         "企画の表。**ここで日付を測らない。** あやとの返事（2026-10-07 / #673）が"

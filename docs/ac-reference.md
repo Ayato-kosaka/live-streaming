@@ -253,7 +253,7 @@ SPORT=4140 node tools/sprites/heroshare.mjs 390 844
 
 - `/streams/[型]` の型の絵（`hut-kitchen` など5枚）は長辺 320px しか焼いていない。
   `sprites/hero/` に長辺 640px があるのは料理32枚と伝説8枚だけ
-  （`tools/sprites/manifest.mjs` が `recipes.ts` と `legends.ts` から名前を拾っている）。
+  （`tools/sprites/manifest.mjs` が `recipes.ts` と `projects.ts` から名前を拾っている）。
   **`streamTypes.ts` も拾うようにすれば、そのまま 280px まで伸ばせる。**
 - `/friends` の住人は Google ドライブから `=s512`。dpr2 では 256px までしか
   引き伸ばさずに出せない。`=s640` にできればもう一段大きくできる。

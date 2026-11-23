@@ -115,6 +115,8 @@ bring(join(LIB, "builtAt.ts"), "builtAt.ts");
 bring(join(CONTENT, "chapters.ts"), "chapters.ts");
 bring(join(LIB, "nightly.ts"), "nightly.ts");
 bring(join(CONTENT, "plans.ts"), "plans.ts");
+/* 企画の表。`plans.ts` は告知の欄を持つ企画をここから札に組む */
+bring(join(CONTENT, "projects.ts"), "projects.ts");
 bring(THEMES_SRC, "themes.ts");
 /* 国の表（出た日を導く。6章）。**字で読まない**——組み立てた表を読む（`tools/sprites/tsread_selftest.mjs`） */
 bring(join(CONTENT, "countries.ts"), "countries.ts");

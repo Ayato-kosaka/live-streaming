@@ -90,6 +90,8 @@ bring(join(SITE, "lib", "builtAt.ts"), "builtAt.ts");
 bring(join(SITE, "content", "chapters.ts"), "chapters.ts");
 bring(join(SITE, "lib", "nightly.ts"), "nightly.ts");
 bring(join(SITE, "content", "plans.ts"), "plans.ts");
+/* 企画の表。`plans.ts` は告知の欄を持つ企画をここから組むので、一緒に持ってこないと企画あての宛先が引けない */
+bring(join(SITE, "content", "projects.ts"), "projects.ts");
 bring(join(SITE, "content", "themes.ts"), "themes.ts");
 
 execFileSync(

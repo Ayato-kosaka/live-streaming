@@ -118,7 +118,8 @@ ARRAYS = (
     # 滞在の表（#1275）。`COUNTRIES[].stays` と `AHEAD_COUNTRIES` はここから引いている
     ("stays.ts", "STAYS", "country"),
     ("recipes.ts", "RECIPES", "slug"),
-    ("legends.ts", "LEGENDS", "slug"),
+    # 企画の表（伝説はその印。`legends.ts` は面の形に組むだけで、字の表を持たない）
+    ("projects.ts", "PROJECTS", "slug"),
     ("residents.ts", "RESIDENTS", "icon"),
     ("chatter.ts", "VOICES", "icon"),
     ("nordic.ts", "ROUTE", "id"),
@@ -156,7 +157,7 @@ LEGACY = {
     ("recipes.ts", "RECIPES"): (
         re.compile(r'\{ label: "([^"]+)", date: "([^"]+)", videoId: "([^"]+)"'), "gap",
     ),
-    ("legends.ts", "LEGENDS"): (
+    ("projects.ts", "PROJECTS"): (
         re.compile(r'range: \["([\d-]+)", "([\d-]+)"\]'), "gap",
     ),
     ("residents.ts", "RESIDENTS"): (

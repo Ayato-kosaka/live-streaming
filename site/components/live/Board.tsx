@@ -4,12 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getPoll, pollAnswer } from "@/lib/api";
 import { THEMES } from "@/content/themes";
-import { LEGENDS } from "@/content/legends";
+/* 伝説の名前と数だけが要る。面の形に組んだ `content/legends.ts` は旅程の表（`content/nordic.ts`）を
+   読むので、client のここからは企画の表を直に読む */
+import { PROJECTS, isLegend } from "@/content/projects";
 import { useAuth } from "@/lib/auth";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/IconCore";
 import SignIn from "./SignIn";
 import Notes from "./Notes";
+
+const LEGENDS = PROJECTS.filter(isLegend);
 
 /** 「むちゃでも通る」ことが伝わる、実際にやった企画。記録の類ではなく企画だけ選ぶ。 */
 const PROOF = ["iran-walk", "egypt-festival", "newyear-24h", "roulette-georgia"];

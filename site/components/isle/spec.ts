@@ -180,19 +180,23 @@ const inSpan = (date: string, s: [number, number]) => {
 };
 
 /**
- * その章の期間に入っている伝説の企画。
+ * その旅の島に建つ伝説の企画。**伝説は1つの旅の島にだけ建つ。**
  *
- * **見るのは `date` だけ**（`range` ではない）。だから伝説を1つ足すときは、
- * `date` をその章の期間の中に置くこと。1日でも外すと、丘（`/legends`）には
- * 出るのに島には1枚も建たない。
+ * - 旅を指している企画（旅と1対1。`content/projects.ts` の `trip`）は、**その旅の島にだけ**建つ
+ * - 旅を指していない企画は、`date` が期間に入る**本線の旅**の島に建つ。枝の旅（`branchOf`）の
+ *   期間は本線の旅の期間に重なっているので、日付で引くと両方に建つ——枝の旅の島には、
+ *   その旅を指した企画だけが建つ（前は「イランまで歩く」がコーカサス周遊の島にも建っていた）
+ *
+ * 伝説を1つ足すときは、旅そのものが企画なら `trip` を、そうでなければ `date` を本線の旅の期間の中に置く。
  *
  * **終わった章にここが0件になっていないか**は、毎晩 `python/upkeep_watch.py`
- * の引き金「終わった旅の伝説」が数えて #664 の札に出す。あちらも `date` だけを
- * 見る——見かたを2つ持つと、札が緑なのに島が空っぽ、が起きる。
+ * の引き金「終わった旅の伝説」が数えて #664 の札に出す。あちらも同じ引きかた（旅の鍵 → 本線の旅の期間）
+ * ——見かたを2つ持つと、札が緑なのに島が空っぽ、が起きる。
  */
 export const legendsOf = (c: Chapter, today = new Date()) => {
+  if (c.branchOf) return LEGENDS.filter((l) => l.trip === c.slug);
   const s = spanOf(c, today);
-  return s ? LEGENDS.filter((l) => inSpan(l.date, s)) : [];
+  return s ? LEGENDS.filter((l) => (l.trip ? l.trip === c.slug : inSpan(l.date, s))) : [];
 };
 
 /**

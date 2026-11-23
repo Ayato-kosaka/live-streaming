@@ -386,9 +386,9 @@ step が落ちたかどうか**だけ。しきい値を2か所に置くと、片
 | 焼くもの | スクリプト | 待っているもの |
 | --- | --- | --- |
 | `kitchenTalk.ts` | `build_kitchen_talk.py` | `recipes.ts` と、手で選んだ引用 |
-| `legendDays.ts` | `build_legend_days.py` | `legends.ts` に足された伝説 |
+| `legendDays.ts` | `build_legend_days.py` | 企画の表（`projects.ts`）に足された伝説 |
 
-**上流が止まっていれば、下流も止まる。** `recipes.ts` の料理名も `legends.ts` の
+**上流が止まっていれば、下流も止まる。** `recipes.ts` の料理名も `projects.ts` の
 「どれを伝説と呼ぶか」も、人しか決められない。そこが増えるまで下流も動かない。
 
 **この2本は BigQuery を引かない。** ここが `cityStreams.ts` との違いで、
@@ -421,8 +421,8 @@ JSON は**引いた結果の写し**として置き直すだけで、もう入�
 | `voices.ts` | 他己紹介の抜粋を手で選ぶ（`python/voices_picks.json`） |
 | `countries.ts` | 歩いた国と滞在期間。本人しか知らない |
 | `chapters.ts` | 章（島）の区切り |
-| `legends.ts` | どれを伝説と呼ぶか。**ただし「いつ1つ増えるべきか」は数えられる**（下の「終わった旅には、伝説が1つ要る」） |
-| `plans.ts` `apps.ts` | 企画・アプリの選定 |
+| `projects.ts` | 企画の表。どれを伝説と呼ぶか（`legend: true`）。**ただし「いつ1つ増えるべきか」は数えられる**（下の「終わった旅には、伝説が1つ要る」） |
+| `plans.ts` `apps.ts` | 国を移る行と月末配信の回（告知の札。W3 #1277 が畳む）・アプリの選定 |
 | `voice.ts` `chatter.ts` `themes.ts` `directory.ts` | 画面に出る言葉 |
 | `goods.ts` | グッズの品ぞろえ。ステッカーの名簿（`STICKERS`）と、LINE・SUZURI のお店への札。LINEスタンプの欄は店への札1枚だけ（2026-11-20。候補のセリフの枠と、透かしを焼く道具は消した） |
 | `site.ts` の `SITE` `PROFILE` `NOW_FALLBACK` `LINKS` | 名前・説明・本人から聞いた事実（誕生日・日本を出た日・勤めていた期間）・画面に出る言葉。**同じファイルの `STATS_FALLBACK` だけは①**（2章） |
@@ -467,17 +467,22 @@ JSON は**引いた結果の写し**として置き直すだけで、もう入�
   章が閉じる前に先回りして急かさない（閉じる前は「章が終わった」の手入れが先）
 - **急がない側に出す。** 島が嘘を出しているのではなく、まだ書かれていないだけ
 
-当てるのは **`date` 1つだけ。島とまったく同じ見かた**にしてある。
+当てかたは**島とまったく同じ見かた**にしてある（2026-11-23 に旅の鍵を足した。#1356）。
 
 島にどの記念碑が建つかを決めているのは `site/components/isle/spec.ts` の
-`legendsOf()` で、あちらが見るのも「`date` が章の期間に入っているか」だけ
-（`inSpan`）。**`range` を足して甘くしない**——足すと、`range` だけが
+`legendsOf()` で、引きかたは2つだけ。
+
+- **旅そのものが企画の伝説**（企画の表 `site/content/projects.ts` の `trip`）は、その旅の島にだけ建つ
+- それ以外は、`date` が期間に入る**本線の旅**の島に建つ。枝の旅の島には、その旅を指した伝説しか建たない
+  （前は日付で引いていたので、「イランまで歩く」がコーカサス周遊の島にも建っていた）
+
+**`range` を足して甘くしない**——足すと、`range` だけが
 重なっている伝説でこちらが黙るのに、**島にはその記念碑が1枚も建たない。**
 見張りが緑なのに、見張りたかったことが起きている状態になる。
 
-そのぶん「**伝説の `date` は章の中に置く**」が決まりになる。北欧旅の `date` が
-出発した 9/11 ではなく1日目の 9/12 なのはこれが理由で、`legends.ts` の
-その行にも書いてある。`range`（配信を数える範囲）は `span` より1日ひろくてよい。
+そのぶん「**旅を指さない伝説の `date` は本線の旅の中に置く**」が決まりになる。
+北欧旅は旅を指している（`trip: "nordic"`）ので、`date` は出発した晩の 9/11 のままでよい
+（前は日付で引いていたので、1日目の 9/12 にずらしてあった）。`range`（配信を数える範囲）は旅の期間と違ってよい。
 
 **この行がどうやっても消せないと分かったら、見張りを緩めずに見かたを直す。**
 伝説の無い旅が本当に在るなら、それは `chapters.ts` に書けるようにする
@@ -778,14 +783,14 @@ BREAK=covers-today python3 python/stale_content_watch_selftest.py   # 足を1本
 | `apps.ts` | 人 | LATEST | 120日 | 26日前 |
 | `countries.ts` | 人 | LATEST | 150日 | 6日前 |
 | `chapters.ts` | 人 | LATEST | 240日 | 6日前 |
-| `legends.ts` | 人 | LATEST | 300日 | 25日前。**床だけ。**「終わった旅に1枚も無い」は `upkeep_watch` が #664 に出す（4章） |
+| `projects.ts`（当時は `legends.ts`） | 人 | LATEST | 300日 | 25日前。**床だけ。**「終わった旅に1枚も無い」は `upkeep_watch` が #664 に出す（4章） |
 | `shorts.ts` | 機械（YouTube） | LATEST | 90日 | 2日前 |
 | `chapterStreams.ts` | 機械（章が閉じたとき） | LATEST | 300日 | 6日前 |
 | `nordic.ts` | 人（旅程） | COVERS | 旅のあいだは今日まで／終わったら旅の最終日 | あと10日 |
 | `nordicSun.ts` | ①b（**毎晩**。`tools/nordic_sun.py`。上流 `nordic.ts`） | KEYS | — | 17/17日（2026-10-07 に `COVERS` から移した） |
 | `nordicShops.ts` | 外の地図（OSM、`tools/nordic/shops.py`） | LATEST | 30日 | 4日前 |
 | `kitchenTalk.ts` | ①b（上流 `recipes.ts`） | KEYS | — | 38/38 |
-| `legendDays.ts` | ①b（上流 `legends.ts`） | KEYS | — | 8/8（2026-10-13 に 9/9） |
+| `legendDays.ts` | ①b（上流 `projects.ts` の伝説。当時は `legends.ts`） | KEYS | — | 8/8（2026-10-13 に 9/9） |
 | `characterBox.ts` | 機械（**毎晩**。`charbox.py`。上流 `residents.ts`） | KEYS | — | **🔴 7人ぶん欠け** → 2026-09-18 に毎晩へ繋いで **103/103** |
 | `chatter.ts` | 人（上流 `residents.ts`） | SHARE | 50% | 26%（27/102人） |
 | `chapterStats.ts` | 機械（毎晩） | — | rebake 4日 | 判定しない |

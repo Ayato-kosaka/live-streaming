@@ -408,7 +408,7 @@ YouTube を100人ぶん引き直す**ので、すぐ前の `channel_alias` に�
 | **いつ、どの国・街に居たか**（予定を含む） | `site/content/stays.ts`（滞在の表） | `content/plans.ts` の移動の行、島の便り `island/state.current` の `place` | **滞在の表が正**（2026-11-22。#1275）。`COUNTRIES[].stays`・`AHEAD_COUNTRIES`・章の国・案内の出し分け・`python/stays.py` はここから引く。移動の行と便りは W2〜W4（#1276 #1277 #1278）で寄せる |
 | 住人（誰が島にいるか） | `islandUsers` ＋ `islandChannels`（本番） | `site/content/residents.ts`（焼き込み） | **本番が正。** 焼き込みは、島の状態の口が読めなかったときの受け皿 |
 | 常連の数 | `island/state.stats.activeFriends` | `residents.ts` の `ACTIVE_FRIENDS` | **本番が正**（画面に出るのはこちら） |
-| 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/plans.ts` / `legends.ts` の `PLANS` `LEGENDS` | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
+| 企画 | `islandStreamEvent`（掲示板に出るほう） | `site/content/projects.ts` の `PROJECTS`（伝説はその印。告知の札は `plans.ts` の `PLANS` に組まれる） | `planId` で結ぶ。**Git 側1つに結ぶ行は1つだけ**（409 で断る） |
 | ~~企画に付く写真~~ | `islandStreamEventImage` | — | **2か所ではなくなった**（2026-10-13）。読み（`GET /nordic/photos`）も書き（`POST /nordic/photos`）も新だけ。**宣言は 10-01 から「新が正」だったのに、公開の面に出ていたのは旧のほうだった** |
 | ~~「その日いた人」~~ | `islandTips`（台帳） | — | **2か所ではなくなった**（2026-10-13）。`nordicDays` は読まれていなかったが、**毎晩2本が書き続けていた**。止めた |
 | キャラクターの割り当て | Firestore `islandCharacter` | `site/content/residents.ts` | **本番が正**（2026-09-16 に確かめ直した。前の版は「あやとのスプレッドシート」と書いていたが、Viewers 表はもう誰も読んでいない。`build_residents.py` は図鑑を読む）。焼き直しで反映する。**誰のものかは 3.4** |
@@ -1676,7 +1676,7 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | `stays.ts` | 滞在の表（いつ、どの国・街に居たか。予定を含む） | 国を移った日に1行。**居場所を手で書くのはここだけ**（#1275） |
 | `countries.ts` | 歩いた国の記録（紹介・見どころ・何カ国目） | 歩き終わってから書く。滞在は `stays.ts` から引く |
 | `chapters.ts` | 島の連なり（章）と、その期間 | どこで区切るか |
-| `legends.ts` | 伝説の企画 | どれを伝説と呼ぶか |
+| `projects.ts` | 企画の表（伝説はその印） | どれを企画・伝説と呼ぶか。企画の話と数字（M-20） |
 | `plans.ts` `apps.ts` | これからの企画／作っているアプリ | 選定 |
 | `python/data/shorts.json` | ショートの一覧（`shorts.ts` の元） | **BigQuery にショートは1本も入っていない** |
 | `python/voices_picks.json` | 他己紹介の抜粋（`voices.ts` の元） | どの声を載せるか |
@@ -1765,7 +1765,7 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | 焼かれるもの | 元 | 回すもの | 待っているもの | `rebake` から |
 | --- | --- | --- | --- | --- |
 | `kitchenTalk.ts` | `python/data/kitchen_*.json` + `recipes.ts` + `residents.ts` | `build_kitchen_talk.py --build` | `recipes.ts` と `kitchen_talk_picks.json` | 手で押せば回る |
-| `legendDays.ts` | `python/data/legend_*.json` + `legends.ts` | `build_legend_days.py` | `legends.ts` | **回せない** |
+| `legendDays.ts` | `python/data/legend_*.json` + `projects.ts` | `build_legend_days.py` | `projects.ts` | **回せない** |
 | `voices.ts` | `python/voices_picks.json` | `build_voices.py --build` | `voices_picks.json` | **回せない** |
 | `shorts.ts` | `python/data/shorts.json` | `build_shorts.py --build` | `shorts.json` | **回せない** |
 | `nordic.ts` + `nordic/*.json` | 下ごしらえした JSON | `build_nordic.py` / `build_nordic_map.py` | 元の JSON（**リポジトリに無い**） | **回せない** |
