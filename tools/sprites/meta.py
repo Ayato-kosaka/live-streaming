@@ -55,6 +55,16 @@ WIDE_HERO_SIDE = 1280
 # 大きいほうは `<name>@2x.webp` として別に書き、画面は `srcset` で
 # どちらを取るかをブラウザに選ばせる。**スマホは今までどおり 640px。**
 WIDE_SUFFIX = "@2x"
+# **札の頭の小さな絵だけ、もう1枚この大きさで焼く(`mini/`)。**
+#
+# 札(`components/ui/Tags.tsx`・国の面のパスポート)の絵は `.mini-icon` で 24px にしか出ないのに、
+# 320px の1枚(伝説の印で 8〜17KB)を取りに行っていた。札は面の頭に並ぶので、そのまま最初の1画面の代金になる。
+# W10(#1357)で伝説の札が印からこの絵に替わった日に、北欧の国の面が 13KB、ジョージアが 58KB 重くなり、
+# `/travel/latvia` が上限(`tools/sprites/firstload.mjs`)を超えた。
+# 72px は 24px の3倍(3倍の画面でもぼけない)。焼くのは札の絵になる名前だけ(料理と伝説)
+MINI_DIR = "mini"
+MINI_SIDE = 72
+MINI = re.compile(r"^(?:food|legend)-")
 # **1280 まで届くとは限らない。** `shrink` は縮めるだけなので、焼いたものが
 # それより小さければそのまま出る。焼く枠（`manifest.mjs` の HERO_PX = 1280）は
 # 正方形で、その中に絵を余白ごと収めるから、横に長い絵ほど実際の幅は
@@ -150,8 +160,12 @@ for g, box in frames.items():
         print(f"{g}: 焼いていないコマがあるので、まとめて切るのはやめる")
 
 meta = {}
+mini_dir = os.path.join(SRC, MINI_DIR)
+os.makedirs(mini_dir, exist_ok=True)
 for name in names:
     fresh = os.path.join(SRC, name + ".png")
+    # 小さい版は、本体を焼き直したときと、まだ無いときだけ書く(触っていない絵の差分を作らない)
+    want_mini = MINI.match(name) and (os.path.exists(fresh) or not os.path.exists(os.path.join(mini_dir, name + ".webp")))
     if os.path.exists(fresh):
         im = Image.open(fresh).convert("RGBA")
         a = im.getchannel("A")
@@ -171,6 +185,10 @@ for name in names:
         os.remove(fresh)
     else:
         im = Image.open(os.path.join(SRC, name + ".webp")).convert("RGBA")
+    if want_mini:
+        k = min(1.0, MINI_SIDE / max(im.size))
+        im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.LANCZOS).save(
+            os.path.join(mini_dir, name + ".webp"), quality=82, alpha_quality=72, method=6)
 
     a = im.getchannel("A")
     solid = a.point(lambda v: 255 if v > SOLID else 0).getbbox() or (0, 0, im.width, im.height)
@@ -265,3 +283,11 @@ if os.path.isdir(hero_dir):
     with open(WIDE_OUT, "w") as fp:
         json.dump(have, fp, indent=0)
     print(f"横に長い主役 {len(have)} 点 → {WIDE_OUT}")
+
+# 小さい版がある名前の名簿。画面はこれに在る名前だけ `mini/` を指し、無ければ本体に落ちる
+# (無い絵を指すと 404 になる。heroWide.json と同じく、ディスクの実物から作る)
+MINI_OUT = os.path.join(os.path.dirname(OUT), "spriteMini.json")
+have = sorted(f[: -len(".webp")] for f in os.listdir(mini_dir) if f.endswith(".webp"))
+with open(MINI_OUT, "w") as fp:
+    json.dump(have, fp, indent=0)
+print(f"札の小さい絵 {len(have)} 点 → {MINI_OUT}")

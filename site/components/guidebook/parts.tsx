@@ -213,6 +213,8 @@ export function MapsLink({ href, of, label = "Google マップで開く" }: { hr
 /**
  * 窓の終わりの出どころ（その1件のぶんだけ）。面の終わりには全部の一覧がある。
  * 見た日（`Src.seen`）が在れば、いちばん新しい日を1つだけ添える（外の事実は「いつ見た字か」まで出す。`docs/country-guide.md` 1-2）
+ * リンクの字は外の記事の題をそのまま引いたもの（「〜おすすめ10選」も他人の字）。`data-quote="src"` は見張り（`python/guide_watch.py`）への目印で、
+ * 口調の見張りはこのリンクの字だけを飛ばす
  */
 export function SrcLine({ src, of }: { src: Src[]; of: string }) {
   if (!src.length) return null;
@@ -221,7 +223,14 @@ export function SrcLine({ src, of }: { src: Src[]; of: string }) {
     <p className="gb-src">
       <span>出どころ</span>
       {src.map((s, i) => (
-        <a key={s.url} href={s.url} target="_blank" rel="noreferrer" aria-label={`${of}の出どころ（${s.name}${src.length > 1 ? `・${i + 1}` : ""}）`}>
+        <a
+          key={s.url}
+          href={s.url}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`${of}の出どころ（${s.name}${src.length > 1 ? `・${i + 1}` : ""}）`}
+          data-quote="src"
+        >
           {s.name}
         </a>
       ))}

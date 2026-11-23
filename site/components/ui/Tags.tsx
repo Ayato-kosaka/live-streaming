@@ -2,6 +2,7 @@ import Link from "next/link";
 import Flag from "@/components/ui/Flag";
 import Icon from "@/components/ui/Icon";
 import type { Tag, TagRow } from "@/lib/tags";
+import { miniSprite } from "@/lib/miniSprite";
 
 /**
  * 札の段を描く。**札を選ぶのは `lib/tags.ts`**（ここでは並べるだけ。表を読まない）。
@@ -41,6 +42,6 @@ export default function Tags({ rows }: { rows: TagRow[] }) {
 
 function Art({ t }: { t: Tag }) {
   if ("flag" in t.art) return <Flag slug={t.art.flag} size={22} />;
-  if ("sprite" in t.art) return <img className="mini-icon" src={`/sprites/${t.art.sprite}.webp`} alt="" />;
+  if ("sprite" in t.art) return <img className="mini-icon" src={miniSprite(t.art.sprite)} alt="" />;
   return <Icon name={t.art.icon} size={20} />;
 }

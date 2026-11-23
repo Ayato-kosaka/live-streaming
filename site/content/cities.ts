@@ -38,6 +38,8 @@ export const CITIES: CityRow[] = [
   /* あやとは 2026-11-21 に着いた（`content/countries.ts` の `AHEAD_COUNTRIES`）。国の面は着いた日に建てた（`GUIDE_ONLY`）。
      あやと 2026-11-20「割といい感じ」「どんどん公開していいよ。あなたの裁量の範囲内」で公開前の印を外した */
   { country: "romania", slug: "bucharest", name: "ブカレスト" },
+  /* 行く前の街（移る日は未定）。国の面はまだ無い（`CITY_ONLY`） */
+  { country: "serbia", slug: "belgrade", name: "ベオグラード", draft: true },
 ];
 
 /** 名簿の街。無ければ `undefined` */
