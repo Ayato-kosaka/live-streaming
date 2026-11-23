@@ -197,8 +197,9 @@ function loadLayout(src) {
   if (!existsSync(js)) nothing(`${src} が組み立てられなかった`);
   const mod = { exports: {} };
   const nodeRequire = createRequire(import.meta.url);
-  // 建物の添え書きが1つ、住人の言葉を引いている。印には関わらないので空で返す
-  const req = (id) => (id === "@/content/nights" ? { say: () => "" } : nodeRequire(id));
+  // 建物の添え書きが2つ、住人の言葉と企画の道のりを引いている。印には関わらないので空で返す
+  const STUB = { "@/content/nights": { say: () => "" }, "@/content/projects": { courseOf: () => ({ km: 0 }) } };
+  const req = (id) => STUB[id] ?? nodeRequire(id);
   new Function("require", "exports", "module", readFileSync(js, "utf8"))(req, mod.exports, mod);
   return mod.exports;
 }

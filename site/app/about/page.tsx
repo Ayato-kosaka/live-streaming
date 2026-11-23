@@ -27,6 +27,7 @@ import { PackArt, PotArt, CodeArt } from "@/components/atlas/art";
 import Age from "./parts";
 import "./about.css";
 import { TRAVEL, travelHref } from "@/content/travelPath";
+import { courseOf } from "@/content/projects";
 
 /** 面の名前。題・パンくず・見出し・機械に渡す名札（`lib/jsonld.tsx`）が同じ字を読む */
 const NAME = "あやとのこと";
@@ -84,6 +85,9 @@ const on = (slug: string, i = 0) => countryBySlug(slug)?.stays[i]?.from ?? "";
  * `from` は事実の欄で、旅に出た日にあやとが手で入れる。旅の17日間は入らないので、
  * 空なら予定の欄（`opensAt`）の日付を使う（`content/chapters.ts` の `began()` と同じ見かた）。
  */
+/** 「イランまで歩く」の道のり。数の持ち主は企画の表（M-20） */
+const IRAN = courseOf("iran-walk");
+
 const chapterFrom = (slug: string) => {
   /* **知らない slug は `chapterOf` が投げる。** ここで `""` を返していたせいで、
      #224（アルバニア＋北マケドニア → バルカン諸国周遊）の日に
@@ -185,11 +189,13 @@ const STORY: Step[] = [
     go: "このアプリへ",
   },
   {
-    /* 歩いたのは枝の旅「イランまで歩く」。国境は国ではないので、日付は旅から引く（#1355） */
+    /* 歩いたのは枝の旅「イランまで歩く」。国境は国ではないので、日付は旅から引く（#1355）。
+       **道のりと日数は企画の表から引く**（`content/projects.ts` の `IRAN_WALK`。前はここに 380km と「10日間」を手で書いていて、
+       伝説の面の「12日間」と食い違って見えた。12日は帰り道を含む企画の日数、10日目は国境の町に着いた日） */
     date: chapterFrom("iran-walk"),
     kind: "travel",
-    what: "アルメニアからイラン国境まで、380kmを歩いた",
-    note: "10日間。帰りはヒッチハイクでエレバンへ",
+    what: `${IRAN.from}からイラン国境まで、約${IRAN.km}kmを歩いた`,
+    note: `${IRAN.arriveDay}日目に${IRAN.to}へ。帰りはヒッチハイクで${IRAN.from}へ`,
     href: "/legends/iran-walk",
     go: "伝説の企画へ",
   },

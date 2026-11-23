@@ -22,7 +22,7 @@
  * 毎 PR では回せない。**名前とファイルの突き合わせだけ**をここへ切り出す。
  *
  * 焼き足す手順は `manifest.mjs` の `heroNames()` が決めている——
- * `recipes.ts` / `legends.ts` / `streamTypes.ts` の `icon:` を読んで、
+ * `recipes.ts` / `projects.ts` / `streamTypes.ts` の `icon:` を読んで、
  * `hero/<名前>` を `HERO_PX` で焼く。だから**この3つに名前を書き足したら、
  * `bake.mjs` → `meta.py` を通すまでが1組。** ここはその通し忘れを捕まえる。
  *
@@ -48,7 +48,8 @@ const HERO_DIR = path.join(ROOT, "site/public/sprites/hero");
 /** `manifest.mjs` の `HERO_BOOKS` と同じ3冊。読み方は `tsread.mjs` の1本（#694） */
 const HERO_BOOKS = [
   ["recipes.ts", "RECIPES"],
-  ["legends.ts", "LEGENDS"],
+  /* 伝説の絵は企画の表（伝説はその印。印の無い企画は絵を持たないので数えない） */
+  ["projects.ts", "PROJECTS"],
   ["streamTypes.ts", "STREAM_TYPES"],
 ];
 

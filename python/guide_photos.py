@@ -21,7 +21,7 @@
 | --- | --- | --- | --- |
 | 街のガイドブック（`/travel/<国>/<街>`） | `guide/<国>/<街>/photos/` | 120・500・960 | `python/data/…` の写真の欄 |
 | 北欧の6か国（`/travel/<国>`） | `travel/<国>/photos/` | 250・500・960 | `python/data/nordic-src/` のその国の見どころ |
-| 企画（`/next`） | `next/photos/` | 960 | `site/content/plans.ts` の写真の出どころ（`creditHref`） |
+| 企画（`/next`） | `next/photos/` | 960 | `site/content/projects.ts` の写真の出どころ（`creditHref`） |
 
 幅は**面が読む幅だけ**置く。ガイドブックは 500（狭い画面）・960（広い画面・窓）と、120（前は見どころマップのピン。2026-11-16 にピンをやめて面は読まなくなった。置き場の絵を外すのは絵の担当）。
 北欧は 250（段の頭の 52px 角）・500（国の札・見たいものの一覧）・960（開いた写真・国の表紙）。企画は 960 だけ。
@@ -33,7 +33,7 @@
 （`guide_bake._save` と同じ）。
 
 焼く道具（`python/guidebook_bake.py`・`python/build_bulgaria.py`・`python/build_nordic.py`）は `local()` で
-置き場の道に直す。**置き場に無ければ焼かずに止まる**（先にここを回す）。企画（`plans.ts`）は焼く道具を持たない
+置き場の道に直す。**置き場に無ければ焼かずに止まる**（先にここを回す）。企画（`projects.ts`）は焼く道具を持たない
 手書きの表なので、道は人が書き、ここの `--check` が置き場と突き合わせる。
 
 ## 取りかた
@@ -105,7 +105,7 @@ GONE: dict[str, str] = {
 
 #: 面ごとの、置き場（`site/public/` の下）・置く幅・写真の出どころ（材料）・面に焼いたもの（Wikimedia の絵が
 #: 残っていないかを見る所）。材料は（ファイル, JSON の中の道[, 見る欄]）。道が () ならファイルぜんぶ、
-#: 見る欄が無ければ全部の欄。JSON でないファイル（`plans.ts`）は字のまま読む
+#: 見る欄が無ければ全部の欄。JSON でないファイル（`projects.ts`）は字のまま読む
 PLACES: dict[str, dict] = {
     "bulgaria/sofia": {
         "dir": "guide/bulgaria/sofia/photos",
@@ -129,12 +129,13 @@ PLACES: dict[str, dict] = {
         for slug, src in NORDIC.items()
     },
     # 企画は手書きの表で、焼く道具を持たない。写真の `src` には置き場の道を人が書き、借りた写真の名前は
-    # 出どころのリンク（`creditHref` の `File:`）から引く
+    # 出どころのリンク（`creditHref` の `File:`）から引く。
+    # 写真を持つのは企画の表（`projects.ts` の告知の欄）。面の名前（`plans`・`next/photos/`）は告知の面 `/next` のまま
     "plans": {
         "dir": "next/photos",
         "widths": (960,),
-        "from": [("site/content/plans.ts", ())],
-        "baked": ["site/content/plans.ts"],
+        "from": [("site/content/projects.ts", ())],
+        "baked": ["site/content/projects.ts"],
     },
 }
 

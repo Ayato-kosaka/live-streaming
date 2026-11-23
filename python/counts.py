@@ -234,7 +234,8 @@ def n_recipes() -> int:
 
 
 def n_legends() -> int:
-    return len(_rows("site/content/legends.ts", "LEGENDS", "name", id_key="slug"))
+    """伝説の数。伝説は企画の表（`projects.ts`）の印なので、印の付いた行を数える（M-3）"""
+    return sum(r["legend"] == "true" for r in _rows("site/content/projects.ts", "PROJECTS", "legend", id_key="slug"))
 
 
 def n_sprite_tools() -> int:

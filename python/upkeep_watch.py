@@ -236,7 +236,8 @@ STAYS_TS = "site/content/stays.ts"
 ABOUT_TSX = "site/app/about/page.tsx"
 PLACE_TS = "site/lib/place.ts"
 UPDATES_TS = "site/content/updates.ts"
-LEGENDS_TS = "site/content/legends.ts"
+# 伝説は企画の表の印（`docs/spec/model.md` M-3）。字で読める表は企画の表だけ
+PROJECTS_TS = "site/content/projects.ts"
 
 # **視聴者さんから見える変更が入る置き場。**
 #
@@ -333,7 +334,7 @@ class World:
     stays: list[dict]                 # `stays.ts` の滞在の表（`country` / `from` / `to` / …）
     itineraries: set[str]             # 旅程のある章の slug（`site/content/<slug>.ts`）
     about: str                        # `/about` の年表の字（`STORY` の中身）
-    legends: list[dict]               # `legends.ts` の伝説（`slug` / `date` / `range`）
+    legends: list[dict]               # 企画の表（`projects.ts`）の伝説の印が付いた行（`slug` / `date` / `trip`）
     current: dict                     # 島の便り（`/island-api/state` の `current`）
     stale_days: int                   # `site/lib/place.ts` の `PLACE_STALE_DAYS`
     shown_at: date | None             # 視聴者さんから見える変更が入った、いちばん新しい日
@@ -843,23 +844,25 @@ def updates_behind(w: World) -> list[Gap]:
                 urgent=False)]
 
 
-def _legend_covers(lg: dict, a: date, b: date) -> bool:
-    """その伝説が、`a`〜`b`（章の期間）のものか。
+def _legend_covers(lg: dict, ch: dict, a: date, b: date) -> bool:
+    """その伝説が、章 `ch`（期間 `a`〜`b`）の島に建つものか。
 
-    **見るのは `date` 1つだけ。島と同じ見かたにする。**
-    島にどの記念碑が建つかを決めているのは
-    `site/components/isle/spec.ts` の `legendsOf()` で、あちらが見るのも
-    「`date` が章の期間に入っているか」だけ（`inSpan`）。
+    **島と同じ見かたにする。** 島にどの記念碑が建つかを決めているのは
+    `site/components/isle/spec.ts` の `legendsOf()` で、引きかたは2つだけ:
+
+    - 旅を指している伝説（旅と1対1。企画の表の `trip`）は、**その旅の島にだけ**建つ
+    - 旅を指していない伝説は、`date` が期間に入る**本線の旅**の島に建つ。
+      枝の旅（`branchOf`）の島には、その旅を指した伝説しか建たない
 
     **`range` を足して甘くしない。** 足すと、`range` だけが重なっている
     伝説でここが黙るのに、**島にはその記念碑が1枚も建たない**——
     見張りが緑なのに、見張りたかったものが起きている状態になる。
     同じ答えが要るものは、同じ見かたを通す（`CLAUDE.md`）。
-
-    そのぶん、**伝説の `date` は章の中に置くこと**が決まりになる。
-    北欧旅の `date` が出発の 9/11 ではなく1日目の 9/12 なのはそれが理由で、
-    `content/legends.ts` のその行にも書いてある。
     """
+    if lg.get("trip"):
+        return lg["trip"] == ch["slug"]
+    if ch.get("branchOf"):
+        return False
     d = _as_date(lg.get("date", ""))
     return bool(d and a <= d <= b)
 
@@ -867,10 +870,10 @@ def _legend_covers(lg: dict, a: date, b: date) -> bool:
 def ended_without_legend(w: World) -> list[Gap]:
     """**旅（章）が終わったのに、その章の伝説が1つも無い。**
 
-    `content/legends.ts` は「どれを伝説と呼ぶか」で、**人しか決められない**
+    企画の表（`content/projects.ts`）の伝説の印は「どれを伝説と呼ぶか」で、**人しか決められない**
     （`docs/island-fresh.md` 4章）。だから古くなっても誰も鳴らさず、
     北欧旅は終わってから16日のあいだ、丘に1枚も立たなかった。
-    `legends.ts` に付いている見かたは `LATEST` の300日（床）だけで、
+    伝説（当時の `legends.ts`）に付いていた見かたは `LATEST` の300日（床）だけで、
     **章が1つまるごと抜けても緑**だった。
 
     数えられる理由は、**いままで例外が無かった**から。終わった5つの章は
@@ -898,11 +901,12 @@ def ended_without_legend(w: World) -> list[Gap]:
             # 期間が読めない章は数えない。**空で通さず、ここで黙る**のは
             # 「着いた日が入っていない」が先に立つから（二重に鳴らさない）
             continue
-        if any(_legend_covers(lg, a, b) for lg in w.legends):
+        if any(_legend_covers(lg, r, a, b) for lg in w.legends):
             continue
         out.append(Gap(
-            f"`{LEGENDS_TS}`（`{r['slug']}` の章）",
-            f"その旅の伝説を1つ（`date` は {a}〜{b} の中に）。"
+            f"`{PROJECTS_TS}`（`{r['slug']}` の章）",
+            f"その旅の伝説を1つ（旅そのものが企画なら `trip: \"{r['slug']}\"`、"
+            f"そうでなければ `date` を {a}〜{b} の中に）。"
             f"丘（`/legends`）にも島にも、この旅のものが1枚も立っていない",
             urgent=False))
     return out
@@ -1132,21 +1136,23 @@ def count(content_dir: Path, today: date, books: dict | None = None,
     # 伝説。**読めなかったら空で渡さない**——空で渡すと、終わった章ぜんぶが
     # 「伝説が無い」になって、毎晩ありもしない手入れを並べる
     legends: list[dict] = []
-    lg = content_dir / "legends.ts"
+    lg = content_dir / "projects.ts"
     if not lg.is_file():
-        blind.append(f"{LEGENDS_TS} がありません")
+        blind.append(f"{PROJECTS_TS} がありません")
     else:
-        got_l = ts_read.read_array(lg.read_text(encoding="utf-8"), "LEGENDS",
-                                   keys=("slug", "date"))
+        got_l = ts_read.read_array(lg.read_text(encoding="utf-8"), "PROJECTS",
+                                   keys=("slug", "date", "trip", "legend"))
         if not got_l.declared:
-            blind.append(f"{LEGENDS_TS} が伝説を1つも名乗っていません")
+            blind.append(f"{PROJECTS_TS} が企画を1つも名乗っていません")
         elif got_l.missed:
             blind.append(
-                f"{LEGENDS_TS} の伝説を {got_l.missed}個 読み落としました"
+                f"{PROJECTS_TS} の企画を {got_l.missed}個 読み落としました"
                 f"（名乗り {got_l.declared} / 読めた {len(got_l.rows)}）"
             )
+        elif not (marked := [r for r in got_l.rows if r["legend"] == "true"]):
+            blind.append(f"{PROJECTS_TS} に伝説の印（`legend: true`）が1つもありません")
         else:
-            legends = got_l.rows
+            legends = marked
 
     stale_days = 0
     pl = site / "lib" / "place.ts"

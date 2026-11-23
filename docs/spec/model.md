@@ -164,11 +164,10 @@ erDiagram
 
 | 条 | いま | 直す issue |
 | --- | --- | --- |
-| M-3 | 伝説の表（`content/legends.ts`）と企画の表（`content/plans.ts`）が別 | #1356 |
-| M-4 | 移動が企画の表に入っている（滞在の表 `site/content/stays.ts` はできた） | #1276 #1277 |
+| M-4 | 企画の表（`site/content/projects.ts`）は移動を持たないが、国を移る行が告知の札の表（`content/plans.ts`）に残っている（滞在の表 `site/content/stays.ts` はできた） | #1276 #1277 |
 | M-5 | 表紙の島（`components/isle/cover.ts`）が `Country.region` を1か所読む。値はどの国にも入っていないので空を読むだけ。読む所が外れたら型の欄（`content/countries.ts`）ごと消す | #1276 |
-| M-6 | `Legend.pages[].href`・`Plan.href`・`Theme.href` の直書き。国の「行った街」と街のガイドは名前の文字で結ぶ。`nordic` が旅・企画・伝説で同じ字なだけ | #1356 #1357 |
-| M-20 | 居場所を3か所に手書き（滞在の表・`content/plans.ts` の移動の行・島の便りの `island/state.current`）。「イランまで歩く」は5か所、「北欧ヒッチハイク」は4か所に手書き | #1276 #1278 #1356 |
+| M-6 | `Plan.href`（告知の札。ジョージアバイバイ・海外出発二周年）・`Theme.href` の直書き。国の「行った街」と街のガイドは名前の文字で結ぶ。お題と企画は id が同じ字なだけ（`content/themes.ts` の `planById(t.id)`） | #1277 #1357 |
+| M-20 | 居場所を3か所に手書き（滞在の表・`content/plans.ts` の移動の行・島の便りの `island/state.current`） | #1276 #1278 |
 | M-31 | `/now`（いまどこ）と `/next`（企画）が建物と面を持つ | #1277 #1278 |
-| 札 | 料理→国、国↔企画、企画↔料理、旅↔月、のリンクが無い | #1357 |
+| 札 | 料理→国、企画→国、企画↔料理、旅↔月、のリンクが無い（国→伝説の企画は、国の面のパスポートに1行だけ在る。`lib/projectsOf.ts`） | #1357 |
 | 配信1回 | 表が無い。videoId が7つの焼き込みに別々に出る | 未定（足すときは `/feature-design`） |

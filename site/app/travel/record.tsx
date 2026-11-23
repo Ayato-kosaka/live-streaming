@@ -7,6 +7,7 @@ import { COUNTRIES, countryBySlug, type Country } from "@/content/countries";
 import { WALKED_DONE, chapterCountries, walkingCountries } from "@/content/walked";
 import { chapterHref, chapterNow } from "@/content/chapters";
 import { tripsOfCountry } from "@/content/stayChapters";
+import { legendsOfCountry } from "@/lib/projectsOf";
 import { RECIPES } from "@/content/recipes";
 import { streamsOfCity, type CityStream } from "@/content/cityStreams";
 import { STREAM_DIGEST } from "@/content/streamDigest";
@@ -91,6 +92,12 @@ type CountryRecord = {
    * 旅の島へ行けるのは北欧の6か国（旅のしおりの部品）だけだった（#1355）
    */
   trips: { slug: string; name: string; href: string }[];
+  /**
+   * その国でやった伝説の企画。旅の札のとなりに札で出て、押すと企画の面へ。
+   * 国の一言（`summary`）は場所の事実だけにしたので（M-20・M-21）、企画の話へはここから辿る
+   * （`lib/projectsOf.ts`。札の段ぜんぶは W10 #1357）
+   */
+  projects: { slug: string; title: string; href: string }[];
   /** 面の一言の、字だけの形（題の下・検索の一文・名札） */
   summary: string;
   /** 面の一言。まだ続いている滞在は、長さを画面が出てから数え直す */
@@ -134,6 +141,9 @@ const daysBetween = (from: string, to: string) =>
 /** その国に行った旅の札。島の道は `chapterHref` から（手で組まない） */
 const tripTags = (slug: string) => tripsOfCountry(slug).map((t) => ({ slug: t.slug, name: t.name, href: chapterHref(t) }));
 
+/** その国でやった伝説の企画の札 */
+const projectTags = (slug: string) => legendsOfCountry(slug).map((l) => ({ slug: l.slug, title: l.title, href: `/legends/${l.slug}` }));
+
 /** 題に入れる旅の名前。**本線の旅**（枝の旅「イランまで歩く」は題の「〜で〈長さ〉」に続かない）。2回入っていれば、あとの旅 */
 const mainTrip = (slug: string) => tripsOfCountry(slug).filter((t) => !t.branchOf).at(-1)?.name;
 
@@ -157,6 +167,7 @@ function walkedRecord(c: Country): CountryRecord {
     name: c.name,
     en: c.en,
     trips: tripTags(c.slug),
+    projects: projectTags(c.slug),
     summary: c.summary,
     headLead: c.summary,
     stays: c.stays,
@@ -212,6 +223,7 @@ function walkingRecord(slug: string): CountryRecord | undefined {
     slug,
     name: k.name,
     trips: tripTags(slug),
+    projects: projectTags(slug),
     summary,
     headLead,
     stays: [{ from: k.entered, to: k.left }],
@@ -521,12 +533,21 @@ export function CountryRecordPage({ r, children }: { r: CountryRecord; children?
 
         {/* どの旅で行ったか。押すと、その旅の島へ（2つの旅に入った国は2枚）。
             字は旅の名前だけ（「〈旅〉で行った」と説明を足さない。札の並びで読める） */}
-        {r.trips.length > 0 && (
+        {(r.trips.length > 0 || r.projects.length > 0) && (
           <p className="apass-trips">
             {r.trips.map((t) => (
               <Link key={t.slug} className="chip" href={t.href} prefetch={false}>
                 <Icon name="island" size={20} />
                 {t.name}
+              </Link>
+            ))}
+            {/* ここでやった伝説の企画。絵は丘（伝説の企画の建物）の印。
+                **字に種類を添える。** 旅と企画は別の種類で、名前が同じこと（イランまで歩く）も、
+                同じ面に旅の島へ送る同じ字（北欧の旅のしおり）が在ることもある。字だけで行き先が分かるように */}
+            {r.projects.map((pj) => (
+              <Link key={pj.slug} className="chip" href={pj.href} prefetch={false}>
+                <Icon name="hill" size={20} />
+                伝説「{pj.title}」
               </Link>
             ))}
           </p>

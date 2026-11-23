@@ -118,7 +118,7 @@ NSRC = {
     }
 }
 
-PLANS_TS = """export const PLANS = [{
+PLANS_TS = """export const PROJECTS = [{
     photos: [
       {
         src: "/next/photos/%s-960.webp",
@@ -166,7 +166,7 @@ def places() -> None:
            == f"/travel/finland/photos/{gp.stem(n)}-250.webp", "北欧の材料の URL を置き場の 250 に")
         ok(gp.local("nordic/finland", NSRC["spots"]["フィンランド"][0]["big"], 960, root) is None, "置いていない 960 は None（焼く道具が止まる）")
 
-        plans = root / "site/content/plans.ts"
+        plans = root / "site/content/projects.ts"
         plans.parent.mkdir(parents=True, exist_ok=True)
         p = "Tbilisi_-_Mtatsminda_Park_(9460953464).jpg"
         plans.write_text(PLANS_TS % gp.stem(p), encoding="utf-8")

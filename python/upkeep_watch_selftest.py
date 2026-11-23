@@ -346,16 +346,17 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
         # 人が書く本。日で見る（`LATEST`）。**終わった章（`nordic`）の
         # 伝説も1つ持たせる**——持たせないと引き金「終わった旅の伝説」が
         # 仕込みのぜんぶで立って、他の確かめの0件がどれも崩れる
-        "legends.ts": LEGENDS_OK if legends is None else legends,
-        # ①b。上流は `legends.ts`。**鍵は伝説の slug そのもの**なので、
+        "projects.ts": LEGENDS_OK if legends is None else legends,
+        # ①b。上流は `projects.ts` の伝説。**鍵は伝説の slug そのもの**なので、
         # 仕込みの伝説から作る。手で並べると、伝説を差し替える確かめ
         # （`LEGENDS_NONE` ほか）のたびに鍵がずれて、見たいところの手前で
         # `legendDays.ts` が赤くなる
         "legendDays.ts": "const LEGEND_DAYS = {\n" + "".join(
             f'  "{r["slug"]}": {{}},\n'
             for r in ts_read.read_array(
-                LEGENDS_OK if legends is None else legends, "LEGENDS",
-                keys=("slug",)).rows
+                LEGENDS_OK if legends is None else legends, "PROJECTS",
+                keys=("slug", "legend")).rows
+            if r["legend"] == "true"
         ) + "};\n",
         # 名簿と、そこから焼かれる箱・セリフ
         "residents.ts": 'export const RESIDENTS = [\n  { icon: "a", n: 1 },\n'
@@ -409,11 +410,13 @@ def make_content(tmp: Path, *, voices: str = "2026-10-01",
 
 
 # 仕込みの伝説。**終わった章（`nordic` / 2026-09-12〜09-27）の中に `date` が在る。**
-# 島に記念碑が建つ条件と同じ（`site/components/isle/spec.ts` の `legendsOf`）
-LEGENDS_OK = """export const LEGENDS: Legend[] = [
+# 島に記念碑が建つ条件と同じ（`site/components/isle/spec.ts` の `legendsOf`）。
+# 伝説は企画の表（`projects.ts`）の印なので、表は `PROJECTS` で、印は `legend: true`
+LEGENDS_OK = """export const PROJECTS: Project[] = [
   {
     slug: "nordic",
     /* 読みにくい形をわざと残す。本番がこうなっている */
+    legend: true,
     title: "北欧ヒッチハイク",
     date: "2026-09-12",
     range: ["2026-09-11", "2026-09-27"],
@@ -422,13 +425,21 @@ LEGENDS_OK = """export const LEGENDS: Legend[] = [
 ];
 """
 
-# **終わった旅の伝説が1つも無い**（北欧旅が丘に立たなかった 16日間の形）
-LEGENDS_NONE = """export const LEGENDS: Legend[] = [
+# **終わった旅の伝説が1つも無い**（北欧旅が丘に立たなかった 16日間の形）。
+# 章の中の日を持つ企画は在るが、**伝説の印が無い**（祭り・節目）。印の無い企画は島に建たないので鳴る
+LEGENDS_NONE = """export const PROJECTS: Project[] = [
   {
     slug: "old",
+    legend: true,
     title: "むかしの企画",
     date: "2026-01-05",
     range: ["2026-01-01", "2026-01-10"],
+    day: "2026-10-01",
+  },
+  {
+    slug: "fest",
+    title: "章の中の祭り（伝説ではない）",
+    date: "2026-09-15",
     day: "2026-10-01",
   },
 ];
@@ -436,9 +447,10 @@ LEGENDS_NONE = """export const LEGENDS: Legend[] = [
 
 # **`range` を持たない1日の企画**（年越し・登録1,000人がこの形）。
 # `date` が章の中なので鳴らない
-LEGENDS_DATE_IN = """export const LEGENDS: Legend[] = [
+LEGENDS_DATE_IN = """export const PROJECTS: Project[] = [
   {
     slug: "nordic",
+    legend: true,
     title: "北欧ヒッチハイク",
     date: "2026-09-15",
     day: "2026-10-01",
@@ -446,15 +458,45 @@ LEGENDS_DATE_IN = """export const LEGENDS: Legend[] = [
 ];
 """
 
-# **`date` が章の1日前。`range` は章と重なっている。**
+# **`date` が章の1日前。`range` は章と重なっている。旅は指していない。**
 # ここで鳴らないと、**島には記念碑が1枚も建たないのに札は黙る**——
-# 島（`legendsOf`）が見るのは `date` だけなので、`range` で甘くできない
-LEGENDS_OUTSIDE = """export const LEGENDS: Legend[] = [
+# 島（`legendsOf`）が見るのは `trip` か `date` で、`range` で甘くできない
+LEGENDS_OUTSIDE = """export const PROJECTS: Project[] = [
   {
     slug: "nordic",
+    legend: true,
     title: "北欧ヒッチハイク",
     date: "2026-09-11",
     range: ["2026-09-11", "2026-09-27"],
+    day: "2026-10-01",
+  },
+];
+"""
+
+# **旅を指した伝説**（旅と1対1。本番の北欧がこの形）。`date` は出発の晩（章の1日前）でも、
+# その旅の島に建つので鳴らない
+LEGENDS_TRIP = """export const PROJECTS: Project[] = [
+  {
+    slug: "nordic",
+    legend: true,
+    trip: "nordic",
+    title: "北欧ヒッチハイク",
+    date: "2026-09-11",
+    range: ["2026-09-11", "2026-09-27"],
+    day: "2026-10-01",
+  },
+];
+"""
+
+# **別の旅を指した伝説。`date` は章の中。** 旅を指した伝説はその旅の島にだけ建つ
+# （枝の旅の伝説が親の島にも建つ、をやめた）。日付で拾って黙ると、島は空っぽのまま
+LEGENDS_OTHER_TRIP = """export const PROJECTS: Project[] = [
+  {
+    slug: "walk",
+    legend: true,
+    trip: "elsewhere",
+    title: "よその旅の企画",
+    date: "2026-09-15",
     day: "2026-10-01",
   },
 ];
@@ -1278,7 +1320,7 @@ def case15_legend(tmp: Path):
     d = make_content(tmp / "c15a", legends=LEGENDS_NONE)
     c = uw.count(d, TODAY)
     ck("終わった章の伝説が無い → **急がない**側に1件",
-       len(c.later) == 1 and "legends.ts" in c.later[0], (c.urgent, c.later))
+       len(c.later) == 1 and "projects.ts" in c.later[0], (c.urgent, c.later))
     ck("どの章のぶんかが出る", "nordic" in c.later[0], c.later[0])
     ck("その旅の期間が出る（いつからいつまでを書くのか）",
        "2026-09-12" in c.later[0] and "2026-09-27" in c.later[0], c.later[0])
@@ -1304,22 +1346,35 @@ def case15_legend(tmp: Path):
     ck("`range` が重なっていても、`date` が章の外なら鳴る",
        c.waiting == 1, (c.urgent, c.later))
 
+    # --- 旅を指した伝説は、その旅の島にだけ建つ（`trip`。旅と1対1）--------
+    c = uw.count(make_content(tmp / "c15t", legends=LEGENDS_TRIP), TODAY)
+    ck("旅を指した伝説は、`date` が章の外でも鳴らない",
+       c.waiting == 0, (c.urgent, c.later))
+    c = uw.count(make_content(tmp / "c15u", legends=LEGENDS_OTHER_TRIP), TODAY)
+    ck("別の旅を指した伝説は、`date` が章の中でも鳴る（その島には建たない）",
+       c.waiting == 1, (c.urgent, c.later))
+
     # --- まだ終わっていない章は急かさない ---------------------------------
     #
     # `to` を入れるのは旅から帰った本人。入る前に「伝説を書け」と言うと、
     # 旅のあいだじゅう鳴り続ける
     ck("いまの章（`to` が空）の伝説は求めない",
-       not any("albania" in x and "legends.ts" in x for x in c.urgent + c.later),
+       not any("albania" in x and "projects.ts" in x for x in c.urgent + c.later),
        "求めない")
 
     # --- 伝説が1つも読めない回は、数えずに止まる -------------------------
     #
     # 空で渡すと、終わった章ぜんぶが「伝説が無い」になって、
     # ありもしない手入れを毎晩並べる
-    d = make_content(tmp / "c15e", legends="export const LEGENDS = [];\n")
+    d = make_content(tmp / "c15e", legends="export const PROJECTS = [];\n")
     c = uw.count(d, TODAY)
-    ck("伝説を1つも名乗っていなければ「数えられない」",
-       not c.countable and any("legends.ts" in b for b in c.blind), c.blind)
+    ck("企画を1つも名乗っていなければ「数えられない」",
+       not c.countable and any("projects.ts" in b for b in c.blind), c.blind)
+    # 企画は在るが、伝説の印が1つも無い（印の綴りが変わった・欄が落ちた）も同じ
+    d = make_content(tmp / "c15f", legends='export const PROJECTS = [\n  { slug: "a", date: "2026-09-15" },\n];\n')
+    c = uw.count(d, TODAY)
+    ck("伝説の印が1つも無ければ「数えられない」",
+       not c.countable and any("projects.ts" in b for b in c.blind), c.blind)
 
 
 def case12_real():
@@ -1375,9 +1430,10 @@ def case12_real():
             if (CONTENT / f"{r['slug']}.ts").is_file()},
         about=uw.read_about_steps(
             (ROOT / "site" / "app" / "about" / "page.tsx").read_text(encoding="utf-8")),
-        legends=uw.ts_read.read_array(
-            (CONTENT / "legends.ts").read_text(encoding="utf-8"), "LEGENDS",
-            keys=("slug", "date"), lists=("range",)).rows,
+        legends=[r for r in uw.ts_read.read_array(
+            (CONTENT / "projects.ts").read_text(encoding="utf-8"), "PROJECTS",
+            keys=("slug", "date", "trip", "legend"), lists=("range",)).rows
+            if r["legend"] == "true"],
         current=live.current,
         stale_days=uw.read_place_stale_days(
             (ROOT / "site" / "lib" / "place.ts").read_text(encoding="utf-8")),
