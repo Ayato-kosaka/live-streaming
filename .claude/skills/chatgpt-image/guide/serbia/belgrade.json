@@ -1,0 +1,584 @@
+{
+  "ja": "ベオグラード",
+  "items": {
+    "guidebook": "python/data/guide/serbia/belgrade/guidebook.json"
+  },
+  "ec2_dir": "/home/ubuntu/chatgpt/belgrade",
+  "style": "editorial",
+  "style_ref": ".claude/skills/chatgpt-image/guide/bulgaria/sofia-style.webp",
+  "scene": "Scene: Belgrade, the capital of Serbia, on a clear late-autumn (November) afternoon in warm, low golden light. Seen from the water, from a low point on the river, the Belgrade Fortress (Kalemegdan) stands on its high green bluff right above the meeting of two wide rivers, faithful to the fortress photo: long, massive walls of pale honey-colored stone and old brick with bastions and a gate, half-hidden among autumn trees in gold, amber and rust; on the tip of the bluff a tall slim stone column carries a tiny dark bronze statue. Behind and above the fortress the city's pale roofs rise softly along the ridge, and far in the distance on the right stands the great white Church of Saint Sava with its big central dome and smaller domes, as in the church photo, small but clear on the skyline. The lower part of the picture is the calm, wide water where the Sava meets the Danube, softly reflecting the warm light and the walls, with one small white river boat far away. A calm, simple pale sky fills the upper part.",
+  "title": {
+    "name": "ベオグラード",
+    "label": "観光ガイド",
+    "catch": "ドナウとサヴァに抱かれた白い町",
+    "kicker": "セルビア"
+  },
+  "cover": {
+    "v": 1,
+    "bias": 0.5,
+    "file": "ベオグラード-観光ガイド",
+    "title": {
+      "x": 0.04,
+      "y": 0.955,
+      "anchor": "bl",
+      "scale": 0.85
+    },
+    "alt": "晩秋の午後の日に照らされた、2つの川の合流を見下ろす崖の上のベオグラード要塞。遠くに聖サヴァ大聖堂の白い丸屋根。ベオグラードの絵",
+    "note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。要塞と聖サヴァ大聖堂は写真を形の手本として渡した。下は川の水面、上は空。3:2 で描かせて 16:9 に切った。字なし",
+    "photos": [
+      "site/public/guide/serbia/belgrade/photos/p037152-661920-belgrade-fortress-3be9c0cb-500.webp",
+      "site/public/guide/serbia/belgrade/photos/hram-svetog-save-beograd-0005-ed-70f8761b-500.webp"
+    ]
+  },
+  "cover_tall": {
+    "v": 1,
+    "bias": 0.5,
+    "file": "ベオグラード-観光ガイド-縦",
+    "title": {
+      "x": 0.5,
+      "y": 0.955,
+      "anchor": "bc",
+      "scale": 1.2
+    },
+    "alt": "晩秋の午後の、2つの川の合流の上に立つベオグラード要塞と、遠くの聖サヴァ大聖堂。ベオグラードの絵",
+    "note": "横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+    "photos": [
+      "site/public/guide/serbia/belgrade/photos/p037152-661920-belgrade-fortress-3be9c0cb-500.webp",
+      "site/public/guide/serbia/belgrade/photos/hram-svetog-save-beograd-0005-ed-70f8761b-500.webp"
+    ]
+  },
+  "areamap": {
+    "v": 1,
+    "layout": "layout1.png",
+    "file": "ベオグラード-見どころマップ-地区分け",
+    "ratio": 0.8,
+    "sizes": [
+      1200,
+      800
+    ],
+    "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: every road, park, both rivers and the four district colors must stay where they are in the layout, and each landmark sits exactly on its numbered dot. The fortress (1) is the biggest landmark, at the upper left on the green bluff above the meeting of the rivers; the mosque (2), Republic Square (3) and Skadarlija (4) are in the upper middle; the National Assembly (5) and the Tesla Museum (6) are in the middle right; the Church of Saint Sava (7) is at the bottom right. Keep every icon small so that it fits on its own dot and does not cover its neighbours. Leave the middle of each district calm and empty (only the wash and the roads): names will be placed there later. ",
+    "prompt": "Paint an illustrated sightseeing map of central Belgrade, Serbia, as a tall portrait image (2:3, 1024x1536), using the attached layout as the exact base. North is up. Keep every white road, every green park, both rivers and the four colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove roads, rivers or districts. This is a calm, clean picture map: do NOT draw any houses, buildings, rooftops, trees, people, boats or cars. The blocks between the roads stay flat warm cream paper with a faint watercolor texture; parks are flat soft green watercolor washes; the two rivers (the wide Danube across the top and the Sava along the left side, meeting at the upper left right below the fortress) are broad, calm, soft blue watercolor water; roads are clean cream-white ribbons. Paint the four districts as flat translucent watercolor washes in their own colors from the layout (warm yellow for the fortress park at the upper left, soft lavender for the Knez Mihailova area below and right of it, soft pink for the small Skadarlija quarter to the right, soft green for the long Saint Sava area at the bottom right), with gently darker soft edges, so the roads inside them stay visible. At each numbered dark dot in the layout, draw ONE small cute illustrated landmark (about 7% of the image width; the fortress and the Church of Saint Sava may be about 12%), standing exactly on its dot with a soft contact shadow; do NOT draw the numbers or the dots themselves: 1 Belgrade Fortress (thick pale honey-colored stone walls with a bastion and an arched gate, and beside it a slim tall column with a tiny bronze statue on top); 2 Bajrakli Mosque (a small square stone mosque with one lead-grey dome and one slender white minaret); 3 Republic Square (a bronze statue of a prince on horseback on a tall stone pedestal); 4 Skadarlija (a short sloping cobbled lane with two low old white houses, a tiny cafe terrace and an old street lamp); 5 the House of the National Assembly (a grand pale neoclassical palace with a green copper central dome and a columned portico); 6 the Nikola Tesla Museum (a small two-storey cream villa with tall windows); 7 the Church of Saint Sava (a huge white Serbian-Byzantine church with a big central dome, four smaller domes around it and gold crosses). These seven landmarks are the only drawn objects on the map.",
+    "alt": "ベオグラードの見どころマップ（地区分け）。カレメグダン周辺・クネズ・ミハイロ通り周辺・スカダルリヤ・聖サヴァ大聖堂周辺の4つの地区を色で分け、名前を書いた絵地図。ベオグラード要塞・バイラクリ・モスク・共和国広場・スカダルリヤ・国会議事堂・テスラ博物館・聖サヴァ大聖堂の目印の絵と名前つき",
+    "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・川・公園・4つの地区の色・目印7か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。ゼムン（北西4km）とユーゴスラビア博物館は地図の外（矢印）",
+    "bbox": {
+      "west": 20.437,
+      "east": 20.4746,
+      "south": 44.7925,
+      "north": 44.8325
+    },
+    "districts": [
+      {
+        "id": "kalemegdan",
+        "color": "#ffd98a",
+        "poly": [
+          [
+            44.8275,
+            20.4465
+          ],
+          [
+            44.8275,
+            20.455
+          ],
+          [
+            44.823,
+            20.4555
+          ],
+          [
+            44.8205,
+            20.453
+          ],
+          [
+            44.82,
+            20.448
+          ],
+          [
+            44.823,
+            20.4455
+          ]
+        ]
+      },
+      {
+        "id": "knez",
+        "color": "#d9ccf5",
+        "poly": [
+          [
+            44.8235,
+            20.4558
+          ],
+          [
+            44.8235,
+            20.4628
+          ],
+          [
+            44.8165,
+            20.463
+          ],
+          [
+            44.814,
+            20.46
+          ],
+          [
+            44.815,
+            20.452
+          ],
+          [
+            44.8185,
+            20.4515
+          ]
+        ]
+      },
+      {
+        "id": "skadarlija",
+        "color": "#ffc4d2",
+        "poly": [
+          [
+            44.8192,
+            20.4632
+          ],
+          [
+            44.8192,
+            20.4662
+          ],
+          [
+            44.817,
+            20.4662
+          ],
+          [
+            44.8168,
+            20.4632
+          ]
+        ]
+      },
+      {
+        "id": "sava",
+        "color": "#c8e6c9",
+        "poly": [
+          [
+            44.8065,
+            20.4685
+          ],
+          [
+            44.8065,
+            20.4725
+          ],
+          [
+            44.7965,
+            20.4715
+          ],
+          [
+            44.7965,
+            20.467
+          ]
+        ]
+      }
+    ],
+    "marks": [
+      {
+        "n": 1,
+        "what": "ベオグラード要塞",
+        "lat": 44.823502,
+        "lon": 20.449765
+      },
+      {
+        "n": 2,
+        "what": "バイラクリ・モスク",
+        "lat": 44.822057,
+        "lon": 20.457349
+      },
+      {
+        "n": 3,
+        "what": "共和国広場",
+        "lat": 44.816222,
+        "lon": 20.460295
+      },
+      {
+        "n": 4,
+        "what": "スカダルリヤ",
+        "lat": 44.818099,
+        "lon": 20.464758
+      },
+      {
+        "n": 5,
+        "what": "国会議事堂",
+        "lat": 44.811727,
+        "lon": 20.465932
+      },
+      {
+        "n": 6,
+        "what": "ニコラ・テスラ博物館",
+        "lat": 44.805105,
+        "lon": 20.4707
+      },
+      {
+        "n": 7,
+        "what": "聖サヴァ大聖堂",
+        "lat": 44.798045,
+        "lon": 20.469188
+      }
+    ],
+    "title": {
+      "name": "ベオグラード",
+      "label": "見どころマップ"
+    },
+    "names": [
+      {
+        "id": "kalemegdan",
+        "label": [
+          "ベオグラード要塞"
+        ],
+        "x": 0.55,
+        "y": 0.128
+      },
+      {
+        "id": "bajrakli",
+        "label": [
+          "バイラクリ・モスク"
+        ],
+        "x": 0.74,
+        "y": 0.19
+      },
+      {
+        "id": "republic",
+        "label": [
+          "共和国広場"
+        ],
+        "x": 0.74,
+        "y": 0.4
+      },
+      {
+        "id": "assembly",
+        "label": [
+          "国会議事堂"
+        ],
+        "x": 0.77,
+        "y": 0.585
+      },
+      {
+        "id": "tesla",
+        "label": [
+          "テスラ博物館"
+        ],
+        "x": 0.885,
+        "y": 0.68
+      },
+      {
+        "id": "sava",
+        "label": [
+          "聖サヴァ大聖堂"
+        ],
+        "x": 0.66,
+        "y": 0.93
+      }
+    ],
+    "areas": [
+      {
+        "id": "kalemegdan",
+        "name": "カレメグダン周辺",
+        "label": [
+          "カレメグダン周辺"
+        ],
+        "local": "Kalemegdan",
+        "color": "#ffd98a",
+        "x": 0.3,
+        "y": 0.255,
+        "source": [
+          "https://www.arukikata.co.jp/webmagazine/272443/",
+          "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html"
+        ]
+      },
+      {
+        "id": "knez",
+        "name": "クネズ・ミハイロ通り周辺",
+        "label": [
+          "クネズ・ミハイロ",
+          "通り周辺"
+        ],
+        "local": "Knez Mihailova",
+        "color": "#d9ccf5",
+        "x": 0.36,
+        "y": 0.39,
+        "source": [
+          "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_175.html"
+        ]
+      },
+      {
+        "id": "skadarlija",
+        "name": "スカダルリヤ",
+        "label": [
+          "スカダルリヤ"
+        ],
+        "local": "Skadarlija",
+        "color": "#ffc4d2",
+        "x": 0.75,
+        "y": 0.253,
+        "source": [
+          "https://ja.wikipedia.org/wiki/%E3%82%B9%E3%82%AB%E3%83%80%E3%83%AB%E3%83%AA%E3%83%A4"
+        ]
+      },
+      {
+        "id": "sava",
+        "name": "聖サヴァ大聖堂周辺",
+        "label": [
+          "聖サヴァ大聖堂周辺"
+        ],
+        "local": "Hram Svetog Save",
+        "color": "#c8e6c9",
+        "x": 0.78,
+        "y": 0.81,
+        "source": [
+          "https://www.veltra.com/jp/guide/international/spot-international/36278/",
+          "https://www.arukikata.co.jp/webmagazine/272443/"
+        ]
+      }
+    ],
+    "beyond": [
+      {
+        "id": "zemun",
+        "name": "ゼムン",
+        "local": "Zemun",
+        "lat": 44.849309,
+        "lon": 20.411248,
+        "source": [
+          "https://en.wikipedia.org/wiki/Zemun"
+        ],
+        "x": 0.08,
+        "y": 0.13,
+        "dir": "nw"
+      },
+      {
+        "id": "yugoslavia",
+        "name": "ユーゴスラビア博物館（花の家）",
+        "local": "Muzej Jugoslavije",
+        "lat": 44.788019,
+        "lon": 20.452314,
+        "source": [
+          "https://en.wikipedia.org/wiki/Museum_of_Yugoslavia"
+        ],
+        "x": 0.36,
+        "y": 0.95,
+        "dir": "s"
+      }
+    ],
+    "base": {
+      "by": "© OpenStreetMap contributors",
+      "licence": "https://www.openstreetmap.org/copyright"
+    }
+  },
+  "food": {
+    "model": "bulgaria/sofia:food-shopska-salata",
+    "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた（ショプスカ・サラダだけは写し取らせないよう別の手本）。布は描かせない（あやと 2026-11-19）。字なし",
+    "items": {
+      "cevapi": {
+        "desc": "Serbian ćevapi: eight short, finger-sized, skinless grilled minced-meat sausages (juicy brown with dark grill marks) on a plain plate, half tucked into a soft, puffy round flatbread (lepinja) split open, with a small heap of finely chopped raw white onion beside them.",
+        "alt": "焼いた棒の形のひき肉チェヴァピと、平たいパンと刻んだ玉ねぎ"
+      },
+      "pljeskavica": {
+        "desc": "Serbian pljeskavica: one large, flat, round grilled minced-meat patty (about 20 cm across, juicy brown with grill marks and charred edges) laid on a soft round lepinja flatbread on a plain plate, topped with a heap of chopped raw onion.",
+        "alt": "平たいパンにのせた大きなひき肉の焼き物プリェスカヴィツァと、刻んだ玉ねぎ"
+      },
+      "karadjordjeva": {
+        "desc": "Serbian Karađorđeva šnicla: one long rolled breaded schnitzel (a crisp golden-brown roll about 20 cm long) on a plain oval plate, cut in half so that white melted kajmak cream oozes from the middle, with a wedge of lemon and a small bowl of white tartar sauce.",
+        "alt": "巻いて揚げたカツの断面から白いカイマク。レモンとタルタルソースを添えて"
+      },
+      "sarma": {
+        "desc": "Serbian sarma: five plump cabbage rolls (soft pale yellow-green pickled cabbage leaves wrapped around minced meat and rice) in a small round brown glazed earthenware pot with a little red-brown broth and a few pieces of smoked bacon between them.",
+        "alt": "陶器の鍋に入った、酢漬けのキャベツのロールキャベツ、サルマ"
+      },
+      "paprike": {
+        "desc": "Serbian punjene paprike: three pale green bell peppers stuffed with minced meat and rice, each with its top put back on as a little lid, sitting in a shallow plain dish of thick red tomato sauce.",
+        "alt": "トマトのソースで煮た、米とひき肉を詰めたピーマン"
+      },
+      "pasulj": {
+        "desc": "Serbian pasulj: a deep plain bowl of thick, creamy white-bean stew, orange-red with paprika, with chunks of smoked pork rib and a few bay leaves, and one small dried red pepper beside the bowl.",
+        "alt": "白いんげんと燻製の肉の、とろりとした豆の煮込み、パスリ"
+      },
+      "prebranac": {
+        "desc": "Serbian prebranac: a shallow round brown earthenware baking dish of baked white beans layered with soft onions, the top crusty and reddish-brown from paprika and caramelized at the edges, with a wooden spoon in it.",
+        "alt": "土鍋で焼いた、表面が赤茶色の豆と玉ねぎの重ね焼き、プレブラナツ"
+      },
+      "muckalica": {
+        "desc": "Serbian mućkalica: a small oval terracotta dish with two little handles, full of a glossy red stew of grilled pork pieces cooked with strips of red and green peppers, onion and tomato.",
+        "alt": "焼いた豚肉とピーマン・トマトの赤い煮込み、ムチュカリツァ"
+      },
+      "riblja": {
+        "desc": "Serbian riblja čorba: a deep plain white bowl of bright orange-red fisherman's soup made with paprika, with chunks of white river fish and a few slices of onion, steam rising, and one small fresh hot pepper beside it.",
+        "alt": "パプリカで赤い、川魚のスープ、リブリャ・チョルバ"
+      },
+      "kajmak": {
+        "desc": "Serbian kajmak: a small plain bowl filled with thick, smooth, ivory-white clotted milk cream, its surface softly folded and slightly glossy, a small butter knife resting on the rim, beside a few torn pieces of puffy lepinja bread.",
+        "alt": "白くなめらかな乳脂のクリーム、カイマクの小鉢とパン"
+      },
+      "ajvar": {
+        "desc": "Serbian ajvar: a small plain bowl of thick, coarse, glossy orange-red roasted red pepper relish with flecks of char, a spoon in it, beside one slice of rustic bread spread with it and one whole roasted red pepper with blistered skin.",
+        "alt": "赤ピーマンのペースト、アイバルの小鉢と、塗ったパン"
+      },
+      "urnebes": {
+        "desc": "Serbian urnebes: a small plain bowl of thick, rough, creamy white cheese spread speckled all over with flakes of red chili and paprika, a spoon in it, beside one dried red chili pepper and a piece of lepinja bread.",
+        "alt": "唐辛子の赤い粒が混ざった白いチーズのペースト、ウルネベス"
+      },
+      "sopska": {
+        "desc": "Serbian šopska salad: in a shallow plain white bowl, diced ripe red tomatoes, diced cucumbers, a little chopped onion and pale green pepper, completely covered with a fluffy mound of finely grated white sheep cheese, with one small pickled hot pepper on top.",
+        "alt": "角切りのトマトときゅうりに、白いチーズをたっぷりおろしたショプスカ・サラダ",
+        "model": "bulgaria/sofia:food-tarator"
+      },
+      "cvarci": {
+        "desc": "Serbian čvarci: a small plain dish heaped with crisp, rough, golden-brown cubes of fried pork cracklings, with a small raw onion cut into quarters and a pinch of coarse salt beside it.",
+        "alt": "かりかりの豚の脂かす、チュヴァルツィと、生の玉ねぎ"
+      },
+      "burek": {
+        "desc": "Serbian burek: a big round pie of paper-thin, flaky golden-brown pastry coiled in a spiral, in a round metal baking tray, with one large wedge cut out and placed on a plain plate in front showing the thin layers, and a tall glass of white drinking yogurt beside it.",
+        "alt": "渦巻きの薄い生地のパイ、ブレクの一切れと、飲むヨーグルト"
+      },
+      "pita": {
+        "desc": "Serbian cheese pita (savijača): four long, thin, golden-brown rolls of paper-thin pastry filled with white cheese, lying side by side on a plain wooden board, two of them cut into short pieces that show the spiral of pastry and the soft white cheese inside.",
+        "alt": "薄い生地でチーズを巻いて焼いた、細長いチーズのピタの切り口"
+      },
+      "gibanica": {
+        "desc": "Serbian gibanica: one tall square piece of cheese pie on a plain plate, its golden puffed top crisp and blistered, the cut side showing many soft, wrinkled layers of thin pastry baked together with white cheese and egg.",
+        "alt": "チーズと卵を薄い生地と重ねて焼いた、四角いギバニツァの一切れ"
+      },
+      "proja": {
+        "desc": "Serbian proja: four thick square pieces of golden-yellow cornbread with a rough, crumbly top crust and specks of white cheese inside, stacked on a small wooden board.",
+        "alt": "四角く切った黄色いとうもろこしのパン、プロヤ"
+      },
+      "palacinke": {
+        "desc": "Serbian palačinke: three thin pancakes folded into triangles on a plain plate, one opened to show a layer of dark red jam, sprinkled with chopped walnuts and a little powdered sugar.",
+        "alt": "ジャムとくるみをのせて折りたたんだクレープ、パラチンケ"
+      },
+      "krempita": {
+        "desc": "Serbian krempita: one tall square slice of custard cake on a plain plate: a very thick layer of pale yellow, softly wobbling vanilla custard between a thin flaky pastry base and a thin flaky pastry top dusted with powdered sugar.",
+        "alt": "厚いカスタードを薄いパイで挟んだ、四角いクレムピタ"
+      },
+      "baklava": {
+        "desc": "Baklava as served in Serbia: six diamond-shaped pieces on a plain plate, made of many paper-thin golden pastry layers filled with chopped walnuts, glossy with syrup.",
+        "alt": "シロップで光る、くるみを挟んだひし形のバクラヴァ"
+      },
+      "tufahije": {
+        "desc": "Serbian tufahije: two whole peeled apples poached in sugar syrup until pale golden and translucent, their cores filled with chopped walnuts, each topped with a swirl of white whipped cream, in a shallow glass bowl with a little clear syrup.",
+        "alt": "くるみを詰めて煮たりんごに、白いクリームをのせたトゥファヒヤ"
+      },
+      "vanilice": {
+        "desc": "Serbian vanilice: a small heap of about ten little round shortbread sandwich cookies, each pair held together with a thin layer of red jam, all thickly dusted with white powdered sugar, on a plain plate.",
+        "alt": "ジャムを挟んで粉砂糖をかけた小さな丸いクッキー、ヴァニリツェ"
+      },
+      "rakija": {
+        "desc": "Serbian šljivovica (plum rakija): two small, slender, tulip-shaped shot glasses filled with clear plum brandy, standing beside a few dark blue-purple plums with a soft whitish bloom. No bottle.",
+        "alt": "細い小さなグラスに入った透明なラキヤと、すもも"
+      },
+      "kafa": {
+        "desc": "Serbian domestic coffee: a small long-handled copper coffee pot (džezva) beside a small white porcelain cup without a handle, filled with thick dark coffee with a little light-brown foam, a sugar cube and a small glass of water next to it.",
+        "alt": "柄つきの銅のポット、ジェズヴァと、小さなカップの濃いコーヒー"
+      },
+      "pivo": {
+        "desc": "Serbian beer: one tall, heavy glass beer mug with a handle and NO logo or writing, full of clear golden lager with a thick white foam head and drops of condensation on the glass.",
+        "alt": "ジョッキに注いだ金色のセルビアのビール"
+      },
+      "prokupac": {
+        "desc": "A glass of Serbian Prokupac red wine: one stemmed wine glass of deep ruby-red wine, beside a small bunch of dark blue-black grapes. No bottle.",
+        "alt": "グラスの濃い赤ワイン、プロクパツと、黒いぶどう"
+      }
+    }
+  },
+  "buy": {
+    "model": "bulgaria/sofia:buy-rose-oil",
+    "note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（キリムは品そのもの）。瓶・袋・箱は字なし",
+    "items": {
+      "rakija": {
+        "desc": "Two glass bottles of Serbian rakija with NO labels and no writing: one tall clear bottle with a whole yellow-green pear grown inside it in clear pear brandy, and one bottle of pale golden plum brandy with a cork, with one small slender filled shot glass beside them.",
+        "alt": "梨が丸ごと入った瓶と、金色のすももの瓶のラキヤ。小さなグラス"
+      },
+      "medovaca": {
+        "desc": "Serbian medovača (honey brandy): one traditional round, flat, ring-shaped glazed earthenware flask (with a hole through the middle) in brown and cream glaze with NO writing, beside a small glass of amber honey-colored brandy and a small piece of honeycomb.",
+        "alt": "輪の形の焼き物の瓶と、蜂蜜色のメドヴァチャ"
+      },
+      "ajvar": {
+        "desc": "Two unopened glass jars of Serbian ajvar with NO labels, full of thick orange-red roasted pepper relish, with plain dark red metal lids, and two whole red peppers beside them.",
+        "alt": "赤ピーマンのペースト、アイバルの瓶詰め"
+      },
+      "plazma": {
+        "desc": "Serbian Plazma biscuits: a neat stack of flat, rectangular, pale golden-brown biscuits (each about 6 x 4 cm, with straight sides and slightly rounded corners, NOT long oval finger biscuits), the top one showing a fine embossed pattern of tiny dots (no letters), half sliding out of an opened plain dark blue paper wrapper with NO writing or logo.",
+        "alt": "包みから出した四角いビスケット、プラズマ",
+        "v": 2
+      },
+      "eurocrem": {
+        "desc": "Serbian Eurocrem spread: an open plain glass jar showing thick two-color cream, dark brown chocolate-hazelnut and creamy white milk cream in wide swirling stripes, its plain lid beside it and a small spoon holding a swirl of both colors.",
+        "alt": "茶と白の2色のクリームがうずを巻く、エウロクレムの器"
+      },
+      "smoki": {
+        "desc": "Serbian Smoki snack: a plain yellow paper snack bag with NO writing or logo, torn open, with puffy, curly, yellow-orange peanut-flavored corn puffs spilling out onto the table.",
+        "alt": "袋からこぼれたピーナッツ味のスナック、スモキ"
+      },
+      "opanci": {
+        "desc": "Serbian opanci: one pair of traditional handmade brown leather peasant moccasins, low and soft like slippers, the very tip of each toe ending in a distinct upturned pointed leather hook that curls up and back like a little ram's horn (the most characteristic detail, clearly visible from the side), with woven leather strips across the top, standing side by side, seen from the side at an angle.",
+        "alt": "つま先が角のように反った革の伝統の靴、オパンツィ",
+        "v": 2
+      },
+      "pirot": {
+        "desc": "A Pirot kilim from Serbia: a flat-woven wool rug, rolled up at one end and partly unrolled across the table, showing bold geometric motifs (red background with black, white and dark blue diamonds and stepped shapes) and a short fringe at the end.",
+        "alt": "赤と黒の幾何学模様のピロトのキリムを丸めたもの",
+        "fix": "The kilim itself is the subject and the only textile in the picture; nothing under it. "
+      },
+      "prokupac": {
+        "desc": "A bottle of Serbian red wine: one dark green glass wine bottle with a plain cream label with NO writing, standing beside one filled glass of deep ruby wine and a cork.",
+        "alt": "字の無いラベルの赤ワインの瓶とグラス。プロクパツ"
+      }
+    }
+  },
+  "do": {
+    "note": "案2「大人の画集」の調子（ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。要塞・スカダルリヤ・ペトロヴァラディン要塞は写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+    "shape": "card43",
+    "items": {
+      "kalemegdan": {
+        "ja": "要塞から2つの川の合流",
+        "desc": "the view from the walls of Belgrade Fortress (Kalemegdan) at sunset, high above the meeting of the Sava and the Danube; the landscape is the hero. Composition: from on top of the old fortress wall, looking far out and down over a battlement of pale honey-colored stone (in the lower left foreground) onto a vast, shining expanse of water where two wide rivers meet; in the middle of the water lies a long, low, wooded river island in autumn colors, and the flat far bank fades into a soft haze. One small person seen from behind sits on the wall at the left, looking out. Light: the sun is just setting on the far horizon, the sky glows apricot, rose and soft violet, and the water mirrors it in long bands of gold. Palette: apricot, rose gold and lilac, with warm honey stone and cool violet-blue shadows.",
+        "alt": "夕暮れのベオグラード要塞の城壁から、サヴァ川とドナウ川が合わさる広い水面と中洲の島を眺める、小さな人の後ろ姿の絵",
+        "photos": [
+          "site/public/guide/serbia/belgrade/photos/p037152-661920-belgrade-fortress-3be9c0cb-500.webp"
+        ]
+      },
+      "cevapi": {
+        "ja": "本場のチェヴァプチチ",
+        "desc": "a meal of ćevapi at a traditional Belgrade grill house (kafana); the food is the hero. Composition: a close view from slightly above onto a rustic dark wooden board on a plain wooden table: eight short, finger-sized, skinless grilled minced-meat sausages (juicy brown with dark grill marks), a soft, puffy round flatbread (lepinja) torn open beside them, a heap of finely chopped raw white onion, and a small earthenware dish of thick ivory-white kajmak cream. Two hands come in from the bottom edge, one tearing off a piece of the flatbread. In the soft background, the warm blur of the grill house. Light: warm evening lamplight from the upper left, a little smoke from the grill. Palette: charcoal brown, toasted gold, ivory white and fresh onion white, with deep warm browns in the shadows.",
+        "alt": "木の板にのった焼きたてのチェヴァピと、ふっくらしたパン・刻んだ玉ねぎ・カイマク。パンをちぎる手元の絵"
+      },
+      "skadarlija": {
+        "ja": "石畳のスカダルリヤで夕食",
+        "desc": "an evening dinner in Skadarlija, Belgrade's old bohemian quarter; the street and its atmosphere are the hero. Composition: a view down a gently sloping cobbled lane, faithful to the street photo: rounded old paving stones, low old houses with pale plastered walls, small windows and red geraniums, and in front of them café terraces with small tables, wooden chairs and old iron lanterns. In the middle ground, a small band of three musicians seen from behind (an accordion, a violin and a double bass) plays beside a table; a few diners sit at the tables, small, seen from behind or in profile. Light: night, deep blue sky; the lanterns and the windows glow warm amber, and the cobbles shine with reflected lamplight. Palette: deep night blue and warm amber, with geranium red and pale plaster white.",
+        "alt": "夜の石畳のスカダルリヤ。ランプの灯るテラス席と、アコーディオンと弦の小さな楽団の後ろ姿の絵",
+        "photos": [
+          "site/public/guide/serbia/belgrade/photos/skadarska-street-c941551f-500.webp"
+        ]
+      },
+      "sava": {
+        "ja": "聖サヴァ大聖堂の金のモザイク",
+        "desc": "inside the Church of Saint Sava in Belgrade, one of the largest Orthodox churches in the world; the golden dome is the hero. Composition: a dramatic low view straight up into the vast central dome, which fills most of the picture: its inner surface is entirely covered in shimmering golden mosaic with large, simple, softly suggested figures in deep blue and red robes (no faces in detail, no writing), ringed by a band of small arched windows; four huge white marble arches and pillars frame it at the edges. At the very bottom of the picture, a few tiny visitors seen from behind stand on the polished marble floor, looking up. Light: cool daylight pours in through the ring of windows in soft shafts and makes the gold glitter. Palette: shimmering gold and white marble, with deep lapis blue and touches of dark red.",
+        "alt": "聖サヴァ大聖堂の丸屋根の内側いっぱいの金色のモザイクを、下から見上げる小さな人影の絵",
+        "fix": "The air inside is perfectly clear: no white streaks, veils, smoke, light beams drawn as stripes or ghostly shapes anywhere in the picture. ",
+        "v": 2
+      },
+      "tesla": {
+        "ja": "テスラ博物館の放電",
+        "desc": "a demonstration at the Nikola Tesla Museum in Belgrade; the electric spark is the hero. Composition: a dim, small exhibition room with dark wooden display cases and old brass instruments along the walls; in the middle stands a tall Tesla coil (a tall cylinder wound with fine copper wire, topped by a large round metal ring), and bright branching violet-white electric discharges leap from the ring into the air. In the foreground, a small group of five or six visitors, seen from behind as dark silhouettes, watches; one of them holds up a long thin glass tube that glows softly. Light: almost dark, lit only by the cold violet glow of the sparks, which rims the visitors and the brass. Palette: deep indigo and violet, electric white, with warm copper and dark wood.",
+        "alt": "薄暗い展示室で、大きなテスラコイルから紫の放電が走るのを見守る見学の一行の後ろ姿の絵"
+      },
+      "riblja": {
+        "ja": "ドナウの川辺で魚のスープ",
+        "desc": "lunch on a riverside terrace on the Danube in Zemun, Belgrade; the table and the river are the hero. Composition: a medium view from slightly above a plain wooden terrace table in the foreground: a deep white bowl of riblja čorba, a bright orange-red fish soup made with paprika, with chunks of white river fish, steam rising; beside it thick slices of white bread and a small fresh hot pepper. Behind the table, past a simple wooden railing, the wide, calm Danube, and on the far left a small green hill with old low houses and a slender old brick tower on top. Light: soft, clear autumn midday light, slightly hazy over the water. Palette: paprika red-orange and white, with grey-green river water, pale blue sky and soft autumn ochre.",
+        "alt": "ドナウ川沿いのテラス席の卓に、パプリカで赤い魚のスープとパン。後ろに川と、塔の立つ小さな丘の絵"
+      },
+      "burek": {
+        "ja": "朝ごはんのブレク",
+        "desc": "an early breakfast at a small Belgrade bakery (pekara); the pastry is the hero. Composition: a close view at counter height: on a plain metal bakery counter lies a big wedge of burek, a round pie of paper-thin, flaky golden pastry coiled in a spiral, on a square of plain white bakery paper, with flakes of pastry scattered around; beside it stands a small plain glass bottle of white drinking yogurt. A hand reaches in from the right to pick up the paper. Behind, slightly blurred, a glass display case with more round golden pies and the warm glow of the oven. Light: cool, pale blue early-morning daylight from a window on the left, mixed with the warm light of the oven. Palette: flaky golden brown and creamy white, with cool morning blue-grey.",
+        "alt": "パン屋のカウンターで、紙にのせた渦巻きの薄い生地のブレクと、飲むヨーグルトの瓶を手に取る手元の絵"
+      },
+      "novi-sad": {
+        "ja": "ノヴィ・サドへ日帰り",
+        "desc": "a day trip to Novi Sad, an hour from Belgrade; Petrovaradin Fortress and its clock tower are the hero. Composition: from the terrace on top of Petrovaradin Fortress, faithful to the fortress photo: on the right in the foreground stands the white baroque clock tower with a dark grey onion-shaped roof and a big clock face (no numbers drawn in detail); thick fortress walls of warm ochre stone run along the edge of the hill. Below, the wide Danube curves past, crossed by a bridge, and on the far bank spreads the town of Novi Sad with red roofs and a few church spires. One small person seen from behind leans on the wall, looking at the view. Light: crisp, bright clear morning with a high blue sky and small white clouds. Palette: clear sky blue and river blue, warm ochre stone and chalk white, with red-roof accents.",
+        "alt": "ドナウ川を見下ろすペトロヴァラディン要塞の城壁と白い時計塔。下の川と対岸のノヴィ・サドの町並みを眺める人の後ろ姿の絵",
+        "photos": [
+          "site/public/guide/serbia/belgrade/photos/petrovaradin-fortress-petervarad-f5764db8-500.webp"
+        ]
+      }
+    }
+  }
+}
