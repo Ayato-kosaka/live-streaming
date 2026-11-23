@@ -316,20 +316,20 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "albania", city: "tirana", slug: "airport", crumb: "空港から市街へ" },
   /* ティラナのホステルで2回盗まれた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
   { country: "albania", city: "tirana", slug: "hostel", crumb: "ホステルの盗難" },
-  /* セヴァン湖に行ってきた【2026年5月】（#1228。マトカ渓谷と同じ型）。エレバンの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "armenia", city: "yerevan", slug: "sevan", crumb: "セヴァン湖", draft: true },
-  /* エレバンの市バスに乗ってきた【2026年5月】（#1228。マトカ渓谷と同じ型）。エレバンの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "armenia", city: "yerevan", slug: "bus", crumb: "市バス", draft: true },
-  /* エレバン湖まで歩いてきた【2026年5月】（#1228。マトカ渓谷と同じ型）。エレバンの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "armenia", city: "yerevan", slug: "lake", crumb: "エレバン湖", draft: true },
-  /* カスケードの大階段を上ってきた【2026年4〜5月】（#1228。マトカ渓谷と同じ型）。エレバンの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "armenia", city: "yerevan", slug: "cascade", crumb: "カスケード", draft: true },
-  /* ジェノサイド記念碑まで歩いてきた【2026年5月】（#1228。マトカ渓谷と同じ型）。エレバンの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "armenia", city: "yerevan", slug: "memorial", crumb: "ジェノサイド記念碑", draft: true },
-  /* エレバンのパン屋でガタを食べてきた【2026年4〜5月】（#1228。マトカ渓谷と同じ型）。エレバンの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "armenia", city: "yerevan", slug: "bakery", crumb: "パン屋とガタ", draft: true },
-  /* エレバンの市場を歩いてきた【2026年4〜5月】（#1228。マトカ渓谷と同じ型）。エレバンの街の面が公開前なので、記事も印を付けておき、街と一緒に外す */
-  { country: "armenia", city: "yerevan", slug: "market", crumb: "市場", draft: true },
+  /* セヴァン湖に行ってきた【2026年5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "sevan", crumb: "セヴァン湖" },
+  /* エレバンの市バスに乗ってきた【2026年5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "bus", crumb: "市バス" },
+  /* エレバン湖まで歩いてきた【2026年5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "lake", crumb: "エレバン湖" },
+  /* カスケードの大階段を上ってきた【2026年4〜5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "cascade", crumb: "カスケード" },
+  /* ジェノサイド記念碑まで歩いてきた【2026年5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "memorial", crumb: "ジェノサイド記念碑" },
+  /* エレバンのパン屋でガタを食べてきた【2026年4〜5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "bakery", crumb: "パン屋とガタ" },
+  /* エレバンの市場を歩いてきた【2026年4〜5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "market", crumb: "市場" },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */
