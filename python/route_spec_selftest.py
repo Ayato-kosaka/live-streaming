@@ -48,6 +48,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "python"))
+from ts_read import read_array  # noqa: E402
 SPEC = ROOT / "docs" / "spec" / "routes.md"
 APP = ROOT / "site" / "app"
 KINDS = ROOT / "site" / "content" / "kinds.ts"
@@ -70,10 +72,14 @@ def spec_rows(text: str) -> list:
 
 
 def kind_rows(text: str) -> list:
-    """種類の表（`kinds.ts` の `KINDS`）を、(型, 種類, 入口, 状態) の並びで返す。"""
-    pat = r'\{ route: "([^"]*)", kind: "([^"]*)", entrance: "([^"]*)", state: "([^"]*)" \}'
-    m = re.search(r"export const KINDS = \[(.*?)\] as const", text, re.S)
-    return [tuple(x) for x in re.findall(pat, m.group(1))] if m else []
+    """種類の表（`kinds.ts` の `KINDS`）を、(型, 種類, 入口, 状態) の並びで返す。
+
+    読み手は `ts_read.read_array` の1本（字を正規表現で読まない）。読み落としが在れば空を返して 2 で止める。
+    """
+    got = read_array(text, "KINDS", keys=("route", "kind", "entrance", "state"), id_key="route")
+    if got.missed:
+        return []
+    return [(r["route"], r["kind"], r["entrance"], r["state"]) for r in got.rows]
 
 
 def kinds_judge(spec: list, kinds: list) -> list:

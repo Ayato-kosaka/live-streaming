@@ -41,7 +41,7 @@ import { fileURLToPath } from "node:url";
    見ている。`docs/island-misses.md` #248 で、読み手を1本に寄せたのに
    `.mjs` 側に自前の読み手が20か所あった、という前がある）。
    最初は `/robots:\s*\{[^}]*index:\s*false/` と書いて、そこで止められた。 */
-import { closeAt, fields, nestedBody } from "../../tools/sprites/tsread.mjs";
+import { closeAt, fields, nestedBody, readMap } from "../../tools/sprites/tsread.mjs";
 import {
   sitemapReadsArticles,
   sitemapReadsCities,
@@ -104,7 +104,11 @@ if (!found.length) {
   process.exit(2);
 }
 /** 索引に出すと決めた道の型（`"/about": { listed: true, …`）。固定の道はそのまま、`<…>` の型は名簿から */
-const LISTED = new Set([...src.matchAll(/"(\/[^"]*)": \{\s*listed: true/g)].map((m) => m[1]));
+const LISTED = new Set(
+  readMap(src, "MEMBERS")
+    .filter(([, v]) => fields(v).listed === "true")
+    .map(([k]) => k),
+);
 if (!src.includes("const MEMBERS") || !LISTED.size) {
   console.error("✕ lib/pages.ts の MEMBERS が読めない。数えられないので 2 で止めます");
   process.exit(2);
