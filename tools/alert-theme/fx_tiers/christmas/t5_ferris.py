@@ -35,13 +35,13 @@ from xmas_kit import burst, emit_masked, snowfall, soft_dot, trail  # noqa: E402
 ART = os.path.join(ME, "..", "..", "fx_art", "christmas", "t5")
 
 # 世界（落ち着いたあとの画面）の置き場
-HX, HY, H_HERO = 360.0, 22.0, 232.0     # あやとのゴンドラ（吊り輪の x・y・高さ）。上の帯に収まる
-WCX, WCY, WR = 360.0, 352.0, 330.0      # 観覧車の輪（真ん中・半径）。てっぺんの吊り輪があやとのゴンドラ
+HX, HY, H_HERO = 360.0, 14.0, 210.0     # あやとのゴンドラ（吊り輪の x・y・高さ）。揺れても下の端が 230 より上（上の帯）
+WCX, WCY, WR = 360.0, 344.0, 330.0      # 観覧車の輪（真ん中・半径）。てっぺんの吊り輪があやとのゴンドラ
 WHEEL_C = (0.5, 252 / 629)              # 観覧車の絵の中の輪の真ん中（割合）
 MUG = (112 / 566, 150 / 800)            # あやとの絵の中のマグの口
 H_GOND = 200.0                          # ほかのゴンドラの高さ
 SETTLE = (2.2, 2.55)
-START_ZOOM, START_X, START_Y = 2.45, 360.0, 330.0   # 登場のあいだ、ゴンドラを箱の真ん中に大きく（吊り輪が y 330）
+START_ZOOM, START_X, START_Y = 2.7, 360.0, 330.0    # 登場のあいだ、ゴンドラを箱の真ん中に大きく（幅 56%。吊り輪が y 330）
 CHEERS = 1.0
 VIOLET_SKY = (np.float32([0.05, 0.04, 0.17]), np.float32([0.20, 0.12, 0.33]))
 
@@ -69,13 +69,13 @@ class Scene(Stage):
         R = np.random.default_rng(5101)
         self.stars = np.stack([R.random(130) * W, R.random(130) ** 1.3 * 900, R.random(130), R.random(130), R.random(130)], -1)
         self.snow_far = Loop(120, 5102, cycles=(1, 1))
-        self.snow_mid = Loop(170, 5103, cycles=(2, 2))
-        self.near = Loop(140, 5104, cycles=(3, 3))
+        self.snow_mid = Loop(100, 5103, cycles=(2, 2))
+        self.near = Loop(28, 5104, cycles=(3, 3))
         self.flake = {r: soft_dot(r) for r in (1.6, 3.0, 6.5)}
         self.steam = Loop(8, 5105, cycles=(1, 1))
-        self.dust = Loop(50, 5106, cycles=(1, 2))
-        self.glitter = Loop(115, 5109, cycles=(1, 2))
-        self.bok = Loop(22, 5107, cycles=(2, 2))
+        self.dust = Loop(24, 5106, cycles=(1, 2))
+        self.glitter = Loop(36, 5109, cycles=(1, 2))
+        self.bok = Loop(12, 5107, cycles=(2, 2))
         self.sparkles = np.stack([30 + R.random(22) * 660, 30 + R.random(22) * 600, R.random(22), R.random(22)], -1)
 
     # ---------------- カメラ（2D）: 登場はゴンドラを箱の真ん中に 2.45 倍。観覧車・ゴンドラは p=1、空・屋台は動かない
@@ -92,7 +92,7 @@ class Scene(Stage):
     def hero(self, c):
         """返す: (絵, ゴンドラの揺れ（度）, sy)"""
         T, u = c.T, c.u
-        swing = 4.0 * math.sin(2 * math.pi * 2 * (T - self.INTRO) / self.STAY)
+        swing = 2.5 * math.sin(2 * math.pi * 2 * (T - self.INTRO) / self.STAY)
         if c.clip == "intro":
             if T < 0.4:
                 return None
@@ -107,7 +107,7 @@ class Scene(Stage):
         s = (c.ph * self.STAY) % self.STAY if c.clip == "stay" else 0.0
         if c.clip == "stay" and 1.5 <= s < 3.0:
             q = (s - 1.5) / 1.5
-            return self.wave, swing + 4 * math.sin(2 * math.pi * 3 * q), 1.0
+            return self.wave, swing + 2.5 * math.sin(2 * math.pi * 3 * q), 1.0
         return self.mug, swing, 1.0
 
     def draw(self, c):
@@ -129,6 +129,9 @@ class Scene(Stage):
         for j, (x, y, r0, r1) in enumerate(self.sparkles):
             tw1 = max(0.0, math.sin(6.283 * (c.ph * (1 + int(r0 * 2)) + r1))) ** 3
             fxv.stamp(back.L, self.kit.star["white" if j % 3 else "gold"], x, y, (0.2 + 0.6 * tw1) * sky_k)
+
+        # ---- 遊園地のサーチライト（下から夜空を5本が首を振る。やわらかい光なので、焼いても軽い。滞在の輪の周期）
+        self.searchlights(c, back, sky_k * ease(ramp(Ti, 0.5, 1.2)))
 
         # ---- マーケットの屋台（下の端）とメリーゴーランド（右下）。動かない
         mk = ease(ramp(Ti, 0.2, 0.8)) * out_k
@@ -153,7 +156,7 @@ class Scene(Stage):
         for j in range(1, 6):
             th = -math.pi / 2 + j * math.pi / 3
             gx, gy, gs = self.at(c, WCX + WR * math.cos(th), WCY + WR * math.sin(th), 1.0)
-            sprite(back, self.gond, gx, gy, H_GOND * gs, anchor=(0.5, 0.02), rot=5 * math.sin(2 * math.pi * (c.ph * 2 + j * 0.17)), k=wk, blur=dof,
+            sprite(back, self.gond, gx, gy, H_GOND * gs, anchor=(0.5, 0.02), rot=3 * math.sin(2 * math.pi * (c.ph + j * 0.17)), k=wk, blur=dof,
                    grade=np.float32([0.95, 0.92, 0.95]) * (0.7 + 0.3 * lit))
 
         # ---- あやとのゴンドラ（主役だけの層。てっぺんの吊り輪から下がる）
@@ -202,6 +205,7 @@ class Scene(Stage):
             glow(back, 360, 760, 220, GOLD * 0.7 + WHITE * 0.2, 0.6 * (1 - rv) ** 2)
         out_b = back.finish(bloom=0.8, edge=self.edge)
         out_b = over_rgba(self.finish_hero(heroc, bloom=0.4), out_b)
+        back_glitter = Canvas()
 
         # ---- front（光と粒だけ）: 手前の雪（snowfall で足した）・金の粉・ぼけ玉・キャラ絵のふちの星
         dd = self.dust
@@ -221,7 +225,8 @@ class Scene(Stage):
             tw_ = (0.5 + 0.5 * math.sin(6.283 * (a4[j] * 4 + rr[2]))) ** 2
             kk = math.sin(math.pi * a4[j]) ** 0.6 * (0.3 + 0.5 * tw_) * sk
             if kk > 0.02:
-                fxv.stamp(front.L, self.kit.star[("gold", "white", "pink")[j % 3]], x, y, kk)
+                # 紙吹雪は back に（front は焼くと重い。front の予算は1通りの 15%）
+                fxv.stamp(back_glitter.L, self.kit.star[("gold", "white", "pink")[j % 3]], x, y, kk)
         for j in range(self.bok.n):
             rr = self.bok.r[j]
             a1 = self.bok.age(c)[j]
@@ -239,7 +244,33 @@ class Scene(Stage):
                     dist = 170 + 220 * ease_out(rv / 0.9) * (0.6 + 0.4 * R.random())
                     fxv.stamp(front.L, self.kit.star["gold" if k % 3 else "white"], 360 + math.cos(ang_) * dist * 0.9,
                               760 + math.sin(ang_) * dist * 1.05, 0.85 * (1 - rv / 0.9) ** 1.5 * (0.5 + 0.5 * R.random()))
+        out_b = over_rgba(back_glitter.finish(bloom=0.3, edge=self.edge), out_b)
         return out_b, self.finish_front(front, bloom=0.7)
+
+    def searchlights(self, c, cv, k):
+        """下の屋台のあたりから昇る光の柱が5本、首を振る（1本ずつ周期をずらす）"""
+        if k <= 0.003:
+            return
+        if not hasattr(self, "_sl_grid"):
+            h, w = 160, 90
+            ys = np.linspace(0, H, h, dtype=np.float32)[:, None]
+            xs = np.linspace(0, W, w, dtype=np.float32)[None, :]
+            self._sl_grid = (ys, xs)
+        ys, xs = self._sl_grid
+        out = np.zeros((ys.shape[0], xs.shape[1], 3), np.float32)
+        beams = ((80.0, 2, 0.0, GOLD), (230.0, 3, 0.5, WHITE * 0.7 + PINK * 0.3), (380.0, 2, 0.15, WHITE * 0.8 + CYAN * 0.2),
+                 (520.0, 3, 0.7, GOLD * 0.8 + WHITE * 0.2), (660.0, 2, 0.4, AMBER * 0.6 + GOLD * 0.4))
+        for j, (bx, cyc, ph, col) in enumerate(beams):
+            ang = math.radians(32 * math.sin(2 * math.pi * (c.ph * cyc + ph)))
+            by = 1080.0
+            dx, dy = xs - bx, by - ys
+            along = dx * math.sin(ang) + dy * math.cos(ang)
+            across = dx * math.cos(ang) - dy * math.sin(ang)
+            wdt = 22 + 0.2 * np.clip(along, 0, None)
+            beam = np.exp(-(across / wdt) ** 2) * np.clip(along / 120, 0, 1) * np.exp(-np.clip(along, 0, None) / 900)
+            out += beam[..., None] * col * 0.58
+        up = cv2.resize(out, (W, H), interpolation=cv2.INTER_CUBIC)
+        cv.emit((np.clip(up, 0, None) * k).astype(np.float32))
 
     def steam_puffs(self, c, cv, x0, y0, hs, k):
         """マグから昇る湯気（物の層。白くやわらかい丸がゆらゆら昇って消える）"""
