@@ -5,6 +5,7 @@ import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageShell from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import { STREAM_TYPES, streamTypeBySlug } from "@/content/streamTypes";
@@ -117,7 +118,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
   const recs = figures(t.slug);
 
   return (
-    <PageShell crumbs={[{ label: "配信", href: "/streams" }, { label: t.name }]}>
+    <PageShell crumbs={crumbsOf(`/streams/${t.slug}`)}>
       {/*
         5つの型を別物に見せるのは、紙のわずかな染まりだけ（`docs/island-world.md` 3.3）。
         蛍光ペンの帯・動画の縁・下のタイルまで型の色にすると、色が4か所に増えて

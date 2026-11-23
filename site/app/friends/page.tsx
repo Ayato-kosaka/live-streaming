@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
 import Link from "next/link";
@@ -41,7 +42,7 @@ export default function FriendsPage() {
   const doneru = LINKS.find((l) => l.id === "doneru")!;
 
   return (
-    <PageShell crumbs={[{ label: "住んでる人" }]}>
+    <PageShell crumbs={crumbsOf("/friends")}>
       {/* h1 は場所の名前。島に立っている札（`components/island/layout.ts`）と
           パンくずが「住んでる人」なので、h1 もそれに合わせる。
           「愉快な仲間達」は、その人たちの呼び名なので1行下へ。

@@ -8,7 +8,9 @@ import Icon from "@/components/ui/Icon";
 import Fold from "@/components/ui/Fold";
 import { CHAPTER_STREAMS } from "@/content/chapterStreams";
 import { ISLE_STREAM_CHAPTERS } from "@/components/chain/route";
-import { chapterCrumbs, chapterHref } from "@/content/chapters";
+import { chapterHref } from "@/content/chapters";
+import { hrefOf } from "@/content/kinds";
+import { crumbsOf } from "@/lib/pages";
 
 /**
  * 過去の島の配信だけを並べる面。
@@ -125,9 +127,9 @@ export default async function ChapterStreams({
   }
 
   return (
-    /* **行き先を手で組み立てない。** 島の地図と章の島の道は `chapterCrumbs`（`chapterHref`）が持つ。
+    /* **行き先を手で組み立てない。** パンくずは面の一覧（`lib/pages.ts` の `crumbsOf`）が、入口（歩いた国）と道の上の段から組む。
        前は章の島を手で `/island/${c.slug}` と書きかけて、いまいる章のときだけ写しの面へ送る形だった */
-    <PageShell crumbs={chapterCrumbs(c, { label: "配信" })}>
+    <PageShell crumbs={crumbsOf(hrefOf("/island/<旅>/streams", c.slug))}>
       <PageHead
         icon="tower-studio"
         title={`${c.name}の配信`}

@@ -145,7 +145,7 @@ Module._resolveFilename = function (request, ...rest) {
 };
 
 const req = createRequire(import.meta.url);
-const { AHEAD, phaseOf, leadPlan, stayHere, stayNext, upNext, countdownDay, hereNow } = req(join(OUT, "lib", "leadPlan.js"));
+const { AHEAD, phaseOf, leadPlan, stayHere, stayNext, upNext, hereNow } = req(join(OUT, "lib", "leadPlan.js"));
 const { chapterNow } = req(join(OUT, "content", "chapters.js"));
 /** 企画の表と滞在の表は**本物**（`site/content/projects.ts` `stays.ts`）。写しを置かない */
 const { PROJECTS } = req(join(OUT, "content", "projects.js"));
@@ -387,27 +387,7 @@ check(
   stayHere(at("2026-11-13"), [row("x", "2026-11-12", "", { name: "ルーマニア" })])?.place === "ルーマニア",
 );
 
-/* (7) 「あと何日」は同じ表から。つぎの滞在の着く日 */
-check(
-  "「あと何日」の日は、つぎの滞在の着く日",
-  countdownDay(at("2026-12-01"), ahead, []) === "2026-12-05",
-  `出た=${countdownDay(at("2026-12-01"), ahead, [])}`,
-);
-check(
-  "つぎの滞在も先の回も無い日（翌年）は、数えない",
-  countdownDay(AFTER_ALL, ahead, []) === undefined,
-  `出た=${countdownDay(AFTER_ALL, ahead, [])}`,
-);
-/* 本番の表で: 「あと何日」の日は、つぎの滞在の着く日か「これから」の元の日だけ */
-const cdBad = sweep.filter((d) => {
-  const c = countdownDay(d);
-  return c && !STAYS.some((x) => x.from === c && x.from > iso(d)) && !AHEAD.some((a) => a.date === c);
-});
-check(
-  `${sweep.length}日、「あと何日」の日は、つぎの滞在か「これから」の回の日だけ`,
-  cdBad.length === 0,
-  cdBad.slice(0, 3).map((d) => `${iso(d)}→${countdownDay(d)}`).join(" "),
-);
+/* (7) 島の軒の「あと何日」（`countdownDay`）は #1279 で外した。常設の軒には状態を貼らない（R-24） */
 
 /* --------------------------- 7. 畳んだ表を、画面が読んでいないこと
 
