@@ -503,9 +503,8 @@ if (guide?.href) {
     Boolean(pageOf(guide.href)),
     `${guide.href} に当たる page.tsx が無い`,
   );
-  /* 面を1枚増やす仕事は3か所（`app/sitemap.ts` の注）。索引から落ちると、
-     検索からだけ見つからない面になる */
-  const sitemap = readFileSync(join(SITE, "app", "sitemap.ts"), "utf8");
+  /* 索引から落ちると、検索からだけ見つからない面になる。索引の行は種類の表の面の一覧（`lib/pages.ts`）から出る（#1357） */
+  const sitemap = readFileSync(join(SITE, "lib", "pages.ts"), "utf8");
   /* 国の面は、索引が字で書かずに名簿（`content/travel.ts`）から並べる（#1201）。
      **街の面も同じ**（ソフィアは国の面を持たず、街の面が国の案内を兼ねる。#1228）——公開前の印の無い街だけが索引に出る */
   const viaTravel = [
@@ -513,9 +512,9 @@ if (guide?.href) {
     ...(sitemapReadsCities(sitemap) ? travelCities(SITE).filter((c) => !c.draft).map((c) => c.route) : []),
   ];
   check(
-    "その行き先が、索引（sitemap.ts か、国の面の名簿）にも載っている",
+    "その行き先が、索引（面の一覧 lib/pages.ts か、国の面の名簿）にも載っている",
     sitemap.includes(`"${guide.href}"`) || viaTravel.includes(guide.href),
-    `${guide.href} が sitemap.ts にも content/travel.ts にも無い`,
+    `${guide.href} が lib/pages.ts にも content/travel.ts にも無い`,
   );
   /* 島に建てるだけでは足りない（送って読む人には小さな札が見つからない。#216 の裏）。
      トップの紙にも1本引いてあるが、**そこに国の名前を書き写していない**こと。
