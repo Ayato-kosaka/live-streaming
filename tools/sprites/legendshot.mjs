@@ -60,14 +60,18 @@ const MINE = /^(?:\d\d-[\w-]+\.png|sim-[\w-]+\.png|thumb240\.png|page(?:\.norm)?
  * 書き出した HTML を、**束が変わっても揺れない形**にする。
  *
  * 束の名前には中身の指紋が付き、`<script>` には束の目録（RSC）が入るので、面の字が1字も変わらなくても
- * ほかの面の直しで揺れる。比べたいのは読む人と検索が受け取る HTML なので、それを落とす。
+ * ほかの面の直しで揺れる。書き出すたびに変わる書き出しの番号（頭のコメント `<!--XL_ko_…-->`）も同じ。
+ * 2026-11-23 に同じインドの面を2つのコミットで書き出したら、違いはこの1行だけだった（run 45262259464）。
+ * 比べたいのは読む人と検索が受け取る HTML なので、それを落とす。
  * 構造化データ（`application/ld+json`）は中身なので残す。1タグ1行にして、違った行を数えられるようにする。
+ * 2回かけても同じ形になる（前の回の形を、いまの決まりで落とし直して比べるため）。
  */
 export function normHtml(html) {
   return html
     .replace(/<script\b(?![^>]*\btype=["']?application\/ld\+json)[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<link\b(?=[^>]*(?:\bas=["']?script\b|\brel=["']?modulepreload\b))[^>]*>/gi, "")
     .replace(/\/_next\/static\/[^"'\s)>,]+/g, "/_next/static/…")
+    .replace(/<!--[\w-]{16,40}-->/g, "<!--書き出しの番号-->")
     .replace(/>\s*</g, ">\n<");
 }
 
@@ -79,7 +83,8 @@ export function normHtml(html) {
 export function compareHtml(norm, dir) {
   const f = dir ? join(dir, "page.norm.html") : "";
   if (!f || !existsSync(f)) return { line: "前の回が無い（この回が、次に比べる相手になる）", same: null, diff: "" };
-  const prev = readFileSync(f, "utf8");
+  /* 前の回の形も、いまの決まりで落とし直す（落としかたを直した回に、直したぶんが違いに出ないように） */
+  const prev = normHtml(readFileSync(f, "utf8"));
   let who = "前の回";
   try {
     const m = JSON.parse(readFileSync(join(dir, "meta.json"), "utf8"));
