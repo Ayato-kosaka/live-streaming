@@ -175,9 +175,8 @@ const CITIES: Omit<TravelCity, "href">[] = [
   /* あやとは 2026-11-21 に着いた（`content/countries.ts` の `AHEAD_COUNTRIES`）。国の面は着いた日に建てた（`GUIDE_ONLY`）。
      あやと 2026-11-20「割といい感じ」「どんどん公開していいよ。あなたの裁量の範囲内」で公開前の印を外した */
   { country: "romania", slug: "bucharest", name: "ブカレスト" },
-  /* 行った街（2026-09-28〜10-11）。骨組みを先に置き、行った担当が facts から肉付けする。
-     運営が確かめ表（`.claude/skills/city-guide/review.md`）で見てから印を外す */
-  { country: "albania", slug: "tirana", name: "ティラナ", draft: true },
+  /* 行った街（2026-09-28〜10-11）。運営が確かめ表（`.claude/skills/city-guide/review.md`）で見て、公開前の印を外した */
+  { country: "albania", slug: "tirana", name: "ティラナ" },
 ];
 
 /**
