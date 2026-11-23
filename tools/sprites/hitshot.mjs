@@ -12,6 +12,7 @@
 import { chromium } from "playwright-core";
 import { mkdirSync } from "node:fs";
 import { offline } from "./route.mjs";
+import { deskTab, pressTab } from "./desktools.mjs";
 import { apply } from "./asme.mjs";
 
 const PORT = process.env.SPORT || "4800";
@@ -46,11 +47,11 @@ const SCENES = [
   { id: "foot-board", page: "/board.html", pick: ".ifoot" },
   { id: "foot-about", page: "/about.html", pick: ".ifoot" },
   {
-    id: "off-desk-video", page: "/me/desk.html", tab: "配信", pick: ".mp-tool-body, .mp-tool",
+    id: "off-desk-video", page: "/me/desk.html", tab: deskTab("video"), pick: ".mp-tool-body, .mp-tool",
     dis: true,
   },
-  { id: "off-desk-donor", page: "/me/desk.html", tab: "投げ銭", pick: ".mp-donor-hints", dis: true, hints: true },
-  { id: "off-desk-fund", page: "/me/desk.html", tab: "スパチャ", pick: ".mp-sc-more", dis: true },
+  { id: "off-desk-donor", page: "/me/desk.html", tab: deskTab("donor"), pick: ".mp-donor-hints", dis: true, hints: true },
+  { id: "off-desk-fund", page: "/me/desk.html", tab: deskTab("fund"), pick: ".mp-sc-more", dis: true },
   {
     id: "off-cards-sheet", page: "/cards.html", pick: ".akd-sheet-foot, .akd-drop", dis: true,
     async open(p) {
@@ -97,7 +98,7 @@ for (const sc of SCENES) {
   await p.goto(`http://localhost:${PORT}${sc.page}`, { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
   await p.waitForTimeout(1500);
   if (sc.tab) {
-    await p.locator(".mp-tab", { hasText: new RegExp(`^${sc.tab}`) }).first().click({ timeout: 5000 }).catch(() => {});
+    await pressTab(p, sc.tab);
     await p.waitForTimeout(1600);
   }
   if (sc.open) await sc.open(p);

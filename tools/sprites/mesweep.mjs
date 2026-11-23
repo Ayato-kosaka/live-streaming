@@ -1,5 +1,5 @@
 /**
- * `/me`（じぶんのこと）と `/me/desk`（島の手入れ）を、**道具1つずつ**撮って数える。
+ * `/me`（じぶんのこと）と `/me/desk`（島の管理）を、**道具1つずつ**撮って数える。
  *
  * `docs/island-misses.md` #77 のあと。あの日に絵で見たのは足元の札2種類だけで、
  * **道具9つの中身は1枚も撮っていなかった。** ここは、机の札を1つずつ押して
@@ -42,6 +42,7 @@ import { chromium } from "playwright-core";
 import { mkdirSync, writeFileSync } from "fs";
 import { seed } from "./meseed.mjs";
 import { offline } from "./route.mjs";
+import { DESK_TOOLS, pressTab } from "./desktools.mjs";
 import { openFolds, measure as hitMeasure, SEL_ALL, addProbe, delProbe, isProbe, probeVerdict } from "./hitbox.mjs";
 
 const PORT = process.env.SPORT || "4600";
@@ -53,22 +54,20 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
 const OUT = `/tmp/mesweep/${MODE}`;
 mkdirSync(OUT, { recursive: true });
 
-/** 撮る場面。机の道具は `tools.ts` の並びそのまま（9つ）。 */
+/**
+ * 撮る場面。**机の道具は `site/components/me/tools.ts` の `TOOLS` を字のまま読む**（`desktools.mjs`）。
+ *
+ * ここには「`tools.ts` の並びそのまま」と書いた手書きの一覧があって、机から
+ * 「企画」「いまどこ」が外れ、「投げ銭」「スパチャ」の名前が変わっても古いまま
+ * 残っていた。押す札が無い場面は、**机の1枚目を撮って別の道具の名前で出す**
+ * （押せなかったのを `catch` で飲む）ので、撮れていないことが絵から分からない（#1280）。
+ */
 const SCENES = [
   { id: "me-note", page: "/me.html", tab: "付箋" },
-  { id: "me-plan", page: "/me.html", tab: "企画" },
   { id: "me-card", page: "/me.html", tab: "カード" },
   // 名前とアイコンを出すか（畳みの中の `IslandMe`）。開かないと欄が出ない
   { id: "me-islandme", page: "/me.html", open: true },
-  { id: "desk-photo", page: "/me/desk.html", tab: "写真" },
-  { id: "desk-place", page: "/me/desk.html", tab: "いまどこ" },
-  { id: "desk-video", page: "/me/desk.html", tab: "配信" },
-  { id: "desk-sticky", page: "/me/desk.html", tab: "付箋" },
-  { id: "desk-plan", page: "/me/desk.html", tab: "企画" },
-  { id: "desk-donor", page: "/me/desk.html", tab: "投げ銭" },
-  { id: "desk-chara", page: "/me/desk.html", tab: "キャラ" },
-  { id: "desk-fund", page: "/me/desk.html", tab: "スパチャ" },
-  { id: "desk-obs", page: "/me/desk.html", tab: "OBS" },
+  ...DESK_TOOLS.map((t) => ({ id: `desk-${t.id}`, page: "/me/desk.html", tab: t.label })),
 ];
 
 /* ------------------------------------------------------------------ */
@@ -283,12 +282,9 @@ for (const sc of SCENES) {
 
     if (sc.tab) {
       /* 机の札も、じぶんのものの札も `.mp-tab`。**字で押す**
-         （並びが変わっても同じ道具が開く）。 */
-      await p
-        .locator(".mp-tab", { hasText: new RegExp(`^${sc.tab}`) })
-        .first()
-        .click({ timeout: 5000 })
-        .catch(() => {});
+         （並びが変わっても同じ道具が開く）。畳んだ用事の札は、その畳みだけ
+         開いてから押す（`pressTab`）。ほかの畳みは下の `sc.open` が決める。 */
+      await pressTab(p, sc.tab);
       await p.waitForTimeout(MODE === "wait" ? 2000 : 1600);
     }
     /* 絵は**畳みをさわる前に**撮る。撮る目的は「その場面がどう見えるか」で、
