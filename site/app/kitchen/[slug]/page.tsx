@@ -20,6 +20,7 @@ import { isoDay } from "@/lib/isoDay";
 import { crumbsOf } from "@/lib/pages";
 import { tagsOfDish } from "@/lib/tags";
 import Tags from "@/components/ui/Tags";
+import { miniSprite } from "@/lib/miniSprite";
 
 export function generateStaticParams() {
   return RECIPES.map((r) => ({ slug: r.slug }));
@@ -236,7 +237,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
         {prev ? (
           <Link href={`/kitchen/${prev.slug}`} prefetch={false}>
             <Icon name="right" size={13} className="is-flip" />
-            <img className="mini-icon" src={`/sprites/${prev.icon}.webp`} alt="" />
+            <img className="mini-icon" src={miniSprite(prev.icon)} alt="" />
             {prev.name}
           </Link>
         ) : (
@@ -244,7 +245,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
         )}
         {next ? (
           <Link href={`/kitchen/${next.slug}`} prefetch={false}>
-            <img className="mini-icon" src={`/sprites/${next.icon}.webp`} alt="" />
+            <img className="mini-icon" src={miniSprite(next.icon)} alt="" />
             {next.name}
             <Icon name="right" size={13} />
           </Link>

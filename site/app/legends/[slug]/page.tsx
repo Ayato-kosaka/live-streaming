@@ -15,6 +15,7 @@ import { legendDays } from "@/content/legendDays";
 import { crumbsOf } from "@/lib/pages";
 import { tagsOfProject } from "@/lib/tags";
 import Tags from "@/components/ui/Tags";
+import { miniSprite } from "@/lib/miniSprite";
 
 export function generateStaticParams() {
   return LEGENDS.map((l) => ({ slug: l.slug }));
@@ -256,7 +257,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
         {prev ? (
           <Link href={`/legends/${prev.slug}`} prefetch={false}>
             <Icon name="right" size={13} className="is-flip" />
-            <img className="mini-icon" src={`/sprites/${prev.icon}.webp`} alt="" />
+            <img className="mini-icon" src={miniSprite(prev.icon)} alt="" />
             {prev.title}
           </Link>
         ) : (
@@ -264,7 +265,7 @@ export default async function LegendPage({ params }: { params: Promise<{ slug: s
         )}
         {next ? (
           <Link href={`/legends/${next.slug}`} prefetch={false}>
-            <img className="mini-icon" src={`/sprites/${next.icon}.webp`} alt="" />
+            <img className="mini-icon" src={miniSprite(next.icon)} alt="" />
             {next.title}
             <Icon name="right" size={13} />
           </Link>
