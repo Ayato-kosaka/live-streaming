@@ -20,7 +20,9 @@ spec を直すか、原稿だけを当てるなら `--no-spec`。
 **帳面の決まりのうち、字で拾えるものだけ**を規則にしてある。
 ただし、あやとの指摘ではなく**出した本の数字から決めた規則**（L-WIDE）は、帳面ではなく仮説の台帳
 （`references/playbook.md` の N 番号）を `hypo` に持つ。帳面には足さない（あやとが言っていない決まりを、言ったことにしない）。
-台帳の行には規則の名前（`lint.py` の L-WIDE）を書いて、名前から行き来できるようにする（`lint_selftest.py` の `hypo_link`）。面白いか・テンポ・「？」が残るか・映像の枠の外でも
+台帳の行には規則の名前（`lint.py` の L-WIDE）を書いて、名前から行き来できるようにする（`lint_selftest.py` の `hypo_link`）。
+**研究から決めた規則**（L-RUN・L-ANSNEXT。出した37本の維持率と跳ねた回の構成、#1403）は、帳面にも台帳にも足さず、出どころの issue を
+`src` に持つ。どれも △ で、spec の行に種類（`kind`）がある原稿だけに当たる。面白いか・テンポ・「？」が残るか・映像の枠の外でも
 正しいか、は字では決まらない。そこは批評役の (h) で当てる（`script_writing.md` 7.4）。
 **ここが緑でも「字で拾える指摘には当たっていない」だけ**で、原稿が良いという意味ではない。
 
@@ -125,6 +127,7 @@ class Rule:
     what: str
     run: Callable
     hypo: tuple = ()   # 帳面の代わりに持つ、仮説の台帳（`playbook.md`）の番号。出した本の数字から決めた規則だけ
+    src: tuple = ()    # 帳面でも台帳でもない出どころ（研究の issue。"#1403"）。研究から決めた規則だけ
 
 
 # ---------- 場所 ----------
@@ -854,6 +857,123 @@ def width_line(c: Ctx) -> str | None:
     return f"1行の字数: 中央値 {statistics.median(ns):g}字（読み上げる{len(ns)}行。{WIDE_MAX}字以下が目安・仮説 N5）"
 
 
+# ---------- 2026-11-23（#1403）: あやとの指摘でも、出した本の仮説でもなく、研究（出した37本の維持率を原稿の行に重ねた・
+# 跳ねた回20本の構成。`references/diagnosis_2026-11-23.md`）から。帳面の ID も台帳の番号も持たず、出どころの issue を `src` に持つ ----------
+# 行の種類（spec の rows の `kind`）と問いの開け閉め（`turn`）は、作文者が6欄の表で書く（`writer_prompt.md` 4）。
+# 種類の名前は診断の 1.1 と付録A の物差しと同じ。**どの行にも kind が無い spec は見ない**（「見ていない」。前からの原稿は今までどおり通る）
+
+KINDS = ("題", "出来事", "引っ張り", "数", "前置き", "説明", "反応", "味", "締め")
+KIND_ALIAS = {"題読み": "題", "値段・数": "数", "値段": "数", "締めの問い": "締め", "配信へ": "締め"}   # 付録A の書きかたでも読む
+TURNS = ("o", "c", "oc", "-")
+TURN_ALIAS = {"ー": "-", "－": "-", "−": "-", "–": "-", "—": "-", "なし": "-", "co": "oc"}
+RUN_KEEP = ("出来事", "引っ張り", "数")   # 続きを切る種類。ほかの種類が RUN_MAX 行続いたら、その行から △（L-RUN）
+RUN_MAX = 3
+OPENS = ("出来事", "引っ張り")   # 次を開く種類（L-ANSNEXT）。turn に o があれば、種類を問わず開いたに数える
+ANS_WINDOW = 3.0   # 題の答えの行が終わってから、次を開く行が始まるまでの秒（診断 1.1 の「答」と同じ物差し）
+
+
+def est_sec(ln: str) -> float:
+    """1行の声の秒と、次の行までの間の見積もり（`brief.py` の `seconds` と同じ: 上限の速さで読んで最短 1.2秒＋間 0.3秒）。"""
+    return max(1.2, chars(ln) / CPS) + 0.3
+
+
+def kind_of(r) -> str | None:
+    """spec の行の種類（付録A の書きかたは畳む）。書いていなければ None。決まりに無い字はそのまま返す（L-RUN が △ で出す）。"""
+    k = str(r.get("kind") or "").strip() if isinstance(r, dict) else ""
+    return KIND_ALIAS.get(k, k) or None
+
+
+def turn_of(r) -> str | None:
+    """spec の行の問いの開け閉め（o・c・oc・-）。書いていなければ None。"""
+    t = str(r.get("turn") or "").strip().lower() if isinstance(r, dict) else ""
+    return TURN_ALIAS.get(t, t) or None
+
+
+def row_at(c: Ctx, i: int) -> dict:
+    """spec の i 行目（1から）。spec が無い・行が足りなければ空の辞書。"""
+    rows = c.rows or []
+    return rows[i - 1] if 0 < i <= len(rows) and isinstance(rows[i - 1], dict) else {}
+
+
+def kinds(c: Ctx) -> list | None:
+    """行ごとの種類（原稿の行の数に揃える）。spec が無い・どの行にも kind が無ければ None（L-RUN・L-ANSNEXT は見ない）。"""
+    ks = [kind_of(r) for r in (c.rows or [])]
+    if not any(ks):
+        return None
+    return (ks + [None] * len(c.lines))[:len(c.lines)]
+
+
+def close_at(c: Ctx, ks: list) -> int:
+    """締めの行（1から）。最後の問い（`closing_index`）と、2行目より後で種類が「締め」の最初の行の、早いほう。
+
+    問い → 次の配信への誘い、で終える原稿は、`closing_index` が誘いの行を締めに数えるので、問いの行を種類で拾う。
+    """
+    first = next((i for i, k in enumerate(ks, 1) if i > 1 and k == "締め"), len(c.lines) + 1)
+    return min(closing_index(c.lines), first)
+
+
+def l_run(c: Ctx):
+    """#1403 出来事・引っ張り・数の無い行が3行続いたら、3行目から △。題の1行目と締めの行は数えない。
+
+    出した37本では、前置き・説明・反応・味だけの行が3行続くと、そこから余計に落ちた（1秒に0.28点。4行に1行が大きく落ちる）。
+    跳ねた回の最長は中央値3行、同じチャンネルのふつうの回は5行。直近18本では15本・53行がこれに当たった（診断 1.2）。
+    欄の抜け（種類の無い行）・決まりに無い種類・開け閉めの字も △ で出す。黙って読み飛ばすと、規則が効いていないのに緑になる。
+    """
+    ks = kinds(c)
+    if ks is None:
+        return None
+    out = []
+    for i, (k, ln) in enumerate(zip(ks, c.lines), 1):
+        t = turn_of(row_at(c, i))
+        if k is None:
+            out.append(Hit("L-RUN", i, ln, f"種類（spec の kind）が無い。全部の行に1つ書く（{'・'.join(KINDS)}）", look=True))
+        elif k not in KINDS:
+            out.append(Hit("L-RUN", i, ln, f"種類「{k}」は決まりの字でない（{'・'.join(KINDS)} のどれか）", look=True))
+        if t is not None and t not in TURNS:
+            out.append(Hit("L-RUN", i, ln, f"開け閉め（spec の turn）「{t}」は決まりの字でない（{'・'.join(TURNS)} のどれか）", look=True))
+    run = 0
+    for i in range(2, close_at(c, ks)):
+        if ks[i - 1] in RUN_KEEP or ks[i - 1] not in KINDS:   # 分からない種類では数えない（上で △ にしてある）
+            run = 0
+            continue
+        run += 1
+        if run >= RUN_MAX:
+            out.append(Hit("L-RUN", i, c.lines[i - 1], f"出来事・引っ張り・数の無い行が{run}行続いた（{i - run + 1}〜{i}行目）。"
+                           "この行を出来事か「〜たら……」か数の行にする（要らない説明・反応なら消す。#1403）", look=True))
+    return out
+
+
+def l_ansnext(c: Ctx):
+    """#1403 題の答え（【答】）の次の行が、問いも出来事も開かない（味・反応・説明・前置き・数）なら、その行を △。
+
+    出した37本では、答えの行で落ち、そのあと次を開かない行でも落ち続けた。跳ねた回は16本中12本が、答えのあと1〜3秒で
+    次の問いか出来事を開いていた（ふつうの回は4本中0本）。**答えの次がすぐ締めなら当てない。** 短い反応を1つ挟んでも、
+    答えの行が終わって3秒のうちに開く行が始まれば当てない（診断の「答」の物差し。クリスマスの回の「わお、人がいっぱい！」）。
+    開いたかは、行の種類（出来事・引っ張り）か turn の o で見る。種類の無い行・決まりに無い種類で止まったら見ない（L-RUN が出す）。
+    答えのあとに行を足すかどうかは帳面 F-037 のまま（L-AFTER が見る）。
+    """
+    ks = kinds(c)
+    if ks is None or not c.answer_marked:
+        return None
+    end = close_at(c, ks)
+    out = []
+    for a in sorted(c.answer_marked):
+        nxt = a + 1
+        if nxt in c.answer_marked or nxt >= end:
+            continue
+        t, j = 0.0, nxt
+        while j < end and t <= ANS_WINDOW:
+            if ks[j - 1] not in KINDS or ks[j - 1] in OPENS or "o" in (turn_of(row_at(c, j)) or ""):
+                break
+            t += est_sec(c.lines[j - 1])
+            j += 1
+        else:
+            out.append(Hit("L-ANSNEXT", nxt, c.lines[nxt - 1], f"題の答え（{a}行目）の次が{ks[nxt - 1]}の行で、{ANS_WINDOW:g}秒のうちに"
+                           "次の問いも出来事も開かない。要らない行なら消して締めへ渡し、残すなら次の問いか出来事を開く行にする（#1403）",
+                           look=True))
+    return out
+
+
 # 規則の since。同じ日の決まりは、あやとのコメントID で前後を分ける（`--as-of 2026-10-23:6354242835` なら、朝の
 # フォカッチャの添削の時点。夕方の滝の回の直しでできた規則は当てない）
 S1019 = "2026-10-23:6370959237"
@@ -891,6 +1011,11 @@ RULES = (
          hypo=("N5",)),
     # ---- 2026-11-13（#1186、F-008 の5回目）: 十字架の登山の原稿 A の「先週は雨で流れたリベンジや！」 ----
     Rule("L-PREV", ("F-008",), "2026-11-13:6850736486", "前の回・ほかの日の事情の補足（先週・前回・リベンジ。題と締めの行は見ない）", l_prev),
+    # ---- 2026-11-23（#1403）: 研究の決まり。帳面にも台帳にも足さず、出どころの issue を持つ。どれも △（落とさない） ----
+    Rule("L-RUN", (), "2026-11-23", f"出来事・引っ張り・数の無い行が{RUN_MAX}行続く（△。spec に kind がある原稿だけ。欄の抜け・字の揺れも △）",
+         l_run, src=("#1403",)),
+    Rule("L-ANSNEXT", (), "2026-11-23", "題の答え（【答】）の次の行が、問いも出来事も開かない（△。kind がある原稿だけ。次がすぐ締めなら見ない）",
+         l_ansnext, src=("#1403",)),
 )
 
 
@@ -1001,6 +1126,8 @@ BLIND_WHY = {
     "L-NICK": "帳面に呼び名の直し（`呼び名「…」→「…」`）が無い・帳面が読めない",
     "L-ATE": "spec が無い（当て表は spec の promises に書く）・帳面が読めない",
     "L-WIDE": "読み上げる行が無い（全部が本人の声の行）",
+    "L-RUN": "spec の rows に行の種類（kind）が無い",
+    "L-ANSNEXT": "spec の rows に行の種類（kind）が無い・【答】の印が無い",
 }
 
 
@@ -1012,7 +1139,7 @@ def report(path: str, c: Ctx, res: dict, as_of: str | None) -> str:
     for h in sorted(res["hits"], key=lambda h: (h.look, h.line if h.line is not None else 999)):
         mark = "△" if h.look else "✕"
         where = "題の札" if h.line == 0 else ("原稿ぜんぶ" if h.line is None else f"{h.line}行目")
-        ids = "/".join(rules[h.rule].ledger + rules[h.rule].hypo)
+        ids = "/".join(rules[h.rule].ledger + rules[h.rule].hypo + rules[h.rule].src)
         out.append(f"{mark} {ids} {h.rule} {where}「{h.text}」 {h.note}")
     for rid in res["blind"]:
         out.append(f"見ていない: {rid}（{BLIND_WHY.get(rid, '入力が無い')}）")
@@ -1041,7 +1168,7 @@ def main() -> int:
 
     if a.rules:
         for r in RULES:
-            print(f"{r.id:11s} {'/'.join(r.ledger + r.hypo):13s} {r.since}  {r.what}")
+            print(f"{r.id:11s} {'/'.join(r.ledger + r.hypo + r.src):13s} {r.since}  {r.what}")
         return 0
     if not a.script:
         ap.error("原稿の在りかが要る")

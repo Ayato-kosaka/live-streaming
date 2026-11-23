@@ -72,11 +72,14 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `wide` | 16字の行は △、15字の行は何も出さない。数えかたは `build_edit.py` の `spoken_chars` と同じ（「ー」を数える。読み込んで突き合わせる）。1行目の題・本人の声の行（`orig_voice`・`voice_src`）は見ない。✕ にはしない（L-WIDE。仮説 N5） |
 | `width_median` | 行の字数の中央値を1行で出す（題の1行目も入れ、本人の声の行は外す。偶数の行は真ん中2つの間）。L-WIDE を当てない日付でも出す |
 | `prev` | 十字架の登山の原稿 A の4行目「先週は雨で流れたリベンジや！」と、行の途中の「前回の配信で」を ✕。フォカッチャの添削版の締め「リベンジにワンパンピザを本日22時から…」・問いの前の締めの行・題が「リベンジ」を言っている回の本文・1行目の題は見ない。「昨日こねた生地」は前の回の事情ではないので見ない。あやとの書き直し（「…十字架まで歩きたい！」）は通す。11-13 のコメントより前の決まりでは当てない（L-PREV） |
-| `hypo_link` | 規則はどれも、帳面の ID か仮説の台帳（`playbook.md`）の番号を持つ。台帳の番号は台帳の行にあり、その行が規則の名前を書いている。L-WIDE は帳面に足していない（あやとの指摘ではない） |
+| `hypo_link` | 規則はどれも、帳面の ID か仮説の台帳（`playbook.md`）の番号か出どころの issue（`#1403`）を持つ。台帳の番号は台帳の行にあり、その行が規則の名前を書いている。L-WIDE は帳面に足していない（あやとの指摘ではない）。L-RUN・L-ANSNEXT は帳面にも台帳にも無く、出どころ #1403 だけを持つ |
+| `run` | spec の行の種類（`kind`）で、出来事・引っ張り・数の無い行が3行続いたら3行目から △（前置き・説明・前置き → 4行目、反応・反応・味・味 → 8・9行目）。題の1行目・締めの行（最後の問い、問い → 誘いの問いの行も）は数えない。数は続きを切る。付録A の書きかた（題読み・値段・数・締めの問い）でも読む。種類の無い行・決まりに無い種類・開け閉めの字は △。どの行にも kind が無ければ「見ていない」。診断の付録A の屋根裏25人部屋の種類で、診断の「続」と同じ 8・9・10・17行目。✕ にはしない（L-RUN。#1403） |
+| `ansnext` | 題の答え（【答】）の次が反応の行で、3秒のうちに次を開かなければ、その行を △。次がすぐ締め（問い・問い → アーカイブ・問い → 誘い）・出来事・引っ張り・turn に o（o・oc）なら出さない。短い反応（「わお、人がいっぱい！」）のあと3秒のうちに引っ張りが始まれば出さず、長い反応のあとなら出す。spec の why の【答】も読む。kind が無い・【答】が無ければ「見ていない」（L-ANSNEXT。#1403） |
 """
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -145,7 +148,7 @@ CUTS = {
     "answer_mark": ("lint.py", '        if "【答】" in s:\n            answer.add(len(lines) + 1)\n', "",
                     {"after"}, "原稿の字の【答】を読まない"),
     "answer_spec": ("lint.py", '            if "【答】" in (r.get("why") or ""):\n                answer.add(i)\n', "            pass\n",
-                    {"after"}, "spec の why の【答】を読まない"),
+                    {"after", "ansnext"}, "spec の why の【答】を読まない"),
     "num": ("lint.py", "            if v is not None and v >= 2 and v - 1 not in said and v not in said:\n", "            if False:\n",
             {"num"}, "序数の手前の数を見ない"),
     "num_said": ("lint.py", "                said.add(v)\n", "                pass\n", {"num"}, "前の行で言った数を覚えない"),
@@ -224,6 +227,35 @@ CUTS = {
                   {"wide"}, "声だけ別の秒から取る本人の声（voice_src）を読み上げる行に数える"),
     "width_line": ("lint.py", "    if wl:\n        out.append(wl)\n", "", {"width_median"}, "行の字数の中央値を出さない"),
     "hypo": ("lint.py", '         hypo=("N5",)),\n', "         hypo=()),\n", {"hypo_link"}, "L-WIDE が仮説の台帳の番号を持たない"),
+    # ---- 2026-11-23（#1403）: 研究から足した規則（行の種類 kind・問いの開け閉め turn。どれも △） ----
+    "run_off": ("lint.py", "        if run >= RUN_MAX:\n", "        if False:\n", {"run"}, "出来事の無い行が続いても出さない"),
+    "run_keep": ("lint.py", 'RUN_KEEP = ("出来事", "引っ張り", "数")', 'RUN_KEEP = ("出来事", "引っ張り")', {"run"},
+                 "数の行で続きを切らない"),
+    "run_title": ("lint.py", "    for i in range(2, close_at(c, ks)):\n", "    for i in range(1, close_at(c, ks)):\n", {"run"},
+                  "題の1行目まで続きに数える"),
+    "run_close": ("lint.py", "    for i in range(2, close_at(c, ks)):\n", "    for i in range(2, len(c.lines) + 1):\n", {"run"},
+                  "締めの行まで続きに数える"),
+    "close_kind": ("lint.py", "    return min(closing_index(c.lines), first)\n", "    return closing_index(c.lines)\n",
+                   {"run", "ansnext"}, "問い → 次の配信への誘いの終わりで、問いの行を締めに数えない"),
+    "kind_alias": ("lint.py", 'KIND_ALIAS = {"題読み": "題", "値段・数": "数", "値段": "数", "締めの問い": "締め", "配信へ": "締め"}',
+                   "KIND_ALIAS = {}", {"run"}, "付録A の書きかた（題読み・値段・数・締めの問い）を読まない"),
+    "kind_missing": ("lint.py", '        if k is None:\n            out.append(Hit("L-RUN"', '        if False:\n            out.append(Hit("L-RUN"',
+                     {"run"}, "種類の抜けた行を黙って読み飛ばす"),
+    "kind_unknown": ("lint.py", "        elif k not in KINDS:\n", "        elif False:\n", {"run"}, "決まりに無い種類を黙って読み飛ばす"),
+    "turn_unknown": ("lint.py", "        if t is not None and t not in TURNS:\n", "        if False:\n", {"run"},
+                     "決まりに無い開け閉めの字を黙って読み飛ばす"),
+    "kinds_none": ("lint.py", "    if not any(ks):\n        return None\n", "", {"run", "ansnext"},
+                   "kind の無い spec を「見ていない」にせず、全部の行を欄の抜けにする"),
+    "ans_off": ("lint.py", '            out.append(Hit("L-ANSNEXT", nxt,', '            [] and out.append(Hit("L-ANSNEXT", nxt,', {"ansnext"},
+                "答えの次が開かなくても出さない"),
+    "ans_open": ("lint.py", "        while j < end and t <= ANS_WINDOW:\n", "        while False:\n", {"ansnext"},
+                 "答えの次が開いていても出す"),
+    "ans_close": ("lint.py", "        if nxt in c.answer_marked or nxt >= end:\n", "        if nxt in c.answer_marked:\n", {"ansnext"},
+                  "答えのすぐあとが締めでも出す"),
+    "ans_turn": ("lint.py", ' or "o" in (turn_of(row_at(c, j)) or ""):\n', ":\n", {"ansnext"}, "turn の o（問いを開く）を見ない"),
+    "ans_window": ("lint.py", "ANS_WINDOW = 3.0", "ANS_WINDOW = 0.0", {"ansnext"}, "短い反応のあと3秒のうちに開いても出す"),
+    "ans_opens": ("lint.py", 'OPENS = ("出来事", "引っ張り")', 'OPENS = ("出来事",)', {"ansnext"}, "引っ張り（〜たら……）を、開く行に数えない"),
+    "src": ("lint.py", '         l_run, src=("#1403",)),\n', "         l_run),\n", {"hypo_link"}, "L-RUN が出どころの issue を持たない"),
     # ---- 2026-11-13（#1186、F-008 の5回目）: 前の回の事情の補足 ----
     "prev": ("lint.py", "        m = next((x for x in PREV.finditer(ln) if x.group(0) not in said), None)\n", "        m = None\n",
              {"prev"}, "前の回の事情（先週・リベンジ）を拾わない"),
@@ -749,12 +781,91 @@ def leg_width_median(L):
             ("L-WIDE を当てない日付（2026-10-21）でも出す", "中央値 14字" in line_of(odd, "2026-10-21"))]
 
 
+def kctx(L, lines, ks, ans=(), turns=None):
+    """行と種類（と開け閉め）から原稿を組む（spec の rows の kind・turn と同じ形。None はその欄を書かない）。"""
+    rows = [{"line": ln, **({"kind": k} if k else {}), **({"turn": t} if t else {})}
+            for ln, k, t in zip(lines, ks, turns or [None] * len(lines))]
+    return L.Ctx(lines=list(lines), title_card=None, title_from="足", rows=rows, answer_marked=set(ans))
+
+
+def numbered(n, last="みんなは？"):
+    return [f"{i}行目の字" for i in range(1, n)] + [last]
+
+
+# 診断（`references/diagnosis_2026-11-23.md`）の付録A の、屋根裏25人部屋の行の種類（書きかたも付録A のまま）。診断の「続」は 8・9・10・17行目
+ROOF = ("題読み", "前置き", "引っ張り", "出来事", "引っ張り", "反応", "説明", "前置き", "前置き", "反応",
+        "値段・数", "引っ張り", "出来事", "値段・数", "反応", "反応", "反応", "締めの問い")
+
+
+def leg_run(L):
+    def got(lines, ks, turns=None):
+        hs = hits_of(L, kctx(L, lines, ks, turns=turns), "L-RUN")
+        return ([h.line for h in hs if "続いた" in h.note], [(h.line, h.note.split("。")[0]) for h in hs if "続いた" not in h.note],
+                all(h.look for h in hs))
+    base = got(numbered(10), ["題", "前置き", "説明", "前置き", "出来事", "反応", "反応", "味", "味", "締め"])
+    title = got(numbered(5), ["題", "反応", "反応", "出来事", "締め"])
+    close = got(numbered(5), ["題", "出来事", "反応", "反応", "締め"])
+    invite = got(numbered(5) + ["本日22時から配信見にきてね！"], ["題", "出来事", "反応", "反応", "締め", "締め"])
+    num = got(numbered(6), ["題", "説明", "数", "説明", "説明", "締め"])
+    alias = got(numbered(6), ["題読み", "前置き", "値段・数", "反応", "反応", "締めの問い"])
+    missing = got(numbered(5), ["題", "出来事", None, "反応", "締め"])
+    unknown = got(numbered(5), ["題", "出来事", "オチ", "反応", "締め"])
+    turn_bad = got(numbered(5), ["題", "出来事", "出来事", "反応", "締め"], [None, "x", "oc", "ー", "-"])
+    roof = got(numbered(len(ROOF)), list(ROOF))
+    blind = L.lint(kctx(L, numbered(4), [None] * 4), TODAY)["blind"]
+    return [(f"前置き・説明・前置き → 4行目、反応・反応・味・味 → 8・9行目を △（{base[0]}）", base[0] == [4, 8, 9] and base[2] and not base[1]),
+            (f"題の1行目は数えない（題・反応・反応 で出さない。{title[0]}）", not title[0]),
+            (f"締めの行は数えない（反応・反応・締め で出さない。{close[0]}）", not close[0]),
+            (f"問い → 次の配信への誘いの終わりも、問いの行を締めに数える（{invite[0]}）", not invite[0]),
+            (f"数の行は続きを切る（説明・数・説明・説明 で出さない。{num[0]}）", not num[0]),
+            (f"付録A の書きかた（題読み・値段・数・締めの問い）で読む（{alias}）", not alias[0] and not alias[1]),
+            (f"種類の無い行を「種類が無い」で △（{missing[1]}）", [(n, "が無い" in w) for n, w in missing[1]] == [(3, True)] and missing[2]),
+            (f"決まりに無い種類（オチ）を △（{unknown[1]}）", [(n, "「オチ」" in w) for n, w in unknown[1]] == [(3, True)] and unknown[2]),
+            (f"決まりに無い開け閉め（x）を △。oc・ー・- は通す（{turn_bad[1]}）", [(n, "「x」" in w) for n, w in turn_bad[1]] == [(2, True)]),
+            (f"付録A の屋根裏25人部屋で、診断の「続」と同じ 8・9・10・17行目（{roof[0]}）", roof[0] == [8, 9, 10, 17] and not roof[1]),
+            ("どの行にも kind が無ければ「見ていない」", "L-RUN" in blind)]
+
+
+def leg_ansnext(L):
+    def got(lines, ks, ans=(3,), turns=None):
+        return [(h.line, h.look) for h in hits_of(L, kctx(L, lines, ks, ans, turns), "L-ANSNEXT")]
+    head, head_k = ["題", "鍋のふたを開けたら、", "中が空っぽ！"], ["題", "引っ張り", "出来事"]
+    react = got(head + ["あ、なんか嫌や！", "みんなは？"], head_k + ["反応", "締め"])
+    to_close = got(head + ["みんなは？"], head_k + ["締め"])
+    to_archive = got(head + ["みんなは？", "続きはアーカイブ見てね！"], head_k + ["締め", "締め"])
+    to_invite = got(head + ["みんなは？", "本日22時から配信見にきてね！"], head_k + ["締め", "締め"])
+    to_event = got(head + ["と思ったら、底に手紙！", "みんなは？"], head_k + ["出来事", "締め"])
+    to_pull = got(head + ["裏を見てみたら……", "みんなは？"], head_k + ["引っ張り", "締め"])
+    ask = head + ["じゃあ、誰が食べたん？", "みんなは？"]
+    turn_o = got(ask, head_k + ["反応", "締め"], turns=[None, "o", "c", "o", None])
+    turn_oc = got(ask, head_k + ["反応", "締め"], turns=[None, "o", "c", "oc", None])
+    turn_no = got(ask, head_k + ["反応", "締め"], turns=[None, "o", "c", "-", None])
+    short = got(head + ["わお、人がいっぱい！", "屋台を1軒ずつ見て回ったら、", "全部盛りにしてくれた！", "みんなは？"],
+                head_k + ["反応", "引っ張り", "出来事", "締め"])
+    long_ = got(head + ["甘くてドロドロやから、1本飲んだらたぶん死ぬ！", "裏を見てみたら……", "手紙！", "みんなは？"],
+                head_k + ["反応", "引っ張り", "出来事", "締め"])
+    in_spec = L.build(tmp_script(head + ["あ、なんか嫌や！", "みんなは？"], {"rows": [
+        {"line": "題", "kind": "題"}, {"line": "a", "kind": "引っ張り"}, {"line": "b", "kind": "出来事", "why": "【答】題の答え"},
+        {"line": "c", "kind": "反応"}, {"line": "d", "kind": "締め"}]}))
+    no_kind = L.lint(kctx(L, head + ["あ、なんか嫌や！", "みんなは？"], [None] * 5, {3}), TODAY)["blind"]
+    no_ans = L.lint(kctx(L, head + ["あ、なんか嫌や！", "みんなは？"], head_k + ["反応", "締め"], ()), TODAY)["blind"]
+    return [(f"答え → 反応 → 締め なら、反応の行（4行目）を △（{react}）", react == [(4, True)]),
+            ("答えのすぐあとが締め（問い・問い → アーカイブ・問い → 誘い）なら出さない", not (to_close or to_archive or to_invite)),
+            ("答えの次が出来事・引っ張りなら出さない", not (to_event or to_pull)),
+            ("答えの次が反応でも、turn に o（o・oc）があれば出さず、- なら出す", not turn_o and not turn_oc and turn_no == [(4, True)]),
+            (f"短い反応のあと3秒のうちに引っ張りが始まれば出さない（{short}）", not short),
+            (f"長い反応（3秒を越える）のあとなら出す（{long_}）", long_ == [(4, True)]),
+            ("spec の why の【答】を読む", [h.line for h in hits_of(L, in_spec, "L-ANSNEXT")] == [4]),
+            ("kind が無い・【答】が無ければ「見ていない」", "L-ANSNEXT" in no_kind and "L-ANSNEXT" in no_ans)]
+
+
 def hypo_problems(rules, playbook: str) -> list:
-    """規則と仮説の台帳の名指しの崩れ。台帳の行は「| N5 | …」で始まり、その行に規則の名前がある。"""
+    """規則と仮説の台帳の名指しの崩れ。台帳の行は「| N5 | …」で始まり、その行に規則の名前がある。研究の規則は出どころの issue（#1403）を持つ。"""
     out = []
     for r in rules:
-        if not (r.ledger or r.hypo):
-            out.append(f"{r.id} が帳面の ID も仮説の番号も持たない")
+        if not (r.ledger or r.hypo or r.src):
+            out.append(f"{r.id} が帳面の ID も仮説の番号も出どころの issue も持たない")
+        out += [f"{r.id} の出どころ {s} が issue の形（#1403）でない" for s in r.src if not re.fullmatch(r"#\d+", s)]
         for h in r.hypo:
             row = next((ln for ln in playbook.splitlines() if ln.startswith(f"| {h} |")), None)
             if row is None:
@@ -770,12 +881,19 @@ def leg_hypo_link(L):
     wide = next((r for r in L.RULES if r.id == "L-WIDE"), None)
     stray = hypo_problems([L.Rule("L-NONE", (), "2026-11-11", "x", lambda _: [], hypo=("N99",))], pb)
     bare = hypo_problems([L.Rule("L-BARE", (), "2026-11-11", "x", lambda _: [])], pb)
-    return [(f"規則 {len(L.RULES)} がどれも帳面の ID か台帳の番号を持ち、台帳の行が規則の名前を書いている" + (f" ← {got}" if got else ""),
-             not got),
+    odd = hypo_problems([L.Rule("L-ODD", (), "2026-11-23", "x", lambda _: [], src=("1403",))], pb)
+    research = [r for r in L.RULES if r.id in ("L-RUN", "L-ANSNEXT")]
+    led = LEDGER_MD.read_text(encoding="utf-8")
+    return [(f"規則 {len(L.RULES)} がどれも帳面の ID か台帳の番号か出どころの issue を持ち、台帳の行が規則の名前を書いている"
+             + (f" ← {got}" if got else ""), not got),
             ("L-WIDE は帳面の ID を持たず、台帳の N5 を持つ", wide is not None and wide.ledger == () and wide.hypo == ("N5",)),
-            ("帳面（ayato_feedback.md）に L-WIDE が無い（あやとの指摘ではない）", "L-WIDE" not in LEDGER_MD.read_text(encoding="utf-8")),
+            ("帳面（ayato_feedback.md）に L-WIDE が無い（あやとの指摘ではない）", "L-WIDE" not in led),
+            ("L-RUN・L-ANSNEXT は帳面の ID も台帳の番号も持たず、出どころ #1403 だけを持つ（研究の決まり）",
+             len(research) == 2 and all(r.ledger == () and r.hypo == () and r.src == ("#1403",) for r in research)),
+            ("帳面に L-RUN・L-ANSNEXT が無い", "L-RUN" not in led and "L-ANSNEXT" not in led),
             ("台帳に無い番号（N99）を指す規則を拾う", any("N99" in p for p in stray)),
-            ("どちらも持たない規則を拾う", any("L-BARE" in p for p in bare))]
+            ("どれも持たない規則を拾う", any("L-BARE" in p for p in bare)),
+            ("issue の形でない出どころ（1403）を拾う", any("L-ODD" in p for p in odd))]
 
 
 LEGS = {
@@ -790,6 +908,7 @@ LEGS = {
     "as_of_id": leg_as_of_id, "spec_rows": leg_spec_rows,
     "wide": leg_wide, "width_median": leg_width_median, "hypo_link": leg_hypo_link,
     "prev": leg_prev,
+    "run": leg_run, "ansnext": leg_ansnext,
 }
 
 if __name__ == "__main__":
