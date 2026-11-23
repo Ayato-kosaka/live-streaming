@@ -5,7 +5,7 @@
 - 登場 0.5〜1.45: 画面の真ん中に雪の屋根と煙突。軒の電球が左から点き、煙突がかたかた揺れて雪をふく（1.0・1.25）
 - 山場 1.45〜2.6: すぽん！とあやとが飛び出し（ばんざい）、雪がはじけて金の輪が閃く。金の光の筋が2本、
   あやとのまわりを回りながら昇る。あやとは手を振る。1.95〜2.55 にカメラが引いて、屋根と煙突が上の帯へ
-- キャラ絵が出たら（2.6〜3.3）: 金の輪がはじけ、景色がすっと引いて、縁（上の帯の屋根と煙突と満月・下の隅の町）だけが残る
+- キャラ絵が出たら（2.6〜3.3）: 金の輪がはじけ、景色がすっと引いて、縁（上の帯の煙突と満月・下の隅の町）だけが残る
 - 滞在（3秒の輪）: あやとは手を振り続け、金の光の筋が2本、まわりを回る。月が瞬き、雪が降る
 - 締め 1.0秒: あやとが煙突にすぽっと戻り、雪がふいて、景色が消える
 
@@ -103,22 +103,20 @@ class Scene(Stage):
 
     def thin_keep(self):
         """景色が薄く引いたあとに残す縁（0〜1。画面の濃さに掛ける）。真ん中（キャラ絵と字の所）は 0。
-        - 上の帯: 煙突・屋根の雪の上の端・満月は、その絵の形のまま残す（形で残さないと、まわりの夜空が四角や丸の
-          暗い板になって浮いた）。夜空は上の端に薄く
+        - 上の帯: 煙突と満月は、その絵の形のまま残す（形で残さないと、まわりの夜空が四角や丸の暗い板になって浮いた）。
+          煙突の根もと（屋根に隠れた所）は下へ溶かす。屋根は残さない（雪の上の端だけ細く残すと、宙に浮いた雪の棚に見えた）。
+          夜空は上の端にごく薄く（濃くすると、配信の景色の上にぼやけた暗い帯が乗って見えた）
         - 下の隅: 町の家々"""
         yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
         sm = lambda v: v * v * (3 - 2 * v)
-        top = sm(np.clip((240 - yy) / 150, 0, 1)) * 0.32
+        top = sm(np.clip((240 - yy) / 150, 0, 1)) * 0.16
         cv = Canvas()  # 落ち着いたあと（カメラ 1 倍・ずれ 0）の形
         sprite(cv, self.chim, CX, MOUTH - CHIM_MOUTH * H_CHIM, H_CHIM, anchor=(0.5, 0.0))
-        chim = cv.A.copy()
-        cv = Canvas()
-        sprite(cv, self.roof, RX, R_TOP, W_ROOF * self.roof.h / self.roof.w, anchor=(0.5, 0.0))
-        roof = cv.A * sm(np.clip((330 - yy) / 50, 0, 1))
+        chim = cv.A * sm(np.clip((322 - yy) / 34, 0, 1))
         cv = Canvas()
         sprite(cv, self.moon, MOON[0], MOON[1], MOON[2], anchor=(0.5, 0.5))
         moon = cv.A
-        shape = cv2.GaussianBlur(np.maximum(np.maximum(chim, roof), moon), (0, 0), 1.0)
+        shape = cv2.GaussianBlur(np.maximum(chim, moon), (0, 0), 1.0)
         corner = np.maximum(*(sm(np.clip((300 - np.hypot(xx - cx, yy - H)) / 170, 0, 1)) for cx in (0.0, float(W)))) * 0.8
         return np.maximum(np.maximum(top, shape), corner).astype(np.float32)
 
