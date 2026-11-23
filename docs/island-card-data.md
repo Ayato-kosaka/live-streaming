@@ -45,7 +45,7 @@
 | Firestore | `islandDonors` | どねID → チャンネルの対応表 | どねID（`viewer_pk`） | **31** |
 | Firestore | `nordicDays` | 旧・その日いた人 | `YYYY-MM-DD` | 測っていない（毎晩書かれている。6-3） |
 | Git | `site/content/plans.ts` の `PLANS` | これからの企画（人が書く） | `id` | **4** |
-| Git | `site/content/legends.ts` の `LEGENDS` | やった企画（人が書く） | **`slug`** | **8** |
+| Git | `site/content/projects.ts` の `PROJECTS`（伝説はその印） | やった企画（人が書く） | **`slug`** | **8** |
 | Git | `site/content/nordic.ts` の `DAYS` | 北欧の旅程表 | `id`（`day-depart` / `day-1`…） | **17**（`DAY_PAGES` も17） |
 | Git | `site/content/planDays.ts` の `PLAN_BY_DAY` | 日付 → その日の企画の札 | `YYYY-MM-DD` | **18日ぶん・21本** |
 | Git | `python/stream_events_seed.json` | 企画の種（戻し先） | `events[].id` | **14** |
@@ -143,7 +143,7 @@
 | ファイル | 何を表すか | 鍵 | 件数 | 誰が書くか | 誰が読むか |
 | --- | --- | --- | --- | --- | --- |
 | `site/content/plans.ts` の `PLANS` | これからの企画のページ | `id` | 4（`food-wine-fest` `georgia-bye` `japan-2years` `nordic`） | 人 | `/next`、`PLAN_BY_DAY`、`islandStreamEvent.planId` の相手 |
-| `site/content/legends.ts` の `LEGENDS` | やった企画のページ | **`slug`** | 8 | 人 | `/legends/{slug}`、`planId` の相手 |
+| `site/content/projects.ts` の `PROJECTS`（伝説の印が付いた行） | やった企画のページ | **`slug`** | 8 | 人 | `/legends/{slug}`、`planId` の相手 |
 | `site/content/nordic.ts` の `DAYS` | 旅程表。1日1行 | `id` | **17**（`day-depart` ＋ `day-1`〜`day-16`。2026-09-11〜09-27） | 人 | `/nordic`、`DAY_PAGES`、`PLAN_BY_DAY` |
 | `site/content/nordic.ts` の `DAY_PAGES` | 面のある日 | 同上 | **17**（`legs` か `city` を持つ行。いまは全部持っている） | — | `PLAN_BY_DAY`、`/nordic/day/{slug}` |
 | `site/content/planDays.ts` の `PLAN_BY_DAY` | **日付 → 企画の札。カードの紙の見出しはここから出る** | `YYYY-MM-DD` | **18日・21本** | — | `/cards`・`/friends`・`/me`（面＝server で引いて値だけ渡す） |

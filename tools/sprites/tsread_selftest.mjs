@@ -132,7 +132,7 @@ const ARRAYS = [
   ["site/content/plans.ts", "PLANS", "id", "nextempty"],
   ["site/content/travel.ts", "CITIES", "slug", "guidestop"],
   ["site/content/recipes.ts", "RECIPES", "slug", "manifest / heroicon"],
-  ["site/content/legends.ts", "LEGENDS", "slug", "manifest / heroicon"],
+  ["site/content/projects.ts", "PROJECTS", "slug", "manifest / heroicon"],
   ["site/content/streamTypes.ts", "STREAM_TYPES", "slug", "manifest / heroicon"],
   // 焼き込みではないが、**同じ形の危うさ**を持っていたので一緒に寄せた
   ["site/components/island/layout.ts", "PLACES", "id", "here_selftest"],

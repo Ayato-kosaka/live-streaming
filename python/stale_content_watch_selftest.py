@@ -180,7 +180,7 @@ TWO_SIDES: dict[str, tuple[int, int]] = {
     "stays.ts": (273, 400),  # いちばん長く1つの国に居た日付の空き（ジョージア 2025-07-19〜2026-04-18）
     "apps.ts": (102, 200),  # 2026-02-26 → 06-08 の102日
     "chapters.ts": (126, 400),  # 章の間隔の中央値126日
-    "legends.ts": (222, 400),  # 2025-05-07 → 12-15 の222日
+    "projects.ts": (222, 400),  # 伝説の 2025-05-07 → 12-15 の222日
     "shorts.ts": (45, 130),  # 130 は #119 の127日のすぐ上
     "chapterStreams.ts": (130, 400),  # 章が閉じる間隔は3〜6ヶ月
     # **`COVERS` の3本（`nordic.ts` `nordicSun.ts` `plans.ts`）と
@@ -235,7 +235,7 @@ def _rewrite_dates(src: str, when: date) -> str:
 PLANT_RE = {
     "recipes.ts": re.compile(r'^\s+slug: "([^"]+)"'),
     "kitchenTalk.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{'),
-    "legends.ts": re.compile(r'^\s+slug: "([^"]+)"'),
+    "projects.ts": re.compile(r'^\s+slug: "([^"]+)"'),
     "legendDays.ts": re.compile(r'^\s+"([a-z0-9-]+)": \{'),
     "residents.ts": re.compile(r'^\s+\{ icon: "([^"]+)"'),
     "characterBox.ts": re.compile(r'^\s+"([^"]+)"(?:,|: \[)'),

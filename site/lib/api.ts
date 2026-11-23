@@ -228,7 +228,7 @@ export type NextPlan = {
   byLogin?: true;
   hearts: number;
   status: PlanStatus;
-  /** ページとして立ったときの、Git 側の企画の id（`content/plans.ts`・`content/legends.ts`） */
+  /** ページとして立ったときの、Git 側の企画の id（`content/projects.ts` の slug。国を移る行と月末配信の回は `content/plans.ts` の id） */
   planId?: string;
   /**
    * この企画のものだと決めた配信（#202）。**あやとしか足せない。**

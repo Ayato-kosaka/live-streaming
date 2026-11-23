@@ -4,6 +4,7 @@
  */
 
 import { say } from "@/content/nights";
+import { courseOf } from "@/content/projects";
 
 export const WORLD = 1200;
 
@@ -102,7 +103,8 @@ export const PLACES: Place[] = [
     icon: "hall-museum",
     size: 74,
     href: "/legends",
-    blurb: "イラン380km、年越し24時間",
+    /* 距離は企画の表から（`content/projects.ts`。数の持ち主は企画。M-20） */
+    blurb: `イラン${courseOf("iran-walk").km}km、年越し24時間`,
   },
   {
     id: "next",

@@ -238,7 +238,7 @@ REPO_CASES: list[dict] = [
     # 最後の節が**本物の面の元**を数える。比較をひっくり返す `py` の当てかただけでは、
     # 「面に Commons の URL を貼り戻した」形を当てていない。その形そのものを置く
     {"watch": "python/hotlink_watch_selftest.py",
-     "file": "site/content/plans.ts",
+     "file": "site/content/projects.ts",
      "old": 'src: "/next/photos/tbilisi-mtatsminda-park-94609534-3168f235-960.webp"',
      "new": 'src: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/'
             'Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg/960px-Tbilisi_-_Mtatsminda_Park_%289460953464%29.jpg"',
