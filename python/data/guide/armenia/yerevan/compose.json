@@ -46,27 +46,28 @@
  "items": {
   "see/cascade": {
    "story": {
-    "text": "夕日まで20分しかなく、大階段を爆速で登りました。階段に座る人たちは、まるで無限映画館。でも、みんなが見ている方向は、夕日の沈む方向ではありませんでした。最後の日にもう一度行くと、エスカレーターはメンテナンスで止まっていました。",
+    "text": "夕日まで20分しかなく、大階段を爆速で登りました。階段に座る人たちが見ていたのは、夕日の沈む方向ではありませんでした。最後にもう一度行った日は、エスカレーターで上へ。",
     "facts": [
      "5cWmE-KqHLA@19830#move",
-     "5cWmE-KqHLA@19950#quote",
      "5cWmE-KqHLA@20010#caution",
-     "YFxoJhKOasQ@7170#caution"
+     "YFxoJhKOasQ@5220#move",
+     "YFxoJhKOasQ@6420#move"
     ]
-   }
+   },
+   "article": "cascade"
   },
   "see/genocide": {
    "card": "hill",
    "story": {
-    "text": "記念碑の44mの塔は民族の復活、12の石板は失われた土地を表すそうです。犠牲者は100万〜150万人とされると聞いて、えげつないと感じました。丘の上からは、街の建物の向こうにアララト山が見えました。別の日の夜中にも、散歩で夜景を見に行きました。",
+    "text": "街から坂道や階段を登って歩きました。記念碑の44mの塔は民族の復活、12の石板は失われた土地を表すそうです。犠牲者は100万〜150万人とされると聞いて、えげつないと感じました。",
     "facts": [
+     "2y4IbYu-ZeI@2160#move",
      "2y4IbYu-ZeI@8960#fact",
      "2y4IbYu-ZeI@9060#fact",
-     "2y4IbYu-ZeI@9120#quote",
-     "2y4IbYu-ZeI@9360#place",
-     "2u4HfAvQdsI@1290#place"
+     "2y4IbYu-ZeI@9120#quote"
     ]
-   }
+   },
+   "article": "memorial"
   },
   "see/opera": {
    "story": {
@@ -111,13 +112,14 @@
   },
   "todo/cascade": {
    "story": {
-    "text": "上の段からは、富士山のような山が見えました。最後の日は、次の日の大事な移動に備えて、エスカレーターで上へ。エスカレーターでも、上まで結構長かったです。",
+    "text": "上の段からは、富士山のような山が見えました。もう一度行った日は、次の日の大事な移動に備えて、エスカレーターで上へ。エスカレーターでも、上まで結構長かったです。",
     "facts": [
      "5cWmE-KqHLA@19980#fact",
      "YFxoJhKOasQ@6420#move",
      "YFxoJhKOasQ@7860#caution"
     ]
-   }
+   },
+   "article": "cascade"
   },
   "todo/sevan": {
    "story": {
@@ -141,23 +143,27 @@
      "o7OIStvxT0Q@5170#food",
      "o7OIStvxT0Q@4890#price"
     ]
-   }
+   },
+   "article": "market"
   },
   "eat/lavash": {
    "story": {
-    "text": "スーパーでは、ラヴァシュを1枚ずつ量り売りで買えます。パンがおいしくて、毎日のようにスーパーで買って食べていました。街のパン屋では、ラヴァシュを機械で伸ばして焼いていました。",
+    "text": "スーパーでは、ラヴァシュを1枚ずつ量り売りで買えます。パンがおいしくて、毎日のようにスーパーで買って食べていました。街のパン屋では、ラヴァシュを機械を使って伸ばして焼いていました。",
     "facts": [
      "k-3fN6Ynsok@5200#food",
      "YFxoJhKOasQ@3300#quote",
      "gHTWAMKCITo@2100#food"
     ]
-   }
+   },
+   "article": "bakery"
   },
   "eat/lahmajo": {
    "story": {
-    "text": "ラフマジュンは、アルメニアのソウルフード。裏路地の奥の専門店で、まずザクロのソースを使ったアラビックを頼みました。2枚でお腹いっぱいになり、閉店時間を過ぎて店から追い出されました。",
+    "text": "ラフマジュンは、アルメニアのソウルフード。前に食べようとしたときは、売り切れでした。裏路地の奥の専門店は、探すのに迷いましたが、まずザクロのソースを使ったアラビックを頼みました。2枚でお腹いっぱいになり、閉店時間を過ぎて店から追い出されました。",
     "facts": [
      "j_yInDStbKg@1000#food",
+     "j_yInDStbKg@1020#caution",
+     "j_yInDStbKg@3100#caution",
      "j_yInDStbKg@3180#place",
      "j_yInDStbKg@3330#food",
      "j_yInDStbKg@3450#food",
@@ -184,7 +190,8 @@
      "7R7xote6efA@7110#food",
      "XE0lZY5fzEQ@4950#food"
     ]
-   }
+   },
+   "article": "bakery"
   },
   "eat/apricot": {
    "story": {
@@ -203,7 +210,8 @@
      "74c2AutI7PY@4650#price",
      "74c2AutI7PY@4680#food"
     ]
-   }
+   },
+   "article": "market"
   },
   "guide/transit": {
    "story": {
@@ -266,7 +274,7 @@
   "budget": {
    "icon": "wallet",
    "label": "乗り物の目安",
-   "value": "空港バス300ドラム",
+   "value": "空港バス201番",
    "lead": "街のまん中まで約30分",
    "to": "#budget"
   },
