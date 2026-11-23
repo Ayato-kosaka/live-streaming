@@ -44,7 +44,10 @@ const STREAMS_OPEN = 2;
 export default function YerevanSevanPage() {
   const country = travelPage(COUNTRY);
   const city = travelCity(COUNTRY, CITY);
-  const all = CITY_STREAMS[A.streams.country]?.[A.streams.city] ?? [];
+  /* アルメニアの滞在は街を6つ持つので、配信の一覧（cityStreams.ts）は題名に街の名前がある回だけを街の欄に寄せる
+     （エレバンの回は「エレバン」と「セヴァン湖」の欄に分かれる）。滞在の街の分けかたが変わっても引けるように、
+     国の欄をまたいで探す（ティラナのスフラキの記事と同じ。一覧に無ければ止めるのは同じ） */
+  const all = Object.values(CITY_STREAMS[A.streams.country] ?? {}).flat();
   const cited = A.streams.videos.map((v) => {
     const s = all.find((x) => x.videoId === v);
     if (!s) throw new Error(`yerevan/sevan/page.tsx: 場面を引いた回 ${v} が配信の一覧（cityStreams.ts）に無い`);

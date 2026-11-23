@@ -7,8 +7,8 @@
 座標は同じ置き場の `geo.json`、借りた写真の欄は `photos.json`（どちらも同じ道具の `geo` `photo` で足す）。
 **JSON を手で直さない。** ここを直して build する。
 
-エレバンは「行った」街（2026-04-19〜04-28・05-10〜05-23）。ここに書くのは骨組み（外の出どころの事実）だけで、
-行った箱と記事は、行った担当が master の配信の facts（streams/2026/04-05）から足す。ここでは went は全部 false。
+エレバンは「行った」街（2026-04-19〜04-28・05-10〜05-23）。骨組み（外の出どころの事実）のほかに、
+行った箱を配信の facts（streams/2026/04-05）から肉付けしている（下の「行った」。`.claude/skills/city-guide/briefs/articles.md`）。厚い所は記事
 骨組みの品は、配信で行った所・食べたもの（カスケード・オペラ座・虐殺記念館・ブルーモスク・グム市場・エレバン湖・
 セヴァン湖・ラフマジョ・ラヴァシュ・ガタ・シャウルマ）が肉付けの先になるように選んだ（facts から品は作らない）。
 店に結ぶ品は、その店のいまの品書き（Glovo の配達の品書き。2026-11-23 に見た）か、2024年以降の Wikivoyage の店の欄に載っている品だけ。
@@ -548,12 +548,116 @@ unknown = [
     {"what": "グム市場の場所", "why": "Wikivoyage の「屋根つき市場（G.U.M.）」の点はマシュトツ通りの古い市場の建物を指していて、OpenStreetMap のグム市場と約1.2kmずれる。面は OpenStreetMap の点にした"},
 ]
 
+# ------------------------------------------------------------------ 行った（配信の facts。行った担当が足す）
+# エレバンに居たのは 2026-04-19〜04-28・05-10〜05-23 の27本。facts は `streams/2026/<月>/<stem>.facts.json`（`python/guide_facts.py`）。
+# **ガイドの品にだけ肉付けする**（facts から品を作らない）。骨組みの字（出どころつき）には混ぜず、行った箱に入る字だけを持つ。
+# 配信で名前を言っていない所・品を、ガイドの品に結んだものは、何で結んだかを書いておく:
+#   - マーケット街の串焼き屋の串（04-23）→ キャバブ（ひき肉の串焼き）: その日に「中身はつくね・ネギ・コリアンダー」と言った（ひき肉の串）
+#   - エレバンマーケットで買わされた干し柿（05-21）→ ドライフルーツ: 干した果物そのもの（グム市場かどうかは言っていないので、店には結ばない）
+# 結ばなかったもの: 緑のハーブのピザ（04-22・04-26。ジンガロフ・ハツらしいが名前を言っていない）・串のバーベキュー（04-26。
+# ホロヴァツかキャバブか言っていない）・シャウルマの品書き（04-22 のカード。食べたかを言っていない）・
+# 広場の警察（05-19。どの広場かを言っていない）・中心地のカジノ（05-17。うろ覚えと言った）
+# 配信の一覧（cityStreams.ts）に在るエレバンの回は8本だけ（滞在の街が6つあるので、題名に街の名前がある回だけが寄る）。
+# 窓の場面は YouTube へ直に繋ぐので一覧に無い回でもよいが、記事の一言と場面は一覧に在る回からしか引けない
+
+import json as _json
+
+
+def _days() -> dict:
+    """動画の id → 配信の日（MM-DD）。facts.json の date_local（見張りの ref と同じ物差し）"""
+    out = {}
+    for p in sorted((ROOT / "streams").glob("*/*/*.facts.json")):
+        d = _json.loads(p.read_text(encoding="utf-8"))
+        out[d["video_id"]] = d["date_local"][5:]
+    return out
+
+
+_DAY = _days()
+
+
+def fx(fid: str) -> dict:
+    """facts の行の結び（`<動画>@<秒>#<種類>`）を、材料の形（ref・url つき）にする"""
+    v, rest = fid.split("@")
+    t, kind = rest.split("#")
+    t = int(t)
+    if v not in _DAY:
+        raise BookError(f"facts の行「{fid}」の配信が streams に無い")
+    return {"id": fid, "ref": f"{_DAY[v]} {t // 3600}:{t % 3600 // 60:02d}:{t % 60:02d}", "video": v, "t": t, "kind": kind,
+            "url": f"https://www.youtube.com/watch?v={v}&t={t}s"}
+
+
+def went(xs: list, key: str, ids: list, scene: str) -> None:
+    """品（鍵）に行った行と場面を付ける。場面は結んだ行のどれか（一言に選ぶ品は、一言の行）"""
+    x = next((x for x in xs if x["key"] == key), None)
+    if x is None or scene not in ids:
+        raise BookError(f"行った: 品「{key}」が無いか、場面「{scene}」が結んだ行に無い")
+    x["went"] = {"facts": [fx(i) for i in ids]}
+    sc = fx(scene)
+    x["scene"] = {"id": sc["id"], "video": sc["video"], "t": sc["t"], "url": sc["url"]}
+
+
+SUNSET = "5cWmE-KqHLA"  # 04-25 夕日に間に合わせてカスケードを駆け上がった回
+LAST = "YFxoJhKOasQ"    # 05-22 最後の日にもう一度カスケードへ行った回
+WALK = "2y4IbYu-ZeI"    # 05-17 虐殺記念碑まで歩いた回
+GO, BACK = "haHAczqMooM", "JJdPN0ozwZI"  # 05-20 セヴァン湖の行きと、湖から帰るまで
+LAKE = "c-ogYrwX8iA"    # 05-16 エレバン湖まで歩いた回
+
+went(see, "cascade", [f"{SUNSET}@19830#move", f"{SUNSET}@19950#quote", f"{SUNSET}@19980#fact", f"{SUNSET}@20010#caution",
+                      f"{LAST}@6300#move", f"{LAST}@6360#fact", f"{LAST}@7170#caution"], f"{SUNSET}@19950#quote")
+went(see, "genocide", [f"{WALK}@8910#place", f"{WALK}@8960#fact", f"{WALK}@9060#fact", f"{WALK}@9120#quote", f"{WALK}@9360#place",
+                       "2u4HfAvQdsI@1290#place"], f"{WALK}@8910#place")
+went(see, "opera", ["5cWmE-KqHLA@14310#place", "2u4HfAvQdsI@200#place", "2u4HfAvQdsI@270#caution"], "2u4HfAvQdsI@200#place")
+went(see, "bluemosque", ["1KWNenbPR5A@1190#place"], "1KWNenbPR5A@1190#place")
+went(see, "yerevanlake", [f"{LAKE}@1170#move", f"{LAKE}@4140#place", f"{LAKE}@4145#quote", f"{LAKE}@4260#caution"], f"{LAKE}@4140#place")
+went(see, "sevanavank", [f"{GO}@14070#place", f"{GO}@14880#fact", f"{GO}@15780#place", f"{BACK}@1110#place", f"{BACK}@1230#fact"],
+     f"{GO}@15780#place")
+
+went(todos, "cascade", [f"{SUNSET}@19830#move", f"{SUNSET}@19980#fact", f"{LAST}@6420#move", f"{LAST}@7860#caution"], f"{SUNSET}@19830#move")
+went(todos, "sevan", [f"{GO}@1800#move", f"{GO}@3540#price", f"{GO}@8880#move", f"{GO}@9870#fact", f"{GO}@9900#quote", f"{BACK}@6480#price"],
+     f"{GO}@9900#quote")
+
+went(eat_items, "kebab", ["o7OIStvxT0Q@4440#fact", "o7OIStvxT0Q@4530#food", "o7OIStvxT0Q@4870#quote", "o7OIStvxT0Q@4890#price",
+                          "o7OIStvxT0Q@5130#food", "o7OIStvxT0Q@5170#food"], "o7OIStvxT0Q@4870#quote")
+went(eat_items, "lavash", ["k-3fN6Ynsok@5200#food", "gHTWAMKCITo@2100#food", f"{LAST}@3300#quote", "1KWNenbPR5A@2820#fact"],
+     f"{LAST}@3300#quote")
+went(eat_items, "lahmajo", ["j_yInDStbKg@1000#food", "j_yInDStbKg@3180#place", "j_yInDStbKg@3330#food", "j_yInDStbKg@3450#food",
+                            "j_yInDStbKg@6030#caution", "j_yInDStbKg@6090#food"], "j_yInDStbKg@3450#food")
+went(eat_items, "khachapuri", ["k-3fN6Ynsok@3365#place", "k-3fN6Ynsok@3695#price"], "k-3fN6Ynsok@3695#price")
+went(eat_items, "gata", ["7R7xote6efA@6750#place", "7R7xote6efA@7020#price", "7R7xote6efA@7110#food", "XE0lZY5fzEQ@4380#food",
+                         "XE0lZY5fzEQ@4950#food"], "7R7xote6efA@7110#food")
+went(eat_items, "apricot", ["74c2AutI7PY@4950#food"], "74c2AutI7PY@4950#food")
+
+went(buy_items, "driedfruit", ["74c2AutI7PY@3960#place", "74c2AutI7PY@4530#caution", "74c2AutI7PY@4650#price", "74c2AutI7PY@4680#food"],
+     "74c2AutI7PY@4530#caution")
+
+
+def own(key: str, text: str, ids: list) -> None:
+    """基本情報の札に、行った人の話を1つ足す（出どころの無い、facts だけを持つ字。行った箱に入る）"""
+    g = next(g for g in basics["guide"] if g["key"] == key)
+    g["points"].append({"text": text, "facts": [fx(i) for i in ids]})
+
+
+own("transit", "バスでは現金もカードも使えず、乗車券は街なかの券売機テルセルで買いました。待っていた49番はなかなか来ず、"
+               "乗れたのは、位置の分かるアプリで見つけてからです。",
+    ["ey_pIoeVo_8@690#move", "ey_pIoeVo_8@600#place", "ey_pIoeVo_8@2310#caution", "ey_pIoeVo_8@2460#move"])
+own("pay", "ATMで下ろすときに間違えて、1,000円ほどしか下ろせておらず、パン屋で払ったら所持金がちょうど0円になりました。"
+           "セヴァン湖の店では、カードは使えないと言われたのに、それなら帰りますと言ったら使えました。",
+    ["7R7xote6efA@6900#caution", f"{BACK}@3240#caution"])
+own("sim", "SIMは1ヶ月無制限で1,600円ほど。10分以内に使えると言われたのに、開通まで30分ほどかかって使えず、店に戻って直してもらいました。",
+    ["jTpvux9mM44@3660#price", "aYXWyg1ANh0@3560#caution"])
+own("safety", "差別は受けず、めちゃくちゃ平和だと感じました。ただ、横断歩道は怖くて、信号をつけてほしいと思いました。"
+              "夜中の1時ごろには、道路で車が衝突する事故を見ました。",
+    ["jTpvux9mM44@5530#quote", "gHTWAMKCITo@3480#caution", "2u4HfAvQdsI@1350#caution"])
+basics["holidays"]["went"] = {"text": "4月24日の前の晩、帰り道で、ろうそくのようなものを持って音楽を流す大行列に出会いました。"
+                                      "昔の大量虐殺を忘れないための行列らしく、道は警察に封鎖されていました。",
+                              "facts": [fx("7R7xote6efA@5700#fact")]}
+
 book = {
     "_meta": {
         "何か": "エレバンを「ガイドブック型の街の面」（/travel/armenia/yerevan）にするための材料。行った街（2026-04-19〜04-28・05-10〜05-23）。焼くのは python/guidebook_bake.py",
         "見張り": "python3 python/guide_book_check.py armenia/yerevan（出どころの無い事実・座標の無い店・枠の外の座標）。マイマップの CSV も同じ道具が書く（--mymaps）",
         "出どころ": "事実を持つ欄には src（https と見た日）。座標は OpenStreetMap（Nominatim）。値段と「いまも」は2024年以降の出どころ（Wikivoyage の店と名所の欄は 2024-09 以降の書き込み）。確かめきれないものは unknown へ",
-        "行った": "行った街。went は全部 false で、行った箱と記事は行った担当が配信の facts（streams/2026/04-05）から足す。骨組みの字には混ぜない",
+        "行った": "行った街（2026-04-19〜04-28・05-10〜05-23）。went は配信の facts の行だけを持つ（台本の「行った」の段。名前を言っていない所を品に結んだ理由もそこ）。骨組みの字には混ぜない",
         "店": "店に結ぶ品は、その店のいまの品書き（Glovo の配達の品書き。2026-11-23 に見た）か、2024年以降の Wikivoyage の店の欄に載っている品だけ。値段は配達の値段",
         "円": "円は 1ユーロ＝395.18ドラム・10円＝22.695ドラム（2026年11月20日のアルメニア中央銀行のレート。1ドラム＝約0.4406円）で直し、10円で丸めた",
         "地図": "多角形（range.polygon）は、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない。虐殺記念館・エレブニ・エレバン湖・グム市場・ブランデー工場・日帰りの5つの町は見どころマップの外（矢印）",
@@ -581,7 +685,7 @@ book = {
 compose = {
     "_meta": {
         "何か": "エレバンのガイドブックの面（/travel/armenia/yerevan）の組み立て。材料（guidebook.json）にあるのは事実で、ここにあるのは選びかたと並べかただけ。焼くのは python/guidebook_bake.py",
-        "行った": "行った街。カード・話・一言は、行った担当が facts から足す（ここでは空）",
+        "行った": "行った街。カードはその日のあやと島カード（札の絵には使わず、窓の中の行った箱に）。話（story）は facts の行をつないだあやとの一人称（docs/guide-blog.md）で、記事のある品は要約だけ（article）。一言は節に1つ",
         "どんな街": "問いは日本語の頁がエレバンを語る3つ（材料の about.why_src）。前の街の問いを写していない",
         "題": "「エレバン観光ガイド」が頭（docs/island-misses.md #332・#333）",
     },
@@ -596,9 +700,66 @@ compose = {
     "terms": ["エレバン 観光", "エレバン 見どころ", "エレバン 地図", "アルメニア エレバン 観光", "エレバン 日帰り"],
     "published": "2026-11-23",
     "cover": {"catch": 0},
-    "cards": {},
-    "say": {},
-    "items": {},
+    "cards": {
+        "lake": {"id": "VuLK3vxONnoR2nLdQDlq", "day": "2026-05-16", "alt": "エレバン湖。曇り空の下の湖と、対岸の建物（2026年5月16日）"},
+        "hill": {"id": "p2u29ckWY2SqmpvnFSoL", "day": "2026-05-17", "alt": "丘の上から見た街。雲のすきまから光が差す（2026年5月17日）"},
+    },
+    "say": {"see": "cascade", "todo": "sevan", "eat": "kebab"},
+    "items": {
+        "see/cascade": {"story": {"text": "夕日まで20分しかなく、大階段を爆速で登りました。階段に座る人たちは、まるで無限映画館。"
+                                          "でも、みんなが見ている方向は、夕日の沈む方向ではありませんでした。"
+                                          "最後の日にもう一度行くと、エスカレーターはメンテナンスで止まっていました。",
+                                  "facts": ["5cWmE-KqHLA@19830#move", "5cWmE-KqHLA@19950#quote", "5cWmE-KqHLA@20010#caution",
+                                            "YFxoJhKOasQ@7170#caution"]}},
+        "see/genocide": {"card": "hill",
+                         "story": {"text": "記念碑の44mの塔は民族の復活、12の石板は失われた土地を表すそうです。"
+                                           "犠牲者は100万〜150万人とされると聞いて、えげつないと感じました。"
+                                           "丘の上からは、街の建物の向こうにアララト山が見えました。別の日の夜中にも、散歩で夜景を見に行きました。",
+                                   "facts": ["2y4IbYu-ZeI@8960#fact", "2y4IbYu-ZeI@9060#fact", "2y4IbYu-ZeI@9120#quote", "2y4IbYu-ZeI@9360#place",
+                                             "2u4HfAvQdsI@1290#place"]}},
+        "see/opera": {"story": {"text": "オペラ座の前の広場では、スティッチのダーツに当てると景品がもらえる遊びをやっていました。"
+                                        "遠くから投げたダーツが外れて飛んでくるのが怖くて、ベンチの端でサングラスをして備えていました。",
+                                "facts": ["2u4HfAvQdsI@200#place", "2u4HfAvQdsI@270#caution"]}},
+        "see/bluemosque": {"story": {"text": "ブルーモスクの前を通りました。アルメニアにも、ブルーモスクがあるんです。",
+                                     "facts": ["1KWNenbPR5A@1190#place"]}},
+        "see/yerevanlake": {"card": "lake",
+                            "story": {"text": "街から歩いて1時間ほど。大きくて、晴れていればアララト山も見える眺めでしたが、近くで見ると汚くてびっくりしました。",
+                                      "facts": ["c-ogYrwX8iA@1170#move", "c-ogYrwX8iA@4140#place", "c-ogYrwX8iA@4260#caution"]},
+                            "article": "lake"},
+        "see/sevanavank": {"story": {"text": "丘の上に教会が2つあって、片方は中に入れました。中は石でできていて、カトリックの大聖堂とは雰囲気が全然違います。"
+                                             "ふもとは、お祭りみたいなにぎわいでした。",
+                                     "facts": ["haHAczqMooM@15780#place", "JJdPN0ozwZI@1110#place", "JJdPN0ozwZI@1230#fact", "haHAczqMooM@14880#fact"]},
+                           "article": "sevan"},
+        "todo/cascade": {"story": {"text": "上の段からは、富士山のような山が見えました。最後の日は、次の日の大事な移動に備えて、エスカレーターで上へ。"
+                                           "エスカレーターでも、上まで結構長かったです。",
+                                   "facts": ["5cWmE-KqHLA@19980#fact", "YFxoJhKOasQ@6420#move", "YFxoJhKOasQ@7860#caution"]}},
+        "todo/sevan": {"story": {"text": "市バスとミニバスを乗り継ぎ、最後はヒッチハイクで湖へ。対岸が見えないほど大きな湖で、ほとりの店で1,200円の魚料理を食べました。",
+                                 "facts": ["haHAczqMooM@1800#move", "haHAczqMooM@3540#price", "haHAczqMooM@8880#move", "haHAczqMooM@9870#fact",
+                                           "JJdPN0ozwZI@6480#price"]},
+                       "article": "sevan"},
+        "eat/kebab": {"story": {"text": "マーケット街の串焼き屋で、チキンの串を温めてもらいました。中身はつくね・ネギ・コリアンダーで、"
+                                        "トルティーヤの上につくね串を敷いたような味。串焼きとトルティーヤで200円ぐらいでした。",
+                                "facts": ["o7OIStvxT0Q@4530#food", "o7OIStvxT0Q@5130#food", "o7OIStvxT0Q@5170#food", "o7OIStvxT0Q@4890#price"]}},
+        "eat/lavash": {"story": {"text": "スーパーでは、ラヴァシュを1枚ずつ量り売りで買えます。パンがおいしくて、毎日のようにスーパーで買って食べていました。"
+                                         "街のパン屋では、ラヴァシュを機械で伸ばして焼いていました。",
+                                 "facts": ["k-3fN6Ynsok@5200#food", "YFxoJhKOasQ@3300#quote", "gHTWAMKCITo@2100#food"]}},
+        "eat/lahmajo": {"story": {"text": "ラフマジュンは、アルメニアのソウルフード。裏路地の奥の専門店で、まずザクロのソースを使ったアラビックを頼みました。"
+                                          "2枚でお腹いっぱいになり、閉店時間を過ぎて店から追い出されました。",
+                                  "facts": ["j_yInDStbKg@1000#food", "j_yInDStbKg@3180#place", "j_yInDStbKg@3330#food", "j_yInDStbKg@3450#food",
+                                            "j_yInDStbKg@6090#food", "j_yInDStbKg@6030#caution"]}},
+        "eat/khachapuri": {"story": {"text": "中東寄りの店ザ・ピザでは、品書きのアジャリ・ハチャプリが480円。ジョージアより安かったです。",
+                                     "facts": ["k-3fN6Ynsok@3365#place", "k-3fN6Ynsok@3695#price"]}},
+        "eat/gata": {"story": {"text": "フードマーケットのパン屋で買ったガタは100円。パイ生地に、カスタードのような中身が入っていました。"
+                                       "お気に入りのパン屋のガタは、固くてずっしり重く、中に砂糖菓子のようなものが入っていて、おいしかったです。",
+                               "facts": ["7R7xote6efA@6750#place", "7R7xote6efA@7020#price", "7R7xote6efA@7110#food", "XE0lZY5fzEQ@4950#food"]}},
+        "eat/apricot": {"story": {"text": "あんずを初めて食べました。うまかったです。", "facts": ["74c2AutI7PY@4950#food"]}},
+        "buy/driedfruit": {"story": {"text": "エレバンマーケットで干し柿を買おうとしたら、果物をどんどん詰められて、所持金を全部持っていかれました。"
+                                             "干し柿は3つで200円。硬めで、思ったより悪くなかったです。",
+                                     "facts": ["74c2AutI7PY@3960#place", "74c2AutI7PY@4530#caution", "74c2AutI7PY@4650#price", "74c2AutI7PY@4680#food"]}},
+        "guide/transit": {"story": {"text": "切符は券売機テルセルで買う形で、バスでは現金もカードも使えませんでした。待っていた49番はなかなか来ず、降りる場所にも迷いました。",
+                                    "facts": ["ey_pIoeVo_8@600#place", "ey_pIoeVo_8@690#move", "ey_pIoeVo_8@2310#caution", "ey_pIoeVo_8@4050#caution"]},
+                          "article": "bus"},
+    },
     "about": {"history": {"q": "歴史は？", "icon": "ruins"}, "ararat": {"q": "アララト山は？", "icon": "mountain"},
               "pink": {"q": "なぜピンクシティ？", "icon": "plaza"}},
     "areas": {"republic": {"color": "#ffc4d2", "plan": [2, 1, 2]}, "cascade": {"color": "#d9ccf5", "plan": [1, 2, 2]}},

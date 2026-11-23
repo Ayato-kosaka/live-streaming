@@ -3,7 +3,7 @@
   "何か": "エレバンを「ガイドブック型の街の面」（/travel/armenia/yerevan）にするための材料。行った街（2026-04-19〜04-28・05-10〜05-23）。焼くのは python/guidebook_bake.py",
   "見張り": "python3 python/guide_book_check.py armenia/yerevan（出どころの無い事実・座標の無い店・枠の外の座標）。マイマップの CSV も同じ道具が書く（--mymaps）",
   "出どころ": "事実を持つ欄には src（https と見た日）。座標は OpenStreetMap（Nominatim）。値段と「いまも」は2024年以降の出どころ（Wikivoyage の店と名所の欄は 2024-09 以降の書き込み）。確かめきれないものは unknown へ",
-  "行った": "行った街。went は全部 false で、行った箱と記事は行った担当が配信の facts（streams/2026/04-05）から足す。骨組みの字には混ぜない",
+  "行った": "行った街（2026-04-19〜04-28・05-10〜05-23）。went は配信の facts の行だけを持つ（台本の「行った」の段。名前を言っていない所を品に結んだ理由もそこ）。骨組みの字には混ぜない",
   "店": "店に結ぶ品は、その店のいまの品書き（Glovo の配達の品書き。2026-11-23 に見た）か、2024年以降の Wikivoyage の店の欄に載っている品だけ。値段は配達の値段",
   "円": "円は 1ユーロ＝395.18ドラム・10円＝22.695ドラム（2026年11月20日のアルメニア中央銀行のレート。1ドラム＝約0.4406円）で直し、10円で丸めた",
   "地図": "多角形（range.polygon）は、その地区に入っている目印の座標を囲んで外へ広げた、おおよその範囲。区の境ではない。虐殺記念館・エレブニ・エレバン湖・グム市場・ブランデー工場・日帰りの5つの町は見どころマップの外（矢印）",
@@ -578,7 +578,42 @@
      "seen": "2026-11-23"
     }
    ],
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "5cWmE-KqHLA@19830#move",
+      "ref": "04-25 5:30:30",
+      "video": "5cWmE-KqHLA",
+      "t": 19830,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=5cWmE-KqHLA&t=19830s"
+     },
+     {
+      "id": "5cWmE-KqHLA@19980#fact",
+      "ref": "04-25 5:33:00",
+      "video": "5cWmE-KqHLA",
+      "t": 19980,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=5cWmE-KqHLA&t=19980s"
+     },
+     {
+      "id": "YFxoJhKOasQ@6420#move",
+      "ref": "05-22 1:47:00",
+      "video": "YFxoJhKOasQ",
+      "t": 6420,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=YFxoJhKOasQ&t=6420s"
+     },
+     {
+      "id": "YFxoJhKOasQ@7860#caution",
+      "ref": "05-22 2:11:00",
+      "video": "YFxoJhKOasQ",
+      "t": 7860,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=YFxoJhKOasQ&t=7860s"
+     }
+    ]
+   },
    "links": {
     "see": [
      "cascade",
@@ -587,6 +622,12 @@
    },
    "photo": {
     "drawn": "do"
+   },
+   "scene": {
+    "id": "5cWmE-KqHLA@19830#move",
+    "video": "5cWmE-KqHLA",
+    "t": 19830,
+    "url": "https://www.youtube.com/watch?v=5cWmE-KqHLA&t=19830s"
    }
   },
   {
@@ -1360,7 +1401,58 @@
      "seen": "2026-11-23"
     }
    ],
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "haHAczqMooM@1800#move",
+      "ref": "05-20 0:30:00",
+      "video": "haHAczqMooM",
+      "t": 1800,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=1800s"
+     },
+     {
+      "id": "haHAczqMooM@3540#price",
+      "ref": "05-20 0:59:00",
+      "video": "haHAczqMooM",
+      "t": 3540,
+      "kind": "price",
+      "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=3540s"
+     },
+     {
+      "id": "haHAczqMooM@8880#move",
+      "ref": "05-20 2:28:00",
+      "video": "haHAczqMooM",
+      "t": 8880,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=8880s"
+     },
+     {
+      "id": "haHAczqMooM@9870#fact",
+      "ref": "05-20 2:44:30",
+      "video": "haHAczqMooM",
+      "t": 9870,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=9870s"
+     },
+     {
+      "id": "haHAczqMooM@9900#quote",
+      "ref": "05-20 2:45:00",
+      "video": "haHAczqMooM",
+      "t": 9900,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=9900s"
+     },
+     {
+      "id": "JJdPN0ozwZI@6480#price",
+      "ref": "05-20 1:48:00",
+      "video": "JJdPN0ozwZI",
+      "t": 6480,
+      "kind": "price",
+      "url": "https://www.youtube.com/watch?v=JJdPN0ozwZI&t=6480s"
+     }
+    ]
+   },
    "links": {
     "see": [
      "sevanavank"
@@ -1368,6 +1460,12 @@
    },
    "photo": {
     "drawn": "do"
+   },
+   "scene": {
+    "id": "haHAczqMooM@9900#quote",
+    "video": "haHAczqMooM",
+    "t": 9900,
+    "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=9900s"
    }
   }
  ],
@@ -1457,7 +1555,66 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "5cWmE-KqHLA@19830#move",
+      "ref": "04-25 5:30:30",
+      "video": "5cWmE-KqHLA",
+      "t": 19830,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=5cWmE-KqHLA&t=19830s"
+     },
+     {
+      "id": "5cWmE-KqHLA@19950#quote",
+      "ref": "04-25 5:32:30",
+      "video": "5cWmE-KqHLA",
+      "t": 19950,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=5cWmE-KqHLA&t=19950s"
+     },
+     {
+      "id": "5cWmE-KqHLA@19980#fact",
+      "ref": "04-25 5:33:00",
+      "video": "5cWmE-KqHLA",
+      "t": 19980,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=5cWmE-KqHLA&t=19980s"
+     },
+     {
+      "id": "5cWmE-KqHLA@20010#caution",
+      "ref": "04-25 5:33:30",
+      "video": "5cWmE-KqHLA",
+      "t": 20010,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=5cWmE-KqHLA&t=20010s"
+     },
+     {
+      "id": "YFxoJhKOasQ@6300#move",
+      "ref": "05-22 1:45:00",
+      "video": "YFxoJhKOasQ",
+      "t": 6300,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=YFxoJhKOasQ&t=6300s"
+     },
+     {
+      "id": "YFxoJhKOasQ@6360#fact",
+      "ref": "05-22 1:46:00",
+      "video": "YFxoJhKOasQ",
+      "t": 6360,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=YFxoJhKOasQ&t=6360s"
+     },
+     {
+      "id": "YFxoJhKOasQ@7170#caution",
+      "ref": "05-22 1:59:30",
+      "video": "YFxoJhKOasQ",
+      "t": 7170,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=YFxoJhKOasQ&t=7170s"
+     }
+    ]
+   },
    "lat": 40.191463,
    "lon": 44.515587,
    "coord_src": [
@@ -1505,6 +1662,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg/500px-Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg/960px-Yerevan%2C_Cascade_of_Yerevan%2C_Armenia.jpg"
     }
+   },
+   "scene": {
+    "id": "5cWmE-KqHLA@19950#quote",
+    "video": "5cWmE-KqHLA",
+    "t": 19950,
+    "url": "https://www.youtube.com/watch?v=5cWmE-KqHLA&t=19950s"
    }
   },
   {
@@ -1602,7 +1765,58 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "2y4IbYu-ZeI@8910#place",
+      "ref": "05-17 2:28:30",
+      "video": "2y4IbYu-ZeI",
+      "t": 8910,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=2y4IbYu-ZeI&t=8910s"
+     },
+     {
+      "id": "2y4IbYu-ZeI@8960#fact",
+      "ref": "05-17 2:29:20",
+      "video": "2y4IbYu-ZeI",
+      "t": 8960,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=2y4IbYu-ZeI&t=8960s"
+     },
+     {
+      "id": "2y4IbYu-ZeI@9060#fact",
+      "ref": "05-17 2:31:00",
+      "video": "2y4IbYu-ZeI",
+      "t": 9060,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=2y4IbYu-ZeI&t=9060s"
+     },
+     {
+      "id": "2y4IbYu-ZeI@9120#quote",
+      "ref": "05-17 2:32:00",
+      "video": "2y4IbYu-ZeI",
+      "t": 9120,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=2y4IbYu-ZeI&t=9120s"
+     },
+     {
+      "id": "2y4IbYu-ZeI@9360#place",
+      "ref": "05-17 2:36:00",
+      "video": "2y4IbYu-ZeI",
+      "t": 9360,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=2y4IbYu-ZeI&t=9360s"
+     },
+     {
+      "id": "2u4HfAvQdsI@1290#place",
+      "ref": "05-19 0:21:30",
+      "video": "2u4HfAvQdsI",
+      "t": 1290,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=2u4HfAvQdsI&t=1290s"
+     }
+    ]
+   },
    "lat": 40.185718,
    "lon": 44.489184,
    "coord_src": [
@@ -1645,6 +1859,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg/500px-Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg/960px-Genocide_Memorial_complex_from_air_on_a_sunny_day%2C_September_2017.jpg"
     }
+   },
+   "scene": {
+    "id": "2y4IbYu-ZeI@8910#place",
+    "video": "2y4IbYu-ZeI",
+    "t": 8910,
+    "url": "https://www.youtube.com/watch?v=2y4IbYu-ZeI&t=8910s"
    }
   },
   {
@@ -1806,7 +2026,18 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "1KWNenbPR5A@1190#place",
+      "ref": "05-23 0:19:50",
+      "video": "1KWNenbPR5A",
+      "t": 1190,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=1KWNenbPR5A&t=1190s"
+     }
+    ]
+   },
    "lat": 40.177883,
    "lon": 44.50556,
    "coord_src": [
@@ -1837,6 +2068,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Blue_Mosque%2C_Yerevan_in_2019_06.jpg/500px-Blue_Mosque%2C_Yerevan_in_2019_06.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Blue_Mosque%2C_Yerevan_in_2019_06.jpg/960px-Blue_Mosque%2C_Yerevan_in_2019_06.jpg"
     }
+   },
+   "scene": {
+    "id": "1KWNenbPR5A@1190#place",
+    "video": "1KWNenbPR5A",
+    "t": 1190,
+    "url": "https://www.youtube.com/watch?v=1KWNenbPR5A&t=1190s"
    }
   },
   {
@@ -2027,7 +2264,34 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "5cWmE-KqHLA@14310#place",
+      "ref": "04-25 3:58:30",
+      "video": "5cWmE-KqHLA",
+      "t": 14310,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=5cWmE-KqHLA&t=14310s"
+     },
+     {
+      "id": "2u4HfAvQdsI@200#place",
+      "ref": "05-19 0:03:20",
+      "video": "2u4HfAvQdsI",
+      "t": 200,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=2u4HfAvQdsI&t=200s"
+     },
+     {
+      "id": "2u4HfAvQdsI@270#caution",
+      "ref": "05-19 0:04:30",
+      "video": "2u4HfAvQdsI",
+      "t": 270,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=2u4HfAvQdsI&t=270s"
+     }
+    ]
+   },
    "lat": 40.185749,
    "lon": 44.515063,
    "coord_src": [
@@ -2058,6 +2322,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg/500px-Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg/960px-Exterior_of_Opera_house_of_Yerevan_2019-05-16.jpg"
     }
+   },
+   "scene": {
+    "id": "2u4HfAvQdsI@200#place",
+    "video": "2u4HfAvQdsI",
+    "t": 200,
+    "url": "https://www.youtube.com/watch?v=2u4HfAvQdsI&t=200s"
    }
   },
   {
@@ -2420,7 +2690,42 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "c-ogYrwX8iA@1170#move",
+      "ref": "05-16 0:19:30",
+      "video": "c-ogYrwX8iA",
+      "t": 1170,
+      "kind": "move",
+      "url": "https://www.youtube.com/watch?v=c-ogYrwX8iA&t=1170s"
+     },
+     {
+      "id": "c-ogYrwX8iA@4140#place",
+      "ref": "05-16 1:09:00",
+      "video": "c-ogYrwX8iA",
+      "t": 4140,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=c-ogYrwX8iA&t=4140s"
+     },
+     {
+      "id": "c-ogYrwX8iA@4145#quote",
+      "ref": "05-16 1:09:05",
+      "video": "c-ogYrwX8iA",
+      "t": 4145,
+      "kind": "quote",
+      "url": "https://www.youtube.com/watch?v=c-ogYrwX8iA&t=4145s"
+     },
+     {
+      "id": "c-ogYrwX8iA@4260#caution",
+      "ref": "05-16 1:11:00",
+      "video": "c-ogYrwX8iA",
+      "t": 4260,
+      "kind": "caution",
+      "url": "https://www.youtube.com/watch?v=c-ogYrwX8iA&t=4260s"
+     }
+    ]
+   },
    "lat": 40.161597,
    "lon": 44.478547,
    "coord_src": [
@@ -2451,6 +2756,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/View_of_Yerevan_Lake_01.jpg/500px-View_of_Yerevan_Lake_01.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/View_of_Yerevan_Lake_01.jpg/960px-View_of_Yerevan_Lake_01.jpg"
     }
+   },
+   "scene": {
+    "id": "c-ogYrwX8iA@4140#place",
+    "video": "c-ogYrwX8iA",
+    "t": 4140,
+    "url": "https://www.youtube.com/watch?v=c-ogYrwX8iA&t=4140s"
    }
   },
   {
@@ -2952,7 +3263,50 @@
      }
     ]
    },
-   "went": false,
+   "went": {
+    "facts": [
+     {
+      "id": "haHAczqMooM@14070#place",
+      "ref": "05-20 3:54:30",
+      "video": "haHAczqMooM",
+      "t": 14070,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=14070s"
+     },
+     {
+      "id": "haHAczqMooM@14880#fact",
+      "ref": "05-20 4:08:00",
+      "video": "haHAczqMooM",
+      "t": 14880,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=14880s"
+     },
+     {
+      "id": "haHAczqMooM@15780#place",
+      "ref": "05-20 4:23:00",
+      "video": "haHAczqMooM",
+      "t": 15780,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=15780s"
+     },
+     {
+      "id": "JJdPN0ozwZI@1110#place",
+      "ref": "05-20 0:18:30",
+      "video": "JJdPN0ozwZI",
+      "t": 1110,
+      "kind": "place",
+      "url": "https://www.youtube.com/watch?v=JJdPN0ozwZI&t=1110s"
+     },
+     {
+      "id": "JJdPN0ozwZI@1230#fact",
+      "ref": "05-20 0:20:30",
+      "video": "JJdPN0ozwZI",
+      "t": 1230,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=JJdPN0ozwZI&t=1230s"
+     }
+    ]
+   },
    "lat": 40.563984,
    "lon": 45.010808,
    "coord_src": [
@@ -2988,6 +3342,12 @@
      "500": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Sevanavank_on_1.09.23%2C_22.jpg/500px-Sevanavank_on_1.09.23%2C_22.jpg",
      "960": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Sevanavank_on_1.09.23%2C_22.jpg/960px-Sevanavank_on_1.09.23%2C_22.jpg"
     }
+   },
+   "scene": {
+    "id": "haHAczqMooM@15780#place",
+    "video": "haHAczqMooM",
+    "t": 15780,
+    "url": "https://www.youtube.com/watch?v=haHAczqMooM&t=15780s"
    }
   },
   {
@@ -3198,7 +3558,58 @@
      ]
     },
     "stores": [],
-    "went": false,
+    "went": {
+     "facts": [
+      {
+       "id": "o7OIStvxT0Q@4440#fact",
+       "ref": "04-23 1:14:00",
+       "video": "o7OIStvxT0Q",
+       "t": 4440,
+       "kind": "fact",
+       "url": "https://www.youtube.com/watch?v=o7OIStvxT0Q&t=4440s"
+      },
+      {
+       "id": "o7OIStvxT0Q@4530#food",
+       "ref": "04-23 1:15:30",
+       "video": "o7OIStvxT0Q",
+       "t": 4530,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=o7OIStvxT0Q&t=4530s"
+      },
+      {
+       "id": "o7OIStvxT0Q@4870#quote",
+       "ref": "04-23 1:21:10",
+       "video": "o7OIStvxT0Q",
+       "t": 4870,
+       "kind": "quote",
+       "url": "https://www.youtube.com/watch?v=o7OIStvxT0Q&t=4870s"
+      },
+      {
+       "id": "o7OIStvxT0Q@4890#price",
+       "ref": "04-23 1:21:30",
+       "video": "o7OIStvxT0Q",
+       "t": 4890,
+       "kind": "price",
+       "url": "https://www.youtube.com/watch?v=o7OIStvxT0Q&t=4890s"
+      },
+      {
+       "id": "o7OIStvxT0Q@5130#food",
+       "ref": "04-23 1:25:30",
+       "video": "o7OIStvxT0Q",
+       "t": 5130,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=o7OIStvxT0Q&t=5130s"
+      },
+      {
+       "id": "o7OIStvxT0Q@5170#food",
+       "ref": "04-23 1:26:10",
+       "video": "o7OIStvxT0Q",
+       "t": 5170,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=o7OIStvxT0Q&t=5170s"
+      }
+     ]
+    },
     "pork_note": {
      "text": "ひき肉が何の肉かは、出どころに書かれていない。",
      "src": [
@@ -3208,6 +3619,12 @@
        "seen": "2026-11-23"
       }
      ]
+    },
+    "scene": {
+     "id": "o7OIStvxT0Q@4870#quote",
+     "video": "o7OIStvxT0Q",
+     "t": 4870,
+     "url": "https://www.youtube.com/watch?v=o7OIStvxT0Q&t=4870s"
     }
    },
    {
@@ -3269,7 +3686,48 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
      }
     ],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "k-3fN6Ynsok@5200#food",
+       "ref": "04-21 1:26:40",
+       "video": "k-3fN6Ynsok",
+       "t": 5200,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=k-3fN6Ynsok&t=5200s"
+      },
+      {
+       "id": "gHTWAMKCITo@2100#food",
+       "ref": "05-14 0:35:00",
+       "video": "gHTWAMKCITo",
+       "t": 2100,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=gHTWAMKCITo&t=2100s"
+      },
+      {
+       "id": "YFxoJhKOasQ@3300#quote",
+       "ref": "05-22 0:55:00",
+       "video": "YFxoJhKOasQ",
+       "t": 3300,
+       "kind": "quote",
+       "url": "https://www.youtube.com/watch?v=YFxoJhKOasQ&t=3300s"
+      },
+      {
+       "id": "1KWNenbPR5A@2820#fact",
+       "ref": "05-23 0:47:00",
+       "video": "1KWNenbPR5A",
+       "t": 2820,
+       "kind": "fact",
+       "url": "https://www.youtube.com/watch?v=1KWNenbPR5A&t=2820s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "YFxoJhKOasQ@3300#quote",
+     "video": "YFxoJhKOasQ",
+     "t": 3300,
+     "url": "https://www.youtube.com/watch?v=YFxoJhKOasQ&t=3300s"
+    }
    },
    {
     "key": "dolma",
@@ -3725,7 +4183,58 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Karas+Yerevan&hl=ja"
      }
     ],
-    "went": false,
+    "went": {
+     "facts": [
+      {
+       "id": "j_yInDStbKg@1000#food",
+       "ref": "05-18 0:16:40",
+       "video": "j_yInDStbKg",
+       "t": 1000,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=j_yInDStbKg&t=1000s"
+      },
+      {
+       "id": "j_yInDStbKg@3180#place",
+       "ref": "05-18 0:53:00",
+       "video": "j_yInDStbKg",
+       "t": 3180,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=j_yInDStbKg&t=3180s"
+      },
+      {
+       "id": "j_yInDStbKg@3330#food",
+       "ref": "05-18 0:55:30",
+       "video": "j_yInDStbKg",
+       "t": 3330,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=j_yInDStbKg&t=3330s"
+      },
+      {
+       "id": "j_yInDStbKg@3450#food",
+       "ref": "05-18 0:57:30",
+       "video": "j_yInDStbKg",
+       "t": 3450,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=j_yInDStbKg&t=3450s"
+      },
+      {
+       "id": "j_yInDStbKg@6030#caution",
+       "ref": "05-18 1:40:30",
+       "video": "j_yInDStbKg",
+       "t": 6030,
+       "kind": "caution",
+       "url": "https://www.youtube.com/watch?v=j_yInDStbKg&t=6030s"
+      },
+      {
+       "id": "j_yInDStbKg@6090#food",
+       "ref": "05-18 1:41:30",
+       "video": "j_yInDStbKg",
+       "t": 6090,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=j_yInDStbKg&t=6090s"
+      }
+     ]
+    },
     "pork_note": {
      "text": "のせるひき肉は牛か羊が多い。オストとカラスの品書きは牛肉。",
      "src": [
@@ -3745,6 +4254,12 @@
        "seen": "2026-11-23"
       }
      ]
+    },
+    "scene": {
+     "id": "j_yInDStbKg@3450#food",
+     "video": "j_yInDStbKg",
+     "t": 3450,
+     "url": "https://www.youtube.com/watch?v=j_yInDStbKg&t=3450s"
     }
    },
    {
@@ -3837,7 +4352,32 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
      }
     ],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "k-3fN6Ynsok@3365#place",
+       "ref": "04-21 0:56:05",
+       "video": "k-3fN6Ynsok",
+       "t": 3365,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=k-3fN6Ynsok&t=3365s"
+      },
+      {
+       "id": "k-3fN6Ynsok@3695#price",
+       "ref": "04-21 1:01:35",
+       "video": "k-3fN6Ynsok",
+       "t": 3695,
+       "kind": "price",
+       "url": "https://www.youtube.com/watch?v=k-3fN6Ynsok&t=3695s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "k-3fN6Ynsok@3695#price",
+     "video": "k-3fN6Ynsok",
+     "t": 3695,
+     "url": "https://www.youtube.com/watch?v=k-3fN6Ynsok&t=3695s"
+    }
    },
    {
     "key": "shaurma",
@@ -4330,7 +4870,56 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=Art+Lunch+Yerevan&hl=ja"
      }
     ],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "7R7xote6efA@6750#place",
+       "ref": "04-24 1:52:30",
+       "video": "7R7xote6efA",
+       "t": 6750,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=7R7xote6efA&t=6750s"
+      },
+      {
+       "id": "7R7xote6efA@7020#price",
+       "ref": "04-24 1:57:00",
+       "video": "7R7xote6efA",
+       "t": 7020,
+       "kind": "price",
+       "url": "https://www.youtube.com/watch?v=7R7xote6efA&t=7020s"
+      },
+      {
+       "id": "7R7xote6efA@7110#food",
+       "ref": "04-24 1:58:30",
+       "video": "7R7xote6efA",
+       "t": 7110,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=7R7xote6efA&t=7110s"
+      },
+      {
+       "id": "XE0lZY5fzEQ@4380#food",
+       "ref": "04-28 1:13:00",
+       "video": "XE0lZY5fzEQ",
+       "t": 4380,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=XE0lZY5fzEQ&t=4380s"
+      },
+      {
+       "id": "XE0lZY5fzEQ@4950#food",
+       "ref": "04-28 1:22:30",
+       "video": "XE0lZY5fzEQ",
+       "t": 4950,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=XE0lZY5fzEQ&t=4950s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "7R7xote6efA@7110#food",
+     "video": "7R7xote6efA",
+     "t": 7110,
+     "url": "https://www.youtube.com/watch?v=7R7xote6efA&t=7110s"
+    }
    },
    {
     "key": "ponchik",
@@ -4422,7 +5011,24 @@
      ]
     },
     "stores": [],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "74c2AutI7PY@4950#food",
+       "ref": "05-21 1:22:30",
+       "video": "74c2AutI7PY",
+       "t": 4950,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=74c2AutI7PY&t=4950s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "74c2AutI7PY@4950#food",
+     "video": "74c2AutI7PY",
+     "t": 4950,
+     "url": "https://www.youtube.com/watch?v=74c2AutI7PY&t=4950s"
+    }
    },
    {
     "key": "tan",
@@ -4924,7 +5530,48 @@
       "maps": "https://www.google.com/maps/search/?api=1&query=GUM+Market+Yerevan&hl=ja"
      }
     ],
-    "went": false
+    "went": {
+     "facts": [
+      {
+       "id": "74c2AutI7PY@3960#place",
+       "ref": "05-21 1:06:00",
+       "video": "74c2AutI7PY",
+       "t": 3960,
+       "kind": "place",
+       "url": "https://www.youtube.com/watch?v=74c2AutI7PY&t=3960s"
+      },
+      {
+       "id": "74c2AutI7PY@4530#caution",
+       "ref": "05-21 1:15:30",
+       "video": "74c2AutI7PY",
+       "t": 4530,
+       "kind": "caution",
+       "url": "https://www.youtube.com/watch?v=74c2AutI7PY&t=4530s"
+      },
+      {
+       "id": "74c2AutI7PY@4650#price",
+       "ref": "05-21 1:17:30",
+       "video": "74c2AutI7PY",
+       "t": 4650,
+       "kind": "price",
+       "url": "https://www.youtube.com/watch?v=74c2AutI7PY&t=4650s"
+      },
+      {
+       "id": "74c2AutI7PY@4680#food",
+       "ref": "05-21 1:18:00",
+       "video": "74c2AutI7PY",
+       "t": 4680,
+       "kind": "food",
+       "url": "https://www.youtube.com/watch?v=74c2AutI7PY&t=4680s"
+      }
+     ]
+    },
+    "scene": {
+     "id": "74c2AutI7PY@4530#caution",
+     "video": "74c2AutI7PY",
+     "t": 4530,
+     "url": "https://www.youtube.com/watch?v=74c2AutI7PY&t=4530s"
+    }
    },
    {
     "key": "ttulavash",
@@ -5176,6 +5823,43 @@
         "seen": "2026-11-23"
        }
       ]
+     },
+     {
+      "text": "バスでは現金もカードも使えず、乗車券は街なかの券売機テルセルで買いました。待っていた49番はなかなか来ず、乗れたのは、位置の分かるアプリで見つけてからです。",
+      "facts": [
+       {
+        "id": "ey_pIoeVo_8@690#move",
+        "ref": "05-10 0:11:30",
+        "video": "ey_pIoeVo_8",
+        "t": 690,
+        "kind": "move",
+        "url": "https://www.youtube.com/watch?v=ey_pIoeVo_8&t=690s"
+       },
+       {
+        "id": "ey_pIoeVo_8@600#place",
+        "ref": "05-10 0:10:00",
+        "video": "ey_pIoeVo_8",
+        "t": 600,
+        "kind": "place",
+        "url": "https://www.youtube.com/watch?v=ey_pIoeVo_8&t=600s"
+       },
+       {
+        "id": "ey_pIoeVo_8@2310#caution",
+        "ref": "05-10 0:38:30",
+        "video": "ey_pIoeVo_8",
+        "t": 2310,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=ey_pIoeVo_8&t=2310s"
+       },
+       {
+        "id": "ey_pIoeVo_8@2460#move",
+        "ref": "05-10 0:41:00",
+        "video": "ey_pIoeVo_8",
+        "t": 2460,
+        "kind": "move",
+        "url": "https://www.youtube.com/watch?v=ey_pIoeVo_8&t=2460s"
+       }
+      ]
      }
     ]
    },
@@ -5222,6 +5906,27 @@
         "seen": "2026-11-23"
        }
       ]
+     },
+     {
+      "text": "ATMで下ろすときに間違えて、1,000円ほどしか下ろせておらず、パン屋で払ったら所持金がちょうど0円になりました。セヴァン湖の店では、カードは使えないと言われたのに、それなら帰りますと言ったら使えました。",
+      "facts": [
+       {
+        "id": "7R7xote6efA@6900#caution",
+        "ref": "04-24 1:55:00",
+        "video": "7R7xote6efA",
+        "t": 6900,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=7R7xote6efA&t=6900s"
+       },
+       {
+        "id": "JJdPN0ozwZI@3240#caution",
+        "ref": "05-20 0:54:00",
+        "video": "JJdPN0ozwZI",
+        "t": 3240,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=JJdPN0ozwZI&t=3240s"
+       }
+      ]
      }
     ]
    },
@@ -5256,6 +5961,27 @@
         "name": "Wikivoyage「Armenia」",
         "url": "https://en.wikivoyage.org/wiki/Armenia",
         "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "SIMは1ヶ月無制限で1,600円ほど。10分以内に使えると言われたのに、開通まで30分ほどかかって使えず、店に戻って直してもらいました。",
+      "facts": [
+       {
+        "id": "jTpvux9mM44@3660#price",
+        "ref": "04-19 1:01:00",
+        "video": "jTpvux9mM44",
+        "t": 3660,
+        "kind": "price",
+        "url": "https://www.youtube.com/watch?v=jTpvux9mM44&t=3660s"
+       },
+       {
+        "id": "aYXWyg1ANh0@3560#caution",
+        "ref": "04-20 0:59:20",
+        "video": "aYXWyg1ANh0",
+        "t": 3560,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=aYXWyg1ANh0&t=3560s"
        }
       ]
      }
@@ -5302,6 +6028,35 @@
         "name": "外務省 海外安全ホームページ（アルメニア 安全対策基礎データ。2024年6月20日更新）",
         "url": "https://www.anzen.mofa.go.jp/info/pcsafetymeasure_199.html",
         "seen": "2026-11-23"
+       }
+      ]
+     },
+     {
+      "text": "差別は受けず、めちゃくちゃ平和だと感じました。ただ、横断歩道は怖くて、信号をつけてほしいと思いました。夜中の1時ごろには、道路で車が衝突する事故を見ました。",
+      "facts": [
+       {
+        "id": "jTpvux9mM44@5530#quote",
+        "ref": "04-19 1:32:10",
+        "video": "jTpvux9mM44",
+        "t": 5530,
+        "kind": "quote",
+        "url": "https://www.youtube.com/watch?v=jTpvux9mM44&t=5530s"
+       },
+       {
+        "id": "gHTWAMKCITo@3480#caution",
+        "ref": "05-14 0:58:00",
+        "video": "gHTWAMKCITo",
+        "t": 3480,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=gHTWAMKCITo&t=3480s"
+       },
+       {
+        "id": "2u4HfAvQdsI@1350#caution",
+        "ref": "05-19 0:22:30",
+        "video": "2u4HfAvQdsI",
+        "t": 1350,
+        "kind": "caution",
+        "url": "https://www.youtube.com/watch?v=2u4HfAvQdsI&t=1350s"
        }
       ]
      }
@@ -5696,7 +6451,20 @@
      "url": "https://en.wikipedia.org/wiki/Public_holidays_in_Armenia",
      "seen": "2026-11-23"
     }
-   ]
+   ],
+   "went": {
+    "text": "4月24日の前の晩、帰り道で、ろうそくのようなものを持って音楽を流す大行列に出会いました。昔の大量虐殺を忘れないための行列らしく、道は警察に封鎖されていました。",
+    "facts": [
+     {
+      "id": "7R7xote6efA@5700#fact",
+      "ref": "04-24 1:35:00",
+      "video": "7R7xote6efA",
+      "t": 5700,
+      "kind": "fact",
+      "url": "https://www.youtube.com/watch?v=7R7xote6efA&t=5700s"
+     }
+    ]
+   }
   },
   "time": {
    "text": "アルメニアは UTC+4 で、日本より5時間遅い。",
