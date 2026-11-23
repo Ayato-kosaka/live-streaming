@@ -103,6 +103,14 @@ const SINGLE: Record<string, Line> = {
 
 /** 街の探し言葉。**人が書く字**（面の中身の見どころ・食べもの）。無い街は名前と slug だけで引く */
 const CITY_Q: Record<string, Line> = {
+  /* 2026-11-23 に公開した行く前の街。国の面はまだ無い */
+  "serbia/belgrade": {
+    note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・ことば",
+    q: q(
+      "セルビア serbia ベオグラード belgrade 要塞 カレメグダン kalemegdan 聖サヴァ大聖堂 テスラ tesla " +
+        "スカダルリヤ skadarlija ゼムン zemun ノヴィ・サド novi sad チェヴァプチチ ćevapi ブレク burek ディナール dinar バルカン",
+    ),
+  },
   "romania/bucharest": {
     note: "どんな街か・やりたいこと8選・見どころ・食べもの・買いもの・ことば",
     q: q(

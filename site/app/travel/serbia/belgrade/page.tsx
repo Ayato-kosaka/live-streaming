@@ -44,7 +44,7 @@ import "@/components/guidebook/guidebook.css";
  *
  * ## 公開
  *
- * 公開前（`content/travel.ts` の `draft: true`）。付いているあいだ、検索に載せない・索引と `/all` に並べない。
+ * 2026-11-23 に公開前の印を外した（運営が本番の390幅・型の数・見張りを見て。`content/cities.ts`）。
  */
 
 const G = BELGRADE;
