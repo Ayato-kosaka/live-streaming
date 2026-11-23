@@ -1673,7 +1673,8 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | ファイル | 中身 | なぜ機械にできないか |
 | --- | --- | --- |
 | `recipes.ts` | 作ってきた料理（クッキング・スタンプ帳の元） | **スタンプの絵を `food-*` 105枚から1枚選ぶ**（同じ絵を2品で使わない）。題名から料理名は決まらない |
-| `stays.ts` | 滞在の表（いつ、どの国・街に居たか。予定を含む） | 国を移った日に1行。**居場所を手で書くのはここだけ**（#1275） |
+| `stays.ts` | 滞在の表（いつ、どの国・街に居たか。予定を含む） | 国を移った日に1行。**居場所を手で書くのはここだけ**（#1275）。街の名簿に在る街は slug で書く（#1357） |
+| `cities.ts` | 街の名簿（ガイドを書いた街の slug と名前） | ガイドを書くと決めた街。滞在の表がここを slug で指す（#1357） |
 | `countries.ts` | 歩いた国の記録（紹介・見どころ・何カ国目） | 歩き終わってから書く。滞在は `stays.ts` から引く |
 | `chapters.ts` | 島の連なり（章）と、その期間 | どこで区切るか |
 | `projects.ts` | 企画の表（伝説はその印） | どれを企画・伝説と呼ぶか。企画の話と数字（M-20） |
@@ -1683,6 +1684,39 @@ Cloud Functions（`islandApi`）を通す。Admin SDK はルールを迂回す�
 | `python/kitchen_talk_picks.json` | その日の台所の引用（`kitchenTalk.ts` の元） | 機械が選ぶと「こんばんは」が並ぶ |
 | `site.ts` の `SITE` `PROFILE` `NOW_FALLBACK` `LINKS` ／ `voice.ts` `chatter.ts` | プロフィール・画面に出る言葉・住人のセリフ | 文章。**同じファイルの `STATS_FALLBACK` は機械が焼く**（下の (a)） |
 | `streamTypes.ts` `themes.ts` `directory.ts` `roulette.ts` `planDays.ts` `nights.ts` `place.ts` `trip.ts` `tripPlaces.ts` | 配信の型・島の景色・目次・ルーレット・日付から企画を引く表・夜の言い方・場所・旅 | 決めごと |
+| `kinds.ts` | 種類の表（道の型・種類・入口）。仕様の道の表（`docs/spec/routes.md` 2章）と同じ行 | 道の型を足すのは仕様を通してから（R-5）。索引・`/all`・パンくずはここから（`lib/pages.ts`） |
+
+#### 種類の表どうしの結ばれかた（`docs/spec/model.md` 4章）
+
+上の人が書く表は、**名前の鍵（slug）と日付だけで**結ぶ（M-6）。どちらの表も相手の行を写さない。
+結ぶのは `content/stayChapters.ts`（旅と滞在）と `lib/tags.ts`（面の札。国・街・旅・企画・料理・月）の2か所だけ。
+
+```mermaid
+erDiagram
+    chapters_ts ||--o{ stays_ts      : "期間で含む（stayChapters.ts）"
+    chapters_ts |o--o{ chapters_ts   : "branchOf（枝の旅）"
+    countries_ts ||--o{ stays_ts     : "country（slug）"
+    countries_ts ||--o{ cities_ts    : "country（slug）"
+    stays_ts     }o--o{ cities_ts    : "cities の slug（行った街）"
+    projects_ts  |o--o| chapters_ts  : "trip（旅そのものが企画のとき）"
+    recipes_ts   }o--|| countries_ts : "country（作った国）"
+    recipes_ts   }o--o| stays_ts     : "date（作った日が入る滞在）"
+    months_ts    }o--o{ stays_ts     : "期間で重なる"
+    onThisDay_ts }o--|| stays_ts     : "配信の日（M-14）"
+```
+
+| 表 | ファイル | 指す先（鍵） |
+| --- | --- | --- |
+| 旅 | `chapters.ts` | 親の旅（`branchOf`。枝の旅だけ） |
+| 滞在 | `stays.ts` | 国（`country`）・行った街（`cities`。名簿の街は slug）・案内の街（`guide.city`） |
+| 国 | `countries.ts` | — |
+| 街 | `cities.ts` | 国（`country`） |
+| 企画 | `projects.ts` | 旅（`trip`。旅と1対1のときだけ） |
+| 料理 | `recipes.ts` | 国（`country`）・作った日（`date`） |
+| 月 | `months.ts`（焼き込み） | — |
+
+配信1回は表を持たない（`model.md` 8章）。配信の日は毎晩焼く `onThisDay.ts` から読み、
+**どの日もちょうど1つの滞在に入る**ことを `lib/tags.ts` の `modelProblems`（M-14）が書き出しの前に確かめる。
 
 #### 機械が焼く（**手で書き換えない**）
 
