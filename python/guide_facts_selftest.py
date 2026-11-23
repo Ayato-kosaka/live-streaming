@@ -591,6 +591,15 @@ def extract_cases() -> dict[str, bool]:
             and dest.exists() and len(json.loads(dest.read_text(encoding="utf-8"))["items"]) == len(GOOD))
         dest.unlink(missing_ok=True)
 
+        def partial(p, n):
+            # 直した1件だけを返す直し役（「全体を同じ形で」を守らない。2026-11-22 に実際に起きた）
+            return {"items": [copy.deepcopy(GOOD[4])] if n > 1 else bad_items()}
+        rc, out, fake, dest = run_extract(root, table_p, d, partial)
+        got[PARTIAL] = (
+            rc == 0 and len(fake.prompts) == 2 and dest.exists()
+            and len(json.loads(dest.read_text(encoding="utf-8"))["items"]) == len(GOOD))
+        dest.unlink(missing_ok=True)
+
         def stubborn(p, n):
             return {"items": bad_items()}
         rc, out, fake, dest = run_extract(root, table_p, d, stubborn)
@@ -613,11 +622,12 @@ def extract_cases() -> dict[str, bool]:
 
 
 ZERO = "0件: 項目が0件の返事も、落として0件になった回も置かない（終了 2）"
+PARTIAL = "直す: 直しの返事が NG の無い項目を落としていたら、足し戻して置く（黙って減らさない）"
 DROP = "落とす: 2回目も落ちた項目だけを落として、残りを置く（落とした数を札ごとに出す）"
 # 呼べたときだけ通る対照（0件の対照は、呼ばずに終了 2 でも通るので入れない）
 EXTRACT_E2E = {"抜く: 返ってきた項目が check を通れば、頭を機械で埋めて置く",
                "直す: NG の行を添えて同じ1枚で直させると、2回目で直る（落とさない）",
-               "直す: 直させるのは1回まで（呼ぶのは2回）", DROP}
+               "直す: 直させるのは1回まで（呼ぶのは2回）", DROP, PARTIAL}
 _fix_prompt, _drop_ng = ge.fix_prompt, ge.drop_ng
 # 守りの外しかた → そのとき落ちるはずの対照（これ以外は通るはず）
 DRILL = [
@@ -634,6 +644,8 @@ DRILL = [
      {"fix_prompt": lambda base, items, ng: _fix_prompt(base, items, [])},
      {"直す: NG の行を添えて同じ1枚で直させると、2回目で直る（落とさない）"}),
     ("直させる回数を2回に（FIXES）", {"FIXES": 2}, {"直す: 直させるのは1回まで（呼ぶのは2回）"}),
+    ("直しの返事をそのまま使う（keep_unflagged を素通しに）",
+     {"keep_unflagged": lambda said, bad, got: got}, {PARTIAL}),
     # 落とさなければ、全部が落ちる回も「0件」にならず NG のまま（終了 1）になるので、0件の対照もいっしょに落ちる
     ("2回目も落ちた項目を落とさない（drop_ng を素通しに）",
      {"drop_ng": lambda m, table, items: (items, Counter(), ge.check_items(m, table, items))}, {DROP, ZERO}),
