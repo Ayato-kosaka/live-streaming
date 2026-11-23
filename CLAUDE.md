@@ -94,12 +94,9 @@
 
 - [`docs/island-standards.md`](docs/island-standards.md) — **求められている水準。
   作る前と出す前に必ず読む。** 品質は「任天堂のどう森レベル」で、「前より良い」は
-  基準ではない。出す前のチェックもここ
-- [`docs/island-misses.md`](docs/island-misses.md) — **言われたことと、外した理由。
-  作る前に必ず読む。** 同じ外し方を繰り返さないための決めごとが4つ書いてある。
-  **新しく指摘されたら、直すだけでなくここに足す**（原因と対策を書く。直しても消さない）。
-  **節の番号は `python3 python/misses_next.py` で採る**（master だけでなく開いている PR が採った番号も見て、次を出す。
-  master の最大の次を手で採ると、並行する PR とぶつかる——#337〜#339 が実際にそれ）
+  基準ではない。出す前のチェックもここ。**指摘から生まれた決めごとも、全部ここ（§22〜§35）かほかの仕様に条として在る**
+- **指摘を受けたら** — 記録に1節足し、決めごとが出たら同じ PR で仕様に条を足す（`docs/island-standards.md` §22）。
+  記録は `docs/island-misses.md`、節ごとの行き先は `docs/island-misses-map.md`。記録は規範として読まない（`docs/README.md` D-4）
 - [`docs/island-design.md`](docs/island-design.md) — **デザイン仕様。拘束力あり。作る前に必ず読む**
 - [`docs/island-money.md`](docs/island-money.md) — **お金の出しかた。視聴者さんに見せる額は全部ここの式1本。**
   貢献額（スパチャ ÷ 2 + Doneru）・実額を出してよい場所の表・名寄せは図鑑ひとつ・月末の期間の決め方。

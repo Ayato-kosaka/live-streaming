@@ -161,7 +161,7 @@ print(''.join(sorted({c.get('emoji','') for c in cs if c.get('emoji')})))"
 
 ## 3. 日誌（`site/content/nordic.ts` の `NORDIC_LOG`）
 
-**`docs/island-misses.md` #153 の決めごとを、書く前に読む。**
+**決まりは `docs/island-standards.md` §27.2（一次情報を正にする）。** この日誌で当てると、こうなる。
 
 1. **字幕（ショートの説明文）が出ている日は、そちらを正にする**
 2. **移動した日をコメントだけから書くときは、先に数える**（何本乗ったか・
