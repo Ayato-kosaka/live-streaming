@@ -99,7 +99,9 @@ def prompt_lines(files: dict[str, str]) -> list[str]:
         lines = text.splitlines()
         for i, line in enumerate(lines):
             # 名指しの行と、その次の行まで（「…`island-misses.md` — 言われたこと。\n作る前に必ず読む」の折り返し）
-            near = line + (lines[i + 1] if i + 1 < len(lines) else "")
+            # 次の行が別の項目（`- `・見出し・表の行）なら、そこは別の話なので足さない
+            nxt = lines[i + 1] if i + 1 < len(lines) else ""
+            near = line + ("" if re.match(r"^\s*(?:[-*] |#|\|)", nxt) else nxt)
             if "island-misses.md" in line and READ_RE.search(near):
                 bad.append(f"{name}:{i + 1}: {line.strip()[:80]}")
     return bad
@@ -198,6 +200,10 @@ def drill(real: str, ids: list[str], ok, prompts: dict[str, str]) -> bool:
         check(judge(ids, rs, ok, ps, frozenset({leg})) == [], f"   BREAK={leg} を当てると通る")
     check(prompt_lines({"x.md": "`docs/island-misses.md` #87 と同じ形"}) == [],
           "節を名指しするだけの行は、読むものとして数えない")
+    check(len(prompt_lines({"x.md": "- `docs/island-misses.md` — 言われたこと。\n  作る前に必ず読む。"})) == 1,
+          "折り返した次の行で「作る前に読む」と言っていたら数える")
+    check(prompt_lines({"x.md": "- `docs/island-misses.md` は記録\n- `docs/x.md` — 作る前に必ず読む"}) == [],
+          "次の行が別の項目なら、その項目の「読む」は数えない")
     return good
 
 
