@@ -121,7 +121,7 @@ export const STAYS: Stay[] = [
   { country: "belgium", cities: ["リエージュ"], from: "2025-03-21", to: "2025-03-27" },
   { country: "germany", cities: ["ケルン"], from: "2025-03-28", to: "2025-03-30" },
   // 中東周遊
-  { country: "turkey", cities: ["イスタンブール"], from: "2025-03-30", to: "2025-04-13" },
+  { country: "turkey", cities: ["istanbul"], from: "2025-03-30", to: "2025-04-13" },
   { country: "cyprus", cities: ["ニコシア", "ラルナカ"], from: "2025-04-14", to: "2025-04-23" },
   { country: "egypt", cities: ["カイロ", "ルクソール", "アスワン", "アブ・シンベル", "シワ"], from: "2025-04-24", to: "2025-05-21" },
   { country: "cyprus", cities: ["ラルナカ", "パフォス"], from: "2025-05-22", to: "2025-05-26" },
