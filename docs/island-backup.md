@@ -109,7 +109,33 @@ RESTORE_TO_PRODUCTION=yes-i-mean-it \
 
 **書いたあと、読み直して1件ずつ指紋を比べる。** 件数だけ合っていて中身が違う、は通らない。
 
-### 3. 消えたぶんだけ足したいとき
+### 3. 消した入れ物を戻す
+
+**入れ物ごと消したものは、毎晩の退避には残らない。** 毎晩の退避は90日で
+古い世代を落とすので、消した日から90日たつと、そこからも消える。
+
+だから入れ物を消すときは、`python/admin/collection_drop.py` が**消す前に**
+BigQuery の `island_backup.retired_docs`（**期限なし**。毎晩の掃除が触らない表）へ
+全件を写し、**写った指紋の並びが Firestore と一致したときだけ**消す。
+合わなければ1件も消さずに 2 で落ちる。
+
+| 消した日 | 入れ物 | 件数 | 指紋（並びの sha256 の頭12字） | なぜ |
+| --- | --- | --- | --- | --- |
+| 2026-11-23 | `islandNextPlans` | 2 | `312254ffd65e` | #202 で `islandStreamEvent` へ移した残り。読む口も書く口も無い（#1281） |
+| 2026-11-23 | `islandIdeas` | 8（全部 `hidden`） | `4f7fefa7488b` | #162 で付箋へ移した旧い企画の種。口は #171 で畳んであった（#1281） |
+
+`islandDrafts` は 2026-11-23 に数え直して0件だったので、写すものが無かった。
+
+戻すときは、上の2と同じ道に `--retired` を足す（読む表が `retired_docs` になる）:
+
+```bash
+python python/backup/restore.py --retired --list
+python python/backup/restore.py --retired --collection islandIdeas          # 下見
+RESTORE_TO_PRODUCTION=yes-i-mean-it \
+  python python/backup/restore.py --retired --collection islandIdeas --apply
+```
+
+### 4. 消えたぶんだけ足したいとき
 
 `restore.py` は `set()` で書くので、**退避に入っている書類だけを上書きする。**
 退避に無い書類（事故のあとに新しく書かれたもの）は消さない。
@@ -224,8 +250,8 @@ run_admin_script.yml → backup_photos
 
 | 何 | なぜ |
 | --- | --- |
-| 視聴者さんの書いた字（`islandNotes` `islandIdeas` `islandStreamEvent` `islandNextPlans` `islandPolls`） | **どこからも作り直せない** |
-| 旅の日記（`nordicLog`）と「いまどこ」（`island`） | 人しか書けない。日記は焼き込みへ移ってもう増えないが、**入れ物は消さない** |
+| 視聴者さんの書いた字（`islandNotes` `islandStreamEvent` `islandPolls`） | **どこからも作り直せない** |
+| 旅の日記（`nordicLog`）と島の状態（`island`） | 人しか書けない。日記は焼き込みへ移ってもう増えないが、**入れ物は消さない** |
 | 手で紐付けた対応表（`islandDonors`）と、名前を出してよいという同意（`islandUsers`） | 人の作業と、本人の意思表示 |
 | 豚の貯金箱（`islandFundSuperChats` `islandFundSpends` `islandFundGoals`） | 手で入れたぶんと支出は、どこからも作り直せない |
 | 投げ銭の台帳（`islandTips`） | 作り直せることになっているが、**お金の記録を「たぶん戻る」に賭けない** |

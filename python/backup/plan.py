@@ -32,13 +32,13 @@
 # **取る。** 名前 → なぜ取るか
 KEEP = {
     "islandNotes": "視聴者さんの書いた字（付箋）。どこからも作り直せない",
-    "islandIdeas": "視聴者さんの書いた字（企画の種）。#162 で付箋へ移したあとも印を付けて残す決め",
-    "islandStreamEvent": "企画。視聴者さんの提案が入っている。人の字",
-    "islandNextPlans": "旧の企画。#288 の 2-d で移し切れていないので、まだ人の字が残っている",
+    # `islandIdeas` と `islandNextPlans` は #1281 で消した（2026-11-23）。字は
+    # 期限の無い退避 `retired_docs` にある（`python/admin/collection_drop.py`）
+    "islandStreamEvent": "その日の出来事。採らなかった視聴者さんの提案も字を残して入っている。動画を結んだのは人の作業",
     "islandPolls": "問いと票。人が立てた問い",
     "islandDonors": "どねID ↔ YouTube の対応表。**あやとが手で紐付けたもの。**人の作業は戻らない",
     "islandUsers": "名前と写真を出してよいという本人の意思表示。**同意は作り直せない**（鍵は作り直せる）",
-    "island": "あやとが手で書く「いまどこ」。旅のあいだ毎日変わる",
+    "island": "島の状態の書類（`state`）。北欧旅の着いた日・終わった日はあやとが書いた事実。数字は焼き直せる",
     "nordicLog": (
         "旅の日記。**人しか書けない。**画面は焼き込み（`site/content/nordic.ts` の "
         "NORDIC_LOG）に移ったので、もう増えない。**入れ物は消さない**"
@@ -121,7 +121,6 @@ SKIP = {
     "islandFundReplay": "配信にもう一度アラートを出すための1件。その場限り",
     "islandHere": "いま島にいる人。60秒で消える入れ物",
     "islandVotes": "#171 で口を畳んだ。本番に0件（collection_drop.py の DEAD）",
-    "islandDrafts": "本番に0件。入れ物そのものが無い",
     "streamChatMessages": "配信中だけ溜める。翌日 BigQuery の chat_messages に入る",
     "streamChatRuns": "配信1本ぶんの栞。配信が終われば用済み",
 }

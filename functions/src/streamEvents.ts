@@ -1,5 +1,5 @@
 /**
- * 企画（`islandStreamEvent`）と、企画に付く画像（`islandStreamEventImage`）と、
+ * その日の出来事（`islandStreamEvent`）と、出来事に付く画像（`islandStreamEventImage`）と、
  * 投げ銭の台帳（`islandTips`）。**カードはこの3つから組み上がる**(#202)。
  *
  * ## なぜ北欧から切り離すのか
@@ -12,7 +12,7 @@
  * | --- | --- |
  * | `nordicPhotos/{photoId}` | `islandStreamEventImage/{imageId}` |
  * | `nordicDays/{YYYY-MM-DD}.people` | `islandTips/{tipId}` |
- * | `islandNextPlans/{id}` | `islandStreamEvent/{id}` |
+ * | （視聴者さんの企画の入れ物。#1281 で退避を取って消した） | `islandStreamEvent/{id}` |
  *
  * ## 企画と配信は N:N
  *
@@ -50,7 +50,7 @@ import * as admin from "firebase-admin";
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
 
-/** 企画。旧 `islandNextPlans`。**改名しただけで、中身の形は同じ。** */
+/** その日の出来事。写真・動画・カードが日付と一緒に結ばれる。 */
 export const EVENTS = db.collection("islandStreamEvent");
 /** 企画に付く画像。旧 `nordicPhotos`。 */
 export const IMAGES = db.collection("islandStreamEventImage");

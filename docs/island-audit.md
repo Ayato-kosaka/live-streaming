@@ -243,8 +243,9 @@ python3 python/audit_counts_selftest.py
 | **名前** | `islandApi.ts` の `whoIs()`（ハンドル > チャンネル名 > Google 表示名） / `python/island_channels.py`（毎晩入れ直る） | 名前を決める規則が2系統ある。**残件** |
 | **旅の写真** | `islandStreamEventImage`（新） / `nordicPhotos`（旧） | **片づいた**（2026-10-13）。読むのも書くのも新しいほう1本。旧に残った書類を消す側だけ両方を触る |
 
-`islandNextPlans`（旧・企画）は `firestore.rules` で `read, write: if false` に閉じてあり、
-`streamEvents.ts` のコメントも「改名しただけ」と書いてある。**閉じ終わっている。**
+`islandNextPlans`（旧・企画）は **2026-11-23 に退避を取って消した**（2件。#1281）。
+`islandIdeas`（8件）も同じ日に消し、`islandDrafts`（0件）と一緒に `firestore.rules` の名指しも外した。
+字は期限の無い退避 `island_backup.retired_docs` にある（`docs/island-backup.md` の「消した入れ物を戻す」）。
 
 ## 2-5. 同意（`showName` / `showPhoto`）の関所は1か所しかない
 
@@ -427,6 +428,8 @@ Firestore の件数は **2026-09-11 の実測のまま。数え直していな�
 `islandIdeas` 8 / `islandPolls` 7 / `islandVisits` 7 / `nordicDays` 6 / `islandCards` 4 /
 `islandUsers` 2 / `islandNextPlans` 2 / `islandStreamEventImage` 2 / `nordicPhotos` 2 /
 残り5本が1件ずつ。
+**2026-11-23 に一部だけ数え直した**（`python/admin/streamevent_census.py`）:
+`islandStreamEvent` 19。`islandIdeas` 8 と `islandNextPlans` 2 は退避を取って消した（0）。`islandDrafts` 0。
 
 **この2つは1年経っても古いままになりうる。** 回すのに本番の鍵が要るので、
 **数え直した回に、必ず日付ごとここへ書く。**
