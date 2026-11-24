@@ -3739,6 +3739,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "-Zw_89-eL2Q",
         "title": "🇷🇴ルーマニアついたし、湖みにいこか！",
         "date": "2026-11-22"
+      },
+      {
+        "videoId": "43BT1vLo_ZA",
+        "title": "🇷🇴ルーマニアついたし、ちょい街アルコか",
+        "date": "2026-11-23"
       }
     ]
   }
