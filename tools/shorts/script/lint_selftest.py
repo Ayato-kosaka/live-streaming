@@ -117,6 +117,11 @@ CUTS = {
                    "    if places_in(t) or REAL_NUM.search(t):\n", {"title_real", "approved"}, "あやとが題の場所に使った「海外」を場所に数えない"),
     "metaphor": ("lint.py", "    m = METAPHOR.search(t)\n", "    m = None\n",
                  {"title_metaphor"}, "題の見立てを拾わない"),
+    "hide": ("lint.py", '    m = HIDE.search(t.replace("\\n", ""))\n', "    m = None\n",
+             {"title_hide"}, "題が結果を伏せても拾わない"),
+    "hide_hard": ("lint.py", '"そうでなければ本当に起きたこと（出来事・数）で言い切る（F-031）", look=True)]',
+                  '"そうでなければ本当に起きたこと（出来事・数）で言い切る（F-031）", look=False)]',
+                  {"title_hide"}, "あやとの「まさかの事態に」（F-071）まで ✕ で落とす"),
     "flag_none": ("lint.py", '        return [Hit("T-FLAG", 0, card, f"題の札に国旗が無い', '        return [] and [Hit("T-FLAG", 0, card, f"題の札に国旗が無い',
                   {"flag", "later_rule_live"}, "国旗が無くても通す"),
     "flag_wrong": ("lint.py", "        if code and code not in codes:\n", "        if False:\n",
@@ -373,6 +378,33 @@ def leg_title_metaphor(L):
             bool(title_hits(L, "🇸🇪 ストックホルムの地下鉄、迷路みたいだった", "T-METAPHOR")))]
     for t in AYATO_TITLES:
         out.append((f"あやとの題「{t.splitlines()[0]}…」は通す", not title_hits(L, t, "T-METAPHOR")))
+    return out
+
+
+def title_looks(L, card, rule):
+    """△（look）だけ。✕ にはならないことを別に見る。"""
+    return [h for h in L.lint(ctx(L, ["題", "みんなは？"], title_card=card), TODAY)["hits"] if h.rule == rule and h.look]
+
+
+AYATO_HIDE = ("海外キッチンでワンパンチーズフォカッチャ\n作ったらまさかの事態に！",          # F-071 と同じ形（フォカッチャ）
+              "🇲🇰北マケドニア旅行中にパソコンを送ったら、まさかの事態に！",               # #1171 あやとの題
+              "🇲🇰北マケドニアでハードパン3種の実験をしたらまさかの事態に！")             # F-071（#1171）
+
+
+def leg_title_hide(L):
+    """T-HIDE: 題が結果を伏せる言い方を △ で拾う。あやとの「まさかの事態に」（F-071）は ✕ にしない。"""
+    out = [("「乗り物に乗ろうとしたら、まさかの事態に！」を △ で拾う",
+            bool(title_looks(L, "🇧🇬ブルガリアのクリスマスマーケットで、乗り物に乗ろうとしたら、まさかの事態に！", "T-HIDE"))),
+           ("「衝撃の結末」「〜した結果…」も拾う",
+            bool(title_looks(L, "🇬🇧ロンドンで衝撃の結末", "T-HIDE")) and bool(title_looks(L, "🇬🇧ロンドンで紅茶を頼んだ結果…", "T-HIDE"))),
+           ("言い切った「乗り物に乗ろうとしたら、大行列やった！」は拾わない",
+            not title_hits(L, "🇧🇬ブルガリアのクリスマスマーケットで、乗り物に乗ろうとしたら、大行列やった！", "T-HIDE")
+            and not title_looks(L, "🇧🇬ブルガリアのクリスマスマーケットで、乗り物に乗ろうとしたら、大行列やった！", "T-HIDE"))]
+    for t in AYATO_HIDE:
+        out.append((f"あやとの題「{t.splitlines()[0]}…」は △ 止まり（✕ にしない。F-071）",
+                    bool(title_looks(L, t, "T-HIDE")) and not title_hits(L, t, "T-HIDE")))
+    for t in AYATO_TITLES[:3]:
+        out.append((f"伏せていないあやとの題「{t.splitlines()[0]}」は拾わない", not title_looks(L, t, "T-HIDE")))
     return out
 
 
@@ -1035,7 +1067,7 @@ def leg_hypo_link(L):
 
 LEGS = {
     "approved": leg_approved, "later_rule_live": leg_later_rule_live, "miete": leg_miete,
-    "title_real": leg_title_real, "title_metaphor": leg_title_metaphor, "flag": leg_flag,
+    "title_real": leg_title_real, "title_metaphor": leg_title_metaphor, "title_hide": leg_title_hide, "flag": leg_flag,
     "narrator": leg_narrator, "phrase": leg_phrase, "yen": leg_yen, "length": leg_length,
     "end": leg_end, "ashi": leg_ashi, "sorry": leg_sorry, "as_of": leg_as_of, "cli": leg_cli,
     "card": leg_card, "sec": leg_sec, "after": leg_after, "num": leg_num, "quote": leg_quote,
