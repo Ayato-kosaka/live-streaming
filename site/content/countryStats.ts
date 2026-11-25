@@ -49,7 +49,7 @@ const COUNTRY_STATS: Record<string, CountryStat> = {
   "lithuania": { lives: 2, people: 56, msgs: 2243, days: 2, top: ["2026-09-14", "ZuzHKyDfocw", "【三日目】親友に会いにスウェーデンまでヒッチハイクします、リトアニアまで", 46] },
   "north-macedonia": { lives: 35, people: 189, msgs: 14083, days: 31, top: ["2026-10-23", "vZ2O8pabk1g", "【緊急】ホステル追い出されました", 42] },
   "poland": { lives: 6, people: 57, msgs: 2624, days: 2, top: ["2026-09-12", "hrXYXcu9IDE", "【一日目】親友に会いにスウェーデンまで、ワルシャワまで", 44] },
-  "romania": { lives: 3, people: 30, msgs: 1083, days: 2, top: ["2026-11-21", "A_cJ9CNM0G8", "🇧🇬ブルガリア出国します", 21] },
+  "romania": { lives: 5, people: 41, msgs: 1512, days: 4, top: ["2026-11-21", "A_cJ9CNM0G8", "🇧🇬ブルガリア出国します", 21] },
   "slovakia": { lives: 2, people: 7, msgs: 52, days: 2, top: ["2024-12-03", "uylUHvF_1WM", "チェコに着いたので、魅力を探りませう", 5] },
   "sweden": { lives: 8, people: 76, msgs: 3732, days: 8, top: ["2026-09-20", "GBYHxJQGlCY", "【到着日日】親友に会いにスウェーデンまでヒッチハイクします。スウェーデン🇸🇪ストックホルム", 38] },
   "turkey": { lives: 16, people: 69, msgs: 5469, days: 15, top: ["2025-04-11", "UULcHjBHSJM", "【神回】トルコ🇹🇷イスタンブールでアジア側にいってみた", 25] },
