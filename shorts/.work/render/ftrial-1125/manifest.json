@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__ftrial-1125",
  "mode": "render",
- "dest": "render/ftrial-1125/inbox",
+ "dest": "render/ftrial-1125",
  "video": null,
  "channel": null,
  "request": "shorts/render/ftrial-1125.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 1006,
-  "tar_gz": 817,
-  "encrypted": 832
+  "plain": 25648,
+  "tar_gz": 6632,
+  "encrypted": 6640
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 832,
-   "sha256": "8a28ee4eb354e7fbbf879bca89908cbae4d9e7924613e50e5c93b689c0188ebf"
+   "bytes": 6640,
+   "sha256": "1349f164b064f7d45c3d95887b19a3f8d6ff90bc45a1392b2f9f706011111951"
   }
  ],
- "hmac_sha256": "ce35089b8d12edef956d21aaa0530e949fed6db3684028c37f234211b97da69f",
+ "hmac_sha256": "5890db9bc574e120e4e6f7699cf6a2ccce6d9341a3cd00cbac2b4438a74ccd0a",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-25T18:53:23+00:00",
+ "created_at": "2026-11-25T18:55:03+00:00",
  "nonce": "bf6403e448cdff8d315cd46f"
 }
