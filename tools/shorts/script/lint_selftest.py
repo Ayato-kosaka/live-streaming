@@ -24,6 +24,8 @@
 | `rejected/VusdZVyjgjQ_p1` | 2026-10-23「ちょっと台本の品質が悪い」（#1014。7c008c3d の下書き21行。帳面 F-047） | 今日 |
 | `approved/VusdZVyjgjQ_p1` | 2026-10-23 あやとの添削そのもの（#1014。5f1a3008 の19行） | 添削の時点（2026-10-23:6354242835） |
 | `rejected/LdgTh1DC3Jk_p1` | 2026-10-23「字幕をつなげてるだけ」「『配信のコメントで』は使わない約束」「何度も言ってます」（#1019。滝の回 p1 の17行。帳面 F-048〜F-050） | 今日 |
+| `approved/2EKBYEnv850_p1_v5` | 2026-11-25「ブラッシュアップ完璧だと思います」（#1441 の書き置き。温泉 v5 の L＝輪の版。spec は字・根拠・種類・開け閉め・画・本人の声だけ） | 今日（当て表 L-ATE は外す） |
+| `approved/bg-boza_p1_v9` | 同じ（ボザ v9 の L の版） | 今日（当て表 L-ATE は外す） |
 
 フォカッチャの2本は、批評役の対照（`script_writing.md` 7.7）にも使うので、spec に `why`（作文者が挙げた配信の時刻）と
 `visual`（画）を残してある。下書きの spec は当時まだ無かったので、作文者の表（7c008c3d の `script_table.md`）から組んだ。
@@ -72,9 +74,15 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `wide` | 16字の行は △、15字の行は何も出さない。数えかたは `build_edit.py` の `spoken_chars` と同じ（「ー」を数える。読み込んで突き合わせる）。1行目の題・本人の声の行（`orig_voice`・`voice_src`）は見ない。✕ にはしない（L-WIDE。仮説 N5） |
 | `width_median` | 行の字数の中央値を1行で出す（題の1行目も入れ、本人の声の行は外す。偶数の行は真ん中2つの間）。L-WIDE を当てない日付でも出す |
 | `prev` | 十字架の登山の原稿 A の4行目「先週は雨で流れたリベンジや！」と、行の途中の「前回の配信で」を ✕。フォカッチャの添削版の締め「リベンジにワンパンピザを本日22時から…」・問いの前の締めの行・題が「リベンジ」を言っている回の本文・1行目の題は見ない。「昨日こねた生地」は前の回の事情ではないので見ない。あやとの書き直し（「…十字架まで歩きたい！」）は通す。11-13 のコメントより前の決まりでは当てない（L-PREV） |
-| `hypo_link` | 規則はどれも、帳面の ID か仮説の台帳（`playbook.md`）の番号か出どころの issue（`#1403`）を持つ。台帳の番号は台帳の行にあり、その行が規則の名前を書いている。L-WIDE は帳面に足していない（あやとの指摘ではない）。L-RUN・L-ANSNEXT は帳面にも台帳にも無く、出どころ #1403 だけを持つ |
+| `hypo_link` | 規則はどれも、帳面の ID か仮説の台帳（`playbook.md`）の番号か出どころの issue（`#1403`）を持つ。台帳の番号は台帳の行にあり、その行が規則の名前を書いている。L-WIDE は帳面に足していない（あやとの指摘ではない）。L-RUN・L-ANSNEXT と 11-25 の5つ（L-CLIFF・T-HOOK・L-NUM38・L-VOICE0・L-BANG）は帳面にも台帳にも無く、出どころ #1403 だけを持つ |
 | `run` | spec の行の種類（`kind`）で、出来事・引っ張り・数の無い行が3行続いたら3行目から △（前置き・説明・前置き → 4行目、反応・反応・味・味 → 8・9行目）。題の1行目・締めの行（最後の問い、問い → 誘いの問いの行も）は数えない。数は続きを切る。付録A の書きかた（題読み・値段・数・締めの問い）でも読む。種類の無い行・決まりに無い種類・開け閉めの字は △。どの行にも kind が無ければ「見ていない」。診断の付録A の屋根裏25人部屋の種類で、診断の「続」と同じ 8・9・10・17行目。✕ にはしない（L-RUN。#1403） |
 | `ansnext` | 題の答え（【答】）の次が反応の行で、3秒のうちに次を開かなければ、その行を △。次がすぐ締め（問い・問い → アーカイブ・問い → 誘い）・出来事・引っ張り・turn に o（o・oc）なら出さない。短い反応（「わお、人がいっぱい！」）のあと3秒のうちに引っ張りが始まれば出さず、長い反応のあとなら出す。spec の why の【答】も読む。kind が無い・【答】が無ければ「見ていない」（L-ANSNEXT。#1403） |
+| `cliff` | 題の直後の行（2行目）が前置きの決まり文句なら ✕: ヨーグルト「やってきたのは、…」・屋根裏「…へバス移動！」ほか、出した本の2行目7つ。出来事（「街なかの蛇口から、温泉が出てた。」）・頭が「まずは」でも「〜たら……」で終わる引っ張り・常識と逆の言い切り（IKEA）は通す。温泉 v5・ボザ v9 には当たらない。3行目より後は見ない（L-CLIFF。#1403 Q2・F-093） |
+| `hook` | 題の行の画（spec の visual）の頭（最初の「→」「／」まで）がカード・横断歩道・青空なら △。頭が最中で写真が1.5秒目からなら通す。`hook` に「最中」と書けば通し、「景色」なら △。visual も hook も無ければ「見ていない」（T-HOOK。#1403 Q4） |
+| `num38` | 題の直後から8秒（見込み）までに数（漢字の数も）が無ければ2行目に △。題の数は数えない。ボザ v9（4行目の1L）は通す（L-NUM38。#1403 Q5） |
+| `voice0` | 0〜8秒（見込み）に本人の声（orig_voice）の行が無ければ △。4行目（7.7秒）なら通し、7行目だけなら出す。spec が無ければ「見ていない」（L-VOICE0。#1403） |
+| `bang` | 山でない行の「！」が6行で △、5行は通す。題・【答】・本人の声・【大】の「！」は数えない（L-BANG。#1403） |
+| `new_fixtures` | 温泉 v5・ボザ v9（`approved/2EKBYEnv850_p1_v5`・`approved/bg-boza_p1_v9`。あやと #1441「ブラッシュアップ完璧」）が今日の決まりで ✕ 0（当て表 L-ATE は控えに入れていないので外す） |
 """
 from __future__ import annotations
 
@@ -170,7 +178,7 @@ CUTS = {
     # ---- 2026-10-23（#1014、F-047）に足した規則 ----
     "read_any": ("lint.py", "    if card == first:\n", "    if True:\n", {"title_read"}, "1行目が題の札と違っても通す"),
     "read_norm": ("lint.py", '    return TITLE_NOISE.sub("", FLAG_PAIR.sub("", s or ""))\n', '    return s or ""\n',
-                  {"title_read", "approved", "particle"}, "国旗・改行・句読点の置きかたの違いまで ✕ にする"),
+                  {"title_read", "approved", "particle", "new_fixtures"}, "国旗・改行・句読点の置きかたの違いまで ✕ にする"),
     "next_none": ("lint.py", "    if invites(last) and not TIME.search(last):\n", "    if False:\n", {"next_time"}, "時刻の無い誘いを通す"),
     "next_spec": ("lint.py", "        if miss:\n", "        if False:\n", {"next_time"}, "spec の next_stream の時刻を見ない"),
     "next_spec_read": ("lint.py", '        nxt = s.get("next_stream") or None\n', "        nxt = None\n", {"next_time"},
@@ -223,7 +231,7 @@ CUTS = {
     "wide_count": ("lint.py", "    return [(i, spoken_chars(ln)) for i, ln in", "    return [(i, chars(ln)) for i, ln in",
                    {"wide"}, "L-SEC の数えかた（「ー」を数えない）で数える"),
     "wide_voice": ("lint.py", '    return isinstance(r, dict) and bool(r.get("orig_voice") or r.get("voice_src"))\n', "    return False\n",
-                   {"wide", "width_median"}, "本人の声の行まで読み上げる行に数える"),
+                   {"wide", "width_median", "voice0", "bang"}, "本人の声の行まで読み上げる行に数える（L-VOICE0・L-BANG も同じ見分けを使う）"),
     "wide_vsrc": ("lint.py", 'bool(r.get("orig_voice") or r.get("voice_src"))', 'bool(r.get("orig_voice"))',
                   {"wide"}, "声だけ別の秒から取る本人の声（voice_src）を読み上げる行に数える"),
     "width_line": ("lint.py", "    if wl:\n        out.append(wl)\n", "", {"width_median"}, "行の字数の中央値を出さない"),
@@ -257,6 +265,29 @@ CUTS = {
     "ans_window": ("lint.py", "ANS_WINDOW = 3.0", "ANS_WINDOW = 0.0", {"ansnext"}, "短い反応のあと3秒のうちに開いても出す"),
     "ans_opens": ("lint.py", 'OPENS = ("出来事", "引っ張り")', 'OPENS = ("出来事",)', {"ansnext"}, "引っ張り（〜たら……）を、開く行に数えない"),
     "src": ("lint.py", '         l_run, src=("#1403",)),\n', "         l_run),\n", {"hypo_link"}, "L-RUN が出どころの issue を持たない"),
+    # ---- 2026-11-25（#1403・#1441、帳面 F-093）: 温泉 v5・ボザ v9 の作りかたを全部の回へ ----
+    "cliff_off": ("lint.py", "    if not m:\n        return []\n    return [Hit(\"L-CLIFF\"", "    if True:\n        return []\n    return [Hit(\"L-CLIFF\"",
+                  {"cliff"}, "題の直後の前置きを拾わない"),
+    "cliff_head": ("lint.py", "    m = CLIFF.search(ln) or (None if PULL_END.search(ln) else CLIFF_HEAD.search(ln))\n",
+                   "    m = CLIFF.search(ln)\n", {"cliff"}, "頭の決まり文句（最近・明日・まずは）を拾わない"),
+    "cliff_pull": ("lint.py", "    m = CLIFF.search(ln) or (None if PULL_END.search(ln) else CLIFF_HEAD.search(ln))\n",
+                   "    m = CLIFF.search(ln) or CLIFF_HEAD.search(ln)\n", {"cliff"}, "「まずは嗅いでみたら……」（引っ張り）まで前置きにする"),
+    "cliff_look": ("lint.py", "題の札・出来事の行の中・最初の出来事のあとへ（#1403 Q2）\")]",
+                   "題の札・出来事の行の中・最初の出来事のあとへ（#1403 Q2）\", look=True)]", {"cliff"}, "前置きを ✕ にせず △ にする（前の案）"),
+    "hook_off": ("lint.py", "    if not hook and not m:\n        return []\n", "    if True:\n        return []\n", {"hook"}, "0秒目の景色・写真を拾わない"),
+    "hook_head": ("lint.py", '    head = re.split(r"→|／", vis, maxsplit=1)[0]\n', "    head = vis\n", {"hook"},
+                  "題の行の画の頭でなく、後ろ（1.5秒目からの写真）まで見る"),
+    "hook_ok": ("lint.py", "    if hook in HOOK_OK:\n        return []\n", "", {"hook"}, "hook に「最中」と書いても通さない"),
+    "num38_off": ("lint.py", "if st[i - 1] < EARLY):\n        return []\n    return [Hit(\"L-NUM38\"", "if True):\n        return []\n    return [Hit(\"L-NUM38\"",
+                  {"num38"}, "8秒より後の数でも、題の直後の数に数える"),
+    "num38_word": ("lint.py", 'NUM_ANY = re.compile(r"[0-9０-９]|', 'NUM_ANY = re.compile(r"[0-9０-９]|(?!)', {"num38"},
+                   "漢字の数（百度・三人）を数に数えない"),
+    "voice0_off": ("lint.py", "    if any(own_voice(row_at(c, i)) for i in range(1, len(c.lines) + 1) if st[i - 1] < EARLY):\n",
+                   "    if any(own_voice(row_at(c, i)) for i in range(1, len(c.lines) + 1)):\n", {"voice0"}, "8秒より後の本人の声でも通す"),
+    "bang_off": ("lint.py", "    if len(got) <= BANG_MAX:\n", "    if True:\n", {"bang"}, "「！」の多さを見ない"),
+    "bang_peak": ("lint.py", '        if i == 1 or i in c.answer_marked or own_voice(r) or r.get("big") or "【大】" in str(r.get("why") or ""):\n',
+                  "        if i == 1:\n", {"bang"}, "山（【答】・【大】・本人の声）の「！」まで数える"),
+    "src_cliff": ("lint.py", "l_cliff,\n         src=(\"#1403\",)),\n", "l_cliff),\n", {"hypo_link"}, "L-CLIFF が出どころの issue を持たない"),
     # ---- 2026-11-13（#1186、F-008 の5回目）: 前の回の事情の補足 ----
     "prev": ("lint.py", "        m = next((x for x in PREV.finditer(ln) if x.group(0) not in said), None)\n", "        m = None\n",
              {"prev"}, "前の回の事情（先週・リベンジ）を拾わない"),
@@ -864,6 +895,106 @@ def leg_ansnext(L):
             ("kind が無い・【答】が無ければ「見ていない」", "L-ANSNEXT" in no_kind and "L-ANSNEXT" in no_ans)]
 
 
+V5, V9 = "approved/2EKBYEnv850_p1_v5", "approved/bg-boza_p1_v9"   # あやと #1441「ブラッシュアップ完璧」の2本
+NEW = ("L-CLIFF", "T-HOOK", "L-NUM38", "L-VOICE0", "L-BANG")          # 2026-11-25 に足した規則
+# 直近の古い原稿（ヨーグルト・屋根裏25人部屋）の2行目と、出した本の2行目（診断 1.3.1）
+OLD2 = ("やってきたのは、ブルガリアの首都ソフィア！", "北マケドニアから、ブルガリアの首都ソフィアへバス移動！",
+        "首都からバスで、紅葉のマトカ渓谷へ！", "海外に住んで二年になるけど、そろそろ日本が恋しい！", "最近、パン作りにハマってるんやけど、",
+        "ヒッチハイクでタリンに着いて、パン休憩！", "明日焼くのは、こねたら一晩ほったらかすだけのパン！")
+
+
+def new_hits(L, c):
+    return [(h.rule, h.line, h.look) for h in L.lint(c, TODAY)["hits"] if h.rule in NEW]
+
+
+def leg_cliff(L):
+    def got(second):
+        return [(h.line, h.look) for h in hits_of(L, ctx(L, ["題", second, "みんなは？"]), "L-CLIFF")]
+    old = {s: got(s) for s in OLD2}
+    ok = {s: got(s) for s in ("街なかの蛇口から、温泉が出てた。", "ヨーグルトの棚で、麦の絵の瓶を見つけた。", "まずは嗅いでみたら……",
+                              "7年愛用したパソコンの画面が壊れた！", "この国、物価がぶっ壊れてんねん。")}
+    v = {rel: [x for x in new_hits(L, fix(L, rel)) if x[0] == "L-CLIFF"] for rel in (V5, V9)}
+    return [(f"古い2行目（ヨーグルト・屋根裏ほか {len(OLD2)}本）を2行目で ✕"
+             + (f" ← {[s for s, h in old.items() if h != [(2, False)]]}" if any(h != [(2, False)] for h in old.values()) else ""),
+             all(h == [(2, False)] for h in old.values())),
+            (f"出来事・引っ張り（「まずは〜たら……」）・常識と逆の言い切りの2行目は通す（{[s for s, h in ok.items() if h]}）",
+             not any(ok.values())),
+            ("温泉 v5・ボザ v9 には当たらない", not any(v.values())),
+            ("3行目より後の前置きは見ない", not hits_of(L, ctx(L, ["題", "鍋を開けたら……", "やってきたのは、ソフィア！", "みんなは？"]), "L-CLIFF"))]
+
+
+def leg_hook(L):
+    def got(visual=None, hook=None):
+        row = {"line": "題", **({"visual": visual} if visual is not None else {}), **({"hook": hook} if hook else {})}
+        c = L.Ctx(lines=["題", "みんなは？"], title_card=None, title_from="足", rows=[row, {"line": "みんなは？"}])
+        res = L.lint(c, TODAY)
+        return [(h.line, h.look) for h in res["hits"] if h.rule == "T-HOOK"], "T-HOOK" in res["blind"]
+    card = got("前半= あやと島カード 11-13（いちごの瓶）／後半= 配信 1:37:23（瓶を傾けて飲む）")
+    cross = got("前半= 配信 0:15:55（広場へ渡る横断歩道・青空）／後半= 配信 1:35:05")
+    later = got("0.0〜1.3 配信 0:29:08（蛇口の湯が口に入る）→ 1.5〜2.8 ガイドの写真")
+    v = {rel: [x for x in new_hits(L, fix(L, rel)) if x[0] == "T-HOOK"] for rel in (V5, V9)}
+    return [("頭がカード・横断歩道の画を △（✕ にしない）", card == ([(1, True)], False) and cross == ([(1, True)], False)),
+            ("頭が最中の画で、写真が1.5秒目からなら通す", later == ([], False)),
+            ("hook に「最中」と書けば、頭の字にかかわらず通す", got("あやと島カード", "最中") == ([], False)),
+            ("hook が「景色」なら △", got("配信 0:01:00", "景色") == ([(1, True)], False)),
+            ("visual も hook も無ければ「見ていない」", got() == ([], True)),
+            ("温泉 v5・ボザ v9 には当たらない", not any(v.values()))]
+
+
+def leg_num38(L):
+    def got(lines):
+        return [(h.line, h.look) for h in hits_of(L, ctx(L, lines), "L-NUM38")]
+    t = "ブルガリアで温泉を飲んでみたら、激まずすぎた！"
+    return [("題の直後の行に数（100度）があれば通す", not got([t, "100度とかあったらどうしよう……", "みんなは？"])),
+            ("漢字の数（百度）も数える", not got([t, "百度とかあったらどうしよう……", "みんなは？"])),
+            ("8秒までに数が無ければ2行目に △", got([t, "街なかの蛇口から、温泉が出てた。", "まずは嗅いでみたら……", "なんか、コケの匂い",
+                                            "100度とかあったらどうしよう……"]) == [(2, True)]),
+            ("題の数は数えない", got(["温泉を3回飲んでみた！", "街なかの蛇口から、温泉が出てた。"]) == [(2, True)]),
+            ("ボザ v9（4行目の1L）は通す", not [x for x in new_hits(L, fix(L, V9)) if x[0] == "L-NUM38"])]
+
+
+def leg_voice0(L):
+    def got(voice_at):
+        lines = ["ブルガリアで温泉を飲んでみたら、激まずすぎた！", "街なかの蛇口から、温泉が出てた。", "まずは嗅いでみたら……",
+                 "なんか、コケの匂い", "100度とかあったらどうしよう……", "思い切って触ってみたら……", "あちあちちあちちちちち！"]
+        rows = [{"line": ln, **({"orig_voice": "0:22:00〜0:22:02"} if i == voice_at else {})} for i, ln in enumerate(lines, 1)]
+        c = L.Ctx(lines=lines, title_card=None, title_from="足", rows=rows, has_spec=True)
+        return [h.look for h in hits_of(L, c, "L-VOICE0")]
+    blind = L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
+    return [("4行目（見込み 7.7秒）の本人の声なら通す", got(4) == []),
+            ("7行目（8秒より後）の本人の声だけなら △", got(7) == [True]),
+            ("spec が無ければ「見ていない」", "L-VOICE0" in blind),
+            ("温泉 v5（4行目が本人の声）は通す", not [x for x in new_hits(L, fix(L, V5)) if x[0] == "L-VOICE0"])]
+
+
+def leg_bang(L):
+    def got(n_bang, peak=None):
+        lines = ["題！"] + [f"{i}行目！" if i <= n_bang + 1 else f"{i}行目。" for i in range(2, 12)] + ["みんなは？"]
+        rows = [{"line": ln} for ln in lines]
+        ans = set()
+        if peak == "答":
+            ans = {2}
+        elif peak == "声":
+            rows[1]["orig_voice"] = "0:10:00〜0:10:02"
+        elif peak == "大":
+            rows[1]["big"] = True
+        c = L.Ctx(lines=lines, title_card=None, title_from="足", rows=rows, answer_marked=ans)
+        return [(h.line, h.look) for h in hits_of(L, c, "L-BANG")]
+    return [("山でない「！」が5行なら通す（題の「！」は数えない）", got(5) == []),
+            ("6行なら △", got(6) == [(None, True)]),
+            ("6行のうち1行が【答】・本人の声・【大】なら通す", got(6, "答") == [] and got(6, "声") == [] and got(6, "大") == []),
+            ("温泉 v5・ボザ v9 は通す", not [x for x in new_hits(L, fix(L, V5)) + new_hits(L, fix(L, V9)) if x[0] == "L-BANG"])]
+
+
+def leg_new_fixtures(L):
+    """温泉 v5・ボザ v9 は今日の決まりで ✕ 0（当て表 L-ATE は控えに入れていないので外す）。"""
+    out = []
+    for rel in (V5, V9):
+        f = [h.rule for h in fails(L, fix(L, rel)) if h.rule != "L-ATE"]
+        out.append((f"{rel} は今日の決まりで ✕ 0" + (f" ← {f}" if f else ""), not f))
+    return out
+
+
 def hypo_problems(rules, playbook: str) -> list:
     """規則と仮説の台帳の名指しの崩れ。台帳の行は「| N5 | …」で始まり、その行に規則の名前がある。研究の規則は出どころの issue（#1403）を持つ。"""
     out = []
@@ -887,15 +1018,16 @@ def leg_hypo_link(L):
     stray = hypo_problems([L.Rule("L-NONE", (), "2026-11-11", "x", lambda _: [], hypo=("N99",))], pb)
     bare = hypo_problems([L.Rule("L-BARE", (), "2026-11-11", "x", lambda _: [])], pb)
     odd = hypo_problems([L.Rule("L-ODD", (), "2026-11-23", "x", lambda _: [], src=("1403",))], pb)
-    research = [r for r in L.RULES if r.id in ("L-RUN", "L-ANSNEXT")]
+    ids = ("L-RUN", "L-ANSNEXT") + NEW
+    research = [r for r in L.RULES if r.id in ids]
     led = LEDGER_MD.read_text(encoding="utf-8")
     return [(f"規則 {len(L.RULES)} がどれも帳面の ID か台帳の番号か出どころの issue を持ち、台帳の行が規則の名前を書いている"
              + (f" ← {got}" if got else ""), not got),
             ("L-WIDE は帳面の ID を持たず、台帳の N5 を持つ", wide is not None and wide.ledger == () and wide.hypo == ("N5",)),
             ("帳面（ayato_feedback.md）に L-WIDE が無い（あやとの指摘ではない）", "L-WIDE" not in led),
-            ("L-RUN・L-ANSNEXT は帳面の ID も台帳の番号も持たず、出どころ #1403 だけを持つ（研究の決まり）",
-             len(research) == 2 and all(r.ledger == () and r.hypo == () and r.src == ("#1403",) for r in research)),
-            ("帳面に L-RUN・L-ANSNEXT が無い", "L-RUN" not in led and "L-ANSNEXT" not in led),
+            (f"{'・'.join(ids)} は帳面の ID も台帳の番号も持たず、出どころ #1403 だけを持つ（研究の決まり）",
+             len(research) == len(ids) and all(r.ledger == () and r.hypo == () and r.src == ("#1403",) for r in research)),
+            ("帳面にこれらの規則の名前が無い（帳面の当てる場所から名指さない）", not any(f"lint:{i}" in led for i in ids)),
             ("台帳に無い番号（N99）を指す規則を拾う", any("N99" in p for p in stray)),
             ("どれも持たない規則を拾う", any("L-BARE" in p for p in bare)),
             ("issue の形でない出どころ（1403）を拾う", any("L-ODD" in p for p in odd))]
@@ -914,6 +1046,7 @@ LEGS = {
     "wide": leg_wide, "width_median": leg_width_median, "hypo_link": leg_hypo_link,
     "prev": leg_prev,
     "run": leg_run, "ansnext": leg_ansnext,
+    "cliff": leg_cliff, "hook": leg_hook, "num38": leg_num38, "voice0": leg_voice0, "bang": leg_bang, "new_fixtures": leg_new_fixtures,
 }
 
 if __name__ == "__main__":

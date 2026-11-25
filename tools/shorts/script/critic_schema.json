@@ -1,16 +1,17 @@
 {
-  "$comment": "批評役の返す形（references/critic_prompt.md の「返す形」）。critic.py が claude -p の --json-schema に渡し、critic_gate.py が読む前に同じ形かを確かめる。checked（当てた約束の ID）・alone（その行だけで通るか）・outsider（画に居ない人の言葉）は 2026-10-23（#1019、帳面 F-048〜F-050）から。前の hearsay（人の話の印）は外した。after（題の答えの直後の行の種類。(m)）は 2026-11-23（#1403）から",
+  "$comment": "批評役の返す形（references/critic_prompt.md の「返す形」）。critic.py が claude -p の --json-schema に渡し、critic_gate.py が読む前に同じ形かを確かめる。checked（当てた約束の ID）・alone（その行だけで通るか）・outsider（画に居ない人の言葉）は 2026-10-23（#1019、帳面 F-048〜F-050）から。前の hearsay（人の話の印）は外した。after（題の答えの直後の行の種類。(m)）は 2026-11-23（#1403）から。2026-11-25（#1403・#1441、帳面 F-093）に、点の a を a1（0秒目の画）と a2（題の直後の1行）に分け、turn（行ごとの問いの開け閉め。(l)）を足した",
   "type": "object",
   "additionalProperties": false,
-  "required": ["scores", "score_why", "checked", "alone", "outsider", "tsunagi", "questions", "turns", "numbers",
+  "required": ["scores", "score_why", "checked", "alone", "outsider", "tsunagi", "turn", "questions", "turns", "numbers",
                "after", "ledger", "leave", "fixes", "verdict"],
   "properties": {
     "scores": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["a", "b", "c", "d", "e", "f"],
+      "required": ["a1", "a2", "b", "c", "d", "e", "f"],
       "properties": {
-        "a": {"type": "integer", "minimum": 1, "maximum": 5},
+        "a1": {"type": "integer", "minimum": 1, "maximum": 5},
+        "a2": {"type": "integer", "minimum": 1, "maximum": 5},
         "b": {"type": "integer", "minimum": 1, "maximum": 5},
         "c": {"type": "integer", "minimum": 1, "maximum": 5},
         "d": {"type": "integer", "minimum": 1, "maximum": 5},
@@ -21,9 +22,9 @@
     "score_why": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["a", "b", "c", "d", "e", "f"],
+      "required": ["a1", "a2", "b", "c", "d", "e", "f"],
       "properties": {
-        "a": {"type": "string"}, "b": {"type": "string"}, "c": {"type": "string"},
+        "a1": {"type": "string"}, "a2": {"type": "string"}, "b": {"type": "string"}, "c": {"type": "string"},
         "d": {"type": "string"}, "e": {"type": "string"}, "f": {"type": "string"}
       }
     },
@@ -43,6 +44,7 @@
       }
     },
     "tsunagi": {"type": "array", "items": {"type": "string", "enum": ["題", "答", "反", "足", "前", "転", "外", "跳", "締"]}},
+    "turn": {"type": "array", "items": {"type": "string", "enum": ["o", "c", "oc", "-"]}},
     "questions": {
       "type": "array",
       "items": {

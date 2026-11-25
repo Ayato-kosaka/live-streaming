@@ -11,7 +11,7 @@
 
 | 足 | 確かめること |
 | --- | --- |
-| `shape` | 決まりの形の JSON は通り、鍵が無い（tsunagi・(m) の after）・enum に無い字・決まりに無い鍵は崩れとして出す |
+| `shape` | 決まりの形の JSON は通り、鍵が無い（tsunagi・(m) の after・(l) の turn）・点が前の形（a1・a2 に分けていない a）・enum に無い字・決まりに無い鍵は崩れとして出す |
 | `count` | つなぎの数が原稿の行数と違えば、崩れとして出す |
 | `jump` | 跳の行を ✕。最後の行がアーカイブの1行なら、その行の跳は数えない |
 | `question` | 答えない問い・答える前に移る問いを ✕。終わりの問い（アーカイブの前の問いも）は数えない |
@@ -21,13 +21,14 @@
 | `checked` | 約束のカードの ID が `checked` に1つでも無ければ ✕（欠けた ID を名指す）。`ledger` に挙げた ID は当てたに数える。帳面の外の約束 X2 も帳面の ID と同じに扱う |
 | `numbers` | 前の声に無い数を ✕ |
 | `ledger` | 帳面にある ID は ✕、帳面に無い ID は △ |
-| `scores` | 2 以下は ✕、3 は △、4 は何も出さない |
+| `scores` | 2 以下は ✕、3 は △、4 は何も出さない。a2（題の直後の1行）も a1 と別に数える |
 | `ayato` | 【あやと】の行（spec の why が「あやとの題」など）に当たった ✕ は △ にする（まとめ役が裁く） |
 | `as_of` | 城塞 p1 の承認（2026-10-21:6306110329）で読み直すと、あとでできた F-037（09:28）の ✕ は △。前からある F-008 は ✕ のまま。as_of 無しなら F-037 も ✕ |
 | `i_side` | (h) の F-039・F-040 は、同じ行に (i)(j)(k) の当たりがあれば ✕、無ければ △（批評役自身の見かたでは渡れている） |
 | `pending` | (h) F-014 が、画の「確認中」の行（1次の原稿。spec の visual に「確認中」）に当たったら △。why が「回に無い:」で始まれば（その回に無い画を当てにしている）✕ のまま。確認中でない行の F-014 は ✕（2026-11-04） |
 | `cli` | 終了コード: 通る 0・落ちる 1・形が違う 2 |
 | `after` | (m) 題の答え（15行目）の次が反応・味・説明・数・前置きなら、次の行（16行目）を △（✕ にはしない）。出来事・引っ張り・問い・締めなら出さない。答えのすぐあとが締め（20行の控えは 19行目の問い → アーカイブ）なら出さない。答えが無い（0）なら見ない。範囲の外の行は崩れ（#1403） |
+| `idle` | (l) 題の直後から締めの2行前までに、開け閉め（`turn`）の「-」が2行続いたら2行目を ✕。1行おきは通す。題の行・締めの手前・締め（20行の控えは 18〜20行目）は数えない。【あやと】の行は △。数が原稿と違えば崩れ（2026-11-25 #1403） |
 | `focaccia` | フォカッチャの下書き（あやと「台本の品質が悪い」#1014）は、添削の時点（2026-10-23:6354242835）の決まりでも、批評役が何も挙げなくても lint の T-READ（1行目）・L-NEXT（21行目）で落ちる。あやとの添削版は同じ時点で lint の ✕ 0（日付だけにすると夕方の規則まで当たる）。批評役の (h) F-047 は ✕ |
 """
 from __future__ import annotations
@@ -79,7 +80,7 @@ CUTS = {
     "ledger_unknown": ("critic_gate.py", "        if fid not in known:\n", "        if False:\n", {"ledger"}, "帳面に無い ID まで ✕ にする"),
     "score_low": ("critic_gate.py", "        if v <= 2:\n", "        if False:\n", {"scores"}, "2 以下の点を通す"),
     "score_three": ("critic_gate.py", "        elif v == 3:\n", "        elif False:\n", {"scores"}, "3 の点を △ に出さない"),
-    "ayato": ("critic_gate.py", "        if line in ayato:\n", "        if False:\n", {"ayato", "alone"}, "【あやと】の行でも ✕ にする"),
+    "ayato": ("critic_gate.py", "        if line in ayato:\n", "        if False:\n", {"ayato", "alone", "idle"}, "【あやと】の行でも ✕ にする"),
     "i_side": ("critic_gate.py", "        if fid in I_SIDE and ln not in i_lines:\n", "        if False:\n",
                {"i_side"}, "(i) で渡れている行の F-039 も ✕ にする"),
     "pending": ("critic_gate.py", "        if fid == PICTURE and 1 <= ln <= len(rows) and brief.pending_visual(rows[ln - 1])",
@@ -102,6 +103,14 @@ CUTS = {
     "after_fail": ("critic_gate.py", '        look.append((al + 1, "(m) 答えのあと"', '        fail.append((al + 1, "(m) 答えのあと"', {"after"},
                    "題の答えのあとを ✕ にする（F-037 の答えを待たずに落とす）"),
     "after_range": ("critic_gate.py", "    if al and not in_range(al):\n", "    if False:\n", {"after"}, "範囲の外の答えの行を崩れにしない"),
+    # ---- 2026-11-25（#1403・#1441、帳面 F-093）: (l) 問いの開け閉め・(a) を a1・a2 に ----
+    "idle_off": ("critic_gate.py", "            if tn[i - 2] == IDLE and tn[i - 1] == IDLE:\n", "            if False:\n", {"idle"},
+                 "「-」が続いても数えない"),
+    "idle_title": ("critic_gate.py", "        for i in range(3, last + 1):\n", "        for i in range(2, last + 1):\n", {"idle"},
+                   "題の行（1行目）の「-」まで数える"),
+    "idle_end": ("critic_gate.py", "        last = lint_mod.closing_index(c.lines) - 2\n", "        last = n\n", {"idle"},
+                 "締めと、その手前の行まで数える"),
+    "idle_count": ("critic_gate.py", "    if len(tn) != n:\n", "    if False:\n", {"idle"}, "turn の数を見ない"),
 }
 
 
@@ -115,13 +124,14 @@ FOCACCIA_AT = "2026-10-23:6354242835"   # フォカッチャのあやとの添�
 sys.path.insert(0, str(HERE))
 import brief as _brief  # noqa: E402
 CARD_IDS = _brief.card_ids()             # 約束のカードの ID（帳面から。手で並べない）
+SK = ("a1", "a2", "b", "c", "d", "e", "f")   # 点の鍵（(a) は 2026-11-25 から a1・a2 に分けた）
 
 
 def base(n=20) -> dict:
     """何にも当たらない批評役の JSON（20行・全部4・約束のカードを全部当てた）。"""
-    return {"scores": dict.fromkeys("abcdef", 4), "score_why": dict.fromkeys("abcdef", ""), "checked": list(CARD_IDS),
+    return {"scores": dict.fromkeys(SK, 4), "score_why": dict.fromkeys(SK, ""), "checked": list(CARD_IDS),
             "alone": [{"line": i, "ok": True, "why": ""} for i in range(1, n + 1)], "outsider": [],
-            "tsunagi": ["題"] + ["足"] * (n - 3) + ["締", "締"], "questions": [], "turns": [],
+            "tsunagi": ["題"] + ["足"] * (n - 3) + ["締", "締"], "turn": ["o"] * n, "questions": [], "turns": [],
             "numbers": [], "after": {"line": 0, "next": "無し", "why": ""}, "ledger": [], "leave": [], "fixes": [], "verdict": "通る"}
 
 
@@ -149,11 +159,18 @@ def leg_shape(G):
     del miss["tsunagi"]
     no_after = base()
     del no_after["after"]
+    no_turn = base()
+    del no_turn["turn"]
+    old_a = with_(scores={**dict.fromkeys("abcdef", 4)}, score_why=dict.fromkeys("abcdef", ""))
+    bad_turn = with_(turn=["o", "x"] + ["o"] * 18)
     bad_enum = with_(tsunagi=["題", "飛"] + ["足"] * 18)
     extra = with_(note="長い説明")
     return [("決まりの形の JSON は通る", ok),
             ("tsunagi が無ければ崩れ", bool(G.check_shape(miss, schema))),
             ("after（(m) 題の答えの直後の行。#1403）が無ければ崩れ", bool(G.check_shape(no_after, schema))),
+            ("turn（(l) 行ごとの開け閉め。2026-11-25）が無ければ崩れ", bool(G.check_shape(no_turn, schema))),
+            ("点が前の形（a1・a2 に分けていない a）なら崩れ", bool(G.check_shape(old_a, schema))),
+            ("turn に「x」（o・c・oc・- のどれでもない）があれば崩れ", bool(G.check_shape(bad_turn, schema))),
             ("つなぎに「飛」（enum に無い字）があれば崩れ", bool(G.check_shape(bad_enum, schema))),
             ("決まりに無い鍵（note）があれば崩れ", bool(G.check_shape(extra, schema)))]
 
@@ -251,12 +268,14 @@ def leg_ledger(G):
 
 
 def leg_scores(G):
-    s2 = run(G, with_(scores={**dict.fromkeys("abcdef", 4), "b": 2}))
-    s3 = run(G, with_(scores={**dict.fromkeys("abcdef", 4), "c": 3}))
+    s2 = run(G, with_(scores={**dict.fromkeys(SK, 4), "b": 2}))
+    s3 = run(G, with_(scores={**dict.fromkeys(SK, 4), "c": 3}))
+    a2 = run(G, with_(scores={**dict.fromkeys(SK, 4), "a2": 2}))
     s4 = run(G, base())
     return [("(b) 2 は ✕", [x[1] for x in s2["fail"]] == ["(b) 2"]),
             ("(c) 3 は ✕ にせず △", not s3["fail"] and [x[1] for x in s3["look"]] == ["(c) 3"]),
-            ("全部 4 なら ✕ も △ も無い", not s4["fail"] and not s4["look"])]
+            ("全部 4 なら ✕ も △ も無い", not s4["fail"] and not s4["look"]),
+            ("(a2) 題の直後の1行が 2 なら ✕（a1 と分けて数える）", [x[1] for x in a2["fail"]] == ["(a2) 2"])]
 
 
 def leg_ayato(G):
@@ -342,6 +361,27 @@ def leg_after(G):
             ("範囲の外の答えの行（99）は崩れ", bool(got(99, "反応")[2]))]
 
 
+def leg_idle(G):
+    """(l) 20行の控えは 19行目が問い（締め）、20行目がアーカイブ。見るのは 2〜17行目（締めの2行前まで）。"""
+    def got(idle, ayato=None):
+        tn = ["o"] * 20
+        for i in idle:
+            tn[i - 1] = "-"
+        c, rows = G.brief.rows_of(SCRIPT, None)
+        if ayato:
+            rows = copy.deepcopy(rows)
+            rows[ayato - 1]["why"] = "あやとの添削（#977 2026-10-21）"
+        r = G.judge(with_(turn=tn), c, rows)
+        return [x[0] for x in r["fail"] if x[1] == "(l) 開け閉め"], [x[0] for x in r["look"] if x[1] == "(l) 開け閉め"], r["bad"]
+    return [("5・6行目が続けて「-」なら 6行目を ✕", got((5, 6)) == ([6], [], [])),
+            ("「-」が1行おきなら通す", got((5, 7, 9)) == ([], [], [])),
+            ("題の行（1行目）の「-」は数えない（1・2行目でも出さない）", got((1, 2)) == ([], [], [])),
+            ("締めの2行前（17行目）までを見る（16・17行目は ✕）", got((16, 17)) == ([17], [], [])),
+            ("締めの手前（17・18行目）・締め（19・20行目）は数えない", got((18, 19, 20)) == ([], [], [])),
+            ("【あやと】の行なら △（まとめ役が裁く）", got((5, 6), ayato=6) == ([], [6], [])),
+            ("turn の数が原稿と違えば崩れ", bool(run(G, with_(turn=["o"] * 19))["bad"]))]
+
+
 def leg_focaccia(G):
     ng, ok = FIX / "rejected/VusdZVyjgjQ_p1/script.txt", FIX / "approved/VusdZVyjgjQ_p1/script.txt"
     c_ng, rows_ng = G.brief.rows_of(ng, None)
@@ -359,7 +399,7 @@ LEGS = {
     "shape": leg_shape, "count": leg_count, "jump": leg_jump, "question": leg_question, "cancel": leg_cancel,
     "outsider": leg_outsider, "alone": leg_alone, "checked": leg_checked, "numbers": leg_numbers, "ledger": leg_ledger, "scores": leg_scores, "ayato": leg_ayato,
     "i_side": leg_i_side, "pending": leg_pending, "as_of": leg_as_of, "cli": leg_cli, "focaccia": leg_focaccia,
-    "after": leg_after,
+    "after": leg_after, "idle": leg_idle,
 }
 
 if __name__ == "__main__":

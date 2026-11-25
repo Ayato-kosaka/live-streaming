@@ -61,6 +61,7 @@
 | `e_name` | 勧める書き出しの名前は、作業枝に頼んだことのある名前（`shorts/render/<名前>.json` の今と履歴）と重ならない。担当の枝で足して下ろした依頼も数える |
 
 `e_clips` の「下ろしてある」と `e_name` は、本物の履歴ではなく、その場で作る小さな git（`git_fixture`）で見る。CI は浅い checkout（履歴1つ）で、本物の履歴に頼ると CI だけで落ちる（#1012 で落ちた）。
+| `e_type` | 回の型（`tools/shorts/render/presets/*.json` の `_axis`。帳面 F-092）: 5つの型のどれでも、様式の重ねかた・大きい字・効果音の行が入り、いまの道具で作れない決め（6章・BGM を止める）は入らない。型が無ければ5つを並べて `--type` で作り直すと書く。無い型は止まる。`--type` の1枚に節が入る（2026-11-25 #1441） |
 | `e_voice` | 声に渡す字の雛形は、spec の `tts_text`（無ければ行の字）・key は `<id>/NN`・bytes は UTF-8 のバイト数 |
 """
 from __future__ import annotations
@@ -236,6 +237,11 @@ CUTS = {
                "頼んだことのある書き出しの名前を勧める"),
     "e_hist": ("brief.py", '"log", "--full-history", "--format=", "--name-only", "--",\n', '"log", "--format=", "--name-only", "--",\n',
                {"e_name"}, "担当の枝で足して下ろした書き出しの依頼を、既定の省略のまま数えない"),
+    # ---- 2026-11-25（#1441、帳面 F-092・F-093）: 回の型の様式と編集の決め ----
+    "e_type_tool": ("brief.py", '    ok = lambda s: isinstance(s, str) and s and not NO_TOOL.search(s)  # noqa: E731\n',
+                    "    ok = lambda s: isinstance(s, str) and bool(s)  # noqa: E731\n", {"e_type"}, "道具に無い決め（6章・道具を足す）まで1枚に書く"),
+    "e_type_none": ("brief.py", "    if not kind:\n        return (", "    if not kind:\n        return \"\" and (", {"e_type"},
+                    "型が無いとき、選ぶための並びを出さない"),
     "e_seal": ("brief.py", 'SHEETS = re.compile(r"/sheets\\.enc(\\.\\d{3})?$")\n', 'SHEETS = re.compile(r"$^")\n', {"e_clips"},
                "コマ一覧の小さな封を見分けない"),
 }
@@ -1184,6 +1190,27 @@ def leg_e_pick(B):
             ("案が要る回で案が無い・無い案（Z）は止まる", stops("shorts/videos/france-2025", None) and stops("shorts/videos/france-2025", "Z"))]
 
 
+def leg_e_type(B):
+    """回の型（presets の `_axis`）の要点が1枚に入り、いまの道具で作れない決めは入らない。"""
+    types = B.preset_types()
+    blocks = {k: B.axis_block(k) for k in types}
+    none = B.axis_block(None)
+    try:
+        B.axis_block("ramen")
+        unknown = False
+    except KeyError:
+        unknown = True
+    text = B.build_edit_brief(Path("shorts/videos/CKJvprUMOgA"), None, "", None, None, "try")
+    return [(f"型が5つ（{'・'.join(types)}）", set(types) == {"food", "try", "trouble", "surprise", "money"}),
+            ("どの型も、様式の重ねかた（presets/<型>.json）・大きい字・効果音の行が入る",
+             all(f'presets/{k}.json' in b and "大きい字" in b and "効果音" in b for k, b in blocks.items())),
+            ("いまの道具で作れない決め（6章・道具を足す・BGM を止める）は入らない",
+             not any(re.search(r"6章|道具(を足す|が要る)|BGM を.{0,6}止め", b) for b in blocks.values())),
+            ("型が無ければ、5つの名前を並べて --type で作り直す、と書く", all(f"`{k}`" in none for k in types) and "--type" in none),
+            ("無い型（ramen）は止まる", unknown),
+            ("--type を渡した1枚に「回の型と様式」の節と try の様式が入る", "## 回の型と様式" in text and "presets/try.json" in text)]
+
+
 def leg_e_cmds(B):
     def raises(t):
         try:
@@ -1313,7 +1340,8 @@ LEGS = {
     "c_pending": leg_c_pending, "w_pairs": leg_w_pairs, "w_stay": leg_w_stay, "c_retouch": leg_c_retouch,
     "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
     "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,
-    "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice, "e_clips": leg_e_clips, "e_name": leg_e_name}
+    "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice, "e_clips": leg_e_clips, "e_name": leg_e_name,
+    "e_type": leg_e_type}
 
 
 class _Tee:

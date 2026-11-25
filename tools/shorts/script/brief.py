@@ -1256,8 +1256,11 @@ def check_only(it) -> bool:
     return bool(it.checks) and ledger_mod.HUMAN not in it.place and "批評役" not in it.place
 
 
-def rule_do(it, width: int = 120) -> str:
-    """決まりの「する」の側（「しない —」より前）を width 字まで。"""
+def rule_do(it, width: int = 100) -> str:
+    """決まりの「する」の側（「しない —」より前）を width 字まで。
+
+    2026-11-25 に 120 → 100 字（帳面の画の項目が増え、回の型の節を足して、1枚が上限の2万字を越えたため。全文は帳面にある）。
+    """
     s = re.split(r"[。\s]*しない\s*[—―-]", it.fields.get("決まり", ""))[0]
     s = re.sub(r"\s+", " ", re.sub(r"^\s*する\s*[—―-]\s*", "", s)).strip()
     return s if len(s) <= width else s[: width - 1] + "…"
@@ -1536,7 +1539,63 @@ def suggest_name(vdir: Path, sid: str, qa: Path) -> str:
     return f"{head}{v}"
 
 
-def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str | None, scratch: str | None) -> str:
+PRESETS = ROOT / "tools/shorts/render/presets"
+# 型の決めのうち、いまの道具で作れない物（BGM を山で止める・行ごとの BGM・題の札の語ごとの色…）。1枚に書くと、担当は
+# 作れない物を作りに道具のソースを読みに行く（#1011 の元）。`edit_axis_2026-11.md` 6章の物は、字に「道具」が出る
+NO_TOOL = re.compile(r"道具(を足す|が要る|は次の段|は6章)|6章")
+
+
+def preset_types() -> dict:
+    """回の型（`presets/<型>.json` の `_axis`）。{型: _axis}。"""
+    out = {}
+    for f in sorted(PRESETS.glob("*.json")):
+        ax = json.loads(f.read_text(encoding="utf-8")).get("_axis") or {}
+        out[ax.get("id") or f.stem] = ax
+    return out
+
+
+def axis_block(kind: str | None) -> str:
+    """回の型の様式と、型の決め（`edit_axis_2026-11.md`）の要点（帳面 F-092）。型が無ければ、選ぶための5行の表。
+
+    いまの道具で作れない物（`NO_TOOL`）は書かない。BGM の決めも書かない（止める・行ごとに下げるは道具が無い。音の大きさは様式に入っている）。
+    """
+    types = preset_types()
+    if not kind:
+        return ("**型がまだ決まっていない。** 題の答え（山）で1つ選び（" + "・".join(f"`{k}` {ax.get('type', '')}" for k, ax in types.items())
+                + "）、まとめ役に `--type <型>` で1枚を作り直してもらう（2つにまたがる回は主の型。温泉は体験で、答えの味だけ食べ物の見た目を借りる）")
+    if kind not in types:
+        raise KeyError(f"--type {kind} は回の型に無い（{'・'.join(types)}）")
+    ax = types[kind]
+    ok = lambda s: isinstance(s, str) and s and not NO_TOOL.search(s)  # noqa: E731
+    tel, sfx, cuts, com = ax.get("telop") or {}, ax.get("sfx") or {}, ax.get("cuts") or {}, ax.get("common") or {}
+    lo, hi = (tel.get("big_per_video") or [None, None])[:2]
+    s_lo, s_hi = (sfx.get("per_10s") or [None, None])[:2]
+    out = [f"- **型: {ax.get('type')}**（`{kind}`）。回の様式を `{{\"extends\": \"presets/{kind}.json\", …回の帯など…}}` にする"]
+    if ok(tel.get("caption")) and "今のまま" not in tel["caption"]:   # 「今のまま」は書いても何も変わらない
+        out.append(f"- 字幕: {tel['caption']}")
+    big = [b for b in tel.get("big_on") or [] if ok(b)]
+    if big:
+        out.append(f"- 大きい字（1本に{lo}〜{hi}回。その型の山の言葉だけ・同じ見た目を続けない）: " + "／".join(big))
+    for k in ("giongo", "steps", "headings", "yen", "title_keyword", "memes"):
+        if ok(tel.get(k)):
+            out.append(f"- {tel[k]}")
+    rules = [f"{r.get('on')} → {r.get('sfx')}" for r in sfx.get("rules") or [] if ok(r.get("on")) and ok(r.get("sfx"))]
+    if rules:
+        out.append(f"- 効果音（10秒に{s_lo:g}〜{s_hi:g}回。polish の `sfx` に置く。出来事のコマだけで、カット・写真の札・字の出には鳴らさない）: "
+                   + "／".join(rules))
+    shot = cuts.get("shot_s")
+    note = "。".join(cuts[k] for k in ("close_up", "note") if ok(cuts.get(k)))
+    cut_txt = "。".join(x for x in ((f"1カット{shot[0]:g}〜{shot[1]:g}秒" if shot else ""), note) if x)
+    if cut_txt:
+        out.append(f"- カット: {cut_txt}")
+    avoid = [a for a in tel.get("avoid") or [] if ok(a)]
+    if avoid:
+        out.append("- しない: " + "／".join(avoid))
+    return "\n".join(out)
+
+
+def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str | None, scratch: str | None,
+                     kind: str | None = None) -> str:
     vdir, script, sfx = pick(episode, pattern)
     spec_p = vdir / f"spec{sfx}.json"
     spec = json.loads(spec_p.read_text(encoding="utf-8")) if spec_p.exists() else None
@@ -1581,6 +1640,7 @@ def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str |
         "table": edit_table(c, rows, real, c.title_card),
         "material": material_block(vdir, spec, excerpt, scratch),
         "ledger": edit_ledger_block(),
+        "axis": axis_block(kind),
         "scratch": S, "bgm": bgm, "name": name, "sid": sid,
         "ep": rel(vdir), "pat_arg": f" --pattern {pattern}" if pattern else "",
         "spec": "$V/" + files["spec"].name, "ov": "$V/" + files["上書き"].name, "edit": "$V/" + files["指示書"].name,
@@ -1614,6 +1674,8 @@ def main() -> int:
     ed.add_argument("--name", help="書き出しの名前（remote.py の --name。既定は検査の記録の版の次）")
     ed.add_argument("--scratch", help="作業の置き場（スクラッチパッド）。手元に開いた素材を探し、鍵・BGM の道を埋める")
     ed.add_argument("--voice-lines", help="1枚は作らず、声に渡す字の雛形を spec の tts_text からこの道に書く")
+    ed.add_argument("--type", help="回の型（tools/shorts/render/presets の food・try・trouble・surprise・money）。"
+                                   "その型の様式と編集の決めの要点を1枚に入れる（無ければ、選ぶための表）")
     for p in (w, c):
         p.add_argument("--ref", action="append", default=[], help="写す参考の略号（reference_beats.md の節。何回でも）")
         p.add_argument("--transcript", action="append", default=[],
@@ -1638,7 +1700,7 @@ def main() -> int:
             print(f"{a.voice_lines}（{len(items)}文・{sum(x['bytes'] for x in items):,}バイト）")
             return 0
         elif a.who == "edit":
-            text = build_edit_brief(Path(a.episode), a.pattern, a.about, a.name, a.scratch)
+            text = build_edit_brief(Path(a.episode), a.pattern, a.about, a.name, a.scratch, a.type)
         else:
             text = build_writer(a.video, a.range, a.ref, a.about, a.lines, a.chat, a.extra, a.title, a.next)
     except (OSError, KeyError, ValueError) as e:

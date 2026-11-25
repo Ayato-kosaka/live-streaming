@@ -22,7 +22,8 @@ spec を直すか、原稿だけを当てるなら `--no-spec`。
 （`references/playbook.md` の N 番号）を `hypo` に持つ。帳面には足さない（あやとが言っていない決まりを、言ったことにしない）。
 台帳の行には規則の名前（`lint.py` の L-WIDE）を書いて、名前から行き来できるようにする（`lint_selftest.py` の `hypo_link`）。
 **研究から決めた規則**（L-RUN・L-ANSNEXT。出した37本の維持率と跳ねた回の構成、#1403）は、帳面にも台帳にも足さず、出どころの issue を
-`src` に持つ。どれも △ で、spec の行に種類（`kind`）がある原稿だけに当たる。面白いか・テンポ・「？」が残るか・映像の枠の外でも
+`src` に持つ。どれも △ で、spec の行に種類（`kind`）がある原稿だけに当たる。2026-11-25 に、温泉 v5・ボザ v9 で磨いた形を全部の回へ
+広げた（#1441、帳面 F-093）ので、同じ研究から L-CLIFF（✕。題の直後の前置き）・T-HOOK・L-NUM38・L-VOICE0・L-BANG（△）を足した。面白いか・テンポ・「？」が残るか・映像の枠の外でも
 正しいか、は字では決まらない。そこは批評役の (h) で当てる（`script_writing.md` 7.4）。
 **ここが緑でも「字で拾える指摘には当たっていない」だけ**で、原稿が良いという意味ではない。
 
@@ -978,6 +979,116 @@ def l_ansnext(c: Ctx):
     return out
 
 
+# ---------- 2026-11-25（#1403・#1441、帳面 F-093）: 温泉 v5・ボザ v9 で磨いた作りかたを全部の回へ ----------
+# 診断（`references/diagnosis_2026-11-23.md` 4.5）の案のうち、まだ当てていなかった5つ。あやとの答え（#1403 の Q2〜Q5）と
+# 「ブラッシュアップ完璧」（#1441）のあとなので、L-CLIFF だけを ✕ にし、ほかは △（数えたいが、字だけでは良し悪しが決まらない）。
+# 帳面には足さない（F-093 は進め方の項目で、カードにすると当て表の欄が1つ増える）。出どころの issue を `src` に持つ
+
+# 題の直後の行の前置きの決まり文句。出した37本の2行目で、当たった17行は全部が前置きだった（診断 4.5。外れ0。37本で作った並びなので、
+# 次の本で外れが出たら △ に下げる）。頭の決まり文句（まずは・今日は…）は、行が「〜たら……」で終わる引っ張りなら当てない
+# （温泉 v5 の「まずは嗅いでみたら……」の形。ほかの前置きの字は、引っ張りで終わっても当てる）
+CLIFF = re.compile(r"やってきた|移動[！!。]|(へ|に)(バス|電車|歩いて)?移動|楽しみにしてた|気になってた|^材料は|住んで|旅中|旅して(る|いる)"
+                   r"|おいら|に着いて、|^首都から|^(日本|海外)では|^人気と噂|スタート[！!]|(買い|見|食べ)に行く[！!。]$")
+CLIFF_HEAD = re.compile(r"^(今日は|明日|今回|最近|まずは|ということで|って訳で|てことで)")
+PULL_END = re.compile(r"(たら|ったら)[、…。！？!?]*$")
+# 0秒目の画が「何かが起きている最中・答え・作る手元」でない字（spec の題の行の visual の頭。診断 1.1 の「0画」）
+HOOK_STILL = re.compile(r"景色|風景|建物|外観|正面|街並|街なみ|写真|カード|地図|看板|横断歩道|青空|夕日|全景|俯瞰|空撮")
+HOOK_OK = ("最中", "答え", "手元")   # spec の題の行に `hook` を書いたら、その字で決める
+# 数（値段でなくてよい。時間・人数・量・温度）。診断の数えかたと同じ
+NUM_ANY = re.compile(r"[0-9０-９]|[一二三四五六七八九十百千万]+(円|倍|回|人|日|年|体|泊|時間|分|秒|個|杯|位|度|°|キロ|グラム|ミリ)")
+EARLY = 8.0        # 題の直後の数・本人の声を探す秒（見込みの秒で、この秒より前に始まる行）
+BANG_MAX = 5       # 山でない行の「！」の上限（1本に。診断 2.1: 跳ねた回の AI の語りは山に取っておく）
+
+
+def starts(c: Ctx) -> list:
+    """行ごとの始まりの秒の見込み（`est_sec` を足していく。題の行は 0）。"""
+    t, out = 0.0, []
+    for ln in c.lines:
+        out.append(t)
+        t += est_sec(ln)
+    return out
+
+
+def l_cliff(c: Ctx):
+    """#1403 Q2・F-093 題の直後の行（2行目）が、前置きの決まり文句（やってきた・〜へ移動・最近・〜に着いて、…）なら ✕。
+
+    出した37本で、2行目が前置きの本は3→8秒に30点、「〜たら……」の本は18点が去った（いちばん深い崖。診断 1.3.1）。
+    街の名前と「なぜ」は、題の札と国旗・出来事の行の中・最初の出来事のあとで言う（帳面 F-057・F-070 の置き換わった字）。
+    """
+    if len(c.lines) < 2:
+        return []
+    ln = c.lines[1]
+    m = CLIFF.search(ln) or (None if PULL_END.search(ln) else CLIFF_HEAD.search(ln))
+    if not m:
+        return []
+    return [Hit("L-CLIFF", 2, ln, f"題の直後が前置き（「{m.group(0)}」）。出来事・「〜たら……」・数のどれかにし、場所と「なぜ」は"
+                "題の札・出来事の行の中・最初の出来事のあとへ（#1403 Q2）")]
+
+
+def t_hook(c: Ctx):
+    """#1403 Q4・F-093 題の行の画（0秒目）が、景色・建物・写真・カード・地図で始まるなら △。
+
+    跳ねた回は0秒目に出来事（最中・答えの画・作る手元）が写る回が20本中12本、同じチャンネルのふつうの回は15本中1本（診断 1.1）。
+    見るのは spec の題の行の `visual` の頭（最初の「→」「／」まで）。`hook` に 最中・答え・手元 を書けば、その字で通す。
+    """
+    r = row_at(c, 1)
+    hook, vis = str(r.get("hook") or "").strip(), str(r.get("visual") or "")
+    if not (hook or vis):
+        return None
+    if hook in HOOK_OK:
+        return []
+    head = re.split(r"→|／", vis, maxsplit=1)[0]
+    m = HOOK_STILL.search(head) if not hook else None
+    if not hook and not m:
+        return []
+    what = f"hook「{hook}」" if hook else f"画の頭が「{m.group(0)}」"
+    return [Hit("T-HOOK", 1, c.lines[0] if c.lines else "", f"0秒目の{what}。何かが起きている最中・答えの画・作る手元から始め、"
+                "景色・写真・高画質の絵は1.5秒目から（#1403 Q4）", look=True)]
+
+
+def l_num38(c: Ctx):
+    """#1403 Q5・F-093 題の直後から8秒（見込み）までに、数（値段でなくてよい）が1つも無ければ △。"""
+    if len(c.lines) < 2:
+        return []
+    st = starts(c)
+    if any(NUM_ANY.search(ln) for i, ln in enumerate(c.lines[1:], 2) if st[i - 1] < EARLY):
+        return []
+    return [Hit("L-NUM38", 2, c.lines[1], f"題の直後から{EARLY:g}秒までに数が無い。時間・人数・量・温度など、数を1つ置けるか（#1403 Q5）",
+                look=True)]
+
+
+def l_voice0(c: Ctx):
+    """#1403 0〜8秒（見込み）に、本人の声（spec の orig_voice・voice_src）の行が無ければ △。候補が無い回はそのままでよい。"""
+    if not c.has_spec:
+        return None
+    st = starts(c)
+    if any(own_voice(row_at(c, i)) for i in range(1, len(c.lines) + 1) if st[i - 1] < EARLY):
+        return []
+    return [Hit("L-VOICE0", None, f"0〜{EARLY:g}秒", f"0〜{EARLY:g}秒に本人の声の行が無い。その場で漏れた一言が録れていれば、1つ置けるか"
+                "（無ければ置かない。#1403）", look=True)]
+
+
+def l_bang(c: Ctx):
+    """#1403 「！」で終わる行が、山（題・【答】・【大】・本人の声）と締めの行を除いて1本に5行を越えたら △。
+
+    跳ねた回の AI の語りは「！」を山に取っておき、起きたことは「〜た。」で言う（診断 2）。こちらの37本では「！」の多さと
+    中盤の落ちは結びつかなかったので、確かめ用（当てる前後で比べ、向きが無ければ消す）。
+    """
+    got = []
+    for i, ln in enumerate(c.lines, 1):
+        r = row_at(c, i)
+        if i == 1 or i in c.answer_marked or own_voice(r) or r.get("big") or "【大】" in str(r.get("why") or ""):
+            continue
+        if "アーカイブ" in ln or invites(ln):
+            continue
+        if re.search(r"[！!]$", ln):
+            got.append(i)
+    if len(got) <= BANG_MAX:
+        return []
+    return [Hit("L-BANG", None, f"「！」{len(got)}行", f"山でない行の「！」が{len(got)}行（{'・'.join(map(str, got))}行目）。"
+                f"{BANG_MAX}行までにし、起きたことは「〜た。」で言う（#1403）", look=True)]
+
+
 # 規則の since。同じ日の決まりは、あやとのコメントID で前後を分ける（`--as-of 2026-10-23:6354242835` なら、朝の
 # フォカッチャの添削の時点。夕方の滝の回の直しでできた規則は当てない）
 S1019 = "2026-10-23:6370959237"
@@ -1020,6 +1131,14 @@ RULES = (
          l_run, src=("#1403",)),
     Rule("L-ANSNEXT", (), "2026-11-23", "題の答え（【答】）の次の行が、問いも出来事も開かない（△。kind がある原稿だけ。次がすぐ締めなら見ない）",
          l_ansnext, src=("#1403",)),
+    # ---- 2026-11-25（#1403・#1441、帳面 F-093）: 温泉 v5・ボザ v9 の作りかたを全部の回へ。L-CLIFF だけ ✕ ----
+    Rule("L-CLIFF", (), "2026-11-25", "題の直後の行（2行目）が前置きの決まり文句（やってきた・〜へ移動・最近・〜に着いて、…）", l_cliff,
+         src=("#1403",)),
+    Rule("T-HOOK", (), "2026-11-25", "題の行の画（spec の visual の頭）が景色・建物・写真・カード・地図（△。hook に最中・答え・手元を書けば通す）",
+         t_hook, src=("#1403",)),
+    Rule("L-NUM38", (), "2026-11-25", f"題の直後から{EARLY:g}秒（見込み）までに数が無い（△）", l_num38, src=("#1403",)),
+    Rule("L-VOICE0", (), "2026-11-25", f"0〜{EARLY:g}秒（見込み）に本人の声の行が無い（△。spec がある原稿だけ）", l_voice0, src=("#1403",)),
+    Rule("L-BANG", (), "2026-11-25", f"山でない行の「！」が1本に{BANG_MAX}行を越える（△。確かめ用）", l_bang, src=("#1403",)),
 )
 
 
@@ -1132,6 +1251,8 @@ BLIND_WHY = {
     "L-WIDE": "読み上げる行が無い（全部が本人の声の行）",
     "L-RUN": "spec の rows に行の種類（kind）が無い",
     "L-ANSNEXT": "spec の rows に行の種類（kind）が無い・【答】の印が無い",
+    "T-HOOK": "spec の題の行に visual も hook も無い",
+    "L-VOICE0": "spec が無い（本人の声は spec の orig_voice・voice_src で見る）",
 }
 
 
