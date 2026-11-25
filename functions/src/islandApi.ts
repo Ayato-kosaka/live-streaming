@@ -3375,6 +3375,19 @@ export const islandApi = onRequest(
           return;
         }
         const patch: Json = {updatedAt: Date.now()};
+        /* **写真の日を直す。** 貼るときの日付は手で選ぶので、1日ずれて
+           貼られることがある（2026-11-25、11/17 の写真18枚が 11/18 に入った）。
+           消して貼り直すと画像のIDが変わり、カードのIDも置き方も変わるので、
+           ここで日付だけ差し替えて、下の作り直しに任せる。
+           置き場のパス（`nordic/photos/<日>/…`）は動かさない——
+           `storagePath` を書類が持っているので、日付と揃っていなくてよい。 */
+        if (body.day !== undefined) {
+          if (!isDay(body.day)) {
+            res.status(400).json({error: "bad day"});
+            return;
+          }
+          patch.day = body.day as string;
+        }
         const want = clean(body.streamEventId, 64);
         if (want) {
           if (!(await STREAM_EVENTS.doc(want).get()).exists) {
