@@ -1,0 +1,425 @@
+{
+ "version": 1,
+ "_note": "あやとが撮った素材の台帳（#1441）。公開してよい欄だけ。動画と絵は私有の置き場（tools/shorts/footage/README.md）",
+ "items": [
+  {
+   "id": "ffdb9709b1",
+   "kind": "video",
+   "taken_utc": "2026-11-20T15:31:10+00:00",
+   "taken_local": "2026-11-20 17:31:10",
+   "tz": "+0200",
+   "taken_jst": "2026-11-21 00:31:10",
+   "seconds": 8.167,
+   "w": 1080,
+   "h": 1920,
+   "desc": "夜のクリスマスマーケットの回転木馬（電飾）",
+   "sha256": "f3556714ca711283c969232216a857141b96fce16d6f2bde2e31992345f8e926",
+   "bytes": 10580070,
+   "ext": ".mp4",
+   "sheet": "ef97501c2230c4643560fcd43a0dea3a4b617cb1cad079d6d07478613a5bc19a",
+   "stream": {
+    "video": "tr_YBmyLGUc",
+    "title": "🇧🇬ブルガリア最後にクリスマスマーケットみにいこか！",
+    "at": "1:46:10",
+    "at_s": 6370,
+    "start_jst": "2026-11-20 22:45"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f285e3b71f",
+   "kind": "video",
+   "taken_utc": "2026-11-20T15:32:19+00:00",
+   "taken_local": "2026-11-20 17:32:19",
+   "tz": "+0200",
+   "taken_jst": "2026-11-21 00:32:19",
+   "seconds": 5.133,
+   "w": 1080,
+   "h": 1920,
+   "desc": "夜のクリスマスマーケットの人混みと電飾",
+   "sha256": "6897cf8af8a942d5ecdd9e5b19871316fa89c19ed6cc344055ec0d8d2383305b",
+   "bytes": 4708921,
+   "ext": ".mp4",
+   "sheet": "5775f9ab1142c9c05a59f065a25152e853dd056483e003df24dbc5b96d26a7ab",
+   "stream": {
+    "video": "tr_YBmyLGUc",
+    "title": "🇧🇬ブルガリア最後にクリスマスマーケットみにいこか！",
+    "at": "1:47:19",
+    "at_s": 6439,
+    "start_jst": "2026-11-20 22:45"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f32181891f",
+   "kind": "video",
+   "taken_utc": "2026-11-20T15:37:32+00:00",
+   "taken_local": "2026-11-20 17:37:32",
+   "tz": "+0200",
+   "taken_jst": "2026-11-21 00:37:32",
+   "seconds": 5.667,
+   "w": 1080,
+   "h": 1920,
+   "desc": "光るツリーと回るカップの乗り物（緑から赤へ色が変わる）",
+   "sha256": "68e3a4e925bdf6e00f05d9248fb4fc834a8e24195cd6a9f4f7153982df2c1e22",
+   "bytes": 6376684,
+   "ext": ".mp4",
+   "sheet": "a2c9546a013012e21d97a3ac7150d65f0bccadcfb2e8820fd4ce0b4b92494f47",
+   "stream": {
+    "video": "tr_YBmyLGUc",
+    "title": "🇧🇬ブルガリア最後にクリスマスマーケットみにいこか！",
+    "at": "1:52:32",
+    "at_s": 6752,
+    "start_jst": "2026-11-20 22:45"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f2a04232f8",
+   "kind": "video",
+   "taken_utc": "2026-11-20T17:01:37+00:00",
+   "taken_local": "2026-11-20 19:01:37",
+   "tz": "+0200",
+   "taken_jst": "2026-11-21 02:01:37",
+   "seconds": 5.233,
+   "w": 1080,
+   "h": 1920,
+   "desc": "色が変わる大きなツリー（青・緑・赤）と乗り物",
+   "sha256": "67123b04eb62fe9272408744c09180007c61072e2c822792b6e82a2e4407141b",
+   "bytes": 5562579,
+   "ext": ".mp4",
+   "sheet": "e66e23c80928504baf6608fabe7453dfe81f0e2ef208a6ed275bf6ebe9bfa02d",
+   "stream": {
+    "video": "tr_YBmyLGUc",
+    "title": "🇧🇬ブルガリア最後にクリスマスマーケットみにいこか！",
+    "at": "3:16:37",
+    "at_s": 11797,
+    "start_jst": "2026-11-20 22:45"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "fece6b6aef",
+   "kind": "video",
+   "taken_utc": "2026-11-23T13:21:55+00:00",
+   "taken_local": "2026-11-23 15:21:55",
+   "tz": "+0200",
+   "taken_jst": "2026-11-23 22:21:55",
+   "seconds": 4.0,
+   "w": 1080,
+   "h": 1920,
+   "desc": "暗い教会の中（金の祭壇）",
+   "sha256": "fd867b192c009294553347b0065c4b57c36a8efb4c60a3a68ba7baaf3d2053f1",
+   "bytes": 3378695,
+   "ext": ".mp4",
+   "sheet": "ec145a4b459b65e47709367fb2eba106ab8778507ae8e50fc43fb4d151f923c0",
+   "stream": {
+    "video": "43BT1vLo_ZA",
+    "title": "🇷🇴ルーマニアついたし、ちょい街アルコか",
+    "at": "0:20:55",
+    "at_s": 1255,
+    "start_jst": "2026-11-23 22:01"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f6e383c40c",
+   "kind": "video",
+   "taken_utc": "2026-11-23T13:24:46+00:00",
+   "taken_local": "2026-11-23 15:24:46",
+   "tz": "+0200",
+   "taken_jst": "2026-11-23 22:24:46",
+   "seconds": 4.2,
+   "w": 720,
+   "h": 1280,
+   "desc": "レンガ縞の教会の外観と庭（曇り）",
+   "sha256": "7eb041644666ae183d5a56d8d5485f4a2a6a55fb9c97b17a6a3365ddd51fbf63",
+   "bytes": 506390,
+   "ext": ".mp4",
+   "sheet": "b7f0a410ac767b75388cbc5cc6f88cd3250183231e32aa799d07bf3918f68b7c",
+   "stream": {
+    "video": "43BT1vLo_ZA",
+    "title": "🇷🇴ルーマニアついたし、ちょい街アルコか",
+    "at": "0:23:46",
+    "at_s": 1426,
+    "start_jst": "2026-11-23 22:01"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "fe112d2f4b",
+   "kind": "video",
+   "taken_utc": "2026-11-23T13:52:30+00:00",
+   "taken_local": "2026-11-23 15:52:30",
+   "tz": "+0200",
+   "taken_jst": "2026-11-23 22:52:30",
+   "seconds": 3.267,
+   "w": 720,
+   "h": 1280,
+   "desc": "雨の街角の丸屋根の建物と横断歩道を走る車",
+   "sha256": "5e2419c62eac4a9e8e82608e2212cbbf34b5a4929ea86f6d24c69345b1595f66",
+   "bytes": 438432,
+   "ext": ".mp4",
+   "sheet": "9f762c72bc449d6bb385be6c02aaf2674a4dc4f82b2cdaf5ecbf8116306eb939",
+   "stream": {
+    "video": "43BT1vLo_ZA",
+    "title": "🇷🇴ルーマニアついたし、ちょい街アルコか",
+    "at": "0:51:30",
+    "at_s": 3090,
+    "start_jst": "2026-11-23 22:01"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f9f24980da",
+   "kind": "video",
+   "taken_utc": "2026-11-23T14:10:38+00:00",
+   "taken_local": "2026-11-23 16:10:38",
+   "tz": "+0200",
+   "taken_jst": "2026-11-23 23:10:38",
+   "seconds": 4.7,
+   "w": 720,
+   "h": 1280,
+   "desc": "曇りの大通りの古い建物と車の列",
+   "sha256": "116babb21fcb7c93a9194097e0943d55ffab56d2033cf4f03eed762bb112f7d7",
+   "bytes": 410000,
+   "ext": ".mp4",
+   "sheet": "a6b5f38ec8173fa30b3d26361bc3c9b6875aa8cc53eb0ad145bb5acbd543330a",
+   "stream": {
+    "video": "43BT1vLo_ZA",
+    "title": "🇷🇴ルーマニアついたし、ちょい街アルコか",
+    "at": "1:09:38",
+    "at_s": 4178,
+    "start_jst": "2026-11-23 22:01"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f6116e9612",
+   "kind": "video",
+   "taken_utc": "2026-11-24T05:16:08+00:00",
+   "taken_local": "2026-11-24 07:16:08",
+   "tz": "+0200",
+   "taken_jst": "2026-11-24 14:16:08",
+   "seconds": 3.6,
+   "w": 1080,
+   "h": 1920,
+   "desc": "朝の濡れた大通りと白い建物（車のライト）",
+   "sha256": "75e99737e35093629287f4711bd28dace9540f3d5bb0fa1748ecf2841ae6ae3d",
+   "bytes": 3174701,
+   "ext": ".mp4",
+   "sheet": "e2c230793441495c8a84c92b4b318d470596ff74d3a5863082303e19a0874510",
+   "stream": {
+    "video": null,
+    "note": "配信の外（43BT1vLo_ZA の終わりから 14:49:38 後・vXYYLJy1Uyc の始まりの 7:46:52 前）"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "fb600660dd",
+   "kind": "video",
+   "taken_utc": "2026-11-24T05:16:08+00:00",
+   "taken_local": "2026-11-24 07:16:08",
+   "tz": "+0200",
+   "taken_jst": "2026-11-24 14:16:08",
+   "seconds": 3.6,
+   "w": 1080,
+   "h": 1920,
+   "desc": "朝の濡れた大通りと白い建物（同じ時刻の別の1本）",
+   "sha256": "fa5c13855093e5d94bf697142c8cff91b4ee790de598bdfe433099ba24195e48",
+   "bytes": 3142073,
+   "ext": ".mp4",
+   "sheet": "3a557b95373bba57878c73812d48cc7b8aaef81b5bb41f4e2e058ee36f7c96b3",
+   "stream": {
+    "video": null,
+    "note": "配信の外（43BT1vLo_ZA の終わりから 14:49:38 後・vXYYLJy1Uyc の始まりの 7:46:52 前）"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f1d4845d13",
+   "kind": "video",
+   "taken_utc": "2026-11-24T05:38:37+00:00",
+   "taken_local": "2026-11-24 07:38:37",
+   "tz": "+0200",
+   "taken_jst": "2026-11-24 14:38:37",
+   "seconds": 3.467,
+   "w": 1080,
+   "h": 1920,
+   "desc": "朝焼けで建物が赤く染まる大通り",
+   "sha256": "7c7dd1feb306cfede6b52a065d3f659c6c5bf0c9c89d0412ca5d953aa74ee1a6",
+   "bytes": 3249120,
+   "ext": ".mp4",
+   "sheet": "6cc1313fe6863105563dd88f5a95c988c2feca83c80770a3bf9047c7e038f222",
+   "stream": {
+    "video": null,
+    "note": "配信の外（43BT1vLo_ZA の終わりから 15:12:07 後・vXYYLJy1Uyc の始まりの 7:24:23 前）"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "fb1e1f5471",
+   "kind": "video",
+   "taken_utc": "2026-11-24T13:43:22+00:00",
+   "taken_local": "2026-11-24 15:43:22",
+   "tz": "+0200",
+   "taken_jst": "2026-11-24 22:43:22",
+   "seconds": 4.7,
+   "w": 1080,
+   "h": 1920,
+   "desc": "青空の下の大きな宮殿と観覧車・マーケットの屋台",
+   "sha256": "c93bb7021000ba497ff4ec479f52e475ab56d8d53421c34466fffe1fe639ff39",
+   "bytes": 4372360,
+   "ext": ".mp4",
+   "sheet": "eebc6147131b3e4cd6c9c6daab9ed782b3c942620d9d4007ee9173c6dcc9cc50",
+   "stream": {
+    "video": "vXYYLJy1Uyc",
+    "title": "🇷🇴ルーマニアで風邪引きました",
+    "at": "0:40:22",
+    "at_s": 2422,
+    "start_jst": "2026-11-24 22:03"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f6db54cbd8",
+   "kind": "video",
+   "taken_utc": "2026-11-25T13:41:40+00:00",
+   "taken_local": "2026-11-25 15:41:40",
+   "tz": "+0200",
+   "taken_jst": "2026-11-25 22:41:40",
+   "seconds": 7.567,
+   "w": 1080,
+   "h": 1920,
+   "desc": "白い吹き抜けの本屋を、棚と通路に沿って歩く",
+   "sha256": "d4bca7ef71b72a3637166a9c4d55a2ac20504dffb4d22cf6f0f87f10aabd13a3",
+   "bytes": 6938487,
+   "ext": ".mp4",
+   "sheet": "cfffe79d2ed5d74ec5289932a479e950c0aef93058d090195e1840d4fad9d1df",
+   "stream": {
+    "video": null,
+    "note": "配信の外（vXYYLJy1Uyc の終わりから 22:27:29 後）"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "fda1ae107b",
+   "kind": "video",
+   "taken_utc": "2026-11-25T13:43:47+00:00",
+   "taken_local": "2026-11-25 15:43:47",
+   "tz": "+0200",
+   "taken_jst": "2026-11-25 22:43:47",
+   "seconds": 4.467,
+   "w": 1080,
+   "h": 1920,
+   "desc": "本屋のクリスマスのお菓子と雑貨の売り場",
+   "sha256": "9f16c5783088526adcfed75780bd7aa5ccac1415a0d830e59b942f018ead9508",
+   "bytes": 4245707,
+   "ext": ".mp4",
+   "sheet": "1c73349df7876ab7b4ffa845428f00fe80b5d9ed45dd8e1e4fee9c5b2556f468",
+   "stream": {
+    "video": null,
+    "note": "配信の外（vXYYLJy1Uyc の終わりから 22:29:36 後）"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "fe2d70c4b4",
+   "kind": "video",
+   "taken_utc": "2026-11-25T13:50:06+00:00",
+   "taken_local": "2026-11-25 15:50:06",
+   "tz": "+0200",
+   "taken_jst": "2026-11-25 22:50:06",
+   "seconds": 3.067,
+   "w": 1080,
+   "h": 1920,
+   "desc": "本屋のカラフルな雑貨の棚",
+   "sha256": "5030533f38387eb98ea539f8979b671de7fd3c37ab467dcb8158e07b84077bac",
+   "bytes": 3012298,
+   "ext": ".mp4",
+   "sheet": "e330103f05d2af53000893526d0c958860541f2751a91287428a1ab5a6c0c147",
+   "stream": {
+    "video": null,
+    "note": "配信の外（vXYYLJy1Uyc の終わりから 22:35:55 後）"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f65bd667f4",
+   "kind": "video",
+   "taken_utc": "2026-11-25T14:26:22+00:00",
+   "taken_local": "2026-11-25 16:26:22",
+   "tz": "+0200",
+   "taken_jst": "2026-11-25 23:26:22",
+   "seconds": 4.867,
+   "w": 1080,
+   "h": 1920,
+   "desc": "本屋の吹き抜けを上から見下ろす（天井の飾り）",
+   "sha256": "7e87510b6f055afd5d50b97f115d6651c1ca0346fb728f2888ef73c3f474dd47",
+   "bytes": 4850647,
+   "ext": ".mp4",
+   "sheet": "d81c5ec403081234e2de29ee7d669502bafdb429c6e0e80bae4a53ee25c5106d",
+   "stream": {
+    "video": null,
+    "note": "配信の外（vXYYLJy1Uyc の終わりから 23:12:11 後）"
+   },
+   "added": "2026-11-26"
+  },
+  {
+   "id": "f1ae9e4841",
+   "kind": "video",
+   "taken_utc": "2026-11-25T14:27:32+00:00",
+   "taken_local": "2026-11-25 16:27:32",
+   "tz": "+0200",
+   "taken_jst": "2026-11-25 23:27:32",
+   "seconds": 6.2,
+   "w": 1080,
+   "h": 1920,
+   "desc": "トナカイのぬいぐるみ越しに本屋の吹き抜け",
+   "sha256": "c4f45d2b809b2962c6583d2321d209ce8e40132a0f63004cb84c4c579ecbe5c9",
+   "bytes": 6050559,
+   "ext": ".mp4",
+   "sheet": "33e644d9f56d27c57a4c1e7bf9680c65a02ad439a8007981e2e78843f61747a2",
+   "stream": {
+    "video": null,
+    "note": "配信の外（vXYYLJy1Uyc の終わりから 23:13:21 後）"
+   },
+   "added": "2026-11-26"
+  }
+ ],
+ "streams": {
+  "43BT1vLo_ZA": {
+   "title": "🇷🇴ルーマニアついたし、ちょい街アルコか",
+   "start_jst": "2026-11-23 22:01",
+   "seconds": 5130,
+   "ids": [
+    "fece6b6aef",
+    "f6e383c40c",
+    "fe112d2f4b",
+    "f9f24980da"
+   ],
+   "sheet": "f28f1cafe0d97513f23edf27a3220bf3e8e48ccaa9aa6cc24ba9f9f0e19fb3a7"
+  },
+  "tr_YBmyLGUc": {
+   "title": "🇧🇬ブルガリア最後にクリスマスマーケットみにいこか！",
+   "start_jst": "2026-11-20 22:45",
+   "seconds": 12770,
+   "ids": [
+    "ffdb9709b1",
+    "f285e3b71f",
+    "f32181891f",
+    "f2a04232f8"
+   ],
+   "sheet": "93ee547da89db43fe4f180d935f1b7e9f0cdbe093e0939a702da2e4486998977"
+  },
+  "vXYYLJy1Uyc": {
+   "title": "🇷🇴ルーマニアで風邪引きました",
+   "start_jst": "2026-11-24 22:03",
+   "seconds": 7871,
+   "ids": [
+    "fb1e1f5471"
+   ],
+   "sheet": "ef2ba29bf7abfe708b6141b3e3269717f39a77c848d27cdd23176849bfa5cb2b"
+  }
+ }
+}

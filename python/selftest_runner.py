@@ -404,6 +404,11 @@ SKIP: dict[str, str] = {
     "tools/shorts/render/polish_selftest.py":
         "ffmpeg と numpy・Pillow・OpenCV・budoux が要る（Selftests は入れていない）。守る実物は tools/shorts/render/ と tools/shorts/qa/ の下だけで、"
         "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
+    # 撮影の素材（#1441・帳面 F-094「動画の音声はミュートにすること」、2026-11-25）。作業用を作る道具と本物の書き出し
+    # （下書き）を通して、音が混ざらないか・台帳と置き場が私有の外に出ないかを見る。ffmpeg と numpy・Pillow が要る
+    "tools/shorts/footage/footage_selftest.py":
+        "ffmpeg と numpy・Pillow・budoux が要る（Selftests は入れていない）。守る実物は tools/shorts/footage/ と tools/shorts/render/ の下だけで、"
+        "そこを触る PR で .github/workflows/shorts_selftest.yml が名指しで回す",
 }
 
 # 既定の引数。ここに載せたものは、載せた形でだけ回る

@@ -137,7 +137,7 @@ def scan_edit(edit_path: Path, out: Path, every: int, score: float):
     report = []
     for k, c in enumerate(edit["cuts"]):
         sd = edit["sources"][c["src"]]
-        src = R.resolve(base, sd["path"])
+        src = R.source_path(base, sd)
         meta = R.probe(src)
         cut = {**c, "path": str(src), "w": meta["w"], "h": meta["h"], "color_space": meta["color_space"],
                "frames": c["out"] - c["in"]}

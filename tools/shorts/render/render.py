@@ -128,6 +128,37 @@ def resolve(base: Path, p: str) -> Path:
     return q if q.is_absolute() else (base / q).resolve()
 
 
+def source_path(base: Path, src_def: dict) -> Path:
+    """素材の道。撮影の素材（`{"footage": "<ID>"}`。#1441）で道が無ければ、手元の私有の置き場の作業用
+    （`SHORTS_FOOTAGE_DIR`、既定 ~/.cache/shorts/footage。tools/shorts/footage/footage.py が作る）。
+    Actions では remote.py が道を `in/<sha256>.mp4` に書き換えて運ぶ。"""
+    if "path" in src_def or not src_def.get("footage"):
+        return resolve(base, src_def["path"])
+    d = Path(os.environ.get("SHORTS_FOOTAGE_DIR") or "~/.cache/shorts/footage").expanduser()
+    return d / f"{src_def['footage']}.mp4"
+
+
+def audio_streams(path: Path) -> int:
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
+                          "-of", "csv=p=0", str(path)], check=True, capture_output=True, text=True).stdout
+    return len([x for x in out.split() if x.strip()])
+
+
+def footage_guard(src_def: dict, cut: dict, path: Path) -> None:
+    """撮影の素材の音を書き出しに混ぜない（あやと 2026-11-25「動画の音声はミュートにすること」。帳面 F-094）。
+
+    作業用は音の流れを外して作る（footage.py の strip_audio）。それでもここで2つ断る: 撮影の素材のカットに
+    `audio_db`（元の音を入れる）を書いた指示書と、音の流れの残った撮影の素材。黙って消すと、指示書を書いた人が
+    音が入っているつもりのまま出す。見張りは tools/shorts/footage/footage_selftest.py
+    """
+    if not src_def.get("footage"):
+        return
+    if cut.get("audio_db") is not None:
+        sys.exit(f"撮影の素材（{src_def['footage']}）のカットに audio_db は書けない（撮影の素材の音は使わない。F-094）")
+    if audio_streams(path):
+        sys.exit(f"撮影の素材（{src_def['footage']}）に音の流れがある。footage.py で作った作業用（音なし）を使う: {path}")
+
+
 # ---------------------------------------------------------------- ナレーション
 
 # 声の後処理。前後の無音を詰め（字幕の出だしが声より先に出ないように）、80Hz より下を落とす
@@ -905,7 +936,8 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
     metas: dict[str, dict] = {}
     for c in edit["cuts"]:
         src_def = edit["sources"][c["src"]]
-        src = resolve(base, src_def["path"])
+        src = source_path(base, src_def)
+        footage_guard(src_def, c, src)
         n = c["out"] - c["in"]
         if n <= 0:
             sys.exit(f"カットの長さが 0 以下: {c}")
@@ -916,6 +948,9 @@ def plan(edit: dict, style: dict, base: Path, work: Path) -> dict:
             sys.exit(f"元素材のフレームレートが {meta['fps']}（{fps} 以外はまだ扱わない）: {src}")
         cut = {**c, "path": str(src), "w": meta["w"], "h": meta["h"], "color_space": meta["color_space"],
                "at": t, "frames": n, "fit": c.get("fit", "cover"), "crop": source_crop(src_def, meta, style)}
+        if src_def.get("footage"):
+            # 撮影の素材の印（音の束がこのカットの元の音を読まない・品質チェックが撮影の素材と分かる）
+            cut["footage"] = src_def["footage"]
         dl = delogo_rect(src_def, meta, style)
         if dl:
             cut["delogo"] = dl
@@ -2264,7 +2299,8 @@ def audio_stems(p: dict, style: dict, base: Path, work: Path) -> tuple[Path, Pat
     srcs = np.zeros((n, 2), dtype=np.float32)
     fade = int(SR * 0.012)
     for c in p["cuts"]:
-        if c.get("audio_db") is None:
+        # 撮影の素材（F-094）は audio_db があっても読まない（plan の footage_guard が先に断る。時間割を手で直した回の受け皿）
+        if c.get("audio_db") is None or c.get("footage"):
             continue
         ss = max(0, math.floor(c["in"] / fps) - 1)
         rel_in, rel_out = c["in"] - ss * fps, c["out"] - ss * fps

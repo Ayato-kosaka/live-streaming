@@ -86,6 +86,10 @@ from req import Bad, compare_files, norm_pem  # noqa: E402
 BRANCH = "claude/serene-darwin-sf09tt"
 REQ_DIR = "shorts/render/"
 CAS = "render/cas/"
+# 撮影の素材（#1441）の私有の置き場。寿命の決まりの掛からない道（gcs.py の SHORT_LIVED に入れない）。
+# 書き出しの依頼で使うときは、prepare がここから CAS へ写す（作業箱からは上げ直さない）
+FOOTAGE = "footage/"
+FOOTAGE_LEDGER = ROOT / "shorts" / "footage" / "index.json"
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 ID = re.compile(r"^[A-Za-z0-9_-]{1,16}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
@@ -158,7 +162,20 @@ def bake_narration(edit: dict, base: Path, work: Path) -> dict:
     return {**edit, "narration": {**narr, "lines": lines}}
 
 
-def collect(edit_path: Path, objects: dict[str, Path], work: Path | None = None) -> bytes:
+def footage_row(fid: str) -> dict:
+    """撮影の素材の ID から、台帳（shorts/footage/index.json）の作業用の sha256・大きさ・拡張子。"""
+    try:
+        rows = {r["id"]: r for r in json.loads(FOOTAGE_LEDGER.read_text(encoding="utf-8"))["items"]}
+    except (OSError, ValueError, KeyError) as e:
+        raise SystemExit(f"!! 撮影の素材の台帳が読めない（{FOOTAGE_LEDGER}）: {e}")
+    r = rows.get(str(fid))
+    if not r or not HEX64.match(str(r.get("sha256"))) or r.get("ext") != ".mp4":
+        raise SystemExit(f"!! 撮影の素材 {fid} が台帳に無い（動画のものだけ使える）")
+    return r
+
+
+def collect(edit_path: Path, objects: dict[str, Path], work: Path | None = None,
+            footage: dict[str, int] | None = None) -> bytes:
     """指示書が指すファイルを全部 objects（sha256 → 道）に足し、道を `in/<sha256><拡張子>` に書き換える。
 
     書き出しは指示書の場所から相対の道を解く（render.py の resolve）。ランナーでは指示書と同じ所に
@@ -170,6 +187,14 @@ def collect(edit_path: Path, objects: dict[str, Path], work: Path | None = None)
     edit = json.loads(edit_path.read_text(encoding="utf-8"))
     if work is not None:
         edit = bake_narration(edit, base, work)
+    for src in (edit.get("sources") or {}).values():
+        if isinstance(src, dict) and src.get("footage") and "path" not in src:
+            # 撮影の素材（#1441）は作業箱から上げない。私有の置き場（GCS の footage/）に在るものを prepare が写す
+            r = footage_row(src["footage"])
+            src["path"] = f"in/{r['sha256']}{r['ext']}"
+            if footage is None:
+                raise SystemExit("!! 撮影の素材を運ぶ先が無い（collect の footage）")
+            footage[r["sha256"]] = int(r["bytes"])
     for src in (edit.get("sources") or {}).values():
         if isinstance(src, dict) and isinstance(src.get("path"), str) and "stream" not in src:
             p = Path(src["path"]) if Path(src["path"]).is_absolute() else base / src["path"]
@@ -286,6 +311,7 @@ def cmd_up(a) -> int:
     T: dict[str, float] = {}
     t0 = time.time()
     objects: dict[str, Path] = {}
+    footage: dict[str, int] = {}
     items = []
     stage = Path(tempfile.mkdtemp(dir=out, prefix=".edits-"))
     try:
@@ -296,7 +322,7 @@ def cmd_up(a) -> int:
                 return 1
         for e in a.edits:
             ep = Path(e)
-            body = collect(ep, objects, stage / "narration")
+            body = collect(ep, objects, stage / "narration", footage)
             h = hashlib.sha256(body).hexdigest()
             (stage / h).write_bytes(body)
             objects[h] = stage / h
@@ -305,6 +331,7 @@ def cmd_up(a) -> int:
             print("!! 指示書の名前（edit_<id>.json の id）が重なっている")
             return 1
         objs = [{"sha256": h, "bytes": p.stat().st_size} for h, p in sorted(objects.items())]
+        objs += [{"sha256": h, "bytes": n, "store": "footage"} for h, n in sorted(footage.items()) if h not in objects]
         T["collect"] = time.time() - t0
         total = sum(o["bytes"] for o in objs)
         print(f"集めた: 指示書 {len(items)}本・ファイル {len(objs)}個・{total / 1e6:.0f}MB"
@@ -442,13 +469,22 @@ def read_request(req: dict, origin: str) -> dict:
         raise Bad(f"{origin}: nonce が無い")
     items = req.get("items") or []
     objs = req.get("objects") or []
-    if not 1 <= len(items) <= MAX_ITEMS or len(objs) > MAX_OBJECTS:
+    footage = bool(req.get("footage"))
+    look = req.get("look") or []
+    if footage:
+        # 撮影の素材を私有の置き場へ上げる・見る（#1441）。書き出しは無い
+        if items or len(objs) > MAX_OBJECTS or len(look) > MAX_OBJECTS or not (objs or look):
+            raise Bad(f"{origin}: 撮影の素材の依頼は、指示書なし・ファイルか見るものが1〜{MAX_OBJECTS}個")
+        if any(o.get("store") != "footage" for o in objs) or not all(HEX64.match(str(h)) for h in look):
+            raise Bad(f"{origin}: 撮影の素材の依頼の形が違う")
+    elif not 1 <= len(items) <= MAX_ITEMS or len(objs) > MAX_OBJECTS or look:
         raise Bad(f"{origin}: 指示書は1〜{MAX_ITEMS}本・ファイルは{MAX_OBJECTS}個まで")
     for it in items:
         if not ID.match(str(it.get("id"))) or not HEX64.match(str(it.get("edit"))):
             raise Bad(f"{origin}: items の形が違う")
     for o in objs:
-        if not HEX64.match(str(o.get("sha256"))) or not isinstance(o.get("bytes"), int):
+        if not HEX64.match(str(o.get("sha256"))) or not isinstance(o.get("bytes"), int) \
+                or o.get("store", "cas") not in ("cas", "footage"):
             raise Bad(f"{origin}: objects の形が違う")
     if sum(o["bytes"] for o in objs) > MAX_BYTES:
         raise Bad(f"{origin}: 合計 {MAX_BYTES // 1024 ** 3}GB まで")
@@ -457,7 +493,7 @@ def read_request(req: dict, origin: str) -> dict:
     return {"name": name, "nonce": nonce, "pubkey": pem, "pubkey_sha256": fp, "req": origin,
             "draft": bool(req.get("draft")), "twin": bool(req.get("twin")) and not req.get("draft"),
             "preview": bool(req.get("preview")) and not req.get("draft"),
-            "items": items, "objects": objs}
+            "items": items, "objects": objs, "footage": footage, "look": [str(h) for h in look]}
 
 
 def the_request() -> dict:
@@ -537,7 +573,11 @@ def cmd_prepare() -> int:
           f"（{', '.join(i['id'] for i in req['items'])}）・双子 {'あり' if req['twin'] else 'なし'}"
           f"・ファイル {len(req['objects'])}個 {sum(o['bytes'] for o in req['objects']) / 1e6:.0f}MB")
     client, bucket = storage()
+    if req["footage"]:
+        return footage_prepare(req, branch, client, bucket)
     have = {b.name[len(CAS):]: b.size for b in client.list_blobs(bucket, prefix=CAS)}
+    copy_footage(req, bucket, have)
+    # 撮影の素材は copy_footage が CAS に写したので、ここで上げる URL を出すものには入らない
     missing = [o for o in req["objects"] if have.get(o["sha256"]) != o["bytes"]]
     puts = {o["sha256"]: bucket.blob(CAS + o["sha256"]).generate_signed_url(
         version="v4", method="PUT", expiration=PUT_TTL, content_type="application/octet-stream")
@@ -579,6 +619,58 @@ def cmd_prepare() -> int:
             # Actions の matrix に任せる。指示書の sha256 と下書きかどうかは GCS の prepare.json から読む
             ids = [it["id"] for it in req["items"]]
             f.write(f"ids={json.dumps(ids)}\nroles={json.dumps(roles)}\nprefix={prefix}\n")
+    return 0
+
+
+def copy_footage(req: dict, bucket, have: dict[str, int]) -> int:
+    """書き出しが使う撮影の素材を、私有の置き場（footage/）から CAS へ写す（GCS の中だけ。作業箱からは上げない）。
+    私有の置き場に無ければ止まる（上げる URL は出さない。撮影の素材は footage.py stash でだけ上げる）。"""
+    n = 0
+    for o in req["objects"]:
+        if o.get("store") != "footage" or have.get(o["sha256"]) == o["bytes"]:
+            continue
+        b = bucket.get_blob(FOOTAGE + o["sha256"])
+        if b is None or b.size != o["bytes"]:
+            raise Bad(f"撮影の素材（{o['sha256'][:8]}…）が私有の置き場に無い。footage.py stash で上げてから回す")
+        bucket.copy_blob(b, bucket, CAS + o["sha256"])
+        have[o["sha256"]] = o["bytes"]
+        n += 1
+    if n:
+        print(f"  撮影の素材 {n}個を私有の置き場から写した")
+    return n
+
+
+def footage_prepare(req: dict, branch: str, client, bucket) -> int:
+    """撮影の素材の依頼（#1441）: 私有の置き場（footage/）に無いものだけ上げる URL を、見るものに見る URL（7日）を
+    依頼の公開鍵で包んで返し、上がるのを待つ。書き出しの job は起こさない（idle）。"""
+    have = {b.name[len(FOOTAGE):]: b.size for b in client.list_blobs(bucket, prefix=FOOTAGE)}
+    missing = [o for o in req["objects"] if have.get(o["sha256"]) != o["bytes"]]
+    puts = {o["sha256"]: bucket.blob(FOOTAGE + o["sha256"]).generate_signed_url(
+        version="v4", method="PUT", expiration=PUT_TTL, content_type="application/octet-stream") for o in missing}
+    gets = {h: bucket.blob(FOOTAGE + h).generate_signed_url(version="v4", method="GET", expiration=GET_TTL)
+            for h in req["look"] if h in have}
+    print(f"{req['name']}: 撮影の素材 上げる候補 {len(req['objects'])}個（無いもの {len(missing)}個・"
+          f"{sum(o['bytes'] for o in missing) / 1e6:.0f}MB）・見るもの {len(gets)}/{len(req['look'])}個")
+    with tempfile.TemporaryDirectory() as td:
+        adds = seal_to(req, {"footage.json": json.dumps({"puts": puts, "gets": gets}).encode()},
+                       f"render/{req['name']}/inbox", Path(td), "ok")
+        br.push_change(branch, adds, [], f"撮影の素材 {req['name']} の URL を暗号化して置く\n\n"
+                       "私有の置き場（GCS の footage/）に無いものだけ上げる URL。見る URL は7日。依頼の公開鍵で包む。")
+    want = {o["sha256"]: o["bytes"] for o in missing}
+    t1 = time.time()
+    while want:
+        if time.time() - t1 > UPLOAD_WAIT:
+            raise Bad(f"{UPLOAD_WAIT}秒待っても、上がっていないものが {len(want)}個ある")
+        time.sleep(3)
+        for h in list(want):
+            b = bucket.get_blob(FOOTAGE + h)
+            if b is not None and b.size == want[h]:
+                want.pop(h)
+    print(f"  そろった（上げた {len(missing)}個）")
+    gh = os.environ.get("GITHUB_OUTPUT")
+    if gh:
+        with open(gh, "a", encoding="utf-8") as f:
+            f.write("idle=true\n")
     return 0
 
 
