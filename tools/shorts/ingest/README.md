@@ -48,6 +48,10 @@ huggingface.co にも、artifact の実体（`*.blob.core.windows.net`）にも�
 push の前後を GitHub の compare で比べて拾う）。同じものをもう一度回したいときは、名前を変えて置き直す。
 1回の push で40本まで（`plan.py` の `MAX_ITEMS`）。
 
+**clips を何本も頼むときは手で束ねない。** `python3 tools/shorts/ingest/bundle.py --pubkey <鍵> --out <置き場> <区間の紙>…` が、重なりをつなぎ、上限で割り、push の束（同じ回1本・8本まで）ごとに札つきの新しい名前で書き、全部を plan.py の検査に通してから、次に出す束を表で出す（push はしない）。
+限り（1区間600秒・合計1800秒・60区間）は `plan.py` の `CLIPS_MAX_SEC` / `CLIPS_MAX_TOTAL` / `CLIPS_MAX_COUNT` から import する（数を写さない）。8本は bundle.py の `PER_PUSH`。
+同じ回の clips を1回の push で2本頼むと置き場（`<id>__clips`）が重なってあとの1本だけが残る（#1195）ので、束を分ける。見張りは `bundle_selftest.py`。
+
 ```json
 {"mode": "archive",   "videos": ["yk-by7R7iPA", "hK0SwIeAxg0"], "pubkey": "-----BEGIN PUBLIC KEY-----\n…"}
 {"mode": "reference", "videos": ["_IhNSDR6eVk", "OEFJIhPunJ0"], "pubkey": "…"}

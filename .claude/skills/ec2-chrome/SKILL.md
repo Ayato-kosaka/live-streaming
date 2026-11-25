@@ -283,6 +283,7 @@ EC2 の上で走り続けていれば、その終わり（`run` の秒数）ま�
 
 ## 4. 躓いたところ
 
+- **`sh -c '… pkill -f "user-data-dir=…cdp-fish" …'` は自分のシェルまで消す**（`sh -c` の命令の行にも同じ字が載るので、pkill がそれに当たる）。`pkill -f "[u]ser-data-dir=…cdp-fish"` の形にして、命令の行には当たらないようにする（2026-11-25）
 - **`npm` は root にも ubuntu の PATH にも無い。** nvm の下（`/home/ubuntu/.nvm/versions/node/v24.19.0/bin/npm`）を
   直に呼ぶ。`sudo -u ubuntu npm` は command not found になる（2026-10-22、#1013 で npm のキャッシュを空けるときに踏んだ）
 - **ディスクは 29G。Chrome のプロファイルの複製7つは、既定の Chrome をまるごと写して作っていたので、
