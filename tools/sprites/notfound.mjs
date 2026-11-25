@@ -132,7 +132,6 @@ function gonePaths() {
     "/apps/no-such-app",
     "/streams/no-such-type",
     "/island/nowhere",
-    "/next/no-such-page",
     "/me/no-such-thing",
     "/cards/nope",
     "/atlas/nope",

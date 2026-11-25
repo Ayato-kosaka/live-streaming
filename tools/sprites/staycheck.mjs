@@ -29,7 +29,6 @@ const clockOf = (when) => `(() => {
 
 /** 撮る面。名前は出来上がりのファイル名になる */
 const PAGES = [
-  ["now", "/now.html"],
   ["map", "/map.html"],
   ["georgia", "/map/georgia.html"],
   ["caucasus", "/island/caucasus.html"],

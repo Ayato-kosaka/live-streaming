@@ -1081,6 +1081,22 @@ PRESETS = {
         "jsonld:/travel/north-macedonia/skopje=Article+ItemList+FAQPage",
         # ブカレスト（2026-11-20 に公開前の印を外した。あやと「どんどん公開していいよ」。ソフィアと同じ線）
         "jsonld:/travel/romania/bucharest=Article+ItemList+FAQPage",
+        # ベオグラード（2026-11-23 に公開前の印を外した。運営が型の数と見張りを見て。ソフィアと同じ線）
+        "jsonld:/travel/serbia/belgrade=Article+ItemList+FAQPage",
+        # ティラナ（行った街。2026-11-23 に街と記事6本の公開前の印を外した。街はソフィアと同じ線、記事は Article）
+        "jsonld:/travel/albania/tirana=Article+ItemList+FAQPage",
+        "jsonld:/travel/albania/tirana/walk=Article", "jsonld:/travel/albania/tirana/sufllaqe=Article",
+        "jsonld:/travel/albania/tirana/airport=Article", "jsonld:/travel/albania/tirana/hostel=Article",
+        "jsonld:/travel/albania/tirana/gjelltore=Article", "jsonld:/travel/albania/tirana/mosque=Article",
+        # エレバン（行った街。2026-11-23 に公開前の印を外した。ソフィアと同じ線と、記事7本）
+        "jsonld:/travel/armenia/yerevan=Article+ItemList+FAQPage",
+        "jsonld:/travel/armenia/yerevan/sevan=Article",
+        "jsonld:/travel/armenia/yerevan/bus=Article",
+        "jsonld:/travel/armenia/yerevan/lake=Article",
+        "jsonld:/travel/armenia/yerevan/cascade=Article",
+        "jsonld:/travel/armenia/yerevan/memorial=Article",
+        "jsonld:/travel/armenia/yerevan/bakery=Article",
+        "jsonld:/travel/armenia/yerevan/market=Article",
         "jsonld-bad=0", "crumbs=jsonld", "time-plain<=1", "tools-noindex=all",
         # img-main-blank: 58 → 40（2026-11-18。国の面の配信の小さな絵に alt。#1296）
         "title-short<=0", "desc-short<=0", "img-main-blank<=40", "youtube-none<=0",

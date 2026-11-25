@@ -1,5 +1,7 @@
 # 島をひとつから、島の連なりへ
 
+種別: 仕様
+
 **これは仕様である。拘束力がある。** 島のかたちを変える作業は、まずここを読んでから始める。
 
 `docs/island-design.md`（絵と触りごこちの決まり）と `docs/island-world.md`（板と紙の決まり）は
@@ -48,8 +50,8 @@ BigQuery の `youtube_chat.videos`（配信のタイトルと日付）から決�
 
 だから、次の国へ移っても `chapters.ts` に行は足さない。足すのは
 
-- `countries`（歩いた国。`content/countries.ts` に載ってから）
-- その国の案内への入口（`components/isle/spec.ts` の `GUIDES`）
+- 滞在の表（`content/stays.ts`）の1行。章で回った国も、その国の案内への入口（行の `guide`）も
+  ここから引く（#1275）
 - 付箋の宛先（`content/themes.ts`。島の板の棚は `BALKAN_BOARDS` が束ねる）
 
 **章の名前を変えると、焼き込み（`chapterStats` / `chapterStreams`）の鍵が
@@ -121,7 +123,7 @@ BigQuery の `youtube_chat.videos`（配信のタイトルと日付）から決�
 北欧は `content/nordic.ts` の `DEPART` と同じ値。**片方を動かしたら両方動かす。**
 
 **静的書き出しに焼かない。** `output: "export"` なので、ビルドしたときの答えが
-HTML に入る（`CLAUDE.md`）。焼くのはいまの島1つだけにして、画面では必ず
+HTML に入る（`docs/island-verify.md` 2章「静的書き出し」）。焼くのはいまの島1つだけにして、画面では必ず
 `chapterNow(new Date())` を呼び直す。連なりの「いまここ」も、トップの表紙も、
 これを見ている。
 

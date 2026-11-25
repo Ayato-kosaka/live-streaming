@@ -72,6 +72,11 @@ const EXCUSES = new Map([
     "`/cards` の壁の下に、ログインしたあやとにだけ画面が出たあとで出る入口から行く"
       + "（`components/cards/ImportDoor.tsx`。`CardWall` が `useOwner` で出し分ける）。焼いた字には道が無い（2026-11-19）",
   ],
+  [
+    "/tip",
+    "島の投げ銭。口（`/island-api/tip/checkout`）が本番に出て、テストの支払いで通るまでは、"
+      + "島のどこからも繋がない（#1405 の段1・段2）。繋いだ PR でこの行を消す（2026-11-23）",
+  ],
 ]);
 
 const die = (why) => {

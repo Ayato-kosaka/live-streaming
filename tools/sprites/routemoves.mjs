@@ -177,6 +177,16 @@ export function srcTree({ app = join(ROOT, "site", "app"), pub = [join(ROOT, "pu
       });
       return hit || files.has(path);
     },
+    /**
+     * 在ると言ったのが**動く段の当て推量だけ**か（字のままの面にもファイルにも当たらない）。
+     * `/travel/[slug]` はどの1段にも当たるので、国の表から外した `iran-border` も「在る」と答える。
+     * そういう道を守っている転送は、ここからは「抜いても落ちない」に見える——見分けるのは `--dist`
+     */
+    guess(path) {
+      const want = path.split("/").filter(Boolean);
+      const exact = routes.some((segs) => segs.length === want.length && segs.every((s, i) => s === want[i]));
+      return this.has(path) && !exact && !files.has(path);
+    },
   };
 }
 

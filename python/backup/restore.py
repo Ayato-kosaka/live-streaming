@@ -7,6 +7,11 @@
     FIRESTORE_EMULATOR_HOST=localhost:8080 \
       python python/backup/restore.py --collection islandNotes --apply
 
+    # 消した入れ物（#1281。`collection_drop.py` が取った期限の無い退避）から戻す
+    python python/backup/restore.py --retired --list
+    FIRESTORE_EMULATOR_HOST=localhost:8080 \
+      python python/backup/restore.py --retired --collection islandIdeas --apply
+
     # 本当に本番へ戻すとき（**事故のあとだけ**）
     RESTORE_TO_PRODUCTION=yes-i-mean-it \
       python python/backup/restore.py --collection islandNotes --apply
@@ -99,13 +104,13 @@ def target():
     return firestore.Client(project=sink.PROJECT), True
 
 
-def snapshots(c, collection: str | None):
+def snapshots(c, collection: str | None, table: str = sink.FS_TABLE):
     where = "WHERE collection = @c" if collection else ""
     from google.cloud import bigquery
 
     q = f"""
       SELECT taken_at, collection, COUNT(*) AS n
-      FROM `{sink.FS_TABLE}` {where}
+      FROM `{table}` {where}
       GROUP BY taken_at, collection
       ORDER BY taken_at DESC, collection
       LIMIT 200
@@ -118,14 +123,14 @@ def snapshots(c, collection: str | None):
     return list(c.query(q, job_config=cfg, location=sink.LOCATION).result())
 
 
-def read_snapshot(c, collection: str, at: str | None):
+def read_snapshot(c, collection: str, at: str | None, table: str = sink.FS_TABLE):
     """戻す元。`at` を省くと**そのコレクションのいちばん新しい世代。**"""
     from google.cloud import bigquery
 
-    pick = "@at" if at else f"(SELECT MAX(taken_at) FROM `{sink.FS_TABLE}` WHERE collection = @c)"
+    pick = "@at" if at else f"(SELECT MAX(taken_at) FROM `{table}` WHERE collection = @c)"
     q = f"""
       SELECT doc_id, doc_json, digest, taken_at
-      FROM `{sink.FS_TABLE}`
+      FROM `{table}`
       WHERE collection = @c AND taken_at = {pick}
       ORDER BY doc_id
     """
@@ -260,6 +265,8 @@ def main() -> int:
     ap.add_argument("--at", help="いつの世代か（省くといちばん新しいもの）")
     ap.add_argument("--apply", action="store_true", help="実際に書く（既定は下見）")
     ap.add_argument("--list", action="store_true", help="どの世代があるか出す")
+    ap.add_argument("--retired", action="store_true",
+                    help="毎晩の退避ではなく、消した入れ物の期限の無い退避（retired_docs）から読む")
     ap.add_argument("--photo", action="store_true",
                     help="旅の写真を1枚戻して、バイト列が一致するか見る")
     ap.add_argument("--photo-path", help="どの1枚か（省くと晩ごとの組み合わせから引く）")
@@ -269,6 +276,9 @@ def main() -> int:
     a = ap.parse_args()
 
     bq = sink.client()
+    # 消した入れ物は毎晩の退避（90日で落ちる）には残らない。#1281 で消す前に
+    # `python/admin/collection_drop.py` が写した表から読む
+    table = f"{sink.PROJECT}.{sink.DATASET}.retired_docs" if a.retired else sink.FS_TABLE
 
     if a.photo:
         # **Firestore を1ミリも触らない。** 置き場から読んで、置き場に
@@ -276,7 +286,7 @@ def main() -> int:
         return drill_photos(bq, a.photo_n, a.photo_path, a.photo_out)
 
     if a.list:
-        for r in snapshots(bq, a.collection):
+        for r in snapshots(bq, a.collection, table):
             log.info("  %s  %-26s %5d 件", r["taken_at"].isoformat(), r["collection"], r["n"])
         return 0
 
@@ -284,7 +294,7 @@ def main() -> int:
         log.error("--collection か --list が要ります")
         return 2
 
-    rows = read_snapshot(bq, a.collection, a.at)
+    rows = read_snapshot(bq, a.collection, a.at, table)
     if not rows:
         log.error("%s の世代が退避に見つかりません", a.collection)
         return 1

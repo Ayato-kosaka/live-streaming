@@ -214,12 +214,12 @@ LABEL = {
 }
 
 # 焼き込み1本ずつの「どの面に出るか」。**重さが違う。**
-# `legends.ts` に出ている1本と `onThisDay.ts` にしか出ていない1本は、
+# `projects.ts`（企画の表。伝説の見どころの配信）に出ている1本と `onThisDay.ts` にしか出ていない1本は、
 # 同じ1件でも島の見え方がまるで違う。件数だけ出すと、そこが消える。
 # **面の名前は人が書く。** 取り込み元から導けるのは「どのファイルに在るか」までで、
 # それがどの画面のどこに出るかは import の網からは決まらない（1本が何面からも読まれる）
 PAGES: dict[str, str] = {
-    "legends.ts": "語り継がれている企画（/legends, /streams, 島の棚）",
+    "projects.ts": "企画の表。伝説の見どころの配信（/legends, /streams, 島の棚）",
     "countries.ts": "歩いた国（/map/<国>）と、その話の出てくる配信",
     "recipes.ts": "台所の品（/kitchen/<品>）",
     "apps.ts": "作ったアプリ（/apps/<名前>）",
@@ -238,6 +238,8 @@ PAGES: dict[str, str] = {
     "months.ts": "月ごとのふりかえりの、その月の配信ぜんぶ（/months/<年-月>）",
     # 街のガイドブック（`content/guidebook/<国>-<街>.ts`。焼くのは `python/guidebook_bake.py`。#1228）
     "north-macedonia-skopje.ts": "スコピエのガイドブック（/travel/north-macedonia/skopje）の、行った所の場面・一言・あやとの1日の額のリンク",
+    "albania-tirana.ts": "ティラナのガイドブック（/travel/albania/tirana）の、行った所の場面・一言のリンク",
+    "armenia-yerevan.ts": "エレバンのガイドブック（/travel/armenia/yerevan）の、行った所の場面・一言のリンク",
     # 手で組んだ街のガイドブックの「行った」だけ（焼くのは `python/guidebook_went.py`）
     "bulgaria-sofia-went.ts": "ソフィアのガイドブック（/travel/bulgaria/sofia）の、行った所の場面・一言のリンク",
     # 旅のガイドの記事（`content/travel/<国>/<街>-<話>.ts`。焼くのは `python/guide_article.py`）
@@ -256,9 +258,24 @@ PAGES: dict[str, str] = {
     "skopje-oldtown.ts": "スコピエの旧市街を歩いてきたの記事（/travel/north-macedonia/skopje/oldtown）の、一言と場面のリンク",
     "skopje-kale.ts": "スコピエ城塞に行ってきたの記事（/travel/north-macedonia/skopje/kale）の、一言と場面のリンク",
     "skopje-vodno.ts": "ヴォドノ山に登ってきたの記事（/travel/north-macedonia/skopje/vodno）の、一言と場面のリンク",
+    "tirana-walk.ts": "ティラナの中心を歩いて回ってきたの記事（/travel/albania/tirana/walk）の、一言と場面のリンク",
+    "tirana-sufllaqe.ts": "ティラナでスフラキとケバブを食べ比べてきたの記事（/travel/albania/tirana/sufllaqe）の、一言と場面のリンク",
+    "tirana-mosque.ts": "ティラナの大きなモスクに入ってきたの記事（/travel/albania/tirana/mosque）の、一言と場面のリンク",
+    "tirana-gjelltore.ts": "ティラナの大衆食堂でミートボールのスープを食べてきたの記事（/travel/albania/tirana/gjelltore）の、一言と場面のリンク",
+    "tirana-airport.ts": "ティラナ空港からバスで市街へ出てきたの記事（/travel/albania/tirana/airport）の、一言と場面のリンク",
+    "tirana-hostel.ts": "ティラナのホステルで2回盗まれたの記事（/travel/albania/tirana/hostel）の、一言と場面のリンク",
+    "yerevan-sevan.ts": "セヴァン湖に行ってきたの記事（/travel/armenia/yerevan/sevan）の、一言と場面のリンク",
+    "yerevan-bus.ts": "エレバンの市バスに乗ってきたの記事（/travel/armenia/yerevan/bus）の、一言と場面のリンク",
+    "yerevan-lake.ts": "エレバン湖まで歩いてきたの記事（/travel/armenia/yerevan/lake）の、一言と場面のリンク",
+    "yerevan-cascade.ts": "カスケードの大階段を上ってきたの記事（/travel/armenia/yerevan/cascade）の、一言と場面のリンク",
+    "yerevan-memorial.ts": "ジェノサイド記念碑まで歩いてきたの記事（/travel/armenia/yerevan/memorial）の、一言と場面のリンク",
+    "yerevan-bakery.ts": "エレバンのパン屋でガタを食べてきたの記事（/travel/armenia/yerevan/bakery）の、一言と場面のリンク",
+    "yerevan-market.ts": "エレバンの市場を歩いてきたの記事（/travel/armenia/yerevan/market）の、一言と場面のリンク",
     "sofia-yogurt.ts": "ソフィアで本場のヨーグルトを探してきたの記事（/travel/bulgaria/sofia/yogurt）の、一言と場面のリンク",
     # 国の面の「この国であったこと」に添える1〜2行（焼くのは `python/stream_digest.py`）
     "streamDigest.ts": "配信1本の1〜2行（/travel/<国> の「この国であったこと」）",
+    # 企画の面（面の印。`content/legends/<企画>.ts`。焼くのは `python/legend_book_bake.py`。#1404）
+    "india-street-food.ts": "インド屋台飯100食の面（/legends/india-street-food）の、決まりに添えた本人の一言の場面のリンク",
 }
 
 # **島が1件ずつ選んで押し出している面。ここの死にリンクは重い。**
@@ -271,11 +288,13 @@ PAGES: dict[str, str] = {
 # 国の代表配信も、旅のその日の配信も、行き先はその1本しかない
 # 街のガイドも押し出す側。一言も額も「押せば、その場面で本人がそう言っている」が証拠で、
 # 行き先はその1本しかない
-FRONT = ("legends.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
-         "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "bulgaria-sofia-went.ts",
+FRONT = ("projects.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
+         "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "albania-tirana.ts", "armenia-yerevan.ts", "bulgaria-sofia-went.ts",
          "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts",
          "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts",
-         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts")
+         "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts", "tirana-walk.ts", "tirana-sufllaqe.ts", "tirana-mosque.ts", "tirana-gjelltore.ts", "tirana-airport.ts", "tirana-hostel.ts", "yerevan-sevan.ts", "yerevan-bus.ts", "yerevan-lake.ts",
+         "yerevan-cascade.ts", "yerevan-memorial.ts", "yerevan-bakery.ts", "yerevan-market.ts",
+         "india-street-food.ts")
 # `months.ts` は一覧の側。その月の配信を**ぜんぶ**並べる面なので、1本が
 # 見られなくなっても隣に生きた配信が並んでいる（`chapterStreams.ts` と同じ形）。
 # ただし「いちばん集まった日」の1枚だけは1件を選んで押し出しているので、

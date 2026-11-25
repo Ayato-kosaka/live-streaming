@@ -34,14 +34,16 @@ const POSTS: { spot: SpotId; r: number }[] = [
   { spot: "apps", r: 74 },
   { spot: "streams", r: 86 },
   { spot: "board", r: 66 },
-  { spot: "friends", r: 70 },
+  { spot: "about", r: 70 },
   { spot: "map", r: 66 },
-  { spot: "now", r: 62 },
+  /* 「いまどこ」の軒（#1278 で畳んだ）の持ち場。**数を減らさない**——減らすと `n % POSTS.length` で
+     ほかの住人の持ち場まで1つずつずれる */
+  { spot: "map", r: 92 },
   { spot: "legends", r: 62 },
-  { spot: "next", r: 62 },
+  { spot: "board", r: 92 },
   { spot: "kitchen", r: 100 },
   { spot: "streams", r: 118 },
-  { spot: "friends", r: 96 },
+  { spot: "about", r: 96 },
 ];
 
 /**

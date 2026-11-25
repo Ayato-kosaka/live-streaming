@@ -90,11 +90,26 @@ export const _PLANT_PLAN = [
   {
     id: "plant",
     date: "2026-12-01",
-    note: "島を出る予定。",
+    lead: "島を出る予定。",
   },
 ];
 '''
 PLAN_DAY = date(2026, 12, 1)
+
+# 企画の表（`projects.ts`）の仕込み。**同じ字を、告知の欄の中と外に1つずつ置く。**
+# 中（告知の文）は企画の日で拾い、外（伝説の振り返りの文）は拾わない（`CARRY_ONLY`）
+PROJECT_PLANT = '''
+export const _PLANT_PROJECT = [
+  {
+    slug: "plant",
+    date: "2026-12-01",
+    lead: "外で島を出る予定。",
+    notice: {
+      note: "中で島を出る予定。",
+    },
+  },
+];
+'''
 
 
 def _plant_src() -> str:
@@ -165,15 +180,22 @@ def main() -> int:
     quote = planted / "content" / "onThisDay.ts"
     quote.write_text(quote.read_text(encoding="utf-8") + f"\nexport const _PLANT = [{QUOTE_LINE}];\n", encoding="utf-8")
     # 企画の本にも仕込む（字ではなく、すぐ上の欄から日を取る足）
-    plans = planted / "content" / "plans.ts"
+    # 日を持つお題の本（前は告知の札の表 `plans.ts`。#1277 で畳んだ）
+    plans = planted / "content" / "themes.ts"
     plans.write_text(plans.read_text(encoding="utf-8") + PLAN_PLANT, encoding="utf-8")
+    projects = planted / "content" / "projects.ts"
+    projects.write_text(projects.read_text(encoding="utf-8") + PROJECT_PLANT, encoding="utf-8")
 
     hits, _ = _run(planted)
     mine = [h for h in hits if "_plant" in h.path]
-    plan_hit = [h for h in hits if h.path.endswith("plans.ts") and h.text.startswith("島を出る")]
+    plan_hit = [h for h in hits if h.path.endswith("themes.ts") and h.text.startswith("島を出る")]
     check("仕込みを置いた面から拾った数", len(mine), len(PLANT))
     check("企画の本の仕込みを、上の欄の日で拾った", [h.expires for h in plan_hit], [PLAN_DAY])
-    check("仕込み以外から新しく拾っていない", len(hits) - len(mine) - len(plan_hit), 0)
+    proj_in = [h for h in hits if h.path.endswith("projects.ts") and h.text.startswith("中で島を出る")]
+    proj_out = [h for h in hits if h.path.endswith("projects.ts") and h.text.startswith("外で島を出る")]
+    check("企画の表の告知の欄の中は、企画の日で拾った", [h.expires for h in proj_in], [PLAN_DAY])
+    check("企画の表の告知の欄の外（伝説の話）は拾わない", len(proj_out), 0)
+    check("仕込み以外から新しく拾っていない", len(hits) - len(mine) - len(plan_hit) - len(proj_in), 0)
     for name, text, kind, want_day, want_rule, _leg in PLANT:
         got = [h for h in mine if h.expires == want_day and h.rule == want_rule]
         check(f"仕込み「{name}」を拾った", len(got) >= 1, True)
@@ -191,8 +213,11 @@ def main() -> int:
             # 「これから起きる言い方」を見ないと、過去の事実まで拾う
             check("BREAK=forward で過去の事実まで拾う", len(b_mine) > len(PLANT), True)
         elif leg == "carryblock":
-            got = [h for h in broke if h.path.endswith("plans.ts") and h.text.startswith("島を出る")]
+            got = [h for h in broke if h.path.endswith("themes.ts") and h.text.startswith("島を出る")]
             check("BREAK=carryblock で、上の欄から取る仕込みが落ちる", len(got), 0)
+        elif leg == "notice":
+            got = [h for h in broke if h.path.endswith("projects.ts") and h.text.startswith("外で島を出る")]
+            check("BREAK=notice で、告知の欄の外（伝説の話）まで拾う", len(got), 1)
         elif leg == "quotes":
             got = [h for h in broke if h.path.endswith("onThisDay.ts")]
             check("BREAK=quotes で引用まで拾う", len(got) >= 1, True)

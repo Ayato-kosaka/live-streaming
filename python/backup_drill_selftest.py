@@ -452,7 +452,7 @@ def run_collection_drill(rows, twist=None, env=None) -> tuple[int, str]:
     buf = io.StringIO()
     try:
         sys.modules["google.cloud.firestore"] = fake_firestore_module(store, twist)
-        restore.read_snapshot = lambda c, col, at: rows
+        restore.read_snapshot = lambda c, col, at, table=None: rows
         restore.sink.client = lambda: "偽の置き場"
         os.environ["FIRESTORE_EMULATOR_HOST"] = "127.0.0.1:9"
         os.environ.pop("RESTORE_TO_PRODUCTION", None)

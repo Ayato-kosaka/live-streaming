@@ -10,9 +10,9 @@
 
 | 足 | 見ること | 正 |
 | --- | --- | --- |
-| 額 | 面に出た額（円・デナール・ユーロ…）が、`verify` の無い facts の行に在る。値段の表と料理の額は、**その行の場面（動画と秒）の facts の行の額**と同じ。合計の額は、**同じ表・同じ行に並んだ額の足し算**のときだけ通す | facts（`streams/**/*.facts.json`） |
+| 額 | 面に出た額（円・デナール・ユーロ…）が、`verify` の無い facts の行か、**材料の出どころつきの字**に在る。値段の表と料理の額は、**その行の場面（動画と秒）の facts の行の額**と同じ。合計の額は、**同じ表・同じ行に並んだ額の足し算**か、**列の見出しに単位を書いた表の合計の行**（内訳の足し算）のときだけ通す。換算の比（「1ユーロ＝177円」）と「1円もかからない」は額ではない | facts（`streams/**/*.facts.json`）・材料（`guidebook.json`・`HAND`） |
 | 一言 | 吹き出し（`data-quote="ayato"`）が**全部**場面のリンクの中に在り、リンクの動画と秒が、その一言を持つ facts の行の `t` と同じ。チャットが出どころの行（`via`）の字は引かない。吹き出しの外に本人の一言を「」で置かない | facts |
-| 口調 | 案内鳥の字（一言・配信の題を除いた本文と、`<title>`・`description`）に、説明口調の語と画面の仕組みの説明が0 | `docs/guide-design.md` 5-1・CLAUDE.md「画面で、システムの仕様を説明しない」 |
+| 口調 | 案内鳥の字（一言・配信の題・外の出どころの題を除いた本文と、`<title>`・`description`）に、説明口調の語と画面の仕組みの説明が0 | `docs/guide-design.md` 5-1・CLAUDE.md「画面で、システムの仕様を説明しない」 |
 | 節の一言 | 本人の一言は**節（`<section>`）に1つまで** | `docs/island-misses.md` #323 の決めごと2 |
 | 場面 | 行った人の話（`data-went`）は場面のリンクを**1つだけ**持つ（値段の表の行・測った値の始まりと終わりは数えない）。外の事実（`data-src`）の中に場面のリンクを置かない | #323 の決めごと2（一文ごとにリンクを付けない） |
 | 出どころ | 外の事実（`data-src`）が、出どころのリンク（https・YouTube 以外）と見た日（`<time datetime>`）を持つ | `docs/country-guide.md` 1-2・#323 の決めごと1 |
@@ -39,7 +39,8 @@
 
 スコピエの面は、前のハブ（`components/travel/Guide.tsx`・`article.tg`）からガイドブック型（`article.gb`）へ移った。
 目印は同じものを部品に持たせてある——骨組みの入れ物は `data-src`（`parts.tsx` の `Ext`）、行った箱は `data-went`
-（`Videos.tsx` の `WentBox`）、一言は場面の札の中の `data-quote="ayato"`、動画の題は `data-quote="title"`。
+（`Videos.tsx` の `WentBox`）、一言は場面の札の中の `data-quote="ayato"`、動画の題は `data-quote="title"`、
+外の出どころの題（リンクの字）は `data-quote="src"`（`parts.tsx` の `SrcLine`・`Sources.tsx`・記事の `ExtLine` と出どころの一覧）。
 足したのは2つ。
 
 - **合計の額**: 「あやとの1日」の表は、内訳（facts の行の額）の下に日ごとの合計を出す。合計そのものは facts に無いので、
@@ -53,7 +54,41 @@
 - 本文は `<article class="tg">`（記事）か `<article class="gb">`（街のガイドブック）の中だけ（島の枠——看板・足元——は全部の面に共通なので、ここでは見ない）
 - 場面のリンクは `https://www.youtube.com/watch?v=<id>&t=<秒>s`（`scene.ts`）
 - 額は `guide_facts.money_in`（字幕を読む道具と同じ単位の表 `python/data/guide/cities.json`）で拾う。
-  外の出どころの行（`.tg-ext`）の額は、その出どころが正なので facts とは突き合わせない
+  外の出どころの行（`.tg-ext`）の額は、その出どころが正なので facts とは突き合わせない。
+  外の出どころの題（`data-quote="src"` のリンクの字）の中の額も読まない（下の「外の出どころの題を口調から外した」と同じ理由）
+
+## 2026-11-23 に、外の出どころの題を口調から外した
+
+ベオグラードの面（#1365）が「本文に説明口調『おすすめ』」で赤くなった。出どころは案内鳥の字ではなく、
+出どころのリンクの字——NEWT「セルビア・ベオグラード旅行におすすめの観光地11選！」と、地球の歩き方「セルビアのおすすめ観光スポット10選！…」。
+他人の記事の題をそのまま引いたもので、配信の題と同じ扱いが正しい。飛ばすのは**印（`data-quote="src"`）の付いた外へのリンクの字だけ**。
+同じ外の事実の箱（`data-src`）の中でも、案内鳥が書いた地の文は今までどおり全部読む（箱ごと飛ばすと、地の文の「おすすめ」が素通りする。
+`mutation_drill.py` の当て先）。赤の1行が NEWT だけだったのは、口調の赤を**語ごとに1行**にまとめ、最初に出た所だけを添えていたから
+（地球の歩き方の題も同じ1行に畳まれていた。VELTRA の題は材料の中だけで、面には出ていない）。いまは何か所あったかも添える。
+
+## 2026-11-24 に、外の出どころの題を額からも外した
+
+イスタンブールの面が「20リラ が facts のどの行にも無い」で赤くなった。拾ったのは出どころの一覧に並んだ
+sol haber「İstanbullunun ulaşım masrafına yeni zam: Tam bilet 46,20 TL」——トルコの記事の題で、小数のカンマで切れた
+「20 TL」を額と読んでいた。口調の見張りは 11-23 から題を飛ばしていたが、額の見張りは飛ばしていなかった。
+出どころの一覧は外の事実の箱（`data-src`）の外に並ぶので、箱で飛ばす守りにも掛からない。
+飛ばすのは口調と同じ**印の付いた外へのリンクの字だけ**で、箱の外にある案内鳥とあやとの字の額は、今までどおり facts と突き合わせる。
+
+## 2026-11-24 に、最初に手で組んだ街（ソフィア）の形を読めるようにした
+
+ソフィアを名指しで当てると、正しい額が36件落ちた。ソフィアは guidebook.json を持たない（焼く道に乗る前に手で組んだ）ので
+`keys()` に入らず、名指ししない限り一度も見張られていなかった。落ちかたは4つの形で、どれも面ではなく見張りが読めていなかった。
+
+- **出どころつきの材料の額（32件）。** 札の下の行・値段の印・まとめの札・空港の案内・安く済ませるコツの額は、ソフィアの
+  調べた事実（`python/data/bulgaria/facts.json`。`build_bulgaria.py` が焼く）にある。前は材料の額を「行く前の街」の
+  guidebook.json の `text` からしか読まなかった。いまは**行った街でも**材料の額を通し、手で組んだ街の材料は `HAND` に名指しする。
+  facts.json は欄の名前が品ごとに違う（料理の `price`・基本の `body`・数の札の `n` `unit` `cap`）ので、`src` を持つ入れ物の字の欄を全部読む。
+  **`src` の無い入れ物の字（`lead`・`rate_note`）の額は、今までどおり数えない**
+- **予算の合計（2件）。** まとめの札の「約36ユーロ〜」「約6,400円〜」は、別の入れ物の「1日の予算」の表の合計の行。表のマスに
+  単位が無い（列の見出しが「ユーロ」「円」）ので、`summed` は内訳を読めなかった。いまは列の見出しの単位でマスを読み、合計の行が
+  **内訳の足し算**（ユーロの列）か、**その足し算を表に書いた換算の比で直したもの**（円の列。円のマスは丸めてあるので足さない）のときだけ通す
+- **換算の比（1件）。** 表の注記「1ユーロ＝177円」の 177円 は値段ではない。「1<単位>＝（は）<数><別の単位>」は額として読まない
+- **言い回し（1件）。** 「1円もかからない」は額ではない。「1<単位>も」のすぐあとが打ち消しのときは読まない
 
 対照は `python/guide_watch_selftest.py`（足を1本ずつ抜いて、その足だけが赤くなるか）。
 """
@@ -61,6 +96,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import html
 import itertools
 import json
@@ -206,6 +242,15 @@ def verbatim(n: Node) -> bool:
     return n.attrs.get("data-quote") == "title" or "tg-vids" in n.cls()
 
 
+def ext_title(n: Node) -> bool:
+    """外の出どころの題（出どころのリンクの字）。他人の記事の題をそのまま引いたもの（「〜おすすめ10選」）。
+    **リンクの字だけ。** 印（`data-quote="src"`）が付いていても、外（https・YouTube 以外）へのリンクでなければ案内鳥の字として読む。
+    リンクを入れている行・外の事実の箱（`data-src`）は飛ばさない——中の地の文は案内鳥が書いた字"""
+    href = html.unescape(n.attrs.get("href", ""))
+    return (n.tag == "a" and n.attrs.get("data-quote") == "src"
+            and href.startswith("https://") and "youtube.com" not in href)
+
+
 # ---------------------------------------------------------------- facts
 
 def rows_of(country: str, city: str, streams: Path) -> list[dict]:
@@ -218,6 +263,45 @@ def rows_of(country: str, city: str, streams: Path) -> list[dict]:
         for it in d["items"]:
             out.append({"v": d["video_id"], "t": it["t"], "it": it,
                         "hold": "verify" if it.get("verify") else ("chat" if it.get("via") else None)})
+    return out
+
+
+@functools.lru_cache(maxsize=None)
+def _not_money(key: tuple[tuple[str, str], ...]) -> tuple[re.Pattern, re.Pattern]:
+    """額に見えて額でない2つの形。単位の言いかたは `money_in` と同じ表から（`key` は `units` を並べたもの）。
+
+    - 換算の比「1ユーロ＝177円」「1デナールは約2.7円」——1つ目が「1」で、2つの単位が違うもの（同じ単位かは置き換えで見る）
+    - 「1円もかからない」——「1<単位>も」のすぐあと（12字まで・文の終わりの前）が打ち消し"""
+    alt = "|".join(re.escape(u) for u, _ in sorted(key, key=lambda x: len(x[0]), reverse=True))
+    num = gf.NUM.pattern
+    rate = re.compile(rf"(?<![\d.,])1\s*({alt})\s*(?:=|は)\s*約?\s*({num})\s*({alt})", re.I)
+    nil = re.compile(rf"(?<![\d.,])1\s*(?:{alt})\s*も(?=[^。|]{{0,12}}?(?:ない|なかっ|ません|ず))", re.I)
+    return rate, nil
+
+
+def page_money(s: str, units: dict) -> list[tuple[str, str]]:
+    """面の字の額（`money_in`）。換算の比と「1円もかからない」は値段ではないので、読む前に外す（2026-11-24 ソフィア）"""
+    s = gf.norm(s)
+    if not units:
+        return []
+    rate, nil = _not_money(tuple(sorted(units.items())))
+    if "rate" not in BREAK:
+        s = rate.sub(lambda m: SEP if units[m.group(1).casefold()] != units[m.group(3).casefold()] else m.group(), s)
+    if "nil" not in BREAK:
+        s = nil.sub(SEP, s)
+    return gf.money_in(s, units)
+
+
+def rates_in(s: str, units: dict) -> dict[tuple[str, str], float]:
+    """字に書いた換算の比 {(元の単位, 直した単位): 比}。「1ユーロ＝177円」→ {("ユーロ", "円"): 177.0}"""
+    if not units:
+        return {}
+    rate, _ = _not_money(tuple(sorted(units.items())))
+    out = {}
+    for m in rate.finditer(gf.norm(s)):
+        a, b = units[m.group(1).casefold()], units[m.group(3).casefold()]
+        if a != b:
+            out[(a, b)] = float(gf.numval(m.group(2)))
     return out
 
 
@@ -257,7 +341,7 @@ def summed(art: Node, v: str, u: str, ready: set[tuple[str, str]], units: dict, 
     for n in art.walk():
         if n.tag not in SUM_BLOCKS or skip(n) or any(skip(p) for p in n.up()):
             continue
-        found = set(gf.money_in(n.text(skip=skip, sep=SEP), units))
+        found = set(page_money(n.text(skip=skip, sep=SEP), units))
         if (v, u) not in found:
             continue
         parts = [float(x) for x, uu in found if uu == u and (x, uu) in ready and x != v]
@@ -267,9 +351,83 @@ def summed(art: Node, v: str, u: str, ready: set[tuple[str, str]], units: dict, 
     return False
 
 
+CELL = re.compile(rf"^(約)?\s*({gf.NUM.pattern})(?:\s*[〜~]\s*({gf.NUM.pattern}))?$")
+
+
+def _cell(n: Node) -> tuple[float, float, bool] | None:
+    """単位の無いマス（「1〜2」「約2,700」「約36〜47」）→（下, 上, 丸めたか）。数だけのマスでなければ None"""
+    m = CELL.match(gf.norm(n.text()).strip())
+    if not m:
+        return None
+    lo = float(gf.numval(m.group(2)))
+    return lo, float(gf.numval(m.group(3))) if m.group(3) else lo, bool(m.group(1))
+
+
+def _near(tot: tuple[float, float, bool], lo: float, hi: float) -> bool:
+    """合計のマスが、足した値（下・上）と同じか。「約」の合計は、書いた桁の半分までずれてよい（約6,400 → ±50・約36 → ±0.5）"""
+    steps = []
+    for v in tot[:2]:
+        if v and v == int(v):
+            p, k = 1, int(v)
+            while k % 10 == 0:
+                p, k = p * 10, k // 10
+            steps.append(p)
+        elif v:
+            steps.append(0.01)
+    tol = min(steps or [1]) / 2 if tot[2] else 0.005
+    return abs(tot[0] - lo) <= tol and abs(tot[1] - hi) <= tol
+
+
+def column_totals(art: Node, units: dict, skip) -> set[tuple[str, str]]:
+    """列の見出しに単位を書いた表（「何に｜ユーロ｜円」。ソフィアの「1日の予算」）の、合計の行（`tfoot`）の額のうち、
+    内訳の足し算に当たるもの。**合計は facts に無い**ので、ほかの所（まとめの札の「約36ユーロ〜」）に出たら、これと突き合わせる。
+
+    マスに単位が無いので、`summed` は内訳を読めない（2026-11-24）。見出しの単位でマスを読み、合計が
+    （1）その列の内訳の足し算か、（2）足し算の合った列を、その表に書いた換算の比（「1ユーロ＝177円」）で直したもの、のときだけ通す。
+    **丸めた内訳（「約2,700」）は足さない。** 丸めを6つ足すと合計の丸めより大きくずれる（ソフィアの円の列は内訳が 6,600、合計が 6,400。
+    面は円の合計を、ユーロの合計から直して出している）"""
+    out: set[tuple[str, str]] = set()
+    if "budget" in BREAK:
+        return out
+
+    def kids(n: Node, tags: tuple[str, ...]) -> list[Node]:
+        return [k for k in n.kids if isinstance(k, Node) and k.tag in tags]
+
+    for t in art.walk():
+        if t.tag != "table" or skip(t) or any(skip(p) for p in t.up()):
+            continue
+        part = {k.tag: k for k in kids(t, ("thead", "tbody", "tfoot"))}
+        head = kids(part["thead"], ("tr",)) if "thead" in part else []
+        foot = kids(part["tfoot"], ("tr",)) if "tfoot" in part else []
+        if not head or not foot or "tbody" not in part:
+            continue
+        cols = {i: units[w] for i, c in enumerate(kids(head[0], ("th", "td")))
+                if (w := gf.norm(c.text()).strip().casefold()) in units}
+        body = [kids(tr, ("th", "td")) for tr in kids(part["tbody"], ("tr",))]
+        last = kids(foot[0], ("th", "td"))
+        tots, sums = {}, {}
+        for i in cols:
+            got = [_cell(row[i]) if i < len(row) else None for row in body]
+            tot = _cell(last[i]) if i < len(last) else None
+            if tot is None or not got or None in got:
+                continue
+            tots[i] = tot
+            if not any(c[2] for c in got):
+                sums[i] = (sum(c[0] for c in got), sum(c[1] for c in got))
+        direct = {i for i, s in sums.items() if _near(tots[i], *s)}
+        rates = rates_in(t.text(sep=SEP), units)
+        conv = {j for j in set(tots) - direct
+                if any((cols[i], cols[j]) in rates and _near(tots[j], *(x * rates[(cols[i], cols[j])] for x in sums[i]))
+                       for i in direct)}
+        for i in direct | conv:
+            out |= {(gf.as_num(tots[i][0]), cols[i]), (gf.as_num(tots[i][1]), cols[i])}
+    return out
+
+
 def check_money(art: Node, rows: list[dict], units: dict, r: Report, outside: set[tuple[str, str]] | None = None) -> None:
-    """`outside` は、行く前の街の材料の外の事実（出どころつきの字）に在る額。行く前の街は facts が無いので、
-    要約の札（「1回3〜5レイ」）のように出どころの印の無い所に出た額は、材料の外の事実と突き合わせる"""
+    """`outside` は、材料の出どころつきの字に在る額（`outside_amounts`）。要約の札（「1回3〜5レイ」）や札の下の行
+    （ソフィアの「4〜6ユーロ」）のように、出どころの印の無い所に出た額は、材料の出どころつきの字と突き合わせる。
+    行く前の街は facts が無いのでこれだけが頼り。行った街も、配信で払っていない額（調べた値段）はここに在る"""
     ready: set[tuple[str, str]] = set(outside or ())
     held: set[tuple[str, str]] = set()
     for x in rows:
@@ -277,14 +435,17 @@ def check_money(art: Node, rows: list[dict], units: dict, r: Report, outside: se
         (held if hold else ready).update(amounts_of(x, units))
 
     def ext(n: Node) -> bool:
-        # 外の出どころの事実は、その出どころが正（facts と突き合わせない）。配信の題は、題のまま
-        return is_src(n) or verbatim(n)
+        # 外の出どころの事実は、その出どころが正（facts と突き合わせない）。配信の題は、題のまま。
+        # 外の出どころの題（リンクの字）も他人の字（口調の見張りと同じ `ext_title`）。面の終わりの出どころの一覧は
+        # 外の事実の箱（`data-src`）の外に並ぶので、題の中の額（「Tam bilet 46,20 TL」）を読んでいた（2026-11-24 イスタンブール）
+        return is_src(n) or verbatim(n) or (ext_title(n) and "srcamount" not in BREAK)
 
-    # 1. 面のどこに出た額も、確かめの要らない行に在る
+    # 1. 面のどこに出た額も、確かめの要らない行に在る（合計の行の額は、内訳の足し算のとき）
     body = art.text(skip=ext, sep=SEP)
-    for v, u in gf.money_in(body, units):
+    totals = column_totals(art, units, ext)
+    for v, u in page_money(body, units):
         r.seen["額"] += 1
-        if (v, u) in ready or summed(art, v, u, ready, units, ext):
+        if (v, u) in ready or (v, u) in totals or summed(art, v, u, ready, units, ext):
             continue
         if (v, u) in held:
             r.ng("額", f"{v}{u} は確かめが要る行（verify）・チャットの行にしか無い")
@@ -313,7 +474,7 @@ def check_money(art: Node, rows: list[dict], units: dict, r: Report, outside: se
     for amt, holder in cells:
         r.seen["表の行"] += 1
         link = next((a for a in holder.walk() if a.tag == "a" and scene_of(a)), None)
-        shown = set(gf.money_in(amt, units))
+        shown = set(page_money(amt, units))
         if not shown:
             continue
         if link is None:
@@ -418,17 +579,26 @@ def check_sections(art: Node, r: Report) -> None:
 def check_tone(art: Node, head: dict, r: Report) -> None:
     def skip(n: Node) -> bool:
         # 本人の一言と配信の題は、案内鳥の字ではない
-        return (is_quote(n) or verbatim(n)) and "scope" not in BREAK
+        if (is_quote(n) or verbatim(n)) and "scope" not in BREAK:
+            return True
+        # 外の出どころの題も、他人の字（2026-11-23。#1365）
+        return ext_title(n) and "srctitle" not in BREAK
 
     parts = [("本文", art.text(skip=skip, sep=SEP)), ("題", head.get("title", "")), ("description", head.get("description", ""))]
     for where, s in parts:
         r.seen["字"] += len(s.replace(SEP, ""))
         if "tone" not in BREAK:
             for m in sorted({m.group() for m in TONE.finditer(s)}):
-                r.ng("口調", f"{where}に説明口調「{m}」: …{around(s, m)}…")
+                r.ng("口調", f"{where}に説明口調「{m}」{times(s, m)}: …{around(s, m)}…")
         if "mech" not in BREAK:
             for m in sorted({m.group() for m in MECH.finditer(s)}):
-                r.ng("口調", f"{where}に画面の仕組みの説明「{m}」: …{around(s, m)}…")
+                r.ng("口調", f"{where}に画面の仕組みの説明「{m}」{times(s, m)}: …{around(s, m)}…")
+
+
+def times(s: str, w: str) -> str:
+    """同じ語が何か所あったか。赤は語ごとに1行で、添えるのは最初の1か所だけなので、残りが畳まれたことを字で出す"""
+    n = s.count(w)
+    return f"（{n}か所。最初の1か所）" if n > 1 else ""
 
 
 def around(s: str, w: str, n: int = 18) -> str:
@@ -497,27 +667,50 @@ def check_page(key: str, page: str, rows: list[dict], units: dict, outside: set[
 # ---------------------------------------------------------------- 回す
 
 def keys(scripts: Path = SCRIPTS) -> list[str]:
-    """材料（`<国>/<街>/guidebook.json`）のある街。**前のハブの台本（`<国>/<街>.json`）では探さない**——面はもう焼いていない"""
-    return sorted(f"{p.parent.parent.name}/{p.parent.name}" for p in scripts.glob("*/*/guidebook.json"))
+    """材料（`<国>/<街>/guidebook.json`）のある街と、手で組んだ街（`HAND`。名指ししないと見張られなかった）。**前のハブの台本（`<国>/<街>.json`）では探さない**——面はもう焼いていない"""
+    return sorted({f"{p.parent.parent.name}/{p.parent.name}" for p in scripts.glob("*/*/guidebook.json")} | set(HAND))
+
+
+#: 手で組んだ街（guidebook.json を持たない街）の、出どころつきの材料。ソフィアは焼く道（guidebook.json）に乗る前に
+#: 手で組んだ街で、調べた事実は `python/data/bulgaria/facts.json`（`build_bulgaria.py` が `content/bulgaria.ts` に焼き、
+#: `content/guidebook/bulgaria-sofia.ts` が面に組む）。写真の材料も同じく名指ししている（`guide_photos.PLACES`）
+HAND: dict[str, list[str]] = {"bulgaria/sofia": ["python/data/bulgaria/facts.json"]}
+
+
+def material_amounts(x, units: dict) -> set[tuple[str, str]]:
+    """材料の出どころつきの字（`src` を持つ入れ物の、字の欄）に在る額。**出どころの無い入れ物の字の額は数えない**。
+
+    街の材料（guidebook.json）の外の事実は `{"text", "src"}`。手で組んだソフィアの facts.json は欄の名前が品ごとに違う
+    （料理の `price`・基本の `body`・数の札の `n` と `unit`）ので、入れ物の字の欄を全部読む。出どころの道（`src` `feesrc`・https）は読まない"""
+    out: set[tuple[str, str]] = set()
+    if isinstance(x, dict):
+        if x.get("src"):
+            if "material" in BREAK:
+                texts = [x.get("text")]
+            else:
+                texts = [v for k, v in x.items() if isinstance(v, str) and not k.endswith("src") and not v.startswith("http")]
+                if isinstance(x.get("n"), (str, int, float)) and isinstance(x.get("unit"), str):
+                    texts.append(f"{x['n']}{x['unit']}")
+            for s in texts:
+                if isinstance(s, str):
+                    out.update(gf.money_in(s, units))
+        for v in x.values():
+            out |= material_amounts(v, units)
+    elif isinstance(x, list):
+        for v in x:
+            out |= material_amounts(v, units)
+    return out
 
 
 def outside_amounts(key: str, units: dict, scripts: Path = SCRIPTS) -> set[tuple[str, str]]:
-    """材料の外の事実（`src` を持つ入れ物の `text`）に在る額。**出どころの無い字の額は数えない**"""
+    """材料（街の guidebook.json と、手で組んだ街の `HAND`）の出どころつきの字に在る額"""
+    paths = [scripts / key / "guidebook.json"] + ([ROOT / p for p in HAND.get(key, [])] if "hand" not in BREAK else [])
     out: set[tuple[str, str]] = set()
-
-    def walk(x):
-        if isinstance(x, dict):
-            if x.get("src") and isinstance(x.get("text"), str):
-                out.update(gf.money_in(x["text"], units))
-            for v in x.values():
-                walk(v)
-        elif isinstance(x, list):
-            for v in x:
-                walk(v)
-    try:
-        walk(json.loads((scripts / key / "guidebook.json").read_text(encoding="utf-8")))
-    except (OSError, ValueError):
-        pass
+    for p in paths:
+        try:
+            out |= material_amounts(json.loads(p.read_text(encoding="utf-8")), units)
+        except (OSError, ValueError):
+            pass
     return out
 
 
@@ -565,9 +758,14 @@ def main(argv: list[str] | None = None) -> int:
         if not rows and not pre:
             print(f"::error::{k}: facts の行が1つも無い。突き合わせる相手が無い")
             return 2
+        lost = [x for x in HAND.get(k, []) if not (ROOT / x).exists()]
+        if lost:
+            print(f"::error::{k}: 手で組んだ街の材料（{'・'.join(lost)}）が無い。置き場を見失っている")
+            return 2
         units = gf.money_units(table, country)
         text = p.read_text(encoding="utf-8")
-        r = check_page(k, text, rows, units, outside_amounts(k, units) if pre else None)
+        # 材料の出どころつきの額は、行った街でも通す（調べた値段は配信で払っていない。2026-11-24 ソフィア）
+        r = check_page(k, text, rows, units, outside_amounts(k, units))
         if r is None or not r.seen["字"] or (not pre and not r.seen["一言"]):
             print(f"::error::{k}: 面の本文（article.tg / article.gb）か一言が読めない。見るものが無い")
             return 2

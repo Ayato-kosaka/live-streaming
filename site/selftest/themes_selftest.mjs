@@ -31,6 +31,8 @@
  *  4. **束ねたあと、どの宛先も必ずどれかの見出しに入る。**
  *     出てきうる見出しが全部 `ORDER`（`GROUP_ORDER`）に並んでいて、
  *     束ねる前と後で宛先の数が変わらない
+ *  5〜6. 日付で閉じる宛先・出た国あての宛先が、閉じる日から書けない
+ *  7. **企画あて・日あての宛先が、結んだ企画か日の翌日から書けない**（#1277。前は企画と id の字が同じことに頼っていた）
  *
  * ## わざと壊して、赤くなることを見る
  *
@@ -72,8 +74,8 @@ const BREAK_HINT = `わざと壊して、ここが落ちることを見るには
     site/content/themes.ts > /tmp/themes-dup.ts
   THEMES_TS=/tmp/themes-dup.ts node site/selftest/themes_selftest.mjs   # → 1
 
-  # 2) 行き先の面が無い href を書く
-  sed 's|href: "/goods#suzuri"|href: "/goodz#suzuri"|' \\
+  # 2) 行き先の面が無い鍵を書く（組んだ href の先に面が無い）
+  sed 's|    country: "poland",|    country: "polland",|' \\
     site/content/themes.ts > /tmp/themes-href.ts
   THEMES_TS=/tmp/themes-href.ts node site/selftest/themes_selftest.mjs   # → 1
 
@@ -87,10 +89,15 @@ const BREAK_HINT = `わざと壊して、ここが落ちることを見るには
     site/content/themes.ts > /tmp/themes-order.ts
   THEMES_TS=/tmp/themes-order.ts node site/selftest/themes_selftest.mjs   # → 1
 
-  # 5) 面が在るのに href を外す（押せる先を1つ捨てている）
-  sed 's|^    href: "/island/nordic",$||' \\
+  # 5) 面が在るのに鍵を外す（押せる先を1つ捨てている）
+  sed 's|^    chapter: "nordic",$||' \\
     site/content/themes.ts > /tmp/themes-nohref.ts
-  THEMES_TS=/tmp/themes-nohref.ts node site/selftest/themes_selftest.mjs   # → 1`;
+  THEMES_TS=/tmp/themes-nohref.ts node site/selftest/themes_selftest.mjs   # → 1
+
+  # 6) 企画あての宛先の結びを外す（企画が終わっても、ずっと「これからの企画」で書ける）
+  sed 's|^    project: "georgia-bye",$||' \\
+    site/content/themes.ts > /tmp/themes-unbound.ts
+  THEMES_TS=/tmp/themes-unbound.ts node site/selftest/themes_selftest.mjs   # → 1`;
 
 if (process.argv.includes("--hint")) {
   console.log(BREAK_HINT);
@@ -114,10 +121,24 @@ function bring(src, name) {
 bring(join(LIB, "builtAt.ts"), "builtAt.ts");
 bring(join(CONTENT, "chapters.ts"), "chapters.ts");
 bring(join(LIB, "nightly.ts"), "nightly.ts");
-bring(join(CONTENT, "plans.ts"), "plans.ts");
+/* 企画の表。企画あての宛先は、結んだ企画（`project`）の日で棚と締め切りが決まる */
+bring(join(CONTENT, "projects.ts"), "projects.ts");
 bring(THEMES_SRC, "themes.ts");
 /* 国の表（出た日を導く。6章）。**字で読まない**——組み立てた表を読む（`tools/sprites/tsread_selftest.mjs`） */
 bring(join(CONTENT, "countries.ts"), "countries.ts");
+/* 滞在の表（国の表と章が引く。#1275）。案内の面の絵の名前（`IconName`）は部品の側の型なので、
+   ここでは字で受ける——確かめるのは宛先で、絵の名前ではない */
+bring(join(CONTENT, "stays.ts"), "stays.ts");
+/* 滞在の表が読む2枚（街の名簿と種類の表。どちらも何も読まない。#1357） */
+bring(join(CONTENT, "cities.ts"), "cities.ts");
+bring(join(CONTENT, "kinds.ts"), "kinds.ts");
+writeFileSync(
+  join(WORK, "stays.ts"),
+  readFileSync(join(WORK, "stays.ts"), "utf8").replace(
+    /^import type \{ IconName \} from "@\/components\/ui\/icons";$/m,
+    "type IconName = string;",
+  ),
+);
 
 execFileSync(
   join(SITE, "node_modules", ".bin", "tsc"),
@@ -412,13 +433,22 @@ const jst = (y, m, d, h, mi = 0) => new Date(Date.UTC(y, m - 1, d, h - 9, mi, 0)
 /* ==================================== 6. 出た国あての付箋が、書けるまま残っていない
 
    2026-11-20 に、北マケドニアあて（`north-macedonia`）が出た日（11-12）のあとも書けるままだったのを見つけた。
-   **出た日は国の表から導く**——つぎの国に入った日（`content/countries.ts` の `AHEAD_COUNTRIES` の `entered`）。
-   ここに日付を書き写さない（国を1つ越えた日に、ここだけ古い表で緑になる）。 */
-const ahead = [...(req(join(OUT, "countries.js")).AHEAD_COUNTRIES ?? [])]
+   **出た日は国の表から導く**——歩いている国はつぎの国に入った日（`content/countries.ts` の `AHEAD_COUNTRIES` の
+   `entered`）、歩き終わった国は滞在の終わりの翌日（`COUNTRIES` の `stays` の `to`。境目の日は入った国が取る）。
+   ここに日付を書き写さない（国を1つ越えた日に、ここだけ古い表で緑になる）。
+   **歩き終わった国も見る。** 2026-11-22 にアルバニア・北マケドニア・ブルガリアを `COUNTRIES` へ移したので、
+   `AHEAD_COUNTRIES` だけを見ていると、出た国あての3つが黙って確かめの外へ出る */
+const C = req(join(OUT, "countries.js"));
+const nextDay = (d) => new Date(Date.parse(`${d}T00:00:00Z`) + 86400_000).toISOString().slice(0, 10);
+const ahead = [...(C.AHEAD_COUNTRIES ?? [])]
   .map((c) => ({ slug: c.slug, entered: c.entered }))
   .sort((a, b) => a.entered.localeCompare(b.entered));
-if (ahead.length < 2) nothing("国の表（`AHEAD_COUNTRIES`）から、入った日を2つ以上読めない");
-const left = ahead.slice(0, -1).map((c, i) => ({ ...c, leftOn: ahead[i + 1].entered })).filter((c) => T.themeById(c.slug));
+const done = (C.COUNTRIES ?? []).flatMap((c) => {
+  const last = c.stays.map((s) => s.to).filter(Boolean).sort().at(-1);
+  return last ? [{ slug: c.slug, leftOn: nextDay(last) }] : [];
+});
+if (!done.length) nothing("国の表（`COUNTRIES`）から、閉じた滞在を1つも読めない");
+const left = [...done, ...ahead.slice(0, -1).map((c, i) => ({ ...c, leftOn: ahead[i + 1].entered }))].filter((c) => T.themeById(c.slug));
 if (left.length === 0) nothing("出た国のうち、付箋の宛先を持つ国が1つも無い");
 for (const c of left) {
   const [y, m, d] = c.leftOn.split("-").map(Number);
@@ -431,6 +461,43 @@ for (const c of left) {
   const nm = T.themeById("north-macedonia");
   check("対照: 北マケドニアあてから閉じる日を外すと、出た日のあとも書けてしまう",
     !!nm && isOpenTheme({ ...nm, closesOn: undefined }, jst(2026, 11, 20, 12)) === true);
+}
+
+/* ==================================== 7. 企画あて・日あての宛先は、結んだ先の日で締まる（#1277）
+
+   前は宛先と同じ id の企画に日付を聞いていた（`planById(t.id)`。告知の札の表 `content/plans.ts`）。
+   表を畳んだので、宛先は企画に `project`（名前の鍵）で、配信の回は `date` で結ぶ（`docs/spec/model.md` の お題）。
+   **結び損ねると、企画が終わっても棚が「これからの企画」のまま、ずっと書ける**——赤くならない形の壊れ方 */
+{
+  const P = req(join(OUT, "projects.js"));
+  const planThemes = T.THEMES.filter((t) => t.group === T.PLAN_GROUP);
+  if (planThemes.length === 0) nothing("企画あての宛先が1つも無い");
+  const unbound = planThemes.filter((t) => !t.project && !t.date);
+  check(`企画あての宛先（${planThemes.length}件）は、どれも企画か日に結んである`, unbound.length === 0, unbound.map((t) => t.id).join(" "));
+  const lost = planThemes.filter((t) => t.project && !P.projectBySlug(t.project));
+  check("結んだ企画が、企画の表に在る（M-15）", lost.length === 0, lost.map((t) => `${t.id}→${t.project}`).join(" "));
+  /* 結んだ先の終わりの日の、その日の夜はまだ書けて、翌日の 0:00（日本時間）から書けない */
+  const lastOf = (t) => {
+    const p = t.project && P.projectBySlug(t.project);
+    return p ? (p.range?.[1] ?? p.date) : t.date;
+  };
+  for (const t of planThemes) {
+    const last = lastOf(t);
+    if (!last) continue; // 結んでいないもの・無い企画は上で落としてある
+    const [y, m, d] = last.split("-").map(Number);
+    check(
+      `${t.id} は ${last} の夜まで書けて、翌日の 0:00 から「${T.PLAN_DONE_GROUP}」の棚で書けない`,
+      isOpenTheme(t, jst(y, m, d, 23, 30)) === true &&
+        isOpenTheme(t, jst(y, m, d + 1, 0, 0)) === false &&
+        T.shelves([t], jst(y, m, d + 1, 0, 0))[0]?.group === T.PLAN_DONE_GROUP,
+    );
+  }
+  /* 対照: 結びを外した写しは、何年たっても「これからの企画」で書ける（上の確かめが、結んだ先を本当に見ている） */
+  const fest = T.themeById("food-wine-fest");
+  check(
+    "対照: フード＆ワイン祭りあてから結びを外すと、翌年も書けてしまう",
+    !!fest && isOpenTheme({ ...fest, project: undefined }, jst(2027, 9, 7, 12)) === true,
+  );
 }
 
 console.log(`\n${OK + BAD}件中 ${OK}件通った`);

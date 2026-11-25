@@ -4,6 +4,9 @@
  */
 
 import { say } from "@/content/nights";
+import { courseOf } from "@/content/projects";
+/* 入口の名前と、道の型ごとの入口。種類の表（`content/kinds.ts`）は何も読まない軽い1枚なので、ここから読んでよい */
+import { KINDS, kindOf, routeOf } from "@/content/kinds";
 
 export const WORLD = 1200;
 
@@ -28,18 +31,24 @@ export const PLATEAU = {
   drop: 34,
 };
 
+/**
+ * 軒の鍵。**行き先の道と同じ言葉にそろえる**（`about` は `/about`、`friends` は `/friends`）。
+ * 前は `friends` が `/about`（あやとのこと）、`fellows` が `/friends`（住んでる人）を指していて、
+ * 鍵を読んだ人が逆の軒を思い浮かべた（#1279）。`map` だけは前の道（`/map`。いまは `/travel` へ 301）の名残。
+ */
 export type SpotId =
+  | "about"
   | "streams"
-  | "map"
-  | "kitchen"
-  | "apps"
   | "legends"
-  | "now"
-  | "next"
-  | "board"
+  | "map"
+  | "apps"
+  | "kitchen"
   | "friends"
-  | "fellows"
-  | "goods";
+  | "goods"
+  | "board";
+
+/** 入口の名前。**種類の表（`content/kinds.ts`）の「入口」欄に在る字だけ**が書ける（`表紙`・`建物の外`・`—` は入口ではない） */
+export type Entrance = Exclude<(typeof KINDS)[number]["entrance"], "表紙" | "建物の外" | "—">;
 
 /**
  * 島に建っている物。
@@ -49,7 +58,7 @@ export type SpotId =
  * 「壊れている」と思う。景色が要るなら木・岩・花・柵を置く。
  *
  * 押せることと、案内することは別。看板（島の「！」の札と下のバー）に
- * 出すのは `sign` の付いた6つだけ。残りは静かに建っていて、
+ * 出すのは `sign` の付いたものだけ（6つまで）。残りは静かに建っていて、
  * 近づいた人にだけ名前が出る。
  */
 export type Place = {
@@ -57,8 +66,8 @@ export type Place = {
   /** 建物の足元 */
   x: number;
   y: number;
-  /** 建物の名前 */
-  label: string;
+  /** 建物の名前。**入口の名前そのもの**（種類の表の「入口」欄と同じ字。型で縛る） */
+  label: Entrance;
   /** スプライト名。バーの小さな絵にも同じものを使う。 */
   icon: string;
   /** 絵の高さ(ワールド単位)。押せる範囲もこの大きさから作るので、絵と一致させる。 */
@@ -67,89 +76,23 @@ export type Place = {
   href: string;
   /** 名札に添える、そこで分かることの一言 */
   blurb: string;
-  /** 看板を出す6つ。島の「！」の札と、下のバーに出るのはこれだけ。 */
+  /** 看板を出す軒（6つまで）。島の「！」の札と、下のバーに出るのはこれだけ。 */
   sign?: true;
-  /** 出発までの日数を出す入口。いちばん気にされるところなので目立たせる。 */
-  countdown?: true;
-  /**
-   * その軒の中だが、**道の名前が軒とそろっていない面**の頭。
-   *
-   * 砂浜の「いま居る場所」は、いま開いている道から決める（`spotOfPath`）。
-   * `/kitchen/…` `/travel/…` のように軒の道の下に居る面は、それだけで決まる。
-   * 決まらないのは「中身としてはその軒のものなのに、別の道に立っている面」——
-   * 北欧ヒッチハイクも企画だが `/nordic` に
-   * 立っている。**そこだけここに書く。**
-   *
-   * **長いほうが勝つ。** `/next/new` は `/next` の下にあるが、中身は
-   * 掲示板へ送るだけの1枚なので、掲示板の側に書いてそちらが取る。
-   */
-  under?: string[];
 };
 
 /**
  * 島に建っている物、ぜんぶ。
  * 座標はここが唯一の出どころ。飾りの配置も明かりも絵も、これを見て置く。
  *
- * 並びは足元の y の順（奥から手前）。名札が重なるときに、
- * 手前のものが上に来るようにするため。
+ * **並びは入口の並び**（`docs/spec/routes.md` R-20。あやと 2026-11-18 の9つの順）。
+ * 下のボタン・表紙の島・`/all` の棚・表紙の棚は、この並びのまま引く（R-22）。
+ *
+ * 前は足元の y の順（奥から手前）に並べていて、その並びがそのまま下のボタンの並びになっていた。
+ * 名札を手前ほど上に重ねたい所（手で作った島）は、y の順に並べ直したほうを使う（下の `BY_DEPTH`）。
  */
 export const PLACES: Place[] = [
   {
-    id: "legends",
-    x: 736,
-    y: 462,
-    label: "伝説の企画",
-    icon: "hall-museum",
-    size: 74,
-    href: "/legends",
-    blurb: "イラン380km、年越し24時間",
-  },
-  {
-    id: "next",
-    x: 296,
-    y: 548,
-    /* **時制を名乗らない。** 「これから」にしていたので、これから分が
-       0件になった日から半月、空の部屋へ案内し続けていた（あやと 2026-10-01
-       「ルーティングが下手すぎ」／`docs/island-standards.md` 16章）。
-       0件になりうる時制は、入口の札に入れない。時制は中身の側が言う。 */
-    label: "企画",
-    icon: "tent",
-    size: 66,
-    href: "/next",
-    /* 添え書きにも時制を入れない。看板の字は丸ごと `<a>` の中に入るので、
-       ここに「これから」と書くと札を直した意味が無くなる（見張りが拾う） */
-    blurb: "日にちの決まった企画と、その記録",
-    sign: true,
-    countdown: true,
-    /* 企画そのものの面。道の名前は企画ごとに違うので、ここで引き受ける。
-       増やすのは「企画1つにつき面を1枚作った」ときだけ。
-       北マケドニアの案内は 2026-11-13 に `/travel/north-macedonia` へ移った（#1201）。
-       国の面は「歩いた国」の軒の下に立つので、ここには書かない。
-       北欧ヒッチハイク（前の `/nordic`）も同じ日に章の島 `/island/nordic` へ寄せた。
-       パンくずが島の地図から生えるので（`content/chapters.ts` の `chapterCrumbs`）、
-       砂浜も軒の外（島そのもの）に立たせる。上と下で別のことを言わない */
-    /* 前は `under: ["/bulgaria"]` を持っていた。ソフィアは `/travel/bulgaria/sofia` に移り（#1228）、
-       `/travel` の下は「歩いた国」の軒にひとりでに入るので、この軒の下に立つ面はもう無い */
-  },
-  {
-    id: "now",
-    x: 452,
-    y: 556,
-    label: "いまどこ",
-    // 郵便受けは「知らせが届く」の絵で、「いま居る場所」を指していなかった。
-    // 地球にピンが1本立っていれば、名前と絵が同じことを言う
-    icon: "globe-stand",
-    size: 48,
-    href: "/now",
-    /* **添え書きに「今週」を入れない。** 中身は旅先から打たれる欄で、
-       何日も打ち直せない日がある。島の看板は焼いた字なので、札が
-       「今週」と言い、中身が2週間前、という形が必ずいつか起きる
-       （`docs/island-standards.md` 16章 / `docs/island-misses.md` #228）。
-       「いまどこ」は、いつ読んでも「いま」があるのでよい。 */
-    blurb: "いまいる国と、あやとの島だより",
-  },
-  {
-    id: "friends",
+    id: "about",
     x: 886,
     y: 574,
     label: "あやとのこと",
@@ -171,10 +114,68 @@ export const PLACES: Place[] = [
     href: "/streams",
     blurb: say("types"),
     sign: true,
-    /* 月ごとのふりかえり（`/months`）。道の名前が軒とそろっていないが、
-       降りてくるのは `/streams/monthly` からで、パンくずも配信から生えている。
-       砂浜だけ別のことを言うと、同じ面の上と下で食い違う（`/next/new` と同じ形）。 */
-    under: ["/months"],
+  },
+  {
+    id: "legends",
+    x: 736,
+    y: 462,
+    label: "伝説の企画",
+    icon: "hall-museum",
+    size: 74,
+    href: "/legends",
+    /* 距離は企画の表から（`content/projects.ts`。数の持ち主は企画。M-20） */
+    blurb: `イラン${courseOf("iran-walk").km}km、年越し24時間`,
+    /* 島を引いたときに名前の出る6つのうちの1つ（あやと 2026-11-18 の9つの3番目。#1279）。
+       前は名前を出していなかったので、引きの島に「伝説の企画」の札が無かった */
+    sign: true,
+  },
+  {
+    id: "map",
+    x: 262,
+    y: 846,
+    label: "歩いた国",
+    // 桟橋は「船で出ていく」の絵で、中身（歩いた国）を指していなかった。
+    // 国旗を何枚も掛けた道しるべにして、名前と絵を同じことにする
+    icon: "signpost-flags",
+    size: 64,
+    /* 旅のガイドの区画（#1201）。道の字は `content/travelPath.ts` の `TRAVEL` と同じ
+       （食い違うと `content/travel.ts` が書き出しを止める）。前の道 `/map` は 301 でここへ */
+    href: "/travel",
+    // **終点の街を書かない。** 旅は毎日進むので、書いた翌日から嘘になる。
+    // 出発した日は動かないので、そこだけ言う（`app/travel/page.tsx` の同じ注）。
+    blurb: "日本を出てから、歩いた国ぜんぶ",
+    sign: true,
+  },
+  {
+    id: "apps",
+    x: 812,
+    y: 700,
+    label: "アプリ",
+    icon: "hut-workshop",
+    size: 78,
+    href: "/apps",
+    blurb: "旅先で作ってるグルメアプリ",
+    sign: true,
+  },
+  {
+    id: "kitchen",
+    x: 330,
+    y: 706,
+    label: "作った料理",
+    icon: "hut-kitchen",
+    size: 78,
+    href: "/kitchen",
+    blurb: "その土地のものを、買い出しから",
+  },
+  {
+    id: "friends",
+    x: 770,
+    y: 800,
+    label: "住んでる人",
+    icon: "tent-small",
+    size: 56,
+    href: "/friends",
+    blurb: "毎晩集まる人と、そのキャラクター",
   },
   {
     id: "goods",
@@ -209,54 +210,6 @@ export const PLACES: Place[] = [
     blurb: "ステッカーを落とす。ほしい形も書ける",
   },
   {
-    id: "apps",
-    x: 812,
-    y: 700,
-    label: "アプリ",
-    icon: "hut-workshop",
-    size: 78,
-    href: "/apps",
-    blurb: "旅先で作ってるグルメアプリ",
-    sign: true,
-  },
-  {
-    id: "kitchen",
-    x: 330,
-    y: 706,
-    label: "作った料理",
-    icon: "hut-kitchen",
-    size: 78,
-    href: "/kitchen",
-    blurb: "その土地のものを、買い出しから",
-  },
-  {
-    id: "fellows",
-    x: 770,
-    y: 800,
-    label: "住んでる人",
-    icon: "tent-small",
-    size: 56,
-    href: "/friends",
-    blurb: "毎晩集まる人と、そのキャラクター",
-  },
-  {
-    id: "map",
-    x: 262,
-    y: 846,
-    label: "歩いた国",
-    // 桟橋は「船で出ていく」の絵で、中身（歩いた国）を指していなかった。
-    // 国旗を何枚も掛けた道しるべにして、名前と絵を同じことにする
-    icon: "signpost-flags",
-    size: 64,
-    /* 旅のガイドの区画（#1201）。道の字は `content/travelPath.ts` の `TRAVEL` と同じ
-       （食い違うと `content/travel.ts` が書き出しを止める）。前の道 `/map` は 301 でここへ */
-    href: "/travel",
-    // **終点の街を書かない。** 旅は毎日進むので、書いた翌日から嘘になる。
-    // 出発した日は動かないので、そこだけ言う（`app/travel/page.tsx` の同じ注）。
-    blurb: "日本を出てから、歩いた国ぜんぶ",
-    sign: true,
-  },
-  {
     id: "board",
     x: 610,
     y: 872,
@@ -269,10 +222,6 @@ export const PLACES: Place[] = [
     href: "/board",
     blurb: "誰でも出せる。通ったらやる",
     sign: true,
-    /* `/next/new` は企画の道の下にあるが、中身は掲示板へ送るだけの1枚で、
-       パンくずも掲示板から生えている（`app/next/new/page.tsx`）。
-       砂浜だけ「企画」と言うと、同じ面の上と下で違うことを言う。 */
-    under: ["/next/new"],
   },
 ];
 
@@ -281,21 +230,39 @@ export type Spot = Place;
 /**
  * 押せる建物ぜんぶ。島の当たり判定と名札は、これを見て作る。
  *
- * `SPOTS`（看板を出す6つ）と分けてあるのは、島の外のページの
- * ヘッダーが「行き先6つ」を並べるところで使っているから。
+ * `SPOTS`（看板を出す軒）と分けてあるのは、島の外のページの
+ * ヘッダーが「行き先」を並べるところで使っているから。
  * ヘッダーに10個並べると、そちらが行き先を選べない列になる。
  */
 export const DOORS: Spot[] = PLACES;
 
 /**
- * 看板を出す6つ。
+ * 看板を出す軒。**6つまで。** 企画の軒は畳んだ（#1277。企画の面 `/next` を `/board` へ寄せた）。
  *
  * 島の「！」の札、下のバー、島の外のページのヘッダーに出るのはこれだけ。
- * 増やしたくなったら、どれかの中に入れる。ここは6つのまま。
+ * 増やしたくなったら、どれかの中に入れる。6つを超えない。
  */
 export const SPOTS: Spot[] = PLACES.filter((p) => p.sign);
 
+/**
+ * 同じ軒ぜんぶを、足元の y の順（奥から手前）に。**名札を重ねる順だけに使う**（手で作った島の札）。
+ * 下のボタンや棚の並びには使わない——あちらは入口の並び（`PLACES` のまま）。
+ */
+export const BY_DEPTH: Spot[] = [...PLACES].sort((a, b) => a.y - b.y);
+
 export const placeById = (id: SpotId) => PLACES.find((p) => p.id === id)!;
+
+/* **入口の表と種類の表を、読み込んだときに突き合わせる**（R-20・R-23）。
+   種類の表の「入口」欄に在る字ぜんぶに軒が1つずつ建っていて、軒の名前はどれも入口の字。
+   型は軒の名前を入口の字に縛るが、「入口の字なのに軒が無い」は型では止まらないので、ここで止める */
+{
+  const want = new Set<string>(KINDS.map((k) => k.entrance as string).filter((e) => e !== "表紙" && e !== "建物の外" && e !== "—"));
+  const have = new Set<string>(PLACES.map((p) => p.label));
+  const lost = [...want].filter((e) => !have.has(e));
+  if (lost.length || have.size !== PLACES.length || want.size !== have.size) {
+    throw new Error(`components/island/layout.ts: 入口の表（PLACES）と種類の表（content/kinds.ts）の入口が合わない（軒の無い入口: ${lost.join(", ") || "なし"}）`);
+  }
+}
 
 /**
  * 道を、島のかたちにそろえる。
@@ -329,25 +296,18 @@ export const tidyPath = (path: string | null | undefined) =>
  *
  * ## 決めかた
  *
- * その軒の道と同じか、その下に居れば、その軒。**いちばん長く一致した軒が勝つ**
- * （`/next/new` は `/next` と `/next/new` の両方に当たるので、後者）。
- * 道の名前が軒とそろっていない面は `Place.under` が引き受ける。
+ * **種類の表（`content/kinds.ts`）の、その道の型の「入口」**（R-23）。パンくずの2段目
+ * （`lib/pages.ts` の `crumbsOf`）と同じ表から引くので、砂浜の印とパンくずが別のことを言わない。
+ * 前は「軒の道の下に居るか」で決めていて、道の名前が軒とそろっていない面（`/months`）を
+ * 軒ごとに書き足していた（`under`）。書き足していない `/island/**` `/cards` `/updates` は、どの軒でもなかった。
  *
  * @param path いま開いている道（`usePathname()` の値）
  */
 export function spotOfPath(path: string | null | undefined): SpotId | undefined {
-  const here = tidyPath(path);
-  let best: SpotId | undefined;
-  let bestLen = 0;
-  for (const p of PLACES) {
-    for (const root of [p.href, ...(p.under ?? [])]) {
-      if (here !== root && !here.startsWith(`${root}/`)) continue;
-      if (root.length <= bestLen) continue;
-      best = p.id;
-      bestLen = root.length;
-    }
-  }
-  return best;
+  const route = routeOf(tidyPath(path));
+  if (!route) return undefined;
+  const entrance: string = kindOf(route).entrance;
+  return PLACES.find((p) => p.label === entrance)?.id;
 }
 
 /**

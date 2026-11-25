@@ -4,16 +4,26 @@
 小さな人形の姿でひっそり描いている。その数え方・見本の作り方・頼みの文を置く場所。
 全体の手順は `docs/goods-calendar.md`。
 
-## 1. 上位7人を数える — `rank.sql`
+## 1. 上位7人を数える — `python/admin/calendar_top.py`（Actions）
 
-`python/admin/monthly_tips_run.py` と**同じ数え方**（貢献額 = スパチャ ÷ 2 + Doneru、図鑑で名寄せ。
-`docs/island-money.md`）を、BigQuery の中で1本に写したもの。月は JST の暦月。
+```
+Actions > 管理スクリプトを実行 > script = calendar_top
+ARGS: {"from": "2026-01", "to": "2026-12"}                        … 暦の月（日本時間）ごと
+      {"periods": {"2026-09c": ["2026-08-29", "2026-09-25"]}}     … 期間を直に
+```
 
-- 図鑑は Firestore の毎晩の退避 `island_backup.firestore_docs` の最新世代を読む
-  （図鑑は asia-northeast1、`youtube_chat` は US なので、1本に繋げるときは
-  スパチャ・Doneru も `island_backup.chat_messages` / `island_backup.doneru_donations` に差し替える）
-- 数える月は先頭の `periods` で変える
-- **結果の額は公開の場（issue・Actions のログ）に出さない。** 順位と呼び名だけ
+**数え方は月末の授賞式（`python/admin/monthly_tips_run.py`）と1本。** 1か月ぶんを
+`monthly_tips_run.standing()` に渡すだけで、貢献額（スパチャ ÷ 2 + Doneru + 島の投げ銭）・
+図鑑での名寄せ・円以外のスパチャの換算・Doneru の寄せが、月末と同じものになる
+（`docs/island-money.md`）。結果は注記（`::notice::`）の JSON で持ち帰り、図鑑のIDの順を `sheet.py` に渡す。
+
+- **結果の額は公開の場（issue・Actions のログ）に出さない。** 道具が出すのも順位・呼び名・図鑑のIDだけ
+- 順位が7以内の人は全部出る（同額の7位は全員）。図鑑に絵の無い人を入れないのは、見本を作るときに人が決める
+
+**前は BigQuery の中で1本に写した SQL（`rank.sql`）で数えていた。** 2026-11 にやめた（#1405）。
+島の投げ銭は BigQuery に入らず台帳（`islandTips`）にしか無いので、SQL では足せない。
+しかも SQL の中に貢献額の式（`DIV(sc, 2) + dn`）をもう1本持っていたので、3つ目の出どころが
+入った日にそこだけ抜けた。円以外のスパチャ（#951）と Doneru の寄せ（#1067）も、同じ理由で抜けていた。
 
 ## 2. 住人の見本を作る — `sheet.py`
 

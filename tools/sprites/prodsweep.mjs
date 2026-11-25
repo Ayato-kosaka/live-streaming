@@ -52,8 +52,8 @@
  * 1. **本番の `sitemap.xml`** — 123面（2026-09-19 の実測。119 だったものに、
  *    `/island/<章>/streams` の4面を足した）
  * 2. **リポジトリの `site/app` の下の `page.tsx` ぜんぶ** — `[` を含む道（動く段）を除いた
- *    静的な道。sitemap に載っていない7面がここで出る:
- *    `/design` `/me` `/me/desk` `/me/roulette` `/next/new`
+ *    静的な道。sitemap に載っていない面がここで出る（2026-09-19 は7面。`/next/new` は #1277 で畳んだ）:
+ *    `/design` `/me` `/me/desk` `/me/roulette`
  *    `/nordic/photos` `/roulette`
  * 3. **本番の `/all`（島のなか ぜんぶ）に並んでいる行き先** — 121面。
  *    **動く段の面は、ここからしか出ない。**
@@ -345,12 +345,7 @@ export const ABSENCES = [
   { path: "/roulette", lists: ["sitemap", "all"],
     why: "配信に映すルーレット（OBS のブラウザソース）。視聴者さんが開いて読む面ではないが、"
       + "**壊れると配信にそのまま映る**ので、見張りの一覧からは外さない（2026-09-19）" },
-  { path: "/nordic/photos", lists: ["sitemap", "all"],
-    why: "`/cards` へ送るだけの面。行き先そのものは sitemap にも `/all` にも並んでいる（2026-09-19）" },
-  { path: "/next/new", lists: ["sitemap", "all"],
-    why: "`/board` へ送るだけの面。企画を出す口を畳んだので中身が無い"
-      + "（2026-10-01）。面ごと消さないのは、貼られた `?id=…` 付きの URL と"
-      + "`/me` の「続きを書く」が死ぬため。行き先の `/board` は両方に並んでいる" },
+  /* `/nordic/photos` は #1279 で控えの面を消した（2026-11-23）。`firebase.json` の 301 だけが残り、どの一覧にも出ない */
 ];
 
 /** 理由として通る形か。**空・短い・日付が無いのどれかなら通さない** */

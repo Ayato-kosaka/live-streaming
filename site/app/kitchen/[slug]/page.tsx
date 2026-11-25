@@ -17,6 +17,10 @@ import { kitchenTalk } from "@/content/kitchenTalk";
 import VoiceBubble from "@/components/ui/Voice";
 import KitchenDay from "@/components/streams/KitchenDay";
 import { isoDay } from "@/lib/isoDay";
+import { crumbsOf } from "@/lib/pages";
+import { tagsOfDish } from "@/lib/tags";
+import Tags from "@/components/ui/Tags";
+import { miniSprite } from "@/lib/miniSprite";
 
 export function generateStaticParams() {
   return RECIPES.map((r) => ({ slug: r.slug }));
@@ -53,7 +57,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const r = recipeBySlug(slug);
   if (!r) notFound();
   /* 名前しか要らないので、いま歩いている国も引けるほうを使う
-     （アルバニアは `COUNTRIES` にまだ居ない。歩き終わってから入る） */
+     （いま歩いている国は `COUNTRIES` にまだ居ない。歩き終わってから入る） */
   const c = countryNameBySlug(r.country);
   const sorted = [...RECIPES].sort((a, b) => (a.date < b.date ? 1 : -1));
   const i = sorted.findIndex((x) => x.slug === r.slug);
@@ -80,13 +84,11 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
   const day = kitchenTalk(r.slug);
   /** 引用が「どの日の言葉か」。買い出しの日の助言と、作った日の助言は別のもの。 */
   const stepOf = new Map(r.streams.map((s) => [s.videoId, s.label]));
+  const tags = tagsOfDish(r.slug);
 
   return (
     <PageShell
-      crumbs={[
-        { label: "作った料理", href: "/kitchen" },
-        { label: r.name },
-      ]}
+      crumbs={crumbsOf(`/kitchen/${r.slug}`)}
     >
       <Sheet>
         {/* 図鑑の1ページ。本物（`/tmp/acref/ref_NH_Critterpedia_Coelacanth.jpg`）と
@@ -221,6 +223,13 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
             </Zone>
           </>
         )}
+        {/* 作った国と街・その旅。札は `lib/tags.ts` から（0件の段は来ない） */}
+        {tags.length > 0 && (
+          <Zone>
+            <H art={<ArtShelf size={32} />}>この1品が生まれたところ</H>
+            <Tags rows={tags} />
+          </Zone>
+        )}
       </Sheet>
 
       {/* 前へ／次へも、指が乗ってから読む。画面に入っただけで両隣を先読みしない */}
@@ -228,7 +237,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
         {prev ? (
           <Link href={`/kitchen/${prev.slug}`} prefetch={false}>
             <Icon name="right" size={13} className="is-flip" />
-            <img className="mini-icon" src={`/sprites/${prev.icon}.webp`} alt="" />
+            <img className="mini-icon" src={miniSprite(prev.icon)} alt="" />
             {prev.name}
           </Link>
         ) : (
@@ -236,7 +245,7 @@ export default async function RecipePage({ params }: { params: Promise<{ slug: s
         )}
         {next ? (
           <Link href={`/kitchen/${next.slug}`} prefetch={false}>
-            <img className="mini-icon" src={`/sprites/${next.icon}.webp`} alt="" />
+            <img className="mini-icon" src={miniSprite(next.icon)} alt="" />
             {next.name}
             <Icon name="right" size={13} />
           </Link>

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import CardWall from "@/components/cards/CardWall";
 import HowToGet from "@/components/cards/HowToGet";
-import { PLAN_BY_DAY } from "@/content/planDays";
+import { DAY_BRIEFS } from "@/lib/cardDays";
 
 export const metadata: Metadata = share({
   key: "cards",
@@ -64,19 +65,19 @@ export const metadata: Metadata = share({
  *
  * ## 企画を渡してから開く
  *
- * カードにはその日の企画が出る。表（`PLAN_BY_DAY`）はここで引いて、
+ * カードにはその日の企画が出る。表（`DAY_BRIEFS`）はここで引いて、
  * **値だけを渡す。** `content/plans.ts` は 20KB あって、client の部品から
  * 直に読むと、カードの出る面ぜんぶがそれを連れていくことになる。
  */
 export default function CardsPage() {
   return (
-    <PageShell crumbs={[{ label: "あやと島カード" }]}>
+    <PageShell crumbs={crumbsOf("/cards")}>
       <PageHead
         icon="tent-small"
         title="あやと島カード"
         lead="その日の写真に、キャラクターを1人だけ入れて持って帰れます。"
       />
-      <CardWall plans={PLAN_BY_DAY} />
+      <CardWall plans={DAY_BRIEFS} />
       {/* もらいかたは**壁の下**。写真を見たあとに出る位置に置く */}
       <HowToGet />
     </PageShell>

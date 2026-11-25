@@ -2,7 +2,7 @@
 
     python3 python/guide_photos.py                          # 全部の面ぶん、まだ置いていない写真だけ落とす（外に出る）
     python3 python/guide_photos.py north-macedonia/skopje   # 1つの面だけ
-    python3 python/guide_photos.py nordic plans             # 頭が合う面をまとめて（北欧の6か国・企画）
+    python3 python/guide_photos.py nordic                   # 頭が合う面をまとめて（北欧の6か国）
     python3 python/guide_photos.py --check                  # 落とさずに確かめるだけ（外に出ない）
     python3 python/guide_photos.py --lookup "File:X.jpg" …  # Commons のファイルのページから、材料の写真の欄を組む（外に出る）
 
@@ -21,10 +21,10 @@
 | --- | --- | --- | --- |
 | 街のガイドブック（`/travel/<国>/<街>`） | `guide/<国>/<街>/photos/` | 120・500・960 | `python/data/…` の写真の欄 |
 | 北欧の6か国（`/travel/<国>`） | `travel/<国>/photos/` | 250・500・960 | `python/data/nordic-src/` のその国の見どころ |
-| 企画（`/next`） | `next/photos/` | 960 | `site/content/plans.ts` の写真の出どころ（`creditHref`） |
 
 幅は**面が読む幅だけ**置く。ガイドブックは 500（狭い画面）・960（広い画面・窓）と、120（前は見どころマップのピン。2026-11-16 にピンをやめて面は読まなくなった。置き場の絵を外すのは絵の担当）。
-北欧は 250（段の頭の 52px 角）・500（国の札・見たいものの一覧）・960（開いた写真・国の表紙）。企画は 960 だけ。
+北欧は 250（段の頭の 52px 角）・500（国の札・見たいものの一覧）・960（開いた写真・国の表紙）。
+企画の写真（前の `next/photos/`。告知の面 `/next` の札）は、面ごと畳んだときに置き場ごと消した（#1277）。
 
 ## 置き場の名前
 
@@ -33,7 +33,7 @@
 （`guide_bake._save` と同じ）。
 
 焼く道具（`python/guidebook_bake.py`・`python/build_bulgaria.py`・`python/build_nordic.py`）は `local()` で
-置き場の道に直す。**置き場に無ければ焼かずに止まる**（先にここを回す）。企画（`plans.ts`）は焼く道具を持たない
+置き場の道に直す。**置き場に無ければ焼かずに止まる**（先にここを回す）。企画（`projects.ts`）は焼く道具を持たない
 手書きの表なので、道は人が書き、ここの `--check` が置き場と突き合わせる。
 
 ## 取りかた
@@ -105,7 +105,7 @@ GONE: dict[str, str] = {
 
 #: 面ごとの、置き場（`site/public/` の下）・置く幅・写真の出どころ（材料）・面に焼いたもの（Wikimedia の絵が
 #: 残っていないかを見る所）。材料は（ファイル, JSON の中の道[, 見る欄]）。道が () ならファイルぜんぶ、
-#: 見る欄が無ければ全部の欄。JSON でないファイル（`plans.ts`）は字のまま読む
+#: 見る欄が無ければ全部の欄。JSON でないファイル（`projects.ts`）は字のまま読む
 PLACES: dict[str, dict] = {
     "bulgaria/sofia": {
         "dir": "guide/bulgaria/sofia/photos",
@@ -127,14 +127,6 @@ PLACES: dict[str, dict] = {
             "baked": [f"site/content/nordic/{slug}.json"],
         }
         for slug, src in NORDIC.items()
-    },
-    # 企画は手書きの表で、焼く道具を持たない。写真の `src` には置き場の道を人が書き、借りた写真の名前は
-    # 出どころのリンク（`creditHref` の `File:`）から引く
-    "plans": {
-        "dir": "next/photos",
-        "widths": (960,),
-        "from": [("site/content/plans.ts", ())],
-        "baked": ["site/content/plans.ts"],
     },
 }
 
@@ -486,7 +478,7 @@ def pick(asked: list[str]) -> tuple[list[str], list[str]]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("key", nargs="*", help="面（例: north-macedonia/skopje・nordic/finland・nordic・plans）。無ければ全部")
+    ap.add_argument("key", nargs="*", help="面（例: north-macedonia/skopje・nordic/finland・nordic）。無ければ全部")
     ap.add_argument("--check", action="store_true", help="落とさずに確かめるだけ")
     ap.add_argument("--lookup", nargs="+", metavar="FILE", help="Commons のファイル名から、材料の写真の欄を組む")
     ap.add_argument("--gentle", action="store_true", help="1枚ごとに60秒あけ、429 が1回でも返ったら止める（置き場が締め出している日）")

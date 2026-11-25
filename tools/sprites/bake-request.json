@@ -1,5 +1,5 @@
 {
-  "why": "11/09 の白インゲンのトマトグラタン（tavce-gravce）の主役を food-paprika（パプリカ）に決めた。食べた本人が「パプリカパウダー煮込みグラタン」と言った品なので、材料のパプリカを置く。hero/ を焼く",
-  "names": ["food-paprika"],
-  "check": ["food-pepper"]
+  "why": "#1351: kenney.nl が 403 を返すあいだ、控えた写し（kits.json）から取って焼けるかを確かめる。焼いてコミットするのは、前にランナーで焼いて同じバイト列に戻ることが分かっている food-cheese-cut（何も積まれないはず）。見比べは5つのキットから1〜2枚ずつ（町の hut-home と住人の villager-male-a を同じ回に焼き、colormap を取り合わないことも見る）と、手元で焼いたビリヤニの food-onion-half、礼拝堂の wall-window-small を呼ぶ legend-kazbegi。町は Kenney 共通の色見本（kits.json の borrow）で焼くので、屋根の色が出る hut-home・hall-museum・windmill も並べる",
+  "names": ["food-cheese-cut"],
+  "check": ["food-pepper", "food-onion-half", "campfire", "tent", "snowman", "hut-home", "hall-museum", "windmill", "stall", "villager-male-a", "legend-kazbegi"]
 }

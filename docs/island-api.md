@@ -1,5 +1,7 @@
 # あやと島 — API（`/island-api/*`）
 
+種別: 台帳
+
 島の「動くところ」を読み書きする口。**ブラウザから Firestore を直接は触らせない**
 （`islandHere` だけが例外。理由は [`island-db.md`](./island-db.md) の責務の表）。
 
@@ -31,7 +33,6 @@
 | `GET` | `/state` | 誰でも | 島を開いたときの一式（下） |
 | `GET` | `/fund` | 誰でも | 北欧旅の足代。**合計と人数だけ**。個人の額も順位も返さない |
 | `GET` | `/fund/history` | あやとだけ | スパチャの控え1ページぶん（`islandFundSuperChats`）。`?limit=`（既定30・最大60）・`?before=`。**キャッシュしない**。**画面からはもう呼んでいない**（2026-09-25。`/fund/feed` に寄せた）。本番で1回通す道具が使う |
-| `POST` | `/current` | あやとだけ | いまいる場所・ひとこと・今週やること・テーマ。**`week` は送られてきたときだけ書く** |
 | `POST` | `/nordic/arrived`<br>`/nordic/ended` | あやとだけ | 着いた日／旅が終わった日。空で送ると取り消し |
 
 **`/fund` と `/fund/history` は、開き方がまったく違う。**
@@ -49,7 +50,7 @@
 | メソッド | パス | 何を |
 | --- | --- | --- |
 | `GET` | `/fund/desk` | 焼き直しの合計＋Doneru＋**いま**＋**内訳**＋出費の1ページ目（12件）＋目標ぜんぶ |
-| `GET` | `/fund/feed` | **スパチャと Doneru をまぜて時系列**（下） |
+| `GET` | `/fund/feed` | **スパチャと Doneru と島の投げ銭をまぜて時系列**（下） |
 | `GET` | `/fund/spends` | 出費の続き。`?limit=`（既定12・最大120）・`?before=`（`<日付>_<書類ID>`） |
 | `POST` | `/fund/spends` | 出費を1行。`{day, title, yen}` |
 | `DELETE` | `/fund/spends/{書類ID}` | 出費を1行消す |
@@ -57,7 +58,7 @@
 | `DELETE` | `/fund/goals/{from}` | **打ち間違えた**目標を消す（「終わらせる」道ではない） |
 | `POST` | `/fund/chats` | 取りこぼしたスパチャを1件。`{day, yen, who}` |
 | `DELETE` | `/fund/chats/{書類ID}` | スパチャの控えを1件消す |
-| `POST` | `/fund/replay` | **配信にもう一度アラートを出す**。`{kind, id}`（下） |
+| `POST` | `/fund/replay` | **配信にもう一度アラートを出す**。`{kind, id}`。`kind` は `superchat` / `donation` / `island`（下） |
 
 **「おわりにする」だけの口は置いていない**（2026-09-24。あやと「目標は最大1です。
 なので閉じるは不要な気もする」）。単独のボタンがあると、押したあとに
@@ -83,9 +84,9 @@
 
 あやとの言葉「今の目標に対する総金額（豚にでてるやつ）も内訳付きで出したい」。
 
-    開始時点 ＝ いま − スパチャ（期間内） − ドネ（期間内） ＋ 出費（期間内）
+    開始時点 ＝ いま − スパチャ（期間内） − ドネ（期間内） − 島の投げ銭（期間内） ＋ 出費（期間内）
 
-**開始時点は測っていない。残差。** こう組むと4行の足し引きは**必ず**
+**開始時点は測っていない。残差。** こう組むと5行の足し引きは**必ず**
 「いま」（＝`GET /fund` の `total`）に戻る。**合わない内訳は無いほうがマシ**
 なので、合わない形を作れなくしてある。意味のほうも正しい——目標が
 始まった時点で財布に入っていた額そのもの。
@@ -95,6 +96,13 @@
 
 スパチャの期間内は、**全体の半分から「始まる前のぶんの半分」を引く。**
 期間ごとに半分にすると、両方が奇数のときに1円ずれて足して戻らなくなる。
+
+**島の投げ銭（#1405）は5行目**（`split.island`）。期間内は、焼き直しの合計
+（`fund.box.island`。「いま」に入っているのと同じ値）から**始まる前のぶん**
+（`islandSiteTips` を `paidAt` の単一フィールドで切って読み、本番で、いまも
+`paid` のものだけ足す）を引く。**払った額のまま**で、割らない。
+行を分けないと、期間内に島で受けたぶんが「開始時点」に入って、目標の前から
+あったお金に見える（足し引きは合ったまま意味だけずれる）。
 
 **索引の要る読み方をしない。** `where` と `sum()` を組み合わせると
 複合索引が要る（単一フィールドの自動索引には足す欄が入っていない）。
@@ -108,16 +116,27 @@
 
 **1つでも読めなければ `split: null`。** とくにドネの写し
 （`islandFundDonations`。`python/doneru_ledger.py`）が無い日に 0 と読むと、
-その日のドネがまるごと「開始時点」へ流れ込んで、**4行は足し引きが合ったまま
+その日のドネがまるごと「開始時点」へ流れ込んで、**5行は足し引きが合ったまま
 嘘をつく。** いちばん見つけにくい壊れ方なので、出さない側へ倒す。
 
 ### 履歴（`GET /fund/feed`）
 
 `?since=`（それより後だけ）・`?before=`（続き）・`?limit=`（既定12・最大120）。
 
-**2つの入れ物から同じ数だけ引いて、手元で混ぜて切る**（Firestore に
+**3つの入れ物（スパチャの控え・ドネの写し・島の投げ銭の受け取り）から
+それぞれ1ページ+1件ぶん引いて、手元で混ぜて切る**（Firestore に
 コレクションをまたぐ並べ替えは無い）。並べるのは `at` で、`day` だと
 同じ晩の中で順が決まらない——配信中はそこがいちばん見たい。
+
+**島の投げ銭（`kind: "island"`。#1405）は、本番で、いまも `paid` のものだけ。**
+テストの支払いと返金・払い戻しの請求は出さない（`fundDesk.ts` の `islandTipYen`。
+`python/fund_box.py` の `island_counts()` と `island_yen_of()` の写しで、
+`functions/selftest/fund_docid_selftest.mjs` が同じ入力で突き合わせる）。
+`livemode` と `status` で絞りながら並べると複合索引が要るので、`paidAt` の
+単一フィールドで並べて読み、手元で絞る。**絞って1ページに足りなければ読み足す**
+（足りないまま混ぜると、ページの境目より新しい島の1件が二度と出てこない）。
+名前はアラートに出した名前（`displayNameSnapshot`）、本文は払った人の
+メッセージ、`at` は `paidAt` を日本時間の ISO8601 に直したもの。
 
 **`at` を持たない控えは、この並びに出てこない**（GAS の表から移した13件）。
 黙って落とさず、件数と額を `noTime` で返す。
@@ -137,7 +156,12 @@
 **変なものを配信に出さないための守りが4つ。**
 
 1. **送られてきた字は1文字も通らない。** 受け取るのは「どの1件か」だけで、
-   出す名前も額も本文も**台帳から組む**（`remote.ts` の `PLACES` と同じ考え）
+   出す名前も額も本文も**台帳から組む**（`remote.ts` の `PLACES` と同じ考え）。
+   島の投げ銭は `islandSiteTips` から組み、**履歴に出るもの（本番で、いまも
+   `paid`）だけ**を出す。テストの支払いを本番の配信に出さない（決定の記録 0017 の7）。
+   配信には **Doneru の donation と同じ形**で出る（`GET /alertbox/{合言葉}/replay` の
+   `show.kind` が `donation`。島の投げ銭のアラートと同じ描きかた。
+   `app/alertbox/connectors/IslandTipConnector.ts`）
 2. **二度押しで二度出ない。** 同じ1件を1分のうちにもう一度頼まれたら、
    印（`seq`）を進めずに `already: true` を返す。画面のほうでも、出したあと
    1分は押しどころが戻らない（**片方が外れても配信に2回出ない**）
@@ -153,26 +177,32 @@
 | | 見るもの |
 | --- | --- |
 | `functions/selftest/fund_owner_selftest.mjs` | **本物の `ownerUid` を通して** 5とおり × 10本。403 と「1バイトも書いていない」まで |
-| `functions/selftest/fund_desk_selftest.mjs` | 2回入れても増えない・入らないものが入らない・消すのは書類IDだけ・焼き直しの数・**内訳の足し引き**・**履歴の並び**・**もう一度出すの4つの守り** |
-| `functions/selftest/fund_docid_selftest.mjs` | **Python と TypeScript の書類IDが1文字も違わない** |
+| `functions/selftest/fund_desk_selftest.mjs` | 2回入れても増えない・入らないものが入らない・消すのは書類IDだけ・焼き直しの数・**内訳の足し引き（島の投げ銭の5行目も）**・**履歴の並び（島の投げ銭も。テストの支払いが前に並んでも落ちない）**・**もう一度出すの4つの守り** |
+| `functions/selftest/fund_docid_selftest.mjs` | **Python と TypeScript の書類IDが1文字も違わない**。島の投げ銭を机に出すかの判定も同じ |
 
 `GET /state` が返すもの（`site/lib/api.ts` の `IslandState`）:
 
 | 鍵 | 中身 |
 | --- | --- |
-| `current` | いまどこ・ひとこと・今週・テーマ |
 | `stats` | 配信本数・日数・コメント数・のべ人数・常連の数・直近5本 |
-| `notes` | テーマ付箋の新着（最大200件） |
 | `residents` | 名前かアイコンを出してよいと言った人だけ。**チャンネルIDも uid も返さない**（下） |
 | `residentDays` | **キャラクターの書類ID** → 一緒にいた日数。読めなかったときは `null` |
 | `nordic` | `arrivedOn` / `endedOn` |
 | `limits` | **字の長さの上限**（下） |
-| `more.notes` | まだ古い付箋が残っていれば、その続きの位置 |
+
+`current`（いまどこ・島だより・島の景色）と `notes`（企画に貼った古い付箋）は
+返さなくなった（#1281）。どちらも読む画面が無い——居場所は滞在の表
+（`site/content/stays.ts`）が持ち、付箋はテーマ付きの `/stickies` だけになった。
+`notes` のために、島を開くたび付箋を200件読んでいた。
 
 #### `limits` — 字の長さは、ここが正（2026-10-13）
 
-`{note, reply, name, link, planTitle}`。**定数だけで、人を指す値は1つも入らない**
+`{note, reply, name, link, planTitle, tipYenMin, tipYenMax, tipMessageMax}`。**定数だけで、人を指す値は1つも入らない**
 （だから CDN にも焼いてよい）。
+
+`tip` で始まる3つは、島で受ける投げ銭（13章）の**額の幅と字数**で、正は `functions/src/tip.ts`
+（`TIP_YEN_MIN`・`TIP_YEN_MAX`・`TIP_MESSAGE_MAX`）。`tipYenMax` はあやとの決めた上限ではなく、
+Stripe の1回の上限（13章）。`/tip` の画面は3つそろって届くまで払わせない（`site/components/tip/yen.ts` の `tipLimitsOf`）。
 
 画面は長いあいだ同じ数字を自分で持っていた——`site/components/live/Notes.tsx` の
 `const MAX = 120;` に「**サーバー側の `MAX_NOTE_LEN` と同じ**」と書き添えて。
@@ -206,7 +236,7 @@
 向こう側が使っていたのは絵を引くためだけなので、引いた答え（`icon`）を返す。
 
 **uid を返していたのは、突き合わせの鍵になるから外した。** 2026-09-17 の実測で、
-`GET /nextplans` が返していた `byUid` をここの `uid` で引くと、**企画の画面には
+企画の口（いまは畳んだ）の `byUid` をここの `uid` で引くと、**企画の画面には
 名前を出していないのに、出した人の名前と顔が分かった**（1人ぶん・2件）。
 口を2つ叩けば済む形だった。かわりに `here`（uid を潰した字）を返す。
 居場所（`islandHere/{uid}`）の書類IDを読む側が同じように潰して突き合わせる
@@ -231,64 +261,31 @@ uid を鍵にしている他のどこにも当たらない。**
 BigQuery の `SELECT AS STRUCT video_id, …` をそのまま焼いているため
 （`python/island_daily_stats.py`）。
 
-## 2. 企画（`islandStreamEvent`）
+## 2. その日の出来事（`islandStreamEvent`）
 
-**口の名前は `/nextplans` のまま。** 入れ物は #202 で `islandStreamEvent` に
-改名したが、口を同じ日に変えると、Functions と Hosting が別々に出る日に
-掲示板がまるごと 404 になる。
-
-| メソッド | パス | 誰が | 何を |
-| --- | --- | --- | --- |
-| `GET` | `/nextplans` | 誰でも | 一覧。`?archived=1` は**あやとだけ**。`?events=1` で運営側の企画（`board: false`）も混ぜる |
-| `GET` | `/nextplans?mine=1` | ログイン済み | **自分が出した企画だけ。** 未ログインは 401。`Cache-Control: no-store` |
-| `GET` | `/nextplans/:id` | 誰でも | 1件（育てる画面が続きを書くために引く） |
-| `POST` | `/nextplans` | 誰でも | 出す。**題だけでいい**（4字以上・60字まで／1日12件） |
-| `POST` | `/nextplans/:id` | 出した人 | 育てる。**送った中身でまるごと置き換わる**。あやとは時間制限を越えて書ける |
-| `POST` | `/nextplans/:id/heart` | 誰でも | ハート。**もう一度押すと外れる**（1日120回） |
-| `POST` | `/nextplans/:id/status` | あやとだけ | 段を動かす。`planId` で Git 側の企画に結ぶ |
-| `POST` | `/nextplans/:id/videos` | あやとだけ | この企画のものだと決めた配信。URL を貼ってもよい |
-| `POST` | `/nextplans/:id/archive` | あやとだけ | しまう・戻す。**消えない** |
-
-1件 12,000 バイトまで（`JSON.stringify(body).length`）。
-
-**一覧は、出した人を返さない**（#133）。返すのは `byLogin`（ログインして出した
-ものかの1ビット）だけで、**誰が出したかは分からない。** 前は `byUid` に uid が
-そのまま入っていて、`/state` の `residents[].uid` と突き合わせると出した人の
-名前と顔が分かった。
-
-| | `GET /nextplans` | `GET /nextplans?mine=1` |
-| --- | --- | --- |
-| 誰が | 誰でも | ログイン済み（未ログインは 401） |
-| 何を | 掲示板に出るぜんぶ | **その人が出したものだけ** |
-| 誰のぶんかの決め方 | — | `uid`。**送られてきた値は見ない** |
-| 持ち主 | `byLogin: true` だけ（**誰かは返らない**） | 同じ（自分のものしか入らない） |
-| 掛け値 | `public, max-age=15, s-maxage=30` | **`no-store`** |
-
-**呼んだ人ごとに中身の変わる答えを、同じ URL で返さない。** `/nextplans` は
-CDN に載る口なので、載せると混ざって他人の答えが配られる。だから URL を分けて
-（`?mine=1`）、`no-store` を付ける。付箋の `?mine=1`（4章）とカードの
-`/cards/mine`（3章）と同じ形。
-
-**「じぶんが出したもの」は、これと端末の控えの合わせ技。** ログインせずに
-出したぶんは `cid` でしか分からないので、そちらは今までどおり画面側の
-localStorage で見分ける（`site/lib/api.ts` の `myPlans`）。
-
-**あとから直せるのは誰か:**
-
-| 出したとき | 直せるのは |
-| --- | --- |
-| ログインしていた（`uid` がある） | その `uid` の人だけ。いつでも |
-| ログインしていなかった | 同じ `cid` の端末だけ。**出してから24時間だけ** |
-| — | あやと（`admin`）はいつでも |
-
-## 3. 企画に付く写真とカード
+写真・動画・カードを、日付と一緒に結ぶ入れ物。**口の名前は `/nextplans` のまま**
+（視聴者さんが企画を出していたころの名前）。残っているのは、机の「配信」
+（`site/components/me/PlanVideos.tsx`）が使う2本だけ。
 
 | メソッド | パス | 誰が | 何を |
 | --- | --- | --- | --- |
-| `GET` | `/streamevents?day=YYYY-MM-DD` | 誰でも | **その日に立っている企画**。1日に何本でも立つので配列 |
-| `GET` | `/streamevents/:id/images` | 誰でも | その企画の画像 |
-| `POST` | `/streamevents/:id/images` | あやとだけ | 画像を貼る。**貼った時点でカードも作る**（1日120枚）。**企画が1本も立っていない日でも作る**（カードの軸は写真の日） |
-| `POST` | `/streamevents/images/:id` | あやとだけ | どの企画のものかを付け替える。`day`（写真の日）も直せる（1日ずれて貼ったとき。道具は `python/admin/image_day.py`）。`videoIds`（11文字・40本まで）も受ける＝**この写真はこの配信のもの**と名乗らせる（0時またぎの逃げ道。**画面はまだ無い**）。カードも作り直す |
+| `GET` | `/nextplans` | 誰でも | 一覧（しまったもの・引っ込めたものは出さない）。`?events=1` は付けても付けなくても同じ答え |
+| `POST` | `/nextplans/:id/videos` | あやとだけ | この出来事のものだと決めた配信。URL を貼ってもよい。**送った一覧でまるごと置き換わる** |
+
+返すのは題・日付・場所・本文・リンク・写真・埋め込み・`planId`（Git 側の企画の
+slug）・`videoIds`。**出した人も、ハートも、段（提案→これから→やった）も返さない。**
+視聴者さんが企画を出す・育てる・ハートを押す口と、あやとが段を動かす・しまう口は
+#1281 で畳んだ（10章）。入れ物には、採らなかった提案が `hidden` のまま字を残して
+3件入っている（2026-11-23）。
+
+## 3. その日の出来事に付く写真とカード
+
+| メソッド | パス | 誰が | 何を |
+| --- | --- | --- | --- |
+| `GET` | `/streamevents?day=YYYY-MM-DD` | 誰でも | **その日の出来事**。1日に何本でも立つので配列 |
+| `GET` | `/streamevents/:id/images` | 誰でも | その出来事の画像 |
+| `POST` | `/streamevents/:id/images` | あやとだけ | 画像を貼る。**貼った時点でカードも作る**（1日120枚）。**出来事が1つも無い日でも作る**（カードの軸は写真の日） |
+| `POST` | `/streamevents/images/:id` | あやとだけ | どの出来事のものかを付け替える。`day`（写真の日）も直せる（1日ずれて貼ったとき。道具は `python/admin/image_day.py`）。`videoIds`（11文字・40本まで）も受ける＝**この写真はこの配信のもの**と名乗らせる（0時またぎの逃げ道。**画面はまだ無い**）。カードも作り直す |
 | `DELETE` | `/streamevents/images/:id` | あやとだけ | 画像を消す。**カードも実体も消える** |
 | `GET` | `/nordic/photos` | 誰でも | 日付から入る道。`days[].people[]` は**絵と名前だけ**（`channelId` は返さない）。**読むのは `islandStreamEventImage`**（2026-10-13。それまで旧 `nordicPhotos` を読んでいた） |
 | `POST` | `/nordic/photos` | あやとだけ | 日付から貼る。**書く先は1つだけ**（2026-10-13。それまで新旧の両方に書いていた） |
@@ -381,14 +378,12 @@ localStorage で見分ける（`site/lib/api.ts` の `myPlans`）。
 
 ## 4. 付箋
 
-**入れ物は1つ（`islandNotes`）で、口が2つある。** 画面が切り替わっている途中の日に、
-両方が混ざったものが両方の画面に出るのを止めるため。旧来のぶんが移り終わったら
-（#162）`/notes` を畳む。
+入れ物は `islandNotes`。企画に貼る旧来の口（`/notes`）は #1281 で畳んだ（10章）。
+入れ物には、あちらの `planId` を持つ古い行が残っていて、ここで読むのは
+`theme` を持つ行だけ。
 
 | メソッド | パス | 誰が | 何を |
 | --- | --- | --- | --- |
-| `GET` | `/notes` | 誰でも | **企画に**貼られた付箋（旧。移行待ち） |
-| `POST` | `/notes` | 誰でも | 企画に付箋を貼る（2,000字まで。1日の枚数は数えない） |
 | `GET` | `/stickies` | 誰でも | **テーマに**貼られた付箋。`?theme=` で1つ、無ければ横断の新着。`?archived=1` と `?seen=1` は**あやとだけ** |
 | `GET` | `/stickies/waiting` | あやとだけ | **まだ何もしていない**付箋の数と、その id。本文も名前も返らない（机の札のバッジ） |
 | `POST` | `/stickies` | 誰でも | テーマに付箋を貼る（2,000字まで。**1日の枚数は数えない**——あやと 2026-11-04「不正が出てきてからで良い。いまは性善説でまわってる」。荒れたら戻す）。**絵を付けるならログイン**（下）。**締め切った宛先は 409**（下）。リンクは1本だけで、**2,048字を超えたら `400 bad link`**（切らない。12章） |
@@ -703,9 +698,20 @@ python3 python/alert_log_report.py --session <session_id> --include-probe --expe
 | `GET/POST /ideas`、`POST /ideas/:id/vote` | #171 | 一言の提案は企画（`/nextplans`）に一本化した |
 | `GET/POST /drafts` | #171 | 下書きも同じ。本番は0件だった |
 | `/state` の `ideas` | #171 | 誰も出していない8件のために、島を開くたび Firestore を1回よけいに読んでいた |
+| `POST /nextplans`・`POST /nextplans/:id`・`POST /nextplans/:id/heart`・`GET /nextplans/:id` | #1281 | 視聴者さんが企画を出す・育てる・ハートを押す道。画面は #1277 で外していた |
+| `POST /nextplans/:id/status`・`POST /nextplans/:id/archive`・`GET /nextplans?mine=1`・`?archived=1` | #1281 | あやとが段を動かす・しまう道と、自分の企画の一覧。画面は #1277 で外していた |
+| `GET/POST /notes` | #1281 | 企画に貼る旧来の付箋。付箋はテーマ付きの `/stickies` に一本化した |
+| `POST /current`、`/state` の `current` と `notes` | #1281 | いまどこ・島だより・島の景色。居場所は滞在の表（`site/content/stays.ts`）が持つ（#1278） |
+
+**#1281 で畳んだ口は、畳む前に本番の呼ばれた回数を数えた**（2026-10-24〜11-23 の
+30日。Cloud Run の要求のログ。`python/admin/api_calls.py`）。書く口はどれも0回。
+読む口のうち `GET /nextplans?mine=1`（43回）と `?events` の無い `GET /nextplans`
+（59回）は、ぜんぶ #1277 を出す前の `/me` と `/me/desk` からで、最後は 11-22。
+`GET /notes` の3回は、ぜんぶ見回り（`python/public_ids_selftest.py`）からだった。
 
 **残すのをやめた理由も同じ**。Functions と Hosting は別々に手で起動するので、
-片方だけ先に出た日に掲示板がまるごと 404 になる。両方が本番に出て3日たってから畳んだ。
+片方だけ先に出た日に掲示板がまるごと 404 になる。#171 は両方が本番に出て3日たってから畳んだ。
+#1281 は、画面（#1277）が本番に出てから口を畳んだ。
 
 ## 11. スタンプのことば（#716。**2026-10-14 に閉じた**。#860）
 
@@ -792,8 +798,7 @@ node functions/selftest/api_trust_selftest.mjs --routes
 | `GET /cards/mine` | `islandUsers/{uid}.channelId`。**送られてきた値は見ない** |
 | `POST /cards/{カードID}` | 同じ。カードの `channelId` と突き合わせて、違えば 403 |
 | `GET/POST /stampline/mine` | — **畳んだ**（#860。誰が叩いても 410） |
-| `GET /stickies?mine=1`<br>`GET /nextplans?mine=1` | `where("uid","==",合言葉の uid)` |
-| `POST /nextplans/{id}` | 書類の `uid`。ログインせずに出したぶんだけ `cid`（24字以上の強い端末ID）＋24時間 |
+| `GET /stickies?mine=1` | `where("uid","==",合言葉の uid)` |
 | `POST /me` | 合言葉で `youtube/v3/channels?mine=true` を**こちらが引く**（7章） |
 | `POST /remote` | 席の `owner` と `uid` を取引の中で突き合わせ |
 | `POST /roulette/{席}/…` | 同じ（5本とも `owner !== uid` なら 404） |
@@ -824,9 +829,8 @@ node functions/selftest/api_trust_selftest.mjs --routes
 | `seenStickies`（既読の一覧） | 3,000 | **兄弟なのに鳴っていなかった** |
 | `GET /stickies?theme=` | 300 | `more: false` のまま古いぶんが消える |
 | `GET /stickies?mine=1` | 300 | 同じ |
-| `GET /nextplans?mine=1` | 300 | 同じ |
 | `listResidents`（島に立てる人） | 500 | 島の名札とカードの名前が黙って減る |
-| `eventsOnDay`（その日の企画） | 30 | その日の企画が落ちる |
+| `eventsOnDay`（その日の出来事） | 30 | その日の出来事が落ちる |
 | `GET /streamevents/{id}/images` | 600 | 写真が落ちる |
 | `GET /characters` | 500 | 図鑑が減り、`total` まで嘘になる |
 | `GET /alertbox/{合言葉}/characters` | 500 | OBS の当てが外れて、絵の出ないアラートになる |
@@ -877,10 +881,87 @@ node functions/selftest/api_trust_selftest.mjs
   壊れていると**どの口も 500 で落ちて「全部拒まれた」に見える**
   （`docs/island-standards.md` §15）。通る本数が4本未満なら、
   数字を1つも出さずに 2 で落ちる
-- あやとだけの口は**46本 × 2（丸腰・よその人）= 92回**を一度に当てる
-- 対照は9本。`POST /me` の断り・カードの持ち主・ことばの名簿・台帳の額・
-  本文の切り落とし・窓の鳴り・道のログ・ハンドルのログ・リンクの長さを
-  1つずつ外した写しで回して、**狙った行が赤くなるか**を見る
+- あやとだけの口は**49本 × 2（丸腰・よその人）= 98回**を一度に当てる
+- **畳んだ口（#1281）が 404・書き込み0であること**も、あやとの合言葉で叩いて見る
+- 対照は10本。`POST /me` の断り・カードの持ち主・ことばの名簿・台帳の額・
+  畳んだ口の 404・本文の切り落とし・窓の鳴り・道のログ・ハンドルのログ・
+  リンクの長さを1つずつ外した写しで回して、**狙った行が赤くなるか**を見る
+
+
+## 13. 島で受ける投げ銭（`/tip/*`。決定の記録 0017・#1405）
+
+| メソッド | パス | 誰が | 何を |
+| --- | --- | --- | --- |
+| `POST` | `/tip/checkout` | ログイン済みで、**YouTube のチャンネルを結んだ人だけ** | Stripe の支払い画面（Checkout Session）を作り、その URL を返す |
+| `POST` | `/stripe/webhook` | **Stripe だけ**（`Stripe-Signature` の署名で見分ける） | 払い終わった知らせを受け、`islandSiteTips` と `islandAlertFeed` に書く。本番の支払いで、そのとき配信していれば、配信のチャットに案内鳥として1行書く（下） |
+
+### `/tip/checkout` が受け取るもの・受け取らないもの
+
+- `body` から読むのは **`yen` と `message` の2つだけ**
+- **名前は送らせない。** アラートに出す名前は、口が `islandUsers/{uid}.channelId` のチャンネル名を引く（スパチャと同じ）。
+  `channelId` を送ってきても見ない（7章「チャンネルを名乗らせない」と同じ）
+- `yen` は整数で ¥100 以上。**1回の上限は置かない**（Doneru も上限なし。あやと 2026-11-23「上限はなくていいですよ」）。守りとして Stripe の1回の上限（¥99,999,999）だけを持つ。外れたら 400
+- `message` は **70字まで**（Doneru であやとが設定している字数）。外れたら 400
+- `message` に禁止ワード（`islandFundConfig/tip.ngWords`。Doneru の禁止ワードを写したもの）が入っていれば 400 `{"error":"ng word"}`。払う前に直せるように、ここで断る。知らせを受けたときにも当て、当たればアラートにはメッセージを出さない（名前と額だけ）
+- チャンネルを結んでいない人は 403（`{"error":"channel required"}`）。画面は「チャンネルを結ぶ」へ案内する
+- 1人1日に作れる支払い画面は100枚まで（`takeQuota`。投げ銭の額の上限ではなく、口を叩きすぎないための栓）
+- 最小額・上限・字数は `GET /state` の `limits`（`tipYenMin`・`tipYenMax`・`tipMessageMax`）で画面に配る。画面は数字を持たない（1章 `limits`）
+- Stripe の鍵（`STRIPE_SECRET_KEY`・`STRIPE_WEBHOOK_SECRET`）が無いあいだは、2本とも 503 `{"error":"tip not configured"}`。鍵は GitHub Secrets から Functions を配るときに `.env` へ書く（空なら書かない）
+
+### `/stripe/webhook` が守ること
+
+- **署名が合わなければ 400 で断り、1バイトも書かない。** 本文は署名を確かめる前に JSON にしない（生の本文で確かめる）
+- **額は Stripe が知らせてきた額だけを使う。** 支払い画面を作るときに画面から来た額は使わない
+- **同じ知らせが何度来ても1件**（書類IDが Checkout Session の ID）
+- **`livemode` が偽（テスト環境）なら、テスト用の合言葉の `islandAlertFeed` にだけ書く。** 台帳・貯金箱・本番のアラートに入れない
+- 返金（`charge.refunded`）と払い戻し請求（`charge.dispute.created`）は、`islandSiteTips.status` を直す。アラートには出さない
+
+### 配信のチャットに書く（決定の記録 0019）
+
+**本番の支払いを `written` で書けたとき、そのとき配信していれば、** 配信のチャットに
+チャンネル「あやと島案内鳥」として1行書く（`functions/src/tip.ts` の `tipChatLine`）。
+
+```
+〇〇さん ¥1,000 島の投げ銭ありやと！「メッセージ」
+```
+
+| ところ | 入れるもの |
+| --- | --- |
+| 〇〇 | アラートに出す名前（口が `islandUsers` から引いたもの）。無ければ「名無しさん」（「さん」を重ねない） |
+| 額 | Stripe が知らせてきた額。3桁で区切る（`¥1,000`）。アラートの `yen` と同じ数 |
+| 「メッセージ」 | アラートに出す字。無い・禁止ワードに当たったときは「」ごと出さない |
+
+いちばん長くても 161字（名前 64字・¥99,999,999・メッセージ 70字）で、YouTube のチャットの1行の上限（200字）に収まる。切らない。
+
+| こうなら | チャット | ログ（`tip chat: …`） | 知らせへの返事 |
+| --- | --- | --- | --- |
+| 本番の支払い・`written`・配信中 | 1回書く | `said`（info） | 200 |
+| 配信していない | **書かない。あとからまとめもしない** | `not-live`（info） | 200 |
+| テストの支払い（`livemode` が偽） | 書かない。配信も探さない | 出さない | 200 |
+| Stripe の再送（`already`） | 書かない | 出さない | 200 |
+| 案内鳥の鍵（`YOUTUBE_GUIDE_REFRESH_TOKEN`）が無い | 書かない。配信も探さない | `no-key`（warn）を1行 | 200 |
+| YouTube が断った | 書き直さない | `failed (403 forbidden)` の形。状態番号と理由の札だけ（warn） | 200 |
+| YouTube が `TIP_CHAT_WAIT_MS`（4秒）で返ってこない | 待たずに返す | `timeout`（warn） | 200 |
+
+- **配信を探すのはあやとの鍵（`YOUTUBE_REFRESH_TOKEN`）、書くのだけ案内鳥の鍵。** `liveBroadcasts.list` の `broadcastStatus` は鍵の持ち主の配信を返すので、案内鳥の鍵で探すと案内鳥の（無い）配信を探してしまう
+- 案内鳥の鍵は、あやとの鍵と同じ OAuth のクライアント（`YOUTUBE_CLIENT_ID`）で出したもの。GitHub Secrets から Functions を配るときに `.env` へ書く（空なら書かない）。口は呼ばれたときに鍵を読む
+- **書くのは取引が済んだあと。** 書けなくても知らせには 200 を返す（台帳・豚・アラートはもう入っている）。待つのは `TIP_CHAT_WAIT_MS` まで
+- **1回の支払いで書くのは1回だけ。** 書くのは `written` のときだけ。同じ知らせが2通、どちらも取引の手前の「もう在るか」をすり抜けても、取引の中で `written` になるのは1通
+- **ログに名前・額・メッセージ・書いた1行を出さない。** 出すのは結果の名前と、断られたときの状態番号・理由の札だけ
+- YouTube の1日の割り当て（2026-11-23 に YouTube の表で確かめた）: 配信を探す `liveBroadcasts.list` が1単位、書く `liveChatMessages.insert` が20単位。**配信は投げ銭ごとに探し直す**（使い回すと、配信を始めてから5分のあいだ「配信していない」が残る）。配信中の投げ銭1件で21単位、配信していないときの1件で1単位
+- 案内鳥は、あやとのチャンネルでモデレーターにする（書いた1行が確認待ちに回されないように。#1405）
+- 確かめは `functions/selftest/tip_selftest.mjs` の5章。守りを1本ずつ外す対照は `TIP_BREAK=chat…`
+
+### アラート画面へは、この口を通さない
+
+アラート画面は `islandAlertFeed/{合言葉}` を Firestore のリアルタイム購読で直に読む（約1秒）。
+口を何秒かおきに読む形にしないのは、あやとが「12秒では遅い」と退けたから（決定の記録 0017）。
+
+### 本番で通して確かめる
+
+テストの Stripe で払ってから、テスト用の合言葉のアラートに出るまでを、本番の面と口で通すのは
+`.github/workflows/tip_e2e.yml`（手で押す。中身と、本番に何を書いて何を消すかは `tools/tip/tip_e2e.mjs` の頭）。
+表は job summary、録画は枝 `review-media/tip-e2e`。
 
 ---
 
@@ -942,7 +1023,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -X POST "$B/alertbox/$(python3 -c 'prin
 一覧を書き出し、**1本でも増減すると `api_trust_selftest.mjs` が赤くなる**（12章）。
 
 ```bash
-# 口の一覧を、照合式から起こす（77本）
+# 口の一覧を、照合式から起こす（本数は python3 python/counts.py の「口」）
 node functions/selftest/api_trust_selftest.mjs --routes
 
 # 信じてはいけない値を送ったら拒まれるか（**本物のルータを偽の置き場で動かす**）
@@ -953,7 +1034,7 @@ python python/public_ids_selftest.py
 
 # 口の一覧（path === と、正規表現の照合）
 grep -nE 'method === "(GET|POST|DELETE|PUT)"' functions/src/islandApi.ts
-grep -nE 'const (photoMatch|eventImages|imageOne|logMatch|factMatch|pollMatch|forkMatch|heartMatch|replyMatch|archiveMatch|planOne|planHeart|planStatus|planVideos|planArchive|abWss|abTok|rlOne|rlChat|rlItems|rlSet|rlSpin|rlPost) = path.match' functions/src/islandApi.ts
+grep -nE 'const (photoMatch|eventImages|imageOne|logMatch|factMatch|pollMatch|forkMatch|heartMatch|replyMatch|archiveMatch|planVideos|abWss|abTok|rlOne|rlChat|rlItems|rlSet|rlSpin|rlPost) = path.match' functions/src/islandApi.ts
 grep -nE 'q.method === "(GET|POST|DELETE)"' functions/src/cards.ts functions/src/donors.ts functions/src/remote.ts
 
 # ログインが要る口（`whoIs` を通っているところ）

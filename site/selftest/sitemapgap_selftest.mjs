@@ -41,9 +41,11 @@ import { fileURLToPath } from "node:url";
    見ている。`docs/island-misses.md` #248 で、読み手を1本に寄せたのに
    `.mjs` 側に自前の読み手が20か所あった、という前がある）。
    最初は `/robots:\s*\{[^}]*index:\s*false/` と書いて、そこで止められた。 */
-import { closeAt, fields, nestedBody } from "../../tools/sprites/tsread.mjs";
+import { closeAt, fields, nestedBody, readMap } from "../../tools/sprites/tsread.mjs";
 import {
+  legendBooks,
   sitemapReadsArticles,
+  sitemapReadsBooks,
   sitemapReadsCities,
   sitemapReadsTravel,
   travelArticles,
@@ -53,7 +55,8 @@ import {
 
 const here = dirname(fileURLToPath(import.meta.url));
 const APP = join(here, "..", "app");
-const SITEMAP = join(APP, "sitemap.ts");
+/* 索引に並べる面は、種類の表の道の型ごとに `lib/pages.ts` の `MEMBERS` が持つ（#1357）。`app/sitemap.ts` はそこを読むだけ */
+const SITEMAP = join(here, "..", "lib", "pages.ts");
 
 /**
  * **索引に出さないと決めた面は、手で表に持たない。**
@@ -102,8 +105,14 @@ if (!found.length) {
   console.error("✕ 面が1枚も見つからない。数えられないので 2 で止めます");
   process.exit(2);
 }
-if (!src.includes("MetadataRoute")) {
-  console.error("✕ sitemap.ts が読めない。数えられないので 2 で止めます");
+/** 索引に出すと決めた道の型（`"/about": { listed: true, …`）。固定の道はそのまま、`<…>` の型は名簿から */
+const LISTED = new Set(
+  readMap(src, "MEMBERS")
+    .filter(([, v]) => fields(v).listed === "true")
+    .map(([k]) => k),
+);
+if (!src.includes("const MEMBERS") || !LISTED.size) {
+  console.error("✕ lib/pages.ts の MEMBERS が読めない。数えられないので 2 で止めます");
   process.exit(2);
 }
 
@@ -141,8 +150,10 @@ function metaBody(src) {
 const CITIES = travelCities(join(here, ".."));
 /* 街の記事も同じ（`travelArticleShare`）。**出すときは名簿の印を1つ外すだけ**で、面は触らない */
 const ARTICLES = travelArticles(join(here, ".."));
+/* 面の印の付いた企画の面も同じ（`bookRobots`。下書きの印から決まる。M-33） */
+const BOOKS = legendBooks(join(here, ".."));
 const hidden = (r) => {
-  if ([...CITIES, ...ARTICLES].some((c) => c.route === r && c.draft)) return true;
+  if ([...CITIES, ...ARTICLES, ...BOOKS].some((c) => c.route === r && c.draft)) return true;
   let src;
   try {
     src = readFileSync(join(APP, r.slice(1), "page.tsx"), "utf8");
@@ -165,8 +176,10 @@ const viaTravel = [
   ...(sitemapReadsCities(src) ? CITIES.filter((c) => !c.draft).map((c) => c.route) : []),
   /* 記事の面も、索引が `publicArticles` を読んでいれば、印の無い記事だけが索引に在る */
   ...(sitemapReadsArticles(src) ? ARTICLES.filter((c) => !c.draft).map((c) => c.route) : []),
+  /* 面の印の付いた企画の面も、面の名簿が `BOOK_PROJECTS` を読んでいれば、下書きでない面だけが索引に在る */
+  ...(sitemapReadsBooks(src) ? BOOKS.filter((c) => !c.draft).map((c) => c.route) : []),
 ];
-const listed = (r) => src.includes(`"${r}"`) || viaTravel.includes(r);
+const listed = (r) => LISTED.has(r) || viaTravel.includes(r);
 
 console.log(`[1] 道が固定の面 ${found.length}枚（うち検索に出す ${open.length}枚・国の名簿から ${viaTravel.length}枚）`);
 // 索引は字で持っている（`"/months"`）か、表から作る（`` `/months/${m.key}` ``）。
@@ -182,13 +195,13 @@ ok("**索引に無い面を混ぜたら見つける**",
    [...open, "/まだ索引に無い面"].filter((r) => !listed(r)), ["/まだ索引に無い面"]);
 // 名簿から出る面も、**索引が名簿を読まなくなったら**挙げる
 ok("索引が国の名簿を読まなくなったら、名簿の面を挙げる",
-   open.filter((r) => !src.includes(`"${r}"`) && viaTravel.includes(r)).length > 0 || viaTravel.length === 0,
+   open.filter((r) => !LISTED.has(r) && viaTravel.includes(r)).length > 0 || viaTravel.length === 0,
    true);
 // 索引のほうを空にしたら、検索に出す面が全部「無い」になる
 ok("索引が空なら、出す面を全部挙げる", open.filter(() => true).length, open.length);
 // 公開前の印を外した街は、索引が街の名簿を読まなくなったら挙げる（印を外す日に、索引の足し忘れを拾う）
 ok("印を外した街は、索引が街の名簿を読まないと挙げる",
-   CITIES.map((c) => c.route).filter((r) => found.includes(r) && !src.includes(`"${r}"`)).length === CITIES.length,
+   CITIES.map((c) => c.route).filter((r) => found.includes(r) && !LISTED.has(r)).length === CITIES.length,
    true);
 // 記事も同じ。**記事の面は道が固定なので、名簿の印で隠れていなければ索引に要る**——印を外して索引が名簿を読まない日を拾う
 ok("名簿の記事は、どれも道が固定の面として見えている（名簿の読み口が外れていない）",

@@ -8,6 +8,7 @@ import {
   BG_IMAGE,
   BG_MYMAPS,
   BG_PLACES,
+  BG_SEEN,
   BG_SPOTS,
   BG_WORDS,
 } from "@/content/bulgaria";
@@ -76,7 +77,9 @@ const HOST: Record<string, string> = {
 function src(url: string): Src {
   if (!url) throw new Error("content/guidebook/bulgaria-sofia.ts: 出どころの無い事実を載せようとした");
   const host = new URL(url).hostname;
-  return { name: HOST[host] ?? host.replace(/^www\./, ""), url };
+  // 見た日は材料（`facts.json` の `seen`）が道ごとに持つ。無い道は日を出さない（確かめていない日を作らない）
+  const seen = BG_SEEN[url];
+  return { name: HOST[host] ?? host.replace(/^www\./, ""), url, ...(seen ? { seen } : {}) };
 }
 
 /** 同じ出どころを2回並べない */
@@ -437,7 +440,7 @@ const AREAS_BASE: Omit<Area, "see" | "src">[] = [
     name: "ジェンスキー・パザール周辺",
     color: "#f7a9c4",
     lead: "街でいちばん古い青空市場",
-    body: "1878年に始まった青空市場（女性市場）は、土産物ではなく、街の人が野菜や果物を買いに来る所。1911年の屋内市場の建物（中央市場ホール）には、2024年からスーパーが入っている。南東ヨーロッパ最大のシナゴーグとカトリックの大聖堂もこの一角。",
+    body: "1878年の解放より前から市が立つ青空市場（女性市場）は、土産物ではなく、街の人が野菜や果物を買いに来る所。1911年の屋内市場の建物（中央市場ホール）には、2024年からスーパーが入っている。南東ヨーロッパ最大のシナゴーグとカトリックの大聖堂もこの一角。",
   },
   {
     id: "nevsky",
@@ -756,7 +759,7 @@ const BUDGET = {
     },
     { label: "昼", what: "安い店の食事", eur: [15, 15] as [number, number], src: srcs(b("物価の目安").src) },
     { label: "夜", what: "安い店の食事", eur: [15, 15] as [number, number], src: srcs(b("物価の目安").src) },
-    { label: "お茶", what: "カプチーノ", eur: [3.13, 3.13] as [number, number], src: srcs(b("物価の目安").src) },
+    { label: "お茶", what: "カプチーノ", eur: [3.24, 3.24] as [number, number], src: srcs(b("物価の目安").src) },
     { label: "移動", what: "1日券（地下鉄・トラム・バス）", eur: [2, 2] as [number, number], src: srcs(b("市内の移動").src) },
     {
       label: "見る",
@@ -912,8 +915,9 @@ export const SOFIA: Guidebook = {
   buy: { items: BUY, places: PLACES.filter((p) => BG_BUY.some((x) => placeIds(x.pins).includes(p.id))), map: mymap("buy") },
   /* ソフィアのショートはまだ無い（`content/shorts.ts` に「ブルガリア」「ソフィア」の題の回が無い。2026-11-19 に見直した）。
      行った項目の動画は ② 配信の場面だけ（ショートができたら `went.json` の項目に `short` を足す）。
-     アーカイブは国の鍵（`ブルガリア`）に積まれていく */
-  videos: { streams: { country: "bulgaria", city: "ブルガリア" }, shorts: [] },
+     アーカイブは街の鍵（`ソフィア`）。歩いているあいだは国の鍵（`ブルガリア`）だったが、2026-11-22 に
+     歩き終わって `content/countries.ts` の `COUNTRIES` へ移したので、`cityStreams.ts` の欄が街の名前になった */
+  videos: { streams: { country: "bulgaria", city: "ソフィア" }, shorts: [] },
   basics: {
     summary: [
       { id: "season", icon: "sun", label: "歩きやすい季節", value: "5〜6月・9月", lead: "平均最高 21〜25℃", to: "#guide-season" },

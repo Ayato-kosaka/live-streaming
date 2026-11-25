@@ -1,8 +1,14 @@
 # あやと島 — コンセプトと作りかた
 
-このドキュメントは、あやと島（https://live-streaming-d3cac.web.app）が
+種別: 仕様
+
+このドキュメントは、あやと島（本番の URL は `site/content/site.ts` の `SITE.url`）が
 何のためにあって、どう作られているかを書いたもの。
 新しくコーナーを足すとき、文言を書くとき、絵を描き足すときは、まずここを読む。
+
+**入口（島の建物）の数と並び・道・どの面に何を入れるかは、ここに書かない。**
+正は [`spec/routes.md`](./spec/routes.md)（入口は4章、道は2章、道ごとの責務は3章）と
+[`spec/model.md`](./spec/model.md)。
 
 ---
 
@@ -47,7 +53,7 @@
 
 ### スプライトの作りかた
 
-Kenney の CC0 の 3D キット（nature-kit / building-kit / holiday-kit / food-kit / mini-characters）を
+Kenney の CC0 の 3D キット（nature-kit / fantasy-town-kit / holiday-kit / food-kit / mini-characters）を
 three.js で読み込み、どうぶつの森の色に塗り替えてから、Playwright のヘッドレス WebGL で
 PNG に焼いて WebP にする。
 
@@ -60,10 +66,14 @@ tools/sprites/meta.py        切り抜き・縮小・WebP化・sprites.json 出�
 色の塗り替えは2通り。
 - **nature-kit** … マテリアル名で塗る（`MATERIALS`）
 - **テクスチャのあるキット** … colormap.png の色相の帯ごとに塗る（`BANDS`）
-  building-kit では `green`=壁、`blue`=柱と縁、`neutral`=屋根 に対応している。
+  fantasy-town-kit（町の建物）では `green`=壁、`blue`=柱と縁、`neutral`=屋根 に対応している。
 
 food-kit は専用の `Textures/colormap.png` を持っているので、
 **必ず `models/food/` に自分のテクスチャごと置く**。他のキットで上書きすると色が壊れる。
+mini-characters も同じ名前の colormap を持つので `models/characters/` に分けてある
+（どのキットをどこに置くかは `tools/sprites/kits.json` の1か所）。
+町の建物は、キット自身の colormap ではなく Kenney 共通の色見本（mini-characters と同じもの）で
+焼いている。上の `green`/`blue`/`neutral` の帯は、その色見本の色に合わせてある（`kits.json` の `borrow`）。
 
 ### 島の座標
 
@@ -95,7 +105,7 @@ food-kit は専用の `Textures/colormap.png` を持っているので、
 ### スマホと PC の出し分け
 
 スマホは島に降り立った視点（`span 340`）で、行き先は下のバーにまとめる。
-島の上に9つの名札を置くと島が見えなくなるため。
+島の上に入口の名札を全部置くと島が見えなくなるため。
 「島をながめる」を押すと引いて全体地図になる（`span 850`）。
 
 PC は島が大きく映るので、名前は薄く全部出しておき、近づいた1つだけ濃くする。
@@ -121,21 +131,12 @@ PC は島が大きく映るので、名前は薄く全部出しておき、近�
 
 ## 5. トップページの並び
 
-分類ではなく、**来た人が順に浮かべる問い**の順にしてある。
+**表紙（`/`）に何を入れるかは [`spec/routes.md`](./spec/routes.md) の3章（R-10）が正。**
+並びの実装は `site/app/page.tsx`。
 
-1. いま、いちばん近い企画（＋日は先でもいちばん大きい企画）
-2. あやとって、どんな人
-3. どんな配信をしてる人なんだろう
-4. グルメアプリを作ってるらしいけど
-5. これから何をするんだろう / 自分も企画を出せる
-6. これまで、どこへ行って何を作ったんだろう
-7. 今夜も22時から
-
-**1がいちばん大きい。** 島に来た人が真っ先に知りたいのは「次に何をするのか」なので、
-どのコーナーよりも先に、いちばん大きく出す（`components/live/NextUp.tsx`）。
-
-既存の視聴者さんは「これからの予定」を、新しく来た人は「いま何をしてるか」と
-「これまで何をしたか」を知りたい。1と5が前者、2〜4と6が後者にあたる。
+並べかたの考えかただけをここに残す。分類ではなく、**来た人が順に浮かべる問い**の順にする。
+既存の視聴者さんは「これからどうするか」を、新しく来た人は「いま何をしてるか」と
+「これまで何をしたか」を知りたい。
 
 ---
 
@@ -168,16 +169,8 @@ PC は島が大きく映るので、名前は薄く全部出しておき、近�
 
 ## 7. データがどこから来るか
 
-| 出どころ | 何が来るか | どうやって |
-| --- | --- | --- |
-| BigQuery `youtube_chat` | 配信本数・コメント数・住人の数・国と街ごとの代表配信 | `python/island_daily_stats.py`（毎日）/ `python/build_city_streams.py`（手動） |
-| Firestore `island/state` | 上の集計結果と、いまいる場所 | Cloud Functions `islandApi` の `GET /state` |
-| Firestore `islandNextPlans` | 企画。**一言でもページ1枚でも同じ入れ物**（#161） | `islandApi` の `/nextplans` |
-| Firestore `islandNotes` | 付箋。テーマにぶら下がる | `islandApi` の `/stickies` |
-| Firestore `islandUsers` | ログインした人。島での見え方の設定 | `islandApi` の `POST /me` |
-| Firestore `islandIdeas` / `islandDrafts` | 旧・企画の入れ物。**画面はもう見ていない**（#171 で畳む） | `islandApi` の `/ideas` `/drafts` |
-| Google スプレッドシート（GAS） | 視聴者さんのキャラクター画像 | 手で `content/residents.ts` に反映 |
-| 手書き | 料理・国・伝説・アプリ・企画・北欧ガイド | `site/content/*.ts` |
+**何が正で、誰が書いて、誰が読むかは [`island-db.md`](./island-db.md) の3章が正**（種類と鍵は
+[`spec/model.md`](./spec/model.md)、口は [`island-api.md`](./island-api.md)）。ここに表を写さない。
 
 静的書き出し（`output: "export"`）なので、ビルド時の値がページに焼き込まれる。
 配信を重ねても数字が増えない、という事故を防ぐため、
@@ -190,10 +183,10 @@ PC は島が大きく映るので、名前は薄く全部出しておき、近�
 
 ```
 site/app/page.tsx                     トップ（並びはここ）
-site/app/nordic/                      北欧ヒッチハイク旅
+site/app/island/                      旅ごとの島（旅の1日・しおり・その旅の配信）
 site/components/island/IslandStage.tsx 島の動き・触りごこち。いちばん大きい
 site/components/island/IslandScene.tsx 島の地形と、置いてある物
-site/components/island/layout.ts      島の座標と、9つの入口
+site/components/island/layout.ts      島の座標と、入口（数と並びは spec/routes.md の4章）
 site/content/voice.ts                 画面に出る言葉ぜんぶ
 site/content/chatter.ts               住人のセリフ
 site/app/globals.css                  見た目ぜんぶ
@@ -203,6 +196,7 @@ python/                               BigQuery からデータを作るところ
 ```
 
 関連ドキュメント:
+- [`spec/routes.md`](./spec/routes.md) — **道と入口の仕様**
+- [`spec/model.md`](./spec/model.md) — **種類と関係の仕様**
 - [`island-design.md`](./island-design.md) — **デザイン仕様。守るべき決まりごとはこちら**
 - [`island-db.md`](./island-db.md) — Firestore / BigQuery のデータ設計
-- [`island-plan-drafts.md`](./island-plan-drafts.md) — 企画ページを視聴者さんと作る仕組み

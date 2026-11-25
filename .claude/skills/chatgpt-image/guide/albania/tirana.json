@@ -1,0 +1,615 @@
+{
+ "ja": "ティラナ",
+ "items": {
+  "guidebook": "python/data/guide/albania/tirana/guidebook.json"
+ },
+ "ec2_dir": "/home/ubuntu/chatgpt/tirana",
+ "stitch": "Albanian",
+ "style": "editorial",
+ "style_ref": ".claude/skills/chatgpt-image/guide/bulgaria/sofia-style.webp",
+ "scene": "Scene: Tirana, the capital of Albania, on a clear, warm early-autumn afternoon (early October). Skanderbeg Square: a vast, open, almost empty pedestrian square paved with large flat stone slabs in many soft, slightly different earthy colours, with a few tiny cheerful people strolling far apart. Slightly right of the centre, in the middle ground, stands the bronze equestrian statue of Skanderbeg: a helmeted warrior riding a horse on a tall plain stone pedestal. To the right of it, the small Et'hem Bey Mosque: a cream and warm ochre stone building with a single small dome, an arched front portico and one slender white minaret; right beside the mosque the tall, slim, square stone Clock Tower of Tirana with a small clock and a little roof at its top. Behind them a few green trees, and far in the distance the long soft blue-green ridge of Mount Dajti on the horizon. A calm, simple pale sky fills the upper part, and the lower-left foreground is open, empty stone paving.",
+ "title": {
+  "name": "ティラナ",
+  "label": "観光ガイド",
+  "catch": "「ヨーロッパの隠れた宝石」と称えられる国の首都",
+  "kicker": "アルバニア"
+ },
+ "cover": {
+  "v": 1,
+  "bias": 0.5,
+  "file": "ティラナ-観光ガイド",
+  "title": {
+   "x": 0.04,
+   "y": 0.955,
+   "anchor": "bl",
+   "scale": 0.85
+  },
+  "alt": "秋の午後の日に照らされた、スカンデルベグ広場の騎馬像と、エトヘム・ベイ・モスクの丸屋根と時計塔。遠くにダイティ山。ティラナの絵",
+  "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。スカンデルベグ広場・エトヘム・ベイ・モスク・時計塔は写真を形の手本として渡した。上は空、左下は広場の石畳。3:2 で描かせて 16:9 に切った。字なし",
+  "photos": [
+   "site/public/guide/albania/tirana/photos/tirana-skanderbeg-square-sheshi-03607d53-500.webp",
+   "site/public/guide/albania/tirana/photos/et-hem-bey-mosque-30519049807-57421dd2-500.webp",
+   "site/public/guide/albania/tirana/photos/clock-tower-of-tirana-1-afa18e6b-500.webp"
+  ]
+ },
+ "cover_tall": {
+  "v": 1,
+  "bias": 0.5,
+  "file": "ティラナ-観光ガイド-縦",
+  "title": {
+   "x": 0.5,
+   "y": 0.955,
+   "anchor": "bc",
+   "scale": 1.2
+  },
+  "alt": "秋の午後の、スカンデルベグ広場の騎馬像とエトヘム・ベイ・モスクと時計塔。ティラナの絵",
+  "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。スカンデルベグ広場・エトヘム・ベイ・モスク・時計塔は写真を形の手本として渡した。上は空、左下は広場の石畳。横と同じ頼みかたで縦に。2:3 で描かせて 4:5 に切った。字なし",
+  "photos": [
+   "site/public/guide/albania/tirana/photos/tirana-skanderbeg-square-sheshi-03607d53-500.webp",
+   "site/public/guide/albania/tirana/photos/et-hem-bey-mosque-30519049807-57421dd2-500.webp",
+   "site/public/guide/albania/tirana/photos/clock-tower-of-tirana-1-afa18e6b-500.webp"
+  ]
+ },
+ "areamap": {
+  "v": 1,
+  "layout": "layout1.png",
+  "file": "ティラナ-見どころマップ-地区分け",
+  "ratio": 0.8,
+  "sizes": [
+   1200,
+   800
+  ],
+  "fix": "POSITIONS MATTER MORE THAN DECORATION. Before painting, trace the layout: every road, every park, the river and the three district colors must stay where they are in the layout, and each landmark sits exactly on its numbered dot. The Skanderbeg Monument (1), the mosque with the clock tower (2) and the cathedral (3) are close together in the yellow district in the upper middle; the market hall (4) is in the lavender district at the upper right; the Pyramid (5) stands at the top right corner of the pink district, just south of the river, and the cafe street (6) is in the middle of the pink district at the lower left. Keep every icon small so that it fits on its own dot and does not cover its neighbours. Leave the east part of the yellow district, the right part of the lavender district and the bottom of the pink district calm and empty (only the wash and the roads): names will be placed there later. ",
+  "prompt": "Paint an illustrated sightseeing map of central Tirana, Albania, as a tall portrait image (2:3, 1024x1536), using the attached layout as the exact base. North is up. Keep every white road, every green park, the river and the three colored districts in exactly the same place and the same shape as in the layout; do not move, add or remove roads or districts. This is a calm, clean picture map: do NOT draw any houses, buildings, rooftops, trees, people or cars. The blocks between the roads stay flat warm cream paper with a faint watercolor texture; parks are flat soft green watercolor washes; the narrow Lana river crossing the map from east to west is a soft blue ribbon; roads are clean cream-white ribbons, and the wide straight boulevard running north-south through the middle stays clearly visible. Paint the three districts as flat translucent watercolor washes in their own colors from the layout (warm yellow for the Skanderbeg Square area in the middle, soft lavender for the Pazari i Ri market area at the upper right, soft pink for the Blloku area at the bottom), with gently darker soft edges, so the roads inside them stay visible. At each numbered dark dot in the layout, draw ONE small cute illustrated landmark (about 7% of the image width), standing exactly on its dot with a soft contact shadow; do NOT draw the numbers or the dots themselves: 1 the Skanderbeg Monument (a small bronze equestrian statue of a helmeted warrior on a horse, on a stone pedestal); 2 the Et'hem Bey Mosque with the Clock Tower (a small cream stone mosque with one dome, an arched portico and a slim minaret, and right beside it a tall slim square stone clock tower); 3 the Resurrection Cathedral (a modern Orthodox cathedral with a big golden-brown dome and a tall separate bell tower); 4 the Pazari i Ri market hall (a long open market hall with a light green metal-and-glass roof over tiny stalls of fruit and vegetables); 5 the Pyramid of Tirana (a white concrete pyramid with staircases on its slopes and a few small brightly colored boxes); 6 the Blloku cafe street (two tiny round cafe tables with chairs and a striped parasol). These six landmarks are the only drawn objects on the map.",
+  "alt": "ティラナの見どころマップ（地区分け）。スカンデルベグ広場周辺・パザリ・イ・リ・ブロックの3つの地区を色で分け、名前を書いた絵地図。スカンデルベグの騎馬像・エトヘム・ベイ・モスクと時計塔・キリスト復活大聖堂・パザリ・イ・リの市場・ピラミッド・ブロックのカフェ通りの目印の絵と名前つき",
+  "note": "OpenStreetMap（OpenFreeMap のベクトルタイル）から作った字の無い下敷き（道・公園・川・3つの地区の色・目印6か所の番号。guide_art.py layout）を渡し、その配置どおりに、家と木を描かない水彩の地図（#1228 の D2）として描かせた。北が上。地区の名前・題の帯・目印の名前は描かせず、こちらで面と同じ丸ゴシックで焼いた（#1262・#332。番号の点は足さない）。ダイティ山・グランドパーク・クルヤ・ドゥラス・ベラトは地図の外（矢印）。地区の範囲は材料（guidebook.json の about.areas）から",
+  "bbox": {
+   "west": 19.8085,
+   "east": 19.832,
+   "south": 41.3116,
+   "north": 41.3381
+  },
+  "districts": [
+   {
+    "id": "skanderbeg",
+    "color": "#ffd98a",
+    "poly": [
+     [
+      41.33,
+      19.814
+     ],
+     [
+      41.33,
+      19.8222
+     ],
+     [
+      41.328,
+      19.8232
+     ],
+     [
+      41.3272,
+      19.8275
+     ],
+     [
+      41.3245,
+      19.8275
+     ],
+     [
+      41.3245,
+      19.815
+     ],
+     [
+      41.327,
+      19.813
+     ]
+    ]
+   },
+   {
+    "id": "pazari",
+    "color": "#d9ccf5",
+    "poly": [
+     [
+      41.3328,
+      19.8228
+     ],
+     [
+      41.3328,
+      19.8275
+     ],
+     [
+      41.3305,
+      19.829
+     ],
+     [
+      41.3286,
+      19.8268
+     ],
+     [
+      41.329,
+      19.8236
+     ]
+    ]
+   },
+   {
+    "id": "blloku",
+    "color": "#ffc4d2",
+    "poly": [
+     [
+      41.324,
+      19.812
+     ],
+     [
+      41.324,
+      19.8228
+     ],
+     [
+      41.3215,
+      19.8232
+     ],
+     [
+      41.3175,
+      19.8225
+     ],
+     [
+      41.317,
+      19.815
+     ],
+     [
+      41.3195,
+      19.8115
+     ]
+    ]
+   }
+  ],
+  "marks": [
+   {
+    "n": 1,
+    "what": "スカンデルベグの騎馬像",
+    "lat": 41.3283,
+    "lon": 19.818
+   },
+   {
+    "n": 2,
+    "what": "エトヘム・ベイ・モスクと時計塔",
+    "lat": 41.3279,
+    "lon": 19.8202
+   },
+   {
+    "n": 3,
+    "what": "キリスト復活大聖堂",
+    "lat": 41.3262,
+    "lon": 19.8169
+   },
+   {
+    "n": 4,
+    "what": "パザリ・イ・リの市場",
+    "lat": 41.3302,
+    "lon": 19.8244
+   },
+   {
+    "n": 5,
+    "what": "ピラミッド",
+    "lat": 41.323,
+    "lon": 19.8216
+   },
+   {
+    "n": 6,
+    "what": "ブロックのカフェ通り",
+    "lat": 41.3211,
+    "lon": 19.816
+   }
+  ],
+  "title": {
+   "name": "ティラナ",
+   "label": "見どころマップ"
+  },
+  "names": [
+   {
+    "id": "statue",
+    "label": [
+     "スカンデルベグ像"
+    ],
+    "x": 0.235,
+    "y": 0.33
+   },
+   {
+    "id": "ethem",
+    "label": [
+     "エトヘム・ベイ",
+     "モスクと時計塔"
+    ],
+    "x": 0.665,
+    "y": 0.345
+   },
+   {
+    "id": "cathedral",
+    "label": [
+     "キリスト",
+     "復活大聖堂"
+    ],
+    "x": 0.195,
+    "y": 0.44
+   },
+   {
+    "id": "market",
+    "label": [
+     "屋根付き市場"
+    ],
+    "x": 0.86,
+    "y": 0.25
+   },
+   {
+    "id": "pyramid",
+    "label": [
+     "ピラミッド"
+    ],
+    "x": 0.55,
+    "y": 0.635
+   },
+   {
+    "id": "cafe",
+    "label": [
+     "カフェ通り"
+    ],
+    "x": 0.31,
+    "y": 0.715
+   }
+  ],
+  "areas": [
+   {
+    "id": "skanderbeg",
+    "name": "スカンデルベグ広場周辺",
+    "label": [
+     "スカンデルベグ",
+     "広場周辺"
+    ],
+    "local": "Sheshi Skënderbej",
+    "color": "#ffd98a",
+    "x": 0.67,
+    "y": 0.445,
+    "source": [
+     "https://www.veltra.com/jp/yokka/article/things-to-do-in-albania-tirana/",
+     "https://www.veltra.com/jp/guide/international/spot-international/36187/"
+    ]
+   },
+   {
+    "id": "pazari",
+    "name": "パザリ・イ・リ",
+    "label": [
+     "パザリ・イ・リ"
+    ],
+    "local": "Pazari i Ri",
+    "color": "#d9ccf5",
+    "x": 0.72,
+    "y": 0.17,
+    "source": [
+     "https://en.wikipedia.org/wiki/New_Bazaar,_Tirana"
+    ]
+   },
+   {
+    "id": "blloku",
+    "name": "ブロック",
+    "label": [
+     "ブロック"
+    ],
+    "local": "Blloku",
+    "color": "#ffc4d2",
+    "x": 0.33,
+    "y": 0.79,
+    "source": [
+     "https://en.wikipedia.org/wiki/Ish-Blloku",
+     "https://en.wikivoyage.org/wiki/Tirana"
+    ]
+   }
+  ],
+  "beyond": [
+   {
+    "id": "kruja",
+    "name": "クルヤ",
+    "local": "Krujë",
+    "lat": 41.506891,
+    "lon": 19.793933,
+    "source": [
+     "https://en.wikipedia.org/wiki/Fortress_of_Kruj%C3%AB"
+    ],
+    "x": 0.2,
+    "y": 0.2,
+    "dir": "n"
+   },
+   {
+    "id": "durres",
+    "name": "ドゥラス",
+    "local": "Durrës",
+    "lat": 41.312123,
+    "lon": 19.445002,
+    "source": [
+     "https://en.wikipedia.org/wiki/Amphitheatre_of_Durr%C3%ABs"
+    ],
+    "x": 0.07,
+    "y": 0.56,
+    "dir": "w"
+   },
+   {
+    "id": "dajti",
+    "name": "ダイティ山",
+    "local": "Mali i Dajtit",
+    "lat": 41.350831,
+    "lon": 19.861161,
+    "source": [
+     "https://dajtiekspres.com/faq/",
+     "https://dajtiekspres.com/rates-and-opening-hours/"
+    ],
+    "x": 0.93,
+    "y": 0.6,
+    "dir": "e"
+   },
+   {
+    "id": "lake",
+    "name": "グランドパーク",
+    "local": "Parku i Madh",
+    "lat": 41.311489,
+    "lon": 19.829455,
+    "source": [
+     "https://en.wikipedia.org/wiki/Grand_Park_of_Tirana"
+    ],
+    "x": 0.7,
+    "y": 0.86,
+    "dir": "s"
+   },
+   {
+    "id": "berat",
+    "name": "ベラト",
+    "local": "Berat",
+    "lat": 40.705387,
+    "lon": 19.949939,
+    "source": [
+     "https://en.wikivoyage.org/wiki/Berat",
+     "https://en.wikipedia.org/wiki/Berat"
+    ],
+    "x": 0.2,
+    "y": 0.95,
+    "dir": "s"
+   }
+  ],
+  "base": {
+   "by": "© OpenStreetMap contributors",
+   "licence": "https://www.openstreetmap.org/copyright"
+  }
+ },
+ "food": {
+  "model": "bulgaria/sofia:food-shopska-salata",
+  "note": "料理の写真風・正方形。ソフィアの1枚目（ショプスカ・サラダ）を手本として渡し、45度の俯瞰・明るい木の卓・左上からの光をそろえた。布（ナプキン・テーブルクロス）は描かせない（あやと 2026-11-19）。見た目は Wikipedia の説明と写真に合わせた。字なし",
+  "items": {
+   "fergese": {
+    "desc": "Albanian fërgesë: a small round unglazed terracotta clay dish filled with a thick, bubbling, creamy orange-red bake of roasted red and green peppers, tomato and melted white cottage cheese, browned in spots on top, with two thick slices of country bread beside it.",
+    "alt": "素焼きの土鍋に入った、ピーマンとトマトとチーズの熱いフェルゲセ。パンを添えて"
+   },
+   "tave-dheu": {
+    "desc": "Albanian tavë dheu: a deep round dark-brown glazed earthenware pot with two small handles, filled with a rich reddish-brown bake of small pieces of calf's liver, roasted peppers, tomato and melted white cheese, darkened and bubbling on top; its lid leans beside it, with a sprig of fresh parsley.",
+    "alt": "茶色の土鍋に入った、レバーとピーマンとチーズの焼きもの、タヴェ・ゼウ"
+   },
+   "tave-kosi": {
+    "desc": "Albanian tavë kosi: a shallow oval ceramic baking dish with a golden, puffed, set yogurt-and-egg custard top, browned in patches, one corner spooned out to show tender pieces of lamb on the bone and a little rice underneath.",
+    "alt": "表面がこんがり焼けたヨーグルトの生地の下に、羊肉と米。タヴェ・コシ"
+   },
+   "tasqebap": {
+    "desc": "Albanian tasqebap: a deep plain white bowl of lamb stew, tender chunks of lamb in a glossy thick tomato-and-onion sauce with soft pieces of onion, a sprinkle of chopped parsley, and a slice of white bread beside the bowl.",
+    "alt": "トマトと玉ねぎで煮た羊肉の煮込み、タスケバプ"
+   },
+   "qofte": {
+    "desc": "Albanian qofte: six small oval grilled meatballs, browned with dark grill marks, on a plain white plate with a small fresh salad of sliced tomato, cucumber and red onion, and a piece of flatbread.",
+    "alt": "焼いた小さな肉団子コフテに、トマトときゅうりのサラダとパン"
+   },
+   "speca": {
+    "desc": "Albanian speca të mbushura: three whole roasted bell peppers (two red, one green), slightly blistered and softened, stuffed with white cheese that bulges out of their open tops, lying on an oval plate with a drizzle of olive oil.",
+    "alt": "白いチーズを詰めて焼いた赤と緑のピーマン"
+   },
+   "japrak": {
+    "desc": "Albanian japrak: about eight small, neat, finger-shaped rolls of dark olive-green vine leaves stuffed with rice, laid side by side on a plain plate, with a small bowl of thick white yogurt sauce and a lemon wedge.",
+    "alt": "ぶどうの葉で米を包んだヤプラクと、ヨーグルトのソース"
+   },
+   "flija": {
+    "desc": "Albanian flija: a round, tall layered pancake cake on a plain plate, one wedge cut out and lying in front to show many thin alternating stripes of pale cream batter and golden-brown baked layers, with a spoonful of thick sour cream and a small jar of honey.",
+    "alt": "薄い生地を何層にも重ねて焼いたフリアの切り口と、サワークリーム"
+   },
+   "djathe": {
+    "desc": "Albanian djathë i bardhë: a thick block of soft white brined cheese, crumbly at the edges with a few slices cut, on a small plain wooden board with a handful of black and green olives and a drizzle of olive oil.",
+    "alt": "白くやわらかいチーズの塊と、黒と緑のオリーブ"
+   },
+   "byrek": {
+    "desc": "Albanian byrek: a large round pie baked in a shallow round metal tray, the top golden and flaky with many paper-thin pastry layers, cut into wedges; one wedge lifted out and set in front showing a green spinach and white cheese filling.",
+    "alt": "丸い焼き型で焼いたほうれん草のビュレクを切り分けて"
+   },
+   "sufllaqe": {
+    "desc": "Albanian sufllaqe: a warm pita wrap rolled around slices of grilled meat, golden French fries, tomato, onion and white yogurt sauce, half wrapped in plain white paper with no printing and standing upright, with a few extra fries beside it.",
+    "alt": "肉とフライドポテトとソースをピタで包んだスフラチェ"
+   },
+   "petulla": {
+    "desc": "Albanian petulla: a heap of small, round, puffy golden fried dough balls of irregular shape, dusted with powdered sugar, on a plain plate with a small bowl of dark fig jam and a few cubes of white cheese.",
+    "alt": "粉砂糖をかけた丸い揚げパンのペトゥラと、いちじくのジャム"
+   },
+   "bakllava": {
+    "desc": "Albanian bakllava: neat diamond-shaped pieces of baklava in a round metal tray, many thin golden crisp pastry layers with a visible line of chopped walnuts inside, glistening with syrup; one piece set on a small plate in front.",
+    "alt": "くるみを重ねてシロップをしみこませた、ひし形のバクラヴァ"
+   },
+   "kadaif": {
+    "desc": "Albanian kadaif: rolls of shredded kataifi pastry, fine golden crispy threads wrapped around a walnut filling, glossy with syrup, cut into short round pieces showing the nuts, on a small plain plate.",
+    "alt": "細い麺の生地でくるみを巻いた、つやのあるカダイフ"
+   },
+   "trilece": {
+    "desc": "Albanian trileçe: a square piece of pale yellow sponge cake soaked in three kinds of milk, sitting in a little pool of milk on a plain plate, the top covered with a smooth layer of glossy light-brown caramel dripping down the sides, a small dessert fork beside it.",
+    "alt": "ミルクのしみたスポンジに、キャラメルをかけたトリレチェ"
+   },
+   "kabuni": {
+    "desc": "Albanian kabuni: a small plain ceramic bowl of sweet buttery rice, the golden grains cooked in butter and sugar with plump dark raisins, sprinkled with ground cinnamon, a small spoon beside the bowl.",
+    "alt": "干しぶどう入りの甘い米の菓子カブニ。シナモンをふって"
+   },
+   "ballokume": {
+    "desc": "Albanian ballokume from Elbasan: four round, domed, pale yellow-golden cookies with a cracked, crackled top surface, stacked loosely on a small plain plate.",
+    "alt": "表面にひびの入った、丸くふくらんだバロクメ"
+   },
+   "kafe": {
+    "desc": "Albanian coffee: one small white cup of espresso and one small cup of macchiato with a thin layer of milk foam on top, each on its own white saucer, with two small paper sugar sticks with no printing and a small glass of water.",
+    "alt": "小さなカップのエスプレッソとマキアート"
+   },
+   "caj-mali": {
+    "desc": "Albanian çaj mali (mountain tea): a clear glass cup of warm golden-amber tea, a small bundle of dried mountain tea stems with pale yellow-green flower heads tied with string beside it, a small jar of honey with a wooden dipper and a slice of lemon.",
+    "alt": "ガラスのカップの黄金色の山のお茶と、干したお茶の束、蜂蜜とレモン"
+   },
+   "dhalle": {
+    "desc": "Albanian dhallë: a tall clear glass of cold, thick, pure white yogurt drink with a little froth on top, and a sprig of fresh mint beside it.",
+    "alt": "白いヨーグルトの飲み物ザッレのグラス"
+   },
+   "boza": {
+    "desc": "Albanian boza: a tall clear glass filled with a thick, creamy, opaque pale beige-yellow fermented maize drink with a little froth on top, beside a small bowl of dry yellow corn kernels.",
+    "alt": "とろりとした薄い黄土色の飲み物、ボザ"
+   },
+   "raki": {
+    "desc": "Albanian raki: two small stemmed shot glasses filled with clear grape brandy and a small clear glass carafe with NO label, beside a small bunch of dark purple grapes.",
+    "alt": "小さなグラスの透明な蒸留酒ラキと、ぶどう"
+   },
+   "birra": {
+    "desc": "Korça beer: a tall glass of golden lager beer with a white head of foam, beside a brown glass beer bottle with NO label and no writing.",
+    "alt": "グラスに注いだ金色のビールと、字の無い茶色の瓶"
+   },
+   "vere": {
+    "desc": "Albanian red wine: a glass of deep ruby red wine and a dark green wine bottle with a plain cream paper label with no writing, beside a few dark grapes.",
+    "alt": "赤ワインのグラスと、字の無いラベルの瓶"
+   }
+  }
+ },
+ "buy": {
+  "model": "bulgaria/sofia:buy-rose-oil",
+  "note": "土産の写真風・正方形。ソフィアの1枚目（バラのオイル）を手本として渡し、料理と同じ卓・光でそろえた。布は描かせない（フェルト・じゅうたん・旗・ベストは品そのもの）。瓶・袋・缶は字なし",
+  "items": {
+   "felt": {
+    "fix": "The felt cap and slippers themselves are the subject and the only textiles in the picture; nothing under them. ",
+    "desc": "Albanian handmade felt: a white, round, brimless felt cap (qeleshe), dome-shaped and seamless, beside a pair of thick white-and-grey felt house slippers with small red stitched patterns.",
+    "alt": "白い丸いフェルトの帽子チェレシェと、フェルトの室内ばき"
+   },
+   "carpet": {
+    "fix": "The carpet itself is the subject and the only textile in the picture; nothing under it. ",
+    "desc": "A small Albanian hand-woven carpet, folded into a neat flat stack on the table, showing a bold geometric pattern of red, black and cream diamonds and zigzags, with a short fringe at one end.",
+    "alt": "赤と黒の幾何学の模様の、手織りのじゅうたん"
+   },
+   "eagle": {
+    "fix": "The small flag itself is the only fabric in the picture. ",
+    "desc": "Albanian double-headed eagle souvenirs: a small rectangular table flag on a thin wooden stick standing in a little base, and three small rectangular fridge magnets lying in front, all plain red with a black double-headed eagle in the middle and nothing else (no letters).",
+    "alt": "赤い地に黒い双頭の鷲の小さな旗とマグネット"
+   },
+   "costume": {
+    "fix": "The vest itself is the only fabric in the picture; nothing under it. ",
+    "desc": "Albanian folk costume and antiques: a richly embroidered dark red velvet vest with gold-thread spiral embroidery, folded on the table, beside an old hammered copper water jug with a long spout and a small copper bowl with a green-brown patina.",
+    "alt": "金の糸で刺繍した民族衣装のベストと、古い銅の水差し"
+   },
+   "coffee": {
+    "desc": "Turkish-style coffee from Albania: a square metal coffee tin painted with a colorful decorative floral pattern (no letters, no logo), its lid open to show finely ground dark coffee, beside a small long-handled hammered copper coffee pot and a tiny cup.",
+    "alt": "絵柄の付いた四角いコーヒーの缶と、小さな銅のコーヒー沸かし"
+   },
+   "bunker": {
+    "desc": "Albanian bunker souvenir ashtrays: a small round dome-shaped ashtray carved from white-grey stone, shaped like a miniature concrete pillbox bunker with a narrow horizontal slit opening at the front, beside a second, smaller one.",
+    "alt": "丸いトーチカの形をした、白い石の小さな灰皿"
+   },
+   "caj-mali": {
+    "desc": "Dried Albanian mountain tea (çaj mali): a plain brown kraft paper bag with no printing, open and lying on its side, with a bundle of long dried pale-green stems topped with fluffy pale yellow flower heads spilling out of it.",
+    "alt": "紙の袋からのぞく、干した山のお茶の花と茎"
+   },
+   "olive": {
+    "desc": "Albanian olive oil: a tall glass bottle with NO label, filled with greenish-gold olive oil and closed with a cork, beside a small dish of green and black olives and a small olive branch with leaves.",
+    "alt": "緑がかった金色のオリーブオイルの瓶と、オリーブの実"
+   },
+   "raki": {
+    "desc": "Homemade Albanian raki: a round, hand-blown, slightly irregular glass bottle with NO label, filled with clear brandy and closed with a cork, standing beside a smaller plain clear glass bottle of the same brandy and a few grapes.",
+    "alt": "手作りの瓶に入った、透明な蒸留酒ラキ"
+   },
+   "wine": {
+    "desc": "Albanian red wine: two dark glass bottles of red wine with plain cream labels with no writing, standing side by side, with a corkscrew beside them.",
+    "alt": "字の無いラベルの赤ワインの瓶"
+   }
+  }
+ },
+ "do": {
+  "note": "案2「大人の画集」の調子（ガッシュ調の大人のエディトリアル。ソフィアと同じ手本の1枚を渡した）。人は小さく、後ろ姿か手元だけ。8枚で主役・構図・時間と光・色の基調を変えた。バンクアート・ピラミッド・ダイティ・エクスプレス・ブロック・クルヤ・ベラトは写真を形の手本として渡した（写真のふりはさせない）。3:2 で描かせて 4:3 に切った。字なし",
+  "shape": "card43",
+  "items": {
+   "bunkart": {
+    "ja": "核シェルターの博物館に潜る",
+    "desc": "Bunk'Art, the huge Cold War nuclear bunker museum built under a hill at the edge of Tirana; the bunker itself is the hero. Composition: a long, low, straight underground corridor in deep one-point perspective: bare grey concrete walls and a rounded concrete ceiling, a row of bare light bulbs in small wire cages along the ceiling, a thick heavy steel blast door painted dull green standing half open on the left, old pipes and ventilation ducts running along the wall. Far down the corridor, one small visitor seen from behind walks away toward a warm pool of light. Light: the warm amber glow of the bulbs against cool grey concrete, deep soft shadows between them. Palette: cold concrete grey, olive green and rusty brown, with warm amber light.",
+    "alt": "裸電球の続くコンクリートの地下の廊下と、分厚い鉄の扉。奥へ歩いていく小さな後ろ姿の絵",
+    "photos": [
+     "site/public/guide/albania/tirana/photos/tirane-albania-january-2023-bunk-edbab28a-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/albania/tirana/photos/tirane-albania-january-2023-bunk-edbab28a-500.webp"
+    ]
+   },
+   "pyramid": {
+    "ja": "ピラミッドに登る",
+    "desc": "the Pyramid of Tirana, renovated in 2023; the building is the hero. Composition: seen from slightly below and to one side, the big white concrete pyramid with its sloping sides fills the right two-thirds of the picture; straight staircases of white steps run up the sloping faces to the top, and a few small box-shaped rooms in bright yellow, orange, red, blue and green sit on and around its lower part like building blocks. Three or four tiny people climb the steps seen from behind, and one sits near the top looking at the city. Light: bright, clear midday sun from the left with crisp shadows of the steps. Palette: chalk white and sky blue, with small bright accents of the colored boxes.",
+    "alt": "白いコンクリートのピラミッドの斜面の階段を、小さな人たちが上っていく。まわりに色のついた箱の絵",
+    "photos": [
+     "site/public/guide/albania/tirana/photos/the-pyramid-of-tirana-albania-c33ac594-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/albania/tirana/photos/the-pyramid-of-tirana-albania-c33ac594-500.webp"
+    ]
+   },
+   "dajti": {
+    "ja": "ロープウェイでダイティ山へ",
+    "desc": "the Dajti Ekspres cable car up Mount Dajti, a short trip from Tirana; the view is the hero. Composition: from high on the mountainside, one small cable car cabin (shaped as in the photo) hangs on its thin cable in the upper right, travelling up over a steep slope covered with dark green pine and oak forest; far below, in the lower left, the city of Tirana spreads across a wide flat plain in soft pale ochre and pink, with hazy hills on the horizon. Light: soft late-afternoon light and a gentle warm haze over the plain. Palette: deep forest green, warm ochre and pale blue haze.",
+    "alt": "森の斜面の上を行く小さなロープウェイと、下に広がるティラナの街並みの絵",
+    "photos": [
+     "site/public/guide/albania/tirana/photos/dajti-ekspres-by-roy-lindman-1dfa258e-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/albania/tirana/photos/dajti-ekspres-by-roy-lindman-1dfa258e-500.webp"
+    ]
+   },
+   "byrek": {
+    "ja": "焼きたてのビュレク",
+    "desc": "eating a freshly baked byrek at a small corner bakery in Tirana; the pastry in the hand is the hero. Composition: a close view: in the foreground a hand holds a triangular slice of byrek half wrapped in plain white paper, its flaky golden layers of paper-thin pastry broken open to show the green spinach and white cheese filling, a little steam rising. Behind it, softly out of focus, a wooden counter with a big round metal baking tray of byrek cut into triangles and a glass display case. Light: warm morning light from the shop window on the left. Palette: golden brown pastry, spinach green, white cheese and warm wood.",
+    "alt": "紙に包んだ焼きたてのビュレクを手に持つ。後ろに丸い焼き型のパン屋の台の絵"
+   },
+   "fergese": {
+    "ja": "名物のフェルゲセ",
+    "desc": "a lunch of fërgesë in a traditional Albanian restaurant in Tirana; the dish is the hero. Composition: a close, slightly high view of a bare dark wooden table: in the middle a small round unglazed terracotta clay pot, still bubbling hot, filled with a thick, creamy orange-red mix of roasted red and green peppers, tomatoes and melted white cottage cheese; a hand dips a piece of bread into it. Beside it a small basket of thick slices of country bread and a glass of water; behind, softly blurred, a whitewashed stone wall and a dark wooden beam. Light: warm light from a small window on the left, steam rising. Palette: terracotta, tomato red, pepper green, creamy white and warm wood.",
+    "alt": "素焼きの土鍋の熱いフェルゲセに、パンをひたす手元の絵"
+   },
+   "cafe": {
+    "ja": "ブロックのカフェ",
+    "desc": "relaxing at a terrace cafe in Blloku, Tirana's lively cafe district; the cafe table is the hero. Composition: a medium-close view across a small round metal cafe table on a tree-lined pavement: one small white cup of espresso and one macchiato with a little white foam, on saucers, and a small glass of water. Behind, a quiet street lined with trees and the colorfully painted facades of Tirana (soft orange, pale green, yellow), other cafe tables with a few tiny people seen from behind. Light: soft afternoon sun through the leaves, dappled light on the table. Palette: coffee brown, cream, leaf green and the soft pastel colors of the facades.",
+    "alt": "並木の通りのテラスのカフェで、小さなカップのエスプレッソとマキアート。向こうに色を塗った建物の絵",
+    "photos": [
+     "site/public/guide/albania/tirana/photos/ish-blloku-neighborhood-in-tiran-fb6db407-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/albania/tirana/photos/ish-blloku-neighborhood-in-tiran-fb6db407-500.webp"
+    ]
+   },
+   "kruja": {
+    "ja": "英雄の城クルヤへ日帰り",
+    "desc": "a day trip to Krujë, the hilltop town of the national hero Skanderbeg; the old bazaar and the castle are the hero. Composition: looking up a narrow cobblestone street of the old bazaar, lined on both sides by low old shops with dark wooden fronts and overhanging wooden eaves; red-and-black hand-woven carpets and white round felt caps hang from the eaves. At the top of the street, on the steep rocky mountainside, the old grey stone walls and the round tower of the castle (as in the photo). One small traveler with a backpack walks up the street, seen from behind. Light: bright morning sun from the right, the street half in shade. Palette: warm wood brown, carpet red and black, stone grey, mountain green.",
+    "alt": "古いバザールの石畳の坂と木の店。軒にじゅうたんとフェルトの帽子、上に山の城。坂を上る小さな旅人の後ろ姿の絵",
+    "photos": [
+     "site/public/guide/albania/tirana/photos/souvenire-shop-old-bazar-kruja-a-d0deeaf5-500.webp",
+     "site/public/guide/albania/tirana/photos/kruje-castle-64e04e62-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/albania/tirana/photos/souvenire-shop-old-bazar-kruja-a-d0deeaf5-500.webp",
+     "site/public/guide/albania/tirana/photos/kruje-castle-64e04e62-500.webp"
+    ]
+   },
+   "berat": {
+    "ja": "千の窓の町ベラトへ日帰り",
+    "desc": "a day trip to Berat, the 'town of a thousand windows', a UNESCO World Heritage town; the old town is the hero. Composition: seen from across the Osum river, the old Mangalem quarter climbs a steep hillside: white houses with many large rectangular windows in tidy rows, stacked closely one above another under dark terracotta roofs, with a slender white minaret among them; at the top of the hill the old stone walls of the castle. In the foreground the calm river and the riverside promenade, with one tiny figure walking along it, seen from behind. Light: warm late-afternoon light on the white walls, soft blue shadows. Palette: chalk white, terracotta, olive green, warm stone and river blue-green.",
+    "alt": "川の向こうの丘の斜面に、白い壁にたくさんの窓が並ぶ家々が重なるベラトの町並みと城の石垣の絵",
+    "photos": [
+     "site/public/guide/albania/tirana/photos/berat-mangalem-1a-5d80eeb4-500.webp"
+    ],
+    "ref": [
+     "site/public/guide/albania/tirana/photos/berat-mangalem-1a-5d80eeb4-500.webp"
+    ]
+   }
+  }
+ }
+}

@@ -13,8 +13,8 @@
 | どこ | 書いてあった | その日の実物 |
 | --- | --- | --- |
 | `docs/island-fresh.md` | 焼き込み 35本 | **38本** |
-| `CLAUDE.md` | `tools/sprites` 461本 / git 242本 | **349本 / 340本** |
-| `CLAUDE.md` | `avatars.py` は 22人ぶん落とす | **129人ぶん** |
+| `CLAUDE.md`（いまは `docs/island-verify.md`） | `tools/sprites` 461本 / git 242本 | **349本 / 340本** |
+| `CLAUDE.md`（いまは `docs/island-verify.md`） | `avatars.py` は 22人ぶん落とす | **129人ぶん** |
 | `docs/island-standards.md` | 島は 138面（料理33・伝説9） | **141面（料理39・伝説8）** |
 | `docs/island-audit.md` | `islandApi.ts` 4,215行 | **4,958行**（24日で +18%） |
 
@@ -73,6 +73,7 @@ from ts_read import (  # noqa: E402
     code_only,
     fields,
     objects,
+    read_ahead_countries,
     read_array,
     read_chapters,
     read_countries,
@@ -214,13 +215,13 @@ def _today() -> str:
 
 def n_walked() -> int:
     """歩いた国。決めは `content/walked.ts` と同じ（`-border` は数えない ＋ 旅程の入国ずみ）。"""
-    src = _read("site/content/countries.ts")
-    got = read_countries(src)
-    if got.missed:
-        raise ValueError("countries.ts を読み落とした")
+    stays = _read("site/content/stays.ts")
+    got = read_countries(_read("site/content/countries.ts"), stays)
+    if got.missed or got.stays_missed:
+        raise ValueError("countries.ts / stays.ts を読み落とした")
     done = [c for c in got.rows if not c["slug"].endswith("-border")]
     today = _today()
-    ahead = read_array(src, "AHEAD_COUNTRIES", keys=("entered",), id_key="slug").rows
+    ahead = read_ahead_countries(stays).rows
     return len(done) + len([1 for a in ahead if a["entered"] and a["entered"] <= today])
 
 
@@ -233,7 +234,8 @@ def n_recipes() -> int:
 
 
 def n_legends() -> int:
-    return len(_rows("site/content/legends.ts", "LEGENDS", "name", id_key="slug"))
+    """伝説の数。伝説は企画の表（`projects.ts`）の印なので、印の付いた行を数える（M-3）"""
+    return sum(r["legend"] == "true" for r in _rows("site/content/projects.ts", "PROJECTS", "legend", id_key="slug"))
 
 
 def n_sprite_tools() -> int:
@@ -504,9 +506,9 @@ COUNTS: dict[str, tuple[str, object, str]] = {
     "residents": ("図鑑の名簿", n_residents, "docs/island-fresh.md 2章"),
     "recipes": ("料理（スタンプ帳）", n_recipes, "docs/island-fresh.md 4章"),
     "legends": ("伝説", n_legends, "docs/island-fresh.md 6章"),
-    "sprite_tools": ("tools/sprites のファイル", n_sprite_tools, "CLAUDE.md"),
-    "sprite_tools_git": ("うち git に在るもの", n_sprite_tools_git, "CLAUDE.md"),
-    "avatars": ("avatars.py が落とす絵", n_avatars, "CLAUDE.md"),
+    "sprite_tools": ("tools/sprites のファイル", n_sprite_tools, "docs/island-verify.md 1章"),
+    "sprite_tools_git": ("うち git に在るもの", n_sprite_tools_git, "docs/island-verify.md 1章"),
+    "avatars": ("avatars.py が落とす絵", n_avatars, "docs/island-verify.md 1-1"),
     "functions_lines": ("functions/src ぜんぶ（行）", n_functions_lines, "docs/island-audit.md 2-1"),
     "island_api_lines": ("islandApi.ts（行）", n_island_api_lines, "docs/island-audit.md 2-1"),
     "outside_text_watch": (

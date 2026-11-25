@@ -187,9 +187,12 @@ function scenario(store, opt = {}) {
           // 1本だけで送る形（履歴の続き）
           rows = rows.filter((d) => String(d.data()[f0] ?? "") < d0);
         } else {
+          /* 並べ替えの欄と書類IDの2本立て（出費の `day`・島の投げ銭の
+             `paidAt`）。**欄の中身はそのまま比べる**（数を字にすると
+             `paidAt` の桁で並びが崩れる） */
           rows = rows.filter((d) => {
-            const day = String(d.data().day ?? "");
-            if (day !== d0) return day < d0;
+            const x = d.data()[f0];
+            if (x !== d0) return x < d0;
             return d.id < i0;
           });
         }
@@ -422,6 +425,70 @@ const seed = () => ({
 
 /** 焼き直しの値を取り出す。 */
 const boxOf = (s) => s.store.island?.state?.fund?.box ?? null;
+
+/**
+ * 島で受けた投げ銭（`islandSiteTips`。#1405）。**名前も額も本文も
+ * チャンネルも偽物。** 本番の支払いが2件（目標の後と前）と、机に
+ * 出してはいけないものが2件（テストの支払い・返金したもの）。
+ * 出してはいけない2件は、**どれよりも新しい時刻**に置く（並びの頭に来る）。
+ */
+const SITE = {
+  "cs_live_aaaa": {
+    livemode: true, status: "paid", amount: 1200, currency: "JPY",
+    displayNameSnapshot: "かえで", message: "ひみつの島",
+    channelId: "UC-fake-kaede", uid: "fake-uid-1",
+    paidAt: Date.parse("2026-09-10T20:15:00+09:00"),
+  },
+  "cs_live_bbbb": {
+    livemode: true, status: "paid", amount: 800, currency: "JPY",
+    displayNameSnapshot: "すぎ", message: "",
+    channelId: "UC-fake-sugi", uid: "fake-uid-2",
+    paidAt: Date.parse("2026-07-01T19:30:00+09:00"),
+  },
+  "cs_test_cccc": {
+    livemode: false, status: "paid", amount: 9999, currency: "JPY",
+    displayNameSnapshot: "テストの人", message: "テストの字",
+    channelId: "UC-fake-test", uid: "fake-uid-3",
+    paidAt: Date.parse("2026-09-12T10:00:00+09:00"),
+  },
+  "cs_live_dddd": {
+    livemode: true, status: "refunded", amount: 500, currency: "JPY",
+    displayNameSnapshot: "かえしたひと", message: "",
+    channelId: "UC-fake-back", uid: "fake-uid-4",
+    paidAt: Date.parse("2026-09-11T10:00:00+09:00"),
+  },
+};
+
+/**
+ * 島の投げ銭の入った筋書き。焼き直しの `island` は**本番で払われて、
+ * いまも paid のもの**の合計（1200 + 800）。`python/fund_daily.py` と同じ数え方
+ * @return {object} 仕込み
+ */
+const seedIsland = () => {
+  const st = seed();
+  st.islandSiteTips = structuredClone(SITE);
+  st.island.state.fund.box = {...st.island.state.fund.box, island: 2000};
+  return st;
+};
+
+/**
+ * 履歴をページを送って全部読む。
+ * @param {object} s 筋書き
+ * @param {number} limit 1ページの数
+ * @return {Promise<string[]>} 出てきた順の `種類_書類ID`
+ */
+const walk = async (s, limit) => {
+  const seen = [];
+  let before = null;
+  for (let i = 0; i < 40; i++) {
+    const r = await s.call("GET", "/fund/feed", {},
+      before ? {limit, before} : {limit});
+    seen.push(...(r.body.got ?? []).map((g) => `${g.kind}_${g.id}`));
+    if (!r.body.more) break;
+    before = r.body.next;
+  }
+  return seen;
+};
 
 console.log("\n# 1. あやと以外は、どの枝も通らない（**先に見る**）");
 {
@@ -994,6 +1061,145 @@ console.log("\n# 13. 配信側が拾うとき（古いものを出さない）")
   check("形の違う合言葉にも何も返らない", bad.seq === 0, JSON.stringify(bad));
 }
 
+console.log("\n# 14. 島の投げ銭も履歴に出る（本番で、いまも paid のものだけ）");
+{
+  const s = scenario(seedIsland());
+  const r = await s.call("GET", "/fund/feed");
+  const got = r.body.got ?? [];
+  const list = got.map((g) => `${g.kind}:${g.id}`).join(",");
+  check("島の投げ銭が履歴に出る（本番の2件）",
+    got.filter((g) => g.kind === "island").length === 2, list);
+  const one = got.find((g) => g.id === "cs_live_aaaa");
+  check("名前はアラートに出した名前・本文は払った人が書いたもの・額は払った額",
+    one?.who === "かえで" && one?.text === "ひみつの島" && one?.yen === 1200,
+    JSON.stringify(one));
+  check("時刻はスパチャ・ドネと同じ形（日本時間の ISO8601）",
+    one?.at === "2026-09-10T20:15:00+09:00" && one?.day === "2026-09-10",
+    `${one?.at} / ${one?.day}`);
+  check("同じ晩のスパチャとドネのあいだに並ぶ（20:01 → 20:15 → 20:30）",
+    got.map((g) => g.id).join(",") ===
+      ["BBBBBBBBBBBBBBBBBBBBBBBBBB", "d0001", "cs_live_aaaa",
+        "AAAAAAAAAAAAAAAAAAAAAAAAAA", "cs_live_bbbb", "d0002"].join(","),
+    got.map((g) => g.id).join(","));
+  check("テストの支払いは履歴に出ない",
+    !got.some((g) => g.id === "cs_test_cccc"), list);
+  check("返金したものは履歴に出ない",
+    !got.some((g) => g.id === "cs_live_dddd"), list);
+
+  const n = await s.call("GET", "/fund/feed", {},
+    {since: "2026-09-10T20:01:00+09:00"});
+  check("`since` を渡すと、島の投げ銭もそれより後だけ",
+    n.body.got.map((g) => g.id).sort().join(",") ===
+      ["BBBBBBBBBBBBBBBBBBBBBBBBBB", "cs_live_aaaa", "d0001"].sort().join(","),
+    n.body.got.map((g) => g.id).join(","));
+
+  const seen = await walk(s, 2);
+  check("2件ずつ送って、6件ぜんぶ1回ずつ",
+    seen.length === 6 && new Set(seen).size === 6, seen.join(","));
+
+  /* テストの支払いが、本番の1件より新しい側に150件並んだ日。
+     **絞ったあとが足りないまま混ぜると、境目より新しい島の1件が
+     次のページからも外れて二度と出てこない。** 本番の1件（9/19）は、
+     スパチャ・ドネのどれよりも新しく、テストの150件より古い所に置く */
+  const t = seedIsland();
+  t.islandSiteTips["cs_live_eeee"] = {
+    livemode: true, status: "paid", amount: 300, currency: "JPY",
+    displayNameSnapshot: "ひのき", message: "",
+    paidAt: Date.parse("2026-09-19T21:00:00+09:00"),
+  };
+  for (let i = 0; i < 150; i++) {
+    t.islandSiteTips[`cs_test_${String(i).padStart(4, "0")}`] = {
+      livemode: false, status: "paid", amount: 100, currency: "JPY",
+      displayNameSnapshot: "テストの人", message: "",
+      paidAt: Date.parse("2026-09-20T00:00:00+09:00") + i * 1000,
+    };
+  }
+  const many = await walk(scenario(t), 2);
+  check("テストの支払いが前に150件並んでも、島の1件が落ちない（送って1回ずつ）",
+    many.length === 7 && new Set(many).size === 7 &&
+    many[0] === "island_cs_live_eeee" &&
+    !many.some((x) => x.startsWith("island_cs_test_")),
+    many.join(","));
+}
+
+console.log("\n# 15. 島の投げ銭も、もう一度出せる（配信では Doneru と同じ形）");
+{
+  const s = scenario(seedIsland());
+  const r = await s.call("POST", "/fund/replay",
+    {kind: "island", id: "cs_live_aaaa", who: "にせもの", text: "配信に出したい字"});
+  check("島の1件を出すと 200", r.status === 200, String(r.status));
+  check("出すものは islandSiteTips から組んだもの（送った字は通らない）",
+    r.body.shown?.who === "かえで" && r.body.shown?.yen === 1200 &&
+    r.body.shown?.text === "ひみつの島",
+    JSON.stringify(r.body?.shown));
+  const seq = s.store.islandFundReplay["a".repeat(32)]?.seq ?? 0;
+  const got = await s.mod.replayFor("a".repeat(32), seq + 1000);
+  check("島の1件は、配信では Doneru と同じ形で出る",
+    got.show?.kind === "donation" && got.show?.who === "かえで" &&
+    got.show?.yen === 1200,
+    JSON.stringify(got));
+  const again = await s.call("POST", "/fund/replay",
+    {kind: "island", id: "cs_live_aaaa"});
+  check("島の1件も、二度押しで二度出ない", again.body.already === true,
+    JSON.stringify(again.body));
+
+  const t = scenario(seedIsland());
+  const r1 = await t.call("POST", "/fund/replay",
+    {kind: "island", id: "cs_test_cccc"});
+  check("テストの支払いは本番の配信に出さない（404・1バイトも書かない）",
+    r1.status === 404 && Object.keys(t.store.islandFundReplay).length === 0,
+    `${r1.status} ${Object.keys(t.store.islandFundReplay).join(",")}`);
+  const r2 = await t.call("POST", "/fund/replay",
+    {kind: "island", id: "cs_live_dddd"});
+  check("返金したものも出さない（404）", r2.status === 404, String(r2.status));
+  const text = [...s.logs, ...t.logs].join("\n");
+  check("ログに島の投げ銭の名前・本文・書類IDが出ていない",
+    !["かえで", "ひみつの島", "cs_live_aaaa", "1200"]
+      .some((w) => text.includes(w)),
+    text.slice(0, 160));
+}
+
+console.log("\n# 16. 内訳の5行目（島の投げ銭）。足し引きは「いま」に戻る");
+{
+  /* 仕込み: 島の投げ銭の焼き直しは 2000（9/10 の 1200 と 7/1 の 800）。
+     いま = -400 + 750 + 2000 + 1000 = 3350。
+     期間内の島は 1200（7/1 は目標 2026-07-27 の前。テストと返金は数えない）。
+     開始時点 = 3350 - 750 - 300 - 1200 + 400 = 1500
+     （目標の前に島で受けた 800 は、開始時点のうち）。 */
+  const s = scenario(seedIsland());
+  const r = await s.call("GET", "/fund/desk");
+  const sp = r.body.split;
+  check("「いま」に島の投げ銭が入る（3350）", r.body.total === 3350,
+    String(r.body?.total));
+  check("島の投げ銭は期間内だけ（1200。7月の800・テスト・返金は入らない）",
+    sp?.island === 1200, JSON.stringify(sp));
+  check("5行の足し引きが「いま」に戻る（豚に出ている額と同じ）",
+    !!sp &&
+    sp.start + sp.superchat + sp.doneru + sp.island - sp.spend === sp.total &&
+    sp.total === r.body.total,
+    JSON.stringify(sp));
+  check("開始時点は残り（1500。目標の前に島で受けた800を含む）",
+    sp?.start === 1500, String(sp?.start));
+  check("ほかの3行は島の投げ銭に動かされない（750 / 300 / 400）",
+    sp?.superchat === 750 && sp?.doneru === 300 && sp?.spend === 400,
+    JSON.stringify(sp));
+
+  const st = seedIsland();
+  st.island.state.fund.box.island = 100;
+  const r2 = await scenario(st).call("GET", "/fund/desk");
+  check("島の焼き直しが台帳より古い → `stale`（負の5行目を出さない）",
+    r2.body.splitWhy === "stale" && r2.body.split === null,
+    `${r2.body?.splitWhy} ${JSON.stringify(r2.body?.split)}`);
+
+  const r3 = await scenario(seed()).call("GET", "/fund/desk");
+  const sp3 = r3.body.split;
+  check("島の投げ銭が1件も無い日は 0円 の行で、足し引きは戻る",
+    sp3?.island === 0 &&
+    sp3.start + sp3.superchat + sp3.doneru + sp3.island - sp3.spend ===
+      r3.body.total,
+    JSON.stringify(sp3));
+}
+
 /* ---------------- 対照 ---------------- */
 
 /**
@@ -1072,7 +1278,7 @@ const BREAKS = [
   ],
   [
     "開始時点を残差で出すのをやめる（0 を置く）",
-    "const start = total - superchat - doneru + spend;",
+    "const start = total - superchat - doneru - island + spend;",
     "const start = 0;",
     "「いま」が、豚に出ている額と同じ",
   ],
@@ -1141,6 +1347,48 @@ const BREAKS = [
     "firebase_functions_1.logger.info(\"fund desk: replay queued\");",
     "firebase_functions_1.logger.info(`fund desk: replay ${shown.text}`);",
     "ログに投げ銭の本文が出ていない",
+  ],
+  [
+    "島の投げ銭を履歴に混ぜない",
+    "        island(),\n    ]);",
+    "        Promise.resolve({ rows: [], floor: null }),\n    ]);",
+    "島の投げ銭が履歴に出る（本番の2件）",
+  ],
+  [
+    "テストの支払いも島の投げ銭として数える",
+    "if (v.livemode !== true || v.status !== \"paid\")",
+    "if (v.status !== \"paid\")",
+    "テストの支払いは履歴に出ない",
+  ],
+  [
+    "絞って足りなくても、島の投げ銭を読み足さない",
+    "if (snap.size < step || rows.length > n)",
+    "if (true)",
+    "テストの支払いが前に150件並んでも、島の1件が落ちない（送って1回ずつ）",
+  ],
+  [
+    "島の1件を、配信でスパチャの形で出し直す",
+    "kind: v.kind === \"donation\" || v.kind === \"island\" ?",
+    "kind: v.kind === \"donation\" ?",
+    "島の1件は、配信では Doneru と同じ形で出る",
+  ],
+  [
+    "期間内の島の投げ銭を5行目に分けない（開始時点に入れる）",
+    "const island = islandAll - islandBefore;",
+    "const island = 0;",
+    "島の投げ銭は期間内だけ（1200。7月の800・テスト・返金は入らない）",
+  ],
+  [
+    "目標の前に島で受けたぶんを引かない",
+    "            islandBeforeOf(from),",
+    "            Promise.resolve(0),",
+    "島の投げ銭は期間内だけ（1200。7月の800・テスト・返金は入らない）",
+  ],
+  [
+    "開始時点から5行目を引かない（足し引きが「いま」に戻らない）",
+    "const start = total - superchat - doneru - island + spend;",
+    "const start = total - superchat - doneru + spend;",
+    "5行の足し引きが「いま」に戻る（豚に出ている額と同じ）",
   ],
   [
     "ログに題を出す",

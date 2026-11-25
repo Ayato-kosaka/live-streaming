@@ -9,27 +9,30 @@ import HashJump from "./HashJump";
 import { SayRoom } from "./Say";
 import { JsonLd, SITE_ROOT_LABEL, breadcrumbLd } from "@/lib/jsonld";
 import { LINKS } from "@/content/site";
-import { NEXT_MOVE, PLANS } from "@/content/plans";
-import { TRAVEL_CITIES } from "@/content/travel";
+import { STAYS } from "@/content/stays";
+/* 街の名簿は軽い1枚（`content/cities.ts`）から。`content/travel.ts` は面の一覧（`lib/pages.ts`）まで連れてくるので、
+   画面の部品（client）から読まない */
+import { CITIES } from "@/content/cities";
+import { hrefOf } from "@/content/kinds";
 import { guideStops } from "@/lib/guideStop";
 import FootGuide from "./FootGuide";
 
 const YOUTUBE = LINKS.find((l) => l.id === "youtube")?.href;
 
 /**
- * 足もとに出せる街のガイド。**滞在の表（企画のうち、つぎの国へ移ったら終わるもの）から引く**
+ * 足もとに出せる街のガイド。**滞在の表（`content/stays.ts`）から引く**
  * （`lib/guideStop.ts` の `guideStops`）。街を手で書かない。
  *
  * どれを出すかは画面が出てから選ぶ（`components/ui/FootGuide.tsx`）——ここで1本に絞って焼くと、
  * つぎの国へ移った日に前の街が残る。
  *
  * **公開前の印（`draft`）の付いた街も入れる。** 次に行く街のガイドは、印を外す前から
- * 表紙の企画の札が指している（`content/plans.ts` の `romania`）。検索・索引・`/all` に
+ * 表紙の［つぎ］の札が指している（滞在の行の `guide`）。検索・索引・`/all` に
  * 出さないのは面の側の印が受け持つ（`content/travel.ts` の `TravelCity`）。
  */
 const GUIDE_STOPS = guideStops(
-  PLANS.filter((p) => p.endsWhen === NEXT_MOVE),
-  TRAVEL_CITIES,
+  STAYS,
+  CITIES.map((c) => ({ name: c.name, href: hrefOf("/travel/<国>/<街>", c.country, c.slug) })),
 );
 
 export { ALL_HREF, ALL_LABEL };
@@ -151,54 +154,9 @@ export function Crumbs({ items }: { items: Crumb[] }) {
   );
 }
 
-export function PageHead({
-  icon,
-  emoji,
-  mark,
-  logo,
-  title,
-  lead,
-  say,
-  meta,
-}: {
-  /** 見出しの絵。島に置いてあるスプライト名。 */
-  icon?: string;
-  /** 中身そのものを表す印(国旗や料理)。UIの飾りには使わない。 */
-  /** 絵文字。もう使わない。残っているのは移行中のページだけ。 */
-  emoji?: string;
-  /** 自前の印（国旗やアイコン）。emoji の置き換え。 */
-  mark?: ReactNode;
-  /** 公式のアプリアイコンなど */
-  logo?: string;
-  /** 面の名前。**パンくずの最後と同じ字にする**（`docs/island-ux.md` 4.3）。
-      折ってよい場所を選びたい面は `Phrase` を渡す（`components/ui/Phrase.tsx`）。 */
-  title: ReactNode;
-  /** 前置き。**「いま」を言う面では、そこだけリンクを混ぜられるように節で受ける**
-      （`app/travel/parts.tsx`）。旅のあいだだけ言い方の変わる1行（`Say`）も部品で来る。
-      ほとんどの面は文字列のまま渡す。 */
-  lead?: ReactNode;
-  /** 案内役のひとこと。 */
-  say?: string;
-  meta?: ReactNode;
-}) {
-  return (
-    <div className="phead">
-      {logo && <img className="phead-logo" src={logo} alt="" />}
-      {!logo && icon && <img className="phead-icon" src={`/sprites/${icon}.webp`} alt="" />}
-      {!logo && !icon && mark && <span className="phead-mark" aria-hidden>{mark}</span>}
-      {!logo && !icon && !mark && emoji && <span className="phead-mark" aria-hidden>{emoji}</span>}
-      <h1>{title}</h1>
-      {lead && <p className="phead-lead">{lead}</p>}
-      {say && (
-        <div className="gsay phead-say">
-          <span className="gsay-bird"><Gull size={52} /></span>
-          <p className="gsay-bubble">{say}</p>
-        </div>
-      )}
-      {meta && <div className="phead-meta">{meta}</div>}
-    </div>
-  );
-}
+/* 面の頭は1枚に分けてある（画面の部品から読んでも、器の重いものを連れてこないため。`./PageHead.tsx`）。
+   server の面はいままでどおりここから読める */
+export { PageHead } from "./PageHead";
 
 /**
  * ページの終わり。島に戻ってきたところ（`docs/island-world.md` 1.6-3）。

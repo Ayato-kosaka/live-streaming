@@ -294,6 +294,24 @@ SOLO = [
     "travel/north-macedonia/skopje/clement",
     "travel/north-macedonia/skopje/debar-maalo",
     "travel/romania/bucharest",
+    "travel/serbia/belgrade",
+    "travel/albania/tirana",
+    "travel/albania/tirana/hostel",
+    "travel/albania/tirana/airport",
+    "travel/albania/tirana/gjelltore",
+    "travel/albania/tirana/mosque",
+    "travel/albania/tirana/sufllaqe",
+    "travel/albania/tirana/walk",
+    "travel/armenia/yerevan",
+    "travel/armenia/yerevan/sevan",
+    "travel/armenia/yerevan/bus",
+    "travel/armenia/yerevan/lake",
+    "travel/armenia/yerevan/cascade",
+    "travel/armenia/yerevan/memorial",
+    "travel/armenia/yerevan/bakery",
+    "travel/armenia/yerevan/market",
+    # 企画の面（面の印。M-8）。100品の窓と用語・地域・食べ比べの字で、街のガイドと同じく字の多い面（#1404）
+    "legends/india-street-food",
 ]
 
 

@@ -1,5 +1,7 @@
 # 国の案内ページの作りかた
 
+種別: 手順
+
 あやと（2026-11-06）:
 
 > できたら次回から簡単にできるように方をコツをまとめて欲しい
@@ -264,40 +266,39 @@ if miss: raise SystemExit("材料の名前が合いません: %s" % miss[:5])
 
 ## 5. トップページに出す期間を切り替える
 
-`site/components/isle/spec.ts` の `GUIDES` が1本の出どころ。
-**島の札（`guidePlace`）も、トップページの「いま」の板も、ここから引く。**
+滞在の表（`site/content/stays.ts`）の行の `guide` が1本の出どころ（#1275）。
+**島の札（`guidePlace`）も、トップページの「いま」の板も、ここから引く**（`components/isle/spec.ts` の `guidesOf`）。
 国の名前を紙のほうへ書き写すと、国を越えた日に**紙だけが前の国を指す。**
 
 ```ts
-const GUIDES: Record<string, Guide[]> = {
-  balkans: [
-    { slug: "bulgaria", name: "ブルガリア・ソフィア", href: "/travel/bulgaria/sofia", icon: "church", lead: "…" },
-    { slug: "north-macedonia", name: "北マケドニア", href: "/travel/north-macedonia", icon: "mountain", lead: "…" },
-  ],
-};
+{
+  country: "bulgaria",
+  cities: ["ソフィア"],
+  from: "2026-11-12",
+  to: "2026-11-20",
+  guide: { name: "ブルガリア・ソフィア", href: "/travel/bulgaria/sofia", lead: "…", icon: "church" },
+},
 ```
 
-**いつ出すかは、ここに書かない。** 出るのは**その国に居るあいだだけ**で、
-居るあいだは国の表（`site/content/countries.ts`）から導く——その国に入った日
-（`AHEAD_COUNTRIES` の `entered`）から、つぎの国に入った前の日まで。
-つぎの国がまだ表に無ければ、開いたまま。
+**いつ出すかは `guide` に書かない。** 出るのは**その滞在のあいだだけ**で、
+その行の `from`（着いた日）から、つぎの行の `from` の前の日まで（`to` が入っていれば、その早いほう）。
+つぎの行がまだ無ければ、開いたまま。章は行の期間で決まる（`site/content/stayChapters.ts`）。
 
-- **行を足すのは、国を `AHEAD_COUNTRIES` に足すのと同じ変更で**（＝入った日に）。
-  片方だけだと——
-  - 行だけ足した → その案内は1日も当たらない。`python/upkeep_watch.py` の
-    引き金「案内している国」がこちらに鳴る
-  - 国だけ足した → 表紙から案内が消える。面（`site/app/travel/<国>/`）が在るのに行が無ければ
-    `site/selftest/islechapter_selftest.mjs` が落ちる
+- **国を移った日に直すのは、この表だけ。** いまの行の `to` に出た日を入れ、つぎの国の行を足す
+  （面が在れば `guide` も）。記録（`countries.ts`）をまだ書かない国は、行に `name` を持たせる。
+  1行足すだけで歩いた国の数・章の国・案内が動くことは `site/selftest/stays_table_selftest.mjs` が見る
+- 面（`site/app/travel/<国>/`）が在るのに `guide` が無ければ
+  `site/selftest/islechapter_selftest.mjs` が落ちる
 - **居る国に案内の面が無ければ、何も出ない。** 前の国へは戻さない
   （もう居ない国の歩きかたを「いま」に出さない）
 - **期間を手で書かない。** 前は行ごとに `from`〜`to` を書いて、期間の無い行を
   「戻る先」にしていた。「一週間ほど」を `to: "2026-11-19"` と書いたら、
   出る日が決まらないまま 11-20 に前の国の案内へ戻る形になった（#664）。
-  同じ事実（いつどの国に入ったか）は国の表がもう持っている
+  同じ事実（いつどの国に入ったか）は滞在の行がもう持っている
 
 **入れ替わりを、焼いた日で決めない。** 島は静的書き出しなので、面に直に書くと
 ビルドした日の国が焼き込まれて、次のビルドまで直らない。
-**画面が出てから**今日の日付で選び直す部品を通す（`components/live/GuideLink.tsx`）。
+**画面が出てから**今日の日付で選び直す部品を通す（`components/live/NextUp.tsx`）。
 最初の1枚は焼いた日（`BUILT_AT`）で出す——ここで `new Date()` を呼ぶと、
 焼いた HTML とブラウザの最初の描画が別の国を指して、1フレームだけ違う札が出る。
 
@@ -316,7 +317,7 @@ const GUIDES: Record<string, Guide[]> = {
 
 | | どこ | 歩き終わった国（`COUNTRIES`） | 行く前の案内だけの国 | 忘れるとどうなるか |
 | --- | --- | --- | --- | --- |
-| 1 | 名簿 | `site/content/countries.ts` の `COUNTRIES` に1行（面は `app/travel/[slug]` からひとりでに立つ） | `site/content/travel.ts` の `GUIDE_ONLY` に1行（国は `AHEAD_COUNTRIES` に居ること） | 面が立たない／名簿に無い面は書き出しが止まる |
+| 1 | 名簿 | `site/content/countries.ts` の `COUNTRY_RECORDS` に1行（面は `app/travel/[slug]` からひとりでに立つ。滞在は `stays.ts` の行から引く） | `site/content/travel.ts` の `GUIDE_ONLY` に1行（国は `stays.ts` に `name` つきの行で居ること＝`AHEAD_COUNTRIES`） | 面が立たない／名簿に無い面は書き出しが止まる |
 | 2 | 面 | 要らない | `site/app/travel/<国>/page.tsx` ＋ `<国>.css`。顔と道は `travelShare` `travelCrumbs` から | — |
 | 3 | `/all` の棚 | 要らない（歩いた国の棚に名簿から並ぶ） | `site/content/directory.ts` に棚（探し言葉は人が書く） | **書き出しが止まる**（`directory.ts` の最後） |
 | 4 | 中身の本の仕分け | 要らない（`countries.ts` は載っている） | `python/stale_content_watch.py` の `BOOKS` | 「仕分けを決めて足してください」で止まる |
@@ -326,7 +327,12 @@ const GUIDES: Record<string, Guide[]> = {
 貼られたときの絵は区画の1枚（`map`）を使うので、国ごとには焼かない。自前の絵を持たせるときだけ
 `site/lib/ogCards.json` ＋ `tools/sprites/ogcards.mjs` の物3つと、名簿の `card` を足す（北マケドニアがそれ）。
 
-もう手で書かなくてよくなったもの: `site/app/sitemap.ts`（名簿から並ぶ。字で書くと2回載って書き出しが止まる）・
+**街の面（`/travel/<国>/<街>`）を足すとき**は、街の名簿 `site/content/cities.ts` に1行（`country` `slug` `name`）と、
+滞在の表 `site/content/stays.ts` のその国の行の `cities` に、**街の名前ではなく slug** を書く（#1357。名前のまま残すと
+書き出しが止まる）。国の面の「行った街」のカード・街の面の札（いつ居たか・旅・企画・料理）は、この slug で結ばれる。
+記事（`/travel/<国>/<街>/<話>`）は今までどおり `site/content/travel.ts` の `ARTICLES` に1行。
+
+もう手で書かなくてよくなったもの: `site/app/sitemap.ts`（種類の表 `site/lib/pages.ts` から並ぶ。字で書くと2回載って書き出しが止まる）・
 `site/components/island/layout.ts` の `under`（`/travel` の下は「歩いた国」の軒にひとりでに入る）。
 
 **道を動かしたら、前の道を 301 で新しい道へ送る**（`firebase.json` の `redirects`）。送り忘れは

@@ -503,18 +503,16 @@
    章の切りかえ
    --------------------------------------------------------- */
 
-/* 4つを1行に収める。2行に折り返すと、地図の上の押しどころが
-   縦に 104px を取って、肝心の地図が画面の外へ落ちる。
-   幅は中身の長さの比で分ける（flex: 1 1 auto）。「中東」だけ
-   極端に細くならないよう、最小の幅を指1本ぶんで止めておく。 */
+/* 「ぜんぶ」と旅5つ（`components/atlas/WorldRoute.tsx` の `TRIP_TABS`）。スマホでは3つずつ2段に並べる。
+   1行に6つは入らない（旅の名前が7〜8字ある）。横に流すと、端の旅が画面の外に隠れて押せることに気づけない。
+   **旅の名前は「周遊」の前でだけ折る**（`<wbr>` と `keep-all`）。字の途中で折ると「バルカン諸国周 / 遊」になる */
 .amap-tabs {
-  display: flex;
-  flex-wrap: nowrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--sp-2);
   margin: 0 0 12px;
 }
 .amap-tab {
-  flex: 1 1 auto;
   min-width: 48px;
   display: inline-flex;
   align-items: center;
@@ -522,8 +520,10 @@
   gap: 6px;
   /* 指で押せる最小 48px。48px の押しものの厚みは 6px */
   min-height: 48px;
-  padding: 0 var(--sp-2);
-  white-space: nowrap;
+  padding: 4px var(--sp-2);
+  word-break: keep-all;
+  line-height: 1.15;
+  text-align: center;
   border-radius: 999px;
   background: var(--paper);
   color: var(--ink-2);
@@ -637,8 +637,8 @@
   .apin-name { font-size: var(--fs-body); bottom: 40px; }
   .acity b { font-size: var(--fs-min); }
   /* 広い画面では折り返す心配が無いので、中身なりの幅に戻す。 */
-  .amap-tabs { flex-wrap: wrap; }
-  .amap-tab { flex: none; font-size: var(--fs-body); padding: 0 22px; }
+  .amap-tabs { display: flex; flex-wrap: wrap; }
+  .amap-tab { flex: none; font-size: var(--fs-body); padding: 0 22px; white-space: nowrap; }
 }
 
 /* ---------------------------------------------------------
@@ -738,6 +738,19 @@
   background: var(--accent-deep) !important;
   color: #fff !important;
 }
+
+/* 束の頭の、旅の島へのリンク（`app/travel/parts.tsx` の `TripList`）。国の札の列の上に1本 */
+.atrip-isle { margin: 4px 0 6px; }
+/* 枝の旅（イランまで歩く）。親の束の中で、本線の国の列のあとに少し下げて置く。
+   左の罫は「本線から逸れた道」の印で、押しものではないので厚みを付けない */
+.atrip-branch {
+  margin: 4px 0 0 8px;
+  padding-left: 12px;
+  border-left: 3px dashed var(--rule);
+}
+
+/* 国の面の頭の「どの旅で行ったか」の札（`app/travel/record.tsx`）。押すと旅の島へ */
+.apass-trips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
 
 /* ---------------------------------------------------------
    国のページ

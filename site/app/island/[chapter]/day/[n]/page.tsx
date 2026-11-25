@@ -48,7 +48,7 @@ import { SUN_CITIES, sunOn } from "@/content/nordicSun";
 import { shopsOf } from "@/content/nordicShops";
 import { foodsOf } from "@/content/nordicFood";
 import { travelHref } from "@/content/travelPath";
-import { chapterCrumbs, chapterOf } from "@/content/chapters";
+import { crumbsOf } from "@/lib/pages";
 
 /**
  * 1日ぶんのページ。**この企画でいちばん詳しく読めるところ。**
@@ -550,7 +550,7 @@ export default async function NordicDayPage({ params }: { params: Promise<{ chap
   ];
 
   return (
-    <PageShell crumbs={chapterCrumbs(chapterOf(DAY_CHAPTER), { label: dayName(day) })}>
+    <PageShell crumbs={crumbsOf(dayHref(day))}>
       {/* その日の記録の名札（#1262）。日付は面の頭に見えているその日 */}
       {day.date && (
         <JsonLd

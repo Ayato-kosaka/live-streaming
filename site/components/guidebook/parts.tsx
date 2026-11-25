@@ -9,7 +9,7 @@ import type { Fact, Flags, Local, Mark, Pic, Src } from "@/content/guidebook/typ
  */
 
 /** 窓の id。**節ごとに頭の字を決める**（`#do-<id>` が URL のハッシュになる） */
-export const sheetId = (sec: "do" | "see" | "eat" | "buy" | "area" | "guide", id: string) => `${sec}-${id}`;
+export const sheetId = (sec: "do" | "see" | "eat" | "buy" | "area" | "guide" | "dish" | "word" | "sight", id: string) => `${sec}-${id}`;
 
 /** 星の言葉（1＝必見）。`rank` の数だけ★を塗るのではない（`docs/country-guide.md` 8章） */
 export const STAR = ["", "必見", "行けたら", "余裕があれば"] as const;
@@ -142,7 +142,7 @@ export function LocalName({ l, full }: { l?: Local; full?: boolean }) {
  * 「肉」と「豚」の違いが出ない。読み上げには長い名前で渡す。
  */
 export function FlagMarks({ f, big }: { f?: Flags; big?: boolean }) {
-  if (!f?.pork && !f?.alcohol) return null;
+  if (!f?.pork && !f?.alcohol && !f?.beef) return null;
   return (
     <span className={`gb-flags${big ? " is-big" : ""}`}>
       {f.pork && (
@@ -157,6 +157,14 @@ export function FlagMarks({ f, big }: { f?: Flags; big?: boolean }) {
           <b aria-hidden="true">酒</b>
           <span className="sr-only">アルコールあり</span>
           {big && <i>アルコールあり</i>}
+        </span>
+      )}
+      {/* 牛肉（企画の面のインド。ケーララのビーフ・フライ）。豚と同じく事実の印で、窓の中だけ（#1404 企画書7章） */}
+      {f.beef && (
+        <span className="gb-flag is-beef" title="牛肉あり">
+          <b aria-hidden="true">牛</b>
+          <span className="sr-only">牛肉あり</span>
+          {big && <i>牛肉あり</i>}
         </span>
       )}
     </span>
@@ -213,6 +221,8 @@ export function MapsLink({ href, of, label = "Google マップで開く" }: { hr
 /**
  * 窓の終わりの出どころ（その1件のぶんだけ）。面の終わりには全部の一覧がある。
  * 見た日（`Src.seen`）が在れば、いちばん新しい日を1つだけ添える（外の事実は「いつ見た字か」まで出す。`docs/country-guide.md` 1-2）
+ * リンクの字は外の記事の題をそのまま引いたもの（「〜おすすめ10選」も他人の字）。`data-quote="src"` は見張り（`python/guide_watch.py`）への目印で、
+ * 口調の見張りはこのリンクの字だけを飛ばす
  */
 export function SrcLine({ src, of }: { src: Src[]; of: string }) {
   if (!src.length) return null;
@@ -221,7 +231,14 @@ export function SrcLine({ src, of }: { src: Src[]; of: string }) {
     <p className="gb-src">
       <span>出どころ</span>
       {src.map((s, i) => (
-        <a key={s.url} href={s.url} target="_blank" rel="noreferrer" aria-label={`${of}の出どころ（${s.name}${src.length > 1 ? `・${i + 1}` : ""}）`}>
+        <a
+          key={s.url}
+          href={s.url}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`${of}の出どころ（${s.name}${src.length > 1 ? `・${i + 1}` : ""}）`}
+          data-quote="src"
+        >
           {s.name}
         </a>
       ))}

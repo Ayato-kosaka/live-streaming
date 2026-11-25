@@ -123,18 +123,18 @@ if (BREAK === "drop") {
 /** 並びの本。`[ファイル, 並びの名前, 1件を名乗る欄, 誰が読むか]` */
 const ARRAYS = [
   ["site/content/residents.ts", "RESIDENTS", "icon", "charfit / asme / asme202 / clutter"],
-  ["site/content/themes.ts", "THEMES", "id", "asme / boardseed"],
+  ["site/content/themes.ts", "THEME_ROWS", "id", "asme / boardseed / nextempty"],
   ["site/content/chapters.ts", "CHAPTERS", "slug", "orphanpage / chapterkey / isleart"],
-  ["site/content/countries.ts", "COUNTRIES", "slug", "walkedcount"],
-  ["site/content/countries.ts", "AHEAD_COUNTRIES", "slug", "walkedcount"],
+  ["site/content/countries.ts", "COUNTRY_RECORDS", "slug", "walkedcount / countryart"],
+  // 滞在の表（#1275）。`AHEAD_COUNTRIES` はここの `name` を持つ行から引いている
+  ["site/content/stays.ts", "STAYS", "country", "walkedcount / countryart / islechapter_selftest"],
   ["site/content/nordic.ts", "ROUTE", "id", "walkedcount"],
-  ["site/content/plans.ts", "PLANS", "id", "nextempty"],
-  ["site/content/travel.ts", "CITIES", "slug", "guidestop"],
+  ["site/content/cities.ts", "CITIES", "slug", "guidestop / sitemapgap"],
   ["site/content/recipes.ts", "RECIPES", "slug", "manifest / heroicon"],
-  ["site/content/legends.ts", "LEGENDS", "slug", "manifest / heroicon"],
+  ["site/content/projects.ts", "PROJECTS", "slug", "manifest / heroicon / nextempty"],
   ["site/content/streamTypes.ts", "STREAM_TYPES", "slug", "manifest / heroicon"],
   // 焼き込みではないが、**同じ形の危うさ**を持っていたので一緒に寄せた
-  ["site/components/island/layout.ts", "PLACES", "id", "here_selftest"],
+  ["site/components/island/layout.ts", "PLACES", "id", "here_selftest / navband"],
 ];
 
 /** 表の本（`Record<string, X>`）。鍵の数だけ見る */
@@ -180,12 +180,12 @@ const LEGACY = {
   },
   // ここだけ**数ではなく答え**で見る。昔の読み方は「`export const THEMES` から
   // 先で最初に当たった `id:`」なので、件数は変わらないまま**別の宛先**を返す
-  "site/content/themes.ts|THEMES": {
+  "site/content/themes.ts|THEME_ROWS": {
     who: "asme:143 / boardseed:47",
     re: /id:\s*"([a-z][a-z0-9-]*)"/g,
     how: "gapwrong",
     pick: (s) =>
-      s.slice(s.indexOf("export const THEMES")).match(/id:\s*"([a-z][a-z0-9-]*)"/)?.[1] ?? "",
+      s.slice(s.indexOf("const THEME_ROWS")).match(/id:\s*"([a-z][a-z0-9-]*)"/)?.[1] ?? "",
   },
   "site/content/chapters.ts|CHAPTERS": {
     who: "chapterkey_selftest:168 / isleart_selftest:128",
@@ -193,15 +193,16 @@ const LEGACY = {
     how: "nest",
     nest: '\n    sub: {\n    slug: "ghost",\n    },',
   },
-  "site/content/countries.ts|COUNTRIES": {
+  "site/content/countries.ts|COUNTRY_RECORDS": {
     who: "walkedcount:78",
     re: /^    slug: "([^"]+)",$/gm,
     how: "nest",
     nest: '\n    sub: {\n    slug: "ghost",\n    },',
   },
-  "site/content/countries.ts|AHEAD_COUNTRIES": {
+  // 昔の `AHEAD_COUNTRIES` を1行ずつ当てていた読み方（walkedcount:80）。いまは滞在の表の1行
+  "site/content/stays.ts|STAYS": {
     who: "walkedcount:80",
-    re: /\{ slug: "([^"]+)", name: "[^"]+", entered: "(\d{4}-\d{2}-\d{2})" \}/g,
+    re: /\{ country: "([^"]+)", cities: \[[^\]]*\], from: "(\d{4}-\d{2}-\d{2})"/g,
     how: "gap",
   },
   "site/content/nordic.ts|ROUTE": {
@@ -209,12 +210,6 @@ const LEGACY = {
     re: /^\s*date: "(\d{4}-\d{2}-\d{2})",/gm,
     how: "nest",
     nest: '\n    sub: {\n    date: "2099-01-01",\n    },',
-  },
-  "site/content/plans.ts|PLANS": {
-    who: "nextempty:72",
-    re: /^\s*date:\s*"(20\d\d-\d\d-\d\d)"/gm,
-    how: "nest",
-    nest: '\n    sub: {\n      date: "2099-01-01",\n    },',
   },
   "site/content/recipes.ts|RECIPES": {
     who: "manifest:961 / heroicon_selftest:52",

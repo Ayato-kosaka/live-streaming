@@ -1,0 +1,619 @@
+{
+ "style": "A square 1:1 food photograph (1024x1024) for a travel guidebook series of 100 Indian and Sri Lankan street dishes. Every image in the series uses this exact setup: camera at a 45-degree overhead angle; the food centered and filling about 60% of the frame; a warm light-oak wooden table, bare, and nothing else on the table unless described; soft natural daylight from the upper left, gentle soft shadows, bright and airy, warm cozy color grading; the far side of the table fades into a soft blur. Serve each dish in the vessel described (steel plate, banana leaf, leaf bowl, unglazed clay cup); otherwise plain off-white stoneware. Paper wrappers and cones are plain brown paper with no print. No hands, no people. No cloth of any kind: no napkin, no handkerchief, no tablecloth, no placemat, no tea towel, no fabric under or beside the subject; the bare wooden table only. Absolutely no text anywhere: no letters, no numbers, no words, no labels, no signs with writing, no logos, no watermark.",
+ "cover": {
+  "draw": "Wide landscape illustration (3:2) in the island's warm hand-painted style: a lively Mumbai street-food stall at dusk, a big iron wok of golden frying potato fritters, stacks of soft bread rolls, small glasses of steaming milky tea, warm hanging bulbs, a few cheerful passers-by. In the foreground Ayato stands in front of the stall seen from behind, drawn the same way as on the island's other covers. Keep the top third a calm dusk sky for the title, which we bake ourselves. No text, no signboards with writing."
+ },
+ "map": {
+  "draw": "A picture map of India and Sri Lanka in the island's warm hand-painted style, traced over OpenStreetMap coastlines and borders. Five regions in five soft colours: north India (wheat gold), west India (peanut brown), east India (mustard yellow), south India (coconut white with banana-leaf green), Sri Lanka (red-rice red). One tiny food icon per region (naan, vada pav, fish curry, dosa, hopper). A thin dotted travel line linking the 13 route cities in order. No text, no legend, no compass letters, no title.",
+  "regions": [
+   "north",
+   "west",
+   "east",
+   "south",
+   "srilanka"
+  ],
+  "labels": "地名はこちらで焼く"
+ },
+ "dishes": [
+  {
+   "id": "vada-pav",
+   "title": "ヴァダパオ",
+   "draw": "two vada pav: golden fried potato fritters tucked into soft white bread rolls, green chutney and red garlic powder visible, two fried green chillies on the side, on a small steel plate",
+   "ref": "https://en.wikipedia.org/wiki/Vada_pav"
+  },
+  {
+   "id": "pav-bhaji",
+   "title": "パオバジ",
+   "draw": "a steel plate with a mound of orange-red mashed vegetable curry topped with a melting pat of butter, two butter-toasted bread rolls, chopped raw onion and a lemon wedge",
+   "ref": "https://en.wikipedia.org/wiki/Pav_bhaji"
+  },
+  {
+   "id": "misal-pav",
+   "title": "ミサル・パオ",
+   "draw": "a steel bowl of sprouted bean curry under a layer of fiery red oil gravy, topped with crunchy yellow fried noodles and chopped onion, two bread rolls and a small bowl of extra red gravy beside it",
+   "ref": "https://en.wikipedia.org/wiki/Misal_pav"
+  },
+  {
+   "id": "gujarati-thali",
+   "title": "グジャラート・ターリー",
+   "draw": "a large round silver thali ringed with many small silver bowls of yellow dal, white kadhi and colourful vegetable dishes, with yellow steamed dhokla, fried snacks, thin rotis, rice and a small sweet in the centre",
+   "ref": "https://en.wikipedia.org/wiki/Gujarati_cuisine"
+  },
+  {
+   "id": "berry-pulao",
+   "title": "ベリー・プラオ",
+   "draw": "a white plate piled with saffron-yellow and white rice studded with small red barberries, fried onions and cashews, with a reddish chicken curry peeking out from beneath",
+   "ref": "https://en.wikipedia.org/wiki/Parsi_cuisine"
+  },
+  {
+   "id": "bhel-puri",
+   "title": "ベルプリ",
+   "draw": "a plain paper plate heaped with puffed rice tossed with thin yellow fried noodles, chopped onion and tomato, brown tamarind and green chutney, coriander leaves on top, a flat puri stuck in as a spoon",
+   "ref": "https://en.wikipedia.org/wiki/Bhelpuri"
+  },
+  {
+   "id": "pani-puri-mumbai",
+   "title": "パニプリ",
+   "draw": "six small hollow golden puris on a steel plate, two of them filled with white pea curry, a small steel cup of green mint water and a cup of brown tamarind water beside them",
+   "ref": "https://en.wikipedia.org/wiki/Panipuri"
+  },
+  {
+   "id": "bun-maska-irani-chai",
+   "title": "ブンマスカとイラニ・チャイ",
+   "draw": "a soft round bun split open with a thick slab of butter inside, on a white saucer, next to a short glass of milky tan tea, on a white marble cafe table",
+   "ref": "https://en.wikipedia.org/wiki/Irani_caf%C3%A9"
+  },
+  {
+   "id": "keema-pav",
+   "title": "キーマパオ",
+   "draw": "a small steel bowl of brown spiced minced-meat curry with green peas and a sunny fried egg on top, two butter-toasted bread rolls beside it, on a white marble table",
+   "ref": "https://en.wikipedia.org/wiki/Keema"
+  },
+  {
+   "id": "goan-fish-thali",
+   "title": "フィッシュ・ターリー",
+   "draw": "a steel thali with a crisp semolina-crusted fried mackerel, a bowl of orange coconut fish curry, a mound of red parboiled rice, a small glass of pale pink kokum drink and a little pickle",
+   "ref": "https://en.wikipedia.org/wiki/Goan_cuisine"
+  },
+  {
+   "id": "pork-vindaloo",
+   "title": "ポーク・ヴィンダルー",
+   "draw": "a deep red, glossy pork curry with tender chunks of pork in an off-white bowl, a small dish of white rice and a Goan bread roll beside it",
+   "ref": "https://en.wikipedia.org/wiki/Vindaloo"
+  },
+  {
+   "id": "choris-pao",
+   "title": "チョリス・パオ",
+   "draw": "a crusty round Goan bread roll split open and stuffed with crumbly red spiced pork sausage and sliced onion, on a small steel plate",
+   "ref": "https://en.wikipedia.org/wiki/Goan_cuisine"
+  },
+  {
+   "id": "ros-omelette",
+   "title": "ロス・オムレツ",
+   "draw": "a folded yellow omelette drowned in brown coconut chicken curry gravy on a steel plate, chopped onion and coriander on top, a round Goan bread beside it",
+   "ref": "https://en.wikipedia.org/wiki/Goan_cuisine"
+  },
+  {
+   "id": "chicken-xacuti",
+   "title": "チキン・シャクティ",
+   "draw": "a bowl of thick dark-brown roasted-coconut chicken curry with a few curry leaves, a round Goan bread roll and a small mound of rice beside it",
+   "ref": "https://en.wikipedia.org/wiki/Xacuti"
+  },
+  {
+   "id": "bebinca",
+   "title": "ベビンカ",
+   "draw": "two slices of layered caramel-brown and golden cake showing many thin stripes, on a small off-white plate",
+   "ref": "https://en.wikipedia.org/wiki/Bebinca"
+  },
+  {
+   "id": "appam-stew",
+   "title": "アッパムとシチュー",
+   "draw": "two bowl-shaped rice pancakes with lacy crisp golden edges and soft white centres on a plate, a bowl of creamy white coconut chicken stew with potato and curry leaves beside them",
+   "ref": "https://en.wikipedia.org/wiki/Appam"
+  },
+  {
+   "id": "karimeen-pollichathu",
+   "title": "カリミーン・ポリチャトゥ",
+   "draw": "an opened charred banana-leaf parcel revealing a whole small flat fish coated in thick red-brown onion and tomato masala, on an off-white plate",
+   "ref": "https://en.wikipedia.org/wiki/Karimeen"
+  },
+  {
+   "id": "beef-fry-parotta",
+   "title": "ビーフ・フライとパロッタ",
+   "draw": "a plate of dark-brown dry-fried beef pieces with slivers of coconut and curry leaves, two flaky layered round parottas beside it",
+   "ref": "https://en.wikipedia.org/wiki/Kerala_cuisine"
+  },
+  {
+   "id": "thalassery-biryani",
+   "title": "タラッセリーのビリヤニ",
+   "draw": "a mound of short-grain fragrant rice biryani with a chicken leg, golden fried onions, cashews and raisins on top, on an off-white plate, a small bowl of white raita beside it",
+   "ref": "https://en.wikipedia.org/wiki/Thalassery_biryani"
+  },
+  {
+   "id": "puttu-kadala",
+   "title": "プットゥとカダラ・カレー",
+   "draw": "a white cylinder of steamed rice flour striped with grated coconut layers on a plate, a bowl of dark brown black-chickpea curry and a small banana beside it",
+   "ref": "https://en.wikipedia.org/wiki/Puttu"
+  },
+  {
+   "id": "kerala-sadya",
+   "title": "サディヤ",
+   "draw": "a long green banana leaf with a mound of rice and about twenty small portions of colourful vegetable dishes, yellow banana chips, pickles and a papad arranged around it",
+   "ref": "https://en.wikipedia.org/wiki/Sadhya"
+  },
+  {
+   "id": "kappa-meen-curry",
+   "title": "カッパとミーン・カレー",
+   "draw": "a mound of pale yellow mashed cassava on a plate next to a bowl of fiery red fish curry with chunks of fish",
+   "ref": "https://en.wikipedia.org/wiki/Cassava"
+  },
+  {
+   "id": "pazham-pori",
+   "title": "パザム・ポリ",
+   "draw": "three long golden batter-fried plantain slices on a plain plate, a small glass of milky tea beside them",
+   "ref": "https://en.wikipedia.org/wiki/Pazham_pori"
+  },
+  {
+   "id": "kari-dosai",
+   "title": "カリ・ドーサイ",
+   "draw": "a thick round dosa topped with a layer of egg and dark minced-meat masala, crisp brown edges, on a banana leaf on a steel plate, with small bowls of gravy",
+   "ref": "https://en.wikipedia.org/wiki/Dosa_(food)"
+  },
+  {
+   "id": "bun-parotta",
+   "title": "ブン・パロッタ",
+   "draw": "two tall, puffy, round layered flatbreads, one torn open to show flaky layers, on a banana leaf, with a bowl of orange chicken salna",
+   "ref": "https://en.wikipedia.org/wiki/Parotta"
+  },
+  {
+   "id": "kothu-parotta",
+   "title": "コットゥ・パロッタ",
+   "draw": "a heap of finely chopped flatbread stir-fried with egg, onion and curry leaves, glistening with gravy, on a steel plate, a small bowl of raita beside it",
+   "ref": "https://en.wikipedia.org/wiki/Kothu_parotta"
+  },
+  {
+   "id": "jigarthanda",
+   "title": "ジガルタンダ",
+   "draw": "a tall glass of creamy pinkish-beige milk drink with clear jelly bits, topped with a scoop of vanilla ice cream, on a steel saucer",
+   "ref": "https://en.wikipedia.org/wiki/Jigarthanda_(drink)"
+  },
+  {
+   "id": "murugan-idli",
+   "title": "イドリ",
+   "draw": "three soft white round steamed rice cakes on a banana leaf, with four small mounds of chutney in white, red, green and pale yellow, and a little reddish spice powder with oil",
+   "ref": "https://en.wikipedia.org/wiki/Idli"
+  },
+  {
+   "id": "banana-leaf-meals",
+   "title": "ミールス",
+   "draw": "a banana leaf with a mound of white rice, small heaps of three vegetable dishes, a crisp papad, a dab of pickle, and small steel cups of sambar, rasam and curd",
+   "ref": "https://en.wikipedia.org/wiki/South_Indian_cuisine"
+  },
+  {
+   "id": "idli-sambar-chennai",
+   "title": "サンバル・イドリ",
+   "draw": "two white idlis drowned in orange-brown lentil sambar in a deep steel bowl, a small cup of white coconut chutney beside it",
+   "ref": "https://en.wikipedia.org/wiki/Idli"
+  },
+  {
+   "id": "filter-coffee",
+   "title": "フィルター・コーヒー",
+   "draw": "a frothy milky coffee in a small stainless steel tumbler set inside a wide steel bowl-saucer (dabara)",
+   "ref": "https://en.wikipedia.org/wiki/Indian_filter_coffee"
+  },
+  {
+   "id": "chicken-65",
+   "title": "チキン65",
+   "draw": "a pile of deep-red crispy fried chicken pieces with fried curry leaves and green chillies, onion rings and a lemon wedge, on an off-white plate",
+   "ref": "https://en.wikipedia.org/wiki/Chicken_65"
+  },
+  {
+   "id": "atho",
+   "title": "アト",
+   "draw": "a plate of cold noodles tossed with shredded cabbage, onion, crispy fried garlic and red chilli, with a small bowl of clear broth beside it",
+   "ref": "https://en.wikipedia.org/wiki/Atho"
+  },
+  {
+   "id": "chettinad-chicken",
+   "title": "チェティナード・チキン",
+   "draw": "a bowl of thick dark-brown peppery chicken curry with curry leaves and whole spices, a flaky parotta beside it",
+   "ref": "https://en.wikipedia.org/wiki/Chettinad_cuisine"
+  },
+  {
+   "id": "ambur-biryani",
+   "title": "アンブールのビリヤニ",
+   "draw": "a mound of short-grain reddish-brown biryani with mutton pieces on a banana leaf, a small bowl of onion raita and a bowl of brinjal curry beside it",
+   "ref": "https://en.wikipedia.org/wiki/Biryani"
+  },
+  {
+   "id": "hyderabadi-biryani",
+   "title": "ハイデラバードのビリヤニ",
+   "draw": "a generous mound of long-grain saffron and white basmati rice biryani with tender mutton pieces, fried onions and mint, on a plate, with small bowls of green chilli gravy and raita",
+   "ref": "https://en.wikipedia.org/wiki/Hyderabadi_biryani"
+  },
+  {
+   "id": "haleem",
+   "title": "ハリーム",
+   "draw": "a bowl of thick, smooth brown meat-and-wheat porridge glistening with ghee, topped with crispy fried onions, mint leaves and a lemon wedge",
+   "ref": "https://en.wikipedia.org/wiki/Hyderabadi_haleem"
+  },
+  {
+   "id": "irani-chai-osmania",
+   "title": "イラニ・チャイとオスマニア・ビスケット",
+   "draw": "a small cup of thick milky tea on a saucer with three round pale golden butter biscuits beside it",
+   "ref": "https://en.wikipedia.org/wiki/Irani_caf%C3%A9"
+  },
+  {
+   "id": "nihari-paya-hyderabad",
+   "title": "マライ・パヤ",
+   "draw": "a bowl of creamy pale-brown trotter soup with a swirl of cream and fried onions, a soft flatbread beside it",
+   "ref": "https://en.wikipedia.org/wiki/Paya_(food)"
+  },
+  {
+   "id": "benne-masala-dosa",
+   "title": "ベンネ・マサラ・ドーサ",
+   "draw": "a thick golden-brown buttery dosa folded over a yellow potato filling, glistening with butter, on a steel plate with a small cup of white coconut chutney",
+   "ref": "https://en.wikipedia.org/wiki/Masala_dosa"
+  },
+  {
+   "id": "kathi-roll",
+   "title": "カティ・ロール",
+   "draw": "a fat flaky paratha roll wrapped in plain brown paper, cut to show egg, chunks of grilled chicken kebab, onion and green chilli inside",
+   "ref": "https://en.wikipedia.org/wiki/Kati_roll"
+  },
+  {
+   "id": "puchka",
+   "title": "プチュカ",
+   "draw": "small crisp darker wholewheat puris filled with mashed potato and green chilli, on a small leaf bowl, next to a steel cup of dark tamarind water and a green lime",
+   "ref": "https://en.wikipedia.org/wiki/Panipuri"
+  },
+  {
+   "id": "jhalmuri",
+   "title": "ジャルムリ",
+   "draw": "a plain brown paper cone overflowing with puffed rice mixed with chopped onion, cucumber, peanuts, green chilli and coriander",
+   "ref": "https://en.wikipedia.org/wiki/Jhal_muri"
+  },
+  {
+   "id": "kochuri-alur-torkari",
+   "title": "コチュリとアルール・トルカリ",
+   "draw": "four small puffy golden fried breads on a sal-leaf plate with a small bowl of yellow-brown potato curry",
+   "ref": "https://en.wikipedia.org/wiki/Kachori"
+  },
+  {
+   "id": "kolkata-biryani",
+   "title": "コルカタのビリヤニ",
+   "draw": "a mound of fragrant white and saffron basmati biryani with a whole golden potato, a halved boiled egg and a piece of mutton, on an off-white plate",
+   "ref": "https://en.wikipedia.org/wiki/Kolkata_biryani"
+  },
+  {
+   "id": "mutton-chaap",
+   "title": "マトン・チャープ",
+   "draw": "two pieces of mutton ribs in a rich glossy orange-brown gravy with a layer of red oil on top, in an off-white bowl",
+   "ref": "https://en.wikipedia.org/wiki/Mughlai_cuisine"
+  },
+  {
+   "id": "kosha-mangsho",
+   "title": "コシャ・マンショ",
+   "draw": "a bowl of very dark, thick, glossy mutton curry with a potato, next to three small puffed white fried breads",
+   "ref": "https://en.wikipedia.org/wiki/Kosha_mangsho"
+  },
+  {
+   "id": "pice-hotel-thali",
+   "title": "パイス・ホテルの魚定食",
+   "draw": "a round steel plate lined with a banana leaf: white rice, yellow dal in a small bowl, a fried vegetable, and a bowl of mustard-yellow river-fish curry with a fish steak",
+   "ref": "https://en.wikipedia.org/wiki/Bengali_cuisine"
+  },
+  {
+   "id": "shorshe-maach",
+   "title": "ショルシェ・マーチ",
+   "draw": "a fish steak in thick bright mustard-yellow sauce with slit green chillies, in an off-white bowl, a small mound of white rice beside it",
+   "ref": "https://en.wikipedia.org/wiki/Shorshe_ilish"
+  },
+  {
+   "id": "rosogolla",
+   "title": "ロショゴッラ",
+   "draw": "two spongy white syrup-soaked cheese balls and one light-brown one in a small clay bowl with clear syrup",
+   "ref": "https://en.wikipedia.org/wiki/Rasgulla"
+  },
+  {
+   "id": "nolen-gur-sandesh",
+   "title": "ノレン・グルのションデシュ",
+   "draw": "four small pale caramel-brown pressed milk sweets in shell shapes on a small plate",
+   "ref": "https://en.wikipedia.org/wiki/Sandesh_(confectionery)"
+  },
+  {
+   "id": "mishti-doi",
+   "title": "ミシュティ・ドイ",
+   "draw": "a small unglazed terracotta pot of set caramel-coloured sweet yogurt, a spoonful lifted out showing the thick texture",
+   "ref": "https://en.wikipedia.org/wiki/Mishti_doi"
+  },
+  {
+   "id": "tiretta-chinese-breakfast",
+   "title": "チャイナタウンの朝ごはん",
+   "draw": "a small bowl of clear fish-ball soup, three steamed prawn dumplings and a white steamed bun on a steel plate",
+   "ref": "https://en.wikipedia.org/wiki/Tiretta_Bazaar"
+  },
+  {
+   "id": "chilli-chicken-tangra",
+   "title": "チリチキン",
+   "draw": "a plate of glossy dark-brown fried chicken pieces tossed with green bell pepper, onion petals and green chillies, a small bowl of noodles beside it",
+   "ref": "https://en.wikipedia.org/wiki/Chilli_chicken"
+  },
+  {
+   "id": "bhaar-chai",
+   "title": "素焼きのカップのチャイ",
+   "draw": "a small unglazed terracotta cup of milky tea, steam rising, with two more empty clay cups beside it",
+   "ref": "https://en.wikipedia.org/wiki/Kulhar"
+  },
+  {
+   "id": "tamatar-chaat",
+   "title": "タマタル・チャート",
+   "draw": "a small clay bowl of hot orange-red tomato and potato mash topped with crunchy fried bits, a drizzle of syrup and coriander",
+   "ref": "https://en.wikipedia.org/wiki/Chaat"
+  },
+  {
+   "id": "kachori-sabzi-varanasi",
+   "title": "カチョリ・サブジとジャレビ",
+   "draw": "four small puffed fried breads on a leaf plate with a bowl of spicy potato-pumpkin curry, and two orange syrupy jalebi spirals beside them",
+   "ref": "https://en.wikipedia.org/wiki/Kachori"
+  },
+  {
+   "id": "malaiyo",
+   "title": "マライヨ",
+   "draw": "a small clay cup heaped with airy pale-yellow milk foam, saffron threads and chopped pistachios on top",
+   "ref": "https://en.wikipedia.org/wiki/Makhan_malai"
+  },
+  {
+   "id": "banarasi-paan",
+   "title": "バナラシ・パーン",
+   "draw": "two neat triangular betel-leaf parcels pinned with a clove, glistening, on a small steel plate",
+   "ref": "https://en.wikipedia.org/wiki/Paan"
+  },
+  {
+   "id": "blue-lassi",
+   "title": "ブルー・ラッシー",
+   "draw": "a clay cup of thick white lassi topped with a thick layer of cream, pomegranate seeds and chopped pistachios",
+   "ref": "https://en.wikipedia.org/wiki/Lassi"
+  },
+  {
+   "id": "galouti-kebab",
+   "title": "ガラウティ・カバブ",
+   "draw": "four small round soft brown kebab patties on small flatbreads, with onion rings and a lemon wedge, on a steel plate",
+   "ref": "https://en.wikipedia.org/wiki/Galouti_kebab"
+  },
+  {
+   "id": "lucknow-biryani",
+   "title": "ラクナウのビリヤニ",
+   "draw": "a mound of delicate long-grain white and pale yellow biryani with tender mutton, a few fried onions, on an off-white plate",
+   "ref": "https://en.wikipedia.org/wiki/Biryani"
+  },
+  {
+   "id": "nihari-kulcha-lucknow",
+   "title": "ニハリとクルチャ",
+   "draw": "a bowl of glossy dark-red slow-cooked meat stew with ginger slivers and green chilli, a round soft bread beside it",
+   "ref": "https://en.wikipedia.org/wiki/Nihari"
+  },
+  {
+   "id": "makhan-malai",
+   "title": "マッカン・マライ",
+   "draw": "a small leaf bowl of cloud-like white milk foam with a few saffron threads and pistachio slivers",
+   "ref": "https://en.wikipedia.org/wiki/Makhan_malai"
+  },
+  {
+   "id": "basket-chaat",
+   "title": "バスケット・チャート",
+   "draw": "an edible basket woven from crisp fried potato shreds, overflowing with yogurt, chickpeas, green and brown chutney, pomegranate seeds and yellow fried noodles, on an off-white plate",
+   "ref": "https://en.wikipedia.org/wiki/Chaat"
+  },
+  {
+   "id": "bedai-jalebi",
+   "title": "ベダイとジャレビ",
+   "draw": "three puffy golden fried breads with a bowl of spicy potato curry on a leaf plate, two orange jalebi spirals beside them",
+   "ref": "https://en.wikipedia.org/wiki/Puri_(food)"
+  },
+  {
+   "id": "agra-petha",
+   "title": "ペタ",
+   "draw": "a small plain box of translucent white, pale yellow and pale green candied ash-gourd cubes",
+   "ref": "https://en.wikipedia.org/wiki/Petha"
+  },
+  {
+   "id": "chole-bhature",
+   "title": "チョレ・バトゥレ",
+   "draw": "two huge puffed golden fried breads on a steel plate with a bowl of dark spicy chickpea curry, pickled onion and green chilli",
+   "ref": "https://en.wikipedia.org/wiki/Chole_bhature"
+  },
+  {
+   "id": "paratha-old-delhi",
+   "title": "パラータ",
+   "draw": "a crisp golden stuffed flatbread cut into quarters on a steel plate with three small steel bowls of curries and a green chutney",
+   "ref": "https://en.wikipedia.org/wiki/Paratha"
+  },
+  {
+   "id": "golgappa",
+   "title": "ゴルガッパ",
+   "draw": "thick crisp round golden puris filled with potato and black chickpeas on a leaf plate, a steel cup of bright green mint water beside them",
+   "ref": "https://en.wikipedia.org/wiki/Panipuri"
+  },
+  {
+   "id": "dahi-bhalla",
+   "title": "ダヒ・バッラ",
+   "draw": "soft lentil dumplings under thick white sweet yogurt, drizzled with brown tamarind and green chutney, sprinkled with red chilli and cumin, in a leaf bowl",
+   "ref": "https://en.wikipedia.org/wiki/Dahi_vada"
+  },
+  {
+   "id": "daulat-ki-chaat",
+   "title": "ダウラット・キ・チャート",
+   "draw": "a leaf bowl of airy white milk foam with saffron threads, a little sugar, chopped pistachios and a piece of edible silver leaf",
+   "ref": "https://en.wikipedia.org/wiki/Daulat_ki_chaat"
+  },
+  {
+   "id": "nagori-halwa-bedmi",
+   "title": "ナゴリ・ハルワとベドミ・プーリー",
+   "draw": "small crisp fried cups filled with golden semolina halwa, beside two fried breads and a bowl of potato curry, on a leaf plate",
+   "ref": "https://en.wikipedia.org/wiki/Halwa"
+  },
+  {
+   "id": "kulfi-kuremal",
+   "title": "クルフィ",
+   "draw": "a whole mango cut into thick round slices, each slice filled with creamy frozen mango kulfi, on an off-white plate",
+   "ref": "https://en.wikipedia.org/wiki/Kulfi"
+  },
+  {
+   "id": "mutton-korma-karims",
+   "title": "マトン・コルマ",
+   "draw": "a bowl of rich dark-brown mutton curry with a layer of red oil, a large soft naan beside it",
+   "ref": "https://en.wikipedia.org/wiki/Karim%27s"
+  },
+  {
+   "id": "butter-chicken-moti-mahal",
+   "title": "バターチキン",
+   "draw": "a bowl of creamy orange tomato-butter gravy with charred chicken pieces and a swirl of cream, a buttery naan beside it",
+   "ref": "https://en.wikipedia.org/wiki/Butter_chicken"
+  },
+  {
+   "id": "gajar-halwa",
+   "title": "ガジャル・カ・ハルワ",
+   "draw": "a small bowl of warm glossy red-orange grated carrot pudding topped with crumbled milk solids and slivered almonds and pistachios",
+   "ref": "https://en.wikipedia.org/wiki/Gajar_ka_halwa"
+  },
+  {
+   "id": "pyaaz-kachori",
+   "title": "ピャーズ・カチョリ",
+   "draw": "two round flaky golden fried pastries, one broken open to show the spiced onion filling, on a leaf plate with brown tamarind chutney",
+   "ref": "https://en.wikipedia.org/wiki/Kachori"
+  },
+  {
+   "id": "dal-baati-churma",
+   "title": "ダール・バーティ・チュルマ",
+   "draw": "a steel thali with three round baked wheat balls broken open and glistening with ghee, a bowl of yellow dal and a mound of sweet crumbly golden churma",
+   "ref": "https://en.wikipedia.org/wiki/Dal_baati"
+  },
+  {
+   "id": "amritsari-kulcha",
+   "title": "アムリトサリ・クルチャ",
+   "draw": "a crisp golden stuffed flatbread with a melting knob of butter on top, a bowl of chickpea curry and pickled onions on a steel plate",
+   "ref": "https://en.wikipedia.org/wiki/Kulcha"
+  },
+  {
+   "id": "golden-temple-langar",
+   "title": "黄金寺院のランガル",
+   "draw": "a steel compartment tray with two thin rotis, yellow dal, a vegetable curry and sweet rice pudding",
+   "ref": "https://en.wikipedia.org/wiki/Langar_(Sikhism)"
+  },
+  {
+   "id": "amritsari-fish",
+   "title": "アムリトサリ・フィッシュ",
+   "draw": "golden orange batter-fried fish pieces sprinkled with spice powder, onion rings, a lemon wedge and green chutney, on an off-white plate",
+   "ref": "https://en.wikipedia.org/wiki/Punjabi_cuisine"
+  },
+  {
+   "id": "lassi-amritsar",
+   "title": "ラッシー",
+   "draw": "a tall steel tumbler brimming with thick white lassi topped with a big knob of white butter",
+   "ref": "https://en.wikipedia.org/wiki/Lassi"
+  },
+  {
+   "id": "dal-makhani-kesar",
+   "title": "ダル・マカニ",
+   "draw": "a bowl of creamy dark black-lentil dal with a swirl of cream and butter, a flaky paratha and a small clay pot of white rice pudding",
+   "ref": "https://en.wikipedia.org/wiki/Dal_makhani"
+  },
+  {
+   "id": "sarson-saag-makki-roti",
+   "title": "サルソン・ダ・サーグとマッキ・ディ・ロティ",
+   "draw": "a bowl of thick dark-green mustard-greens purée with a big knob of white butter, two yellow cornmeal flatbreads and a jaggery piece on a steel plate",
+   "ref": "https://en.wikipedia.org/wiki/Sarson_da_saag"
+  },
+  {
+   "id": "kottu-roti",
+   "title": "コットゥ・ロティ",
+   "draw": "a heaping plate of chopped flatbread stir-fried with egg, leeks, carrot and chicken curry, with a small bowl of curry gravy beside it",
+   "ref": "https://en.wikipedia.org/wiki/Kottu"
+  },
+  {
+   "id": "egg-hopper",
+   "title": "エッグ・ホッパー",
+   "draw": "a bowl-shaped rice pancake with lacy golden crisp edges and a sunny egg cooked in the centre, a small heap of red chilli-onion relish beside it",
+   "ref": "https://en.wikipedia.org/wiki/Appam"
+  },
+  {
+   "id": "string-hoppers",
+   "title": "ストリング・ホッパー",
+   "draw": "eight small round nests of fine steamed rice noodles on a plate, a bowl of yellow coconut-milk gravy and a small heap of red-flecked coconut sambol",
+   "ref": "https://en.wikipedia.org/wiki/Idiyappam"
+  },
+  {
+   "id": "rice-and-curry",
+   "title": "ライス・アンド・カリー",
+   "draw": "a plate with a mound of rice surrounded by small portions of fish curry, yellow lentil curry, green leafy mallum, eggplant curry, cashew curry and a papadum",
+   "ref": "https://en.wikipedia.org/wiki/Rice_and_curry"
+  },
+  {
+   "id": "isso-wade",
+   "title": "イッソ・ワデー",
+   "draw": "two round golden lentil fritters each topped with whole shell-on prawns, one cut in half with red onion-chilli sauce, on a plain paper sheet on a plate",
+   "ref": "https://en.wikipedia.org/wiki/Vada_(food)"
+  },
+  {
+   "id": "short-eats",
+   "title": "ショート・イーツ",
+   "draw": "a plate of assorted savoury snacks: triangular golden fish buns, breadcrumbed fried rolls, crescent patties and round cutlets",
+   "ref": "https://en.wikipedia.org/wiki/Short_eat"
+  },
+  {
+   "id": "lamprais",
+   "title": "ランプライス",
+   "draw": "an opened banana-leaf parcel revealing rice, a dark meat curry, half a boiled egg, a round fried fish cutlet and dark eggplant pickle",
+   "ref": "https://en.wikipedia.org/wiki/Lamprais"
+  },
+  {
+   "id": "pol-roti",
+   "title": "ポル・ロティ",
+   "draw": "two thick round coconut flatbreads with golden spots, flecked with green chilli and onion, a small heap of red chilli-onion relish on top",
+   "ref": "https://en.wikipedia.org/wiki/Roti"
+  },
+  {
+   "id": "srilanka-biryani",
+   "title": "スリランカのビリヤニ",
+   "draw": "a mound of yellow and white ghee rice with a chicken leg, a potato and half a boiled egg, a small bowl of mint sambol beside it, on an off-white plate",
+   "ref": "https://en.wikipedia.org/wiki/Biryani"
+  },
+  {
+   "id": "watalappan",
+   "title": "ワタラッパン",
+   "draw": "a small ramekin of dark caramel-brown steamed coconut custard with a pitted surface, topped with cashew nuts",
+   "ref": "https://en.wikipedia.org/wiki/Watalappam"
+  },
+  {
+   "id": "ministry-of-crab",
+   "title": "マッドクラブ",
+   "draw": "a whole large mud crab glossy with black-pepper sauce on a big white plate, claws cracked, a few curry leaves",
+   "ref": "https://en.wikipedia.org/wiki/Dharshan_Munidasa"
+  },
+  {
+   "id": "ceylon-tea",
+   "title": "セイロン・ティー",
+   "draw": "a plain white cup of clear amber black tea and a glass of frothy milk tea side by side, a few loose tea leaves on the table",
+   "ref": "https://en.wikipedia.org/wiki/Sri_Lankan_tea"
+  },
+  {
+   "id": "ambul-thiyal",
+   "title": "アンブル・ティヤル",
+   "draw": "cubes of tuna coated in a thick, almost black, dry peppery sour curry in a small clay pot, a mound of rice beside it",
+   "ref": "https://en.wikipedia.org/wiki/Sri_Lankan_cuisine"
+  },
+  {
+   "id": "jaffna-crab-curry",
+   "title": "ジャフナ・クラブ・カレー",
+   "draw": "a whole crab in fiery red thick curry with green moringa leaves in a clay pot, a mound of rice beside it",
+   "ref": "https://en.wikipedia.org/wiki/Jaffna_crab_curry"
+  },
+  {
+   "id": "rio-ice-cream",
+   "title": "リオ・アイスクリーム",
+   "draw": "a tall sundae glass layered with pink and orange ice creams, red jelly cubes and fruit, topped with a wafer",
+   "ref": "https://en.wikipedia.org/wiki/Jaffna"
+  }
+ ]
+}

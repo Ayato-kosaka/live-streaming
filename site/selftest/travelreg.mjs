@@ -19,13 +19,17 @@ export function travelRoot(site) {
 }
 
 /**
- * 名簿が索引に出す、**道が固定の**面（行く前の案内だけの国。`app/travel/<国>/page.tsx`）と、根。
- * 歩いた国（`[slug]` の面）は道が固定ではないので、ここには入らない。
+ * 名簿が索引に出す、**道が固定の**面（`app/travel/<国>/page.tsx`）と、根。
+ * いま歩いている旅の国（`GUIDE_ONLY`）と、街のガイドを持ったまま歩き終わった国（`WALKED_FIXED`）。
+ * ほかの歩いた国（`[slug]` の面）は道が固定ではないので、ここには入らない。
  */
 export function travelFixedRoutes(site) {
   const root = travelRoot(site);
   const src = readFileSync(join(site, "content", "travel.ts"), "utf8");
-  const rows = must(readArray(src, "GUIDE_ONLY", { keys: ["slug"] }), "content/travel.ts の GUIDE_ONLY");
+  const rows = [
+    ...must(readArray(src, "GUIDE_ONLY", { keys: ["slug"] }), "content/travel.ts の GUIDE_ONLY"),
+    ...must(readArray(src, "WALKED_FIXED", { keys: ["slug"] }), "content/travel.ts の WALKED_FIXED"),
+  ];
   return [root, ...rows.map((r) => `${root}/${r.slug}`)];
 }
 
@@ -33,7 +37,7 @@ export function travelFixedRoutes(site) {
 export const sitemapReadsTravel = (sitemapSrc) => /\bTRAVEL_PLACES\b/.test(sitemapSrc) && /\bTRAVEL\b/.test(sitemapSrc);
 
 /**
- * 街のガイド（`/travel/<国>/<街>`）の名簿（`content/travel.ts` の `CITIES`）。`draft` は公開前の印。
+ * 街のガイド（`/travel/<国>/<街>`）の名簿（`content/cities.ts` の `CITIES`）。`draft` は公開前の印。
  *
  * 街の面の `robots` は面に字で書いてなく、印から決まる（`travelCityShare`）。だから「索引に出さないと
  * 自分で言っている面か」は、面の `metadata` ではなく名簿の印で読む。印の無い街は、索引が
@@ -41,13 +45,13 @@ export const sitemapReadsTravel = (sitemapSrc) => /\bTRAVEL_PLACES\b/.test(sitem
  */
 export function travelCities(site) {
   const root = travelRoot(site);
-  const src = readFileSync(join(site, "content", "travel.ts"), "utf8");
-  const rows = must(readArray(src, "CITIES", { keys: ["country", "slug", "draft"] }), "content/travel.ts の CITIES");
+  const src = readFileSync(join(site, "content", "cities.ts"), "utf8");
+  const rows = must(readArray(src, "CITIES", { keys: ["country", "slug", "draft"] }), "content/cities.ts の CITIES");
   return rows.map((r) => ({ route: `${root}/${r.country}/${r.slug}`, draft: r.draft === "true" }));
 }
 
 /** 索引が街の名簿（公開してよい街だけ）を読んでいるか */
-export const sitemapReadsCities = (sitemapSrc) => /\bpublicCities\(/.test(sitemapSrc);
+export const sitemapReadsCities = (sitemapSrc) => /\bpublicCities\(|\bTRAVEL_CITIES\b/.test(sitemapSrc);
 
 /**
  * 街の記事（`/travel/<国>/<街>/<話>`）の名簿（`content/travel.ts` の `ARTICLES`）。`draft` は公開前の印。
@@ -64,4 +68,33 @@ export function travelArticles(site) {
 }
 
 /** 索引が記事の名簿（公開してよい記事だけ）を読んでいるか */
-export const sitemapReadsArticles = (sitemapSrc) => /\bpublicArticles\(/.test(sitemapSrc);
+export const sitemapReadsArticles = (sitemapSrc) => /\bpublicArticles\(|\bTRAVEL_ARTICLES\b/.test(sitemapSrc);
+
+/**
+ * 面の印の付いた企画（`content/projects.ts` の `book`。M-8）。`draft` は下書きの印（M-33。行は `content/projectDrafts.ts` の `DRAFT_PROJECTS` に居る）。
+ *
+ * 面は道が固定（`app/legends/<企画>/page.tsx`）だが、`robots` は面に字で書かず、表の印から決まる
+ * （`content/legends/index.ts` の `bookRobots`）。だから「検索に出さないと自分で言っている面か」は表の印で読む。
+ * 出すときは印を1つ外すだけで、面の名簿（`lib/pages.ts`）が `BOOK_PROJECTS` を読んでいれば索引に在る（`sitemapReadsBooks`）。
+ */
+export function legendBooks(site) {
+  const src = readFileSync(join(site, "content", "projects.ts"), "utf8");
+  /* 出ている企画（`PROJECTS`）と下書きの企画（`DRAFT_PROJECTS`）の2つの並び。下書きの並びは空のこともある */
+  const rows = [
+    ...must(readArray(src, "PROJECTS", { keys: ["slug", "book", "draft"] }), "content/projects.ts の PROJECTS"),
+    ...drafts(readArray(readFileSync(join(site, "content", "projectDrafts.ts"), "utf8"), "DRAFT_PROJECTS", { keys: ["slug", "book", "draft"] })),
+  ];
+  return rows.filter((r) => r.book === "true").map((r) => ({ route: `/legends/${r.slug}`, draft: r.draft === "true" }));
+}
+
+/** 下書きの並び。**空でよい**（出す日に行が `PROJECTS` へ移る）が、読み落としは止める（`must` と同じ 2） */
+function drafts(got) {
+  if (got.missed !== 0) {
+    console.log(`::error::content/projects.ts の DRAFT_PROJECTS を ${got.missed}件 読み落としました（名乗り ${got.declared} / 読めた ${got.rows.length}）`);
+    process.exit(2);
+  }
+  return got.rows;
+}
+
+/** 面の名簿が、面の印の付いた企画を読んでいるか */
+export const sitemapReadsBooks = (sitemapSrc) => /\bBOOK_PROJECTS\b/.test(sitemapSrc);

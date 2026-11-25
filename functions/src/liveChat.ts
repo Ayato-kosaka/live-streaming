@@ -1,5 +1,5 @@
 import {logger} from "firebase-functions";
-import {youtube, oauth2Client} from "./youtubeClient";
+import {youtube, oauth2Client, guideYoutube} from "./youtubeClient";
 
 /**
  * 配信中のライブチャットを読む・書くところ。
@@ -127,4 +127,43 @@ export async function sayOnLive(text: string): Promise<boolean> {
     },
   });
   return true;
+}
+
+/** 案内鳥として書いた結果。**ログにはこの名前だけ出す**（`tip.ts`）。 */
+export type GuideSaid = "said" | "not-live" | "no-key";
+
+/**
+ * 配信のチャットに、**チャンネル「あやと島案内鳥」として**1行書く（#1405）。
+ *
+ * **探すのはあやとの鍵、書くのだけ案内鳥の鍵。** 配信を探す
+ * `liveBroadcasts.list`（`broadcastStatus`）は鍵の持ち主の配信を返すので、
+ * 案内鳥の鍵で探すと、案内鳥の（無い）配信を探してしまう。
+ *
+ * - **鍵が無ければ、配信も探さない**（`no-key`）。探すだけでも1単位食う
+ * - **探すのは毎回やり直す**（`liveChatId(true)`）。使い回すと、配信を
+ *   始めてから5分のあいだ「配信していない」が残って書けない。終わった
+ *   配信のチャットへ書きに行って断られもする。探すのは1回1単位
+ *   （書くのは20単位）なので、投げ銭1件ごとに探し直しても枠は減らない
+ * - **投げられなかったことを例外にしない**（配信していなければ `not-live`）。
+ *   YouTube が断ったときは投げる。時間の上限と、投げたものを飲むのは呼ぶ側
+ *   （200 を返さなければならないのは呼ぶ側なので、守りもそこに置く）
+ * @param {string} text 書く1行
+ * @return {Promise<GuideSaid>} どうなったか
+ */
+export async function sayOnLiveAsGuide(text: string): Promise<GuideSaid> {
+  const yt = guideYoutube();
+  if (!yt) return "no-key";
+  const chat = await liveChatId(true);
+  if (!chat) return "not-live";
+  await yt.liveChatMessages.insert({
+    part: ["snippet"],
+    requestBody: {
+      snippet: {
+        liveChatId: chat,
+        type: "textMessageEvent",
+        textMessageDetails: {messageText: text},
+      },
+    },
+  });
+  return "said";
 }

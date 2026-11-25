@@ -15,7 +15,7 @@ const SPORT = process.env.SPORT || "4140";
 const out = process.argv[2] || "/tmp/dex/x";
 const W = Number(process.argv[3] || 390);
 const H = Number(process.argv[4] || 844);
-const PAGES = (process.env.PAGES || "/friends,/now,/streams/cooking,/legends/iran-walk").split(",");
+const PAGES = (process.env.PAGES || "/friends,/streams/cooking,/legends/iran-walk").split(",");
 /** 面ぜんぶを1枚に撮るときは FULL=1。既定は1画面目だけ。 */
 const FULL = process.env.FULL === "1";
 

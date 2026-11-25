@@ -61,11 +61,13 @@ log = logging.getLogger("depart")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # **`site/content/*.ts` を字で読むのは、このリポジトリで1本だけ**（`python/ts_read.py`）
+import stays  # noqa: E402
 import ts_read  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 CHAPTERS_TS = ROOT / "site" / "content" / "chapters.ts"
 COUNTRIES_TS = ROOT / "site" / "content" / "countries.ts"
+STAYS_TS = ROOT / "site" / "content" / "stays.ts"
 JST = timezone(timedelta(hours=9))
 
 # 閉じる章と、その次に始まる章
@@ -124,12 +126,12 @@ def field(src: str, slug: str, name: str) -> str:
 
 
 def chapter_countries(src: str, slug: str) -> list[str]:
-    """その章の `countries: [...]` に並んでいる slug。"""
-    row = next((c for c in chapters(src) if c["slug"] == slug), None)
-    if row is None:
+    """その章で回った国の slug。**滞在の表（`stays.ts`）から引く**（`stays.chapter_countries()`）。"""
+    rows = chapters(src)
+    if not any(c["slug"] == slug for c in rows):
         log.error("chapters.ts に slug: \"%s\" がありません", slug)
         sys.exit(1)
-    return row["countries"]
+    return stays.chapter_countries(rows, stays.read_stays_ts())[slug]
 
 
 def missing_from_countries_ts(slugs: list[str]) -> list[str]:
@@ -143,7 +145,9 @@ def missing_from_countries_ts(slugs: list[str]) -> list[str]:
     見た目だけで COUNTRIES と AHEAD を見分けていた。`ts_read` は並びの名前で
     切るので、字下げが変わっても見分けが外れない。
     """
-    got = ts_read.read_countries(COUNTRIES_TS.read_text(encoding="utf-8"))
+    got = ts_read.read_countries(
+        COUNTRIES_TS.read_text(encoding="utf-8"), STAYS_TS.read_text(encoding="utf-8")
+    )
     if got.missed:
         log.error("countries.ts の国 %d 件のうち %d 件を読み落としました",
                   got.declared, got.missed)

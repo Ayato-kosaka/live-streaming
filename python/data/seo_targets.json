@@ -21,6 +21,15 @@
     {"label": "ブカレスト 観光", "page": "/travel/romania/bucharest", "queries": ["ブカレスト 観光", "ルーマニア ブカレスト 観光"]},
     {"label": "ブカレスト 見どころ／地図", "page": "/travel/romania/bucharest", "queries": ["ブカレスト 見どころ", "ブカレスト 地図"]},
     {"label": "ドラキュラ城 ブカレスト", "page": "/travel/romania/bucharest", "queries": ["ドラキュラ城 ブカレスト", "ブラン城 行き方"]},
+    {"label": "ベオグラード 観光", "page": "/travel/serbia/belgrade", "queries": ["ベオグラード 観光", "セルビア ベオグラード 観光"]},
+    {"label": "ベオグラード 見どころ／地図", "page": "/travel/serbia/belgrade", "queries": ["ベオグラード 見どころ", "ベオグラード 地図"]},
+    {"label": "ベオグラード グルメ", "page": "/travel/serbia/belgrade", "queries": ["ベオグラード グルメ", "セルビア 料理"]},
+    {"label": "ティラナ 観光", "page": "/travel/albania/tirana", "queries": ["ティラナ 観光", "アルバニア ティラナ 観光"]},
+    {"label": "ティラナ 見どころ／地図", "page": "/travel/albania/tirana", "queries": ["ティラナ 見どころ", "ティラナ 地図"]},
+    {"label": "ティラナ 日帰り", "page": "/travel/albania/tirana", "queries": ["ティラナ 日帰り", "クルヤ 行き方"]},
+    {"label": "エレバン 観光", "page": "/travel/armenia/yerevan", "queries": ["エレバン 観光", "アルメニア エレバン 観光"]},
+    {"label": "エレバン 見どころ／地図", "page": "/travel/armenia/yerevan", "queries": ["エレバン 見どころ", "エレバン 地図"]},
+    {"label": "エレバン 日帰り", "page": "/travel/armenia/yerevan", "queries": ["エレバン 日帰り", "ガルニ神殿 行き方"]},
     {"label": "ブルガリア 観光", "page": "/travel/bulgaria", "queries": ["ブルガリア 観光", "ブルガリア 旅行"]}
   ],
   "image_contains": ["見どころマップ"],
@@ -32,6 +41,9 @@
     {"label": "歩いた国", "path": "/travel", "kind": "hub"},
     {"label": "スコピエ", "path": "/travel/north-macedonia/skopje", "kind": "guide", "head": "スコピエ観光"},
     {"label": "ブカレスト", "path": "/travel/romania/bucharest", "kind": "guide", "head": "ブカレスト観光"},
+    {"label": "ベオグラード", "path": "/travel/serbia/belgrade", "kind": "guide", "head": "ベオグラード観光"},
+    {"label": "ティラナ", "path": "/travel/albania/tirana", "kind": "guide", "head": "ティラナ観光"},
+    {"label": "エレバン", "path": "/travel/armenia/yerevan", "kind": "guide", "head": "エレバン観光"},
     {"label": "スコピエの物価", "path": "/travel/north-macedonia/skopje/prices", "kind": "article", "head": "スコピエの物価"},
     {"label": "ソフィアの物価", "path": "/travel/bulgaria/sofia/prices", "kind": "article", "head": "ソフィアの物価"}
   ]

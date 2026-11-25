@@ -29,7 +29,7 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
  "items": 0,
  "streams": {
   "country": "north-macedonia",
-  "city": "北マケドニア",
+  "city": "スコピエ",
   "videos": [
    "hk39U7ZEKCQ",
    "misSMBhPlkc",
@@ -148,7 +148,7 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
   }
  ],
  "published": "2026-11-20",
- "updated": "2026-11-20",
- "hash": "1718936c7f7c5d66"
+ "updated": "2026-11-22",
+ "hash": "69202d7276b8b146"
 }
 /* END GUIDE */;

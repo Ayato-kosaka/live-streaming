@@ -23,6 +23,13 @@ Markdown を返すだけなので、**その1枚だけを `claude -p` に渡す*
 - **上限越え・形の崩れ・素性は、下書きだけを渡す軽い1回で直させる**（字幕とチャットを渡し直さない。削るのに材料は要らない）。
   足りないときだけ、同じ会話の続き（`--resume`。字幕とチャットは cache から読まれる）で足させる
 
+直させるのは1回まで（`FIXES`）。2回目も通らない回は置かずに終了 1 で返し、§3 の依頼文で担当に配る。
+
+## 字幕に無い名前（作り話の見張り。`unknown_names`）
+
+返ってきた議事録のカタカナ・英字の名前を、その回の字幕・チャット・前後の回・島の場所の名前と突き合わせる。
+1つでも無ければ、その名前を添えて直させる（札には数だけ。名前は直しの1枚と控えの `.names.txt` にだけ）。
+
 ## 視聴者さんの素性（`guide_extract.py` の `mask_text` と `leaks` と同じ二重の守り）
 
 議事録には名前（チャットの表記）と投げ銭は書く決まりなので、名前は伏せない。伏せるのは **素性**——
@@ -56,8 +63,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import stream_notes as sn  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-MODEL = "sonnet"   # 2026-11-15 の15本と同じ
-FIXES = 2          # 直させる回数の上限
+MODEL = "sonnet"   # 2026-11-23 に Haiku と同じ3本で比べ、Haiku は話題の落ちが1割を越えた（16〜23%。Sonnet 12%）。SKILL.md §5
+FIXES = 1          # 直させるのは1回まで。それでも通らない回は置かずに報告へ回す（担当に配る）
 JOBS_MAX = 3       # 並べて回すのは3本まで（箱と API の混み具合）
 # 頼む字数は目安のこの割合。2026-11-15 の15本で、目安ちょうどで頼むと1回目の本文は目安の 1.04〜2.3倍
 # （9本が上限 1.2倍を越えた）。0.88 なら、1.3倍まで長く出ても上限に収まり、頼んだとおりに書く回
@@ -190,6 +197,130 @@ def note_leaks(md: str) -> list[str]:
                 out.append(tag)
         if SELF.search(span) and SCHOOL.search(span) and "学校" not in out:
             out.append("学校")
+    return out
+
+
+# ---------------------------------------------------------------- 字幕に無い名前（作り話の見張り）
+#
+# 名前らしい字（カタカナ3字以上・英字3字以上）を議事録から拾い、その回の字幕・チャット・前後の回・島の場所の名前・
+# 1枚の決まりと見本のどれかに在るかを見る。漢字の名前は見ない（ふつうの語と見分けられない）。
+# 自動字幕は同じ語をひらがなでも書くので、かな・小さい字・長音・中黒を揃えてから比べる（`fold`）。
+# 決まりは「誤変換を読み直す」なので、字幕にそのままは無い名前も出る。読み直しは1字違い（「オールセンツ」→
+# 「オールセインツ」）か、ふつうの語のつなぎ（「グーグル」＋「マップ」）までを在るとみなす（`unknown_names`）。
+# それでも、いまの議事録740本で数えると残りが0の回は3割（中央値1・9割の回で4以下）。作った名前（2026-11-23 に
+# Haiku が「バーバリー」「プリティ・ウーマン」を書いた）も1本に1つで紛れるので、1つでも在れば、その名前を添えて
+# 「消すか名前を使わない言いかたに」で直させる。直しは下書きだけを渡す軽い1回。
+NAME_TOKEN = re.compile(r"[ァ-ヺー]{3,}|[A-Za-z][A-Za-z0-9'&.-]*[A-Za-z0-9]")
+COMMON_DF = 20     # 字幕とチャットに出た回の数がこれ以上の語はふつうの語（スマホ・カメラ・クイズ）。名前として数えない
+NAMES_MAX = 0      # 字幕に無い名前を、1本にいくつまで許すか。作った名前は1本に1つだけ紛れることがある（SKILL.md §5）ので0
+_FOLD = str.maketrans("ぁぃぅぇぉゃゅょっゎゕゖ", "あいうえおやゆよつわかけ")
+
+
+_VU = (("ゔぁ", "ば"), ("ゔぃ", "び"), ("ゔぇ", "べ"), ("ゔぉ", "ぼ"), ("ゔ", "ぶ"))
+
+
+def fold(s: str) -> str:
+    """比べる形。カタカナをひらがなに・ヴァ行をバ行に・小さい字を大きく・長音と中黒と空白を落とす・英字は小文字。
+    字幕は「コベントガーデン」、議事録は「コヴェントガーデン」と書く（2025-01-07 で実際に在った）"""
+    s = "".join(chr(ord(c) - 0x60) if "ァ" <= c <= "ヶ" else c for c in norm(s)).lower()
+    for a, b in _VU:
+        s = s.replace(a, b)
+    return re.sub(r"[\s・ー\-]", "", s.translate(_FOLD))
+
+
+def name_tokens(text: str) -> set[str]:
+    return {m.group() for m in NAME_TOKEN.finditer(norm(text)) if len(m.group()) >= 3}
+
+
+_VOCAB: dict[str, set[str]] = {}
+
+
+def common_words(root: Path) -> set[str]:
+    """streams/ の字幕とチャットのうち、COMMON_DF 回以上に出た語（揃えた形）。1回の呼び出しで1度だけ数える"""
+    key = str(root)
+    if key not in _VOCAB:
+        df: Counter = Counter()
+        for p in (root / "streams").glob("*/*/*.transcript.txt"):
+            seen = name_tokens(p.read_text(encoding="utf-8"))
+            ch = p.with_name(p.name.replace(".transcript.txt", ".chat.txt"))
+            if ch.exists():
+                seen |= name_tokens(ch.read_text(encoding="utf-8"))
+            df.update({fold(t) for t in seen})
+        _VOCAB[key] = {w for w, k in df.items() if k >= COMMON_DF}
+    return _VOCAB[key]
+
+
+class Known(str):
+    """在ってよい所を揃えてつないだ字。tokens はそこに出た名前（揃えた形）の集まり"""
+    tokens: frozenset = frozenset()
+
+
+def known_text(root: Path, stem: str, rows: dict) -> Known:
+    """名前が在ってよい所を1本につないで揃えたもの（伏せる前の字幕とチャット・前後の回・場所の名前・決まりと見本）"""
+    tr, ch, _ = paths(root, stem)
+    parts = [p.read_text(encoding="utf-8") for p in (tr, ch) if p.exists()]
+    parts += [context(root, stem, rows), places(root), rules(root)]
+    if (root / SAMPLE).exists():
+        parts.append((root / SAMPLE).read_text(encoding="utf-8"))
+    raw = "\n".join(parts)
+    k = Known(fold(raw))
+    k.tokens = frozenset(fold(t) for t in name_tokens(raw))
+    return k
+
+
+def _one_edit(a: str, b: str) -> bool:
+    """a と b が1字の置き換え・足し・抜きまでで同じか"""
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        return sum(x != y for x, y in zip(a, b)) <= 1
+    if len(a) > len(b):
+        a, b = b, a
+    return any(b[:i] + b[i + 1:] == a for i in range(len(b)))
+
+
+def _near(f: str, known: str) -> bool:
+    """5字以上の名前は、字幕のどこかと1字違いまでなら在るとみなす（「オールセンツ」→「オールセインツ」の読み直し）。
+    1字違いなら頭の2字か尻の2字のどちらかは合うので、そこから窓を切って比べる（全部の窓を比べると遅い）"""
+    if len(f) < 5:
+        return False
+    for i in _positions(known, f[:2]):
+        if any(_one_edit(f, known[i:i + n]) for n in (len(f) - 1, len(f), len(f) + 1)):
+            return True
+    for j in _positions(known, f[-2:]):
+        end = j + 2
+        if any(_one_edit(f, known[max(0, end - n):end]) for n in (len(f) - 1, len(f), len(f) + 1)):
+            return True
+    return False
+
+
+def _positions(s: str, sub: str):
+    i = s.find(sub)
+    while i >= 0:
+        yield i
+        i = s.find(sub, i + 1)
+
+
+def _have(f: str, known: str, common: set[str]) -> bool:
+    return f in common or f in known or (len(f) >= 4 and (f[1:] in known or f[:-1] in known)) or _near(f, known)
+
+
+def unknown_names(draft: str, known: str, common: set[str]) -> list[str]:
+    """議事録の名前のうち、在ってよい所のどこにも無いもの。頭の機械の4行と @名前 は見ない（場所の行は見る）。
+    4字以上は端の1字が欠けても（字幕が語尾を落とす・延ばす）、5字以上は1字違いまで（読み直し）在るとみなす。
+    6字以上は、2つに切ってどちらも材料かふつうの語に出た名前そのものなら在るとみなす（「グーグル」＋「マップ」。
+    切った片方を字の一部として探すと、3字のかなはたいてい字幕のどこかに在るので、名前の集まりで見る）"""
+    head, sep, rest = draft.partition("\n## ")
+    body = "\n".join(l for l in head.splitlines() if l.startswith("- 場所:")) + "\n" + sep + rest
+    out = []
+    for t in sorted(name_tokens(AT.sub(" ", body))):
+        f = fold(t)
+        if not f or _have(f, known, common):
+            continue
+        words = common | getattr(known, "tokens", frozenset())
+        if len(f) >= 6 and any(f[:i] in words and f[i:] in words for i in range(3, len(f) - 2)):
+            continue
+        out.append(t)
     return out
 
 
@@ -328,29 +459,36 @@ def build(root: Path, stem: str, row: dict, rows: dict) -> tuple[str, list[str],
 - 投げ銭は頭に全部並べてある。本文で触れるときは @名前 ¥額
 - 視聴者さんの素性（生年月日・本名・住んでいる所・学校・年齢・職場）は、本人が言っていても書かない。〇〇 を書かない。歌詞を写さない
 - 字幕に無いことを書かない。推し量ったことは「〜らしい」。誤変換は文脈・チャット・地名で読み直し、読めない語は書かない
+- 店・場所・料理・人の名前は、字幕かチャットか上の場所の名前に在るものだけ。自分の知識で名前を足さない（道具が字幕と突き合わせる）
 """
     return p, head, "\n".join(tb + cb)
 
 
-def fix_prompt(draft: str, why: list[str], row: dict) -> str:
-    """下書きだけで直せる直し（削る・形・素性）。字幕とチャットは渡さない"""
+def fix_prompt(draft: str, why: list[str], row: dict, names: list[str] | None = None) -> str:
+    """下書きだけで直せる直し（削る・形・素性・字幕に無い名前）。字幕とチャットは渡さない"""
     tgt, lo, hi, ask = limits(row)
     n = sn.body_chars(draft)
     msg = [f"# 直すこと（{'／'.join(why)}）"]
     if n > hi:
         msg.append(f"本文がいま {n}字で、{hi}字を越えている。{ask}字前後まで、約 {n - ask}字を削る。"
                    "同じ話の繰り返し・細かい言い回し・相づちのコメントを詰める（企画・約束・事件・初めて来た人は残す）。")
+    if names:
+        msg.append(f"次の名前は、この回の字幕・チャット・前後の回・島の場所の名前のどこにも無い: {'、'.join(names)}。"
+                   "字幕に無い名前は書かない決まり。消すか、名前を使わない言いかた（「駅前の店」など）に替える。"
+                   "前後の文はそのまま残す。")
     msg.append("下書きに無いことを足さない。時刻・名前・額は下書きのまま。視聴者さんの素性（生年月日・本名・住んでいる所・"
                "学校・年齢・職場）が書いてあれば消す。〇〇 は書かない。")
     msg.append("直した議事録の全体を、頭の5行から返す。前置きは付けない。")
     return "\n".join(msg) + "\n\n# 下書き\n" + draft
 
 
-def more_prompt(n: int, row: dict) -> str:
+def more_prompt(n: int, row: dict, names: list[str] | None = None) -> str:
     """足りないとき（同じ会話の続きで。字幕とチャットが要る）"""
     tgt, lo, hi, ask = limits(row)
+    drop = (f"また、次の名前は字幕とチャットに無いので、消すか名前を使わない言いかたに替える: {'、'.join(names)}。"
+            if names else "")
     return (f"本文がいま {n}字で、{lo}字に届かない。{ask}字前後まで、約 {ask - n}字を足す。字幕とチャットから漏れている"
-            "出来事を時刻つきで足す（膨らませるための字は入れない）。直した議事録の全体を、頭の5行から返す。前置きは付けない。")
+            f"出来事を時刻つきで足す（膨らませるための字は入れない）。{drop}直した議事録の全体を、頭の5行から返す。前置きは付けない。")
 
 
 def tidy(txt: str, head: list[str]) -> str:
@@ -397,8 +535,16 @@ def call_model(prompt: str, model: str, timeout: int, cwd: str, resume: str | No
         return {"is_error": True, "result": (r.stdout + r.stderr)[-1500:]}
 
 
-def judge(draft: str, stem: str, row: dict, root: Path) -> list[str]:
-    """check_one（字幕・チャットの隣に置いて数える）と、素性の札"""
+def place_ng(draft: str) -> list[str]:
+    """頭の「場所」の行が在って、埋まっているか（tidy は返事に場所の行が無ければ「（ここを埋める）」を置く）"""
+    head = draft.partition("\n## ")[0]
+    line = next((l for l in head.splitlines() if l.startswith("- 場所:")), "")
+    return [] if line.removeprefix("- 場所:").strip() not in ("", "（ここを埋める）") else ["頭の「場所」が埋まっていない"]
+
+
+def judge(draft: str, stem: str, row: dict, root: Path, known: str = "", common: set[str] | None = None
+          ) -> tuple[list[str], list[str]]:
+    """(NG の札, 字幕に無い名前)。check_one（字幕・チャットの隣に置いて数える）・場所の行・素性・字幕に無い名前"""
     tr, ch, _ = paths(root, stem)
     with tempfile.TemporaryDirectory(prefix="notes-judge-") as d:
         for p in (tr, ch):
@@ -407,9 +553,13 @@ def judge(draft: str, stem: str, row: dict, root: Path) -> list[str]:
         md = Path(d) / (stem + ".md")
         md.write_text(draft, encoding="utf-8")
         ng = sn.check_one(md, row["chars_i"])
-    if "（ここを埋める）" in draft:
-        ng.append("頭の「場所」が埋まっていない")
-    return ng + [f"素性（{t}）" for t in note_leaks(draft)]
+    ng += place_ng(draft)
+    ng += [f"素性（{t}）" for t in note_leaks(draft)]
+    names = unknown_names(draft, known, common or set()) if known else []
+    if len(names) > NAMES_MAX:
+        # 札には数だけ（名前は直しの1枚にだけ渡す。出力は公開のログに残りうる）
+        ng.append(f"字幕に無い名前 {len(names)}個（{NAMES_MAX}個まで）")
+    return ng, names
 
 
 def write_one(root: Path, stem: str, a, rows: dict) -> dict:
@@ -433,6 +583,7 @@ def write_one(root: Path, stem: str, a, rows: dict) -> dict:
     if a.prompt_only:
         rec.update(note=f"組んだ（{len(prompt):,}字）: {out / (stem + '.prompt.txt')}")
         return rec
+    known, common = known_text(root, stem, rows), common_words(root)
     t0 = time.time()
     with tempfile.TemporaryDirectory(prefix="notes-writer-") as cwd:
         raw = call_model(prompt, a.model, a.timeout, cwd)
@@ -447,16 +598,19 @@ def write_one(root: Path, stem: str, a, rows: dict) -> dict:
                 break
             draft = tidy(raw["result"], head)
             (out / f"{stem}.draft{k}.md").write_text(draft, encoding="utf-8")
-            ng = judge(draft, stem, row, root)
-            rec["calls"][-1]["body"] = sn.body_chars(draft)
+            ng, names = judge(draft, stem, row, root, known, common)
+            # 控えには名前の数と NG の札だけ（名前そのものは控えの .names.txt に。git にも出力にも入れない）
+            rec["calls"][-1].update(body=sn.body_chars(draft), names=len(names), ng=list(ng))
+            (out / f"{stem}.draft{k}.names.txt").write_text("\n".join(names) + "\n", encoding="utf-8")
             if not ng or k == FIXES:
                 break
             n = sn.body_chars(draft)
             _, lo, _, _ = limits(row)
+            over = names if len(names) > NAMES_MAX else None
             if n < lo and sid:
-                raw = call_model(more_prompt(n, row), a.model, a.timeout, cwd, resume=sid)
+                raw = call_model(more_prompt(n, row, over), a.model, a.timeout, cwd, resume=sid)
             else:
-                raw = call_model(fix_prompt(draft, ng, row), a.model, a.timeout, cwd, keep=False)
+                raw = call_model(fix_prompt(draft, ng, row, over), a.model, a.timeout, cwd, keep=False)
     rec["secs"] = round(time.time() - t0)
     rec["body"] = sn.body_chars(draft) if draft else 0
     if rec["rc"]:

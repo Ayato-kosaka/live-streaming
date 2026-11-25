@@ -1554,7 +1554,8 @@ html.gb-lock { overflow: hidden; }
 .gb-streams img { width: 128px; height: 72px; object-fit: cover; border-radius: 10px; background: #2a1d10; }
 .gb-streams span { display: grid; gap: 2px; min-width: 0; }
 .gb-streams b { font-size: 13.5px; line-height: 1.45; }
-.gb-streams time { font-size: var(--fs-min); color: var(--ink-2); }
+.gb-streams time,
+.gb-streams small { font-size: var(--fs-min); color: var(--ink-2); }
 
 /* ---- 面の終わり --------------------------------------------------------- */
 
@@ -1610,3 +1611,7 @@ html.gb-lock { overflow: hidden; }
 .gb-table.is-days tfoot th b { font-size: 13.5px; }
 .gb-table.is-days tfoot th span { font-size: 12px; color: var(--ink-2); }
 .gb-table.is-days tfoot td { font-weight: 900; color: var(--gb-c); }
+
+/* 街の札の段（`components/travel/CityTags.tsx`。#1357）。ガイドの節の外、付箋の上に1つ */
+.gb-tags { margin: 0 0 var(--sp-6); }
+.gb-tags h2 { margin: 0 0 var(--sp-3); font-size: 22px; font-weight: 900; line-height: 1.3; }

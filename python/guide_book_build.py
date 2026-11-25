@@ -18,13 +18,22 @@
 `book`（材料）と `compose`（組み立て）を書く。台本に書くのは**事実と並べかただけ**で、形は
 `guide_book_check.py` と `guidebook_bake.py` が見る（この道具は形を決めない）。
 
+## 日帰りの町の地図
+
+店（`store`）の地図の検索語には、街の名前を後ろに足す。ただし店の地区が国の表（`cities.json`）の**日帰りの町**なら、
+足すのは泊まる街ではなく**その町の名前**（台本の `TRIP_AREAS`。無ければ止める）。ティラナ（2026-11-23）は
+クルヤの古いバザールの店に「Tiranë」を足していて、見たいものの同じバザール（`Pazari i Krujës`）と
+「マップ（クルヤの古いバザール）」の字のまま別の先を指した（reachkeys の「おなじ字」）。
+問いにもう町の名前が入っているときは足さない（`Pazari i Krujës` に `Krujë` を、`Artisti Tiranë` に `Tiranë` を重ねない）。
+見たいもので日帰りの町に在るものは `maps("問い", "町の鍵")` で、店と同じ道具から作る。
+
 | 台本で使える道具 | 何を返すか |
 | --- | --- |
 | `s("鍵", …)` | 出どころの並び（`SRC` の名前・URL・`SEEN`） |
 | `t("字", "鍵", …)` | 出どころつきの事実 `{"text", "src"}` |
 | `loc("現地の字", "ローマ字", "鍵", …)` | 現地の名前 |
 | `osm("鍵")` / `at("鍵")` | `geo.json` の点の出どころ / `lat`・`lon`・`coord_src` |
-| `maps("問い")` | Google マップの検索の URL（`MAPS_AREA` を後ろに足す） |
+| `maps("問い", 町=None)` | Google マップの検索の URL（泊まる街の `MAPS_AREA`、日帰りの町なら `TRIP_AREAS` の名前を後ろに足す。問いにもう入っていれば足さない） |
 | `photo("鍵", "alt")` | `photos.json` の借りた写真の欄に alt を付けたもの |
 | `store(…)` / `lm(…)` | 店（座標と出どころつき）/ 地区の目印 |
 | `todo(…)` / `dish(…)` | やりたいこと（`src` を窓の事実から集める）/ 食べたいもの |
@@ -82,9 +91,9 @@ def _load(p: Path) -> dict:
 
 # ---------------------------------------------------------------- 台本の道具
 
-def tools(ns: dict, geo: dict, photos: dict) -> dict:
-    """台本の名前空間に入れる道具。`SRC`・`SEEN`・`MAPS_AREA`・`STORES` は**呼ばれたときに** `ns` から読む
-    （台本は道具を入れたあとで、頭に `SRC` を書く）"""
+def tools(ns: dict, geo: dict, photos: dict, trips: frozenset[str] = frozenset()) -> dict:
+    """台本の名前空間に入れる道具。`SRC`・`SEEN`・`MAPS_AREA`・`TRIP_AREAS`・`STORES` は**呼ばれたときに** `ns` から読む
+    （台本は道具を入れたあとで、頭に `SRC` を書く）。`trips` は国の表の、その街の日帰りの町の鍵"""
 
     def s(*keys: str) -> list[dict]:
         src = ns.get("SRC") or {}
@@ -108,8 +117,19 @@ def tools(ns: dict, geo: dict, photos: dict) -> dict:
     def t(text: str, *keys: str) -> dict:
         return {"text": text, "src": s(*keys)}
 
-    def maps(q: str) -> str:
-        area = ns.get("MAPS_AREA", "")
+    def area_of(town: str | None) -> str:
+        if not town or town == ns.get("TOWN"):
+            return ns.get("MAPS_AREA", "")
+        names = ns.get("TRIP_AREAS") or {}
+        if town not in names:
+            raise BookError(f"日帰りの町「{town}」の地図の名前が TRIP_AREAS に無い（無いまま泊まる街の名前を足すと、別の町を探す）")
+        return names[town]
+
+    def maps(q: str, town: str | None = None) -> str:
+        area = area_of(town)
+        # 問いにもう町の名前が入っていれば重ねない（属格の「Krujës」にも「Krujë」は入っている）
+        if area and area.casefold() in q.casefold():
+            area = ""
         return "https://www.google.com/maps/search/?api=1&query=" + urllib.parse.quote_plus(f"{q} {area}".strip()) + "&hl=ja"
 
     def photo(k: str, alt: str) -> dict:
@@ -127,7 +147,7 @@ def tools(ns: dict, geo: dict, photos: dict) -> dict:
     def store(key, name, local, area, geo_key, why, why_src) -> dict:
         x = g(geo_key)
         return {"key": key, "name": name, "local": local, "area": area, "lat": x["lat"], "lon": x["lon"], "coord_src": osm(geo_key),
-                "why": {"text": why, "src": why_src}, "went": False, "maps": maps(local)}
+                "why": {"text": why, "src": why_src}, "went": False, "maps": maps(local, area if area in trips else None)}
 
     def lm(k: str, name: str, local: str) -> dict:
         x = g(k)
@@ -176,13 +196,21 @@ def tools(ns: dict, geo: dict, photos: dict) -> dict:
             "todo": todo, "dish": dish, "BookError": BookError}
 
 
+def trips_of(key: str, root: Path = ROOT) -> frozenset[str]:
+    """国の表（`cities.json`）の、その街の日帰りの町の鍵"""
+    country, _, city = key.partition("/")
+    t = _load(root / GUIDE / "cities.json")
+    c = ((t.get("countries") or {}).get(country) or {}).get("cities", {}).get(city) or {}
+    return frozenset(c.get("trips") or {})
+
+
 def run(key: str, root: Path = ROOT) -> tuple[dict, dict]:
     """台本を読んで (材料, 組み立て)。台本が無ければ FileNotFoundError"""
     d = city_dir(key, root)
     script = d / "book.py"
     code = compile(script.read_text(encoding="utf-8"), str(script), "exec")
     ns: dict = {"__name__": "guide_book", "__file__": str(script), "KEY": key, "ROOT": root, "HERE": d}
-    ns.update(tools(ns, _load(d / "geo.json"), _load(d / "photos.json")))
+    ns.update(tools(ns, _load(d / "geo.json"), _load(d / "photos.json"), trips_of(key, root)))
     exec(code, ns)  # noqa: S102  台本はこのリポジトリの中のファイルだけ（`python/data/guide/<国>/<街>/book.py`）
     for name in ("book", "compose"):
         if not isinstance(ns.get(name), dict):

@@ -20,7 +20,7 @@ description: 配信が終わった日の棚卸し。キャラクター（最優�
 | 1 | キャラクター | 出してくれた人が、島に居ないまま次の日になる |
 | 2 | 切り抜き候補 | その日のうちに切れない（アーカイブの熱が冷める） |
 | 3 | 日誌 | その日が島から消える |
-| 4 | いまどこ | 島が昨日の国を指したままになる |
+| 4 | いまどこ（滞在の表） | 表紙の［いまここ］・名刺・島が前の国を指したままになる |
 | 5 | 取り込みの見届け | 翌朝、数字が全部止まる |
 
 ## 0. その日の配信を特定する
@@ -40,15 +40,18 @@ curl -s "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=<id>
 
 ## 1. キャラクター（最優先）
 
-### 1-1. 投げ銭してくれた人を、2つの出どころから集める
+### 1-1. 投げ銭してくれた人を、3つの出どころ（スパチャ・Doneru・島の投げ銭）から集める
 
 **BigQuery だけ見ない。当日ぶんは入っていない。** ここで えびっち を落とした。
+**島の投げ銭（島の `/tip`。#1405）は BigQuery に1件も入らない。** 台帳と受け取りの書類にしか無い。
 
 | 出どころ | 何のぶん | どう引くか |
 | --- | --- | --- |
 | BigQuery `chat_messages`（`event_type='PAID'`） | **前の晩まで** | ここから直に引く |
 | BigQuery `doneru_donations` | **前の晩まで** | 同上 |
 | Firestore `streamChatMessages` | **今日のぶん** | `characters_gap` で**数だけ** |
+| 台帳 `islandTips`（`source: island`。島の投げ銭） | **前の晩まで** | `characters_gap` で**数だけ**（BigQuery には無い） |
+| Firestore `islandSiteTips`（島の投げ銭の受け取り） | **今日のぶん** | 同上（台帳にまだ居ない人だけ。テストの支払い・返金は数えない） |
 
 BigQuery はこのセッションから直に引ける（`execute_sql_readonly` /
 projectId `live-streaming-d3cac`）。**Actions を通さないので、公開のログに残らない。**
@@ -69,15 +72,19 @@ WHERE DATE(donated_at) >= '2026-09-11' ORDER BY d DESC
 
 ⚠ 時刻の欄は **`published_at`**。`timestamp` という列は無い。
 
-当日ぶんは `characters_gap` で数える。
+当日ぶんと島の投げ銭は `characters_gap` で数える。
 
     Actions > 管理スクリプトを実行 > script = characters_gap / ARGS = {"days": 14}
 
-読むのは3行だけ:
+読むのは4行だけ:
 
 - `Firestore（配信中のぶん）: 投げ銭らしい行から N人。うち BigQuery にまだ居ないのが M人`
   → **M が 0 なら、今日出してくれた人は全員すでに BigQuery が知っている人。**
     名前を引き直さなくていい。
+- `島の投げ銭（台帳＋今日の受け取り）: I人（うち今日のぶんだけの人 J人）`
+  → 島で投げた人。**名前は BigQuery の SQL では引けない**（台帳にしか無い）。
+    島で投げられるのは YouTube のチャンネルを結んだ人だけなので、いつも channelId で当たる。
+    下の「まだ無い K人」にはこの人たちも入っている
 - `調べた人数 … / **まだ無い K人**` → K が 0 でなければ、その人を探す
 - `名前でしか当たらなかった L人` → L が 0 でなければ `characters_link` を回す
 
@@ -161,7 +168,7 @@ print(''.join(sorted({c.get('emoji','') for c in cs if c.get('emoji')})))"
 
 ## 3. 日誌（`site/content/nordic.ts` の `NORDIC_LOG`）
 
-**`docs/island-misses.md` #153 の決めごとを、書く前に読む。**
+**決まりは `docs/island-standards.md` §27.2（一次情報を正にする）。** この日誌で当てると、こうなる。
 
 1. **字幕（ショートの説明文）が出ている日は、そちらを正にする**
 2. **移動した日をコメントだけから書くときは、先に数える**（何本乗ったか・
@@ -199,18 +206,19 @@ curl -s "https://live-streaming-d3cac.web.app/island-api/streamevents?day=2026-0
 
 出すのは `/island-ship`。**Hosting は手で起動する**（`push` トリガーは効いていない）。
 
-## 4. いまどこ
+## 4. いまどこ（滞在の表）
 
-    Actions > island_update.yml（workflow_dispatch）
-    place / word / week / refresh_stats: true
+**国を移った日だけ、`site/content/stays.ts`（滞在の表）を直す。** 表紙の「これから」の
+［いまここ］・名刺と `/about` の「いま ◯◯」・島のカモメと今日の板は、ぜんぶここ1か所から引く
+（`docs/spec/model.md` M-20。#1278）。
 
-⚠ **確かめるのは `place` の欄そのもの。** 文字列で探すと、前の日の `word`
-（「あしたはタリンまで308km」）に当たって「もう入っている」に見える。
+- その日の配信で**着いたと確かめられた**ら、いまの行の `to` に出た日を入れ、つぎの国の行を足す
+  （書きかたは `stays.ts` の頭の「行の決まり」。予定の日で書かない・街は歩き終わってから）
+- 国を移っていない日は、何もしない
+- **Firestore の `island/state.current` は書かない。** `/now`（島だより）を畳んで、画面は
+  `current` を1つも読まなくなった。`island_update.yml` で直すのは数字の取り直しだけ
 
-```bash
-curl -s "https://live-streaming-d3cac.web.app/island-api/state" \
-  | python3 -c "import sys,json;print(json.load(sys.stdin)['current']['place'])"
-```
+確かめは、配ったあとの表紙の［いまここ］と名刺の「いま ◯◯」が同じ国を言っているか。
 
 ## 5. 取り込みの見届け
 

@@ -5,6 +5,7 @@ import type { Guidebook, Went } from "@/content/guidebook/types";
 import { SHORTS, type Short, shortHref } from "@/content/shorts";
 import { LINKS } from "@/content/site";
 import { JsonLd, videoLd } from "@/lib/jsonld";
+import { streamPart } from "@/lib/streamPart";
 
 import ShortPlayer from "./ShortPlayer";
 import { Credit, Picture, Sec, jpDate } from "./parts";
@@ -240,18 +241,30 @@ export default function Videos({
 function StreamList({ rows }: { rows: { videoId: string; title: string; date: string }[] }) {
   return (
     <ul className="gb-streams">
-      {rows.map((s) => (
-        <li key={s.videoId}>
-          <a href={watch(s.videoId)} target="_blank" rel="noopener noreferrer">
-            <img src={`https://i.ytimg.com/vi/${s.videoId}/mqdefault.jpg`} alt="" width={320} height={180} loading="lazy" decoding="async" />
-            <span>
-              {/* 実在する題名の引用（絵文字もそのまま） */}
-              <b data-quote="title">{s.title}</b>
-              <time dateTime={s.date}>{jpDate(s.date)}</time>
-            </span>
-          </a>
-        </li>
-      ))}
+      {rows.map((s) => {
+        /* 同じ日に同じ題が2本ある回（途中で切れて立て直した配信）は、題の外に「この日の何本目か」を添える。
+           題は引用なので触らない。添えないと、同じ字の札が2枚になり、読み上げでも同じ名前のリンクが別の動画へ行く */
+        const part = streamPart(s.videoId);
+        const when = <time dateTime={s.date}>{jpDate(s.date)}</time>;
+        return (
+          <li key={s.videoId}>
+            <a href={watch(s.videoId)} target="_blank" rel="noopener noreferrer">
+              <img src={`https://i.ytimg.com/vi/${s.videoId}/mqdefault.jpg`} alt="" width={320} height={180} loading="lazy" decoding="async" />
+              <span>
+                {/* 実在する題名の引用（絵文字もそのまま） */}
+                <b data-quote="title">{s.title}</b>
+                {part ? (
+                  <small>
+                    {when}・{part}
+                  </small>
+                ) : (
+                  when
+                )}
+              </span>
+            </a>
+          </li>
+        );
+      })}
     </ul>
   );
 }

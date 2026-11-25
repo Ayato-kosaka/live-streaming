@@ -5,25 +5,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import IslandScene, { LAMPS, PROPS, type Item } from "./IslandScene";
 import { charPlace } from "@/content/characterBox";
 import { Sprite, spriteWidth } from "./Sprite";
-import { AYATO_HOME, DOORS, GRASS_INSET, ISLAND, SPOTS, type Spot, type SpotId } from "./layout";
+/* 札は手前ほど上に重ねるので、軒を足元の y の順で回す（`layout.ts` の `BY_DEPTH`。入口の並びは下のバーが `SPOTS` で持つ） */
+import { AYATO_HOME, BY_DEPTH as DOORS, GRASS_INSET, ISLAND, SPOTS, type Spot, type SpotId } from "./layout";
 import { inset, insideRadii, rng } from "./geometry";
 import { LIVE, UI } from "@/content/voice";
 import { hasVoice, linesOf } from "@/content/chatter";
 import { Gull } from "./Guide";
 import Today from "@/components/today/Today";
 import { rememberVisit, VISITED } from "@/components/today/visit";
-import { jstNow, readNight } from "@/lib/nightly";
+import { BUILT_AT, jstNow, readNight } from "@/lib/nightly";
 import { AYATO_ASPECT } from "@/lib/ayatoArt";
 import AyatoSprite, { ayatoFlip, ayatoTurn, newAyatoTurn, setAyatoDir, setAyatoWalking } from "@/components/isle/AyatoSprite";
 import { useResidentShow } from "@/lib/liveStats";
 import Icon from "@/components/ui/IconCore";
 import HereFolks from "./HereFolks";
 import { here } from "@/lib/here";
-import { daysUntil } from "@/content/plans";
-import { leadPlan } from "@/lib/leadPlan";
-import { NOW_FALLBACK } from "@/content/site";
+import { stayHere } from "@/lib/leadPlan";
 /* 「いまどこ」の判定と言い方は1か所（`lib/stay.ts`）。島だけ別の字を言わない。 */
-import { placeWord } from "@/lib/stay";
 import { MAX_LEAD, around, hits, lead } from "@/components/isle/plates";
 import Say from "@/components/ui/Say";
 import { nights } from "@/content/nights";
@@ -112,7 +110,6 @@ const spotOfHref = (href: string): SpotId | null => {
  */
 const TODAY_AT: Partial<Record<TodayNews["kind"], SpotId>> = {
   live: "streams",
-  plan: "next",
   recipe: "kitchen",
   past: "map",
 };
@@ -260,18 +257,13 @@ const HINT_SPAN = 5200;
    同じことを二度言わないよう、言い方を変えてある。
    地名を1つ入れて、ぼんやりした自己紹介にしない（`content/voice.ts` の決めごと）。
    ------------------------------------------------------------------------ */
-/* **場所も時刻も、呼ぶときに決める。** ここは `NOW_FALLBACK.place` と「毎晩22時」を
-   直に埋めた定数だったので、旅に出ても「毎晩22時、いまはジョージア・トビリシだよ。」と
-   言い続けていた（あの欄は出発の1週間前で止まっていて、旅の17日間は打ち直せない）。
-   定数のまま `placeWord` や `nights` を通すこともできない——**焼くときとブラウザで
-   答えが変わるので、水あわせが崩れる。** カモメが喋るのは画面が出たあとなので、
-   そのときの日付で作る。 */
+/* **場所も時刻も、呼ぶときに決める。** 定数にすると、焼くときとブラウザで答えが変わって水あわせが崩れる
+   （前は Firestore の `current.place` の焼き込みを埋めていて、旅に出ても前の国を言い続けた）。
+   場所は滞在の表の［いまここ］（`stayHere`。表紙の名刺と同じ1本。#1278）。
+   カモメが喋るのは画面が出たあとなので、そのときの日付で作る。 */
+const hereWord = (now: Date) => stayHere(now)?.place || "世界のどこか";
 const greeting = (now: Date = new Date()) =>
-  `ようこそ、あやと島へ。あやとは${nights(now).bare}、旅先から生配信してる。いまは${placeWord(
-    NOW_FALLBACK.place,
-    NOW_FALLBACK.updatedAt,
-    now,
-  )}だよ。`;
+  `ようこそ、あやと島へ。あやとは${nights(now).bare}、旅先から生配信してる。いまは${hereWord(now)}だよ。`;
 /** 吹き出しの主が、住人ではなく案内役のカモメであることを表す番号 */
 const GUIDE = -1;
 const clampToIsland = (x: number, y: number): [number, number] => {
@@ -479,8 +471,6 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     return () => clearTimeout(t);
   }, [arriving, talking, dismissHint]);
 
-  /** 出発まであと何日。「これから」の札に付ける。 */
-  const [days, setDays] = useState<number | null>(null);
   /** 今日、何かある建物。「!」が立つのはここ1つだけ。 */
   const [todaySpot, setTodaySpot] = useState<SpotId | null>(null);
   /** 毎フレームの計算から見るための控え。跳ねる札の箱を広く見るのに使う */
@@ -497,24 +487,18 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
   const [onAir, setOnAir] = useState(false);
   /* 配信中の札に出す「いまどこ」。**焼かない。** 焼くと配った日の場所で固まり、
      旅に出た晩に前の国から繋いでいることになる（`content/voice.ts` の LIVE）。 */
-  const [nowPlace, setNowPlace] = useState(() =>
-    placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt),
-  );
+  const [nowPlace, setNowPlace] = useState(() => hereWord(BUILT_AT));
   useEffect(() => {
     /* 静的書き出しなので、ビルド時の「今日」を焼き込まないよう画面が出てから決める。
        **1分ごとに数え直す。** 21:59 に開いたまま22時をまたぐ人がいる。
        そこで島が変わらないと、島の絵は現実と同期していないことになる。 */
     const read = () => {
       const now = new Date();
-      /* 札に出す「あと何日」。**選ぶのは `lib/leadPlan.ts`。**
-         `content/plans.ts` の `nextPlan()` は先が0件になると行ってきた企画を
-         返すので、ここに渡すと過去の日付から数えることになる（#673）。
-         先が0件なら `null`——下の札は `days >= 0` でしか出さないので消える。 */
-      setDays(daysUntil(leadPlan(now)?.date, now));
+      /* 常設の軒には「あと◯日」を貼らない（#1279。`components/isle/cover.ts` の同じ注） */
       const n = todayNews(now);
       setTodaySpot(spotOfHref(n.href) ?? TODAY_AT[n.kind] ?? null);
       setOnAir(readNight(now).onAir);
-      setNowPlace(placeWord(NOW_FALLBACK.place, NOW_FALLBACK.updatedAt, now));
+      setNowPlace(hereWord(now));
     };
     read();
     const id = setInterval(read, 60_000);
@@ -729,7 +713,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
     uiBoxes.current = boxes;
     platesDirty.current = true;
     // wide も見る。引きに移ると島の地図の札が増えるので、避ける相手が変わる
-  }, [openSpot, box.w, box.h, days, onAir, barOpen, todaySpot, wide]);
+  }, [openSpot, box.w, box.h, onAir, barOpen, todaySpot, wide]);
 
   const mode = modeOf(box.w);
   /** スマホは島に降り立った視点。「島ぜんぶ」を押すと引いて全体を見る。 */
@@ -1204,8 +1188,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                「今日ここに何かある」の1枚は 10px 跳ねる（spotHop）ので、
                計算どおりの箱で詰めると、跳ねた先で隣に食い込む。
                紙一重で通すより、6px ずつ広く見て余らせるほうが読める。 */
-            // 「あと◯日」のシールは板の外（真上）に出ているので、その背も箱に入れる
-            const gy = (todayRef.current === sp.id ? 13 : 6) + (sp.countdown ? 26 : 0);
+            const gy = todayRef.current === sp.id ? 13 : 6;
             /* 詰めるのは**見た目の箱ではなく、指の当たり**。
                札は 34〜42px しかないが、`::before` が 48px まで広げてある
                （`island-design.md` 3-2）。見た目で詰めると、隣の札の見えない
@@ -1751,15 +1734,6 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
              出ていない4軒は建物の当たりが押しどころのまま残る（`island.css`）。 */
           const named = wide && !!sp.sign;
           const today = todaySpot === sp.id;
-          /* 出発までの日数のシール。**閉じていても、この1軒にだけ貼っておく。**
-             「これから」はいちばん目立たせると決まっている入口で
-             （`docs/island-design.md` 6章）、日数は毎日変わるので、
-             島に降りた瞬間に見える価値がある数少ない字。
-             今日その日なら「!」が立つので、そちらに任せて重ねない。 */
-          const hasDays = !!sp.countdown && days !== null && days >= 0;
-          /* 「あと◯日」だけを板抜きで貼る形（.is-count）は、札が出ていないとき用。
-             引きで名前が出ている軒（看板の6つ）では、ふつうの札の右肩に貼る。 */
-          const count = hasDays && !today && !named;
           /* 配信中のやぐらは、行き先が YouTube に変わる。
              **島に留めずに外へ出すのが正解**（`docs/island-play.md` 5章）。
              島は留守番の場所で、配信がある3時間だけは、島より向こうが本体。 */
@@ -1791,7 +1765,7 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               ref={(el) => {
                 markRefs.current[i] = el;
               }}
-              className={`spot${sp.sign ? " is-sign" : ""}${on ? " is-on" : ""}${today ? " is-today" : ""}${count ? " is-count" : ""}`}
+              className={`spot${sp.sign ? " is-sign" : ""}${on ? " is-on" : ""}${today ? " is-today" : ""}`}
             >
               {/* 建物の当たり。**`<a href>` にしてある。**
                   `<button>` だと長押しの「新しいタブで開く」が出ないし、
@@ -1844,14 +1818,6 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
                   <span className="spot-bang" aria-hidden>
                     !
                   </span>
-                )}
-                {/* 札の上に印は1つまで。「!」が立つ日は、そちらに譲る。
-                    小さい丸（寄りの閉じた札）にも、名前だけの札（引き）にも、
-                    「!」と「あと1日」を並べる幅は無い。どちらも読めなくなる。 */}
-                {hasDays && (count || on || (named && !today)) && (
-                  <em className="spot-badge" aria-hidden>
-                    {days === 0 ? "今日" : `あと${days}日`}
-                  </em>
                 )}
                 <span className="spot-text">
                   <b>{label}</b>
@@ -1969,9 +1935,6 @@ export default function IslandStage({ residents = [] }: { residents?: Resident[]
               >
                 <img src={`/sprites/${s.icon}.webp`} alt="" />
                 <span>{s.label}</span>
-                {s.countdown && days !== null && days >= 0 && (
-                  <em>{days === 0 ? "今日" : `あと${days}日`}</em>
-                )}
               </Link>
             ))}
             {/* 島の連なりへの口。

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import Notes from "@/components/live/Notes";
 import { UPDATES } from "@/content/updates";
 import "./updates.css";
@@ -57,7 +58,7 @@ const day = (on: string) => {
  */
 export default function UpdatesPage() {
   return (
-    <PageShell crumbs={[{ label: "島をなおしたところ" }]}>
+    <PageShell crumbs={crumbsOf("/updates")}>
       <PageHead
         icon="mailbox"
         title="島をなおしたところ"

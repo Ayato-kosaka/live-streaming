@@ -22,14 +22,15 @@ import uae from "@/content/atlas/c/uae.json";
 import azerbaijan from "@/content/atlas/c/azerbaijan.json";
 import georgia from "@/content/atlas/c/georgia.json";
 import armenia from "@/content/atlas/c/armenia.json";
-import iranBorder from "@/content/atlas/c/iran-border.json";
 import poland from "@/content/atlas/c/poland.json";
 import lithuania from "@/content/atlas/c/lithuania.json";
 import latvia from "@/content/atlas/c/latvia.json";
 import estonia from "@/content/atlas/c/estonia.json";
 import finland from "@/content/atlas/c/finland.json";
 import sweden from "@/content/atlas/c/sweden.json";
-/* いま歩いている旅の国（`python/build_world_route.py` の `WALKING`）。線は無く、国の場所と首都だけ */
+/* バルカン諸国周遊。北マケドニアとブルガリアは歩いているあいだ（`WALKING`）は線の無い地図だったが、
+   2026-11-22 に歩き終わって `ROUTE` へ移し、ほかの国と同じ線と街の地図になった */
+import albania from "@/content/atlas/c/albania.json";
 import northMacedonia from "@/content/atlas/c/north-macedonia.json";
 import bulgaria from "@/content/atlas/c/bulgaria.json";
 
@@ -68,13 +69,13 @@ export const COUNTRY_MAPS: Record<string, CountryMapData> = {
   azerbaijan,
   georgia,
   armenia,
-  "iran-border": iranBorder,
   poland,
   lithuania,
   latvia,
   estonia,
   finland,
   sweden,
+  albania,
   "north-macedonia": northMacedonia,
   bulgaria,
 } as unknown as Record<string, CountryMapData>;

@@ -5,6 +5,7 @@ import HeroArt from "@/components/ui/HeroArt";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageShell from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import Fold from "@/components/ui/Fold";
 import Icon from "@/components/ui/Icon";
 import { STREAM_TYPES, streamTypeBySlug } from "@/content/streamTypes";
@@ -14,6 +15,7 @@ import { STATS_FALLBACK } from "@/content/site";
 import Walked from "@/components/atlas/Walked";
 import { Vid } from "@/components/streams/Vid";
 import { H, Rec, Sheet, Tape, Zone } from "@/components/streams/Sheet";
+import { hrefOf } from "@/content/kinds";
 import {
   ArtBasket,
   ArtBoots,
@@ -116,7 +118,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
   const recs = figures(t.slug);
 
   return (
-    <PageShell crumbs={[{ label: "配信", href: "/streams" }, { label: t.name }]}>
+    <PageShell crumbs={crumbsOf(`/streams/${t.slug}`)}>
       {/*
         5つの型を別物に見せるのは、紙のわずかな染まりだけ（`docs/island-world.md` 3.3）。
         蛍光ペンの帯・動画の縁・下のタイルまで型の色にすると、色が4か所に増えて
@@ -210,7 +212,7 @@ export default async function StreamTypePage({ params }: { params: Promise<{ slu
 
       {/* 型の色は紙の染まりで使いきっている。行き先の板は、島の板と同じ木の色。 */}
       {t.deeper && (
-        <Link prefetch={false} className="tile" href={t.deeper.href} style={{ ["--tile" as string]: "var(--roof-wood)" }}>
+        <Link prefetch={false} className="tile" href={hrefOf(t.deeper.to)} style={{ ["--tile" as string]: "var(--roof-wood)" }}>
           <img className="tile-icon" src={`/sprites/${t.icon}.webp`} alt="" />
           <span className="tile-text">
             <b>{t.deeper.label}</b>

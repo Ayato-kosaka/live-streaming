@@ -3,8 +3,9 @@
  *
  *     node tools/sprites/bakeplan.mjs tools/sprites/bake-request.json
  *     node tools/sprites/bakeplan.mjs --names food-cheese-cut --check food-pepper
+ *     node tools/sprites/bakeplan.mjs --parts    # manifest の部品を、キットごとに JSON で出すだけ
  *
- * 終了コード 0=焼ける / 1=名前がおかしい・manifest に無い / 2=焼くものが無い。
+ * 終了コード 0=焼ける / 1=名前がおかしい・manifest に無い・どのキットか分からない部品が在る / 2=焼くものが無い。
  * `GITHUB_OUTPUT` があれば names / check / kits を書く（`.github/workflows/bake_sprites.yml`）。
  *
  * ## なぜ要るか
@@ -14,11 +15,16 @@
  * ランナーが素材を落とす前にここで止める。
  *
  * キットは5つあり、焼く絵が使うものだけ落とせば足りる。どの絵がどのキットを使うかは
- * manifest.mjs の部品の置き場（NK / HK / BK / FK）で決まっているので、名前の表を別に持たずに
- * そこから引く。表を持つと、絵が増えたとき表だけ古くなる。
+ * manifest.mjs の部品の置き場（NK / HK / BK / CK / FK）で決まっているので、絵ごとの表を別に持たずに
+ * そこから引く。置き場 → キットは `kits.json` の dest の1か所だけ（fetchkits.sh も同じ表で落とす）。
+ * 表を2か所に持つと、片方だけ古くなる——`building-kit` と書いていたあいだ、町の建物の部品は
+ * 実は Fantasy Town Kit のもので、落とすキットを取り違えていた（#1351）。
  */
 import fs from "node:fs";
 import { SPRITES } from "./manifest.mjs";
+
+const KITS = JSON.parse(fs.readFileSync(new URL("./kits.json", import.meta.url), "utf8")).kits;
+const KIT_OF_DIR = new Map(Object.entries(KITS).map(([kit, k]) => [k.dest, kit]));
 
 // 名前はそのままシェルに渡るので、manifest の名前に使われている字だけを通す
 const NAME = /^[a-z0-9][a-z0-9-]*$/;
@@ -39,15 +45,32 @@ function parseArgs(argv) {
 
 const clean = (xs) => [...new Set(xs.map((x) => String(x).trim()).filter(Boolean))];
 
-/** 部品の置き場 → キットの名前。manifest.mjs の NK / HK / BK / FK と同じ並び */
+/** 部品の置き場 → キットの名前（`kits.json` の dest）。キットの要らない部品は null、知らない置き場は undefined */
 function kitOf(url) {
   if (!url || !url.startsWith("./models/")) return null; // 箱や円盤だけの絵はキットが要らない
-  if (url.startsWith("./models/gltf/")) return "nature-kit";
-  if (url.startsWith("./models/holiday/")) return "holiday-kit";
-  if (url.startsWith("./models/food/")) return "food-kit";
-  // building-kit と mini-characters は同じ置き場。住人だけ character- で始まる
-  if (url.startsWith("./models/character-")) return "mini-characters";
-  return "building-kit";
+  return KIT_OF_DIR.get(url.slice(2, url.lastIndexOf("/")));
+}
+
+const urlsOf = (s) => s.parts.map((p) => (typeof p === "string" ? p : p.url));
+
+// 見張り（kitmirror_selftest.py）が、控えの sha256 が manifest の部品を全部覆っているかを見るための口
+if (process.argv[2] === "--parts") {
+  const out = {};
+  let lost = 0;
+  for (const s of SPRITES) {
+    for (const u of urlsOf(s)) {
+      const k = kitOf(u);
+      if (k === null) continue;
+      if (k === undefined) {
+        console.error(`✕ ${s.name}: どのキットの置き場でもない部品 ${u}`);
+        lost++;
+        continue;
+      }
+      (out[k] ??= new Set()).add(u.slice(2 + KITS[k].dest.length + 1));
+    }
+  }
+  console.log(JSON.stringify(Object.fromEntries(Object.entries(out).map(([k, v]) => [k, [...v].sort()]))));
+  process.exit(lost ? 1 : 0);
 }
 
 let req;
@@ -82,9 +105,12 @@ for (const n of [...names, ...check]) {
     bad++;
     continue;
   }
-  for (const p of s.parts) {
-    const k = kitOf(typeof p === "string" ? p : p.url);
-    if (k) kits.add(k);
+  for (const u of urlsOf(s)) {
+    const k = kitOf(u);
+    if (k === undefined) {
+      console.error(`✕ ${n}: どのキットの置き場でもない部品 ${u}（kits.json の dest に無い）`);
+      bad++;
+    } else if (k) kits.add(k);
   }
   const role = names.includes(n) ? "焼いてコミット" : "見比べるだけ";
   console.log(`  ${n}  ${role}${heroes.has(n) ? "（hero/ も焼く）" : ""}`);

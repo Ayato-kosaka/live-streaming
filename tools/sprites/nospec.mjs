@@ -4,7 +4,7 @@
  *   tools/build.sh 3204
  *   DIST=site/.next-3204 node tools/sprites/nospec.mjs
  *
- *   ONLY=/now.html …       # 面を1枚だけ
+ *   ONLY=/about.html …     # 面を1枚だけ
  *   SHOWALL=1 …            # 当たらなかった字も、族ごとの数だけ出す
  *   BREAK=nopat …          # わざと壊す（対照が落ちて 2 になる）
  *

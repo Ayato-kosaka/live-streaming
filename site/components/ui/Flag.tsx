@@ -202,7 +202,6 @@ const FLAGS: Record<string, Spec> = {
     ],
   },
   armenia: { k: "h", bands: ["#d90012", "#0033a0", "#f2a800"] },
-  "iran-border": { k: "h", bands: ["#239f40", "#ffffff", "#da0000"] },
 
   // --- いま歩いている国 ---
   // 赤は #e41e20。アルバニアの旗の規格色（Pantone 186）を RGB に直した値で、
@@ -281,6 +280,9 @@ const FLAGS: Record<string, Spec> = {
      無いと `Flag` が null を返して、`/now` のいちばん大きい絵が消える
      （`tools/sprites/walkedcount.mjs` が「旗が Flag.tsx にない」で赤くする）。 */
   bulgaria: { k: "h", bands: ["#ffffff", "#00966e", "#d62612"] },
+  /* ルーマニア。左から青・黄・赤の縦3本（政府の指定するコバルトブルー・クロムイエロー・朱）。
+     フランス（青・白・赤）とは真ん中の色で、ベルギー（黒・黄・赤）とは左の色で見分ける */
+  romania: { k: "v", bands: ["#002b7f", "#fcd116", "#ce1126"] },
 
   // --- これから行く国 ---
   poland: { k: "h", bands: ["#ffffff", "#dc143c"] },

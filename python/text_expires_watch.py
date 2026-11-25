@@ -122,16 +122,15 @@ QUOTES: dict[str, str] = {
     "countryStats.ts": "国ごとの配信の題名（自動生成）",
     "chapterStats.ts": "章ごとの数（自動生成）。日付は「数えた日」だけ",
     "roulette.ts": "配信の題名から作った引き（自動生成）",
+    # 議事録の「ひとことで」の頭（stream_digest.py が焼く）。「次は日本時間19日22:30から」は、その回に言った予定の記録
+    # （2026-11-23 にエジプト・イギリスを表に足したら、2025年の回の予定が今年の日付として拾われた）
+    "streamDigest.ts": "配信1本の1〜2行。議事録の「ひとことで」から（自動生成）",
 }
 
 # **見送り。** 拾いはしたが、その日が来ても嘘にならないと決めたもの。
 # 鍵は「ファイル + 字の頭40文字」。**字を書き直すと鍵が外れて、また赤くなる。**
 # 黙って落とさずに表へ出す（`docs/island-standards.md` §15）。
 ALLOW: dict[tuple[str, str], str] = {
-    (
-        "content/plans.ts",
-        "着いて終わりではない。友だちの家に7泊して、${md(NORDIC_UNTIL)",
-    ): "旅の終わりの決めごと。日が過ぎても「27日に発つまでが北欧旅」は本当のまま",
     (
         "content/nordicFood.ts",
         "木曜日に出る。旅では9月24日がそれ",
@@ -147,7 +146,7 @@ ALLOW: dict[tuple[str, str], str] = {
 # **判定の足を1本ずつ折る。** `BREAK=<足>` を渡すと、直す前の measuring に戻る。
 # 対照（`python/text_expires_watch_selftest.py`）は、折るたびに落ちることまで見る
 # （`docs/island-standards.md` §15「対照は、足の数だけ用意する」）。
-BREAKS = ("forward", "wayaku", "carry", "carryblock", "jsx", "quotes", "past")
+BREAKS = ("forward", "wayaku", "carry", "carryblock", "notice", "jsx", "quotes", "past")
 
 
 def broken(leg: str) -> bool:
@@ -160,8 +159,24 @@ def broken(leg: str) -> bool:
 # 日付が書いていない。**「行ってきます」「北欧へ発つ」は、その企画の日を過ぎたら
 # 嘘になるのに、文だけ見ても日が分からないので1件も拾えなかった。
 # **1つの企画の中では、いちばん先の日がその文の期限**として読む。
+_CARRY_DATE = re.compile(r'^\s*(?:date|until|done|when): (?:"(\d{4}-\d{2}-\d{2})"|[A-Z_]+),')
 CARRY_FROM: dict[str, re.Pattern[str]] = {
-    "content/plans.ts": re.compile(r'^\s*(?:date|until|done|when): (?:"(\d{4}-\d{2}-\d{2})"|[A-Z_]+),'),
+    # 付箋の宛先の表。日を持つお題（定例の配信の回。`date:`）の文は、その日を過ぎると嘘になりうる。
+    # 前の置き場は告知の札の表（`content/plans.ts`。#1277 で畳んだ）
+    "content/themes.ts": _CARRY_DATE,
+    # 企画の表。告知の欄（`notice: {`）を持つ企画の文だけ（下の `CARRY_ONLY`）。
+    # 同じ当てかたを2本に書き写さない（`python/ts_readers_selftest.py` が数える）
+    "content/projects.ts": _CARRY_DATE,
+}
+
+# **持ち回った日を効かせる範囲を、告知の欄の中だけに絞る本。** `(開き, 閉じ)` の行そのもの（字で比べる）。
+#
+# 企画の表は、告知の文（「やる」「北欧へ」。日が過ぎると嘘になりうる）と、伝説の話
+# （終わった企画を振り返る文）を同じ行に持つ。告知の文は `notice: {` の中にだけ在る。
+# 伝説の話にまで企画の日を持ち回ると、振り返りの文が「その日に嘘になった」と読まれる
+# （前の置き場 `legends.ts` は、日を持ち回らない本だった）
+CARRY_ONLY: dict[str, tuple[str, str]] = {
+    "content/projects.ts": ("    notice: {", "    },"),
 }
 
 # 企画の切れ目。ここで持ち回っている日を捨てる（次の企画の文に前の日を付けない）
@@ -387,6 +402,19 @@ def _carry_map(src: str, rel: str) -> dict[int, date]:
             )
             if got:
                 days.append(got)
+    only = CARRY_ONLY.get(rel)
+    if only and not broken("notice"):
+        # 告知の欄の中の行だけに残す（行の番号は 1 から）
+        inside: set[int] = set()
+        on = False
+        for i, line in enumerate(lines, start=1):
+            if line == only[0]:
+                on = True
+            elif on and line == only[1]:
+                on = False
+            elif on:
+                inside.add(i)
+        out = {n: d for n, d in out.items() if n in inside}
     return out
 
 

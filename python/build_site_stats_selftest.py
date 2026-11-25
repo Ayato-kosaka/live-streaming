@@ -442,8 +442,7 @@ def battery(seed: str, what: str) -> bool:
     # --- 6. SITE と PROFILE に1バイトも触らない ------------------------------
     print("\n6. SITE と PROFILE に1バイトも触らない")
     check("塊の外が1バイトも動いていない", outside(baked_out) == outside(seed), True)
-    for name in ("export const SITE = {", "export const PROFILE = {",
-                 "export const NOW_FALLBACK = {", "export const LINKS:"):
+    for name in ("export const SITE = {", "export const PROFILE = {", "export const LINKS:"):
         at_a, at_b = seed.find(name), baked_out.find(name)
         check(f"`{name}` の位置が動いていない", at_a == at_b and at_a > 0, True)
     # 塊の中で動いた行は、焼く5行だけ（0章で5欄とも進んでいることを見てある）

@@ -1,5 +1,6 @@
-import { AHEAD_COUNTRIES, COUNTRIES, isWalkedCountry, type Country } from "./countries";
+import { AHEAD_COUNTRIES, COUNTRIES } from "./countries";
 import { chapterNow, tripDate, type Chapter } from "./chapters";
+import { chapterCountrySlugs } from "./stayChapters";
 
 /**
  * 「これまで歩いた国」の数。**画面が出てから数え直す。**
@@ -24,9 +25,8 @@ import { chapterNow, tripDate, type Chapter } from "./chapters";
  *   1. 歩き終わった国（`content/countries.ts` の `COUNTRIES`）
  *   2. いま歩いている旅のうち、**今日までに入った国**（`AHEAD_COUNTRIES`）
  *
- * **`iran-border` は数えない**（`isWalkedCountry`）。「イラン（国境まで）」は
- * 国境まで歩いた区間で、入国はしていない。`/map` の章の見出しはこれを1カ国として
- * 数えていて、表紙の 20 に対して章の合計が 21 になっていた。
+ * 国の表には国だけが居る（`docs/spec/model.md` M-17）。前は国境まで歩いた区間（`iran-border`）が
+ * 国の行として居て、ここで「国境は数えない」と外していた（#1355 で国の表から出した）。
  *
  * ## 日付は旅の土地の暦で切る
  *
@@ -50,11 +50,9 @@ export function countriesWalked(now: Date = new Date()): number {
 /**
  * 歩き終わった国の数。**旅の国は入らない。**
  *
- * `/map` の年表で、旅の国に振る通し番号の起点に使う。`COUNTRIES.length` を
- * 使っていたので、国ではない `iran-border` が1つぶん番号を食って、
- * ラトビアが「21番目の国」として出ていた。
+ * `/travel` の年表で、旅の国に振る通し番号の起点に使う。
  */
-export const WALKED_DONE = COUNTRIES.filter((c) => isWalkedCountry(c.slug)).length;
+export const WALKED_DONE = COUNTRIES.length;
 
 /** その日の前日。国の切れ目を引くためだけなので、暦は UTC で足りる */
 const prevDay = (d: string) =>
@@ -82,7 +80,7 @@ export type WalkingCountry = {
 
 export function walkingCountries(): WalkingCountry[] {
   const known = new Set(COUNTRIES.map((c) => c.slug));
-  const rows = AHEAD_COUNTRIES.filter((c) => isWalkedCountry(c.slug) && !known.has(c.slug))
+  const rows = AHEAD_COUNTRIES.filter((c) => !known.has(c.slug))
     .slice()
     .sort((a, b) => a.entered.localeCompare(b.entered));
   return rows.map((c, i) => ({
@@ -96,28 +94,14 @@ export function walkingCountries(): WalkingCountry[] {
 /**
  * その島（章）で歩いた国。**歩き終わった国と、歩いている最中の国の両方。**
  *
- * ## なぜ章の `countries` だけでは足りないか
+ * ## なぜ `chapterCountrySlugs` だけでは足りないか
  *
- * `content/chapters.ts` の `countries` は `COUNTRIES` の slug を並べる欄で、
- * **歩き終わるまで埋められない**（街と滞在と見どころが要る）。だからバルカン
- * 諸国周遊は、アルバニアを歩いて北マケドニアに居る日に `countries: []` のままで、
- * 島が「**0カ国 歩いた**」と言っていた。歩いているのに0は嘘
- * （`docs/island-standards.md` 16章）。
- *
- * ## なぜ章の `countries` に書き足して済ませないか
- *
- * あそこに書いても、読む側が `COUNTRIES` から引き直すので**黙って落ちる**
- * （`components/isle/spec.ts` / `IsleReview.tsx` / `cover.ts` の3か所とも）。
- * 落ちないように直すなら結局ここと同じ式が要るうえ、**国を1つ越えるたびに
- * 人が章の表を書き足しに来る名簿**が1本増える（`docs/island-misses.md` の
- * 決めごと3）。章と国の結びつきは `entered` から導ける——`python/stays.py` の
- * `chapter_stays()` も `/map` の年表も、もうそうしている。**同じ決めかたに揃える。**
- *
- * ## 島の地形はここで変えない
- *
- * `region`（地形の決め手）を持つのは記録のある国だけ。歩いている最中の国は
- * `undefined` のままにしてある。ここで地形を動かすと、島の形が国に入った日に
- * 黙って変わる。
+ * あちら（`content/stayChapters.ts`）が返すのは**国の記録のある国**だけで、記録は
+ * **歩き終わるまで書けない**（見どころと紹介が要る）。それだけを数えると、バルカン
+ * 諸国周遊はアルバニアを歩いて北マケドニアに居る日に島が「**0カ国 歩いた**」と言う。
+ * 歩いているのに0は嘘（`docs/island-standards.md` 16章）。だから記録の無い国
+ * （`AHEAD_COUNTRIES`）を、その国に入った日に動いていた章へ足す——`python/stays.py` の
+ * `chapter_stays()` も `/map` の年表も同じ決めかた。
  */
 export type ChapterCountry = {
   slug: string;
@@ -125,14 +109,12 @@ export type ChapterCountry = {
   stays: { from: string; to: string; cities: string[] }[];
   /** その国の面。まだ記録が無い国は、年表のある「歩いた国」へ送る */
   href: string;
-  /** 島の地形を決める地方。**記録のある国だけが持つ** */
-  region?: Country["region"];
 };
 
 export function chapterCountries(c: Chapter, now: Date = new Date()): ChapterCountry[] {
-  const done: ChapterCountry[] = c.countries.flatMap((slug) => {
+  const done: ChapterCountry[] = chapterCountrySlugs(c).flatMap((slug) => {
     const k = COUNTRIES.find((x) => x.slug === slug);
-    return k ? [{ slug: k.slug, name: k.name, stays: k.stays, href: `/travel/${k.slug}`, region: k.region }] : [];
+    return k ? [{ slug: k.slug, name: k.name, stays: k.stays, href: `/travel/${k.slug}` }] : [];
   });
   const known = new Set(done.map((k) => k.slug));
   const day = tripDate(now);

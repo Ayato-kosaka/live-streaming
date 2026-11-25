@@ -114,10 +114,12 @@ def _hobble() -> None:
 # 並びの本。`(ファイル, 並びの名前, 1件を名乗る欄)`
 ARRAYS = (
     ("chapters.ts", "CHAPTERS", "slug"),
-    ("countries.ts", "COUNTRIES", "slug"),
-    ("countries.ts", "AHEAD_COUNTRIES", "slug"),
+    ("countries.ts", "COUNTRY_RECORDS", "slug"),
+    # 滞在の表（#1275）。`COUNTRIES[].stays` と `AHEAD_COUNTRIES` はここから引いている
+    ("stays.ts", "STAYS", "country"),
     ("recipes.ts", "RECIPES", "slug"),
-    ("legends.ts", "LEGENDS", "slug"),
+    # 企画の表（伝説はその印。`legends.ts` は面の形に組むだけで、字の表を持たない）
+    ("projects.ts", "PROJECTS", "slug"),
     ("residents.ts", "RESIDENTS", "icon"),
     ("chatter.ts", "VOICES", "icon"),
     ("nordic.ts", "ROUTE", "id"),
@@ -149,13 +151,13 @@ LEGACY = {
         re.compile(r'slug: "([a-z-]+)",\n\s*name: "([^"]+)",\n\s*from: "([\d-]*)",'),
         "gap",
     ),
-    ("countries.ts", "COUNTRIES"): (
+    ("countries.ts", "COUNTRY_RECORDS"): (
         re.compile(r'slug: "([a-z-]+)",\s*\n\s*name: "([^"]+)",'), "gap",
     ),
     ("recipes.ts", "RECIPES"): (
         re.compile(r'\{ label: "([^"]+)", date: "([^"]+)", videoId: "([^"]+)"'), "gap",
     ),
-    ("legends.ts", "LEGENDS"): (
+    ("projects.ts", "PROJECTS"): (
         re.compile(r'range: \["([\d-]+)", "([\d-]+)"\]'), "gap",
     ),
     ("residents.ts", "RESIDENTS"): (
@@ -334,7 +336,7 @@ def main() -> int:
     check("読めたぶんはそのまま返る", [r["slug"] for r in half.rows], ["alpha"])
 
     # 国の滞在は、国が読めても別に落ちる（配信の行き先が変わる）
-    cs = ts_read.read_countries(src_of.get("countries.ts", ""))
+    cs = ts_read.read_countries(src_of.get("countries.ts", ""), src_of.get("stays.ts", ""))
     check("countries.ts が1国も名乗っていない、ということは無い（read_countries）",
           cs.declared > 0, True)
     check("countries.ts の国を1件も読み落としていない（read_countries）", cs.missed, 0)

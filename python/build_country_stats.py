@@ -57,7 +57,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from build_dead_streams import check_written, sql_not_in, sql_public  # noqa: E402
-from stays import is_country, read_all  # noqa: E402
+from stays import read_all  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -159,8 +159,8 @@ def ts(x) -> str:
 def walked() -> list:
     """いま「歩いた」と言ってよい国。**表紙の「◯カ国を歩いた」の出どころ。**
 
-    滞在のある国ぜんぶ（`python/stays.py`）から、国境までしか行っていない区間を
-    外したもの（`stays.is_country`）。
+    滞在のある国ぜんぶ（`python/stays.py`）。滞在の表には国だけが居る（`docs/spec/model.md` M-17。
+    前は国境までしか行っていない区間 `iran-border` が国の行として居て、ここで外していた。#1355）。
 
     **「配信が出た国だけ」にしない。** オランダの6日はチャットが1件も残って
     いないが、アムステルダムは歩いた。数が無いことと、行っていないことは別。
@@ -176,7 +176,7 @@ def walked() -> list:
     あるので、9日後のストックホルムはここに入らない。入れると歩く前から
     歩いたことになる（`content/countries.ts` の `AHEAD_COUNTRIES` の注）。
     """
-    return sorted(c["slug"] for c in read_all() if is_country(c["slug"]))
+    return sorted(c["slug"] for c in read_all())
 
 
 def build(src: dict) -> None:

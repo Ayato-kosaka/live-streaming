@@ -111,13 +111,20 @@ name: 管理スクリプトを実行
 #                        絵を手元から島の口へ直に送るために、札のほうを運ぶ。
 #                        押すのは `python/admin/_handoff.py` で、**ほどいたら
 #                        この実行をその場で消す**（SHA も入力も公開に残さない）
+#   guide_token        … 案内鳥のチャンネル（あやと島案内鳥）として配信のチャットに
+#                        書く鍵を作る（#1405）。{"code":"<同意で出たコード>","pubkey":"<SPKI DER の base64>"}。
+#                        コードを refresh token に替え、その鍵の channels.list の名前が
+#                        「あやと島案内鳥」の1つだけのときだけ封をして注記に出す。**1バイトも書かない。**
+#                        client の鍵（YOUTUBE_CLIENT_ID / SECRET）は**このスクリプトのときだけ**渡す。
+#                        コードは使い切りで、入力に載るのは受け入れる（下の step で伏せる）。
+#                        押した側は、ほどいたら実行を消す
 # 月末配信のふりかえり（`.claude/skills/monthly-review`）。
 #   monthly_tips_run … **投げ銭ランキングを本番の値で作る。1バイトも書かない。**
-#                      出す額は**貢献額**（スパチャ ÷ 2 + Doneru）で、
+#                      出す額は**貢献額**（スパチャ ÷ 2 + Doneru + 島の投げ銭）で、
 #                      式は python/fund_box.py の viewer_yen ひとつ。
 #                      **実額は1つも出さない**（あやと 2026-09-26
 #                      「実額は視聴者には一切見せない」）。名寄せは図鑑で、
-#                      スパチャは channelId、Doneru は**名乗り→lookupKeys**。
+#                      スパチャと島の投げ銭は channelId、Doneru は**名乗り→lookupKeys**。
 #                      どちらもちょうど1人のときだけ寄せ、寄らなかった人は
 #                      その人ひとりで1行として残す。ログに出るのは
 #                      **授賞式の画面にそのまま出るもの**（順位・呼び名・
@@ -126,8 +133,8 @@ name: 管理スクリプトを実行
 #                      {"from":"2026-08-31","to":"2026-09-24"}
 #   tips_sealed      … 期間の投げ銭ランキングを**実額つき**で作り、渡された
 #                      公開鍵で**封をして**出す（オーナーが見る表のため）。
-#                      受け取り側（スパチャ ÷ 2 + Doneru）と払った側
-#                      （スパチャ + Doneru × 1.2）の両方。**1バイトも書かない。**
+#                      受け取り側（スパチャ ÷ 2 + Doneru + 島の投げ銭）と払った側
+#                      （スパチャ + Doneru × 1.2 + 島の投げ銭）の両方。**1バイトも書かない。**
 #                      ログに出るのは件数と暗号文だけ。
 #                      {"from":"2025-10-11","to":"2026-10-10","pubkey":"<SPKI DER の base64>"}
 #   monthly_tips_selftest（python/monthly_tips_selftest.py）
@@ -498,6 +505,24 @@ jobs:
           # 伏せた値そのものは出さない。件数だけ
           echo "入力の中の、個人を指しそうな値を $n 件伏せました"
 
+      # 案内鳥の鍵づくり（guide_token）の入力にはコード（使い切りの認可コード）が載る。
+      # 実行の step は env の ARGS をログの頭に出すので、**そこへ出る前に伏せる。**
+      # 上の step は「人を指す欄」しか伏せないので、ここだけ足す（ほかのスクリプトの
+      # `code` 欄を巻き込まないよう、このスクリプトのときだけ）
+      - name: 案内鳥の鍵のコードを伏せる
+        if: inputs.script == 'guide_token'
+        shell: bash
+        run: |
+          set -uo pipefail
+          if ! code="$(jq -r '(.inputs.args // "{}") | fromjson | .code // empty' "$GITHUB_EVENT_PATH" 2>/dev/null)"; then
+            echo "::error::入力が読めませんでした。何も走らせません"
+            exit 1
+          fi
+          if [ -n "$code" ]; then
+            echo "::add-mask::$code"
+            echo "コードを伏せました"
+          fi
+
       - name: Python 環境のセットアップ
         uses: actions/setup-python@v6
         with:
@@ -575,4 +600,8 @@ jobs:
           # 出どころであるスプレッドシートを**読む**のに要る。
           # 読むだけで、1行も書かない。移行が終わったら、この2行ごと消す。
           EXPO_PUBLIC_GAS_API_URL: ${{ secrets.EXPO_PUBLIC_GAS_API_URL }}
+          # 島の OAuth クライアント。**案内鳥の鍵づくり（guide_token）のときだけ**渡す。
+          # ほかのスクリプトには空が入る（渡す理由が無い）
+          YOUTUBE_CLIENT_ID: ${{ inputs.script == 'guide_token' && secrets.YOUTUBE_CLIENT_ID || '' }}
+          YOUTUBE_CLIENT_SECRET: ${{ inputs.script == 'guide_token' && secrets.YOUTUBE_CLIENT_SECRET || '' }}
         run: python "${{ inputs.script }}.py"

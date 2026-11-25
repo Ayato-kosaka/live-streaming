@@ -350,3 +350,52 @@ def resolve_claim_ui(t, video_id, song, how="erase"):
     if not ed or not isinstance(ed[0]["resp"], dict) or ed[0]["resp"].get("executionStatus") != "EDIT_EXECUTION_STATUS_SCHEDULED":
         raise RuntimeError(f"確定が通らなかった: {json.dumps(ed[0]['resp'] if ed else None)[:300]}")
     return ed[0]
+
+
+# ---- 説明欄の頭に1行足す（街のガイドの行。#1262 のソフィア、#664 のブカレスト）----
+_DESC_BOX = "document.querySelector('#description-textarea #textbox')"
+_SAVE_BTN = "document.querySelector('ytcp-button#save')"
+
+
+def prepend_description(t, video_id, line):
+    """説明欄のいちばん頭に line と改行を足して保存し、読み直して「line＋改行＋前の説明」と同じかを返す。
+    **前の説明は打ち直さない**（全部を打つと、ハッシュタグの候補が開いて字が化ける）。
+    戻り値は {"before": 字数, "after": 字数, "exact": bool} か、止まったわけ {"error": …}。
+
+    - 改行は `Enter` の鍵ではなく `execCommand('insertLineBreak')`。URL を打った直後の `Enter` は
+      改行にならない（2026-11-21 に3通り試して、これだけが入った）
+    - 保存で **本人確認** の窓が出たら、`次へ` を押さずに止める（開いた時点であやとのスマホが鳴る。
+      `docs/island-misses.md` #319）。人の手の段取りは CLAUDE.md の「Chrome の認証」"""
+    mask = {"videoId": True, "description": True}
+    before = get_videos(t, [video_id], mask=mask)[0].get("description", "")
+    if line in before:
+        return {"before": len(before), "after": len(before), "exact": True, "skipped": "already"}
+    t = studio(f"{BASE}/video/{video_id}/edit")
+    if "accounts.google.com" in (t.url() or ""):
+        return {"error": "signed_out"}
+    _wait(t, f"!!{_DESC_BOX} && {_DESC_BOX}.offsetParent !== null", 40)
+    time.sleep(2)
+    if t.js(f"{_DESC_BOX}.innerText").rstrip("\n") != before.rstrip("\n"):
+        return {"error": "box_differs_from_api"}
+    t.click(_DESC_BOX)
+    t.js(f"""(() => {{ const e = {_DESC_BOX}; e.focus(); const r = document.createRange();
+        r.setStart(e, 0); r.collapse(true); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }})()""")
+    time.sleep(0.3)
+    t.type(line)
+    time.sleep(0.3)
+    t.js("document.execCommand('insertLineBreak')")
+    time.sleep(1)
+    if t.js(f"{_DESC_BOX}.innerText").rstrip("\n") != (line + "\n" + before).rstrip("\n"):
+        return {"error": "box_not_as_expected"}
+    _wait(t, f"!!{_SAVE_BTN} && {_SAVE_BTN}.getAttribute('aria-disabled') !== 'true'", 15)
+    t.click(_SAVE_BTN)
+    end = time.time() + 40
+    while time.time() < end:
+        if t.js(f"!!{_dlg('本人確認')}"):
+            return {"error": "reauth"}
+        if t.js(f"{_SAVE_BTN}.getAttribute('aria-disabled') === 'true'"):
+            break
+        time.sleep(1)
+    time.sleep(3)
+    after = get_videos(t, [video_id], mask=mask)[0].get("description", "")
+    return {"before": len(before), "after": len(after), "exact": after == line + "\n" + before}

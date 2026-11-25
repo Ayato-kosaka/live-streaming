@@ -98,6 +98,16 @@ import {ownedChannel} from "./youtubeOwner";
    `docs/card-import.md` 3章）。 */
 import {handleCardImport} from "./cardImport";
 import {capHit} from "./capWatch";
+/* 島で受ける投げ銭（#1405。決定の記録 0017）。同じ理由で外に置いてある。
+   **額は Stripe の知らせの値だけ**、名前とチャンネルは口が引く（`tip.ts` 冒頭）。
+   字数と額の線は向こうが正で、`GET /state` の `limits` はそれを配るだけ。 */
+import {
+  TIP_MESSAGE_MAX,
+  TIP_YEN_MAX,
+  TIP_YEN_MIN,
+  handleTip,
+  islandYenOf,
+} from "./tip";
 
 if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
@@ -113,19 +123,15 @@ const NOTE_THEMES_MAX = 40;
 const RATE = db.collection("islandRate");
 const USERS = db.collection("islandUsers");
 const CHANNELS = db.collection("islandChannels");
-/* 企画(#161)。**「一言の提案」と「ページ1枚の下書き」を1つにした入れ物。**
-   前は islandIdeas(120字・ログイン不要)と islandDrafts(12,000字・ログイン必須)に
-   割れていて、一言を出したあと下書きへ進む道が無かった。同じものの粒度違いなので、
-   題1つで出して、あとから日付・場所・本文・リンク・写真を足して育てられる形にする。
+/* その日の出来事（`islandStreamEvent`。#202）。写真・動画・カードが
+   日付と一緒にここへ結ばれる。北欧◯日目も、Git 側の企画の種も同じ入れ物。
 
-   **#202 で `islandNextPlans` から `islandStreamEvent` へ改名した。**
-   「これから」だけのものではなくなったため。北欧◯日目も、もう終わった
-   企画も、同じ入れ物に入る。**口(`/nextplans`)の名前は変えていない。**
-   画面と API を同じ日に切り替えられない(Functions と Hosting は別々に
-   手で起動する)ので、変えると片方が出た日に掲示板がまるごと落ちる。 */
+   もとは視聴者さんが企画を出す入れ物（#161）で、提案・ハート・段の欄が
+   残っている行がある。**その欄を読む所も書く所も、#1281 で無くした。**
+   口の名前（`/nextplans`）はそのころのまま。 */
 const STREAM_EVENTS = EVENTS;
 /* 今夜のおたずね。選択肢を押すだけで意思表示できる、参加のいちばん下の段。
-   作りは islandIdeas + islandVotes とまったく同じ。
+   作りは付箋のハート（`islandHearts`）と同じで、1人1票を重複よけの書類で守る。
    問いの入稿は Firestore を手で書く(python/admin/firestore_write.py)。 */
 const POLLS = db.collection("islandPolls");
 const PVOTES = db.collection("islandPollVotes");
@@ -195,97 +201,6 @@ const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 const MAX_PHOTO_NOTE = 120;
 /** 1日に貼れる枚数。「何枚でも」だが、事故で無限には入らないようにする。 */
 const PHOTOS_PER_DAY = 120;
-
-/** 島の景色。`docs/island-world.md` 1.3 の表がそのまま入る。ここに無い値は入れない。 */
-const ISLAND_THEMES = ["georgia", "nordic", "desert"];
-
-/* 島だよりの「今週やること」。**1行ずつ消せる形で受ける。**
-   ここに触る口が無かったあいだ、日付印だけが「今日書いた」と新しくなって、
-   中身は2週間前の予定（「9/11 から北欧へ」）のまま出ていた。
-   **日付が新しいのに中身だけ古いのは、いちばん気づかれにくい。**
-
-   1行の長さは長めに取る。**GitHub Actions から入った長い行を、
-   切り詰めて書き戻さない**ため(あちらは長さで縛っていない。
-   `python/island_set_current.py`)。短く切ると「1行消しただけ」のつもりが
-   別の行まで書き換わる。 */
-const MAX_WEEK_LINE = 120;
-const MAX_WEEK_LINES = 8;
-
-/** 書き置きの行の中の `M/D`。全角のスラッシュも拾う（スマホの入力で混ざる）。 */
-const WEEK_MD = /(\d{1,2})[/／](\d{1,2})/g;
-
-/**
- * `M/D` を、**今日にいちばん近い年**の日付として読む（`YYYY-MM-DD`）。
- *
- * 欄にあるのは `9/27` までで、年は無い。12/30 を 1/3 に読んだら去年の話、
- * 1/10 を 12/28 に読んだら来年の話。年をまたぐ日にどちらとも読めるので、
- * 前後1年のうち今日にいちばん近いものを採る。
- *
- * **画面側（`site/lib/week.ts` の `readMd`）と同じ読み方。** 片方だけ直すと、
- * 口が返した行を画面が落とす（またはその逆）という食い違いが出る。
- *
- * @param {number} m 月
- * @param {number} d 日
- * @param {number} today きょう（UTC の通し番号。ミリ秒）
- * @return {number|null} 日付（UTC の通し番号）。日付として在りえなければ null
- */
-function weekMdAt(m: number, d: number, today: number): number | null {
-  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
-  const y0 = new Date(today).getUTCFullYear();
-  let best: number | null = null;
-  for (const y of [y0 - 1, y0, y0 + 1]) {
-    const t = Date.UTC(y, m - 1, d);
-    // 月をまたいだ日（2/30 など）は、その月に無いので採らない
-    if (new Date(t).getUTCMonth() !== m - 1) continue;
-    if (best === null || Math.abs(t - today) < Math.abs(best - today)) best = t;
-  }
-  return best;
-}
-
-/**
- * 書き置き（`current.week`）から、**もう過ぎた日の行を落として返す。**
- *
- * あやと（2026-10-13 / #808）:
- * 「これ、わたし打つの面倒なので仕組みを見直してください。
- *  最低でもあなたは知ってるはずだし、**過去のものが出るのはシステムとして
- *  おかしい**」
- *
- * この欄はあやとが旅先からスマホで打つ。旅のあいだは電波の細いところを
- * 通るので、何日も打ち直せない日が続く。**けれど「9/27 が過ぎたこと」は
- * 機械が知っている。** 知っていることを人に消させていたのが間違いだった
- * （`python/upkeep_watch.py` が毎晩「過ぎた行が2行あります」と
- *  あやとを呼んでいた）。
- *
- * **落とすのは返すときだけ。書類は書き換えない。** `current` は島の記録で、
- * 本人が `/me` の「いまどこ」から直す欄。こちらが黙って消すと、
- * 打った本人の控えと島の中身が食い違う。
- *
- * **画面の側（`site/lib/week.ts` の `weekAhead`）も同じことをしている。**
- * 二重だが、どちらも要る——口は CDN に最大5分とどまるので日またぎの数分は
- * 古い答えを配るし、口が落ちた日は画面が焼き込みの値で動く。
- * **日付の判断を持つ側が1つだと、その1つが止まった日に過去が出る。**
- *
- * 日付を1つも持たない行（「回る先はこれから」）は**残す。**
- * 1行に日付が2つあるとき（「9/27〜10/2」）は**いちばん遅いほう**で決める。
- *
- * @param {unknown} week 書類に入っている書き置き（何が来るか分からない）
- * @param {string} todayIso きょう（JST の `YYYY-MM-DD`）
- * @return {string[]|null} まだ過ぎていない行。元が配列でなければ null
- */
-function weekAhead(week: unknown, todayIso: string): string[] | null {
-  if (!Array.isArray(week)) return null;
-  const today = Date.parse(`${todayIso}T00:00:00Z`);
-  if (Number.isNaN(today)) return week.map((x) => String(x));
-  return week.map((x) => String(x)).filter((row) => {
-    let last: number | null = null;
-    for (const hit of row.matchAll(WEEK_MD)) {
-      const t = weekMdAt(Number(hit[1]), Number(hit[2]), today);
-      if (t === null) continue;
-      if (last === null || t > last) last = t;
-    }
-    return last === null || last >= today;
-  });
-}
 
 /* 北欧旅の足代(docs/nordic-fund.md 提案5)。
    doneruAmount は cors: true なのでブラウザから直接叩けるが、叩かせない。
@@ -420,7 +335,7 @@ async function doneruKeyOnly(): Promise<string> {
 }
 
 /**
- * 付箋の本文（`POST /stickies` と `POST /notes` の両方）の上限。
+ * 付箋の本文（`POST /stickies`）の上限。
  *
  * **2026-11-04 に 120 から 2,000 に上げた。** あやと:「1枚に書ききれない時が
  * あるから、もっと文字数入れられるようにして欲しい」「文字列制限とか連投制限
@@ -437,9 +352,6 @@ const MAX_NAME_LEN = 20;
    ハンドルは最大30文字なので、`@` を足して31。名前(20)より長い。
    **切り詰めると別人の名前になる**ので、覚えておく側はここまで受ける。 */
 const MAX_HANDLE_LEN = 31;
-/* **企画の付箋の1日の枚数は、数えない**（あやと 2026-11-04。性善説で外した。
-   不正が出たら戻す）。戻すときは `takeQuota(…, "note", 20)` を `POST /notes` に
-   入れ直す。付箋（`POST /stickies`）の枠と同じ日に外したので、片方だけ戻さない。 */
 // 1人1票なので投票そのものは重複しない。ここは連打してくるボットを止めるためだけの数。
 const POLL_VOTES_PER_DAY = 30;
 
@@ -519,10 +431,9 @@ const WAITING_SCAN = 3000;
  */
 const STICKY_THEME_SCAN = 300;
 /**
- * **「じぶんが出したもの」を1回で引き切る枚数**（付箋・企画で共通）。
+ * **「じぶんが出したもの」を1回で引き切る枚数**（付箋の `?mine=1`）。
  *
  * 1人ぶんなので届く気配は無いが、ここも `more: false` を返す枝。
- * 付箋と企画で別の数にすると、片方だけ鳴る形になる。
  */
 const MINE_SCAN = 300;
 /**
@@ -539,40 +450,8 @@ const DAY_EVENT_SCAN = 30;
    使わないと、同じ付箋で押す・外すを繰り返して書き込みを無限に起こせる。 */
 const HEARTS_PER_DAY = 120;
 
-/* ---- 企画(#161) ----
-   題だけで出せて、あとから育てられる。**ログインは要らない。** */
-
-/** 1件ぶんの上限。旧 islandDrafts と同じ。ページ1枚ぶんの字が入る。 */
-const MAX_PLAN_LEN = 12000;
-/** 題。**これだけあれば出せる。** 1行で出すときはここしか埋まらない。 */
+/** 出来事の題の上限。`eventsOnDay` が返す題を切りそろえる。 */
 const MAX_PLAN_TITLE = 60;
-/** 1日に出せる企画。書くのは付箋より重い行為なので、付箋(20)より少なくする。 */
-const PLANS_PER_DAY = 12;
-/**
- * ログインしていない人が、自分の出した企画を直せる時間(#161・あやと承認済み)。
- *
- * ログインしていれば `uid` が本人の証になるが、していなければ端末の印(`cid`)しか
- * 無い。印を推測できれば他人の企画を直せてしまうので、**書いた直後の書き直しだけ**
- * を通して、時間が経ったものは書いた本人でも触れないようにする。
- * なりすませる窓を短くするのと引き換えに、「あとから育てる」を24時間ぶん残す。
- */
-const PLAN_EDIT_MS = 24 * 60 * 60 * 1000;
-/**
- * 企画の段。**提案 → これから → やった が1本**(#159 で決めた形)。
- *
- * 値を日本語にしないのは、画面に出す言い方を変えたときに
- * 入れ物の中身まで書き換えることになるため。表示名は画面側が持つ。
- */
-const PLAN_STATUS = ["proposed", "next", "done"] as const;
-/**
- * Git 側の企画の id(`site/content/plans.ts` の `PLANS`、
- * `site/content/legends.ts` の `LEGENDS`)。
- *
- * **提案がページとして立ったときだけ、あやとが結び付ける。**
- * これが無いと「これから」に上がった提案と、実際に立っているページが
- * 画面の上で他人のままになる。
- */
-const GIT_PLAN_ID = /^[a-z0-9][a-z0-9-]{1,39}$/;
 
 /* ---- 面ごとの「押すだけの問い」----
    北欧のわかれ道（区間ごとの「どっちにしてほしい？」）で作った入れ物。
@@ -738,7 +617,7 @@ async function residentDays(): Promise<Json | null> {
  * なので、読む側は「この居場所は誰のものか」を uid でしか言えない。
  * かといって `/state` が uid を返すと、**他の口が uid を1つでも返した日に、
  * そこと突き合わせて「この人が出したもの」が分かる**——2026-09-17 に
- * `/nextplans` の `byUid` で実際にそうなっていた（#133）。
+ * 企画の口（#1281 で畳んだ `/nextplans?mine=1` のころ）の `byUid` で実際にそうなっていた（#133）。
  *
  * だから返すのは **uid の sha256 の先頭16字**にする。読む側は手元の
  * 書類ID（uid）を同じように潰して突き合わせるので、絵は今までどおり出る。
@@ -839,57 +718,6 @@ const shapeDay = (v: unknown): string => {
   if (mo < 1 || mo > 12 || d < 1 || d > 31) return "";
   return `${m[1]}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 };
-
-/**
- * 企画ページの中身を、保存してよい形に整える。
- *
- * **旧 `islandDrafts` と、新しい `islandNextPlans`(#161)の両方が通る。**
- * 入れ物は分かれているが、切りそろえる形はまったく同じものなので、
- * ここを2つに割らない(割ると、片方だけ上限が変わる日が来る)。
- *
- * 中身の良し悪しは、あやとが仕上げるときに直す。ここでやるのは長さと形だけ。
- * **足りない欄は空で返る。** 題1つで出した企画も、この形で入る。
- * @param {Json} b 送られてきた中身
- * @return {Json} 保存する形
- */
-function shapeDraft(b: Json): Json {
-  const arr = (v: unknown, n: number, f: (x: Json) => Json) =>
-    Array.isArray(v) ? v.slice(0, n).map((x) => f((x ?? {}) as Json)) : [];
-  const place = (b.place ?? {}) as Json;
-  return {
-    title: clean(b.title, MAX_PLAN_TITLE),
-    when: clean(b.when, 40),
-    date: shapeDay(b.date),
-    /* ひとことで言うと。打つ欄は `<textarea>`（`NextPlanEditor`）なので改行が来る */
-    note: cleanText(b.note, 200),
-    tags: Array.isArray(b.tags) ?
-      b.tags.slice(0, 6).map((t) => clean(t, 16)) :
-      [],
-    place: {
-      name: clean(place.name, 60),
-      area: clean(place.area, 60),
-      map: clean(place.map, 300),
-    },
-    about: Array.isArray(b.about) ?
-      b.about.slice(0, 8).map((p) => cleanText(p, 600)) :
-      [],
-    links: arr(b.links, 8, (x) => ({
-      label: clean(x.label, 60),
-      href: clean(x.href, 300),
-    })),
-    photos: arr(b.photos, 8, (x) => ({
-      src: clean(x.src, 400),
-      alt: clean(x.alt, 120),
-      credit: clean(x.credit, 120),
-      creditHref: clean(x.creditHref, 300),
-    })),
-    embeds: arr(b.embeds, 4, (x) => ({
-      kind: x.kind === "youtube" ? "youtube" : "instagram",
-      id: clean(x.id, 40),
-      note: clean(x.note, 120),
-    })),
-  };
-}
 
 /**
  * 島の「1日」。UTC で切ってある。
@@ -1206,6 +1034,12 @@ const fundChatOf = (b: Json, now: number): FundChat | null => {
 type FundBox = {
   /** 貯金箱に入るぶん（**÷2 済み**） */
   superchat: number;
+  /**
+   * 島の投げ銭（本番で払われたぶん。払った額のまま。#1405）。
+   * **欄が無ければ null**——「まだ焼いていない」で、0円ではない。
+   * 決めるのは `tip.ts` の `islandYenOf`
+   */
+  island: number | null;
   /** 起点。支出の合計の符号を反転した**負の数** */
   start: number;
   /** バーの高さ。分からなければ 0 */
@@ -1231,10 +1065,18 @@ const boxOf = (v: unknown): FundBox | null => {
   const start = Number(b.start);
   if (!Number.isFinite(superchat) || superchat < 0) return null;
   if (!Number.isFinite(start)) return null;
+  /* 島の投げ銭（#1405）。**欄が無いのと、欄が壊れているのは別。**
+     無ければ null（決めるのは `islandYenOf`）、壊れていれば焼き直しごと
+     使わない（スパチャの欄が壊れているときと同じ）。 */
+  const islandRaw = b.island;
+  const island =
+    islandRaw === undefined || islandRaw === null ? null : Number(islandRaw);
+  if (island !== null && (!Number.isFinite(island) || island < 0)) return null;
   const g = (typeof b.goal === "object" && b.goal ? b.goal : {}) as Json;
   const yen = Number(g.yen);
   return {
     superchat,
+    island,
     start,
     goalYen: Number.isFinite(yen) && yen > 0 ? yen : 0,
     goalLabel: String(g.label ?? ""),
@@ -1281,22 +1123,6 @@ async function fetchHandle(channelId: string): Promise<string> {
 const isCid = (v: unknown): boolean =>
   typeof v === "string" && v.length >= 8 && v.length <= 64;
 
-/**
- * 「あとから直せる」の鍵として使ってよい端末IDか(#161)。
- *
- * ふつうの `isCid` より厳しくする。あちらは連投を止めるための印なので
- * 8文字でも役に立つが、こちらは**それを知っていれば他人の企画を直せる**鍵になる。
- * ブラウザが作るのは `crypto.randomUUID()`(36文字・122ビット)なので、
- * 長さで縛れば総当たりは成り立たない。localStorage が使えない端末が返す
- * "anon" のような合言葉は、ここで落ちる(全員が同じ鍵を持つことになるため)。
- * @param {unknown} v 入力
- * @return {boolean} 鍵として使えるなら true
- */
-const isStrongCid = (v: unknown): boolean =>
-  typeof v === "string" &&
-  v.length >= 24 &&
-  v.length <= 64 &&
-  /^[A-Za-z0-9_-]+$/.test(v);
 
 /**
  * cid ごとの1日あたり回数を1つ消費する。
@@ -1411,41 +1237,6 @@ async function pageOf<T>(
     if (snap.size <= limit) break;
   }
   return {items, more, next: more && last ? cursorOf(last) : null};
-}
-
-/**
- * 付箋1件を、画面に返す形に直す。
- * @param {FirebaseFirestore.QueryDocumentSnapshot} d 書類
- * @return {object} 付箋
- */
-function noteShape(d: FirebaseFirestore.QueryDocumentSnapshot) {
-  const v = d.data();
-  return {
-    id: d.id,
-    planId: v.planId as string,
-    text: v.text as string,
-    createdAt: new Date((v.createdAt as number) ?? Date.now()).toISOString(),
-  };
-}
-
-/**
- * 表示できる付箋を新しい順に1ページぶん取る。**企画に貼られたぶんだけ。**
- *
- * 同じコレクションに、テーマ付きの付箋(#160)が並んで入っている。
- * あちらは `planId` を持たないので、ここで拾うと画面の側で
- * 「もう表に無い企画」の棚に落ちる。**入れ物が同じでも、口は分ける。**
- * @param {unknown} limit 1ページの件数
- * @param {unknown} before 続きの位置
- * @return {Promise<Page<object>>} 付箋の1ページ
- */
-function listNotes(limit: unknown = 200, before?: unknown) {
-  return pageOf(
-    NOTES,
-    clampPage(limit),
-    before,
-    noteShape,
-    (d) => !d.get("planId"),
-  );
 }
 
 /** テーマ付きの付箋1枚。画面に返す形(#160)。 */
@@ -1689,26 +1480,7 @@ type PlanShape = {
   links: {label: string; href: string}[];
   photos: {src: string; alt: string; credit: string; creditHref: string}[];
   embeds: {kind: string; id: string; note: string}[];
-  /** 名乗った名前。名乗っていなければ無い */
-  by?: string;
-  /**
-   * ログインして出したものか。**誰が出したかは返さない**(#133)。
-   *
-   * 前はここが `byUid`（uid そのもの）だった。**企画の画面には名前を
-   * 出していないのに、`/state` の `residents[].uid` と突き合わせると
-   * 出した人の名前と顔が分かった。** 口を2つ叩けば済む形で、
-   * 実測で1人ぶん当たっていた。
-   *
-   * 画面がこの欄で決めるのは**直せる窓のほう**だけ——ログインして出した
-   * ものは端末の印では直せず、24時間の締め切りも無い。
-   * 「じぶんが出したものか」は `GET /nextplans?mine=1`（ログインした人が
-   * 自分のぶんだけ引く口）で決める。**この欄からは誰も分からない。**
-   */
-  byLogin?: true;
-  hearts: number;
-  /** 提案 → これから → やった */
-  status: string;
-  /** ページとして立ったときの、Git 側の企画の id */
+  /** ページとして立ったときの、Git 側の企画の id（`site/content/projects.ts` の slug） */
   planId?: string;
   /**
    * この企画のものだと決めた配信(#202)。**足すのはあやとだけ。**
@@ -1762,15 +1534,6 @@ function planShape(
       v.photos,
     ),
     embeds: arr<{kind: string; id: string; note: string}>(v.embeds),
-    by: (v.by as string) || undefined,
-    /* **持ち主そのものは出さない。** 出すのは「持ち主がログインした人か」
-       の1ビットだけ（型の説明に理由）。直せるかどうかを画面が押す前に
-       言えるのは、これで足りる。 */
-    byLogin: v.uid ? true : undefined,
-    hearts: Math.max(0, Math.floor(Number(v.hearts ?? 0)) || 0),
-    status: PLAN_STATUS.includes(v.status as typeof PLAN_STATUS[number]) ?
-      (v.status as string) :
-      "proposed",
     planId: (v.planId as string) || undefined,
     // 形をそろえるのは1か所（`eventRef`）にまとめてある
     videoIds: eventRef(d.id, v).videoIds,
@@ -1781,75 +1544,33 @@ function planShape(
 }
 
 /**
- * 企画を新しい順に1ページぶん取る。
+ * その日の出来事を新しい順に1ページぶん取る。
  *
  * **並べ替えを Firestore に頼まない。** `where` と `orderBy` を組むと複合索引が
  * 要るが、その索引はサービスアカウントに作る権限が無くて配れない(#168)。
- * 付箋(`listStickies`)と同じく、しまったぶんの除外は手元でやる。
- * ハートの多い順も画面側で並べ替える(1回で全部引くので、そこで足りる)。
+ *
+ * 前は運営側の行（`board: false`）を既定で落とし、`?events=1` で混ぜていた。
+ * 視聴者さんの提案を掲示板に並べるための仕分けで、提案の道を畳んだので
+ * 要らない（#1277・#1281）。いまは `?events=1` があっても無くても同じ答え。
+ *
+ * しまった行（`archived`）は出さない。引っ込めた行（`hidden`。採らなかった
+ * 提案が字を残したまま入っている）は `pageOf` が落とす。
  * @param {object} q 引きかた
- * @param {boolean} [q.archived] しまったぶんだけを出す
  * @param {unknown} [q.limit] 1ページの件数
  * @param {unknown} [q.before] 続きの位置
- * @return {Promise<Page<PlanShape>>} 企画の1ページ
+ * @return {Promise<Page<PlanShape>>} 出来事の1ページ
  */
 function listPlans(q: {
-  archived?: boolean;
   limit?: unknown;
   before?: unknown;
-  /** 運営側の企画（`board: false`）も混ぜる。`/me` が企画を選ぶのに要る */
-  events?: boolean;
 }): Promise<Page<PlanShape>> {
-  const want = !!q.archived;
-  const withEvents = !!q.events;
   return pageOf(
     STREAM_EVENTS,
     clampPage(q.limit),
     q.before,
     planShape,
-    /* **掲示板に出すのは「みんなが出した提案」だけ。**
-       #202 で、同じ入れ物に運営側の企画（Git 側の企画と北欧◯日目）が
-       入るようになった。あれはカードを企画に紐付けるための行で、
-       誰かが出した提案ではない。混ぜると掲示板が急に14件増える。
-
-       `hidden` では隠さない。あれを立てると `loadEvents` からも
-       落ちて、カードが1枚も作られなくなる。**出さないのと、
-       無いことにするのは別。** */
-    (d) =>
-      (d.get("archived") === true) !== want ||
-      (!withEvents && d.get("board") === false),
+    (d) => d.get("archived") === true,
   );
-}
-
-/** 直せるか。直せないときは、なぜ直せないかまで返す。 */
-type PlanGuard = "ok" | "expired" | "no";
-
-/**
- * その人が、その企画を直してよいか(#161・あやと承認済み)。
- *
- * > ログインしていれば `uid` で守る。していなければ `cid` で、直せるのは24時間だけ
- *
- * ログインして出したものは、あとで端末の印だけで直せてはいけない。
- * 印は localStorage にあるだけなので、そちらのほうが弱い証だから。
- * @param {Json} cur いまの中身
- * @param {Who} who ログインしている人
- * @param {unknown} cid 送られてきた端末ID
- * @param {boolean} owner あやとか
- * @return {PlanGuard} 直せるか
- */
-function canEditPlan(
-  cur: Json,
-  who: Who,
-  cid: unknown,
-  owner: boolean,
-): PlanGuard {
-  if (owner) return "ok";
-  const uid = (cur.uid as string) || "";
-  if (uid) return who?.uid === uid ? "ok" : "no";
-  const mine = isStrongCid(cid) && cur.cid === cid;
-  if (!mine) return "no";
-  const created = Number(cur.createdAt ?? 0);
-  return Date.now() - created <= PLAN_EDIT_MS ? "ok" : "expired";
 }
 
 /** 投票の中身。集計そのものはドキュメントの votes に入っている。 */
@@ -2517,14 +2238,12 @@ async function eventsOnDay(day: string): Promise<EventBrief[]> {
       id: d.id,
       title: clean(d.get("title"), MAX_PLAN_TITLE),
       date: day,
-      /* 出しどころの見分け。**まだ誰も採っていない提案に写真を
-         付けない。** 掲示板には日付だけ入った提案が並ぶので、
-         そこへ黙って写真が付くと、提案が企画に化けたように見える。 */
-      real:
-        d.get("status") === "next" ||
-        d.get("status") === "done" ||
-        !!d.get("planId") ||
-        !!d.get("source"),
+      /* 出しどころの見分け。**誰も結んでいない行に写真を付けない。**
+         結ばれた印は、Git 側の企画の slug（`planId`）か、種入れの出どころ
+         （`source`）。段（`status`）は読まない——提案の道を畳んで（#1281）、
+         段を動かす口が無くなった。2026-11-23 の本番19件で、`hidden` でない
+         行はどれも `planId` か `source` を持っていて、答えは変わらない。 */
+      real: !!d.get("planId") || !!d.get("source"),
       at: Number(d.get("createdAt")) || 0,
     }))
     .sort((a, b) => a.at - b.at);
@@ -3056,6 +2775,31 @@ export const islandApi = onRequest(
         return;
       }
 
+      /* ---------------- 島で受ける投げ銭(#1405) ----------------
+         中身は `tip.ts`。ここは取り付けだけ。扱ったら true。
+         **Stripe の知らせは生の本文（`req.rawBody`）で確かめる**ので、
+         JSON にした `body` とは別に渡す。戻り先は来たホストから決める
+         （知らないホストなら正の URL。向こうの `originOf`）。 */
+      if (
+        await handleTip(
+          {
+            method,
+            path,
+            auth: req.headers.authorization,
+            body,
+            rawBody: req.rawBody,
+            signature: String(req.headers["stripe-signature"] ?? ""),
+            host: String(
+              req.headers["x-forwarded-host"] ?? req.headers.host ?? "",
+            ),
+          },
+          res,
+          {whoIs, takeQuota, clean},
+        )
+      ) {
+        return;
+      }
+
       /* ---------------- ログイン ---------------- */
       // ログインした直後に呼ばれる。誰が来たかを覚えておくだけ。
       if (method === "POST" && path === "/me") {
@@ -3198,17 +2942,6 @@ export const islandApi = onRequest(
         });
         return;
       }
-
-      /* ---------------- 企画ページの下書き(旧) ----------------
-         **畳んだ**(#171)。`GET/POST /drafts` はもう無い。
-
-         役目は `/nextplans` に移っている(#161)。残してあったのは、
-         Functions と Hosting を別々に手で起動するので、画面が古い日に
-         404 で止まらないため。両方とも本番に出て3日たったので、
-         古い画面を開きっぱなしのタブも、もう残っていない。
-
-         **入れ物(`islandDrafts`)は消していない。** 本番0件だが、
-         `firestore.rules` は deny のままにしてある。 */
 
       /* ---------------- 北欧旅の、その日の写真 ----------------
          貼れるのはあやとだけ。読むのは誰でも(docs/nordic-photos.md 3章)。
@@ -3482,61 +3215,10 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* いま、どこにいるか(#163)。**旅の途中に、あやとがスマホから書きかえる。**
-
-         ここは GitHub Actions の「あやと島の『いま』を更新」と
-         `python/admin/firestore_write.py` からしか動かせなかった。
-         ヒッチハイクの途中でワークフローを起動するのは回らないので、
-         スマホから1回押せば出る口をここに置いた。
-
-         **`week`(今週の予定)は、送られてきたときだけ書く。** 何行もある字なので
-         親指で全部打ち直すものではないが、**消せないのはもっと悪い。**
-         送らなければ今までどおり触らない(既存の呼び出しはそのまま動く)。 */
-      if (method === "POST" && path === "/current") {
-        const uid = await ownerUid(req.headers.authorization);
-        if (!uid) {
-          res.status(403).json({error: "not allowed"});
-          return;
-        }
-        const place = clean(body.place, 60);
-        /* ひとこと。打つ欄は `<textarea>`（`TripTools`）で、
-           「着いた/今日はここから配信」を2行で書く人がいる */
-        const word = cleanText(body.word, 140);
-        const theme = clean(body.theme, 16);
-        if (!place) {
-          res.status(400).json({error: "no place"});
-          return;
-        }
-        /* 島の景色は3つしかない(`docs/island-world.md` 1.3)。
-           知らない値が入ると `data-theme` が当たらず、島が既定の色に戻る。
-           打ち間違いを画面の色で気づかせるより、ここで止める。 */
-        if (theme && !ISLAND_THEMES.includes(theme)) {
-          res.status(400).json({error: "bad theme"});
-          return;
-        }
-        const cur: Json = {place, updatedAt: today()};
-        if (word) cur.word = word;
-        if (theme) cur.theme = theme;
-        /* 今週やること。**欄ごと送られてきたときだけ差し替える。**
-           空の配列は「ぜんぶ消す」。1行だけ消すのは、残る行を送ってもらう。
-           送ってこない呼び出し(GitHub Actions・今までの画面)は素通りする。 */
-        if (Array.isArray(body.week)) {
-          cur.week = (body.week as unknown[])
-            .map((x) => clean(x, MAX_WEEK_LINE))
-            .filter((x) => !!x)
-            .slice(0, MAX_WEEK_LINES);
-        }
-        await STATE_DOC.set({current: cur}, {merge: true});
-        res.set("Cache-Control", "no-store");
-        res.json({current: cur});
-        return;
-      }
-
       /* ---------------- 読み取り ---------------- */
       if (method === "GET" && path === "/state") {
-        const [stateSnap, notes, residents, days] = await Promise.all([
+        const [stateSnap, residents, days] = await Promise.all([
           STATE_DOC.get(),
-          listNotes(200),
           listResidents(),
           residentDays(),
         ]);
@@ -3545,23 +3227,13 @@ export const islandApi = onRequest(
           "Cache-Control",
           "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
         );
-        /* `ideas` は返さなくなった(#171)。中身は8件とも #162 で付箋へ
-           移してあって、`hidden: true` が付いている。**誰も出していない
-           8件のために、島を開くたび Firestore を1回よけいに読んでいた。**
-
-           `notes` は今までどおり配列で返して、そこに「まだ古いものが
-           残っている」を添える。画面はこれを見て `/notes?before=` の
-           続きを読める。**黙って切らない**のがこの役目。 */
-        /* **過ぎた日の行は、口が落としてから返す**（#808）。
-           書類は触らない——落とすのは返す字だけ。これで画面も、
-           あやとが打つ画面（`/me` の「いまどこ」）も、見張り
-           （`python/upkeep_watch.py`）も、**同じ答えを見る。** */
-        const cur = (state.current ?? null) as Json | null;
-        const ahead = cur ? weekAhead(cur.week, jstDay(Date.now())) : null;
+        /* **返すのは、画面が読む欄だけ**（#1281）。
+           `current`（いまどこ・島だより・島の景色）は #1278 で画面が読まなく
+           なり、居場所は滞在の表（`site/content/stays.ts`）が持つ。
+           `notes`（企画に貼った古い付箋）は #1277 で読む画面が無くなった。
+           どちらも返していたあいだ、島を開くたびに付箋を200件読んでいた。 */
         res.json({
-          current: cur && ahead ? {...cur, week: ahead} : cur,
           stats: state.stats ?? null,
-          notes: notes.items,
           residents,
           /* 「一緒にいた日数」（#91）。**キャラクターの書類ID -> 日数。**
              画面はこれを次に開いたときのために控える。**その場では
@@ -3596,11 +3268,14 @@ export const islandApi = onRequest(
             name: MAX_NAME_LEN,
             /** 付箋に貼るリンク（`MAX_LINK_LEN`） */
             link: MAX_LINK_LEN,
-            /** 企画の題（`MAX_PLAN_TITLE`） */
-            planTitle: MAX_PLAN_TITLE,
-          },
-          more: {
-            notes: notes.more ? notes.next : null,
+            /* 島の投げ銭（#1405）。**正は `tip.ts`**。画面は数字を持たない。
+               上限は Stripe の1回の上限（あやとの決めた上限ではない）。 */
+            /** 1回の最小額（円。`TIP_YEN_MIN`） */
+            tipYenMin: TIP_YEN_MIN,
+            /** 1回の上限（円。`TIP_YEN_MAX`） */
+            tipYenMax: TIP_YEN_MAX,
+            /** メッセージの字数（`TIP_MESSAGE_MAX`） */
+            tipMessageMax: TIP_MESSAGE_MAX,
           },
         });
         return;
@@ -3659,13 +3334,23 @@ export const islandApi = onRequest(
            最後まで残っていた Doneru の鍵が `islandFundConfig/doneru` へ
            移ったので、あの書類を読む理由が1つも無くなった。 */
         const b = boxOf(f.box);
+        /* 島の投げ銭（#1405）。**決められないときは、0 で足さずに 503。**
+           豚の口（`GET /alertbox/{合言葉}/fund`）と同じ額を言うため
+           （向こうも 503 にする）。焼き直しが読めない回（`b` が無い）は
+           下の古い受け皿に落ちるので、そこには足さない。 */
+        const island = b ? await islandYenOf(b.island) : 0;
+        if (island === null) {
+          res.set("Cache-Control", "no-store");
+          res.status(503).json({error: "no fund data"});
+          return;
+        }
         const superchat = b ? b.superchat : num(f.superchat);
         const start = b ? b.start : num(f.start);
-        let total = (doneru ?? 0) + superchat + start;
+        let total = (doneru ?? 0) + superchat + island + start;
         /* **人が実際に出した額は、上の合計とは別物。** 合計には起点の
            マイナスが入っているので、「N人があわせて◯円出してくれました」に
            使うと嘘になる。そちらはマイナスを含まない額を渡す。 */
-        const given = (doneru ?? 0) + superchat;
+        const given = (doneru ?? 0) + superchat + island;
         // どれも読めなかったときだけ、集計が置いていった合計に落ちる
         if (total <= 0) total = num(f.total);
         /* 1円も分からないときは、200 で 0 を返さない。
@@ -3787,23 +3472,6 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* 付箋の続き。`/state` が返すのは新しい 200件までで、
-         それより古いぶんはここから `?before=` で順に読む。
-         上限を上げるだけにしなかったのは、上げてもいつか同じ日が来て、
-         そのときはまた黙って消えるから。 */
-      if (method === "GET" && path === "/notes") {
-        const page = await listNotes(
-          req.query.limit ?? 200,
-          req.query.before,
-        );
-        res.set(
-          "Cache-Control",
-          "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
-        );
-        res.json({notes: page.items, more: page.more, next: page.next});
-        return;
-      }
-
       /* ---------------- 付箋を貼れる先(2026-10-14) ----------------
          焼き込みの表(`site/content/themes.ts`)に**足す**ぶん。
          読むのは誰でも、足す・締め切る・消すのはあやとだけ。
@@ -3901,18 +3569,6 @@ export const islandApi = onRequest(
         res.json({ok: true});
         return;
       }
-
-      /* ---------------- 企画提案(旧) ----------------
-         **畳んだ**(#171)。`GET/POST /ideas` と `POST /ideas/:id/vote` は
-         もう無い。役目は `/nextplans`(#161) と付箋(#160) に移っている。
-
-         残してあったのは、Functions と Hosting を別々に手で起動するので、
-         画面が古い日に 404 で止まらないため。両方とも本番に出て3日たった。
-
-         **入れ物は消していない。** `islandIdeas` の8件は #162 で付箋へ移して
-         あって、`movedTo` の印と `hidden: true` が付いた状態で残っている。
-         **書いた人の字なので消さない。** `islandVotes` の13件も同じ。
-         `firestore.rules` はどちらも deny のまま。 */
 
       /* ---------------- 今夜のおたずね ----------------
          参加の階段のいちばん下の段。文章を書かずに、押すだけで数字が動く。
@@ -4133,48 +3789,10 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 付箋 ---------------- */
-      if (method === "POST" && path === "/notes") {
-        const who = await whoIs(req.headers.authorization);
-        const text = cleanText(body.text, MAX_NOTE_LEN);
-        const planId = clean(body.planId, 40);
-        const cid = String(body.cid ?? "");
-        if (text.length < 2 || !planId) {
-          res.status(400).json({error: "bad input"});
-          return;
-        }
-        if (!isCid(cid)) {
-          res.status(400).json({error: "bad cid"});
-          return;
-        }
-        /* 1日の枚数は数えない（上の `MAX_NOTE_LEN` のそば。2026-11-04） */
-        const now = Date.now();
-        const ref = await NOTES.add({
-          planId,
-          text,
-          hidden: false,
-          cid,
-          uid: who?.uid ?? null,
-          name: who?.name ?? null,
-          createdAt: now,
-        });
-        res.json({
-          note: {
-            id: ref.id,
-            planId,
-            text,
-            createdAt: new Date(now).toISOString(),
-          },
-        });
-        return;
-      }
-
       /* ---------------- テーマ付きの付箋(#160) ----------------
-         **旧来の `/notes` とは口を分けてある。** 入れ物（islandNotes）は
-         同じだが、あちらは企画に貼るもので `planId` を持ち、こちらは
-         テーマに貼るもので `theme` を持つ。同じ口にすると、画面を
-         切り替えている途中の日に、両方が混ざったものが両方の画面に出る。
-         旧来のぶんが移り終わったら（#162）、あちらの口を畳む。 */
+         企画に貼る旧来の付箋の口（`GET/POST /notes`）は #1281 で畳んだ。
+         入れ物（islandNotes）には、あちらの `planId` を持つ古い行が
+         残っている。**ここで読むのは `theme` を持つ行だけ。** */
       if (method === "GET" && path === "/stickies") {
         const theme = clean(req.query.theme, 40);
         if (theme && !THEME_ID.test(theme)) {
@@ -4221,7 +3839,7 @@ export const islandApi = onRequest(
 
            **URL を分けて、`no-store` を付ける。** 呼んだ人ごとに中身の変わる
            答えを、キャッシュに載る同じ URL で返すと、混ざって配られる
-           （`/nextplans?mine=1` と同じ決め。`docs/island-api.md` 3章）。 */
+           （`/cards/mine` と同じ決め。`docs/island-api.md` 3章）。 */
         if (req.query.seen === "1") {
           if (!(await ownerUid(req.headers.authorization))) {
             res.status(403).json({error: "not allowed"});
@@ -4653,304 +4271,25 @@ export const islandApi = onRequest(
         return;
       }
 
-      /* ---------------- 企画(#161) ----------------
-         **`/ideas`(一言120字・ログイン不要)と `/drafts`(ページ1枚・ログイン必須)を
-         1つにした口。** 同じものの粒度違いだったのに入れ物が割れていて、
-         一言を出したあと下書きへ進む道が無かった。
+      /* ---------------- その日の出来事(#202) ----------------
+         入れ物は `islandStreamEvent`。口の名前（`/nextplans`）は、企画を
+         視聴者さんが出していたころのまま。
 
-         題1つで出せて、あとから日付・場所・本文・リンク・写真を足して育てられる。
-         ログインは要らない。直せるのは、ログインしていれば自分のぶんをいつでも、
-         していなければ端末の印で24時間だけ(`canEditPlan`)。
-
-         **旧来の `/ideas` `/drafts` は動いたまま残してある。** Functions と
-         Hosting は別々に手で起動するので、画面が先に出た日も古い日も、
-         どちらかが 404 で止まらないようにする。 */
+         **残っているのは、机の「配信」（`components/me/PlanVideos.tsx`）が
+         使う2本だけ**——この一覧と、動画を結ぶ口。視聴者さんが企画を出す・
+         育てる・ハートを押す口と、あやとが段を動かす・しまう口は #1281 で
+         畳んだ（畳む前の30日〈2026-10-24〜11-23〉で、どれも0回だった。
+         `python/admin/api_calls.py`）。 */
       if (method === "GET" && path === "/nextplans") {
-        /* じぶんが出した企画だけ(#133)。**付箋の `?mine=1` と同じ形**
-           （この上の `GET /stickies`）。
-
-           一覧の口(`planShape`)は `uid` も `cid` も返さないので、
-           「どれが自分のか」は画面の側では作れない。ここで絞る。
-
-           **キャッシュに載せない。** `/nextplans` は誰でも読める口なので
-           `s-maxage` が効いている。呼んだ人ごとに中身の変わる答えを
-           同じ URL で返すと、混ざって他人の答えが配られる。だから
-           **URL を分けて**（`?mine=1`）、**`no-store` を付ける**。
-           カードで同じことをしている（`/cards/mine`・`docs/island-api.md` 3章）。
-
-           **`where` に `orderBy` を足さない。** 複合索引が要るが、その索引は
-           サービスアカウントに作る権限が無くて配れない(#168)。引いてから
-           手元で並べる。1人ぶんは多くても数十件。
-
-           しまったものは出さない。掲示板から下ろしたものが、出した人の
-           手元にだけ残っていると、まだ立っているように読める。 */
-        if (req.query.mine === "1") {
-          const who = await whoIs(req.headers.authorization);
-          if (!who) {
-            res.status(401).json({error: "no token"});
-            return;
-          }
-          const snap = await STREAM_EVENTS.where("uid", "==", who.uid)
-            .limit(MINE_SCAN)
-            .get();
-          // `more: false` で返す枝（付箋の `?mine=1` と同じ理由）
-          capHit("GET /nextplans?mine=1 / MINE_SCAN", snap.size, MINE_SCAN);
-          const rows = snap.docs
-            .filter((d) => d.get("hidden") !== true)
-            .filter((d) => d.get("archived") !== true)
-            .sort(
-              (a, b) =>
-                (Number(b.get("createdAt")) || 0) -
-                (Number(a.get("createdAt")) || 0),
-            );
-          res.set("Cache-Control", "no-store");
-          res.json({plans: rows.map(planShape), more: false, next: null});
-          return;
-        }
-        /* しまったぶんは、戻す人にしか見せない(付箋と同じ)。 */
-        const archived = req.query.archived === "1";
-        if (archived && !(await ownerUid(req.headers.authorization))) {
-          res.status(403).json({error: "not allowed"});
-          return;
-        }
         const page = await listPlans({
-          archived,
           limit: req.query.limit ?? 200,
           before: req.query.before,
-          /* `?events=1` で運営側の企画も混ぜる。**掲示板は付けない。**
-             `/me` が「どの企画にこの配信を足すか」を選ぶために要る。 */
-          events: req.query.events === "1",
         });
-        res.set(
-          "Cache-Control",
-          archived ?
-            "no-store" :
-            "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
-        );
-        res.json({plans: page.items, more: page.more, next: page.next});
-        return;
-      }
-
-      /* 1件だけ読む。育てる画面(`/next/new?id=…`)が続きを書くために引く。
-         **端末IDは受け取らない。** 直せるかどうかは画面側が
-         「自分が出したもの」の控えで決めて、実際に直せるかは書く口が見る。
-         ここに端末IDを渡すと、鍵が URL とアクセスログに残る。 */
-      const planOne = path.match(/^\/nextplans\/([A-Za-z0-9_-]{6,})$/);
-      if (method === "GET" && planOne) {
-        const snap = await STREAM_EVENTS.doc(planOne[1]).get();
-        if (!snap.exists || snap.get("hidden") === true) {
-          res.status(404).json({error: "no plan"});
-          return;
-        }
         res.set(
           "Cache-Control",
           "public, max-age=15, s-maxage=30, stale-while-revalidate=120",
         );
-        res.json({plan: planShape(snap)});
-        return;
-      }
-
-      if (method === "POST" && path === "/nextplans") {
-        const who = await whoIs(req.headers.authorization);
-        const cid = String(body.cid ?? "");
-        if (JSON.stringify(body).length > MAX_PLAN_LEN) {
-          res.status(400).json({error: "too long"});
-          return;
-        }
-        const plan = shapeDraft(body);
-        if ((plan.title as string).length < 4) {
-          res.status(400).json({error: "title too short"});
-          return;
-        }
-        /* 端末の印は、ここでは「連投を数える鍵」ではなく
-           「あとで自分の企画を直す鍵」なので、長さで縛る。 */
-        if (!isStrongCid(cid)) {
-          res.status(400).json({error: "bad cid"});
-          return;
-        }
-        if (!(await takeQuota(who?.uid ?? cid, "plan", PLANS_PER_DAY))) {
-          res.status(429).json({error: "too many today"});
-          return;
-        }
-        const now = Date.now();
-        const by = who?.name || clean(body.by, MAX_NAME_LEN) || null;
-        const ref = await STREAM_EVENTS.add({
-          ...plan,
-          by,
-          hearts: 0,
-          status: "proposed",
-          hidden: false,
-          archived: false,
-          cid,
-          uid: who?.uid ?? null,
-          createdAt: now,
-          updatedAt: now,
-          /* **IP は取らない**(#293)。付箋と同じ理由。 */
-        });
-        res.set("Cache-Control", "no-store");
-        res.json({plan: planShape(await ref.get())});
-        return;
-      }
-
-      /* 育てる。**同じ口で、題1つのものにも写真つきのものにも書ける。**
-         送られてきた中身でまるごと置き換える(画面は必ず全部を持って開く)。 */
-      if (method === "POST" && planOne) {
-        const who = await whoIs(req.headers.authorization);
-        const owner = !!(await ownerUid(req.headers.authorization));
-        if (JSON.stringify(body).length > MAX_PLAN_LEN) {
-          res.status(400).json({error: "too long"});
-          return;
-        }
-        const ref = STREAM_EVENTS.doc(planOne[1]);
-        const cur = await ref.get();
-        if (!cur.exists || cur.get("hidden") === true) {
-          res.status(404).json({error: "no plan"});
-          return;
-        }
-        const guard = canEditPlan(cur.data() ?? {}, who, body.cid, owner);
-        if (guard !== "ok") {
-          /* 「時間が切れた」と「あなたのではない」を分けて返す。
-             同じ 403 にすると、画面が「もう直せません」としか言えない。 */
-          const why = guard === "expired" ? "expired" : "not yours";
-          res.status(403).json({error: why});
-          return;
-        }
-        const plan = shapeDraft(body);
-        if ((plan.title as string).length < 4) {
-          res.status(400).json({error: "title too short"});
-          return;
-        }
-        /* あやとは数えない。仕上げるときに1件を何度も書き直すので、
-           出す側と同じ12回で止まると、その日の途中で直せなくなる
-           （付箋の `byOwner` を数えないのと同じ考え）。 */
-        const key = who?.uid ?? String(body.cid);
-        if (!owner && !(await takeQuota(key, "plan", PLANS_PER_DAY))) {
-          res.status(429).json({error: "too many today"});
-          return;
-        }
-        const patch: Json = {...plan, updatedAt: Date.now()};
-        /* 名乗り直しは受ける。ログインしている人は島に出す名前で固定。
-           **書いた人(`uid` `cid`)は上書きしない。** 直すたびに持ち主が
-           入れ替わると、24時間の窓が押すたびに延びる。 */
-        const by = who?.name || clean(body.by, MAX_NAME_LEN);
-        if (by) patch.by = by;
-        await ref.set(patch, {merge: true});
-        res.set("Cache-Control", "no-store");
-        res.json({plan: planShape(await ref.get())});
-        return;
-      }
-
-      /* ハート。**付箋とまったく同じ仕組み**(#161 の指定)。
-         ログイン不要で、もう一度押すと外れる。押したことは
-         `islandHearts/<企画のID>_<uid か端末ID>` の有無で持つ。 */
-      const planHeart = path.match(
-        /^\/nextplans\/([A-Za-z0-9_-]{6,})\/heart$/,
-      );
-      if (method === "POST" && planHeart) {
-        const id = planHeart[1];
-        const who = await whoIs(req.headers.authorization);
-        const cid = String(body.cid ?? "");
-        if (!who && !isCid(cid)) {
-          res.status(400).json({error: "bad cid"});
-          return;
-        }
-        const key = who?.uid ?? cid;
-        if (!(await takeQuota(key, "heart", HEARTS_PER_DAY))) {
-          res.status(429).json({error: "too many today"});
-          return;
-        }
-        const heartRef = HEARTS.doc(`${id}_${key}`);
-        const planRef = STREAM_EVENTS.doc(id);
-        let out: {hearts: number; on: boolean};
-        try {
-          out = await db.runTransaction(async (tx) => {
-            const [h, p] = await Promise.all([
-              tx.get(heartRef),
-              tx.get(planRef),
-            ]);
-            if (!p.exists) throw new Error("no plan");
-            const data = p.data() ?? {};
-            if (data.hidden === true || data.archived === true) {
-              throw new Error("closed");
-            }
-            const n = Math.max(0, Math.floor(Number(data.hearts ?? 0)) || 0);
-            if (h.exists) {
-              tx.delete(heartRef);
-              const next = Math.max(0, n - 1);
-              tx.update(planRef, {hearts: next});
-              return {hearts: next, on: false};
-            }
-            tx.set(heartRef, {at: Date.now(), plan: id});
-            tx.update(planRef, {hearts: n + 1});
-            return {hearts: n + 1, on: true};
-          });
-        } catch (e) {
-          const why = String(e).replace("Error: ", "");
-          res.status(why === "no plan" ? 404 : 400).json({error: why});
-          return;
-        }
-        res.set("Cache-Control", "no-store");
-        res.json(out);
-        return;
-      }
-
-      /* 段を進める。**あやとだけ。** 提案 → これから → やった。
-         ページとして立ったら、Git 側の企画の id(`planId`)で結び付ける。
-         結び付けないと、「これから」に上がった提案と、実際に立っている
-         ページが画面の上で他人のままになる。 */
-      const planStatus = path.match(
-        /^\/nextplans\/([A-Za-z0-9_-]{6,})\/status$/,
-      );
-      if (method === "POST" && planStatus) {
-        if (!(await ownerUid(req.headers.authorization))) {
-          res.status(403).json({error: "not allowed"});
-          return;
-        }
-        const status = clean(body.status, 16);
-        if (!PLAN_STATUS.includes(status as typeof PLAN_STATUS[number])) {
-          res.status(400).json({error: "bad status"});
-          return;
-        }
-        const planId = clean(body.planId, 40);
-        if (planId && !GIT_PLAN_ID.test(planId)) {
-          res.status(400).json({error: "bad planId"});
-          return;
-        }
-        const ref = STREAM_EVENTS.doc(planStatus[1]);
-        if (!(await ref.get()).exists) {
-          res.status(404).json({error: "no plan"});
-          return;
-        }
-        /* **Git 側の企画1つに、結び付く行は1つだけ。**
-           2つあると、掲示板には「提案」のまま並ぶ行と、カードの付く行が
-           別々にできる。ジョージアバイバイと海外出発二周年が実際にそうで、
-           清書したのに段が動かないように見えていた（#202 の種入れが、
-           掲示板にもう出ていた提案を見ずに同じ企画をもう1件作った）。
-           しまってあるものは数えない。付け替えの途中で行き止まりになる。 */
-        if (planId) {
-          const taken = await STREAM_EVENTS
-            .where("planId", "==", planId)
-            .limit(5)
-            .get();
-          const other = taken.docs.find(
-            (d) => d.id !== planStatus[1] && d.get("archived") !== true,
-          );
-          if (other) {
-            res.status(409).json({error: "planId taken", by: other.id});
-            return;
-          }
-        }
-        await ref.set(
-          {
-            status,
-            // 空で送ると外れる。取り違えて結んだときに戻せるようにする
-            planId: planId || admin.firestore.FieldValue.delete(),
-            updatedAt: Date.now(),
-          },
-          {merge: true},
-        );
-        res.set("Cache-Control", "no-store");
-        res.json({plan: planShape(await ref.get())});
+        res.json({plans: page.items, more: page.more, next: page.next});
         return;
       }
 
@@ -4997,37 +4336,6 @@ export const islandApi = onRequest(
         await ref.set({videoIds, updatedAt: Date.now()}, {merge: true});
         res.set("Cache-Control", "no-store");
         res.json({plan: planShape(await ref.get())});
-        return;
-      }
-
-      /* しまう・戻す。**あやとだけ。消さない。**(付箋と同じ) */
-      const planArchive = path.match(
-        /^\/nextplans\/([A-Za-z0-9_-]{6,})\/archive$/,
-      );
-      if (method === "POST" && planArchive) {
-        const uid = await ownerUid(req.headers.authorization);
-        if (!uid) {
-          res.status(403).json({error: "not allowed"});
-          return;
-        }
-        const on = body.on !== false;
-        const ref = STREAM_EVENTS.doc(planArchive[1]);
-        if (!(await ref.get()).exists) {
-          res.status(404).json({error: "no plan"});
-          return;
-        }
-        await ref.set(
-          on ?
-            {archived: true, archivedAt: Date.now(), archivedBy: uid} :
-            {
-              archived: false,
-              archivedAt: admin.firestore.FieldValue.delete(),
-              archivedBy: admin.firestore.FieldValue.delete(),
-            },
-          {merge: true},
-        );
-        res.set("Cache-Control", "no-store");
-        res.json({id: ref.id, archived: on});
         return;
       }
 
@@ -5309,12 +4617,15 @@ export const islandApi = onRequest(
         ]);
         const f = ((snap.exists ? snap.data() ?? {} : {}).fund ?? {}) as Json;
         const b = boxOf(f.box);
+        /* 島の投げ銭（#1405）。欄が無いときに 0 を作らない（`islandYenOf`）。 */
+        const island = b ? await islandYenOf(b.island) : null;
         /* **0円を 200 で返さない。** 豚が「0円」と出るのは、出ないより悪い
            （`docs/island-standards.md` 10章）。読めなかったときは 200 以外を
            返して、OBS 側に印だけ出させる（`setDead("init")`）。 */
-        if (!b || doneru === null) {
+        if (!b || doneru === null || island === null) {
           logger.warn(
-            `alertbox fund: not ready (box=${!!b} doneru=${doneru !== null})`,
+            `alertbox fund: not ready (box=${!!b} doneru=${doneru !== null}` +
+              ` island=${island !== null})`,
           );
           res.set("Cache-Control", "no-store");
           res.status(503).json({error: "no fund data"});
@@ -5323,7 +4634,7 @@ export const islandApi = onRequest(
         res.set("Cache-Control", "no-store");
         res.json({
           // 豚の針が指す額。**式は `GET /fund` の total と同じ1本**
-          currentAmount: b.start + b.superchat + doneru,
+          currentAmount: b.start + b.superchat + island + doneru,
           /* バーの高さ。**落ち先は持たない**（`GET /fund` と同じ。#639）。
              0 のとき豚は 0% を出す（`PiggyGauge` が `targetAmount <= 0` を見る）。 */
           targetAmount: b.goalYen,

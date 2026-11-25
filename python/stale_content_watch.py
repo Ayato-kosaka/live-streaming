@@ -142,7 +142,7 @@
 「そこで終わった旅」に見える。**いつでも通る見張り**ができあがる（§15）。
 
 出どころは `site/content/chapters.ts` の章ひとつ（`BOOKS` の `chapter` に slug を書く）。
-あちらは島の連なり・表紙・`/now` がすでに見ているもので、**旅が終わったかどうかの
+あちらは島の連なり・表紙がすでに見ているもので、**旅が終わったかどうかの
 唯一の出どころ。** 終わりの決めかたも `chapters.ts` の `ended()` に合わせてある——
 `to` が入っていればそれ、空なら `plannedDays` ぶんか、次の章が始まる前日の早いほう。
 **`to` は旅から帰った本人が手で入れる欄なので、そこだけを見ると永久に閉じない。**
@@ -290,7 +290,6 @@ class Book:
 KEY_OF: dict[str, tuple] = {
     "recipes.ts": (("RECIPES", "slug"),),
     "kitchenTalk.ts": (("KITCHEN_TALK",),),
-    "legends.ts": (("LEGENDS", "slug"),),
     "legendDays.ts": (("LEGEND_DAYS",),),
     # **名簿。** Firestore の `islandCharacter` そのものが毎晩ここに焼かれる
     # （`residents.ts` の頭に「並んでいるのは、キャラクターの名簿そのもの」と
@@ -340,6 +339,14 @@ KEY_FN = {
     # （`KEY_OF` は欄を1つしか取れない）。字を読むのは `ts_read` の1本のまま。
     "chapters.ts": lambda src: [
         r["slug"] for r in read_chapters(src).rows if r["from"]
+    ],
+    # 企画の表。**伝説の印が付いた行だけ**を鍵にする（`legendDays.ts` の上流）。
+    # 伝説は企画に付く印で、別の表を持たない（`docs/spec/model.md` M-3）。印の無い企画
+    # （祭り・節目）は `legendDays.ts` に焼かないので、ここを全行にすると消しようのない赤になる
+    "projects.ts": lambda src: [
+        r["slug"]
+        for r in ts_read.read_array(src, "PROJECTS", keys=("slug", "legend")).rows
+        if r["legend"] == "true"
     ],
 }
 
@@ -439,9 +446,9 @@ BOOKS: dict[str, Book] = {
     ),
     "legendDays.ts": Book(
         MACHINE_HUMAN, KEYS, 0,
-        "`legends.ts` の伝説ぜんぶに1件ずつ要る。日付も持っているが、それは伝説の配信の日"
+        "企画の表（`projects.ts`）の伝説ぜんぶに1件ずつ要る。日付も持っているが、それは伝説の配信の日"
         "なので、**新しい伝説が足されたのに焼いていない**ほうが先に出る鍵で見る",
-        upstream="legends.ts",
+        upstream="projects.ts",
     ),
     "characterBox.ts": Book(
         MACHINE, KEYS, 0,
@@ -542,8 +549,14 @@ BOOKS: dict[str, Book] = {
     ),
     "countries.ts": Book(
         HUMAN, LATEST, 150,
-        "歩いた国と滞在。**旅から帰った本人が書く**ので、旅のあいだは1行も増えない"
-        "（いまの旅の滞在は `nordic.ts` から出す）。実測の空きは最大120日",
+        "歩いた国の記録（紹介と見どころ）。**歩き終わってから書く**ので、旅のあいだは1行も増えない"
+        "（滞在は `stays.ts`）。実測の空きは最大120日",
+    ),
+    "stays.ts": Book(
+        HUMAN, LATEST, 300,
+        "滞在の表。**国を移った日に1行足す**（#1275）。いちばん長く1つの国に居たのは"
+        "ジョージアの 2025-07-19〜2026-04-18 で、日付の空きは273日。300日はその上",
+        todo="国を移っていれば、`site/content/stays.ts` のいまの行に `to` を入れて、つぎの国の行を足す",
     ),
     "nordicShops.ts": Book(
         OUTSIDE, SNAP, 30,
@@ -572,9 +585,10 @@ BOOKS: dict[str, Book] = {
         "章（島）の区切り。2年で10章、間隔の中央値は126日。**日数で細かく測れる相手ではない**"
         "ので、240日は「1年近く章が動いていない」を拾うだけの床",
     ),
-    "legends.ts": Book(
+    "projects.ts": Book(
         HUMAN, LATEST, 300,
-        "どれを伝説と呼ぶか。2年で9つ、実測の空きは最大222日。ここも床でしかない。"
+        "企画の表（伝説はその印。`docs/spec/model.md` M-3）。どれを伝説と呼ぶかは人が決める。"
+        "2年で伝説9つ、実測の空きは最大222日。ここも床でしかない。"
         "**足したのに焼いていない**ほうは `legendDays.ts` の鍵が先に拾う。"
         "**床なので、章が1つまるごと抜けても緑になる**——"
         "終わった旅に伝説が1枚も無いことは `python/upkeep_watch.py` の"
@@ -619,17 +633,10 @@ BOOKS: dict[str, Book] = {
              "——焼くほうが名指しで断って 2 で止まる",
     ),
     # --- 見ない。理由つき ---
-    "plans.ts": Book(
-        HUMAN, SKIP, 0,
-        "企画の表。**ここで日付を測らない。** あやとの返事（2026-10-07 / #673）が"
-        "「これからの予定はとくになし」で、**先の予定が0件なのは正常な状態**。"
-        "`COVERS`（いちばん先の日付が今日以降か）で見たら、人が何をしても消せない"
-        "赤になり、毎晩の焼き直しがそれで赤くなった（§13 §15）。"
-        "**本当の不具合は0件そのものではなく、0件のときに画面が"
-        "「行ってきた」企画を「いま、いちばん近い企画」として出すこと。**"
-        "見ているのは `site/selftest/leadplan_selftest.mjs`"
-        "（先が0件なら `lib/leadPlan.ts` が何も返さない・画面が `nextPlan()` を"
-        "読んでいない）。日付の表ではなく画面の作りを見る見張りなので、ここには置けない",
+    "legends.ts": Book(
+        DERIVED, SKIP, 0,
+        "伝説の企画を面の形に組むだけの口（`projects.ts` の印の付いた行。北欧の数は旅程から数える）。"
+        "表を持たないので、古くなるのは上流の `projects.ts` のほう",
     ),
     "aboutWords.ts": Book(
         HUMAN, SKIP, 0,
@@ -648,7 +655,7 @@ BOOKS: dict[str, Book] = {
         "——行ってしまえば取り直す理由の無い表なので、誰にも直せない"
         "（`nordicShops.ts` の注と同じ罠）。"
         "**その日が来ると嘘になる字は置いていない**（行事は「毎年11月中旬〜12月下旬」まで。"
-        "移る日は企画の表 `plans.ts` が持つ）",
+        "移る日は滞在の表 `stays.ts` が持つ）",
     ),
     "northMacedonia.ts": Book(
         HUMAN, SKIP, 0,
@@ -716,25 +723,34 @@ BOOKS: dict[str, Book] = {
     "nights.ts": Book(HUMAN, SKIP, 0, "配信の時間の言い方。画面に出る言葉"),
     "roulette.ts": Book(HUMAN, SKIP, 0, "ルーレットの結果に投げる1行。画面に出る言葉"),
     "trip.ts": Book(DERIVED, SKIP, 0, "旅の面の入口。`nordic.ts` から組む"),
-    "tripPlaces.ts": Book(DERIVED, SKIP, 0, "旅程で降りる街。`nordic.ts` から導出する"),
     "streamDigest.ts": Book(
         MACHINE_HUMAN, SKIP, 0,
         "配信1本の1〜2行（国の面の「この国であったこと」。#1262）。人が `/stream-notes` で足した議事録から、"
         "`python/stream_digest.py` が続けて焼く。**古いかどうかは日数ではなく、議事録と同じか**で決まるので、"
         "そちらは `stream_digest_selftest.py` が見る。日数を2か所に置かない",
     ),
-    "place.ts": Book(DERIVED, SKIP, 0, "打たれた場所から国と街を引く。`countries.ts` と `nordic.ts` から"),
-    "planDays.ts": Book(DERIVED, SKIP, 0, "日付→企画の表。`plans.ts` と `nordic.ts` から組む"),
     "directory.ts": Book(DERIVED, SKIP, 0, "島にある紙ぜんぶの一覧。ほかの焼き込みを集めるだけ"),
     "travel.ts": Book(
         DERIVED, SKIP, 0,
         "国の面（`/travel/<国>`）の名簿。`countries.ts` から組む。**自分では日付を持たない**（#1201）",
     ),
     "travelPath.ts": Book(DERIVED, SKIP, 0, "旅のガイドの区画の道（`/travel`）の字だけ。日付を持たない（#1201）"),
+    "cities.ts": Book(DERIVED, SKIP, 0, "街の名簿（slug と名前）だけ。滞在の表が slug で指す（#1357）。日付を持たない"),
+    "projectDrafts.ts": Book(
+        HUMAN, SKIP, 0,
+        "下書きの企画（M-33）。出す日に行ごと `projects.ts` へ移る置き場で、空が正常。"
+        "古さは日では測れない（あやとの「繋いでいい」で動く）",
+    ),
+    "kinds.ts": Book(DERIVED, SKIP, 0, "種類の表（道の型・種類・入口）。仕様の道の表の写しで、日付を持たない（#1357）"),
     "walked.ts": Book(
         DERIVED, SKIP, 0,
         "歩いた国の数。`countries.ts` から画面が出てから数える。**自分では日付を持たない**"
         "（数が面ごとにそろっているかは `tools/sprites/walkedcount.mjs` が見る）",
+    ),
+    "stayChapters.ts": Book(
+        DERIVED, SKIP, 0,
+        "章と滞在を期間の重なりで結ぶ式だけ（#1275）。`chapters.ts` と `stays.ts` から引く。"
+        "**自分では日付を持たない**",
     ),
 }
 
@@ -765,7 +781,7 @@ def _as_date(s: str) -> date | None:
 # ---------------------------------------------------------------- 章を読む
 #
 # **`site/content/chapters.ts` だけが、旅の始まりと終わりの出どころ。**
-# 島の連なりも表紙も `/now` もここを見ている（`lib/stay.ts`）。
+# 島の連なりも表紙もここを見ている（`lib/stay.ts`）。
 # 見張りだけ別のところから決めると、画面と見張りが別のことを言う日が来る。
 #
 # **字を読むのは `python/ts_read.py`。ここではやらない。** 同じものを3通りに

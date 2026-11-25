@@ -640,6 +640,20 @@ export const RECIPES: Recipe[] = [
       { label: "調理", date: "2026-11-09", videoId: "WiSPWzjqZZA", title: "🇲🇰北マケドニアの白インゲントマトグラタンつくろか！！" },
     ],
   },
+  {
+    slug: "biryani",
+    name: "ビリヤニ",
+    emoji: "🍛",
+    icon: "food-onion-half",
+    country: "bulgaria",
+    kind: "rice",
+    date: "2026-11-18",
+    note: "前に一人で作って米が硬く味も薄かった失敗を洗い出し、鶏肉をヨーグルトとスパイスで一晩漬け、浸水させた米を炒めた玉ねぎと鶏肉の上に平らに重ねて炊いた。コンソメを入れ忘れて途中で水に溶いて足し、底はべちゃっとしたものの、ひと口目は本人いわく「お店の味や」。",
+    streams: [
+      { label: "企画会議", date: "2026-11-16", videoId: "2EKBYEnv850", title: "🇧🇬ブルガリアの温泉みに行こか！" },
+      { label: "調理", date: "2026-11-18", videoId: "sOvaH0tBzSg", title: "🇧🇬ブルガリアのビリヤニつくります！" },
+    ],
+  },
 ];
 
 export const recipeBySlug = (slug: string) => RECIPES.find((r) => r.slug === slug);

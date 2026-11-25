@@ -41,7 +41,7 @@ type Filter = "all" | "out" | "in";
 export default function ImportDesk() {
   const { owner, meRead, reloadMe } = useAuth();
   if (owner === "unknown")
-    return meRead === "down" ? <ReadAgainPanel what="島の手入れ" onRetry={reloadMe} /> : <WaitingPanel />;
+    return meRead === "down" ? <ReadAgainPanel what="島の管理" onRetry={reloadMe} /> : <WaitingPanel />;
   /* あやと以外には、何も出さない。口も叩かない */
   if (owner !== "yes") return null;
   return <Desk />;

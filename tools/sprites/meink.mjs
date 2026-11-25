@@ -20,6 +20,7 @@ import { chromium } from "playwright-core";
 import { mkdirSync, writeFileSync } from "fs";
 import { seed } from "./meseed.mjs";
 import { offline } from "./route.mjs";
+import { DESK_TOOLS, pressTab } from "./desktools.mjs";
 
 const PORT = process.env.SPORT || "4600";
 const MODE = process.env.MEMODE || "ok";
@@ -31,18 +32,10 @@ mkdirSync(OUT, { recursive: true });
 
 const SCENES = [
   { id: "me-note", page: "/me.html", tab: "付箋" },
-  { id: "me-plan", page: "/me.html", tab: "企画" },
   { id: "me-card", page: "/me.html", tab: "カード" },
   { id: "me-islandme", page: "/me.html", open: true },
-  { id: "desk-photo", page: "/me/desk.html", tab: "写真" },
-  { id: "desk-place", page: "/me/desk.html", tab: "いまどこ" },
-  { id: "desk-video", page: "/me/desk.html", tab: "配信" },
-  { id: "desk-sticky", page: "/me/desk.html", tab: "付箋" },
-  { id: "desk-plan", page: "/me/desk.html", tab: "企画" },
-  { id: "desk-donor", page: "/me/desk.html", tab: "投げ銭" },
-  { id: "desk-chara", page: "/me/desk.html", tab: "キャラ" },
-  { id: "desk-fund", page: "/me/desk.html", tab: "スパチャ" },
-  { id: "desk-obs", page: "/me/desk.html", tab: "OBS" },
+  /* 机の札は手で並べない（`desktools.mjs`。#1280） */
+  ...DESK_TOOLS.map((t) => ({ id: `desk-${t.id}`, page: "/me/desk.html", tab: t.label })),
 ];
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
 
@@ -66,7 +59,7 @@ for (const sc of SCENES) {
   await p.goto(`http://localhost:${PORT}${sc.page}`, { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
   await p.waitForTimeout(1500);
   if (sc.tab) {
-    await p.locator(".mp-tab", { hasText: new RegExp(`^${sc.tab}`) }).first().click({ timeout: 5000 }).catch(() => {});
+    await pressTab(p, sc.tab);
     await p.waitForTimeout(1600);
   }
   if (sc.open || process.env.OPENALL) {
@@ -146,7 +139,7 @@ for (const sc of SCENES) {
   await p.reload({ waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
   await p.waitForTimeout(1400);
   if (sc.tab) {
-    await p.locator(".mp-tab", { hasText: new RegExp(`^${sc.tab}`) }).first().click({ timeout: 5000 }).catch(() => {});
+    await pressTab(p, sc.tab);
     await p.waitForTimeout(1500);
   }
   if (sc.open || process.env.OPENALL) {

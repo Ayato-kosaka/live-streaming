@@ -1,6 +1,9 @@
+import { TIRANA } from "./albania-tirana";
+import { YEREVAN } from "./armenia-yerevan";
 import { SOFIA } from "./bulgaria-sofia";
 import { SKOPJE } from "./north-macedonia-skopje";
 import { BUCHAREST } from "./romania-bucharest";
+import { BELGRADE } from "./serbia-belgrade";
 import type { Guidebook } from "./types";
 
 /**
@@ -9,7 +12,7 @@ import type { Guidebook } from "./types";
  * ソフィアは手で組んだもの（`bulgaria-sofia.ts`）、スコピエは焼いたもの（`north-macedonia-skopje.ts`。
  * `python/guidebook_bake.py` が材料から焼く）。どちらも同じ型なので、面の部品は同じものを使う。
  */
-export const GUIDEBOOKS: Guidebook[] = [SOFIA, SKOPJE, BUCHAREST];
+export const GUIDEBOOKS: Guidebook[] = [SOFIA, SKOPJE, BUCHAREST, BELGRADE, TIRANA, YEREVAN];
 
 export const guidebookOf = (country: string, city: string) =>
   GUIDEBOOKS.find((g) => g.country === country && g.city === city);

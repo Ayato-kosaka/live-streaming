@@ -22,12 +22,12 @@
  *  2. **選ぶ関数（`lib/guideStop.ts` の `guideOn`）が、作った滞在で3通りを当てる**——
  *     次の街にガイドがあれば次の街 / 無ければいまの街 / いまの街にも無ければ出さない。
  *     終わる日の当日はまだ居る
- *  3. **本物の滞在の表（`content/plans.ts`）× 本物の街の名簿（`content/travel.ts`）で、
+ *  3. **本物の滞在の表（`content/stays.ts`）× 本物の街の名簿（`content/travel.ts`）で、
  *     最初の滞在の日から最後の滞在の120日先まで1日ずつ選んで、** 選んだ1本の滞在が
- *     企画の段で「行ってきた」でないこと・それより後に始まる、ガイドのある滞在が
- *     「行ってきた」でないまま飛ばされていないこと・何も選ばない日はガイドのある滞在が
- *     全部「行ってきた」であること。段の決めかたは本物（`planPhase`）を使う——
- *     写しで持つと、企画の表の閉じかた（`closeStays`）が変わった日に確かめが古いまま通る
+ *     もう出た滞在（出た日 `to` を過ぎた）でないこと・それより後に始まる、ガイドのある滞在が
+ *     出ないまま飛ばされていないこと・何も選ばない日はガイドのある滞在が全部出たあとであること。
+ *     出たかどうかは滞在の行そのもの（`to`）から見る——`guideStops` の組んだ並びから見ると、
+ *     組みかたが壊れた日に確かめも一緒に壊れる
  *
  * ## 対照（本物を見る前に）
  *
@@ -52,10 +52,8 @@
  * SHELL_TSX=/tmp/fg-shell.tsx node site/selftest/guidestop_selftest.mjs  # → 1
  * ```
  */
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { must, readArray } from "../../tools/sprites/tsread.mjs";
@@ -90,58 +88,37 @@ function give(code, why) {
 
 /* ------------------------------------------------------------------ 組み立て */
 
-/** 1枚だけ字を落として読む。**import の無い（型しか import しない）本だけ**に使う */
+/**
+ * 1枚だけ字を落として読む。**隣の本（`./…`）しか import しない本だけ**に使う。
+ * 隣の本は同じやりかたで読む（滞在の表は街の名簿と種類の表を読む。どちらも何も読まない。#1357）
+ */
 function loadGuide(src) {
   const ts = req(join(SITE, "node_modules", "typescript"));
   const code = ts.transpileModule(readFileSync(src, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   }).outputText;
   const mod = { exports: {} };
-  new Function("exports", "require", "module", code)(mod.exports, req, mod);
+  const near = (spec) => (spec.startsWith("./") ? loadGuide(join(dirname(src), `${spec.slice(2)}.ts`)) : req(spec));
+  new Function("exports", "require", "module", code)(mod.exports, near, mod);
   return mod.exports;
 }
 
-/* 企画の表は**本物**を組み立てる（`leadplan_selftest.mjs` と同じ持ち込みかた）。
-   `@/lib/…` `@/content/…` は tsc が道に直さないので、隣に並べてから組み立てる */
-const WORK = mkdtempSync(join(tmpdir(), "guidestop-src-"));
-const OUT = mkdtempSync(join(tmpdir(), "guidestop-out-"));
-function bring(src, name) {
-  const code = readFileSync(src, "utf8").replace(/@\/lib\//g, "./").replace(/@\/content\//g, "./");
-  writeFileSync(join(WORK, name), code);
-}
-bring(join(LIB, "builtAt.ts"), "builtAt.ts");
-bring(join(CONTENT, "chapters.ts"), "chapters.ts");
-bring(join(LIB, "nightly.ts"), "nightly.ts");
-bring(join(CONTENT, "plans.ts"), "plans.ts");
-execFileSync(
-  join(SITE, "node_modules", ".bin", "tsc"),
-  [
-    join(WORK, "plans.ts"),
-    "--outDir", OUT,
-    "--module", "commonjs",
-    "--target", "es2022",
-    "--strict",
-    "--skipLibCheck",
-    "--typeRoots", join(SITE, "node_modules", "@types"),
-    "--types", "node",
-  ],
-  { stdio: "inherit" },
-);
-const { PLANS, NEXT_MOVE, planPhase } = req(join(OUT, "plans.js"));
+/* 滞在の表は**本物**（`content/stays.ts`）。型の import しか持たないので、そのまま組み立てられる */
+const { STAYS } = loadGuide(join(CONTENT, "stays.ts"));
 
 /**
- * 街の名簿（`content/travel.ts` の `CITIES`）を字で読む。**本体は組み立てない**——
+ * 街の名簿（`content/cities.ts` の `CITIES`）を字で読む。**本体は組み立てない**——
  * あちらは面の部品（パンくず・貼られたときの顔）まで連れてくる。読み方は
  * `tools/sprites/tsread.mjs` の1本（読み落としが在れば `must` が 2 で止める）。
  * 道は本物の組み立てかた（`content/travelPath.ts` の `travelHref` ＋ `/<街>`。`TRAVEL_CITIES` と同じ）
  */
 function readCities() {
   const { travelHref } = loadGuide(join(CONTENT, "travelPath.ts"));
-  const got = readArray(readFileSync(join(CONTENT, "travel.ts"), "utf8"), "CITIES", {
+  const got = readArray(readFileSync(join(CONTENT, "cities.ts"), "utf8"), "CITIES", {
     keys: ["country", "slug", "name"],
     idKey: "slug",
   });
-  return must(got, "content/travel.ts の CITIES").map((c) => ({
+  return must(got, "content/cities.ts の CITIES").map((c) => ({
     href: `${travelHref(c.country)}/${c.slug}`,
     name: c.name,
   }));
@@ -153,24 +130,28 @@ const shift = (day, n) => new Date(Date.parse(`${day}T00:00:00Z`) + n * 86400000
 const noonJst = (day) => new Date(`${day}T12:00:00+09:00`);
 
 /**
- * 選びかたを、企画の段と突き合わせる（3）。**食い違いを並べる。空なら通った。**
+ * 選びかたを、滞在の行と突き合わせる（3）。**食い違いを並べる。空なら通った。**
  *
- * `stays` は滞在の企画（日の順）、`stops` はそこから組んだ並び、`pick` は選ぶ関数。
+ * `stays` は滞在の行（着いた日の順）、`stops` はそこから組んだ並び、`pick` は選ぶ関数。
+ * もう出たかは**滞在の行の出た日（`to`）**で見る（その日いっぱいは居る）。
  */
 function audit(stays, stops, pick, from, to) {
   const bad = [];
   let picked = 0;
-  const planOf = (s) => stays.find((p) => p.href === s.href);
+  const stayOf = (s) => stays.find((x) => x.guide?.href === s.href);
+  const gone = (s, d) => {
+    const x = stayOf(s);
+    return !!x?.to && d > x.to;
+  };
   for (let d = from; d <= to; d = shift(d, 1)) {
-    const now = noonJst(d);
     const g = pick(stops, d);
-    const alive = stops.filter((s) => planPhase(planOf(s), now) !== "after");
+    const alive = stops.filter((s) => !gone(s, d));
     if (!g) {
       if (alive.length) bad.push(`${d}: 何も選ばなかった（まだ終わっていない ${alive.map((s) => s.name).join("・")} がある）`);
       continue;
     }
     picked++;
-    if (planPhase(planOf(g), now) === "after") bad.push(`${d}: ${g.name}（もう行ってきた滞在）を選んだ`);
+    if (gone(g, d)) bad.push(`${d}: ${g.name}（もう出た滞在）を選んだ`);
     const later = stops.slice(stops.indexOf(g) + 1).filter((s) => alive.includes(s));
     if (later.length) bad.push(`${d}: ${g.name} を選んで、あとの ${later.map((s) => s.name).join("・")} を飛ばした`);
   }
@@ -182,8 +163,8 @@ function audit(stays, stops, pick, from, to) {
   const { guideStops } = loadGuide(join(LIB, "guideStop.ts"));
   /* 作り物の滞在。A → B（B に移る日に A が終わる）。どちらもガイドあり */
   const fake = [
-    { id: "a", date: "2030-01-01", until: "2030-01-09", href: "/t/a", endsWhen: NEXT_MOVE, when: "", title: "a", note: "", tags: [] },
-    { id: "b", date: "2030-01-10", href: "/t/b", endsWhen: NEXT_MOVE, when: "", title: "b", note: "", tags: [] },
+    { country: "a", cities: [], from: "2030-01-01", to: "2030-01-09", guide: { href: "/t/a" } },
+    { country: "b", cities: [], from: "2030-01-10", to: "", guide: { href: "/t/b" } },
   ];
   const fakeStops = guideStops(fake, [{ href: "/t/a", name: "A" }, { href: "/t/b", name: "B" }]);
   const oldest = (stops) => stops[0];
@@ -232,27 +213,32 @@ const { guideOn, guideStops } = loadGuide(GUIDE_SRC);
   check("ガイドが1つも無ければ、何も出さない", guideOn([], "2030-01-05") === undefined);
   const built = guideStops(
     [
-      { date: "2030-01-10", href: "/t/b" },
-      { date: "2030-01-01", href: "/t/a", until: "2030-01-09" },
-      { date: "2030-01-05", href: "/t/none" },
+      { from: "2030-01-10", to: "", guide: { href: "/t/b" } },
+      { from: "2030-01-01", to: "2030-01-09", guide: { href: "/t/a" } },
+      { from: "2030-01-05", to: "2030-01-06", guide: { href: "/t/none" } },
+      { from: "2030-01-07", to: "2030-01-08" },
     ],
     [{ href: "/t/a", name: "A" }, { href: "/t/b", name: "B" }],
   );
   check("並べるのは、ガイドのある滞在だけを始まる日の順に",
     built.map((s) => s.name).join() === "A,B", built.map((s) => s.name).join());
+  check("終わる日は滞在の出た日。いまの滞在（出た日が空）は終わる日を持たない",
+    built[0]?.until === "2030-01-09" && built[1]?.until === undefined);
 }
 
 /* ------------------------------------- 3. 本物の滞在の表 × 本物の街の名簿 */
 console.log("\n# 3. 本物の滞在の表で、1日ずつ選ぶ");
 {
   const cities = readCities();
-  const stays = PLANS.filter((p) => p.endsWhen === NEXT_MOVE && p.date).sort((a, b) => a.date.localeCompare(b.date));
+  const stays = [...STAYS].sort((a, b) => a.from.localeCompare(b.from));
   const stops = guideStops(stays, cities);
   console.log(`  （街の名簿 ${cities.length} / 滞在 ${stays.length} / ガイドのある滞在 ${stops.map((s) => s.name).join("・") || "0"}）`);
-  if (!cities.length) give(2, "街の名簿（content/travel.ts の CITIES）が読めない");
-  if (!stays.length) give(2, "滞在の企画（endsWhen が NEXT_MOVE）が1件も無い");
-  const from = stays[0].date;
-  const to = shift(stays[stays.length - 1].date, 120);
+  if (!cities.length) give(2, "街の名簿（content/cities.ts の CITIES）が読めない");
+  if (!stays.length) give(2, "滞在の表（content/stays.ts の STAYS）が読めない");
+  if (!stops.length) give(2, "街のガイドのある滞在が1つも無い（数えるものが無い）");
+  /* 街のガイドのある最初の滞在の前の週から数える（2024 年からの全部の日を回しても、ガイドが無いので何も言わない） */
+  const from = shift(stays.find((x) => stops.some((s) => s.href === x.guide?.href)).from, -7);
+  const to = shift(stays[stays.length - 1].from, 120);
   const { bad, picked } = audit(stays, stops, guideOn, from, to);
   console.log(`  （${from} 〜 ${to}。選んだ日 ${picked}）`);
   if (stops.length && !picked) give(2, "ガイドのある滞在があるのに、1日も選ばなかった（数えていない）");

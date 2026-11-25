@@ -7,14 +7,6 @@
 
 export const API_BASE = "/island-api";
 
-export type IslandCurrent = {
-  place: string;
-  theme: string;
-  word: string;
-  week: string[];
-  updatedAt: string;
-};
-
 export type IslandStats = {
   streams: number;
   streamDays: number;
@@ -36,8 +28,6 @@ export type IslandStats = {
   latest?: { video_id: string; title: string; date: string }[];
   activeFriends?: number;
 };
-
-export type NextNote = { id: string; planId: string; text: string; createdAt: string };
 
 /**
  * 島に名前を出すと決めた住人。何もしていない人はここに出てこない。
@@ -89,9 +79,9 @@ export type NordicFacts = {
 };
 
 export type IslandState = {
-  current?: Partial<IslandCurrent>;
+  /* `current`（いまどこ・島だより・島の景色）は口が返しても読まない（#1278）。居場所は滞在の表
+     （`content/stays.ts`）が持つ。型に置くと、また誰かが読みはじめる */
   stats?: Partial<IslandStats>;
-  notes?: NextNote[];
   residents?: ResidentShow[];
   /**
    * 「一緒にいた日数」（#91）。**キャラクターの書類ID -> 日数。**
@@ -133,8 +123,12 @@ export type IslandLimits = {
   name: number;
   /** 付箋に貼るリンク */
   link: number;
-  /** 企画の題 */
-  planTitle: number;
+  /** 島の投げ銭の1回のいちばん小さい額（円）。入力欄の初期値もこれ（#1405） */
+  tipYenMin: number;
+  /** 島の投げ銭の1回のいちばん大きい額（円）。あやとの決めではなく Stripe の1回の上限 */
+  tipYenMax: number;
+  /** 島の投げ銭のメッセージの字数 */
+  tipMessageMax: number;
 };
 
 /** 端末ごとの ID。1人1票と連投制限のために使う（ログインはしない）。 */
@@ -179,31 +173,12 @@ export type MeSettings = {
   showPhoto?: boolean;
 };
 
-/* 企画ページの下書き（`islandDrafts`）を読み書きするところは、ここから消えた。
-   役目は下の `islandNextPlans`（#161）に移っている。**サーバーの口
-   （`GET/POST /island-api/drafts`）はまだ動いている**が、画面から呼ぶ道は1本にする。
-   2本あると、同じものを2つの入れ物に書ける日が来る。 */
+/* ---------------- その日の出来事（#202） ----------------
+   視聴者さんが企画を出す・育てる・ハートを押す道と、あやとが段を動かす道は、画面（#1277）と口（#1281）の
+   両方で畳んだ。**残っているのは机の「配信」（`components/me/PlanVideos.tsx`）だけ**——
+   配信を日に結ぶ入れ物（Firestore `islandStreamEvent`）の行を読むのと、動画を結ぶのと。 */
 
-/* ---------------- 企画（#161） ----------------
-   **「一言の提案」と「ページ1枚の下書き」を1つにした入れ物**（`islandNextPlans`）。
-   前は `islandIdeas`（120字・ログイン不要）と `islandDrafts`（12,000字・ログイン必須）に
-   割れていて、一言を出したあと下書きへ進む道が無かった。同じものの粒度違いなので、
-   題1つで出して、あとから日付・場所・本文・リンク・写真を足して育てる形にする。
-
-   ログインは要らない。だから「あとから直せる」の本人確認は端末の印（`cid`）になる。
-   ログインしていれば `uid` で守り、していなければ **24時間だけ**（あやと承認済み）。 */
-
-/** 企画の段。**提案 → これから → やった が1本。** */
-export type PlanStatus = "proposed" | "next" | "done";
-
-/** 段の呼び名。入れ物には英字で入れて、画面に出す字はここが持つ。 */
-export const PLAN_STATUS_NAME: Record<PlanStatus, string> = {
-  proposed: "提案",
-  next: "これから",
-  done: "やった",
-};
-
-/** 出された企画1つ。**題以外はぜんぶ空でもよい。** */
+/** 入れ物の1行（机の「配信」が読む形）。**題以外はぜんぶ空でもよい。** */
 export type NextPlan = {
   id: string;
   title: string;
@@ -216,19 +191,7 @@ export type NextPlan = {
   links: { label: string; href: string }[];
   photos: { src: string; alt: string; credit: string; creditHref: string }[];
   embeds: { kind: "instagram" | "youtube"; id: string; note: string }[];
-  /** 名乗った名前 */
-  by?: string;
-  /**
-   * ログインして出したものか。**誰が出したかは返ってこない**（#133）。
-   *
-   * 見分けに使うのは「直せる窓」だけ——ログインして出したものは端末の印では
-   * 直せず、24時間の締め切りも無い。**じぶんのものかどうかは
-   * `loadMyPlans()`**（ログインした人が自分のぶんだけ引く口）で決める。
-   */
-  byLogin?: true;
-  hearts: number;
-  status: PlanStatus;
-  /** ページとして立ったときの、Git 側の企画の id（`content/plans.ts`・`content/legends.ts`） */
+  /** ページとして立ったときの、Git 側の企画の id（`content/projects.ts` の slug） */
   planId?: string;
   /**
    * この企画のものだと決めた配信（#202）。**あやとしか足せない。**
@@ -243,65 +206,10 @@ export type NextPlan = {
   updatedAt: string;
 };
 
-/** 書くときに送る中身。id を付けると、その企画を育てる。 */
-export type NextPlanInput = Omit<
-  NextPlan,
-  | "id"
-  | "hearts"
-  | "status"
-  | "byLogin"
-  | "createdAt"
-  | "updatedAt"
-  | "archived"
-  | "planId"
-  /* 育てる口（`saveNextPlan`）から送らない。あちらは送った中身でまるごと
-     置き換わるので、企画を1文字直すたびに配信の紐付けが消える。
-     足すのは専用の口（`setPlanVideos`）だけ。 */
-  | "videoIds"
-> & { id?: string };
-
-/** 何も書いていない企画。画面の初期値もサーバーの返す形も、これと同じ形。 */
-export const EMPTY_PLAN: NextPlanInput = {
-  title: "",
-  when: "",
-  date: "",
-  note: "",
-  tags: [],
-  place: { name: "", area: "", map: "" },
-  about: [],
-  links: [],
-  photos: [],
-  embeds: [],
-};
-
-export const getNextPlans = (limit = 200) =>
-  req<{ plans: NextPlan[]; more: boolean; next: string | null }>(
-    `/nextplans?limit=${limit}`,
-  );
-
-/**
- * じぶんが出した企画。**ログインした人だけ。**
- *
- * 誰でも読める一覧（`getNextPlans`）は、持ち主を返さなくなった（#133）。
- * 返していたころは `/state` の `residents[].uid` と突き合わせるだけで
- * 「この企画を出したのは、この名前とこの顔の人」が分かった。
- *
- * **この口は呼んだ人ごとに中身が違うので、キャッシュに載せない**
- * （サーバーが `no-store` を付けている）。載せると、ログインAの答えが
- * ログインBに配られる。付箋の `getMyStickies` と同じ形。
- */
-export const getMyNextPlans = (token: string) =>
-  req<{ plans: NextPlan[] }>("/nextplans?mine=1", { headers: auth(token) });
-
-/** しまってある企画を読む。**あやとだけ。** 戻すときにしか使わない。 */
-export const getArchivedPlans = (token: string) =>
-  req<{ plans: NextPlan[] }>("/nextplans?archived=1", { headers: auth(token) });
-
 /**
  * 運営側の企画も混ぜて読む（#202）。
  *
- * 掲示板（`getNextPlans`）に出るのは、みんなが出した提案だけ。
- * **北欧◯日目もフードワインフェスも、あちらには出てこない。**
+ * **北欧◯日目もフードワインフェスも、ここから出てくる。**
  * 配信を結ぶ相手はたいていそちらなので、`/me` の道具はここから引く。
  */
 export const getStreamEventPlans = (limit = 200) =>
@@ -342,177 +250,6 @@ export function videoIdOf(text: string): string | null {
   return hit ? hit[1] : null;
 }
 
-export const getNextPlan = (id: string) =>
-  req<{ plan: NextPlan }>(`/nextplans/${id}`);
-
-/** 出す。**題だけでいい。** */
-export const postNextPlan = (p: NextPlanInput, token?: string | null) =>
-  req<{ plan: NextPlan }>("/nextplans", {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify({ ...p, cid: clientId() }),
-  });
-
-/** 育てる。送った中身でまるごと置き換わるので、**必ず全部を持って開く。** */
-export const saveNextPlan = (id: string, p: NextPlanInput, token?: string | null) =>
-  req<{ plan: NextPlan }>(`/nextplans/${id}`, {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify({ ...p, cid: clientId() }),
-  });
-
-/** ハートを押す。**付箋とまったく同じ。** もう一度押すと外れる。 */
-export const heartNextPlan = (id: string, token?: string | null) =>
-  req<{ hearts: number; on: boolean }>(`/nextplans/${id}/heart`, {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify({ cid: clientId() }),
-  });
-
-/** 段を進める。**あやとだけ。** ページとして立ったら Git 側の id で結ぶ。 */
-export const setPlanStatus = (
-  id: string,
-  status: PlanStatus,
-  planId: string,
-  token: string,
-) =>
-  req<{ plan: NextPlan }>(`/nextplans/${id}/status`, {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify({ status, planId }),
-  });
-
-/** しまう・戻す。**あやとだけ。消えない。** */
-export const archiveNextPlan = (id: string, on: boolean, token: string) =>
-  req<{ id: string; archived: boolean }>(`/nextplans/${id}/archive`, {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify({ on }),
-  });
-
-/**
- * じぶんが出した企画。
- *
- * ログインしていない人には、端末に残したこの控えしか手がかりが無い。
- * **これはサーバーの鍵ではない。** 実際に直せるかどうかは、送った端末IDを
- * サーバーがもう一度見て決める。ここにあるのは「直すボタンを出すかどうか」だけ。
- */
-const MY_PLANS = "ayato-island-myplans";
-
-export function myPlans(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    return new Set(JSON.parse(localStorage.getItem(MY_PLANS) ?? "[]") as string[]);
-  } catch {
-    return new Set();
-  }
-}
-
-/**
- * ログインして出した企画の id。**端末には残さない。**
- *
- * localStorage に混ぜないのは、印が端末に残ると
- * **同じ端末で別の人がログインしたときに、その人のものに見える**から。
- * サーバーが持ち主を返さなくなった（#133）ぶん、ここが「自分のもの」の
- * 唯一の手がかりになるので、**ログインの続いているあいだだけ**持つ。
- *
- * `null` は「まだ引いていない・引けなかった」で、**空の集合とは別**。
- * 0件と読むと、出した人の企画から「そだてる」が消える（#115）。
- */
-let loginPlans: Set<string> | null = null;
-
-/**
- * いま引いている最中のもの。**同じ瞬間に2か所から呼ばれても1本にする。**
- *
- * 育てる画面は「開いた企画」と「じぶんの一覧」を同時に引く。控えずに
- * 出しっぱなしにすると、開くたびに同じ口を2回叩く。
- * **返事が来たら捨てる**ので、次に呼ばれたら必ず引き直す（出したばかりの
- * 1件が入っていない古い答えを配らないため）。
- */
-let loading: { token: string; p: Promise<NextPlan[]> } | null = null;
-
-/**
- * じぶんの企画を引き直して控える。ログアウトしたら捨てる。
- * @param token 合言葉。無い（ログインしていない）なら控えを捨てるだけ
- * @returns 引けた企画。ログインしていなければ空の配列
- */
-export function loadMyPlans(token?: string | null): Promise<NextPlan[]> {
-  if (!token) {
-    loginPlans = null;
-    loading = null;
-    return Promise.resolve([]);
-  }
-  if (loading?.token === token) return loading.p;
-  const p = getMyNextPlans(token)
-    .then((r) => {
-      loginPlans = new Set(r.plans.map((x) => x.id));
-      return r.plans;
-    })
-    .finally(() => {
-      if (loading?.p === p) loading = null;
-    });
-  loading = { token, p };
-  return p;
-}
-
-/**
- * いま出したばかりの1件を、引き直さずに「じぶんのもの」に足す。
- *
- * 出した直後にそのまま育てる画面へ行くので、**ここで足しておかないと
- * 出した本人に「そだてる」が出ない**（引き直すまで自分のものに見えない）。
- * ログインしていない人の控え（`rememberMyPlan`）と同じ役目。
- */
-export function rememberLoginPlan(id: string) {
-  loginPlans = new Set([...(loginPlans ?? []), id]);
-}
-
-/** 控えてある「ログインして出した企画」。引けていなければ空（`null` と同じ扱い） */
-export const myLoginPlans = (): Set<string> => new Set(loginPlans ?? []);
-
-export function rememberMyPlan(id: string) {
-  try {
-    const s = myPlans();
-    s.add(id);
-    localStorage.setItem(MY_PLANS, JSON.stringify([...s]));
-  } catch {
-    /* localStorage が使えない環境では諦める。直すボタンが出なくなるだけ */
-  }
-}
-
-/**
- * ログインしていない人が、自分の企画を直せる時間。
- * サーバー側の `PLAN_EDIT_MS` と同じ値を持つ。**片方だけ変えない。**
- */
-export const PLAN_EDIT_MS = 24 * 60 * 60 * 1000;
-
-/** あと何時間直せるか。過ぎていれば 0。 */
-export const planEditHoursLeft = (p: NextPlan, now = Date.now()): number =>
-  Math.max(0, Math.ceil((Date.parse(p.createdAt) + PLAN_EDIT_MS - now) / 3600000));
-
-/**
- * 直せるか。**サーバーの判定と同じことを、画面の側でも言えるようにする。**
- *
- * ここで嘘をつくと「直す」を押したあとに 403 が返る。押す前に言う。
- * @param p 企画
- * @param uid ログインしている人（していなければ null）
- * @param mine 端末に残した控え
- */
-export function canEditPlan(
-  p: NextPlan,
-  uid: string | null | undefined,
-  mine: Set<string>,
-  now = Date.now(),
-): "ok" | "expired" | "no" {
-  /* ログインして出したものは、端末の印では直せない。印のほうが弱い証なので。
-     **端末の控え（`mine`）では決めない。** サーバーから引いた
-     「自分のもの」（`loadMyPlans`）だけを見る。localStorage の印は
-     ログアウトしても残るので、同じ端末で別の人が入ったときに、
-     その人のものに見えてしまう（#133）。 */
-  if (p.byLogin) return uid && loginPlans?.has(p.id) ? "ok" : "no";
-  if (!mine.has(p.id)) return "no";
-  return Date.parse(p.createdAt) + PLAN_EDIT_MS > now ? "ok" : "expired";
-}
-
 /** 島での見え方を保存する。ログインしていないと使えない。 */
 export const saveMe = (s: MeSettings, token: string) =>
   req<MeSettings & { uid: string }>("/me", {
@@ -520,24 +257,12 @@ export const saveMe = (s: MeSettings, token: string) =>
     headers: auth(token),
     body: JSON.stringify(s),
   });
-/* 企画提案（`islandIdeas`）を読み書きするところは、ここから消えた（#161）。
-   `Idea` の型も落とした（#171）。`/state` がもう `ideas` を返さない。
-   入れ物の8件は #162 で付箋へ移してあって、Firestore には残っている
-   （書いた人の字なので消さない）。 */
-export const postNote = (planId: string, text: string, token?: string | null) =>
-  req<{ note: NextNote }>("/notes", {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify({ planId, text, cid: clientId() }),
-  });
-
 /* ---------------- テーマ付きの付箋（#160） ----------------
    宛先（テーマ）を持つ付箋。ハートが押せて、あやとが1つだけ返信できて、
    あやとがしまえる（消えない・戻せる）。
 
-   **旧来の `/notes`（企画に貼る付箋）とは口が別。** 入れ物は同じだが、
-   あちらは `planId`、こちらは `theme` を持つ。画面を切り替えている
-   途中の日に、両方が混ざったものが両方の画面に出るのを止めるため。 */
+   企画に貼る旧来の付箋の口（`/notes`）は畳んだ（#1281）。入れ物には
+   あちらの `planId` を持つ古い行が残っていて、口が読むのは `theme` を持つ行だけ。 */
 
 /**
  * 付箋に貼られた絵1枚（2026-10-08）。
@@ -1032,25 +757,7 @@ export const amIOwner = async (token: string): Promise<boolean> => {
   }
 };
 
-/**
- * いま、どこにいるか。**あやとだけ。**
- *
- * 旅の途中に書きかえる（島の景色・`/now`・北欧の面が、みなここを読む）。
- *
- * `week`（今週やること）は**渡したときだけ**書き替わる。渡さなければ島に
- * 入っているものがそのまま残る。**空の配列を渡すと消える。**
- * 日付印だけ新しくなって中身が先週のまま、というのがいちばん悪いので、
- * せめて消せるようにしてある。
- */
-export const postCurrent = (
-  c: { place: string; word?: string; theme?: string; week?: string[] },
-  token: string,
-) =>
-  req<{ current: Partial<IslandCurrent> }>("/current", {
-    method: "POST",
-    headers: auth(token),
-    body: JSON.stringify(c),
-  });
+/* 「いまどこ」を書く口（`POST /current`）は、机の道具（#1278）と口（#1281）の両方で畳んだ。 */
 
 export const getNordicPhotos = () =>
   req<{ days: NordicPhotoDay[] }>("/nordic/photos");
@@ -1787,9 +1494,11 @@ export type FundSplit = {
   superchat: number;
   /** 期間内の Doneru */
   doneru: number;
+  /** 期間内の島の投げ銭（#1405。**払った額のまま**） */
+  island: number;
   /** 期間内の出費（**引く額。正の数で来る**） */
   spend: number;
-  /** 4行の足し引き。**豚に出ている額と1円まで同じ** */
+  /** 5行の足し引き。**豚に出ている額と1円まで同じ** */
   total: number;
   /** ドネの1件ずつが、いつまで入っているか */
   donationsAsOf: string;
@@ -1822,9 +1531,12 @@ export type FundDesk = {
 };
 
 /** もらった1件。**スパチャも Doneru も、画面から見れば同じもの。** */
+/** もらった1件の出どころ。`island` は島で受けた投げ銭（#1405） */
+export type FundGotKind = "superchat" | "donation" | "island";
+
 export type FundGot = {
   id: string;
-  kind: "superchat" | "donation";
+  kind: FundGotKind;
   /** ISO8601（日本時間）。**並べ替えの鍵** */
   at: string;
   day: string;
@@ -1964,7 +1676,7 @@ export const getFundFeed = (
 
 /** もう一度出す前に、何が出るかを見せるためのもの。 */
 export type FundShown = {
-  kind: "superchat" | "donation";
+  kind: FundGotKind;
   id: string;
   yen: number;
   who: string;
@@ -1981,7 +1693,7 @@ export type FundShown = {
  * サーバーは印を進めないので、配信には**もう出ない**。
  */
 export const replayFund = (
-  p: { kind: "superchat" | "donation"; id: string },
+  p: { kind: FundGotKind; id: string },
   token: string,
 ) =>
   req<{ already: boolean; seq: number; shown?: FundShown }>("/fund/replay", {

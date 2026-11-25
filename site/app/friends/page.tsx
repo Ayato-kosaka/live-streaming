@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { share } from "@/lib/share";
 import PageShell, { PageHead } from "@/components/ui/PageShell";
+import { crumbsOf } from "@/lib/pages";
 import { LINKS } from "@/content/site";
 import Icon from "@/components/ui/Icon";
 import Link from "next/link";
 import FriendsWall from "@/components/live/FriendsWall";
-import { PLAN_BY_DAY } from "@/content/planDays";
+import { DAY_BRIEFS } from "@/lib/cardDays";
 import { FriendsMark } from "@/components/live/art";
 import { SayRoom } from "@/components/ui/Say";
 import { say } from "@/content/nights";
@@ -41,7 +42,7 @@ export default function FriendsPage() {
   const doneru = LINKS.find((l) => l.id === "doneru")!;
 
   return (
-    <PageShell crumbs={[{ label: "住んでる人" }]}>
+    <PageShell crumbs={crumbsOf("/friends")}>
       {/* h1 は場所の名前。島に立っている札（`components/island/layout.ts`）と
           パンくずが「住んでる人」なので、h1 もそれに合わせる。
           「愉快な仲間達」は、その人たちの呼び名なので1行下へ。
@@ -75,7 +76,7 @@ export default function FriendsPage() {
             <h2 className="pap-h">これまでに描いた人、ぜんぶ</h2>
             {/* 企画の表は面（server）で引いて値だけ渡す。図鑑は client なので、
                 ここで渡さないと `content/plans.ts`（20KB）を連れていく。 */}
-            <FriendsWall plans={PLAN_BY_DAY} />
+            <FriendsWall plans={DAY_BRIEFS} />
             <p className="pap-note" style={{ marginTop: "var(--sp-3)" }}>
               借り物の人形ではなくて、本人です。
             </p>

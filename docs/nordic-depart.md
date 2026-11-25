@@ -1,5 +1,7 @@
 # 旅に出てから、旅が終わるまで
 
+種別: 仕様
+
 **これは仕様である。** 北欧ヒッチハイクの旅で、サイトが「出発前」から
 「旅の最中」へ、そして「旅のあと」へ変わる仕組みを決める。
 
@@ -64,7 +66,7 @@ reached: { when: "2026-09-20", ... },  // 着いた日。**ここでは終わら
 ### 状態は、必ず画面が出てから決める
 
 静的書き出し（`output: "export"`）なので、ビルドした日の答えが HTML に焼かれる
-（`CLAUDE.md`）。`planPhase` を素で呼んで焼くと、何日たっても同じ答えが出る。
+（`docs/island-verify.md` 2章「静的書き出し」）。`planPhase` を素で呼んで焼くと、何日たっても同じ答えが出る。
 画面の側は `usePhase`（`components/live/PlanCard.tsx`）を通す。
 **出るまでは「これから」**にしておく。焼き込みの日付で「終わった」と言わない。
 
@@ -116,7 +118,7 @@ export const NORDIC_LOG: Record<string, DayLog> = {
 };
 ```
 
-焼いたら Hosting を手で起動する（`CLAUDE.md` のデプロイの手順）。
+焼いたら Hosting を手で起動する（`/island-ship` 5章の配り先の表）。
 `/nordic` の旅程表には「その日の話」の印が付き、その日のページのいちばん下に
 「この日、何が起きたか」が出る（`components/nordic/DayLog.tsx`）。
 
@@ -170,7 +172,7 @@ export const NORDIC_LOG: Record<string, DayLog> = {
 
 ### なぜ手順書ではなくボタンにしたか
 
-`CLAUDE.md` は「あやとにやってもらう操作」「期限や状態を持つもの」を
+`docs/README.md` D-10 は「あやとにやってもらう操作」「期限や状態を持つもの」を
 `docs/` に置かず issue に立てる、と決めている。出発の日の操作はまさにそれで、
 手順書を `docs/` に置くのは決まりに反する。
 

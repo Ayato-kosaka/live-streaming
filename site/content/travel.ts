@@ -3,6 +3,8 @@ import { crumbOf } from "@/components/island/layout";
 import { share, type ShareKey } from "@/lib/share";
 import { AHEAD_COUNTRIES, COUNTRIES, type Country } from "./countries";
 import { TRAVEL, travelHref } from "./travelPath";
+import { CITIES } from "./cities";
+import { crumbsOf } from "@/lib/pages";
 
 export { TRAVEL, travelHref };
 
@@ -38,6 +40,11 @@ export type TravelPlace = {
   country?: Country;
   /** 貼られたときの絵（`lib/ogCards.json` の鍵） */
   card: ShareKey;
+  /**
+   * 面の道が固定（`app/travel/<slug>/page.tsx`）か。**歩き終わった国でも立つことがある**（下の `WALKED_FIXED`）。
+   * 立っている国は `[slug]` の面が書き出さない——同じ道の面が2枚になる
+   */
+  fixed?: true;
 };
 
 /**
@@ -49,14 +56,36 @@ export type TravelPlace = {
  * 同じ道の面が2枚になる（下で止める）。
  */
 const GUIDE_ONLY: { slug: string; card: ShareKey }[] = [
-  { slug: "north-macedonia", card: "northMacedonia" },
-  /* 2026-11-18 まで `CITY_ONLY`（国の面を持たず、ソフィアの面だけ）だった。`/travel/bulgaria` が 404 で、
-     ソフィアのパンくずにも国の段が無かった（#1262） */
-  { slug: "bulgaria", card: "bulgaria" },
+  /* 北マケドニアとブルガリアは、歩き終わって `COUNTRIES` へ移した（2026-11-22、#664）。道と絵は下の `WALKED_FIXED` */
+  /* 2026-11-21（入った日）まで `CITY_ONLY` の行く前の国だった。国の絵はまだ焼いていないので、
+     歩いた記録の面と同じ地図の1枚 */
+  { slug: "romania", card: "map" },
 ];
 
 /** 歩いた記録の面の絵。国ごとに焼かない（区画ごとに1枚。`lib/share.ts` の頭） */
 const RECORD_CARD: ShareKey = "map";
+
+/**
+ * **歩き終わった国のうち、面の道が固定のまま（`app/travel/<slug>/page.tsx`）の国。** 歩いているあいだ
+ * `GUIDE_ONLY` に居て、歩き終わって `COUNTRIES` へ移した（2026-11-22、#664）。名前は見張りがこれで読む
+ * （`site/selftest/travelreg.mjs` の `travelFixedRoutes`）。
+ *
+ * **`[slug]` の面に任せない理由は2つ。** 同じ段に街のガイド（`./skopje/` `./sofia/`）が在ること、
+ * 北マケドニアの面は型の外に付箋の板を持っていること（掲示板の宛先がこの面。`content/themes.ts`）。
+ * 中身の型はどちらも `app/travel/record.tsx` の1つなので、見た目は `[slug]` の面と変わらない。
+ *
+ * **絵も替えない。** 歩いているあいだに国の絵を焼いてあり、その国の街のガイドと記事も、貼られたときは
+ * この絵を出している（下の `cityCountry`）。移した日に地図の1枚へ落とすと、もう貼られている
+ * スコピエやソフィアの面の絵が、黙って別の絵に替わる
+ */
+const WALKED_FIXED: { slug: string; card: ShareKey }[] = [
+  { slug: "north-macedonia", card: "northMacedonia" },
+  { slug: "bulgaria", card: "bulgaria" },
+  /* ティラナのガイドが同じ段に入った（2026-11-23）。絵は `[slug]` のときと同じ地図の1枚 */
+  { slug: "albania", card: "map" },
+  /* エレバンのガイドが同じ段に入った（2026-11-23）。絵は `[slug]` のときと同じ地図の1枚 */
+  { slug: "armenia", card: "map" },
+];
 
 function build(): TravelPlace[] {
   /* 島の札（`components/island/layout.ts` の `map`）は道を字で持っている（あちらは画面の部品からも
@@ -64,14 +93,27 @@ function build(): TravelPlace[] {
   if (crumbOf("map").href !== TRAVEL) {
     throw new Error(`content/travel.ts: 島の札「歩いた国」の道（${crumbOf("map").href}）が ${TRAVEL} と違う`);
   }
-  const walked = [...COUNTRIES]
+  /* 道が固定の国は、歩いた記録を持っていること（持っていなければ `GUIDE_ONLY` の側） */
+  const lost = WALKED_FIXED.filter((f) => !COUNTRIES.some((c) => c.slug === f.slug)).map((f) => f.slug);
+  if (lost.length) throw new Error(`content/travel.ts: WALKED_FIXED の ${lost.join(", ")} が COUNTRIES に無い`);
+  const walked: TravelPlace[] = [...COUNTRIES]
     .sort((a, b) => a.order - b.order)
-    .map((c) => ({ slug: c.slug, name: c.name, href: travelHref(c.slug), country: c, card: RECORD_CARD }));
+    .map((c) => {
+      const f = WALKED_FIXED.find((x) => x.slug === c.slug);
+      return {
+        slug: c.slug,
+        name: c.name,
+        href: travelHref(c.slug),
+        country: c,
+        card: f?.card ?? RECORD_CARD,
+        ...(f ? { fixed: true as const } : {}),
+      };
+    });
   const ahead = GUIDE_ONLY.map((g) => {
     /* 名前は国の表から引く。ここに書き写すと、表の名前を直した日に面だけ古い名前で残る */
     const a = AHEAD_COUNTRIES.find((x) => x.slug === g.slug);
     if (!a) throw new Error(`content/travel.ts: ${g.slug} が AHEAD_COUNTRIES に無い（行く前の案内は、入った国にだけ置く）`);
-    return { slug: g.slug, name: a.name, href: travelHref(g.slug), card: g.card };
+    return { slug: g.slug, name: a.name, href: travelHref(g.slug), card: g.card, fixed: true as const };
   });
   const all = [...walked, ...ahead];
   /* **黙って1つに畳まない。** 同じ国が2回並ぶのは、歩き終わって `COUNTRIES` へ移したのに
@@ -101,7 +143,7 @@ export function travelPage(slug: string): TravelPlace {
 export const TRAVEL_LABEL = crumbOf("map").label;
 
 /** パンくず。**道の階層と同じ**（島 › 歩いた国 › <国>）。名札（`BreadcrumbList`）もここから出る */
-export const travelCrumbs = (name: string) => [crumbOf("map"), { label: name }];
+export const travelCrumbs = (slug: string) => crumbsOf(travelHref(slug));
 
 /**
  * **`/travel/<国>/<街>` の名簿。** 実際に行った街のガイド（`docs/guide-design.md`）。
@@ -132,27 +174,20 @@ export type TravelCity = {
   draft?: true;
 };
 
-const CITIES: Omit<TravelCity, "href">[] = [
-  /* あやとが読んで OK（2026-11-19「いい感じ。結構綺麗」）。公開前の印を外した */
-  { country: "north-macedonia", slug: "skopje", name: "スコピエ" },
-  { country: "bulgaria", slug: "sofia", name: "ソフィア" },
-  /* 行く前の街（あやとは 2026-11-21 に移る。`content/plans.ts` の `romania`）。国の面はまだ無い（`CITY_ONLY`）。
-     あやと 2026-11-20「割といい感じ」「どんどん公開していいよ。あなたの裁量の範囲内」で公開前の印を外した */
-  { country: "romania", slug: "bucharest", name: "ブカレスト" },
-];
+/* 街の名簿そのものは `content/cities.ts`（滞在の表が slug で指すので、何も読まない1枚に分けた。#1357） */
 
 /**
  * **国の面（`/travel/<国>`）を持たず、街の面だけを持つ国。** パンくずは 島 › 歩いた国 › <街> で、国の段を飛ばす
  * （行き止まりの段を作らない）。貼られたときの絵は国の1枚（`card`）。
  *
- * いまは空。ブルガリアがここに居たが、国の面（街の一覧）を建てて `GUIDE_ONLY` へ移した（#1262）。
+ * いまはセルビア（行く前）だけ。ブルガリアがここに居たが、国の面（街の一覧）を建てて `GUIDE_ONLY` へ移した（#1262）。
+ * ルーマニアも 2026-11-19 から**行く前の国**（`before`）としてここに居て、入った日（11-21）に `GUIDE_ONLY` へ移した。
  * 国の面を建てた日に、ここから消して `GUIDE_ONLY` か `COUNTRIES` へ移す——両方に居ると書き出しを止める（下）。
  */
 const CITY_ONLY: { country: string; card: ShareKey; before?: true }[] = [
-  /* ルーマニア（2026-11-19）。**行く前の国**（`before`）。国に入った日が国の表（`content/countries.ts` の
-     `AHEAD_COUNTRIES`）に入るのは、入った日に入れる決まりなので、それまでは国の表に居ない。
-     入った日に国の面を建てて `GUIDE_ONLY` へ移すまで、パンくずは 島 › 歩いた国 › ブカレスト */
-  { country: "romania", card: "map", before: true },
+  /* セルビア（2026-11-22）。**行く前の国**（`before`）。入った日に国の面を建てて `GUIDE_ONLY` へ移すまで、
+     パンくずは 島 › 歩いた国 › ベオグラード */
+  { country: "serbia", card: "map", before: true },
 ];
 
 /** 街の上の国。国の面が在ればそれ、無ければ `CITY_ONLY` の行（どちらにも無ければ書き出しを止める） */
@@ -190,9 +225,8 @@ export const publicCities = (country?: string) =>
 
 /** 街のパンくず。島 › 歩いた国 › <国> › <街> */
 export function travelCityCrumbs(country: string, slug: string) {
-  const { page } = cityCountry(country);
-  const c = travelCity(country, slug);
-  return page ? [crumbOf("map"), { label: page.name, href: page.href }, { label: c.name }] : [crumbOf("map"), { label: c.name }];
+  /* 入口と道の上の段から（`lib/pages.ts` の `crumbsOf`。国の面を持たない国は、国の段が出ない） */
+  return crumbsOf(travelCity(country, slug).href);
 }
 
 /** 街の面の、貼られたときの顔と居場所。**公開前は検索に出さない**（`robots` は印から） */
@@ -270,6 +304,32 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "bulgaria", city: "sofia", slug: "hotspring", crumb: "温泉の蛇口" },
   /* ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
   { country: "bulgaria", city: "sofia", slug: "nevsky", crumb: "ネフスキー大聖堂" },
+  /* ティラナの中心を歩いて回ってきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "walk", crumb: "中心を歩いた日" },
+  /* ティラナでスフラキとケバブを食べ比べてきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "sufllaqe", crumb: "スフラキ" },
+  /* ティラナの大きなモスクに入ってきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "mosque", crumb: "大きなモスク" },
+  /* ティラナの大衆食堂でミートボールのスープを食べてきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "gjelltore", crumb: "大衆食堂ジェルトレ" },
+  /* ティラナ空港からバスで市街へ出てきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "airport", crumb: "空港から市街へ" },
+  /* ティラナのホステルで2回盗まれた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "albania", city: "tirana", slug: "hostel", crumb: "ホステルの盗難" },
+  /* セヴァン湖に行ってきた【2026年5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "sevan", crumb: "セヴァン湖" },
+  /* エレバンの市バスに乗ってきた【2026年5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "bus", crumb: "市バス" },
+  /* エレバン湖まで歩いてきた【2026年5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "lake", crumb: "エレバン湖" },
+  /* カスケードの大階段を上ってきた【2026年4〜5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "cascade", crumb: "カスケード" },
+  /* ジェノサイド記念碑まで歩いてきた【2026年5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "memorial", crumb: "ジェノサイド記念碑" },
+  /* エレバンのパン屋でガタを食べてきた【2026年4〜5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "bakery", crumb: "パン屋とガタ" },
+  /* エレバンの市場を歩いてきた【2026年4〜5月】（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
+  { country: "armenia", city: "yerevan", slug: "market", crumb: "市場" },
 ];
 
 /* 街の面が無い記事を立てない（`travelCity` が止める）。パンくずの1つ上が行き止まりになる */
@@ -291,10 +351,7 @@ export const publicArticles = (country?: string) =>
 
 /** 記事のパンくず。島 › 歩いた国 › <国> › <街> › <記事> */
 export function travelArticleCrumbs(country: string, city: string, slug: string) {
-  const p = travelPage(country);
-  const c = travelCity(country, city);
-  const a = travelArticle(country, city, slug);
-  return [crumbOf("map"), { label: p.name, href: p.href }, { label: c.name, href: c.href }, { label: a.crumb }];
+  return crumbsOf(travelArticle(country, city, slug).href);
 }
 
 /**

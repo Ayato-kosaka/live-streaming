@@ -48,8 +48,14 @@
 
 面の終わりに出どころの一覧を出す（`docs/guide-design.md` 4-4）。だから
 **事実の1件ごとに `src` を連れてくる**（入場料は `feesrc`、肉の中身は `meatsrc`）。
+
+**見た日も焼く**（`facts.json` の `seen`。道 → `YYYY-MM-DD`）。面の出どころの行に「◯月◯日に見た」と出る
+（`docs/country-guide.md` 1-2。スコピエ以降の街は台本が道ごとに持っている形）。道ごとに1つなので、
+`fill.json` の入場料・肉の出どころと、面の組み立てが字で持つ出どころ（気候・クリスマス市・大使館）の日もここに置く。
+**書くのは、その道を開いて字の中身がまだ合っているのを確かめた日だけ**（確かめずに今日の日付を入れない）。
 """
 
+import datetime
 import json
 import math
 import re
@@ -587,7 +593,24 @@ def main() -> None:
     arr("BG_EVENTS", F["events"], ["what", "when", "body", "src"])
     arr("BG_WORDS", F["words"], ["cyr", "roman", "kana", "jp"])
 
+    # 見た日は道ごと。崩れた日付と、まだ来ていない日は焼かずに落ちる（確かめていない日を出さない）
+    seen = F.get("seen", {})
+    today = datetime.date.today().isoformat()
+    bad = sorted(u for u, d in seen.items() if not re.fullmatch(r"20\d\d-\d\d-\d\d", d) or d > today)
+    if bad:
+        raise SystemExit("facts.json の seen の日付が崩れているか、まだ来ていない: %s" % bad[:5])
+    ts.append("/** 出どころを見た日（道 → `YYYY-MM-DD`）。面の出どころの行に「◯月◯日に見た」と出す */")
+    ts.append("export const BG_SEEN: Readonly<Record<string, string>> = {")
+    ts.extend('  "%s": "%s",' % (esc(u), seen[u]) for u in sorted(seen))
+    ts.append("};")
+    ts.append("")
+
     OUT_TS.write_text("\n".join(ts), encoding="utf-8")
+    cited = {x.get(k) for x in spots + food + buy + F["events"] + F["basics"] + F["history"] + F["image"] + F["facts"]
+             for k in ("src", "feesrc", "meatsrc") if x.get(k)}
+    unseen = sorted(cited - set(seen))
+    print("出どころ %d本・見た日あり %d本" % (len(cited), len(cited) - len(unseen))
+          + ("" if not unseen else "  **見た日の無い道: %s**" % "、".join(unseen[:4])))
     shots = sum(1 for x in spots + food + buy if x.get("img")) + (1 if hero.get("img") else 0)
     want = len(spots) + len(food) + len(buy) + 1
     print("写真 %d/%d 枚" % (shots, want)

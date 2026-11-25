@@ -2,19 +2,28 @@
 
 ## 何を見るか
 
-直近 N 日（既定 30日）に出してくれた人を、3つの出どころから集めて、
-`islandCharacter` の名簿と突き合わせる。
+直近 N 日（既定 30日）に出してくれた人を、投げ銭の出どころ3つ（スパチャ・
+Doneru・島の投げ銭）の5か所から集めて、`islandCharacter` の名簿と突き合わせる。
 
 | 出どころ | 何が入っているか | いつのぶんか |
 | --- | --- | --- |
 | BigQuery `chat_messages`（`event_type='PAID'`） | チャンネルID と表示名 | 前の晩まで |
 | BigQuery `doneru_donations` | Doneru の呼び名と どねID | 前の晩まで |
 | Firestore `streamChatMessages` | チャンネルID と表示名（`kind` が本文以外） | **今日のぶん** |
+| 台帳 `islandTips`（`source: island`） | 島の投げ銭。チャンネルID とアラートに出した名前 | 前の晩まで |
+| Firestore `islandSiteTips` | 島の投げ銭の受け取り。同じ欄 | **今日のぶん** |
 
-**3つ目が要る理由は、BigQuery が前の晩までしか無いから。**
+**今日のぶんが要る理由は、BigQuery と台帳が前の晩までしか無いから。**
 取り込みは 20:00 UTC の予定で、実際には1〜3時間半遅れて走る。
 その日の配信で初めて投げてくれた人は、翌朝までどこにも出てこない。
 `collectLiveChat`（5分おき）が Firestore に溜めているぶんを足して埋める。
+
+**島の投げ銭（#1405。島の `/tip` で受ける Stripe の投げ銭）は BigQuery に入らない。**
+台帳は月末と同じ1本（`monthly_tips.read_ledger()` → `island_rows()`）で読み、
+今日のぶんは受け取りの書類から、**数に入れてよいかを `fund_box.island_counts()`
+の1本で決めて**足す（テストの支払い・返金・払い戻しの請求は入れない）。
+島で投げられるのは YouTube のチャンネルを島に結んだ人だけなので、いつも
+`channelId` で当てられる（`docs/island-money.md` 3章）。
 
 ## 突き合わせは **channelId が先、名前は後**
 
@@ -52,7 +61,8 @@ YouTube の**チャンネル表示名**（この人なら `moilove`）では当�
 ## オーナーの札は要らない
 
 読むのは Firestore（`islandCharacter` / `islandDonors` /
-`streamChatMessages`）と BigQuery だけ。**公開の口は叩かない。**
+`streamChatMessages` / `islandTips` / `islandSiteTips`）と BigQuery だけ。
+**公開の口は叩かない。**
 Actions のサービスアカウントで全部足りるので、札は作らない。
 
 ## 1バイトも書かない
@@ -89,7 +99,10 @@ from config import (  # noqa: E402
     BQ_TABLE_CHAT_MESSAGES,
     BQ_TABLE_DONERU_DONATIONS,
 )
+import fund_box as fb  # noqa: E402
+from island_tips import jst_day  # noqa: E402
 from logsafe import detail_lines  # noqa: E402
+from monthly_tips import island_rows, read_ledger  # noqa: E402
 from _fs import args, db, log  # noqa: E402
 
 # `collectLiveChat` が入れる `kind` のうち、**本文だけのもの**。
@@ -286,8 +299,54 @@ def from_firestore(client, days: int) -> list[dict]:
     return list(tally.values())
 
 
+def from_island(client, days: int, now_ms: int) -> tuple[list[dict], int]:
+    """島の投げ銭（#1405）で投げた人。**BigQuery には入らない**ので、台帳と受け取りから。
+
+    台帳（前の晩まで）は月末と同じ1本で読む（`read_ledger()` → `island_rows()`）。
+    台帳にまだ居ない人だけ、受け取りの書類（`islandSiteTips`。今日のぶん）から足す。
+    人は `channelId` でまとめる。
+
+    Args:
+        client: Firestore（読むだけ）
+        days: 直近何日か
+        now_ms: いまの時刻（ミリ秒）。**呼ぶ側から渡す**（`docs/island-standards.md` 28.2）
+
+    Returns:
+        (1人1行の並び, 台帳で額かチャンネルが読めず足せなかった件数)
+    """
+    edge = now_ms - days * 86400000
+    rows, stuck = island_rows(read_ledger(client, jst_day(edge), jst_day(now_ms)))
+    people: dict[str, dict] = {}
+    for r in rows:
+        cur = people.setdefault(r["channelId"], {
+            "src": "島の投げ銭", "names": [], "cid": r["channelId"], "n": 0, "last": ""})
+        cur["n"] += 1
+        if r["handle"] and r["handle"] not in cur["names"]:
+            cur["names"].append(r["handle"])
+        cur["last"] = max(cur["last"], r["day"])
+
+    # 今日のぶん。**台帳に居る人は足さない**（同じ投げ銭を2回数えない）
+    today: dict[str, dict] = {}
+    for d in client.collection(fb.C_ISLAND).where("paidAt", ">=", edge).stream():
+        v = d.to_dict() or {}
+        cid = str(v.get("channelId") or "")
+        if not fb.island_counts(v) or not cid or cid in people:
+            continue
+        name = str(v.get("displayNameSnapshot") or "").strip()
+        cur = today.setdefault(cid, {
+            "src": "当日（島の投げ銭）", "names": [], "cid": cid, "n": 0, "last": 0})
+        cur["n"] += 1
+        if name and name not in cur["names"]:
+            cur["names"].append(name)
+        cur["last"] = max(cur["last"], int(v.get("paidAt") or 0))
+    return list(people.values()) + list(today.values()), stuck
+
+
 def day(v) -> str:
     """日付だけにして返す。**時刻までは要らない**（誰かを指す手がかりを増やさない）。"""
+    if isinstance(v, str):
+        # 台帳の `day`（日本時間の `YYYY-MM-DD`）はそのまま
+        return v[:10] or "?"
     if isinstance(v, (int, float)):
         if not v:
             return "?"
@@ -295,26 +354,19 @@ def day(v) -> str:
     return v.astimezone(timezone.utc).strftime("%Y-%m-%d") if v else "?"
 
 
-def main() -> None:
-    a = args()
-    days = int(a.get("days") or 30)
-    client = db()
+def collect(client, days: int, now_ms: int) -> list[dict]:
+    """投げ銭の出どころ3つ（5か所）から、**1つの出どころにつき1人1行**を集める。
 
-    # **いつ測ったかを最初に出す。** 島は何人もが同時に触っているので、
-    # 時刻の無い結果は一人歩きする（「3人足りない」だけが残って、
-    # 足したあとの数字と見分けがつかなくなった）
-    at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    log.info("測った時刻: %s / 直近 %d日の投げ銭。**1バイトも書きません。**", at, days)
+    数えたものはログに出す（数だけ。名前は出さない）。
 
-    cat = catalog(client)
-    h = cat["health"]
-    log.info("図鑑（islandCharacter）: 全体 %d人 / channelId が空 %d人 / "
-             "絵文字が空 %d人 / plain が無い %d人 / scene が無い %d人",
-             h["人"], h["channelId が空"], h["絵文字が空"],
-             h["plain が無い"], h["scene が無い"])
-    log.info("  突き合わせに使える鍵: channelId %d件 / 名前 %d件",
-             len(cat["ids"]), len(cat["keys"]))
+    Args:
+        client: Firestore（読むだけ）
+        days: 直近何日か
+        now_ms: いまの時刻（ミリ秒）
 
+    Returns:
+        `{"src", "names", "cid", "n", "last"}` の並び
+    """
     sc, doneru = from_bigquery(days)
     with_cid = sum(1 for v in sc.values() if v["cid"])
     log.info("BigQuery: スパチャ %d人（うち channelId が取れた %d人）/ Doneru %d件",
@@ -357,7 +409,15 @@ def main() -> None:
     log.info("Firestore（配信中のぶん）: 投げ銭らしい行から %d人。"
              "うち BigQuery にまだ居ないのが %d人", len(live), len(fresh))
 
-    rows = list(sc.values()) + list(by_pk.values())
+    island, island_stuck = from_island(client, days, now_ms)
+    log.info("島の投げ銭（台帳＋今日の受け取り）: %d人（うち今日のぶんだけの人 %d人）",
+             len(island), sum(1 for r in island if r["src"].startswith("当日")))
+    if island_stuck:
+        # **足せなかった行は 0 にも名前にもしない。** 件数だけ（月末と同じ）
+        log.warning("  台帳の島の投げ銭 %d件 はチャンネルか額が読めず、数えていません",
+                    island_stuck)
+
+    rows = list(sc.values()) + list(by_pk.values()) + island
     for r in fresh:
         rows.append({
             "src": "当日（Firestore）",
@@ -366,7 +426,15 @@ def main() -> None:
             "n": r["n"],
             "last": r["at"],
         })
+    return rows
 
+
+def judge(rows: list[dict], cat: dict) -> tuple[list[dict], int, int]:
+    """1人ずつ名簿に当てる。
+
+    Returns:
+        (まだ無い人, channelId で当たった人数, 名前でしか当たらなかった人数)
+    """
     missing = []
     by_id = by_name = 0
     for r in rows:
@@ -377,6 +445,31 @@ def main() -> None:
             by_name += 1
         else:
             missing.append(r)
+    return missing, by_id, by_name
+
+
+def main() -> None:
+    a = args()
+    days = int(a.get("days") or 30)
+    client = db()
+
+    # **いつ測ったかを最初に出す。** 島は何人もが同時に触っているので、
+    # 時刻の無い結果は一人歩きする（「3人足りない」だけが残って、
+    # 足したあとの数字と見分けがつかなくなった）
+    at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    log.info("測った時刻: %s / 直近 %d日の投げ銭。**1バイトも書きません。**", at, days)
+
+    cat = catalog(client)
+    h = cat["health"]
+    log.info("図鑑（islandCharacter）: 全体 %d人 / channelId が空 %d人 / "
+             "絵文字が空 %d人 / plain が無い %d人 / scene が無い %d人",
+             h["人"], h["channelId が空"], h["絵文字が空"],
+             h["plain が無い"], h["scene が無い"])
+    log.info("  突き合わせに使える鍵: channelId %d件 / 名前 %d件",
+             len(cat["ids"]), len(cat["keys"]))
+
+    rows = collect(client, days, int(datetime.now(timezone.utc).timestamp() * 1000))
+    missing, by_id, by_name = judge(rows, cat)
 
     log.info("")
     log.info("調べた人数: %d人 / キャラクターあり %d人 / **まだ無い %d人**",
@@ -395,4 +488,6 @@ def main() -> None:
         log.info("名前は出しません（このログは公開）。誰かはオーナー画面で見てください")
 
 
-main()
+# **読み込んだだけでは走らない**（`characters_gap_selftest.py` が `collect()` と `judge()` を借りる）
+if __name__ == "__main__":
+    main()

@@ -56,7 +56,7 @@
  * 住人が「『歩いた国』から、これまで歩いた◯カ国をたどれるよー」と言う以上、
  * 行った先で数えられる数と違ってはいけない。
  *
- * ほしい数はこの道具が**自分で**組み立てる（`site/content/countries.ts` を読む）。
+ * ほしい数はこの道具が**自分で**組み立てる（`site/content/countries.ts` と `stays.ts` を読む）。
  * 画面の数をそのまま正解にすると、3面そろって間違っていても通る。
  */
 import { chromium } from "playwright-core";
@@ -74,24 +74,28 @@ const SELFTEST = process.argv.includes("--selftest");
 // ---------------------------------------------------------------- ほしい数
 
 const src = readFileSync(repoPath("site/content/countries.ts"), "utf8");
+/* 滞在の表（#1275）。いつどの国に居たかを手で書くのは `stays.ts` だけで、
+   `AHEAD_COUNTRIES` はそこの `name` を持つ行から引いている */
+const staysSrc = readFileSync(repoPath("site/content/stays.ts"), "utf8");
 
 /* 読み方は `tsread.mjs` の1本（#694）。前は**字下げの深さ**（`^    slug:`）と
    **1行に収まっていること**（`{ slug: …, name: …, entered: … }`）を当てにして
    いた。どちらも書き方が変わるだけで黙って減る——そして**減ったぶんは
    「ほしい数」から消える**ので、画面の数と食い違わず緑が出る。 */
 
-/** 歩き終わった国。**`-border` は国ではない**（`python/stays.py` の `is_country`） */
+/** 歩き終わった国。国の表には国だけが居る（`docs/spec/model.md` M-17。`content/countries.ts` が読み込んだときに止める） */
 const DONE = must(
-  readArray(src, "COUNTRIES", { keys: ["slug"], idKey: "slug" }),
-  "countries.ts の COUNTRIES",
+  readArray(src, "COUNTRY_RECORDS", { keys: ["slug"], idKey: "slug" }),
+  "countries.ts の COUNTRY_RECORDS",
 )
-  .map((r) => r.slug)
-  .filter((s) => !s.endsWith("-border"));
-/** いま歩いている旅の国と、入った日 */
+  .map((r) => r.slug);
+/** いま歩いている旅の国と、入った日（滞在の表の、`name` を持つ行。`content/countries.ts` の `AHEAD_COUNTRIES` と同じ引きかた） */
 const AHEAD = must(
-  readArray(src, "AHEAD_COUNTRIES", { keys: ["slug", "entered"], idKey: "slug" }),
-  "countries.ts の AHEAD_COUNTRIES",
-).map((r) => ({ slug: r.slug, entered: r.entered }));
+  readArray(staysSrc, "STAYS", { keys: ["country", "name", "from"], idKey: "country" }),
+  "stays.ts の STAYS",
+)
+  .filter((r) => r.name)
+  .map((r) => ({ slug: r.country, entered: r.from }));
 
 /**
  * 旅程（`content/nordic.ts`）の入国日と、上の写しが合っているか。**合わなければ数えない。**
@@ -141,7 +145,7 @@ function itineraryMatches() {
   const flags = readFileSync(repoPath("site/components/ui/Flag.tsx"), "utf8");
   for (const a of AHEAD) {
     if (done.has(a.slug)) bad.push(`${a.slug} は歩き終わっているのに AHEAD_COUNTRIES に残っている`);
-    // `albania: {` も `"iran-border": {` も拾う
+    // `albania: {` も `"north-macedonia": {` も拾う
     else if (!new RegExp(`^\\s*"?${a.slug}"?:`, "m").test(flags)) bad.push(`${a.slug} の旗が Flag.tsx にない`);
   }
   return bad;
@@ -161,10 +165,15 @@ const tripDate = (iso) => new Date(Date.parse(iso) + 2 * 3600_000).toISOString()
  * 国が増えれば、次の回から勝手に増える。
  *
  * 直書きのほうに残してあるのは、**もう `AHEAD_COUNTRIES` に居ない国の切れ目**
- * （歩き終わって `COUNTRIES` へ移った北欧の6カ国）。過去に割れた日なので、
+ * （歩き終わって `COUNTRIES` へ移った北欧の6カ国と、バルカンの3カ国）。過去に割れた日なので、
  * 導出では出てこないが、見つづける値がある。
  */
-const PAST_EDGES = ["2026-09-13", "2026-09-17", "2026-09-18", "2026-09-19", "2026-09-26"];
+const PAST_EDGES = [
+  "2026-09-13", "2026-09-17", "2026-09-18", "2026-09-19", "2026-09-26",
+  /* バルカン諸国周遊のアルバニア・北マケドニア・ブルガリア（2026-11-22 に `COUNTRIES` へ移した）。
+     入った日と、その前日 */
+  "2026-09-27", "2026-09-28", "2026-10-11", "2026-10-12", "2026-11-11", "2026-11-12",
+];
 const prevDay = (d) => new Date(Date.parse(`${d}T00:00:00Z`) - 86400_000).toISOString().slice(0, 10);
 const DAYS = process.env.DAYS
   ? process.env.DAYS.split(",")

@@ -88,18 +88,33 @@
         "type": 301
       },
       {
-        "source": "/next/new",
+        "source": "/next",
         "destination": "/board",
         "type": 301
       },
       {
-        "source": "/next/new/**",
+        "source": "/next/**",
         "destination": "/board",
+        "type": 301
+      },
+      {
+        "source": "/now",
+        "destination": "/",
         "type": 301
       },
       {
         "source": "/map",
         "destination": "/travel",
+        "type": 301
+      },
+      {
+        "source": "/travel/iran-border",
+        "destination": "/travel/armenia",
+        "type": 301
+      },
+      {
+        "source": "/map/iran-border",
+        "destination": "/travel/armenia",
         "type": 301
       },
       {
