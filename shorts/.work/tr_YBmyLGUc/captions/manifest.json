@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "tr_YBmyLGUc__captions",
+ "mode": "captions",
+ "dest": "tr_YBmyLGUc/captions",
+ "video": "tr_YBmyLGUc",
+ "channel": null,
+ "request": "shorts/requests/seven-captions-20261126.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed",
+  "captions": "failed"
+ },
+ "counts": {
+  "caption_segments": 0,
+  "caption_lines": 0,
+  "files": 5
+ },
+ "bytes": {
+  "plain": 4928,
+  "tar_gz": 2262,
+  "encrypted": 2272
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 2272,
+   "sha256": "c4dc800351971ed905eed6bbdb25254207c97315e2e8283bcda046bdfac7576d"
+  }
+ ],
+ "hmac_sha256": "a53c1544299ddcbca43becd2112efa8d889ac6f3c6e9feabea5c702d18ed231a",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45684125297",
+ "created_at": "2026-11-25T19:21:48+00:00"
+}
