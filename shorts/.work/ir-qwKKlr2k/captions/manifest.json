@@ -1,0 +1,36 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "ir-qwKKlr2k__captions",
+ "mode": "captions",
+ "dest": "ir-qwKKlr2k/captions",
+ "video": "ir-qwKKlr2k",
+ "channel": null,
+ "request": "shorts/requests/seven-captions-20261126.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed",
+  "captions": "failed"
+ },
+ "counts": {
+  "caption_segments": 0,
+  "caption_lines": 0,
+  "files": 5
+ },
+ "bytes": {
+  "plain": 4843,
+  "tar_gz": 2242,
+  "encrypted": 2256
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 2256,
+   "sha256": "1da260e8e08653f4c378218629cc0c2046b24177eb7725feb3d791a609046d61"
+  }
+ ],
+ "hmac_sha256": "f4450ea289b0450e8a3eae4bc9b78d2ad2f361cd1d57024c57d76f37dbdd0e71",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45684125297",
+ "created_at": "2026-11-25T19:21:57+00:00"
+}
