@@ -1,0 +1,4 @@
+{
+ "_note": "揚げパンの回 A（KjB_aBsTIf0・#1447）の様式。型は食べ物の反応（presets/food.json）をそのまま重ねる。配信の透かし・固定コメントの帯・投げ銭の表示の位置は clips が届いてから測り、帯（polish の bands）で切る",
+ "extends": "presets/food.json"
+}
