@@ -212,6 +212,16 @@ export type CastleBankDef = {
 };
 
 /**
+ * 12月のクリスマスの貯金箱（スノードーム。#1034、あやとが案4 を選んだ 2026-11-23）。描くのは `season/bank/XmasBank.tsx`、
+ * 部品の約束は `<dir>/globe.json`。ピポの動きは11月の城と同じ決まり（`castleBrain.ts`）
+ */
+export type XmasBankDef = {
+  kind: "xmas";
+  /** 部品と `globe.json` の置き場（公開側のパス） */
+  dir: string;
+};
+
+/**
  * 投げ銭の演出を動画で流す段の組（11月から。#1095）。**`tiers`（ふだんの段）とは別に持つ。**
  * 配信に出すのは `live` が true で `variant` が決まっているときだけ。それまでは `?fx=full` / `?fx=light` の旗が
  * 付いたページ（試し表示・録画・`/alert/perf`）でだけ、`tiers` の代わりにこちらの段で出す（`season/show/fxVideo.ts`）
@@ -241,6 +251,8 @@ export type SeasonTheme = {
   /** 絵の置き場（公開側のパス。`public/` の下） */
   dir: string;
   bank: {
+    /** コマの置き場（無ければ `dir`）。12月は貯金箱の部品と同じ `bank/` に置く */
+    dir?: string;
     /** コマの枚数（`bank-base-0..n-1.png` / `bank-fill-0..n-1.png`） */
     frames: number;
     /**
@@ -262,6 +274,10 @@ export type SeasonTheme = {
    * 下の `bank`（コマ送り。0% の絵に 100% の絵を下から溜める）に落ちる。それも読めなければ豚
    */
   castleBank?: CastleBankDef;
+  /**
+   * 12月の貯金箱（スノードーム）。部品が読めなければ、下の `bank`（コマ送り）に落ちる。それも読めなければ豚
+   */
+  xmasBank?: XmasBankDef;
   /** 投げ銭の演出を動画で流す段の組。無ければ `tiers` だけ */
   fxVideo?: FxVideoDef;
   /**
@@ -854,6 +870,38 @@ export const THEMES: SeasonTheme[] = [
     fxVideo: { dir: "/alert/themes/castle/fx", live: true, variant: "full", tiers: CASTLE_FX_TIERS },
     finale: null,
   },
+  {
+    id: "christmas",
+    /* 12月。クリスマス（#1034）。**まだ配信に出さない**（`live: false`。`?theme=christmas` の試し表示だけ）。
+       貯金箱はスノードーム（あやとが案4 を選んだ 2026-11-23）。0% は町の灯りが全部消えていて、貯まるほど下から灯る。
+       投げ銭の演出7段は動画（`public/alert/themes/christmas/fx/`。11月の城と同じ形）。`tiers` の1段は旗 `?fx=off` のときだけ */
+    from: "2026-12-01T00:00",
+    until: "2027-01-01T00:00",
+    live: false,
+    dir: "/alert/themes/christmas",
+    xmasBank: { kind: "xmas", dir: "/alert/themes/christmas/bank" },
+    bank: {
+      /* 部品が読めなかった日のコマ送り。スノードームの 0%（町が暗い）に 100%（全部灯る）を下から溜める。1枚なので送らない */
+      dir: "/alert/themes/christmas/bank",
+      frames: 1,
+      sequence: [[0, 60000]],
+      fallbackSize: { width: 640, height: 452 },
+    },
+    text: {
+      top: { color: "#FFF4DC", shadow: "#2A0A0C" },
+      /* いまの額はランタンの金色。地が何色でも読めるように、濃いワイン色の縁を付ける */
+      center: { color: "#FFD54A", shadow: "#2A0A0C" },
+      bottom: { color: "#FFF4DC", shadow: "#2A0A0C" },
+    },
+    fx: [],
+    slots: [],
+    tiers: [{ min: 0, accent: "#C62828", slots: 0, files: [], bats: 0, waves: 0 }],
+    /* 段の切れ目・色・字・キャラ絵の上の空きは11月と同じ（字はハロウィン2版目のまま。#1079）。
+       **段7（1万円〜）は仮**: 12月の段7（黒と赤の王子）は描き直し中なので、manifest の段7 は11月の城の段7 の動画の写し。
+       絵が決まって焼けば、`alert_fx_render.yml` の place が置き換える */
+    fxVideo: { dir: "/alert/themes/christmas/fx", live: true, variant: "full", tiers: CASTLE_FX_TIERS },
+    finale: null,
+  },
 ];
 
 /** JST の `YYYY-MM-DDTHH:mm` を、いつの瞬間か（ms）に直す。 */
@@ -908,7 +956,7 @@ export const bankFrameUrl = (
   th: SeasonTheme,
   layer: "base" | "fill",
   i: number
-) => `${th.dir}/bank-${layer}-${i}.png`;
+) => `${th.bank.dir ?? th.dir}/bank-${layer}-${i}.png`;
 
 export const fxUrl = (th: SeasonTheme, file: string) => `${th.dir}/${file}`;
 

@@ -7,6 +7,7 @@
  *   node alert-banksize.mjs --base ... --max 3 --min 0                         # 幅を広げて数だけ見る
  *   node alert-banksize.mjs --base ... --scales 0.5                            # PRISM 140% だけ（半分の時間）
  *   node alert-banksize.mjs --base ... --no-prism                              # 対照: 豚が 82% 前後（PRISM の2倍）に写る
+ *   node alert-banksize.mjs --base ... --themes christmas --query pipoSeed=3 --fill 120     # 季節の貯金箱の面にだけ旗を足す（ピポのくじの並びなど）
  *
  * ## 決まり（#1078、あやと 2026-11-02）
  *
@@ -93,6 +94,8 @@ if (themes.includes("none")) die("豚（none）は毎回測って比べる相手
 const sizes = arg("sizes", "436x776,664x1180").split(",").map((s) => s.split("x").map(Number));
 if (!sizes.every(([w, h]) => w > 0 && h > 0)) die(`--sizes は 幅x高さ をカンマで（${arg("sizes")}）`);
 const fill = arg("fill", "60");
+/* 季節の貯金箱の面にだけ足す試し表示の旗（`pipoSeed=3` など）。豚には付けない */
+const query = new URLSearchParams(arg("query", ""));
 const frames = Math.max(2, Math.round(Number(arg("frames", "180"))));
 const every = Number(arg("every", "500"));
 const runs = Math.max(1, Math.round(Number(arg("runs", "1"))));
@@ -201,6 +204,7 @@ async function measureOnce(browser, theme, [W, H], acc, scale) {
     const errors = [];
     page.on("pageerror", (e) => errors.push(String(e).slice(0, 200)));
     const q = new URLSearchParams({ preview: "bank", fill, theme });
+    if (theme !== "none") for (const [k, v] of query) q.set(k, v);
     await page.goto(`${base}/alertbox/?${q}`, { waitUntil: "load", timeout: 30000 });
     const probe = await prismProbe(page);
     const want = off ? 1 : scale;

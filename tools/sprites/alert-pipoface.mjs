@@ -23,7 +23,16 @@
  * - 出す数: 溜まり具合ごとに、時間で均した顔の幅（ピポが見えているコマだけ）・ポーズごとの幅・見えていた割合と、
  *   今 ÷ 前 の比
  *
- * 終了コード: 0 = どの溜まり具合でも 今 ÷ 前 が `--min`（既定 1.5）以上 / 1 = 下回った / 2 = 測れなかった
+ * ## 12月から（`--theme christmas`）
+ *
+ * 12月の貯金箱（`season/bank/XmasBank.tsx`）は、ピポの絵に `data-pipo-face`（顔の幅 ÷ 絵の幅）を持たせてあるので、
+ * それを読んで数える（城の castle.json も前の版も要らない）。前の版が無いので比ではなく、**顔の幅 ÷ 場面の幅**
+ * （場面＝豚の 1.6 倍の四角）を出し、`--face-min`（例 0.13。決まりは 13.5%）を下回れば 1
+ *
+ *   node alert-pipoface.mjs --base ... --theme christmas --fills 0,60,120 --seconds 30 --face-min 0.13
+ *
+ * 終了コード: 0 = どの溜まり具合でも 今 ÷ 前 が `--min`（既定 1.5）以上（`--face-min` を渡したら、顔 ÷ 場面がそれ以上） /
+ * 1 = 下回った / 2 = 測れなかった
  */
 import { chromium } from "playwright-core";
 import { chromePath } from "./chrome.mjs";
@@ -46,6 +55,8 @@ const seconds = Number(arg("seconds", "90"));
 const every = Number(arg("every", "250"));
 const MIN = Number(arg("min", "1.5"));
 const query = arg("query", "");
+const theme = arg("theme", "castle");
+const faceMin = arg("face-min", null) != null ? Number(arg("face-min")) : null;
 /** CSS px → 配信の px（PRISM 140%） */
 const STREAM = 1.39;
 
@@ -71,7 +82,7 @@ async function measure(browser, root, fill) {
       return u.startsWith(root) || u.startsWith("data:") || u.startsWith("blob:") ? r.continue() : r.abort();
     });
     const page = await ctx.newPage();
-    const q = new URLSearchParams({ preview: "bank", theme: "castle", fill: String(fill) });
+    const q = new URLSearchParams({ preview: "bank", theme, fill: String(fill) });
     for (const [k, v] of new URLSearchParams(query)) q.set(k, v);
     await page.goto(`${root}/alertbox/?${q}`, { waitUntil: "load", timeout: 30000 });
     // 顔の割合: 今の版は castle.json から、前の版は OLD_FACES
@@ -83,31 +94,36 @@ async function measure(browser, root, fill) {
       }
     });
     const frac = { ...OLD_FACES };
-    let isNew = false;
-    if (def?.pipo?.poses) {
+    let isNew = theme !== "castle";
+    if (theme === "castle" && def?.pipo?.poses) {
       isNew = true;
       for (const p of Object.values(def.pipo.poses)) frac[p.file] = (p.face[2] - p.face[0]) / p.size[0];
     }
     // 描かれ始めるまで待つ
-    await page.waitForFunction(() => document.querySelectorAll('img[src*="/alert/themes/castle/pipo-"]').length > 0, null, { timeout: 20000 });
+    // 12月からは、ピポの絵が `data-pipo-face` を持つ（城は持たないので、置き場の名前で探す）
+    const SEL = 'img[data-pipo-face], img[src*="/alert/themes/castle/pipo-"]';
+    await page.waitForFunction((sel) => document.querySelectorAll(sel).length > 0, SEL, { timeout: 20000 });
     const samples = [];
     const t0 = Date.now();
     for (let i = 0; i * every < seconds * 1000; i++) {
       const wait = t0 + i * every - Date.now();
       if (wait > 0) await page.waitForTimeout(wait);
-      const seen = await page.evaluate(() => {
+      const seen = await page.evaluate((sel) => {
         const out = [];
-        for (const im of document.querySelectorAll('img[src*="/alert/themes/castle/pipo-"]')) {
+        for (const im of document.querySelectorAll(sel)) {
           if (im.checkVisibility && !im.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) continue;
           let o = 1;
           for (let e = im; e; e = e.parentElement) o *= Number(getComputedStyle(e).opacity);
           if (o < 0.5) continue;
           const r = im.getBoundingClientRect();
           if (r.width < 1) continue;
-          out.push({ file: im.src.split("/").pop().split("?")[0], w: r.width });
+          const f = im.getAttribute("data-pipo-face");
+          out.push({ file: im.src.split("/").pop().split("?")[0], w: r.width, frac: f != null ? Number(f) : null });
         }
-        return out;
-      });
+        // 場面（豚の 1.6 倍の四角）の幅
+        const host = document.querySelector("[data-xmas-bank], [data-castle-phase]");
+        return { imgs: out, scene: host ? host.getBoundingClientRect().width : 0 };
+      }, SEL);
       samples.push(seen);
     }
     return { samples, frac, isNew };
@@ -120,11 +136,13 @@ function summarize({ samples, frac }) {
   const per = new Map();
   let sum = 0;
   let n = 0;
-  for (const s of samples) {
+  let scene = 0;
+  for (const { imgs: s, scene: sw } of samples) {
+    if (sw) scene = sw;
     // 1コマに2枚見えるのは、歩きの2枚が入れ替わる瞬間だけ。大きいほうを1つ数える
     let best = null;
     for (const v of s) {
-      const f = frac[v.file];
+      const f = v.frac ?? frac[v.file];
       if (f == null) continue;
       const face = v.w * f;
       if (!best || face > best.face) best = { file: v.file, face };
@@ -137,7 +155,7 @@ function summarize({ samples, frac }) {
     e.sum += best.face;
     per.set(best.file, e);
   }
-  return { mean: n ? sum / n : 0, seen: n / samples.length, per };
+  return { mean: n ? sum / n : 0, seen: n / samples.length, per, scene };
 }
 
 const px = (v) => `${v.toFixed(1)}px（配信 ${(v * STREAM).toFixed(1)}px）`;
@@ -152,6 +170,7 @@ async function main() {
       const runs = await Promise.all([measure(browser, base, fill), oldBase ? measure(browser, oldBase, fill) : null]);
       const [now, old] = runs.map((r) => (r ? summarize(r) : null));
       if (!runs[0].isNew) die(`${base} の castle.json に pipo.poses が無い（今の版ではない？）`);
+      if (!now.mean) die(`ピポが1コマも見えなかった（${theme} ${query}）`);
       console.log(`\n■ 溜まり ${fill}%`);
       const line = (tag, s) => {
         console.log(`  ${tag}: 顔の幅 ${px(s.mean)}（ピポが見えていたコマ ${(s.seen * 100).toFixed(0)}%）`);
@@ -159,6 +178,11 @@ async function main() {
           console.log(`      ${f.padEnd(22)} ${px(e.sum / e.n)}  ${((e.n / Math.max(1, s.per.size && [...s.per.values()].reduce((a, b) => a + b.n, 0))) * 100).toFixed(0)}%`);
       };
       line("今の版", now);
+      if (now.scene) {
+        const k = now.mean / now.scene;
+        console.log(`  顔の幅 ÷ 場面の幅（${now.scene.toFixed(0)}px）= ${(k * 100).toFixed(1)}%${faceMin != null && k < faceMin ? `  ← ${(faceMin * 100).toFixed(1)}% に届かない` : ""}`);
+        if (faceMin != null && (k < faceMin || !now.mean)) bad++;
+      } else if (faceMin != null) die("場面（data-xmas-bank / data-castle-phase）が見つからない");
       if (old) {
         line("前の版", old);
         if (!old.mean) die(`前の版でピポが1コマも見えなかった（${oldBase}）`);

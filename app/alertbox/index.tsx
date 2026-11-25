@@ -222,6 +222,14 @@ export default function AlertBox() {
     amount?: string;
     /** 試し表示で、貯金箱を 0 から `fill` まで何秒かけて溜めるか（溜まる様子を録るため） */
     rise?: string;
+    /**
+     * 試し表示（`preview=bank`）で、貯金箱の溜まり具合（%）をこの順に `stepSec` 秒おきに進める（`0,25,50,75,100,120`）。
+     * 進めるたびに貯金箱を `gapSec` 秒だけ消して出し直す＝**アラートが明けて貯金箱が出直す**のと同じ道を通る
+     * （12月の貯金箱が、アラート明けに金貨を入れてから前の額→今の額へ上げるのを、アラートを待たずに続けて録るため）
+     */
+    steps?: string;
+    stepSec?: string;
+    gapSec?: string;
     /** 試し表示の名前とメッセージ（長い名前・3行のメッセージで並べ方を確かめるため） */
     name?: string;
     msg?: string;
@@ -281,6 +289,8 @@ export default function AlertBox() {
 
   // Goals 情報（起動時に取得し currentAmount を算出して保持）
   const [goal, setGoal] = useState<GoalState | null>(null);
+  /** 試し表示の `steps` で、アラートのあいだ貯金箱が消えるのを真似ているか */
+  const [bankGap, setBankGap] = useState(false);
 
   // 現在表示中の通知（なければ null）
   const [notification, setNotification] = useState<NotificationData | null>(
@@ -412,6 +422,25 @@ export default function AlertBox() {
       /* `rise` 秒かけて額を上げていく。本番の溜まり方（2.2秒で今の額まで）は
          一瞬で終わって録画では見えないので、試し表示のときだけ額のほうを動かす */
       const rise = Math.max(0, numParam(params.rise, 0));
+      const steps = String(params.steps ?? "")
+        .split(",")
+        .map((v) => Number(v))
+        .filter((v) => Number.isFinite(v) && v >= 0 && v <= 150);
+      if (steps.length > 1 && preview === "bank") {
+        const atPct = (pct: number) => ({ currentAmount: Math.round((target * pct) / 100), targetAmount: target, label: "おためし表示" });
+        const every = Math.max(2, numParam(params.stepSec, 8)) * 1000;
+        const gap = Math.max(0.2, numParam(params.gapSec, 0.9)) * 1000;
+        setGoal(atPct(steps[0]));
+        const timers: ReturnType<typeof setTimeout>[] = [];
+        steps.slice(1).forEach((pct, i) => {
+          const t = (i + 1) * every;
+          // 本番と同じ順: 額を足す → アラート（貯金箱は消える）→ 明けて出直す
+          timers.push(setTimeout(() => setBankGap(true), t - gap));
+          timers.push(setTimeout(() => setGoal(atPct(pct)), t - gap + 50));
+          timers.push(setTimeout(() => setBankGap(false), t));
+        });
+        return () => timers.forEach(clearTimeout);
+      }
       if (rise > 0 && preview === "bank") {
         const started = Date.now();
         setGoal(goalAt(0));
@@ -1524,7 +1553,7 @@ export default function AlertBox() {
         )}
 
         {/* 豚の貯金箱ゲージ（アラート非表示時のみ） */}
-        {!notification && goal && (
+        {!notification && goal && !bankGap && (
           <View style={styles.piggyGaugeContainer}>
             <PiggyGauge
               currentAmount={goal.currentAmount}
