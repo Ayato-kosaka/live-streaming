@@ -74,6 +74,7 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `wide` | 16字の行は △、15字の行は何も出さない。数えかたは `build_edit.py` の `spoken_chars` と同じ（「ー」を数える。読み込んで突き合わせる）。1行目の題・本人の声の行（`orig_voice`・`voice_src`）は見ない。✕ にはしない（L-WIDE。仮説 N5） |
 | `width_median` | 行の字数の中央値を1行で出す（題の1行目も入れ、本人の声の行は外す。偶数の行は真ん中2つの間）。L-WIDE を当てない日付でも出す |
 | `prev` | 十字架の登山の原稿 A の4行目「先週は雨で流れたリベンジや！」と、行の途中の「前回の配信で」を ✕。フォカッチャの添削版の締め「リベンジにワンパンピザを本日22時から…」・問いの前の締めの行・題が「リベンジ」を言っている回の本文・1行目の題は見ない。「昨日こねた生地」は前の回の事情ではないので見ない。あやとの書き直し（「…十字架まで歩きたい！」）は通す。11-13 のコメントより前の決まりでは当てない（L-PREV） |
+| `pickwhy` | 揚げパンの回 A の6行目「ヌテラは全部ヌテラ味になるから、蜂蜜ナッツにした。」と B の8行目「…ヌテラ味やから、蜂蜜ナッツにした。」を ✕。あやとの直し（行を消した12行）・頼んだ物だけの「蜂蜜ナッツにした。」・行の頭のつなぎ「だから、全部を歩ける島にした。」・題・締めは見ない。11-25 のコメントより前の時点では当てない（L-PICKWHY。#1447・F-056） |
 | `hypo_link` | 規則はどれも、帳面の ID か仮説の台帳（`playbook.md`）の番号か出どころの issue（`#1403`）を持つ。台帳の番号は台帳の行にあり、その行が規則の名前を書いている。L-WIDE は帳面に足していない（あやとの指摘ではない）。L-RUN・L-ANSNEXT と 11-25 の5つ（L-CLIFF・T-HOOK・L-NUM38・L-VOICE0・L-BANG）は帳面にも台帳にも無く、出どころ #1403 だけを持つ |
 | `run` | spec の行の種類（`kind`）で、出来事・引っ張り・数の無い行が3行続いたら3行目から △（前置き・説明・前置き → 4行目、反応・反応・味・味 → 8・9行目）。題の1行目・締めの行（最後の問い、問い → 誘いの問いの行も）は数えない。数は続きを切る。付録A の書きかた（題読み・値段・数・締めの問い）でも読む。種類の無い行・決まりに無い種類・開け閉めの字は △。どの行にも kind が無ければ「見ていない」。診断の付録A の屋根裏25人部屋の種類で、診断の「続」と同じ 8・9・10・17行目。✕ にはしない（L-RUN。#1403） |
 | `ansnext` | 題の答え（【答】）の次が反応の行で、3秒のうちに次を開かなければ、その行を △。次がすぐ締め（問い・問い → アーカイブ・問い → 誘い）・出来事・引っ張り・turn に o（o・oc）なら出さない。短い反応（「わお、人がいっぱい！」）のあと3秒のうちに引っ張りが始まれば出さず、長い反応のあとなら出す。spec の why の【答】も読む。kind が無い・【答】が無ければ「見ていない」（L-ANSNEXT。#1403） |
@@ -145,7 +146,7 @@ CUTS = {
     "ashi_rows": ("lint.py", '        if "【足】" in (r.get("why") or ""):\n            rows.add(i)\n', "        pass\n",
                   {"ashi"}, "spec の【足】の印を読まない"),
     "as_of": ("lint.py", "        if not in_force(r.since, as_of):\n", "        if False:\n",
-              {"as_of", "approved", "title_read", "as_of_id", "later_rule_live", "nick", "prev"}, "決まりの日を見ない"),
+              {"as_of", "approved", "title_read", "as_of_id", "later_rule_live", "nick", "prev", "pickwhy"}, "決まりの日を見ない"),
     "sorry": ("lint.py", "        m = SORRY.search(ln)\n", "        m = None\n",
               {"sorry"}, "謝る行を拾わない"),
     "spec_title": ("lint.py", '            card, came = s["title_card"], f"{sp.name} の title_card"\n', "            pass\n",
@@ -224,7 +225,7 @@ CUTS = {
     "ate_none": ("lint.py", "    if c.promises is None:\n", "    if False:\n", {"ate"}, "当て表の無い spec を、形の違いと区別しない"),
     "ate_read": ("lint.py", '        has_spec, promises = True, s.get("promises")\n', "        has_spec, promises = True, None\n", {"ate"},
                  "spec の promises を読まない"),
-    "as_of_cid": ("lint.py", "    return sc is None or ac is None or sc <= ac\n", "    return True\n", {"as_of_id", "approved", "prev"},
+    "as_of_cid": ("lint.py", "    return sc is None or ac is None or sc <= ac\n", "    return True\n", {"as_of_id", "approved", "prev", "pickwhy"},
                   "同じ日の決まりの前後をコメントID で分けない"),
     "rows_missing": ("lint.py", "        if not isinstance(rows, list):\n", "        if False:\n", {"spec_rows"}, "rows の無い spec を黙って読む"),
     "rows_count": ("lint.py", "        if len(rows) != len(lines):\n", "        if False:\n", {"spec_rows"}, "行の数の違う spec を黙って読む"),
@@ -300,6 +301,11 @@ CUTS = {
                    {"prev"}, "締めの行（次の配信への誘いの「リベンジに…」）まで拾う"),
     "prev_title": ("lint.py", "    said = {m.group(0) for m in PREV.finditer(c.title)}\n", "    said = set()\n",
                    {"prev"}, "題の約束が「リベンジ」の回の本文まで拾う"),
+    # ---- 2026-11-25（#1447、F-056）: 選んだ訳 ----
+    "pickwhy": ("lint.py", "        m = next((x for x in PICKWHY.finditer(ln) if not head or x.start() >= head.end()), None)\n",
+                "        m = None\n", {"pickwhy"}, "選んだ訳（〜から、…にした）を拾わない"),
+    "pickwhy_head": ("lint.py", "        head = HEAD_CONJ.match(ln)\n", "        head = None\n",
+                     {"pickwhy"}, "行の頭のつなぎ（だから、…にした）まで拾う"),
 }
 
 
@@ -747,6 +753,29 @@ def leg_prev(L):
             ("「昨日こねた生地」（その日の話の中の昨日）は見ない", not day)]
 
 
+def leg_pickwhy(L):
+    a = ["ブルガリアのめちゃくちゃ美味しい揚げパンを食べてみた！", "行列店って書いてあった揚げパン屋に来たら……", "お客さん、僕1人やん！",
+         "ソフィアで甘いもんが欲しくて、頼んだのは名物のメキツァ。", "おばちゃんが、ヨーグルト入りの生地を揚げてくれてる。",
+         "ヌテラは全部ヌテラ味になるから、蜂蜜ナッツにした。", "揚げたてに、蜂蜜がデロンデロン！", "持ち上げたら、蜂蜜こぼした。",
+         "かぶりついたら……うま！", "結局、蜂蜜の味しかせえへん！", "けど、噛んでたら奥から揚げパンの味がして……",
+         "給食で食べた揚げパン、めっちゃ思い出すわ！", "みんなも、ブルガリアで給食の揚げパンを食べてみたい？"]
+    got = hits_of(L, ctx(L, a), "L-PICKWHY")
+    then = [h for h in L.lint(ctx(L, a), "2026-11-25:7173883008")["hits"] if h.rule == "L-PICKWHY"]
+    fixed = hits_of(L, ctx(L, a[:5] + a[6:]), "L-PICKWHY")
+    b = hits_of(L, ctx(L, ["題", "ヌテラかけたら全部ヌテラ味やから、蜂蜜ナッツにした。", "みんなは？"]), "L-PICKWHY")
+    plain = hits_of(L, ctx(L, ["題", "トッピングは、蜂蜜ナッツにした。", "みんなは？"]), "L-PICKWHY")
+    head = hits_of(L, ctx(L, ["題", "だから、全部を歩ける島にした。", "みんなは？"]), "L-PICKWHY")
+    edge = hits_of(L, ctx(L, ["高いから、安い宿にした！", "みんなは、高いから安い宿にする？"]), "L-PICKWHY")
+    return [("揚げパンの回 A の6行目「ヌテラは全部ヌテラ味になるから、蜂蜜ナッツにした。」を ✕（行 6）",
+             [(h.line, h.look) for h in got] == [(6, False)]),
+            ("あやとのコメント（2026-11-25:7173925743）より前の時点では当てない", not then),
+            ("あやとの直し（6行目を消した12行）は通す", not fixed),
+            ("B の「…ヌテラ味やから、蜂蜜ナッツにした。」も ✕", [h.line for h in b] == [2]),
+            ("頼んだ物だけの「トッピングは、蜂蜜ナッツにした。」は見ない", not plain),
+            ("行の頭のつなぎ「だから、全部を歩ける島にした。」は見ない", not head),
+            ("題（1行目）と締めの問いは見ない", not edge)]
+
+
 def leg_particle(L):
     def card_hits(card):
         return hits_of(L, ctx(L, ["題", "みんなは？"], title_card=card), "L-PARTICLE")
@@ -1076,7 +1105,7 @@ LEGS = {
     "inner": leg_inner, "nick": leg_nick, "particle": leg_particle, "ate": leg_ate,
     "as_of_id": leg_as_of_id, "spec_rows": leg_spec_rows,
     "wide": leg_wide, "width_median": leg_width_median, "hypo_link": leg_hypo_link,
-    "prev": leg_prev,
+    "prev": leg_prev, "pickwhy": leg_pickwhy,
     "run": leg_run, "ansnext": leg_ansnext,
     "cliff": leg_cliff, "hook": leg_hook, "num38": leg_num38, "voice0": leg_voice0, "bang": leg_bang, "new_fixtures": leg_new_fixtures,
 }
