@@ -1,0 +1,97 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "KjB_aBsTIf0__clips",
+ "mode": "clips",
+ "dest": "KjB_aBsTIf0/clips",
+ "video": "KjB_aBsTIf0",
+ "channel": null,
+ "request": "shorts/requests/seven-clips-KjB_aBsTIf0-20261126b1.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
+ },
+ "counts": {
+  "sheets": 17,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 6,
+  "clips_ok": 6,
+  "clip_seconds": 910.0,
+  "channel_entries": 0,
+  "files": 31
+ },
+ "bytes": {
+  "plain": 341769271,
+  "tar_gz": 341109910,
+  "encrypted": 341109920
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "e41259385058a8cddec4d4299cf19af5de009fb637df75080a6b8efffafaf32c"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 47185920,
+   "sha256": "832bb481b75491857d3054ed11163a380bc016637db47c09a756b162dbd2ae79"
+  },
+  {
+   "name": "payload.enc.002",
+   "bytes": 47185920,
+   "sha256": "91cb7665a6116380b8f0eb3fe26ff3051be72deff8f8f8ed08325ed1f5ae0f91"
+  },
+  {
+   "name": "payload.enc.003",
+   "bytes": 47185920,
+   "sha256": "0020d79cb710d5a5e563e4abfca7304cb676b608d158f54f0eb6750942d53c5f"
+  },
+  {
+   "name": "payload.enc.004",
+   "bytes": 47185920,
+   "sha256": "6f094f238f46b3143cf839b3661723797745262ae9f61106fa7bf48d4af64b1e"
+  },
+  {
+   "name": "payload.enc.005",
+   "bytes": 47185920,
+   "sha256": "b78e959d76a29a66103f2f658c9db06be6e7d1868ce227a2d3eb4f6e94f25cd9"
+  },
+  {
+   "name": "payload.enc.006",
+   "bytes": 47185920,
+   "sha256": "472976af23ed2cabb7f067150be1cab6adf7275a4fbe0bdddcdbc6e4e388a84b"
+  },
+  {
+   "name": "payload.enc.007",
+   "bytes": 10808480,
+   "sha256": "a7bff6270086a70c2e9dc6d33d4306692358c912aa49c26e4b3e0a82b2628997"
+  }
+ ],
+ "hmac_sha256": "fd35abc3f72259ea22c62c8ecb8aaa31dba30898bed523b0e236ceda21d8cfe3",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45717787298",
+ "created_at": "2026-11-25T23:47:18+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 6104016,
+    "sha256": "81f9c75aad1a85dec267f881e16a18107e2b517d3f9c565a67ec2cad5431177e"
+   }
+  ],
+  "hmac_sha256": "59a13ab59ac72f97d78b6b61b0c8ecbfbf6697225325a0887f90c102f7cb9762",
+  "files": 21,
+  "sheets": 17,
+  "bytes": {
+   "plain": 6294000,
+   "tar_gz": 6104012,
+   "encrypted": 6104016
+  }
+ }
+}
