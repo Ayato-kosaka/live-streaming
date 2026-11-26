@@ -1,0 +1,1064 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "A_cJ9CNM0G8-p5",
+ "style": "presets/try.json",
+ "sources": {
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_p1-17-59.50.mp4",
+   "watermark": "prism_live",
+   "t0": 4679.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c16": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-21-19.5.mp4",
+   "watermark": "prism_live",
+   "t0": 4879.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/hm/hook_map.mp4",
+   "watermark": "prism_live",
+   "t0": 100000.0
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k0-55-53.5.mp4",
+   "watermark": "prism_live",
+   "t0": 3353.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_p1-16-06.50.mp4",
+   "watermark": "prism_live",
+   "t0": 4566.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k0-56-07.0.mp4",
+   "watermark": "prism_live",
+   "t0": 3367.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k0-57-43.0.mp4",
+   "watermark": "prism_live",
+   "t0": 3463.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-00-45.5.mp4",
+   "watermark": "prism_live",
+   "t0": 3645.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_1-13-55.50.mp4",
+   "watermark": "prism_live",
+   "t0": 4435.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-00-55.0.mp4",
+   "watermark": "prism_live",
+   "t0": 3655.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-16-01.0.mp4",
+   "watermark": "prism_live",
+   "t0": 4561.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-14.0.mp4",
+   "watermark": "prism_live",
+   "t0": 4634.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-37.5.mp4",
+   "watermark": "prism_live",
+   "t0": 4657.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-03.5.mp4",
+   "watermark": "prism_live",
+   "t0": 4623.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c15": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-20-27.0.mp4",
+   "watermark": "prism_live",
+   "t0": 4827.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c14": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-18-19.5.mp4",
+   "watermark": "prism_live",
+   "t0": 4699.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c17": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-21-35.5.mp4",
+   "watermark": "prism_live",
+   "t0": 4895.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c18": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_1-45-20t.mp4",
+   "watermark": "prism_live",
+   "t0": 6323.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c19": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_2-27-36t.mp4",
+   "watermark": "prism_live",
+   "t0": 8863.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-00-14.0.mp4",
+   "watermark": "prism_live",
+   "t0": 14.0
+  },
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_0-03-06.50.mp4",
+   "watermark": "prism_live",
+   "t0": 186.5
+  },
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_0-03-45.mp4",
+   "watermark": "prism_live",
+   "t0": 225.0
+  },
+  "c2_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_0-15-21.mp4",
+   "watermark": "prism_live",
+   "t0": 921.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c13",
+   "in": 24,
+   "out": 65,
+   "row": 0,
+   "note": "「ブルガリアからルーマニア行きの」: 乗り場の緑のフリックスバスの横を歩いて乗り口へ（動く画。0秒目）"
+  },
+  {
+   "src": "c16",
+   "in": 240,
+   "out": 273,
+   "row": 0,
+   "note": "「バス移動してみた」: 動き出した車窓から乗り場の出口（F-073 の後半）"
+  },
+  {
+   "src": "c3_01",
+   "in": 0,
+   "out": 78,
+   "row": 1,
+   "note": "地図: ソフィア発 → ブカレスト着の道のり（p3/hookmap.json と同じ仕組み。あやと #1446「映像は地図のやつ」）"
+  },
+  {
+   "src": "c01",
+   "in": 15,
+   "out": 50,
+   "row": 1,
+   "note": "「バス乗り場から」: 青空のソフィアのバスターミナル"
+  },
+  {
+   "src": "c08",
+   "in": 15,
+   "out": 69,
+   "row": 2,
+   "note": "「フリックスバス」: 緑の車体と FLIX の字・荷物入れ"
+  },
+  {
+   "src": "c13",
+   "in": 150,
+   "out": 194,
+   "row": 2,
+   "note": "「乗るのは」: 緑のバスの乗り口の段（v3 は同じ車体の続きで似た見た目が 3.3秒続いた）"
+  },
+  {
+   "src": "c02",
+   "in": 30,
+   "out": 72,
+   "row": 3,
+   "note": "「スーパーに…買いに行く」: 乗り場の前を歩く影（動く画）"
+  },
+  {
+   "src": "c03",
+   "in": 45,
+   "out": 97,
+   "row": 3,
+   "note": "「おやつ」: スーパーのドーナツの棚（v4 は入りの数コマに左端の買い物客の顔が掛かったので 1秒後ろへ）"
+  },
+  {
+   "src": "c04",
+   "in": 15,
+   "out": 61,
+   "row": 4,
+   "note": "「ボザ」: 冷蔵の棚に並ぶボザ"
+  },
+  {
+   "src": "c06",
+   "in": 45,
+   "out": 92,
+   "row": 4,
+   "note": "「購入！」: 乗り場のベンチに並べた買った物（コーヒーのビスケットの袋が写る所から）。v3 は棚・手のボトル・手のボトルで似た見た目が 5.5秒続いた"
+  },
+  {
+   "src": "c05",
+   "in": 300,
+   "out": 373,
+   "row": 5,
+   "note": "「500mlで80円ぐらい」: 手に持った 500ml のボザ（БОЗА の赤い札）"
+  },
+  {
+   "src": "c07",
+   "in": 60,
+   "out": 108,
+   "row": 6,
+   "note": "「荷物を預けたら」: バスの荷物入れ（v4 は字が顔の誤検出に掛かったので入りを後ろへ）"
+  },
+  {
+   "src": "c11",
+   "in": 75,
+   "out": 133,
+   "row": 6,
+   "note": "「乾杯！」: ボザを掲げて乾杯（配信 1:17:17『乾杯』）。v5 は入りの数コマで字が顔に掛かったので後ろへ"
+  },
+  {
+   "src": "c12",
+   "in": 13,
+   "out": 54,
+   "row": 7,
+   "note": "本人の声「うまー」（聞き取り 1:17:38.04〜39.16）・飲んだ直後の本人の顔"
+  },
+  {
+   "src": "c10",
+   "in": 28,
+   "out": 87,
+   "row": 7,
+   "note": "本人の声「めっちゃ濃厚」（聞き取り 1:17:04.54〜06.00）・ボトルの口から見たボザの濃さ"
+  },
+  {
+   "src": "c15",
+   "in": 30,
+   "out": 70,
+   "row": 8,
+   "note": "「定刻の2分前に」: スマホの時計 13:13 を見せる本人"
+  },
+  {
+   "src": "c16",
+   "in": 15,
+   "out": 54,
+   "row": 8,
+   "note": "「もう出発！」: 動き出した車窓・乗り場のバスが流れる"
+  },
+  {
+   "src": "c14",
+   "in": 180,
+   "out": 221,
+   "row": 9,
+   "note": "「車内は思ってたより広い」: 空いた座席と窓（v4 は買い物袋が揺れる画だった）"
+  },
+  {
+   "src": "c17",
+   "in": 60,
+   "out": 94,
+   "row": 9,
+   "note": "「充電もできる」: 座席の充電口とケーブル"
+  },
+  {
+   "src": "c18",
+   "in": 285,
+   "out": 345,
+   "row": 10,
+   "note": "「全然揺れへんし」: 走る車内（乗客は後ろ姿）。v3 の 1:45:36〜 は配信がカクついていた（繰り返し 74%）"
+  },
+  {
+   "src": "c18",
+   "in": 15,
+   "out": 74,
+   "row": 10,
+   "note": "「当たりやな」: 晴れた車窓の野原（カクつきの少ない区間）"
+  },
+  {
+   "src": "c17",
+   "in": 270,
+   "out": 309,
+   "row": 11,
+   "note": "「でかい窓の外は景色がきれいで」: 窓の外の雪山と青空（v4 は手前の壁の画だった）"
+  },
+  {
+   "src": "c19",
+   "in": 30,
+   "out": 78,
+   "row": 11,
+   "note": "「羊まで出てきた」: 車窓の野原（配信の画では羊が見えないので、羊の写真の札を重ねる）"
+  },
+  {
+   "src": "c2_01",
+   "in": 60,
+   "out": 133,
+   "row": 12,
+   "note": "「ブカレストに着いたら、もう夜」: 宿に着いた直後の本人"
+  },
+  {
+   "src": "c2_02",
+   "in": 15,
+   "out": 69,
+   "row": 13,
+   "note": "「宿で紅茶を入れて」: 宿の給湯器で紅茶を入れる手"
+  },
+  {
+   "src": "c2_03",
+   "in": 60,
+   "out": 113,
+   "row": 13,
+   "note": "「なんか微妙な味……」: 紅茶をすする本人"
+  },
+  {
+   "src": "c2_03",
+   "in": 405,
+   "out": 466,
+   "row": 14,
+   "note": "「疲れすぎて、舌がバグってる」: 頭に手をやる本人"
+  },
+  {
+   "src": "c2_05",
+   "in": 15,
+   "out": 85,
+   "row": 15,
+   "note": "「明日から2週間、東欧のパリって呼ばれる」: 宿で話す本人（21時）"
+  },
+  {
+   "src": "c3_01",
+   "in": 18,
+   "out": 78,
+   "row": 15,
+   "note": "「ブカレストを歩くのが楽しみ！」: 2行目の地図の終わり（ソフィア → ブカレストの道のりが引き終わる）に戻して締める。終わりの注（左上）が本人の顔に掛からない画"
+  }
+ ],
+ "title": {
+  "text": "🇧🇬ブルガリアからルーマニア行きのバス移動してみた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ブルガリアからルーマニア行きのバス移動してみた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/01.wav",
+    "tts_text": "ブルガリアからルーマニア行きのバス移動してみた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "東欧を旅してて、今日はバス乗り場からルーマニアまで7時間の移動！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/02.wav",
+    "tts_text": "東欧を旅してて、今日はバス乗り場からルーマニアまで、七時間の移動！",
+    "at": 74,
+    "parts": [
+     {
+      "text": "東欧を旅してて、今日はバス乗り場からルーマニアまで"
+     },
+     {
+      "text": "7時間の移動！",
+      "big": "static_white"
+     }
+    ]
+   },
+   {
+    "text": "乗るのは、ヨーロッパで一番安くて評判の悪いフリックスバス。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/03.wav",
+    "tts_text": "乗るのは、ヨーロッパで一番安くて評判の悪いフリックスバス。",
+    "at": 187
+   },
+   {
+    "text": "長旅やから、遠足気分でスーパーにおやつを買いに行く！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/04.wav",
+    "tts_text": "長旅やから、遠足気分でスーパーにおやつを買いに行く！",
+    "at": 285
+   },
+   {
+    "text": "ブルガリアでハマった、小麦で作る甘酒のボザも購入！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/05.wav",
+    "tts_text": "ブルガリアでハマった、小麦で作る甘酒のボザも購入！",
+    "at": 379
+   },
+   {
+    "text": "500mlで80円ぐらい、安っ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/06.wav",
+    "tts_text": "五百ミリリットルで八十円ぐらい、安っ！",
+    "at": 472,
+    "big": "static_white",
+    "split": "500mlで80円ぐらい、｜安っ！"
+   },
+   {
+    "text": "乗り場に戻って荷物を預けたら、ブルガリア最後のボザで乾杯！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/07.wav",
+    "tts_text": "乗り場に戻って荷物を預けたら、ブルガリア最後のボザで乾杯！",
+    "at": 545
+   },
+   {
+    "text": "うまっ！めっちゃ濃厚！",
+    "orig_voice": true,
+    "file": "/home/user/live-streaming/shorts/videos/ro-move/p5/edit_p5.narr/orig_p5_07.wav",
+    "at": 651,
+    "big": "taste_good",
+    "split": "うまっ！｜めっちゃ濃厚！"
+   },
+   {
+    "text": "乗り込んだら、定刻の2分前にもう出発！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/09.wav",
+    "tts_text": "乗り込んだら、定刻の二分前にもう出発！",
+    "at": 751,
+    "parts": [
+     {
+      "text": "乗り込んだら、"
+     },
+     {
+      "text": "定刻の2分前にもう出発！",
+      "big": "jump_word",
+      "split": "定刻の2分前に｜もう出発！"
+     }
+    ]
+   },
+   {
+    "text": "車内は思ってたより広いし、充電もできる！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/10.wav",
+    "tts_text": "車内は思ってたより広いし、充電もできる！",
+    "at": 830
+   },
+   {
+    "text": "全然揺れへんし、このフリックスバス当たりやな！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/11v.wav",
+    "tts_text": "全然揺れへんし、",
+    "at": 905,
+    "parts": [
+     {
+      "text": "全然揺れへんし、"
+     },
+     {
+      "text": "このフリックスバス当たりやな！",
+      "big": "glow_yellow",
+      "split": "このフリックスバス｜当たりやな！"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "でかい窓の外は景色がきれいで、羊まで出てきた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/12.wav",
+    "tts_text": "でかい窓の外は景色がきれいで、羊まで出てきた！",
+    "at": 1024
+   },
+   {
+    "text": "ルーマニアの首都ブカレストに着いたら、もう夜。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/13.wav",
+    "tts_text": "ルーマニアの首都ブカレストに着いたら、もう夜。",
+    "at": 1111
+   },
+   {
+    "text": "宿で紅茶を入れてひと息ついたら、なんか微妙な味……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/14.wav",
+    "tts_text": "宿で紅茶を入れてひと息ついたら、なんか微妙な味……",
+    "at": 1184,
+    "parts": [
+     {
+      "text": "宿で紅茶を入れてひと息ついたら、"
+     },
+     {
+      "text": "なんか微妙な味……",
+      "big": "taste_bad"
+     }
+    ]
+   },
+   {
+    "text": "疲れすぎて、舌がバグってるんかな。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/15.wav",
+    "tts_text": "疲れすぎて、舌がバグってるんかな。",
+    "at": 1291,
+    "mood": "tense_still"
+   },
+   {
+    "text": "明日から2週間、東欧のパリって呼ばれるブカレストを歩くのが楽しみ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/voice/out/p5/16.wav",
+    "tts_text": "明日から二週間、東欧のパリって呼ばれるブカレストを歩くのが楽しみ！",
+    "at": 1352,
+    "parts": [
+     {
+      "text": "明日から2週間、"
+     },
+     {
+      "text": "東欧のパリって呼ばれる"
+     },
+     {
+      "text": "ブカレストを歩くのが楽しみ！"
+     }
+    ]
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/ro-move/p5/spec.json",
+  "fps": 30,
+  "frames": 1482,
+  "seconds": 49.4,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "1:18:00.3+1.37s",
+     "1:21:27.5+1.10s"
+    ],
+    "line": "ブルガリアからルーマニア行きのバス移動してみた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 74,
+    "frames": 113,
+    "voice_frames": 105,
+    "cuts": [
+     "27:46:40.0+2.60s",
+     "0:55:54.0+1.17s"
+    ],
+    "line": "東欧を旅してて、今日はバス乗り場からルーマニアまで7時間の移動！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "東欧を旅してて、今日はバス乗り場からルーマニアまで"
+     },
+     {
+      "text": "7時間の移動！",
+      "big": "static_white"
+     }
+    ]
+   },
+   {
+    "row": 2,
+    "from": 187,
+    "frames": 98,
+    "voice_frames": 90,
+    "cuts": [
+     "1:16:07.0+1.80s",
+     "1:18:04.5+1.47s"
+    ],
+    "line": "乗るのは、ヨーロッパで一番安くて評判の悪いフリックスバス。",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 285,
+    "frames": 94,
+    "voice_frames": 86,
+    "cuts": [
+     "0:56:08.0+1.40s",
+     "0:57:44.5+1.73s"
+    ],
+    "line": "長旅やから、遠足気分でスーパーにおやつを買いに行く！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 379,
+    "frames": 93,
+    "voice_frames": 85,
+    "cuts": [
+     "1:00:46.0+1.53s",
+     "1:13:57.0+1.57s"
+    ],
+    "line": "ブルガリアでハマった、小麦で作る甘酒のボザも購入！",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 472,
+    "frames": 73,
+    "voice_frames": 65,
+    "cuts": [
+     "1:01:05.0+2.43s"
+    ],
+    "line": "500mlで80円ぐらい、安っ！",
+    "telop": null,
+    "big": "static_white"
+   },
+   {
+    "row": 6,
+    "from": 545,
+    "frames": 106,
+    "voice_frames": 98,
+    "cuts": [
+     "1:16:03.0+1.60s",
+     "1:17:16.5+1.93s"
+    ],
+    "line": "乗り場に戻って荷物を預けたら、ブルガリア最後のボザで乾杯！",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 651,
+    "frames": 100,
+    "voice_frames": 92,
+    "cuts": [
+     "1:17:37.9+1.37s",
+     "1:17:04.4+1.97s"
+    ],
+    "line": "うまっ！めっちゃ濃厚！",
+    "telop": null,
+    "big": "taste_good",
+    "orig_voice": true
+   },
+   {
+    "row": 8,
+    "from": 751,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "1:20:28.0+1.33s",
+     "1:21:20.0+1.30s"
+    ],
+    "line": "乗り込んだら、定刻の2分前にもう出発！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "乗り込んだら、"
+     },
+     {
+      "text": "定刻の2分前にもう出発！",
+      "big": "jump_word",
+      "split": "定刻の2分前に｜もう出発！"
+     }
+    ]
+   },
+   {
+    "row": 9,
+    "from": 830,
+    "frames": 75,
+    "voice_frames": 67,
+    "cuts": [
+     "1:18:25.5+1.37s",
+     "1:21:37.5+1.13s"
+    ],
+    "line": "車内は思ってたより広いし、充電もできる！",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 905,
+    "frames": 119,
+    "voice_frames": 111,
+    "cuts": [
+     "1:45:33.0+2.00s",
+     "1:45:24.0+1.97s"
+    ],
+    "line": "全然揺れへんし、このフリックスバス当たりやな！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "全然揺れへんし、"
+     },
+     {
+      "text": "このフリックスバス当たりやな！",
+      "big": "glow_yellow",
+      "split": "このフリックスバス｜当たりやな！"
+     }
+    ]
+   },
+   {
+    "row": 11,
+    "from": 1024,
+    "frames": 87,
+    "voice_frames": 79,
+    "cuts": [
+     "1:21:44.5+1.30s",
+     "2:27:44.0+1.60s"
+    ],
+    "line": "でかい窓の外は景色がきれいで、羊まで出てきた！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 1111,
+    "frames": 73,
+    "voice_frames": 65,
+    "cuts": [
+     "ir-qwKKlr2k 0:00:16.0+2.43s"
+    ],
+    "line": "ルーマニアの首都ブカレストに着いたら、もう夜。",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1184,
+    "frames": 107,
+    "voice_frames": 87,
+    "cuts": [
+     "ir-qwKKlr2k 0:03:07.0+1.80s",
+     "ir-qwKKlr2k 0:03:47.0+1.77s"
+    ],
+    "line": "宿で紅茶を入れてひと息ついたら、なんか微妙な味……",
+    "telop": null,
+    "parts": [
+     {
+      "text": "宿で紅茶を入れてひと息ついたら、"
+     },
+     {
+      "text": "なんか微妙な味……",
+      "big": "taste_bad"
+     }
+    ]
+   },
+   {
+    "row": 14,
+    "from": 1291,
+    "frames": 61,
+    "voice_frames": 53,
+    "cuts": [
+     "ir-qwKKlr2k 0:03:58.5+2.03s"
+    ],
+    "line": "疲れすぎて、舌がバグってるんかな。",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1352,
+    "frames": 130,
+    "voice_frames": 107,
+    "cuts": [
+     "ir-qwKKlr2k 0:15:21.5+2.33s",
+     "27:46:40.6+2.00s"
+    ],
+    "line": "明日から2週間、東欧のパリって呼ばれるブカレストを歩くのが楽しみ！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "明日から2週間、"
+     },
+     {
+      "text": "東欧のパリって呼ばれる"
+     },
+     {
+      "text": "ブカレストを歩くのが楽しみ！"
+     }
+    ]
+   }
+  ],
+  "speech": {
+   "chars": 313,
+   "raw_voice_s": 52.4,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 37.47,
+   "cps_voiced": 8.35,
+   "video_s": 49.4,
+   "cps_video": 6.34
+  }
+ },
+ "notes": [
+  {
+   "from": 187,
+   "to": 285,
+   "text": "◆ソフィアのバス乗り場"
+  },
+  {
+   "from": 285,
+   "to": 379,
+   "text": "◆スーパーで買い出し"
+  },
+  {
+   "from": 751,
+   "to": 830,
+   "text": "◆フリックスバスで出発"
+  },
+  {
+   "from": 1184,
+   "to": 1238,
+   "text": "◆ブカレストの宿"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "stickers": [
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/photo/sheep_crop.jpg",
+   "x": 360,
+   "y": 1250,
+   "w": 560,
+   "rotate": -4,
+   "from": 1065,
+   "to": 1111,
+   "note": "配信の車窓では羊が小さくて見えない（F-014）。Wikimedia Commons の羊の写真（パブリックドメイン）"
+  }
+ ],
+ "sfx": [
+  {
+   "at": 164,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/hakuryoku.mp3",
+   "db": -2,
+   "note": "数「7時間の移動！」の大きい字"
+  },
+  {
+   "at": 520,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/hakuryoku.mp3",
+   "db": -2,
+   "note": "「安っ！」の大きい字"
+  },
+  {
+   "at": 694,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/kirakirarin.mp3",
+   "db": -8,
+   "note": "飲んだ結果が良い「めっちゃ濃厚！」（本人の声の下に小さく）"
+  },
+  {
+   "at": 778,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/hakuryoku.mp3",
+   "db": -2,
+   "note": "予想外し「定刻の2分前にもう出発！」"
+  },
+  {
+   "at": 953,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/kirakirarin.mp3",
+   "db": -7,
+   "note": "評判の逆「このフリックスバス当たりやな！」"
+  },
+  {
+   "at": 1262,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/chin.mp3",
+   "db": -4,
+   "note": "結果が悪い落ち「なんか微妙な味……」のチーン"
+  }
+ ]
+}
