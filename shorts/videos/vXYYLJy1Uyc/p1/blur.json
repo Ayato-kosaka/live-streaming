@@ -1,0 +1,17 @@
+{
+ "_note": "ぼかしの帳面（tools/shorts/render/README.md「顔のぼかし」）。箱は元素材の画素。撮影の素材の箱は from_t が '<ID> <秒>'、footage はその素材を face_scan.py に通した記録",
+ "regions": [],
+ "footage": {
+  "fb1e1f5471": {
+   "sha256": "c93bb7021000ba497ff4ec479f52e475ab56d8d53421c34466fffe1fe639ff39",
+   "scanned": [
+    [
+     0.0,
+     4.667
+    ]
+   ],
+   "every": 5,
+   "score": 0.5
+  }
+ }
+}

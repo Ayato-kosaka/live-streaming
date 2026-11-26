@@ -1,0 +1,656 @@
+{
+ "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "p5",
+ "style": "style_p5.json",
+ "sources": {
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/02_0-07-10_0-07-50_s432-438.mp4",
+   "watermark": "prism_live",
+   "t0": 432.0
+  },
+  "f_fb1e1f5471": {
+   "footage": "fb1e1f5471"
+  },
+  "c01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/01_0-01-00_0-01-30_s65-72.mp4",
+   "watermark": "prism_live",
+   "t0": 65.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/01_0-01-00_0-01-30_s77-84.mp4",
+   "watermark": "prism_live",
+   "t0": 77.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/02_0-07-10_0-07-50_s442-448.mp4",
+   "watermark": "prism_live",
+   "t0": 442.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/02_0-07-10_0-07-50_s455-462.mp4",
+   "watermark": "prism_live",
+   "t0": 455.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/03_0-19-20_0-19-50_s1160-1166.mp4",
+   "watermark": "prism_live",
+   "t0": 1160.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/03_0-19-20_0-19-50_s1175-1182.mp4",
+   "watermark": "prism_live",
+   "t0": 1175.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1425-1431.mp4",
+   "watermark": "prism_live",
+   "t0": 1425.0
+  },
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1435-1441.mp4",
+   "watermark": "prism_live",
+   "t0": 1435.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1450-1459.mp4",
+   "watermark": "prism_live",
+   "t0": 1450.0
+  },
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/05_0-33-20_0-34-20_s2008-2015.mp4",
+   "watermark": "prism_live",
+   "t0": 2008.0
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/05_0-33-20_0-34-20_s2050-2057.mp4",
+   "watermark": "prism_live",
+   "t0": 2050.0
+  },
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2160-2165.mp4",
+   "watermark": "prism_live",
+   "t0": 2160.0
+  },
+  "c14": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2170-2176.mp4",
+   "watermark": "prism_live",
+   "t0": 2170.0
+  },
+  "c15": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2185-2188h.mp4",
+   "watermark": "prism_live",
+   "t0": 2185.0
+  },
+  "c16": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2188h-2192.mp4",
+   "watermark": "prism_live",
+   "t0": 2188.5
+  },
+  "c17": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/07_0-38-00_0-38-50_s2290-2298.mp4",
+   "watermark": "prism_live",
+   "t0": 2290.0
+  },
+  "c18": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/08_0-41-50_0-42-30_s2522-2529.mp4",
+   "watermark": "prism_live",
+   "t0": 2522.0
+  },
+  "c19": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/09_0-44-00_0-44-20_s2650-2656.mp4",
+   "watermark": "prism_live",
+   "t0": 2650.0
+  },
+  "c20": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/10_1-03-20_1-03-40_s3800-3807.mp4",
+   "watermark": "prism_live",
+   "t0": 3800.0
+  },
+  "c21": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/11_1-04-35_1-05-00_s3878-3886.mp4",
+   "watermark": "prism_live",
+   "t0": 3878.0
+  },
+  "c23": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/13_1-09-50_1-10-20_s4195-4212.mp4",
+   "watermark": "prism_live",
+   "t0": 4195.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c03",
+   "in": 114,
+   "out": 155,
+   "row": 0,
+   "note": "題の前半「風邪ひいたけど、快晴やから」: 外に出てカメラを青空と木へ向ける（F-073）。v3 の 0:07:13 は標識と濡れた地面で空が写らなかった"
+  },
+  {
+   "src": "f_fb1e1f5471",
+   "in": 0,
+   "out": 62,
+   "row": 0,
+   "note": "題の後半「国民の館に行ってみた」: 撮影の素材の青空の国民の館（答えの画・高画質。F-079・F-094）"
+  },
+  {
+   "src": "c01",
+   "in": 60,
+   "out": 114,
+   "row": 1,
+   "note": "マフラーにくるまって鼻声で話す本人（冬の寒さ・風邪の顔。声は AI）"
+  },
+  {
+   "src": "c02",
+   "in": 150,
+   "out": 203,
+   "row": 1,
+   "note": "建物を背に、顔を上に寄せて話す本人（字が顔に被らない時刻）。v2 の 0:01:19 は顔が画面の下半分で字に被った"
+  },
+  {
+   "src": "c04",
+   "in": 60,
+   "out": 112,
+   "row": 2,
+   "note": "宿を出て、青空の通りを歩き出す"
+  },
+  {
+   "src": "c05",
+   "in": 60,
+   "out": 111,
+   "row": 2,
+   "note": "真っ青な空と雲・通り（良い天気）"
+  },
+  {
+   "src": "c06",
+   "in": 30,
+   "out": 78,
+   "row": 3,
+   "note": "長い影の大通り（国民の館の方へ歩き出す）"
+  },
+  {
+   "src": "c07",
+   "in": 60,
+   "out": 108,
+   "row": 3,
+   "note": "横断歩道を渡って進む"
+  },
+  {
+   "src": "c08",
+   "in": 0,
+   "out": 54,
+   "row": 4,
+   "note": "横断歩道に集まる通勤の人"
+  },
+  {
+   "src": "c09",
+   "in": 75,
+   "out": 129,
+   "row": 4,
+   "note": "横断歩道を渡る人の群れ。v3 は 0:23:56 で1カット目と 9.2秒しか離れず、似た見た目の連続で落ちた"
+  },
+  {
+   "src": "c10",
+   "in": 76,
+   "out": 150,
+   "row": 5,
+   "note": "「ちょっと東京思い出すわ」（本人の声と同じ秒）。人の多い交差点"
+  },
+  {
+   "src": "c11",
+   "in": 30,
+   "out": 70,
+   "row": 6,
+   "note": "石造りの建物が並ぶ並木の歩道（パリみたい）"
+  },
+  {
+   "src": "c12",
+   "in": 30,
+   "out": 71,
+   "row": 6,
+   "note": "同じ通りの、店が並ぶ建物の正面"
+  },
+  {
+   "src": "c13",
+   "in": 15,
+   "out": 65,
+   "row": 7,
+   "note": "広場の奥に国民の館が見え始める"
+  },
+  {
+   "src": "c14",
+   "in": 90,
+   "out": 152,
+   "row": 7,
+   "note": "木の向こうに国民の館が大きく（どーん）。v3 は 0:36:12 で1カット目と 9.8秒しか離れず、似た見た目の連続で落ちた"
+  },
+  {
+   "src": "c15",
+   "in": 33,
+   "out": 73,
+   "row": 8,
+   "note": "「バカかっこいいよ」（本人の声と同じ秒。語ごとの時刻 0:36:26.10〜27.12）。館と観覧車の正面。2回目（0:36:30.9）は窓の終わり 0:36:32 に掛かるので1回目を使う"
+  },
+  {
+   "src": "f_fb1e1f5471",
+   "in": 0,
+   "out": 51,
+   "row": 9,
+   "note": "撮影の素材の青空の国民の館（議会の建物）"
+  },
+  {
+   "src": "c16",
+   "in": 15,
+   "out": 66,
+   "row": 9,
+   "note": "館と観覧車の正面（重さは世界一）。v2 は撮影の素材1本で 3.4秒になり、カットの長さで落ちた"
+  },
+  {
+   "src": "c17",
+   "in": 30,
+   "out": 107,
+   "row": 10,
+   "note": "館の前の広場に並ぶ屋台の小屋（マーケットの準備中）"
+  },
+  {
+   "src": "f_fb1e1f5471",
+   "in": 66,
+   "out": 137,
+   "row": 11,
+   "note": "撮影の素材の観覧車と屋台（館から観覧車へ流れる後半）"
+  },
+  {
+   "src": "c18",
+   "in": 30,
+   "out": 68,
+   "row": 12,
+   "note": "風で道に張ったテープ・舞う落ち葉（風が強い）"
+  },
+  {
+   "src": "c19",
+   "in": 30,
+   "out": 69,
+   "row": 12,
+   "note": "風で倒れた柵とテープ（「手袋してても手が凍るわ」の直後）"
+  },
+  {
+   "src": "c20",
+   "in": 30,
+   "out": 71,
+   "row": 13,
+   "note": "カフェの店先（逃げ込む）"
+  },
+  {
+   "src": "c21",
+   "in": 90,
+   "out": 141,
+   "row": 13,
+   "note": "カウンターのコーヒーの豆挽き（アメリカーノを頼んだ）。v4 まで3本目に置いた 1:06:40 の机は、カップが端にしか写らず弱かったので外した（カップは次の行の本人の画に写る）"
+  },
+  {
+   "src": "c23",
+   "in": 178,
+   "out": 240,
+   "row": 14,
+   "note": "「あったかくて美味しいよ」（本人の声と同じ秒）。コーヒーを前にした本人"
+  }
+ ],
+ "title": {
+  "text": "🇷🇴ルーマニアで風邪ひいたけど、快晴やから国民の館に行ってみた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ルーマニアで風邪ひいたけど、快晴やから国民の館に行ってみた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/01.wav",
+    "tts_text": "ルーマニアで風邪ひいたけど、快晴やから国民のやかたに行ってみた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "東欧を旅してて、冬のルーマニアの寒さで、完全に風邪ひいた。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/02.wav",
+    "tts_text": "東欧を旅してて、冬のルーマニアの寒さで、完全に風邪ひいた。",
+    "at": 103,
+    "mood": "tense_still"
+   },
+   {
+    "text": "宿で休むつもりやったけど、良い天気やから、外に出ることにした！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/03.wav",
+    "tts_text": "やどで休むつもりやったけど、いい天気やから、外に出ることにした！",
+    "at": 210
+   },
+   {
+    "text": "目指すは、この国でいちばんすごい建物「国民の館」！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/04.wav",
+    "tts_text": "目指すは、この国でいちばんすごい建物「国民のやかた」！",
+    "at": 313
+   },
+   {
+    "text": "宿から歩いて向かうと、通勤の時間かな、通りは人でいっぱい。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/05.wav",
+    "tts_text": "やどから歩いて向かうと、通勤の時間かな、通りは人でいっぱい。",
+    "at": 409
+   },
+   {
+    "text": "ちょっと東京思い出すわ。",
+    "orig_voice": true,
+    "file": "edit_p5.narr/orig_p5_05.wav",
+    "at": 517
+   },
+   {
+    "text": "さらに歩くと、通りの景観はめっちゃパリみたい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/07.wav",
+    "tts_text": "さらに歩くと、通りの景観はめっちゃパリみたい！",
+    "at": 591,
+    "big": "shake_white"
+   },
+   {
+    "text": "国民の館に着いたら、とんでもなく立派な建物がどーん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/08.wav",
+    "tts_text": "国民のやかたに着いたら、とんでもなく立派な建物がどーん！",
+    "at": 682,
+    "big": "glow_yellow",
+    "caption_from": 672
+   },
+   {
+    "text": "バカかっこいいよ！",
+    "orig_voice": true,
+    "file": "edit_p5.narr/orig_p5_08.wav",
+    "at": 784
+   },
+   {
+    "text": "なんとこれ、議会の建物で、重さは世界一らしい！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/10.wav",
+    "tts_text": "なんとこれ、議会の建物で、重さは世界一らしい！",
+    "at": 824,
+    "big": "jump_word"
+   },
+   {
+    "text": "前の広場では、クリスマスマーケットの準備中。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/11.wav",
+    "tts_text": "前の広場では、クリスマスマーケットの準備中。",
+    "at": 926
+   },
+   {
+    "text": "観覧車まであって、始まったらまた来るで！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/12.wav",
+    "tts_text": "観覧車まであって、始まったらまた来るで！",
+    "at": 1003
+   },
+   {
+    "text": "けど風が強くて、手袋してても手が凍る！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/13.wav",
+    "tts_text": "けど風が強くて、手袋してても手が凍る！",
+    "at": 1074,
+    "big": "brush_zoom"
+   },
+   {
+    "text": "たまらず、あったかいカフェに逃げ込んで、アメリカーノを頼んだ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/voice/out/p5/14.wav",
+    "tts_text": "たまらず、あったかいカフェに逃げ込んで、アメリカーノを頼んだ。",
+    "at": 1151
+   },
+   {
+    "text": "あったかくて美味しいよ。",
+    "orig_voice": true,
+    "file": "edit_p5.narr/orig_p5_14.wav",
+    "at": 1243
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/vXYYLJy1Uyc/p5/spec.json",
+  "fps": 30,
+  "frames": 1305,
+  "seconds": 43.5,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 103,
+    "voice_frames": 95,
+    "cuts": [
+     "0:07:15.8+1.37s",
+     "fb1e1f5471 0.00+2.07s"
+    ],
+    "line": "ルーマニアで風邪ひいたけど、快晴やから国民の館に行ってみた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 103,
+    "frames": 107,
+    "voice_frames": 99,
+    "cuts": [
+     "0:01:07.0+1.80s",
+     "0:01:22.0+1.77s"
+    ],
+    "line": "東欧を旅してて、冬のルーマニアの寒さで、完全に風邪ひいた。",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 210,
+    "frames": 103,
+    "voice_frames": 95,
+    "cuts": [
+     "0:07:24.0+1.73s",
+     "0:07:37.0+1.70s"
+    ],
+    "line": "宿で休むつもりやったけど、良い天気やから、外に出ることにした！",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 313,
+    "frames": 96,
+    "voice_frames": 88,
+    "cuts": [
+     "0:19:21.0+1.60s",
+     "0:19:37.0+1.60s"
+    ],
+    "line": "目指すは、この国でいちばんすごい建物「国民の館」！",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 409,
+    "frames": 108,
+    "voice_frames": 100,
+    "cuts": [
+     "0:23:45.0+1.80s",
+     "0:23:57.5+1.80s"
+    ],
+    "line": "宿から歩いて向かうと、通勤の時間かな、通りは人でいっぱい。",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 517,
+    "frames": 74,
+    "voice_frames": 66,
+    "cuts": [
+     "0:24:12.5+2.47s"
+    ],
+    "line": "ちょっと東京思い出すわ。",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 6,
+    "from": 591,
+    "frames": 81,
+    "voice_frames": 73,
+    "cuts": [
+     "0:33:29.0+1.33s",
+     "0:34:11.0+1.37s"
+    ],
+    "line": "さらに歩くと、通りの景観はめっちゃパリみたい！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 7,
+    "from": 672,
+    "frames": 112,
+    "voice_frames": 94,
+    "cuts": [
+     "0:36:00.5+1.67s",
+     "0:36:13.0+2.07s"
+    ],
+    "line": "国民の館に着いたら、とんでもなく立派な建物がどーん！",
+    "telop": null,
+    "big": "glow_yellow"
+   },
+   {
+    "row": 8,
+    "from": 784,
+    "frames": 40,
+    "voice_frames": 32,
+    "cuts": [
+     "0:36:26.1+1.33s"
+    ],
+    "line": "バカかっこいいよ！",
+    "telop": null,
+    "orig_voice": true
+   },
+   {
+    "row": 9,
+    "from": 824,
+    "frames": 102,
+    "voice_frames": 94,
+    "cuts": [
+     "fb1e1f5471 0.00+1.70s",
+     "0:36:29.0+1.70s"
+    ],
+    "line": "なんとこれ、議会の建物で、重さは世界一らしい！",
+    "telop": null,
+    "big": "jump_word"
+   },
+   {
+    "row": 10,
+    "from": 926,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "0:38:11.0+2.57s"
+    ],
+    "line": "前の広場では、クリスマスマーケットの準備中。",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 1003,
+    "frames": 71,
+    "voice_frames": 63,
+    "cuts": [
+     "fb1e1f5471 2.20+2.37s"
+    ],
+    "line": "観覧車まであって、始まったらまた来るで！",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 1074,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "0:42:03.0+1.27s",
+     "0:44:11.0+1.30s"
+    ],
+    "line": "けど風が強くて、手袋してても手が凍る！",
+    "telop": null,
+    "big": "brush_zoom"
+   },
+   {
+    "row": 13,
+    "from": 1151,
+    "frames": 92,
+    "voice_frames": 84,
+    "cuts": [
+     "1:03:21.0+1.37s",
+     "1:04:41.0+1.70s"
+    ],
+    "line": "たまらず、あったかいカフェに逃げ込んで、アメリカーノを頼んだ。",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1243,
+    "frames": 62,
+    "voice_frames": 39,
+    "cuts": [
+     "1:10:00.9+2.07s"
+    ],
+    "line": "あったかくて美味しいよ。",
+    "telop": null,
+    "orig_voice": true
+   }
+  ],
+  "speech": {
+   "chars": 277,
+   "raw_voice_s": 47.63,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 34.1,
+   "cps_voiced": 8.12,
+   "video_s": 43.5,
+   "cps_video": 6.37
+  }
+ },
+ "notes": [
+  {
+   "from": 313,
+   "to": 409,
+   "text": "◆国民の館へ"
+  },
+  {
+   "from": 672,
+   "to": 784,
+   "text": "◆国民の館"
+  },
+  {
+   "from": 1151,
+   "to": 1243,
+   "text": "◆カフェ"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "sfx": [
+  {
+   "at": 591,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/hakuryoku.mp3",
+   "db": 0,
+   "note": "予想外し「めっちゃパリみたい」の大きい字の出（迫力のアクセント音）"
+  },
+  {
+   "at": 722,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/hakuryoku.mp3",
+   "db": 0,
+   "note": "館が目の前に（どーん）の大きい字の出"
+  },
+  {
+   "at": 824,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/hakuryoku.mp3",
+   "db": 0,
+   "note": "数「重さは世界一」の大きい字の出"
+  },
+  {
+   "at": 1252,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/kirakirabuty18.mp3",
+   "db": -6,
+   "note": "結果が良い「あったかくて美味しいよ」。本人の声の行なので声より小さく"
+  }
+ ]
+}
