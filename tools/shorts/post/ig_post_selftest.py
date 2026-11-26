@@ -39,6 +39,8 @@
 | `gate_too_soon` | いまから15分を切る予約は窓を開く前に止める（近すぎると今すぐ出る・断られる） |
 | `cover_small` | カバーのコマを 0.5秒（55秒の動画で枠を 2px）にできる。数 px だけ引くと押しただけになって動かないので、いったん越えてから戻す |
 | `cover_far` | 2.2秒（44秒の動画）のコマを、引いた結果から 1px あたりの秒を測り直して選べる。動画より後ろの秒は止める |
+| `cover_wobbly` | 引いた幅と動いた秒の比が1回ごとに揺れる枠（2026-11-26 に Instagram で写した 0.76・1.0・0.94・0.84…）でも、39.5秒の動画の 2.5秒のコマを選べる。越えて戻す幅が大きいと、戻りのずれで的の両側を行き来する |
+| `week_months` | 予約の一覧の見出しの月。月をまたぐ週（11/29〜12/5）は「December 2026」と出たので、11/29・11/30 の予約は November と December のどちらの見出しでも読めたことにする。またがない週は1つだけ |
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
 
@@ -79,9 +81,13 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "button": ('    label = "Schedule" if want else "Share"\n', '    label = "Share"\n', {"gate_schedule", "gate_dry"},
                "予約なのに Share（今すぐ出る）を探して押す"),
     "soon": ("        if lead < 15:\n", "        if lead < -10 ** 9:\n", {"gate_too_soon"}, "近すぎる予約を止めない"),
-    "away": ("        if abs(dx) < 6:\n", "        if False:\n", {"cover_small"}, "数 px だけ引く（押しただけになって枠が動かない）"),
-    "cover_read": ("        if abs(s[\"t\"] - sec) <= COVER_TOL:\n            return {\"ok\": True", "        if True:\n            return {\"ok\": True",
-                   {"cover_small", "cover_far"}, "枠の秒を読み直さずに ok にする"),
+    "away": ("        if abs(dx) < 6:\n", "        if False:\n", {"cover_small", "cover_wobbly"}, "数 px だけ引く（押しただけになって枠が動かない）"),
+    "nudge": ('            dx += 12 if s["x"] - s["left"] < 40 else -12\n', '            dx += 30 if s["x"] - s["left"] < 40 else -30\n',
+              {"cover_wobbly"}, "越えて戻す幅を 30px に戻す（戻りのずれで的に入らない）"),
+    "week": ('    return sorted({f"{start:%B %Y}", f"{end:%B %Y}"})\n', '    return [f"{at:%B %Y}"]\n', {"week_months"},
+             "見出しの月を予約の日の月だけで読む（月をまたぐ週で、在る予約を無いと言う）"),
+    "cover_read": ("        if abs(s[\"t\"] - sec) <= tol:\n            return {\"ok\": True", "        if True:\n            return {\"ok\": True",
+                   {"cover_small", "cover_far", "cover_wobbly"}, "枠の秒を読み直さずに ok にする"),
 }
 
 # 2026-11-22 09:05 UTC に Instagram の投稿の窓で日付の箱を押して写した11月の暦（[字, aria-disabled, aria-selected]）。
@@ -331,6 +337,27 @@ def leg_cover_far(m):
             ("枠を動かせない所（動画より後ろ）は止める", _safe(m.set_cover_frame, CoverTab(m, 44.0), 50.0).get("error") == "cover_after_end")]
 
 
+def leg_cover_wobbly(m):
+    t = CoverTab(m, 39.467)
+    gains = iter([0.76, 1.0, 0.94, 0.84, 0.97, 0.9, 1.0, 0.92] * 2)
+    real = t.call
+
+    def call(method, **p):
+        # 放した所を、押した所から引いた幅 × 揺れの比 に置く（実物の写しの比をそのまま使う）
+        if method == "Input.dispatchMouseEvent" and p["type"] == "mouseReleased" and t.press_x is not None:
+            p["x"] = t.press_x + (p["x"] - t.press_x) * next(gains)
+        return real(method, **p)
+    t.call = call
+    r = _safe(m.set_cover_frame, t, 2.5)
+    return [("揺れる枠でも 39.5秒の動画の 2.5秒のコマを選べる", isinstance(r, dict) and r.get("ok") is True and abs(t.t - 2.5) <= 0.25)]
+
+
+def leg_week_months(m):
+    return [("11/29（日）の週は November と December", m.week_months(D(2026, 11, 29, 12, 30)) == ["December 2026", "November 2026"]),
+            ("11/30（月）の週も同じ", m.week_months(D(2026, 11, 30, 12, 30)) == ["December 2026", "November 2026"]),
+            ("11/22 の週は November だけ", m.week_months(D(2026, 11, 22, 12, 30)) == ["November 2026"])]
+
+
 class GateTab:
     """post() の門だけを見る偽のタブ。押した座標と、Network の応答（符号）を持つ"""
 
@@ -359,7 +386,7 @@ def _gate(m, *, at="2026-11-23T12:30", dry=False, fb_stuck=False, now=D(2026, 11
     """窓を作る手・字を貼る手・スイッチ・予約の手を差し替えて post() を回し、(押したか, 捨てたか, RESULT) を返す"""
     t = GateTab()
     out, discarded = [], []
-    m.compose = lambda tab, mp4, cover: None
+    m.compose = lambda tab, mp4, cover, tol=None: None
     m.paste_caption = lambda tab, cap: cap
     sw = [list(r) for r in SW_OFF]
     if fb_stuck:
@@ -422,7 +449,8 @@ LEGS = {"pick_tomorrow": leg_pick_tomorrow, "pick_lead": leg_pick_lead, "past_re
         "grid_guard": leg_grid_guard, "month_steps": leg_month_steps, "labels": leg_labels, "parse_at": leg_parse_at,
         "wired_tomorrow": leg_wired_tomorrow, "wired_next_month": leg_wired_next_month, "wired_mismatch": leg_wired_mismatch,
         "gate_dry": leg_gate_dry, "gate_schedule": leg_gate_schedule, "gate_facebook": leg_gate_facebook,
-        "gate_too_soon": leg_gate_too_soon, "cover_small": leg_cover_small, "cover_far": leg_cover_far}
+        "gate_too_soon": leg_gate_too_soon, "cover_small": leg_cover_small, "cover_far": leg_cover_far,
+        "cover_wobbly": leg_cover_wobbly, "week_months": leg_week_months}
 # 門の足は関数を差し替えるので、足ごとに読み込み直す（差し替えがほかの足に漏れない）
 FRESH = {"gate_dry", "gate_schedule", "gate_facebook", "gate_too_soon"}
 

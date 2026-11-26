@@ -9,6 +9,7 @@
     python3 ig_post.py post <mp4> <caption.txt> --cover-at <秒> --at 2026-11-22T12:30 --dry     # 押す手前まで（欄を入れて読み直し、捨てる）
     python3 ig_post.py post <mp4> <caption.txt> --cover-at <秒> --at 2026-11-22T12:30 --probe   # 予約の欄を開いて中身を書き出すだけ
     python3 ig_post.py post <mp4> <caption.txt> --cover-at <秒> --at 2026-11-22T12:30           # 予約する（--at が無ければ今すぐ出す）
+    （--cover-tol <秒> で、カバーのコマを ok にする幅を既定の ±0.25秒から広げる。post.py は投稿文の cover_tol_s から渡す）
     python3 ig_post.py scheduled <題の行> 2026-11-22T12:30:00Z                  # 予約の一覧で読み直す
 
 どれも最後の行に結果を `RESULT {...}` の1行で出す。
@@ -186,10 +187,12 @@ def cover_step(s, sec):
     return (sec - s["t"]) / s["dur"] * span if s["dur"] and span > 0 else None
 
 
-def set_cover_frame(t, sec):
+def set_cover_frame(t, sec, tol=COVER_TOL):
     """カバーを、動画の sec 秒のコマにする。「Select from computer」に絵を渡しても Instagram は受け取らなかった
     （2026-11-22。欄に直に渡しても、ファイル選びの窓を横取りして渡しても、カバーの欄は替わらなかった）ので、
-    人と同じく「Cover photo」のコマの枠を引いて選び、枠の video の currentTime で読み直す"""
+    人と同じく「Cover photo」のコマの枠を引いて選び、枠の video の currentTime で読み直す。
+    tol は ok にする秒の幅。枠は引くたびに ±0.3秒ほどずれ、±0.25秒に入らない回がある（2026-11-26）ので、
+    同じ画（題の札が見えている同じ場面）が続く回は、投稿文の cover_tol_s で幅を広げる"""
     s = None
     for _ in range(10):
         s = t.js(COVER_SEL)
@@ -204,15 +207,17 @@ def set_cover_frame(t, sec):
     seen = []
     for _ in range(8):
         seen.append(round(s["t"], 2))
-        if abs(s["t"] - sec) <= COVER_TOL:
+        if abs(s["t"] - sec) <= tol:
             return {"ok": True, "t": round(s["t"], 2), "want": sec, "tries": seen}
         dx = (sec - s["t"]) / per_px if per_px else cover_step(s, sec)
         if dx is None:
             return {"ok": False, "error": "cover_strip_unexpected"}
         if abs(dx) < 6:
             # 数 px だけ引いても、放した所が押した所に近いと押しただけになり、枠が動かない（0.5秒は 2px。2026-11-22）。
-            # いったん的を越えて 30px 先へ引き、次の回に大きく引き戻す
-            dx += 30 if s["x"] - s["left"] < 40 else -30
+            # いったん的を越えて 12px 先へ引き、次の回に引き戻す。越える幅は小さく保つ: 引いた幅と動いた秒の比は
+            # 1回ごとに 0.75〜1.0 倍ほど揺れ、30px 越えて戻すと戻りで ±0.3秒ずれて、的の両側を行き来したまま終わった
+            # （2026-11-26、39.5秒の動画の 2.5秒。1.89 → 7.73 → 2.77 → 6.98 → 2.13 …）
+            dx += 12 if s["x"] - s["left"] < 40 else -12
         cx, cy = s["x"] + s["w"] / 2, s["y"] + s["h"] / 2
         drag(t, cx, cy, cx + dx)
         time.sleep(1.5)
@@ -221,11 +226,11 @@ def set_cover_frame(t, sec):
         if abs(moved) > 0.01 and moved * dx > 0:
             per_px = moved / dx
         s = s2
-    return {"ok": abs(s["t"] - sec) <= COVER_TOL, "t": round(s["t"], 2), "want": sec, "tries": seen,
-            **({} if abs(s["t"] - sec) <= COVER_TOL else {"error": "cover_frame_mismatch"})}
+    return {"ok": abs(s["t"] - sec) <= tol, "t": round(s["t"], 2), "want": sec, "tries": seen,
+            **({} if abs(s["t"] - sec) <= tol else {"error": "cover_frame_mismatch"})}
 
 
-def compose(t, mp4, cover_at):
+def compose(t, mp4, cover_at, cover_tol=COVER_TOL):
     """新しい投稿の窓を開き、動画を渡して、切り抜き → 編集（カバー）→ 最後の段まで進む。ok なら None、だめなら理由"""
     t.go(HOME, wait=6)
     if not signed_in(t):
@@ -247,7 +252,7 @@ def compose(t, mp4, cover_at):
     if not press(t, "/^Next$/", f"({DLG}[0])", 4) or not wait_dialog(t, "/Cover photo/", 60):
         return "edit_not_shown"
     if cover_at is not None:
-        r = set_cover_frame(t, cover_at)
+        r = set_cover_frame(t, cover_at, cover_tol)
         log("cover frame:", r)
         if not r.get("ok"):
             return r.get("error") or "cover_frame_not_set"
@@ -415,7 +420,7 @@ def media_from_network(t):
     return sorted(pks), sorted(codes)
 
 
-def post(t, mp4, caption, cover_at=None, at=None, dry=False, probe=False):
+def post(t, mp4, caption, cover_at=None, at=None, dry=False, probe=False, cover_tol=COVER_TOL):
     if not os.path.isfile(mp4):
         result({"ok": False, "error": "mp4_missing"})
         return
@@ -432,7 +437,7 @@ def post(t, mp4, caption, cover_at=None, at=None, dry=False, probe=False):
         if lead > 60 * 24 * 60:
             result({"ok": False, "error": "too_far", "minutes": round(lead)})
             return
-    why = compose(t, mp4, cover_at)
+    why = compose(t, mp4, cover_at, cover_tol)
     if why:
         shot(t, "ig_x_compose")
         result({"ok": False, "error": why, "dialogs": dialogs(t)})
@@ -520,6 +525,14 @@ def sched_label(at):
     return f"{at:%a} {at.day}", f"{h}:{m} {ap}"
 
 
+def week_months(at):
+    """予約の一覧の見出しに出うる月。暦は日曜はじまりの週で、月をまたぐ週（2026-11-29〜12-05）の見出しは
+    後ろの月（「December 2026」）だった（2026-11-26）。週の頭と尻の月のどちらでも読めたことにする"""
+    start = at - datetime.timedelta(days=(at.weekday() + 1) % 7)
+    end = start + datetime.timedelta(days=6)
+    return sorted({f"{start:%B %Y}", f"{end:%B %Y}"})
+
+
 def scheduled(t, needle, at):
     """予約の一覧で、題の字を持つ札が --at の日と時刻に1枚だけ在るか。週を3つまで先へ送って探す"""
     want = parse_at(at)
@@ -528,19 +541,20 @@ def scheduled(t, needle, at):
         return
     day, tm = sched_label(want)
     month = f"{want:%B %Y}"
+    months = week_months(want)
     t.call("Network.enable")
     t.go(SCHEDULED, wait=8)
     seen = []
     for _ in range(4):
         r = t.js(f"({SCHED_CARDS})({json.dumps(needle)})") or {}
         seen.append(r)
-        if r.get("cards") or day in r.get("heads", []) and r.get("month") == month:
+        if r.get("cards") or day in r.get("heads", []) and r.get("month") in months:
             break
         if not press(t, "/^Next week$/", wait=4):
             break
     shot(t, "ig_sched_list")
     cards = seen[-1].get("cards", []) if seen else []
-    ok = len(cards) == 1 and cards[0] == [day, tm] and seen[-1].get("month") == month
+    ok = len(cards) == 1 and cards[0] == [day, tm] and seen[-1].get("month") in months
     ids = sched_media_ids(t, needle)
     result({"ok": ok, "want": [month, day, tm], "month": seen[-1].get("month") if seen else None, "cards": cards,
             "media_ids": ids, "media_id": ids[0] if len(ids) == 1 else None})
@@ -577,8 +591,9 @@ if __name__ == "__main__":
         args = sys.argv[2:]
         at = args[args.index("--at") + 1] if "--at" in args else None
         cover_at = float(args[args.index("--cover-at") + 1]) if "--cover-at" in args else None
+        cover_tol = float(args[args.index("--cover-tol") + 1]) if "--cover-tol" in args else COVER_TOL
         t = fresh_tab()
-        post(t, args[0], open(args[1], encoding="utf-8").read(), cover_at=cover_at, at=at, dry="--dry" in args, probe="--probe" in args)
+        post(t, args[0], open(args[1], encoding="utf-8").read(), cover_at=cover_at, at=at, dry="--dry" in args, probe="--probe" in args, cover_tol=cover_tol)
     elif cmd == "scheduled":
         # 予約の読み直し: python3 ig_post.py scheduled <題の行> <UTC の ISO>
         t = fresh_tab()

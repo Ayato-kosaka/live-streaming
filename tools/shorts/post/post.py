@@ -226,11 +226,14 @@ def cmd_ig_post(a):
         print(f"止めた: --at は UTC の ISO（2026-11-22T12:30:00Z）: {a.at}")
         return 1
     # カバーは題の札のコマ。Instagram は絵を渡しても受け取らないので、投稿文の cover_at_s の秒のコマを枠で選ぶ（ig_post.py の頭）
-    cov = json.load(open(a.post_json)).get("cover_at_s") if getattr(a, "post_json", None) else None
+    pj = json.load(open(a.post_json)) if getattr(a, "post_json", None) else {}
+    cov = pj.get("cover_at_s")
+    # 同じ場面が続く回は、投稿文の cover_tol_s で ok にする秒の幅を広げる（ig_post.py の set_cover_frame。既定 ±0.25秒）
+    tol = f" --cover-tol {float(pj['cover_tol_s'])}" if a.cover and pj.get("cover_tol_s") else ""
     if a.cover and cov is None:
         print("止めた: ig-post の --cover は --post-json <手元の post_<案>.json>（cover_at_s を読む）が要る")
         return 1
-    extra = (" --dry" if a.dry else "") + (f" --at {a.at}" if a.at else "") + (f" --cover-at {float(cov)}" if a.cover else "")
+    extra = (" --dry" if a.dry else "") + (f" --at {a.at}" if a.at else "") + (f" --cover-at {float(cov)}" if a.cover else "") + tol
     cap = f"{d}/ig_caption_{a.option}.txt"
     # 道具は毎回置き直す（send を回さずに、ほかの担当の置き場から出す回がある。中身はリポジトリの公開物と同じ）
     ec2.put(os.path.join(HERE, "ig_post.py"), f"{CDP}/ig_post.py")
