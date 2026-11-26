@@ -308,6 +308,8 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "bulgaria", city: "sofia", slug: "mekitsa", crumb: "メキツァ" },
   /* ソフィアの宿の共同キッチンでビリヤニを作ってきた【2026年11月】（#1453。②ビリヤニのショートの行き先。マトカ渓谷と同じ型） */
   { country: "bulgaria", city: "sofia", slug: "biryani", crumb: "ビリヤニ" },
+  /* ソフィアで、ブルガリア最大のクリスマスマーケットに行ってきた【2026年11月】（#1453。④ホットワインのショートの行き先。11-14 の xmas とは別の会場・別の記事。マトカ渓谷と同じ型） */
+  { country: "bulgaria", city: "sofia", slug: "xmas-hotwine", crumb: "ホットワイン" },
   /* ティラナの中心を歩いて回ってきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
   { country: "albania", city: "tirana", slug: "walk", crumb: "中心を歩いた日" },
   /* ティラナでスフラキとケバブを食べ比べてきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */

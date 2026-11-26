@@ -7,6 +7,7 @@ import { ARTICLE as SOFIA_HOTSPRING } from "./bulgaria/sofia-hotspring";
 import { ARTICLE as SOFIA_NEVSKY } from "./bulgaria/sofia-nevsky";
 import { ARTICLE as SOFIA_MEKITSA } from "./bulgaria/sofia-mekitsa";
 import { ARTICLE as SOFIA_BIRYANI } from "./bulgaria/sofia-biryani";
+import { ARTICLE as SOFIA_XMAS_HOTWINE } from "./bulgaria/sofia-xmas-hotwine";
 import { ARTICLE as SKOPJE_PANPAN } from "./north-macedonia/skopje-panpan";
 import { ARTICLE as SKOPJE_DEBAR_MAALO } from "./north-macedonia/skopje-debar-maalo";
 import { ARTICLE as SKOPJE_CLEMENT } from "./north-macedonia/skopje-clement";
@@ -47,6 +48,7 @@ const ARTICLES: Record<string, GuideArticle> = {
   "bulgaria/sofia/nevsky": SOFIA_NEVSKY,
   "bulgaria/sofia/mekitsa": SOFIA_MEKITSA,
   "bulgaria/sofia/biryani": SOFIA_BIRYANI,
+  "bulgaria/sofia/xmas-hotwine": SOFIA_XMAS_HOTWINE,
   "north-macedonia/skopje/panpan": SKOPJE_PANPAN,
   "north-macedonia/skopje/debar-maalo": SKOPJE_DEBAR_MAALO,
   "north-macedonia/skopje/clement": SKOPJE_CLEMENT,
