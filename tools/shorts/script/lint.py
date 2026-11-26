@@ -131,6 +131,7 @@ class Rule:
     run: Callable
     hypo: tuple = ()   # 帳面の代わりに持つ、仮説の台帳（`playbook.md`）の番号。出した本の数字から決めた規則だけ
     src: tuple = ()    # 帳面でも台帳でもない出どころ（研究の issue。"#1403"）。研究から決めた規則だけ
+    until: str = ""    # この日から当てない（新しい頼む文と食い違う規則を退かせた日）。as_of がこの日より前なら当てる
 
 
 # ---------- 場所 ----------
@@ -915,7 +916,7 @@ def width_line(c: Ctx) -> str | None:
     ns = [n for _, n in read_lines(c)]
     if not ns:
         return None
-    return f"1行の字数: 中央値 {statistics.median(ns):g}字（読み上げる{len(ns)}行。{WIDE_MAX}字以下が目安・仮説 N5）"
+    return f"1行の字数: 中央値 {statistics.median(ns):g}字（読み上げる{len(ns)}行。数えるだけ。1文を割って15字に揃えない。#1457）"
 
 
 # ---------- 2026-11-23（#1403）: あやとの指摘でも、出した本の仮説でもなく、研究（出した37本の維持率を原稿の行に重ねた・
@@ -1185,6 +1186,12 @@ def l_bang(c: Ctx):
 S1019 = "2026-10-23:6370959237"
 
 
+# 2026-11-26（#1457、帳面 F-100・F-101）: 作文者の頼む文を固定の1本（`writer_prompt.md`）にしたとき、それと食い違う4つを退かせた。
+# 当て表（L-ATE）はやめた。「8秒までに数を1つ」（L-NUM38）は「数は気持ちが乗るときだけ」と、「1行15字以下に割る」（L-WIDE）は
+# 「1文で意味を閉じ、片割れの行を作らない」と、2行目の前置きの ✕（L-CLIFF）は「最初の2行で、いまどこで何をしている人かを渡す」と食い違う。
+# 消さずに until を付け、承認の時点（--as-of）で当て直すときは前の決まりのまま当てる
+RETIRE = "2026-11-26"
+
 RULES = (
     Rule("L-NARRATOR", ("F-004",), "2026-10-16", "外の語り手の説明口調（あやとは・本人いわく・だそうです）", l_narrator),
     Rule("L-PHRASE", ("F-006",), "2026-10-16", "ふだん言わない言い回し（国を出る・人に払う）", l_phrase),
@@ -1212,10 +1219,10 @@ RULES = (
     Rule("L-INNER", ("F-048",), S1019, "配信の内輪（コメント・チャット・リスナー・視聴者・スパチャ・投げ銭・配信で言われ）", l_inner),
     Rule("L-NICK", ("F-048", "F-008"), S1019, "配信の中の呼び名（辞書は帳面の `呼び名「…」→「…」`）", l_nick),
     Rule("L-PARTICLE", ("F-049",), S1019, "助詞の抜け（名詞＋見に行く・地名＋来たら・名詞＋乗った）。題は ✕・行は △", l_particle),
-    Rule("L-ATE", ("F-050",), S1019, "当て表（spec の promises）に約束のカードの ID が欠ける・中身が空", l_ate),
+    Rule("L-ATE", ("F-050",), S1019, "当て表（spec の promises）に約束のカードの ID が欠ける・中身が空", l_ate, until=RETIRE),
     # ---- 2026-11-11（#1173、8章の論点9）: あやとの指摘ではなく、出した本の数字から。帳面ではなく仮説の台帳（playbook.md）の番号を持つ ----
     Rule("L-WIDE", (), "2026-11-11", f"1行の読み上げる字が{WIDE_MAX + 1}字以上（△。1行目の題と本人の声の行は見ない）", l_wide,
-         hypo=("N5",)),
+         hypo=("N5",), until=RETIRE),
     # ---- 2026-11-13（#1186、F-008 の5回目）: 十字架の登山の原稿 A の「先週は雨で流れたリベンジや！」 ----
     Rule("L-PREV", ("F-008",), "2026-11-13:6850736486", "前の回・ほかの日の事情の補足（先週・前回・リベンジ。題と締めの行は見ない）", l_prev),
     # ---- 2026-11-23（#1403）: 研究の決まり。帳面にも台帳にも足さず、出どころの issue を持つ。どれも △（落とさない） ----
@@ -1225,10 +1232,10 @@ RULES = (
          l_ansnext, src=("#1403",)),
     # ---- 2026-11-25（#1403・#1441、帳面 F-093）: 温泉 v5・ボザ v9 の作りかたを全部の回へ。L-CLIFF だけ ✕ ----
     Rule("L-CLIFF", (), "2026-11-25", "題の直後の行（2行目）が前置きの決まり文句（やってきた・〜へ移動・最近・〜に着いて、…）", l_cliff,
-         src=("#1403",)),
+         src=("#1403",), until=RETIRE),
     Rule("T-HOOK", (), "2026-11-25", "題の行の画（spec の visual の頭）が景色・建物・写真・カード・地図（△。hook に最中・答え・手元を書けば通す）",
          t_hook, src=("#1403",)),
-    Rule("L-NUM38", (), "2026-11-25", f"題の直後から{EARLY:g}秒（見込み）までに数が無い（△）", l_num38, src=("#1403",)),
+    Rule("L-NUM38", (), "2026-11-25", f"題の直後から{EARLY:g}秒（見込み）までに数が無い（△）", l_num38, src=("#1403",), until=RETIRE),
     Rule("L-VOICE0", (), "2026-11-25", f"0〜{EARLY:g}秒（見込み）に本人の声の行が無い（△。spec がある原稿だけ）", l_voice0, src=("#1403",)),
     Rule("L-BANG", (), "2026-11-25", f"山でない行の「！」が1本に{BANG_MAX}行を越える（△。確かめ用）", l_bang, src=("#1403",)),
     # ---- 2026-11-25（#1447、F-056）: 揚げパンの回 A の「ヌテラは全部ヌテラ味になるから、蜂蜜ナッツにした。」→「いらない」 ----
@@ -1304,9 +1311,11 @@ def when(s: str) -> tuple:
     return day, (int(cid) if cid else None)
 
 
-def in_force(since: str, as_of: str | None) -> bool:
+def in_force(since: str, as_of: str | None, until: str = "") -> bool:
     """規則（since）が as_of の時点で在ったか。同じ日なら、両方にコメントID があるときだけ前後を比べる
-    （どちらかが日付だけなら、その日に在ったことにする。落とす側に倒す）。"""
+    （どちらかが日付だけなら、その日に在ったことにする。落とす側に倒す）。until（退かせた日）の当日からは当てない。"""
+    if until and when(as_of or date.today().isoformat())[0] >= until:
+        return False
     if not as_of:
         return True
     (sd, sc), (ad, ac) = when(since), when(as_of)
@@ -1320,10 +1329,13 @@ def lint(c: Ctx, as_of: str | None = None) -> dict:
 
     Returns:
         {"hits": [Hit], "ran": [規則], "blind": [(規則, 理由)], "later": [規則]}
-        blind は入力が無くて見ていない規則、later は as_of より後にできた規則
+        blind は入力が無くて見ていない規則、later は as_of より後にできた規則、retired は as_of の時点で退いた規則
     """
-    hits, ran, blind, later = [], [], [], []
+    hits, ran, blind, later, retired = [], [], [], [], []
     for r in RULES:
+        if r.until and not in_force(r.since, as_of, r.until) and in_force(r.since, as_of):
+            retired.append(r.id)
+            continue
         if not in_force(r.since, as_of):
             later.append(r.id)
             continue
@@ -1333,7 +1345,7 @@ def lint(c: Ctx, as_of: str | None = None) -> dict:
             continue
         ran.append(r.id)
         hits.extend(got)
-    return {"hits": hits, "ran": ran, "blind": blind, "later": later}
+    return {"hits": hits, "ran": ran, "blind": blind, "later": later, "retired": retired}
 
 
 BLIND_WHY = {
@@ -1370,6 +1382,8 @@ def report(path: str, c: Ctx, res: dict, as_of: str | None) -> str:
         out.append(f"見ていない: {rid}（{BLIND_WHY.get(rid, '入力が無い')}）")
     if res["later"]:
         out.append(f"{as_of} より後の決まりなので当てていない: {'・'.join(res['later'])}")
+    if res.get("retired"):
+        out.append(f"退かせた決まり（{RETIRE}。頼む文と食い違う）: {'・'.join(res['retired'])}")
     wl = width_line(c)
     if wl:
         out.append(wl)

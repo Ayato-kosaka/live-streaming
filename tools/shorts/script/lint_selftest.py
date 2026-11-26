@@ -43,6 +43,7 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 
 | 足 | 確かめること |
 | --- | --- |
+| `retired` | 2026-11-26（#1457）に退かせた4つ（当て表 L-ATE・15字に割る L-WIDE・2行目の前置き L-CLIFF・8秒までの数 L-NUM38）は、今日の決まりでは当てず「退かせた」と書く。退かせる前の日なら当てる（この4つの足は 2026-11-25 で当てる） |
 | `approved` | 出してよいと言われた6本が、言われた時点の決まりで ✕ 0（城塞はコメントの時点、フォカッチャの添削版は添削の時点） |
 | `later_rule_live` | ホステル p2 を 10-22 の決まりで当てると、T-FLAG だけが落ちる（承認のあとにできた決まりが効いている） |
 | `miete` | 「地下鉄1回に見えてきた」を 15行目で拾う。「海が見えてきた！」は拾わない |
@@ -105,6 +106,8 @@ sys.path.insert(0, str(HERE.parent / "feedback"))
 import legs  # noqa: E402
 
 TODAY = "2099-12-31"   # 「いまある決まり全部」の代わり（日付で切らない）
+BEFORE = "2026-11-25"  # 退かせた規則を当てる日（#1457 の前の日）
+RETIRED = ("L-ATE", "L-WIDE", "L-CLIFF", "L-NUM38")   # 2026-11-26 に退かせた（新しい頼む文と食い違う）
 CASTLE_AT = "2026-10-21:6306110329"     # 城塞 p1 の承認（あやと #977「これで、進めて」）
 FOCACCIA_AT = "2026-10-23:6354242835"   # フォカッチャのあやとの添削（#1014）
 WF = "rejected/LdgTh1DC3Jk_p1"          # 滝の回 p1（#1019「字幕をつなげてるだけ」）
@@ -233,7 +236,7 @@ CUTS = {
     "rows_count": ("lint.py", "        if len(rows) != len(lines):\n", "        if False:\n", {"spec_rows"}, "行の数の違う spec を黙って読む"),
     # ---- 2026-11-11（#1173、8章の論点9）: 出した本の数字から足した規則（仮説 N5） ----
     "wide_off": ("lint.py", "            for i, n in got if i > 1 and n > WIDE_MAX]\n", "            for i, n in got if False]\n",
-                 {"wide"}, "16字以上の行を出さない"),
+                 {"wide", "retired"}, "16字以上の行を出さない"),
     "wide_title": ("lint.py", "            for i, n in got if i > 1 and n > WIDE_MAX]\n", "            for i, n in got if n > WIDE_MAX]\n",
                    {"wide"}, "1行目の題（札の字のまま読む行）まで出す"),
     "wide_count": ("lint.py", "    return [(i, spoken_chars(ln)) for i, ln in", "    return [(i, chars(ln)) for i, ln in",
@@ -243,7 +246,9 @@ CUTS = {
     "wide_vsrc": ("lint.py", 'bool(r.get("orig_voice") or r.get("voice_src"))', 'bool(r.get("orig_voice"))',
                   {"wide"}, "声だけ別の秒から取る本人の声（voice_src）を読み上げる行に数える"),
     "width_line": ("lint.py", "    if wl:\n        out.append(wl)\n", "", {"width_median"}, "行の字数の中央値を出さない"),
-    "hypo": ("lint.py", '         hypo=("N5",)),\n', "         hypo=()),\n", {"hypo_link"}, "L-WIDE が仮説の台帳の番号を持たない"),
+    "retire": ("lint.py", "    if until and when(as_of or date.today().isoformat())[0] >= until:\n", "    if False:\n", {"retired"},
+               "退かせた規則も今日の決まりで当てる"),
+    "hypo": ("lint.py", '         hypo=("N5",), until=RETIRE),\n', "         hypo=(), until=RETIRE),\n", {"hypo_link"}, "L-WIDE が仮説の台帳の番号を持たない"),
     # ---- 2026-11-23（#1403）: 研究から足した規則（行の種類 kind・問いの開け閉め turn。どれも △） ----
     "run_off": ("lint.py", "        if run >= RUN_MAX:\n", "        if False:\n", {"run"}, "出来事の無い行が続いても出さない"),
     "run_keep": ("lint.py", 'RUN_KEEP = ("出来事", "引っ張り", "数")', 'RUN_KEEP = ("出来事", "引っ張り")', {"run"},
@@ -295,7 +300,7 @@ CUTS = {
     "bang_off": ("lint.py", "    if len(got) <= BANG_MAX:\n", "    if True:\n", {"bang"}, "「！」の多さを見ない"),
     "bang_peak": ("lint.py", '        if i == 1 or i in c.answer_marked or own_voice(r) or r.get("big") or "【大】" in str(r.get("why") or ""):\n',
                   "        if i == 1:\n", {"bang"}, "山（【答】・【大】・本人の声）の「！」まで数える"),
-    "src_cliff": ("lint.py", "l_cliff,\n         src=(\"#1403\",)),\n", "l_cliff),\n", {"hypo_link"}, "L-CLIFF が出どころの issue を持たない"),
+    "src_cliff": ("lint.py", "l_cliff,\n         src=(\"#1403\",), until=RETIRE),\n", "l_cliff, until=RETIRE),\n", {"hypo_link"}, "L-CLIFF が出どころの issue を持たない"),
     # ---- 2026-11-13（#1186、F-008 の5回目）: 前の回の事情の補足 ----
     "prev": ("lint.py", "        m = next((x for x in PREV.finditer(ln) if x.group(0) not in said), None)\n", "        m = None\n",
              {"prev"}, "前の回の事情（先週・リベンジ）を拾わない"),
@@ -566,8 +571,21 @@ def tmp_script(lines, spec=None):
 ROWS2 = [{"line": "題"}, {"line": "みんなは？"}]
 
 
-def hits_of(L, c, rule):
-    return [h for h in L.lint(c, TODAY)["hits"] if h.rule == rule]
+def hits_of(L, c, rule, as_of=None):
+    """規則の当たり。退かせた規則（L-ATE・L-WIDE・L-CLIFF・L-NUM38）は、退かせる前の日で当てる。"""
+    return [h for h in L.lint(c, as_of or (BEFORE if rule in RETIRED else TODAY))["hits"] if h.rule == rule]
+
+
+def leg_retired(L):
+    """2026-11-26（#1457）に退かせた4つは、今日の決まりでは当てず「退かせた」と書き、退かせる前の日なら当てる。"""
+    c = ctx(L, ["題", "あ" * 16, "みんなは？"])
+    now, before = L.lint(c, TODAY), L.lint(c, BEFORE)
+    rep = L.report("足", c, now, TODAY)
+    return [("今日の決まりでは L-ATE・L-WIDE・L-CLIFF・L-NUM38 を当てず、退かせた並びに入れる",
+             sorted(now["retired"]) == sorted(RETIRED) and not set(RETIRED) & set(now["ran"] + now["blind"])),
+            ("退かせる前の日（2026-11-25）なら当てる（16字の行に L-WIDE の △）",
+             not before["retired"] and any(h.rule == "L-WIDE" for h in before["hits"])),
+            ("報告に「退かせた決まり」の1行が出る", "退かせた決まり" in rep)]
 
 
 def leg_card(L):
@@ -822,11 +840,11 @@ def leg_ate(L):
 
     def got(promises, has_key=True):
         spec = {"rows": ROWS2, **({"promises": promises} if has_key else {})}
-        return [h for h in fails(L, L.build(tmp_script(["題", "みんなは？"], spec))) if h.rule == "L-ATE"]
+        return [h for h in fails(L, L.build(tmp_script(["題", "みんなは？"], spec)), BEFORE) if h.rule == "L-ATE"]
     miss = {k: v for k, v in full.items() if k != "F-048"}
     short = {**full, "F-049": {"lines": [1], "note": "なし"}}
     outside = {**full, "F-031": {"lines": [5], "note": "題の札に場所と出来事を入れた"}}
-    blind = L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
+    blind = L.lint(ctx(L, ["題", "みんなは？"]), BEFORE)["blind"]
     return [(f"カード {len(ids)} 枚（帳面の項目と、帳面の外の X2）の ID が全部あれば通る",
              len(ids) > 1 and "X2" in ids and "F-050" in ids and not got(full)),
             ("F-048 が欠けたら ✕（欠けた ID を名指す）", any("F-048" in h.note for h in got(miss))),
@@ -986,7 +1004,7 @@ OLD2 = ("やってきたのは、ブルガリアの首都ソフィア！", "北�
 
 
 def new_hits(L, c):
-    return [(h.rule, h.line, h.look) for h in L.lint(c, TODAY)["hits"] if h.rule in NEW]
+    return [(h.rule, h.line, h.look) for h in L.lint(c, BEFORE)["hits"] if h.rule in NEW]
 
 
 def leg_cliff(L):
@@ -1152,7 +1170,7 @@ LEGS = {
     "approved": leg_approved, "later_rule_live": leg_later_rule_live, "miete": leg_miete,
     "title_real": leg_title_real, "title_metaphor": leg_title_metaphor, "title_hide": leg_title_hide, "flag": leg_flag,
     "narrator": leg_narrator, "phrase": leg_phrase, "yen": leg_yen, "length": leg_length,
-    "end": leg_end, "ashi": leg_ashi, "sorry": leg_sorry, "as_of": leg_as_of, "cli": leg_cli,
+    "retired": leg_retired, "end": leg_end, "ashi": leg_ashi, "sorry": leg_sorry, "as_of": leg_as_of, "cli": leg_cli,
     "card": leg_card, "sec": leg_sec, "after": leg_after, "num": leg_num, "quote": leg_quote,
     "ask": leg_ask, "desu": leg_desu,
     "title_read": leg_title_read, "next_time": leg_next_time,

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """**作文者と批評役に渡す「1枚」を作る。** 帳面・参考・7.4 節・配信の書き起こしを、担当が自分で全部読みに行かないように。
 
-    # 作文者へ（書く前）: 約束のカード（帳面の決まりと直しの全文）→ 方針 → 書く形 → 当て表 → 材料（配信の字幕）
-    python3 tools/shorts/script/brief.py writer --video LdgTh1DC3Jk --range 0:00:00-0:21:30 --ref IhF --ref f8t \\
-        --title "🇬🇪ジョージアで滝を観に行こうと思ったら大惨事に！" --about "…" -o <scratch>/brief_writer.md
+    # 作文者へ（書く前）: 固定の頼む文（references/writer_prompt.md）＋見本（writer_pairs.md）＋その回の材料。上限を数え、越えたら止まる
+    python3 tools/shorts/script/brief.py writer --video A_cJ9CNM0G8 --video ir-qwKKlr2k \\
+        --range A_cJ9CNM0G8@0:00:00-0:45:00 --range ir-qwKKlr2k@0:00:00-0:20:00 --about "誰に向けてか・基本線" -o <scratch>/brief_writer.md
+    #   材料が 8,000字を越えるときは --spec <spec.json> か --plan <plan.md>（書いた時刻の前後30秒だけに切る）
 
-    # 回をまたぐ原稿: --video を回の数だけ。区間は <videoId>@H:MM:SS-H:MM:SS（回を書かない区間は最初の --video の回）
-    python3 tools/shorts/script/brief.py writer --video Xvdk_P4gKoU --video kunXt2sXnFQ \\
-        --range Xvdk_P4gKoU@0:00:00-0:45:00 --range kunXt2sXnFQ@0:03:00-0:20:00 --ref OEF -o <scratch>/brief_writer.md
+    # 何も知らない視聴者役へ（題の札・原稿の行・画の短い説明だけ）／事実の確かめ役へ（原稿の行と根拠の時刻の字幕）
+    python3 tools/shorts/script/brief.py viewer shorts/videos/<回>/p3/script.txt -o <scratch>/viewer.md
+    python3 tools/shorts/script/brief.py fact shorts/videos/<回>/p3/script.txt --video <id> -o <scratch>/fact.md
 
     # 批評役へ（関所）: 雛形（references/critic_prompt.md）に、同じ約束のカード・原稿の表・lint の結果・参考の拍・配信の字幕を差し込む
     python3 tools/shorts/script/brief.py critic shorts/videos/TDArug_te90/p1/script.txt --ref vJo \\
@@ -23,36 +24,15 @@
 終了コード 0=書けた / 2=原稿・配信の書き起こし・参考の節が見つからない・spec の形が違う（rows が無い・行の数が違う）
 （edit は、雛形の呼び出しが道具と食い違うときも）。
 
-## 作文者の1枚を、ゼロから作り直した（#1019、帳面 F-048〜F-050）
+## 作文者の1枚は、固定の頼む文＋見本＋材料だけ（2026-11-26 #1457、帳面 F-101）
 
-2026-10-23 の滝の回 p1 は、17行のうち13行が配信の字幕をほぼそのまま写していて、あやとに「字幕をつなげてるだけ」「約束が漏れすぎ」と
-言われた。棚卸し（2026-10-23）で数えると、原稿に効く約束26個のうち10個が、この1枚に中身ごと入っていなかった。
+前は帳面からカード48枚・方針・書く形・当て表を毎回組み、⑥の1枚は 162,225字だった（カード 60,241・書く形 28,738・材料 46,026）。
+指摘が1つ増えるたびに1枚が勝手に長くなり、作文者は当て表を埋めることに力を使って、目的（何も知らない人がストレスなく続きを見たくなる1分）が埋もれた。
+いまは**頼む文 6,000字・見本 3,000字・材料 8,000字・合わせて 2万字**を道具が数え、1つでも越えたら渡さない（どこが何字かを出して止まる）。
+頼む文と見本はリポジトリの固定のファイルで、変えるときはチケットで（前後はコミットに残る）。帳面は記録で、1枚に写さない。
+材料は使う区間の字幕だけ（チャットの本文は入れない。読み上げた書き込みは伏せる。F-048）。
 
-- **前の1枚は、帳面を「題＋直しの最初の1組（90字で切る）」に縮めていた。** 決まり（する／しない）は全項目で0字。
-  2回目に言われて中身が増えても、題が同じなら1枚は変わらなかった。分類で選んだので、字に効く F-014（画）・F-019（音）・F-050（進め方）が落ちた
-- **1枚の6割が字幕とチャットの生の文で、その真上に「まずここから拾う」と書いてあった。** 作文者は材料の側に引っ張られた
-- だから今は、**約束のカード（帳面の決まりと直しを、1字も切らずに）を先頭に**置き、字幕は**いちばん後ろの「材料」**に下げる。
-  **チャットの本文は入れない**（視聴者の書き込みで話を動かさない。F-048）。カードは帳面から毎回組む（`ledger.py` の `script_items`）
-
-作文者は1行ずつ「元の出来事（配信の時刻）／見る人に届く文／残した本人の言葉／選んだ理由」の4欄で書き、カード1枚ずつに当て表
-（spec の `promises`）を付ける。当て表の欠けは lint の L-ATE が ✕ にする（渡せない）。
-
-## あやとの書き直しとの差を戻す（2026-11-13 #1192、帳面 F-044 の2回目）
-
-11-13 の4本も、その前の4本も、あやとが原稿を書き直した。8組を突き合わせると、直された57の種類のうち34はカードがもうある決まりで、
-作文者は当て表で「当てた」と書いていた（`references/rewrite_diff_2026-11-13.md`）。だから作文者の1枚は、差の表（`rewrite_diff_*.md`）を全部読み、
-
-- カードを、あやとの書き直しで直された数の多い順に並べ、見出しに数を書く（`rewrite_counts` → `cards(first=…)`）
-- 4 の「あやとの目で直す」に、種類を 消す → 替える → 足す → 形 の順・多い順に、ほかの回の例つきで出す（`retouch_block`）
-
-**いま書いている回の組は入れない**（差の表の見出しの videoId と、`--video`・`--extra <videoId>=` が1本でも重なれば外す。`held_out`）。
-差の表の形が崩れていれば止まる（知らない種類・videoId の無い組）。黙って読み飛ばすと、1枚から手本が消えても気づけない。
-
-2回目（同じ日）: 1回目の1枚で書かせると、作文者は消す種類を当てすぎ、教会の回で題の約束を閉じる入り直しの景色まで消した。
-だから差の表の「あやとが残した行」（`KEEP_HEAD`）を、消す種類の下に「残した」として並べ、作文者が削って戻させた字（パソコン p2 の
-筋の段と助詞）は「残す — 削りすぎ」にまとめる。**批評役の1枚にも同じ節を入れる**（`critic_retouch`。いま見る原稿の行を引く例は伏せる）。
-
-## 批評役の1枚
+## 批評役の1枚（前の関所。2026-11-26 から流れでは使わず、視聴者役と事実の確かめ役に分けた）
 
 作文者と**同じカード**を入れる。批評役は当てた ID を全部 `checked` に並べ、欠けたら `critic_gate.py` が ✕ にする。
 いま見ている原稿の行を引いている直しの例だけは、伏せる（例との一致で落とす・通すのを避ける。`quotes_script`）。
@@ -383,15 +363,6 @@ def critic_retouch(videos: list, avoid: list, data: tuple | None = None) -> str:
             "あやとが残してきた。行を消す直し案を出す前に、残した例と比べる\n\n"
             + retouch_block(videos, data, avoid=avoid))
 
-
-def card_order_line(first: dict) -> str:
-    if not first:
-        return "（ほかの回のあやとの書き直しが無いので、帳面の順）"
-    top = sorted(first.items(), key=lambda x: -x[1])
-    return "・".join(f"{fid} {n}か所" for fid, n in top) + "（この回の書き直しは数えていない）"
-
-
-# ---------- 参考の拍 ----------
 
 def beats(codes: list) -> str:
     text = BEATS.read_text(encoding="utf-8")
@@ -1088,124 +1059,153 @@ def build_critic(script: Path, spec: Path | None, refs: list, about: str, video=
 
 
 # ---------- 作文者へ ----------
+#
+# 2026-11-26（#1457、帳面 F-101）: 作文者の1枚は、**固定の頼む文（`writer_prompt.md`）＋見本（`writer_pairs.md`）＋その回の材料**だけ。
+# 前は帳面からカード48枚・方針・当て表を毎回組み、⑥の1枚は 162,225字だった。指摘が増えるたびに勝手に長くなり、誰も長さを見ていなかった。
+# いまは道具が3つと合計を数え、上限を越えたら渡さない（どこが何字かを出して止まる）。頼む文を変えるのはチケットで、前後はコミットに残す。
 
-def fixed_block(title: str | None, nxt: str | None) -> str:
-    """作文者に、決まっている字（題の札・次の配信）を渡す。1行目と最後の行は、ここから書く（帳面 F-047・F-049）。"""
-    out = []
-    if title:
-        t = title.replace("\n", "")
-        out.append(f"- **題の札**: 「{title.replace(chr(10), ' ／ ')}」。**1行目は、この札の字をそのまま読む**（句読点と改行の置きかただけ変えてよい。lint の T-READ が見る）")
-        drops = lint_mod.particle_drops(t)
-        if drops:
-            out.append("  - **ただし、この札には助詞の抜けがある**: " + "・".join(f"「{g}」→「{f}」" for g, f in drops)
-                       + "。あやとの札でも、札ごと直して spec の `title_card` と1行目に同じ字を書き、直したことを返すときに書く（F-049。lint の L-PARTICLE が見る）")
-    if nxt:
-        out.append(f"- **次の配信**: {nxt}。最後の行で次の配信に誘うなら、**この時刻まで言う**（lint の L-NEXT が見る）")
-    return "\n".join(out) or "（指定なし。題の札が決まったら、1行目はその字をそのまま読む。最後の行で次の配信に誘うなら、時刻まで言う）"
+PAIRS_TMPL = REFS / "writer_pairs.md"
+WRITER_MAX = {"頼む文": 6000, "見本": 3000, "材料": 8000}
+WRITER_TOTAL = 20000
+WRITER_PAD = 30   # spec・plan に書いた時刻の前後に足す秒（30秒ごとの字幕なら前後1行ずつ）
 
 
-def watch_block(lines: list) -> str:
-    """この回の字幕で、約束に当たりやすい所（機械で見つけたもの）。字幕の本文は写さず、時刻と言葉だけ。"""
-    out = []
-    for bad, good in lint_mod.nicknames().items():
-        at = [ln.split("]", 1)[0].lstrip("[") for ln in lines if lint_mod.nick_at(ln, bad)]
-        if at:
-            out.append(f"- 字幕に、配信の中の呼び名「{bad}」が {len(at)} か所（{'・'.join(at[:6])}{' ほか' if len(at) > 6 else ''}）。"
-                       f"声では「{good}」のように、初見に通じる言葉で言う（F-048・F-008。lint の L-NICK が見る）")
-    inner = []
-    for ln in lines:
-        at = ln.split("]", 1)[0].lstrip("[")
-        m = lint_mod.INNER.search(ln.replace(READ_MARK, ""))   # 伏せた印の中の「コメント」は数えない
-        if m:
-            inner.append((at, m.group(0)))
-        elif READ_MARK in ln:
-            inner.append((at, "読み上げ"))
-    prev = []
-    for ln in lines:
-        m = lint_mod.PREV.search(ln)
-        if m:
-            prev.append((ln.split("]", 1)[0].lstrip("["), m.group(0)))
-    if prev:
-        out.append(f"- 字幕で、本人が前の回・ほかの日の事情に触れている所が {len(prev)} か所（"
-                   + "・".join(f"{t}「{w}」" for t, w in prev[:6]) + (" ほか" if len(prev) > 6 else "") + "）。"
-                   "題の約束でなければ、声に入れない。初見には何の話か分からず、話の腰を折る（F-008 の5回目。lint の L-PREV が見る）")
-    if inner:
-        out.append(f"- 字幕で、本人がコメント・チャットに触れている所が {len(inner)} か所（"
-                   + "・".join(f"{t}「{w}」" for t, w in inner[:6]) + "）。"
-                   "そこで向きが変わる話は、視聴者の書き込みで動いている。持ち出さず、その段ごと外すか、本人・画に居る人・起きた出来事で渡す（F-048）")
-    return "\n".join(out) or "（字幕からは、呼び名・内輪の言葉は見つからなかった。それでも全部のカードを当てる）"
+def fixed_text(path: Path) -> str:
+    """固定のファイルのうち、線（MARK）より後ろ（担当に渡る字）。"""
+    return path.read_text(encoding="utf-8").split(MARK, 1)[-1].strip("\n") + "\n"
 
 
-def table_template(n: int, title: str | None = None) -> str:
-    """1行ずつ6欄（元の出来事／見る人に届く文／行の種類／開け閉め／残した本人の言葉／選んだ理由）の雛形。
-
-    選んだ理由は、あやとの返事（#1019「なぜそれを選んだか理由付きで」、帳面 F-051）から。
-    行の種類と開け閉め（spec の `kind`・`turn`）は #1403 の研究から（出来事の無い行の続き・題の答えのあとを、lint の L-RUN・L-ANSNEXT が見る）。
-    1行目は題の札を読む行なので、行の種類は「題」を先に入れておく。「あやとの目で直す」の種類（消す・替える…）とは別物なので「行の」を付ける。
-    """
-    head = ["| # | 元の出来事（配信の時刻） | 見る人に届く文（読み上げる字） | 行の種類 | 開け閉め | 残した本人の言葉 | 選んだ理由 |",
-            "| ---: | --- | --- | --- | --- | --- | --- |"]
-    rows = []
-    for i in range(1, n + 1):
-        if i == 1 and title:
-            rows.append(f"| 1 | 題の札をそのまま読む | {title.replace(chr(10), '')} | 題 |  |  |  |")
-        else:
-            rows.append(f"| {i} |  |  |  |  |  |  |")
-    return "\n".join(head + rows)
+def plan_points(plan: Path, videos: list) -> dict:
+    """企画（plan.md）の行に書いた配信の時刻を、回ごとに {回: [秒]}。行ごとに、回を書かない時刻は最初の回。"""
+    rows = [{"why": ln} for ln in plan.read_text(encoding="utf-8").splitlines()]
+    return cited_points(rows, videos)
 
 
-def ate_template(led=None) -> str:
-    """当て表の雛形（カードの ID を全部）と、spec の promises に書く形。"""
-    items = ledger_mod.script_items(led)
-    head = ["| ID | 約束 | 当たる行 | どう直したか／当たらない理由 |", "| --- | --- | --- | --- |"]
-    rows = [f"| {it.id} | {short(it.title, 40)} |  |  |" for it in items]
-    skel = ",\n".join(f'  "{it.id}": {{"lines": [], "note": ""}}' for it in items)
-    return "\n".join(head + rows) + "\n\nspec.json の `promises`（同じ中身。lint の L-ATE が、ID の欠け・空の note・原稿の外の行の番号を ✕ にする）:\n\n```json\n\"promises\": {\n" + skel + "\n}\n```"
+def used_ranges(videos: list, spec: Path | None, plan: Path | None) -> dict:
+    """spec の行（why・src）か plan に書いた時刻の前後 WRITER_PAD 秒を、回ごとに。--video の回だけ。"""
+    pts = {}
+    if spec:
+        rows = json.loads(spec.read_text(encoding="utf-8")).get("rows") or []
+        for v, ps in cited_points(rows, videos).items():
+            pts.setdefault(v, []).extend(ps)
+    if plan:
+        for v, ps in plan_points(plan, videos).items():
+            pts.setdefault(v, []).extend(ps)
+    return {v: merge_ranges(pts.get(v, []), WRITER_PAD) for v in videos}
 
 
-def build_writer(video, ranges: list, refs: list, about: str, n: int, chat: bool,
-                 extra: list, title: str | None = None, nxt: str | None = None) -> str:
-    """video は1本（字）か何本か（並び）。区間は `[<videoId>@]H:MM:SS-H:MM:SS`（回を書かなければ最初の回）。"""
-    if chat:
-        raise ValueError("作文者の1枚にチャットの本文は入れない（視聴者の書き込みで話を動かさない。帳面 F-048）。--chat を外す")
-    per = video_ranges(videos_of(video), ranges) if ranges else {}
+def material(video, ranges: list, about: str, extra: list, spec: Path | None = None, plan: Path | None = None) -> str:
+    """その回の材料: まとめ役から（誰に向けてか・基本線）＋ 使う区間の字幕（読み上げた書き込みは伏せる）。"""
+    videos = videos_of(video)
+    per = used_ranges(videos, spec, plan) if (spec or plan) else (video_ranges(videos, ranges) if ranges else {})
     bare = [v for v, rs in per.items() if not rs]
     if bare:
         raise ValueError(f"区間の無い回がある: {'・'.join(bare)}（--range {bare[0]}@H:MM:SS-H:MM:SS で渡す）")
-    multi = len(per) > 1
-    parts, got = [], []
+    parts = [f"### まとめ役から\n\n{about.strip()}"] if about.strip() else []
     for v, rs in per.items():
-        # 伏せた数は k に（n は表の行の数。2026-11-04 まで、ここで n を上書きしていて、伏せた数の行の表になっていた）
         tr, lines, k = masked_lines(v, rs)
-        note = f"。{masked_note(k)}" if k else ""
-        body = f"自動字幕（{rel(tr)}、30秒ごと{note}）:\n\n```\n" + "\n".join(lines) + "\n```"
-        parts.append(f"### {v}（{stream_title(tr)}）\n\n{body}" if multi else body)
-        got += labeled(v, lines) if multi else lines
-    if multi:
-        parts.insert(0, "回をまたぐ。字幕は回ごとに切ってある（時刻はそれぞれの回の中の時刻。元の出来事の欄と spec の why には"
-                        "「videoId H:MM:SS」で回を名指して書く）")
+        meta = "。".join(x for x in (stream_title(tr), masked_note(k) if k else "") if x)
+        body = "\n".join(f"‹{t // 3600}:{t % 3600 // 60:02d}:{t % 60:02d}› {x}" for t, x in buckets(lines))
+        parts.append(f"### {v}" + (f"（{meta}）" if meta else "") + f"\n\n{body}")
     for p in extra:
-        block, lines = extra_block(p)
-        parts.append(block)
-        got += lines
-    # いま書いている回（--video と、--extra に回を書いた写し）。あやとの書き直しの組は、この回のものを入れない
-    mine = list(per) or videos_of(video)
-    mine += [p.partition("=")[0] for p in extra if "=" in p]
-    data = rewrites()
-    first = rewrite_counts(mine, data)
-    return fill(WRITER_TMPL.read_text(encoding="utf-8"), {
-        "about": about.strip() or "（まとめ役が1〜3行で書く: どの配信のどの出来事か・誰に向けてか（ペルソナ3つのどれか。帳面 F-099）・伝えたいこと）",
-        "cards": cards(first=first),
-        "card_order": card_order_line(first),
-        "retouch": retouch_block(mine, data),
-        "n_cards": str(len(card_ids())),
-        "fixed": fixed_block(title, nxt),
-        "watch": watch_block(got),
-        "refs": beats(refs) if refs else "（参考の指定なし。上の方針と、あやとの直しを手本にする）",
-        "table": table_template(n, title),
-        "ate": ate_template(),
-        "source": "\n\n".join(parts) or "（区間の指定なし。`--video` と `--range` を渡す）",
-    })
+        block, _ = extra_block(p)
+        parts.append("### " + block)
+    return "\n\n".join(parts) or "（材料なし。`--video` と `--range` を渡す）"
+
+
+def buckets(lines: list, step: int = 30) -> list:
+    """字幕の行を30秒ごとの1行に寄せる [(始めの秒, 字)]。言うたびに時刻の付いた字幕（captions）は、時刻の印だけで材料の4割になる。"""
+    out = []
+    for ln in lines:
+        m = TIME.match(ln)
+        if not m:
+            continue
+        t = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3))
+        k, x = t // step * step, m.group(4).strip()
+        if out and out[-1][0] == k:
+            out[-1] = (k, f"{out[-1][1]} {x}".strip())
+        else:
+            out.append((k, x))
+    return out
+
+
+def writer_sizes(prompt: str, pairs: str, mat: str) -> dict:
+    return {"頼む文": len(prompt), "見本": len(pairs), "材料": len(mat)}
+
+
+def size_line(sizes: dict, total: int) -> str:
+    return "・".join(f"{k} {v:,}字（上限 {WRITER_MAX[k]:,}）" for k, v in sizes.items()) + f"・合わせて {total:,}字（上限 {WRITER_TOTAL:,}）"
+
+
+def build_writer(video, ranges: list, about: str, chat: bool, extra: list, spec: Path | None = None,
+                 plan: Path | None = None, prompt: Path | None = None, pairs: Path | None = None) -> tuple:
+    """作文者の1枚と、節ごとの字数。上限（WRITER_MAX・WRITER_TOTAL）を1つでも越えたら止まる（ValueError に字数）。"""
+    if chat:
+        raise ValueError("作文者の1枚にチャットの本文は入れない（視聴者の書き込みで話を動かさない。帳面 F-048）。--chat を外す")
+    tmpl = fixed_text(prompt or WRITER_TMPL)
+    ex = fixed_text(pairs or PAIRS_TMPL).strip("\n")
+    mat = material(video, ranges, about, extra, spec, plan)
+    sizes = writer_sizes(tmpl, ex, mat)
+    text = fill(tmpl, {"PAIRS": ex, "MATERIAL": mat})
+    over = [k for k, v in sizes.items() if v > WRITER_MAX[k]]
+    if over or len(text) > WRITER_TOTAL:
+        hint = "（材料は --spec か --plan で使う区間に切るか、--range を狭める）" if "材料" in over or len(text) > WRITER_TOTAL else ""
+        raise ValueError(f"上限を越えた: {'・'.join(over) or '合わせて'} — {size_line(sizes, len(text))}{hint}")
+    return text, sizes
+
+
+# ---------- 何も知らない視聴者役・事実の確かめ役（2026-11-26 #1457） ----------
+#
+# 前の批評役は、帳面のカードと書き起こしを読んでいたので、初見のつまずき（前提が無い・唐突）に気づけなかった。2つに分ける:
+# 視聴者役は**題の札と、原稿の行と、画の短い説明だけ**を読む（字幕・企画・意図は渡さない）。事実の確かめ役は、原稿の行と根拠の時刻の字幕を読む。
+
+VIEWER_TMPL = REFS / "viewer_critic_prompt.md"
+FACT_TMPL = REFS / "fact_check_prompt.md"
+VIEWER_MAX = 3000
+FACT_MAX = 2000
+# 画の説明から、配信の時刻・回・確かめの印・その場の声の写しを落とす（初見の人には見えない字）
+VIS_DROP = (re.compile(r"\d+(?:\.\d+)?[〜~]\d+(?:\.\d+)?秒[:：]?\s*"), re.compile(r"【[^】]*】"), re.compile(r"[（(]「[^」]*」[）)]"), TOKEN, re.compile(r"[〜~]\s*(?=\s|$)"))
+
+
+def visual_text(v: str) -> str:
+    for rx in VIS_DROP:
+        v = rx.sub("", v)
+    return re.sub(r"\s+", " ", v).strip(" 　・、")
+
+
+def script_rows(script: Path, spec: Path | None) -> tuple:
+    """（題の札, [(行, spec の行)]）。題の札は spec の title_card、無ければ1行目。"""
+    c = lint_mod.build(script, spec=spec)
+    rows = c.rows or [{} for _ in c.lines]
+    return (c.title_card or (c.lines[0] if c.lines else "")).replace("\n", " "), list(zip(c.lines, rows))
+
+
+def build_viewer(script: Path, spec: Path | None = None) -> str:
+    tmpl = fixed_text(VIEWER_TMPL)
+    if len(tmpl) > VIEWER_MAX:
+        raise ValueError(f"視聴者役の頼む文が {len(tmpl):,}字で、上限 {VIEWER_MAX:,}字を越えた")
+    card, rows = script_rows(script, spec)
+    out = [f"題の札: {card}"]
+    for i, (ln, r) in enumerate(rows, 1):
+        vis = visual_text(str(r.get("visual") or ""))
+        out.append(f"{i}. {ln}" + (f"｜画: {vis}" if vis else ""))
+    return tmpl + "\n".join(out) + "\n"
+
+
+def build_fact(script: Path, spec: Path | None, video, ranges: list, extra: list) -> str:
+    tmpl = fixed_text(FACT_TMPL)
+    if len(tmpl) > FACT_MAX:
+        raise ValueError(f"事実の確かめ役の頼む文が {len(tmpl):,}字で、上限 {FACT_MAX:,}字を越えた")
+    card, rows = script_rows(script, spec)
+    out = ["### 原稿", "", f"0. 題の札: {card}"]
+    for i, (ln, r) in enumerate(rows, 1):
+        why = short(str(r.get("why") or ""), 160)
+        out.append(f"{i}. {ln}" + (f"｜根拠: {why}" if why else ""))
+    use_spec = spec or (lint_mod.spec_for(script) if lint_mod.spec_for(script).exists() else None)
+    mat = material(video, ranges, "", extra, use_spec if not ranges else None)
+    if len(mat) > WRITER_MAX["材料"] * 2:
+        raise ValueError(f"字幕が {len(mat):,}字で、上限 {WRITER_MAX['材料'] * 2:,}字を越えた（spec の why に根拠の時刻を書くか、--range を狭める）")
+    return tmpl + "\n".join(out) + "\n\n" + mat + "\n"
 
 
 # ---------- 本編集の担当へ（edit） ----------
@@ -1663,15 +1663,16 @@ def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str |
 def main() -> int:
     ap = argparse.ArgumentParser(description="作文者・批評役・本編集の担当に渡す1枚を作る")
     sub = ap.add_subparsers(dest="who", required=True)
-    w = sub.add_parser("writer", help="作文者へ（書く前）")
+    w = sub.add_parser("writer", help="作文者へ（書く前）: 固定の頼む文＋見本＋その回の材料。上限を数える")
     w.add_argument("--video", action="append", default=[],
                    help="配信の videoId（streams/ の書き起こしから切る）。回をまたぐ原稿は何回でも")
     w.add_argument("--range", action="append", default=[],
                    help="[<videoId>@]H:MM:SS-H:MM:SS（何回でも）。回を書かなければ最初の --video の回")
+    w.add_argument("--spec", help="材料を、この spec の行（why・src）に書いた時刻の前後30秒に切る（材料が8,000字を越えるとき）")
+    w.add_argument("--plan", help="材料を、この企画（plan.md）に書いた時刻の前後30秒に切る")
+    w.add_argument("--prompt", help="頼む文を差し替える（試すとき。既定は references/writer_prompt.md）")
+    w.add_argument("--pairs", help="見本を差し替える（試すとき。既定は references/writer_pairs.md）")
     w.add_argument("--chat", action="store_true", help="使わない（作文者の1枚にチャットの本文は入れない。帳面 F-048）。渡すと止まる")
-    w.add_argument("--lines", type=int, default=18, help="4欄の表の雛形の行数")
-    w.add_argument("--title", help="題の札の字（決まっていれば。1行目でそのまま読む・表の1行目に入れる。助詞の抜けがあれば1枚に書く）")
-    w.add_argument("--next", help="最後の行で言う次の配信（「本日22時」。決まっていれば）")
     c = sub.add_parser("critic", help="批評役へ（関所）")
     c.add_argument("script")
     c.add_argument("--spec", help="spec.json（既定は原稿の隣）")
@@ -1680,6 +1681,14 @@ def main() -> int:
     c.add_argument("--range", action="append", default=[],
                    help="[<videoId>@]H:MM:SS-H:MM:SS（何回でも）。区間の無い回は、spec の why・src にその回で書いた時刻の前後30秒")
     c.add_argument("--as-of", help="承認済みの原稿を読み直すとき（lint の結果をその時点の決まりで出す。`lint.py --help`）")
+    vw = sub.add_parser("viewer", help="何も知らない視聴者役へ（題の札・原稿の行・画の短い説明だけ）")
+    vw.add_argument("script")
+    vw.add_argument("--spec", help="spec.json（既定は原稿の隣）")
+    fc = sub.add_parser("fact", help="事実の確かめ役へ（原稿の行と、根拠の時刻の前後の字幕）")
+    fc.add_argument("script")
+    fc.add_argument("--spec", help="spec.json（既定は原稿の隣。why・src の時刻で字幕を切る）")
+    fc.add_argument("--video", action="append", default=[], help="配信の videoId。回をまたぐ原稿は何回でも")
+    fc.add_argument("--range", action="append", default=[], help="[<videoId>@]H:MM:SS-H:MM:SS（渡すと spec の時刻でなく、この区間）")
     ed = sub.add_parser("edit", help="本編集の担当へ（声 → spec → 書き出し → 直す → 下見）")
     ed.add_argument("--episode", required=True, help="回の置き場（shorts/videos/<回> か、その版 p1）")
     ed.add_argument("--pattern", help="案（script_A.txt の A。案が1つの回は付けない）")
@@ -1688,21 +1697,27 @@ def main() -> int:
     ed.add_argument("--voice-lines", help="1枚は作らず、声に渡す字の雛形を spec の tts_text からこの道に書く")
     ed.add_argument("--type", help="回の型（tools/shorts/render/presets の food・try・trouble・surprise・money）。"
                                    "その型の様式と編集の決めの要点を1枚に入れる（無ければ、選ぶための表）")
-    for p in (w, c):
-        p.add_argument("--ref", action="append", default=[], help="写す参考の略号（reference_beats.md の節。何回でも）")
+    c.add_argument("--ref", action="append", default=[], help="写す参考の略号（reference_beats.md の節。何回でも）")
+    for p in (w, c, fc):
         p.add_argument("--transcript", action="append", default=[],
                        help="[<videoId>=]<道>: streams/ に無い回の字幕（`[H:MM:SS] 文` の行。captions で取って復号した captions.txt）。"
                        "回を書かなければ最初の --video の回。streams/ にその回のチャットが無ければ、読み上げたコメントは伏せられない")
         p.add_argument("--extra", action="append", default=[],
                        help="[<videoId>=]<道>: 足す書き起こし（復号した whisper・前日の回など、[H:MM:SS] 形式）。"
                        "回を書くと、その回のチャットで読み上げを伏せる")
+    for p in (vw, fc):
+        p.add_argument("-o", "--out", help="書き出す先（無ければ標準出力）")
     for p in (w, c, ed):
         p.add_argument("--about", default="", help="何の動画か・狙い（1〜3行）")
         p.add_argument("-o", "--out", help="書き出す先（無ければ標準出力）")
     a = ap.parse_args()
     try:
         use_transcripts(getattr(a, "transcript", None) or [], getattr(a, "video", None) or [])
-        if a.who == "critic":
+        if a.who == "viewer":
+            text = build_viewer(Path(a.script), Path(a.spec) if a.spec else None)
+        elif a.who == "fact":
+            text = build_fact(Path(a.script), Path(a.spec) if a.spec else None, a.video, a.range, a.extra)
+        elif a.who == "critic":
             text = build_critic(Path(a.script), Path(a.spec) if a.spec else None, a.ref, a.about, a.video, a.range, a.as_of,
                                 a.extra)
         elif a.who == "edit" and a.voice_lines:
@@ -1714,7 +1729,10 @@ def main() -> int:
         elif a.who == "edit":
             text = build_edit_brief(Path(a.episode), a.pattern, a.about, a.name, a.scratch, a.type)
         else:
-            text = build_writer(a.video, a.range, a.ref, a.about, a.lines, a.chat, a.extra, a.title, a.next)
+            text, sizes = build_writer(a.video, a.range, a.about, a.chat, a.extra, Path(a.spec) if a.spec else None,
+                                       Path(a.plan) if a.plan else None, Path(a.prompt) if a.prompt else None,
+                                       Path(a.pairs) if a.pairs else None)
+            print(size_line(sizes, len(text)), file=sys.stderr)
     except (OSError, KeyError, ValueError) as e:
         print(f"作れない: {e}", file=sys.stderr)
         return 2

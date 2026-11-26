@@ -24,20 +24,18 @@
 | `c_leak` | 批評役の雛形は、対照の原稿の行を8字以上そのまま引かない（終わりの形「アーカイブ見てね」は数えない）。引いた字をこしらえると拾い、1枚を作らずに止まる |
 | `c_cards` | 批評役の1枚に、作文者と同じカード（ID の見出しが全部）と「当てる ID」の並びが入る |
 | `rows_stop` | spec が `rows` でなく `lines` で書いてあれば、批評役の1枚を作らずに止まる（滝の回 p1 は、画の列が空のまま回っていた） |
-| `w_fixed` | 作文者の1枚に、`--title` の題の札（1行目でそのまま読む）と `--next` の次の配信を書き、表の1行目に札の字を入れる。札に助詞の抜けがあれば、直す字と一緒に書く（F-049）。無ければ「指定なし」。表は6欄（行の種類・開け閉めの欄が spec の kind・turn。#1403。最後の欄が「選んだ理由」。あやと #1019） |
-| `w_order` | 作文者の1枚は、約束のカード → 方針 → 書く形 → 当て表 → 材料（配信の字幕）の順。カードが先頭で、字幕はいちばん後ろ |
+| `w_order` | 作文者の1枚は、固定の頼む文（`writer_prompt.md` の線より後ろ）→ 見本（`writer_pairs.md`）→ 材料（まとめ役から → 字幕）の順で、差し込み口が残らない。帳面のカード・当て表を組まない。字幕は ‹h:mm:ss› の印。節ごとの字数を返す（#1457） |
+| `w_caps` | 頼む文 6,000字・見本 3,000字・材料 8,000字・合わせて 2万字。1つでも越えたら止まり、どこが何字かを出す。`--spec`・`--plan` を渡すと、材料は書いた時刻の前後30秒だけ（#1457、帳面 F-101） |
 | `w_nochat` | 作文者の1枚にチャットの本文が1行も入らない（同じ区間のチャットがあっても、本人が読み上げて自動字幕に入っていても。読み上げは〔コメントの読み上げ〕に伏せる）。`--chat` を渡すと止まる（F-048） |
 | `w_read` | 本人が読み上げた書き込みを伏せる（こしらえた字幕とチャットで）: 6字のそのまま・かな ↔ 漢字（漢字の側まで伏せる）・長音と句読点と絵文字の名前・1行に2回・長い書き込みの一部（切れ目なく12字）・5字のめずらしい字・6字の頭4字（末尾の笑いの w を除いて 2/3）。伏せないもの: 書き込みから80秒を越えた読み上げ（4字の書き込みも）・本人が先に言った字（前の行・同じ行の前のほう。5字の書き込みも）・3字と挨拶・合う字が少ない書き込み・8字の書き込みの半分だけ。伏せた所の前後の本人の言葉は残す |
 | `w_real` | クラムチャウダーの回（E2oGYjnVQSA）の本物の字幕とチャットで、1:11:29・1:16:48 の書き込みを本人が読み上げた 1:12:00・1:17:00 の行が伏せられ、行の残りの字は残る（字は写さない。2026-11-04 に作文者が本人の言葉として拾った所） |
 | `w_short` | マトカ渓谷の回（eHBAnQF56-E）の本物で、6字に満たない書き込み（1:38:00 の5字・1:38:52 の5字）と、7字の書き込みの頭4字（1:37:48。末尾は笑いの w）を本人が読み上げた 1:38:00・1:39:00 の行が伏せられ、行の残りの字は残る（2026-11-12 に C 案の原稿に2回入った所） |
 | `w_keep` | 同じ回で、4〜5字の書き込みと同じ字を本人が窓の中で言った所のうち、ありふれた相づち・反応（ほかの回の1割を越える回に出る字。0:15:00・2:23:00・2:59:30）と、本人がこの回のほかの所でも言う字（1:25:00）は伏せない |
 | `w_corpus` | ほかの回の字幕を畳んだ字の控え（一時置き場）は、字幕が同じあいだは使い、1本でも変われば読み直す（控えるのは、対照の子が起き直すたびに1秒あまり読み直して、回し役の上限を越えたから） |
-| `w_multi` | 作文者の1枚に、`--video` 2本ぶんの字幕が回ごとの見出しで入り、2本目の回の読み上げも伏せる。区間の頭の `<videoId>@` で回を名指し、書かない区間は最初の回。区間の無い回は止まる。表の行の数は `--lines` のまま（伏せた数で上書きしない） |
+| `w_multi` | 作文者の1枚に、`--video` 2本ぶんの字幕が回ごとの見出しで入り、2本目の回の読み上げも伏せる。区間の無い回があれば止まる |
 | `c_multi` | 批評役の1枚: spec の why・src の「videoId H:MM:SS」「videoId@H:MM:SS」から回ごとに区間を切る（回を書かない時刻は最初の回）。why で名指した、`--video` に無い回も入る。2本目にも伏せ字が効く |
 | `c_extra` | 批評役の1枚に `--extra` の写しが入る。`<videoId>=<道>` ならその回のチャットで伏せ、回を書かなければ「伏せていない」と書く |
 | `c_pending` | spec の画に「確認中」のある行に【画は確認中】の印。批評役の1枚の表の印の列にも出て、雛形の (h) に「確認中は当てない・回に無い画は『回に無い:』で挙げる」の線引きがある |
-| `w_ate` | 当て表の雛形（表と spec の promises の形）に、カードの ID が全部・1回ずつ並ぶ |
-| `w_watch` | 字幕に配信の中の呼び名（ポチ）・コメントへの言及・前の回の事情（先週・リベンジ。L-PREV）があれば、時刻と言葉だけを書く（字幕の文は写さない） |
 | `w_pairs` | あやとの書き直しの差の表（`references/rewrite_diff_*.md`）: 本物の表が読めて、組の種類が全部「種類」の表にある。こしらえた2組の表で、いま書いている回（`--video`）の組は「あやとの目で直す」にも、カードの並びの数にも入らず、ほかの回の組は入る。知らない種類の組は止まる。カードは直された数の多い順に先頭へ並び、見出しに数が付く（数が無ければ帳面の順）。**雛形の字と「種類」の表の言い方に、差の表のあやとの行（8字の窓）が1つも無い**（どの回にも出る字なので、書くとその回で答えが漏れる）。作文者の1枚に節と数の行が入る |
 | `w_stay` | あやとが残した行の表（2026-11-13 の2回目）: 本物に10行以上あり、教会を書くときの「残した」と戻した字は、消す種類の例と同じくらいの数。こしらえた表で、いま書いている回の残した行は入らず、ほかの回の残した行は見かけの消す種類の下に「残した」で入る。見かけの無い戻した字は「残す — 削りすぎ」にまとめて消す種類のすぐあとに。直された数には数えない。見かけに知らない種類・名前に空白のある組の見出しは止まる。本物で、教会を書くときは入り直しの景色が入らず、マトカ渓谷を書くときは「答えのあとの行」の下に入る。パソコン p2 の戻した字が「削りすぎ」に入る |
 | `c_retouch` | 批評役の1枚に、カードのあとで「あやとの目で直す」（作文者と同じ節。「残した」と、消す側で挙げない線引きつき）が入る。いま見る原稿の行を引く例は伏せて数を書き、`--video` の回の組は入れない |
@@ -102,14 +100,13 @@ CUTS = {
                 '        "cards": critic_retouch(mine, c.lines),\n', {"c_cards"}, "批評役の1枚にカードを入れない"),
     "w_chat": ("brief.py", "    if chat:\n        raise ValueError", "    if False:\n        raise ValueError", {"w_nochat"},
                "--chat を黙って受け取る"),
-    "w_particle": ("brief.py", "        if drops:\n", "        if False:\n", {"w_fixed"}, "題の札の助詞の抜けを作文者に書かない"),
-    "w_reason": ("brief.py", ' | 残した本人の言葉 | 選んだ理由 |\",\n', ' | 残した本人の言葉 |\",\n', {"w_fixed"},
-                 "表の最後の欄（選んだ理由）を外す"),
-    "w_kind": ("brief.py", " | 行の種類 | 開け閉め | 残した本人の言葉", " | 残した本人の言葉", {"w_fixed"},
-               "表の行の種類・開け閉めの欄（spec の kind・turn。#1403）を外す"),
     "orig_voice": ("brief.py", '    if r.get("orig_voice"):\n', "    if False:\n", {"ayato"}, "元の声の行に印を付けない"),
     "w_mask": ("brief.py", "        for a, b2 in sorted(spans):\n", "        for a, b2 in sorted([]):\n",
                {"w_nochat", "w_read", "w_real", "w_short", "w_multi", "c_multi", "c_extra"}, "字幕の中のコメントの読み上げを伏せない"),
+    # 作文者の1枚の上限（2026-11-26 #1457、帳面 F-101）
+    "w_cap": ("brief.py", "    if over or len(text) > WRITER_TOTAL:\n", "    if False:\n", {"w_caps"}, "上限を越えた1枚も渡す"),
+    "w_cutspec": ("brief.py", "    per = used_ranges(videos, spec, plan) if (spec or plan) else", "    per = {} if False else", {"w_caps"},
+                  "--spec・--plan を渡しても、材料を使う区間に切らない"),
     # 読み上げの伏せ字（2026-11-04。クラムチャウダーの回で、6字・かな ↔ 漢字・絵文字の名前つきの書き込みが素通りした）
     # 6〜7字は、めずらしい字の決まり（本人がほかで言う字・ありふれた字は当てない）でも拾える。下限を上げると、本人がこの回の
     # ほかの所で言う字を読み上げた所（こしらえた字幕の 0:01:30）が残る
@@ -159,8 +156,6 @@ CUTS = {
                  "区間の頭の <videoId>@ を読まない"),
     "w_bare": ("brief.py", "    if bare:\n        raise ValueError", "    if False:\n        raise ValueError", {"w_multi"},
                "区間の無い回を黙って落とす"),
-    "w_table_n": ("brief.py", "        note = f\"。{masked_note(k)}\" if k else \"\"\n", "        note, n = (f\"。{masked_note(k)}\" if k else \"\"), k\n",
-                  {"w_multi"}, "表の行の数を伏せた数で上書きする（2026-11-04 まで）"),
     "c_token": ("brief.py", "                    if videos and (v in videos or VID.fullmatch(v)):\n", "                    if False:\n", {"c_multi"},
                 "why・src の回の名前を読まず、全部の時刻を最初の回のものにする"),
     "c_named": ("brief.py", "    named = [v for v in cited if v not in videos]", "    named = []", {"c_multi"},
@@ -169,9 +164,6 @@ CUTS = {
                      "回を書いた写しも伏せない"),
     # 1次の原稿の画（2026-11-04。批評役が「画は確認中」の行を F-014 の ✕ に当てた）
     "c_pending": ("brief.py", "    if pending_visual(r):\n", "    if False:\n", {"c_pending"}, "画が確認中の行に印を付けない"),
-    "w_watch": ("brief.py", "        at = [ln.split(\"]\", 1)[0].lstrip(\"[\") for ln in lines if lint_mod.nick_at(ln, bad)]\n",
-                "        at = []\n", {"w_watch"}, "字幕の呼び名を作文者に書かない"),
-    "w_prev": ("brief.py", "        m = lint_mod.PREV.search(ln)\n", "        m = None\n", {"w_watch"}, "字幕の前の回の事情（先週・リベンジ）を作文者に書かない"),
     # あやとの書き直しの差の表（2026-11-13 #1192）
     "pairs_holdout": ("brief.py", '    use = [p for p in pairs if not vs & set(p["videos"])]\n', "    use = list(pairs)\n",
                       {"w_pairs", "w_stay", "c_retouch"},
@@ -212,7 +204,6 @@ CUTS = {
     "c_merge": ("brief.py", "        if out and a <= out[-1][1]:\n", "        if False:\n", {"c_ranges"}, "重なる区間をまとめない"),
     "c_leak": ("brief.py", "            if any(n[i:i + k] in body for i in range(len(n) - k + 1)):\n", "            if False:\n",
                {"c_leak"}, "雛形が対照の行を引いても見逃す"),
-    "w_title": ("brief.py", "    if title:\n", "    if False:\n", {"w_fixed"}, "題の札を作文者の1枚に書かない"),
     # 本編集の1枚
     "e_item": ("brief.py", "    items = edit_items(led)\n", "    items = edit_items(led)[1:]\n", {"e_ledger"},
                "帳面の画の項目を1つ落とす"),
@@ -472,22 +463,6 @@ def leg_rows_stop(B):
     return [("spec が rows でなく lines で書いてあれば、批評役の1枚を作らずに止まる（lines と言う）", "lines" in err)]
 
 
-def leg_w_fixed(B):
-    t = "海外キッチンで\nまさかの事態に！"
-    w = B.build_writer(None, [], [], "x", 3, False, [], t, "本日22時")
-    bare = B.build_writer(None, [], [], "x", 3, False, [])
-    drop = B.build_writer(None, [], [], "x", 3, False, [], "🇬🇪ジョージアで滝観に行こうと思ったら大惨事に！")
-    fixed = B.build_writer(None, [], [], "x", 3, False, [], "🇬🇪ジョージアで滝を観に行こうと思ったら大惨事に！")
-    return [("--title の札を「1行目はそのまま読む」と書く", "1行目は、この札の字をそのまま読む" in w and "海外キッチンで ／ まさかの事態に！" in w),
-            ("--next の時刻を「最後の行で言う」と書く", "本日22時" in w and "この時刻まで言う" in w),
-            ("表の1行目に札の字（改行を外して）が入る", "| 1 | 題の札をそのまま読む | 海外キッチンでまさかの事態に！ |" in w),
-            ("札に助詞の抜け（滝観に）があれば、直す字（滝を観に）と一緒に書く（F-049）", "「滝観に行」→「滝を観に行」" in drop),
-            ("直した札には書かない", "助詞の抜けがある" not in fixed),
-            ("表は6欄で、行の種類・開け閉め（spec の kind・turn。#1403）と、最後が「選んだ理由」（あやと #1019「なぜそれを選んだか理由付きで」）",
-             "| # | 元の出来事（配信の時刻） | 見る人に届く文（読み上げる字） | 行の種類 | 開け閉め | 残した本人の言葉 | 選んだ理由 |" in w),
-            ("無ければ「指定なし」", "（指定なし。" in bare)]
-
-
 def fake_streams(B, td: Path):
     """本物の配信の代わりに、字幕とチャットの写しを置く（チャットの字は、こしらえたもの）。"""
     d = td / "2026/08"
@@ -576,18 +551,61 @@ def with_streams(B, fn):
         B.STREAMS = real
 
 
+def writer(B, vids="ZZZZZZZZZZ1", rng=("0:00:00-0:01:30",), **kw):
+    return with_streams(B, lambda: B.build_writer(vids, list(rng), "基本線: みはりの線", False, [], **kw))
+
+
 def leg_w_order(B):
-    w = with_streams(B, lambda: B.build_writer("ZZZZZZZZZZ1", ["0:00:00-0:01:30"], [], "x", 3, False, [], "題"))
-    at = [w.find(h) for h in ("## 1. 約束のカード", "## 2. 何を作るか", "## 3. 方針", "## 4. 書く形", "## 5. 当て表", "## 6. 材料")]
-    return [("約束のカード → 何を作るか → 方針 → 書く形 → 当て表 → 材料 の順", all(a >= 0 for a in at) and at == sorted(at)),
-            ("カードが1枚の先頭（最初の見出し）", w.find("## ") == at[0]),
-            ("字幕はいちばん後ろの「材料」の節にだけある", w.find("[0:00:00]") > at[-1])]
+    w, sizes = writer(B)
+    tmpl = B.fixed_text(B.WRITER_TMPL)
+    pairs = B.fixed_text(B.PAIRS_TMPL).strip()
+    at = [w.find(x) for x in (tmpl.split("{{PAIRS}}", 1)[0][-40:], pairs[:30], "### まとめ役から", "### ZZZZZZZZZZ1")]
+    return [("固定の頼む文 → 見本 → 材料（まとめ役から → 字幕）の順。差し込み口は残らない",
+             all(x >= 0 for x in at) and at == sorted(at) and "{{" not in w),
+            ("頼む文は references/writer_prompt.md の線より後ろの字のまま（帳面のカード・当て表を組まない）",
+             w.startswith(tmpl.split("{{PAIRS}}", 1)[0]) and "約束のカード" not in w and "promises" not in w),
+            ("字幕は ‹h:mm:ss› の印で入る", "‹0:00:30›" in w and "[0:00:30]" not in w),
+            ("字数を節ごとに返す（頼む文・見本・材料）", set(sizes) == {"頼む文", "見本", "材料"} and sizes["見本"] == len(pairs))]
+
+
+def leg_w_caps(B):
+    def stops(**kw):
+        try:
+            writer(B, **kw)
+        except ValueError as e:
+            return str(e)
+        return ""
+    with tempfile.TemporaryDirectory() as td:
+        long_p = Path(td) / "p.md"
+        long_p.write_text(B.MARK + "\n" + "あ" * 6001 + "{{PAIRS}}{{MATERIAL}}", encoding="utf-8")
+        long_x = Path(td) / "x.md"
+        long_x.write_text(B.MARK + "\n" + "い" * 3001, encoding="utf-8")
+        p_msg, x_msg = stops(prompt=long_p), stops(pairs=long_x)
+        spec = Path(td) / "spec.json"
+        spec.write_text(json.dumps({"rows": [{"line": "題", "why": "Zzzzzzzzzz2 0:07:30「みはり」"}]}), encoding="utf-8")
+        cut = writer(B, vids=["Zzzzzzzzzz2"], rng=("Zzzzzzzzzz2@0:00:00-0:30:00",), spec=spec)[0]
+        plan = Path(td) / "plan.md"
+        plan.write_text("| 山 | Zzzzzzzzzz2 0:07:30 の画 |\n", encoding="utf-8")
+        pcut = writer(B, vids=["Zzzzzzzzzz2"], rng=("Zzzzzzzzzz2@0:00:00-0:30:00",), plan=plan)[0]
+        small = dict(B.WRITER_MAX)
+        try:
+            B.WRITER_MAX["材料"] = 50
+            big = stops(rng=("0:00:00-0:30:00",))
+        finally:
+            B.WRITER_MAX.clear()
+            B.WRITER_MAX.update(small)
+    return [("頼む文が 6,000字を越えたら止まり、どこが何字かを出す", "頼む文 6,0" in p_msg and "上限 6,000" in p_msg and "材料" in p_msg),
+            ("見本が 3,000字を越えたら止まる", "見本 3,001字" in x_msg),
+            ("上限は 6,000・3,000・8,000・合わせて 2万字", small == {"頼む文": 6000, "見本": 3000, "材料": 8000} and B.WRITER_TOTAL == 20000),
+            ("材料が上限を越えたら止まり、spec か plan で切れと言う", "材料" in big and "--spec か --plan" in big),
+            ("--spec を渡すと、材料は spec に書いた時刻（0:07:30）の前後30秒だけ", "‹0:07:30›" in cut and "‹0:07:00›" in cut and "‹0:06:00›" not in cut),
+            ("--plan を渡すと、企画に書いた回と時刻（Zzzzzzzzzz2 0:07:30）の前後30秒だけ", "‹0:07:30›" in pcut and "‹0:05:00›" not in pcut)]
 
 
 def leg_w_nochat(B):
-    w = with_streams(B, lambda: B.build_writer("ZZZZZZZZZZ1", ["0:00:00-0:01:30"], [], "x", 3, False, [], "題"))
+    w = writer(B)[0]
     try:
-        with_streams(B, lambda: B.build_writer("ZZZZZZZZZZ1", ["0:00:00-0:01:30"], [], "x", 3, True, [], "題"))
+        with_streams(B, lambda: B.build_writer("ZZZZZZZZZZ1", ["0:00:00-0:01:30"], "x", True, []))
         stopped = False
     except ValueError:
         stopped = True
@@ -751,10 +769,10 @@ def leg_w_corpus(B):
 def leg_w_multi(B):
     vids = ["ZZZZZZZZZZ1", "Zzzzzzzzzz2"]
 
-    def build(rng, n=3):
-        return with_streams(B, lambda: B.build_writer(vids, rng, [], "x", n, False, [], "題"))
+    def build(rng):
+        return writer(B, vids=vids, rng=rng)[0]
     w = build(["0:00:00-0:01:30", "Zzzzzzzzzz2@0:01:00-0:08:00"])
-    src = w.split("## 6. 材料", 1)[-1]
+    src = w.split("### まとめ役から", 1)[-1]
     one = src.split("### ZZZZZZZZZZ1", 1)[-1].split("### Zzzzzzzzzz2", 1)[0]
     two = src.split("### Zzzzzzzzzz2", 1)[-1]
     try:
@@ -762,12 +780,10 @@ def leg_w_multi(B):
         stopped = False
     except ValueError:
         stopped = True
-    rows = [ln for ln in w.split("## 4. 書く形", 1)[-1].split("## 5.", 1)[0].splitlines() if re.match(r"^\| \d+ \|", ln)]
-    return [("2本の字幕が回ごとの見出しで入る（回を書かない区間は最初の回）", "[0:00:30]" in one and "[0:01:30]" in two
-             and "### ZZZZZZZZZZ1（" in src and "### Zzzzzzzzzz2（見張りの回）" in src),
-            ("2本目の回の読み上げも伏せる（0:07:30）", f"[0:07:30] {PLAIN}" in two),
-            ("区間の無い回（Zzzzzzzzzz2）があれば止まる", stopped),
-            (f"表の行の数は --lines の 3 のまま（伏せた数で上書きしない。いま {len(rows)}）", len(rows) == 3)]
+    return [("2本の字幕が回ごとの見出しで入る（回を書かない区間は最初の回）", "‹0:00:30›" in one and "‹0:01:30›" in two
+             and "### ZZZZZZZZZZ1" in src and "### Zzzzzzzzzz2（見張りの回" in src),
+            ("2本目の回の読み上げも伏せる（0:07:30）", f"‹0:07:30› {PLAIN}" in two),
+            ("区間の無い回（Zzzzzzzzzz2）があれば止まる", stopped)]
 
 
 def critic_with(B, rows: list, videos: list, extra: list | None = None) -> str:
@@ -829,30 +845,6 @@ def leg_c_pending(B):
              "**F-014" in h and "【画は確認中】の行" in h and "「回に無い:」" in h and "渡していない" in text)]
 
 
-def leg_w_ate(B):
-    ids = B.card_ids()
-    a = B.ate_template()
-    table = a.split("```", 1)[0]
-    skel = a.split("```json", 1)[1] if "```json" in a else ""
-    return [(f"当て表の表に、カード {len(ids)} 枚の ID が1回ずつ", all(table.count(f"| {i} |") == 1 for i in ids)),
-            ("spec の promises の形にも、全部の ID が1回ずつ", all(skel.count(f'"{i}"') == 1 for i in ids))]
-
-
-def leg_w_watch(B):
-    lines = ["[0:00:00] ここはポチだらけの草原です。", "[0:00:30] いま配信のコメントで道を教えてもらいました。",
-             "[0:01:00] ボタンをポチっと押した。"]
-    got = B.watch_block(lines)
-    prev = B.watch_block(["[0:03:00] 先週は雨で流れたから、今日はリベンジや。", "[0:03:30] 昨日こねた生地を焼く。"])
-    return [("字幕の呼び名「ポチ」を、時刻（0:00:00）と直す言葉（野良犬）つきで書く", "「ポチ」が 1 か所（0:00:00）" in got and "野良犬" in got),
-            ("前の回の事情（先週）を、時刻（0:03:00）と L-PREV つきで書く。「昨日こねた」は数えない",
-             "前の回・ほかの日の事情に触れている所が 1 か所（0:03:00「先週」）" in prev and "L-PREV" in prev and "前の回" not in got),
-            ("「ポチっと」は数えない", "（0:01:00" not in got),
-            ("コメントに触れた時刻（0:00:30）を書く", "0:00:30「コメント」" in got),
-            ("伏せた読み上げ（〔コメントの読み上げ〕）は「読み上げ」として数え、印の中の「コメント」は数えない",
-             "0:02:00「読み上げ」" in B.watch_block(["[0:02:00] それ〔コメントの読み上げ〕やな"])),
-            ("字幕の文はそのまま写さない", "道を教えてもらいました" not in got and "草原です" not in got)]
-
-
 PAIRS_FAKE = """# 差の表（見張り）
 
 ## 2. 種類
@@ -908,14 +900,11 @@ def leg_w_pairs(B):
     # あやとが残した行は「こちらの案」の欄があやとの字（2026-11-13 の2回目から）
     ayato = set().union(*(_windows(p["ayato"]) for p in pairs if not p["ayato"].startswith("（")),
                         *(_windows(p["ours"]) for p in pairs if p.get("kept")))
-    tmpl = B.WRITER_TMPL.read_text(encoding="utf-8").split(B.MARK, 1)[-1]
-    in_tmpl = sorted(w for w in ayato if w in _norm8(tmpl))
     in_say = sorted(w for w in ayato if any(w in _norm8(k["say"]) for k in kinds.values()))
     first = B.rewrite_counts(["ZZZZZZZZZZ1"], data)
     block = B.cards(first={"F-056": 3, "F-008": 5})
     heads = re.findall(r"^### (\S+) ", block, re.M)
     plain = re.findall(r"^### (\S+) ", B.cards(), re.M)
-    w = with_streams(B, lambda: B.build_writer("ZZZZZZZZZZ1", ["0:00:00-0:01:30"], [], "x", 3, False, [], "題"))
     return [(f"本物の差の表が読める（種類 {len(kinds)}・組の行 {len(pairs)}）。どの組の行も videoId を持つ",
              bool(kinds) and bool(pairs) and all(p["videos"] for p in pairs)),
             ("いま書いている回（一の回）の行は「あやとの目で直す」に入らず、ほかの回（二の回）の行は入る",
@@ -928,10 +917,7 @@ def leg_w_pairs(B):
             ("カードは直された数の多い順に先頭へ（F-008 → F-056）、見出しに数が付く",
              heads[:2] == ["F-008", "F-056"] and "あやとの書き直しで5か所直された" in block),
             ("数を渡さなければ帳面の順（見出しに数が付かない）", plain[:1] == ["F-004"] and "書き直しで" not in B.cards()),
-            ("雛形の字に、差の表のあやとの行（8字の窓）が無い" + (f" ← {in_tmpl[:3]}" if in_tmpl else ""), not in_tmpl),
-            ("「種類」の表の言い方に、差の表のあやとの行（8字の窓）が無い" + (f" ← {in_say[:3]}" if in_say else ""), not in_say),
-            ("作文者の1枚に「あやとの目で直す」の節と、カードの並びの数の行が入る",
-             "### あやとの目で直す" in w and "直された数の多い順" in w and "{{" not in w)]
+            ("「種類」の表の言い方に、差の表のあやとの行（8字の窓）が無い" + (f" ← {in_say[:3]}" if in_say else ""), not in_say)]
 
 
 # 残した行の表（2026-11-13 の2回目）。一の回・二の回に1行ずつ、二の回には見かけの種類の無い「戻した字」も
@@ -1335,7 +1321,7 @@ LEGS = {
     "cards": leg_cards, "full": leg_full, "replaced": leg_replaced, "grows": leg_grows, "holdout": leg_holdout,
     "ranges": leg_ranges, "fill": leg_fill, "ayato": leg_ayato,
     "c_source": leg_c_source, "c_ranges": leg_c_ranges, "c_leak": leg_c_leak, "c_cards": leg_c_cards, "rows_stop": leg_rows_stop,
-    "w_fixed": leg_w_fixed, "w_order": leg_w_order, "w_nochat": leg_w_nochat, "w_ate": leg_w_ate, "w_watch": leg_w_watch,
+    "w_order": leg_w_order, "w_caps": leg_w_caps, "w_nochat": leg_w_nochat,
     "w_read": leg_w_read, "w_real": leg_w_real, "w_short": leg_w_short, "w_keep": leg_w_keep, "w_corpus": leg_w_corpus, "w_multi": leg_w_multi, "c_multi": leg_c_multi, "c_extra": leg_c_extra,
     "c_pending": leg_c_pending, "w_pairs": leg_w_pairs, "w_stay": leg_w_stay, "c_retouch": leg_c_retouch,
     "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
