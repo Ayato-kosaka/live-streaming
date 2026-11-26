@@ -182,7 +182,11 @@ KNOWN_SHORT = json.loads((ga.SHORTS_JSON).read_text(encoding="utf-8"))["shorts"]
 code, out = bake_with({**BASE, "shorts": [{"youtube": KNOWN_SHORT, "tiktok": "https://www.tiktok.com/@ayato/video/1"}]})
 ok("名簿に在るショート", code, 0)
 code, out = bake_with({**BASE, "shorts": [{"youtube": "zzzzzzzzzzz"}]})
-ok("名簿に無いショート（予約中）", (code, "名簿" in out), (1, True))
+ok("名簿に無いショート・公開の時刻なし", (code, "名簿" in out), (1, True))
+code, out = bake_with({**BASE, "shorts": [{"youtube": "zzzzzzzzzzz", "at": "2099-01-01T21:30:00+09:00"}]})
+ok("名簿に無いショート・予約中（公開の時刻つき）は置ける", code, 0)
+code, out = bake_with({**BASE, "shorts": [{"youtube": "zzzzzzzzzzz", "at": "2020-01-01T21:30:00+09:00"}]})
+ok("公開の時刻から3日過ぎても名簿に無い", (code, "3日過ぎても" in out), (1, True))
 code, out = bake_with({**BASE, "shorts": [{"youtube": KNOWN_SHORT, "instagram": "https://example.com/reel/x"}]})
 ok("形の違う Instagram の URL", (code, "形が違う" in out), (1, True))
 

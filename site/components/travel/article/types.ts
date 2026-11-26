@@ -70,8 +70,11 @@ export type ArticleSection = {
   scene?: Scene;
 };
 
-/** この記事のショート（#1453）。`youtube` は `content/shorts.ts` の id（題と日付はそちらが持つ）。TikTok・Instagram は在るときだけ */
-export type ArticleShort = { youtube: string; tiktok?: string; instagram?: string };
+/**
+ * この記事のショート（#1453）。`youtube` は `content/shorts.ts` の id（題と日付はそちらが持つ）。TikTok・Instagram は在るときだけ。
+ * `at` は予約中に置いたときの公開の時刻。面は名簿に在る（＝公開された）ものだけを出す（`shownShorts`）
+ */
+export type ArticleShort = { youtube: string; tiktok?: string; instagram?: string; at?: string };
 
 export type GuideArticle = {
   slug: string;

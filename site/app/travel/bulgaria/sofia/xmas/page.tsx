@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { Body, Head, NextRead, Points, SceneButton, Sec, Shorts, Sources, Streams, Toc, Writer } from "@/components/travel/article/Article";
+import { Body, Head, NextRead, Points, SceneButton, Sec, Shorts, Sources, Streams, Toc, Writer, shownShorts } from "@/components/travel/article/Article";
 import { jpDate } from "@/components/travel/article/scene";
 import { CITY_STREAMS } from "@/content/cityStreams";
 import { travelArticle, travelArticleCrumbs, travelArticleShare, travelCity, travelPage, TRAVEL, TRAVEL_LABEL } from "@/content/travel";
@@ -49,8 +49,8 @@ export default function SofiaXmasPage() {
   });
   const ext = A.sections.flatMap((s) => s.keyword?.ext ?? []);
   const n = A.sections.length + 2;
-  /** この記事のショート（#1453）。空の間は欄も目次の行も出さない */
-  const shorts = A.shorts ?? [];
+  /** この記事のショート（#1453）。名簿に在る（公開された）ものだけ。空の間は欄も目次の行も出さない */
+  const shorts = shownShorts(A.shorts ?? []);
 
   return (
     <PageShell crumbs={travelArticleCrumbs(COUNTRY, CITY, SLUG)}>

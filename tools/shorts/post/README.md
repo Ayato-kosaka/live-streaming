@@ -65,7 +65,7 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
 | 2 | **ショートの説明に記事の URL**（`https://ayato-arigato.com/travel/<国>/<街>/<話>`） | `post_<案>.json` の `youtube.description` と `tiktok.caption`（Instagram は TikTok と同じ字）。「配信のアーカイブ:」の段の次に「あやと島の記事:」の段 |
 | 3 | 予約（上の「手順」と下の「予約投稿」） | — |
 | 4 | **本編（配信アーカイブ）の説明に記事の URL** | Studio の動画の編集（`/youtube-studio`）。説明の終わりに「あやと島の記事:」の段を1つ足す。前の字は消さない |
-| 5 | **公開されたら、記事にショートの URL** | 台本の `shorts`: `[{"youtube": "<ショートの id>", "tiktok": "<投稿の URL>", "instagram": "<リールの URL>"}]` → 焼き直す → 札 `出す`。**名簿（`python/data/shorts.json`。公開の翌晩に `rebake.yml` の `build_shorts.py` が取り直す）に無い id は焼く道具が止める**——予約中のショートは見られないので、記事から死んだリンクを張らない |
+| 5 | **予約したら、記事にショートの URL** | 台本の `shorts`: `[{"youtube": "<ショートの id>", "tiktok": "<投稿の URL>", "instagram": "<リールの URL>", "at": "<公開の時刻 2026-11-27T21:30:00+09:00>"}]` → 焼き直す → 札 `出す`。**面は名簿（`content/shorts.ts`。公開されたショートだけを、公開の翌晩に `rebake.yml` の `build_shorts.py` が取り直す）に在るものだけを出す**——予約中のショートは開けないので、記事から先にリンクしない。名簿に入った晩の書き出しから欄がひとりでに出る（焼き直しは要らない）。Instagram のリールの URL は公開まで無いので、公開のあとに足す。`at` が無いのに名簿に無い・`at` から3日過ぎても名簿に無い id は、焼く道具が止める |
 
 - 記事がもう在る回（①ムサカ = `sofia/nevsky`、④クリスマスマーケット = `sofia/xmas`）は、在る記事に 2〜5 だけ当てる
 - 記事の欄は `components/travel/article/Article.tsx` の `Shorts`（街のガイドの動画の欄と同じ縦の枠・押すまでサムネイル・`VideoObject`。`docs/guide-design.md` ★4）。

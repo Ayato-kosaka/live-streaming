@@ -45,6 +45,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -341,10 +342,13 @@ class ArticleBaker:
         `content/shorts.ts`（控え `python/data/shorts.json`）が持つ**（ここに写さない。`docs/spec/model.md` M-20）。
         TikTok・Instagram は島のどこにも名簿が無いので、URL だけここに置く。
 
-        - 名簿に無い id は止める。予約中のショートは公開されるまで見られない（記事から死んだリンクを張らない）。
-          公開の翌晩の焼き直し（`rebake.yml` の `build_shorts.py`）で名簿に入ってから足す
+        - **予約中のショートは、公開の時刻（`at`）を付けて先に置いてよい。** 面は名簿に在る id だけを出す
+          （`components/travel/article/Article.tsx` の `shownShorts`）。名簿は公開されたショートだけを持ち、公開の翌晩の
+          焼き直し（`rebake.yml` の `build_shorts.py`）で入るので、その書き出しから欄が出る。焼き直しは要らない
+        - 名簿に無いのに `at` が無い・`at` から3日過ぎても名簿に無い（予約が流れた・id の貼り間違い）は止める
         - 形の違う URL は止める（貼り間違いを本番に出さない）"""
         known = {x["id"] for x in json.loads(SHORTS_JSON.read_text(encoding="utf-8")).get("shorts", [])}
+        now = datetime.now(timezone.utc)
         out = []
         for i, r in enumerate(rows):
             w = f"shorts[{i}]"
@@ -360,9 +364,23 @@ class ArticleBaker:
             if "youtube" not in row:
                 self.errors.append(f"{w}: YouTube のショートの id が無い（空の間は shorts に行を置かない）")
                 continue
+            at = (r.get("at") or "").strip()
+            if at:
+                try:
+                    t = datetime.fromisoformat(at)
+                    if t.tzinfo is None:
+                        raise ValueError
+                except ValueError:
+                    self.errors.append(f"{w}.at: 公開の時刻の形が違う「{at}」（例 2026-11-27T21:30:00+09:00）")
+                    continue
+                row["at"] = at
             if row["youtube"] not in known:
-                self.errors.append(f"{w}: ショート {row['youtube']} が名簿（python/data/shorts.json）に無い。公開して名簿に入ってから足す")
-                continue
+                if not at:
+                    self.errors.append(f"{w}: ショート {row['youtube']} が名簿（python/data/shorts.json）に無い。予約中なら公開の時刻（at）を付ける")
+                    continue
+                if now - t > timedelta(days=3):
+                    self.errors.append(f"{w}: ショート {row['youtube']} は {at} に公開のはずが、3日過ぎても名簿に無い（予約が流れたか、id の貼り間違い）")
+                    continue
             out.append(row)
         return out
 

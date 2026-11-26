@@ -7,7 +7,7 @@ import { Vid } from "@/components/streams/Vid";
 import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import type { CityStream } from "@/content/cityStreams";
-import { shortHref } from "@/content/shorts";
+import { SHORTS, shortHref } from "@/content/shorts";
 import { AYATO_SRC } from "@/lib/ayatoArt";
 import { JsonLd, videoLd } from "@/lib/jsonld";
 import { streamPart } from "@/lib/streamPart";
@@ -396,6 +396,17 @@ export function Streams({ open, rest }: { open: CityStream[]; rest: CityStream[]
  * 題と日付は名簿（`content/shorts.ts`。`shortOf` が無い id で書き出しを止める）、埋めたショートには `VideoObject`。
  * その下に、同じショートの TikTok・Instagram（在るものだけ）
  */
+const ON_ROSTER = new Set(Object.values(SHORTS).flatMap((xs) => xs.map((x) => x.id)));
+
+/**
+ * 面に出すショート。**名簿（`content/shorts.ts`）に在るものだけ。** 名簿は公開されたショートだけを持つ
+ * （チャンネルのショートのタブから毎晩取り直す）。予約中に台本へ置いたショートは、公開の翌晩の書き出しから出る。
+ * 予約中は開けないので、記事から先にリンクしない
+ */
+export function shownShorts(xs: ArticleShort[]): ArticleShort[] {
+  return xs.filter((x) => ON_ROSTER.has(x.youtube));
+}
+
 export function Shorts({ shorts }: { shorts: ArticleShort[] }) {
   return (
     <ul className="ta-shorts">
