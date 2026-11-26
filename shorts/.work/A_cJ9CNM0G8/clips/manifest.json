@@ -5,37 +5,63 @@
  "dest": "A_cJ9CNM0G8/clips",
  "video": "A_cJ9CNM0G8",
  "channel": null,
- "request": "shorts/requests/seven-clips-A_cJ9CNM0G8-p5-20261126.json",
- "status": "failed",
+ "request": "shorts/requests/seven-clips-A_cJ9CNM0G8-p5b-20261126.json",
+ "status": "ok",
  "stages": {
-  "download": "failed"
+  "download": "ok",
+  "meta": "ok",
+  "clips": "ok",
+  "sheets": "ok"
  },
  "counts": {
-  "sheets": 0,
+  "sheets": 4,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
-  "clips": 0,
-  "clips_ok": 0,
-  "clip_seconds": 0,
+  "clips": 4,
+  "clips_ok": 4,
+  "clip_seconds": 135.0,
   "channel_entries": 0,
-  "files": 2
+  "files": 16
  },
  "bytes": {
-  "plain": 1324,
-  "tar_gz": 1114,
-  "encrypted": 1120
+  "plain": 73390890,
+  "tar_gz": 73296283,
+  "encrypted": 73296288
  },
  "encrypted_files": [
   {
-   "name": "payload.enc",
-   "bytes": 1120,
-   "sha256": "a7210095980e0e1f388a0d8f2ca0842c2327edaa8c0a088faf1432940652f0ec"
+   "name": "payload.enc.000",
+   "bytes": 47185920,
+   "sha256": "2f48c788f32ab78650d4742ae911f953664ceb16552af56ac7df90ea867418ad"
+  },
+  {
+   "name": "payload.enc.001",
+   "bytes": 26110368,
+   "sha256": "e78c6b84dfefc82fe90f46b0c43eb3a032d6bd5a0567888e12453c9907338fff"
   }
  ],
- "hmac_sha256": "fe90c7b408d58de00300299ce19b50bd3dc2c07430b0e6c9701b7a4230aa6520",
+ "hmac_sha256": "b059348cc2a01d32e08b7c01842d196146b4169fc8df8d0f4cef2ef78b85b0c6",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45896022117",
- "created_at": "2026-11-26T21:13:15+00:00"
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45897280707",
+ "created_at": "2026-11-26T21:57:16+00:00",
+ "sheets": {
+  "key_file": "sheets.key.enc",
+  "encrypted_files": [
+   {
+    "name": "sheets.enc",
+    "bytes": 989456,
+    "sha256": "3031aad4b6c066aaeb2dd8426a8268995f1907bcb20b74ae4a9a74b7e3a9e7d2"
+   }
+  ],
+  "hmac_sha256": "26b05de30fc28a4c64d74525a9395fc9185ddaa75f61b101b045627e0312a6c6",
+  "files": 8,
+  "sheets": 4,
+  "bytes": {
+   "plain": 1020989,
+   "tar_gz": 989455,
+   "encrypted": 989456
+  }
+ }
 }
