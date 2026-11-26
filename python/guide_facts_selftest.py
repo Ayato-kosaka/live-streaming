@@ -227,6 +227,11 @@ def extra(**it) -> list:
 
 
 def check_units() -> None:
+    with tempfile.TemporaryDirectory() as d:
+        tp = Path(d) / "x.transcript.txt"
+        tp.write_text("# 題\n\n[0:46:00] ‹0:46:19›やばい。ちょい焦げした。‹0:46:24›19歳のとき\n[0:46:30] 印の無い行\n", encoding="utf-8")
+        check("字幕: 言った秒の印（‹h:mm:ss›）は外して30秒の行で読む", gf.read_transcript(tp),
+              ("題", [(2760, "やばい。ちょい焦げした。19歳のとき"), (2790, "印の無い行")]))
     check("数字: カンマ・万・全角を同じ形に",
           [gf.numval("1,500"), gf.numval("1万5000"), gf.numval("2万"), sorted(gf.numbers_in("１００円と1.5倍"))],
           ["1500", "15000", "20000", ["1.5", "100"]])

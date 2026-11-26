@@ -109,6 +109,8 @@ sys.path.insert(0, str(ROOT / "tools/shorts/feedback"))
 sys.path.insert(0, str(HERE))
 import ledger as ledger_mod  # noqa: E402
 import lint as lint_mod  # noqa: E402
+sys.path.insert(0, str(ROOT / "python"))
+import stream_text  # noqa: E402  字幕の行の中の、言った秒の印（‹h:mm:ss›）
 
 CPS = 6.8      # 上限の倍率 1.4 で読んだ毎秒の字（`script_writing.md` 6・`storyboard.py`）
 GAP = 0.3      # 行の間（秒）
@@ -517,13 +519,14 @@ _CORPUS: dict = {}   # {字幕の置き場: corpus() の組}
 
 
 def fold(text: str) -> list:
-    """比べる字の並び [(字, 元の位置)]。句読点・記号・空白・長音・`[鼻息]` の注を落とし、カタカナをひらがなに、全角を半角に。"""
+    """比べる字の並び [(字, 元の位置)]。句読点・記号・空白・長音・`[鼻息]` の注・言った秒の印（`‹0:46:19›`）を落とし、
+    カタカナをひらがなに、全角を半角に。印の数字を残すと、印をまたいで読み上げた書き込みが字幕と合わなくなる。"""
     out, depth = [], 0
     for i, ch in enumerate(text):
-        if ch == "[":
+        if ch in "[‹":
             depth += 1
             continue
-        if ch == "]":
+        if ch in "]›":
             depth = max(0, depth - 1)
             continue
         if depth:
@@ -628,7 +631,7 @@ def rare_spans(b: str, s: str) -> list:
         work = work[:m.b] + "\0" * m.size + work[m.b + m.size:]
 
 
-NOTE = re.compile(r"\[[^\]\n]*\]|^#.*$", re.M)   # 時刻・[鼻息] の注・頭の題の行（題の地名で、ありふれて見えないように）
+NOTE = re.compile(r"\[[^\]\n]*\]|‹[^›\n]*›|^#.*$", re.M)   # 時刻・[鼻息] の注・言った秒の印・頭の題の行（題の地名で、ありふれて見えないように）
 NONWORD = re.compile(r"[\W_ー]+")
 KANA = list(range(0x30F7))   # カタカナ → ひらがなの表（str.translate。辞書の表より4割速い）
 KANA[0x30A1:] = range(0x3041, 0x3097)
@@ -732,6 +735,7 @@ def mask_read(lines: list, posts: list, hist: list | None = None, video: str | N
         t, w, text = row
         pairs = fold(text)
         s = "".join(c for c, _ in pairs)
+        heard = said_clock(text, pairs, t, w)
         spans = []
         for k, (c, b) in enumerate(posts):
             lo, hi = READ_LAG[len(b) >= READ_LONG]
@@ -744,7 +748,7 @@ def mask_read(lines: list, posts: list, hist: list | None = None, video: str | N
             got = []
             core = GREET.sub("", b)   # 挨拶は本人も視聴者さんも同じ字を言うので、挨拶を除いた字で長さを数え、めずらしい字を探す
             for s0, s1, left, right in read_spans(b, s) if len(core) >= READ_MIN else ():
-                lag = t + w * s0 / max(1, len(s)) - c   # 行の中の位置から見積もった、読み上げの秒 − 書き込みの秒
+                lag = heard(s0) - c   # 読み上げの秒（言った秒の印。無い行は行の中の位置から見積もる）− 書き込みの秒
                 got.append((lag, s0, s1, left, right))
             if any(lag < lo for lag, *_ in got):
                 first[k] = True   # 同じ行の中で、書き込みより前に本人がもう言っている（画に映った物の名前など）
@@ -752,7 +756,7 @@ def mask_read(lines: list, posts: list, hist: list | None = None, video: str | N
             spans += [_widen(text, pairs[s0][1], pairs[s1 - 1][1] + 1, left, right) for lag, s0, s1, left, right in got if lag < hi]
             # めずらしい字（READ_FLOOR の上）。本人が先に言ったかは、読んだ字で見て、その字だけを外す（書き込みの一部を本人が
             # 先に言っていても、上の決まりで伏せた所は外さない。前に伏せていた読み上げを減らさないため）
-            rare = [(t + w * s0 / max(1, len(s)) - c, s0, s1, left, right, m) for s0, s1, left, right, m in rare_spans(core, s)]
+            rare = [(heard(s0) - c, s0, s1, left, right, m) for s0, s1, left, right, m in rare_spans(core, s)]
             early = {m for lag, *_, m in rare if lag < lo}   # 同じ行の前のほうで、本人がもう言っている字
             for lag, s0, s1, left, right, m in rare:
                 if not lo <= lag < hi or m in early:
@@ -768,10 +772,26 @@ def mask_read(lines: list, posts: list, hist: list | None = None, video: str | N
             else:
                 merged.append((a, b2))
         for a, b2 in reversed(merged):
-            text = text[:a] + READ_MARK + text[b2:]
+            # 伏せる所に挟まった言った秒の印は残す（伏せたあとの字の秒が分からなくならないように）
+            kept = "".join(m.group(0) for m in stream_text.MARK_RE.finditer(text[a:b2]))
+            text = text[:a] + READ_MARK + kept + text[b2:]
         n += len(merged)
         out.append(ln[: len(ln) - len(row[2])] + text if merged else ln)
     return out, n
+
+
+def said_clock(text: str, pairs: list, t: int, w: int):
+    """畳んだ字の位置 → 言った秒。字の前にある言った秒の印（`‹h:mm:ss›`。stream_text.py）のうち最後のもの。
+    印の無い行（印を入れる前の回）と、行の頭の印より前の字は、前と同じく行の中の位置から見積もる。"""
+    at = [(m.start(), int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)))
+          for m in stream_text.MARK_RE.finditer(text)]
+    n = max(1, len(pairs))
+
+    def heard(k: int) -> float:
+        i = pairs[k][1] if k < len(pairs) else len(text)
+        got = [sec for pos, sec in at if pos < i]
+        return got[-1] if got else t + w * k / n
+    return heard
 
 
 def masked_note(n: int) -> str:
@@ -1014,7 +1034,7 @@ def critic_source(video, ranges: list, rows: list, extra: list | tuple = ()) -> 
             continue
         how = "まとめ役が渡した区間" if given.get(v) else f"spec の why・src に書いた時刻の前後{PAD}秒"
         note = f"。{masked_note(n)}" if n else ""
-        blocks.append((v, tr, f"自動字幕（{rel(tr)}、30秒ごと。{how}{note}）:\n\n```\n" + "\n".join(got) + "\n```"))
+        blocks.append((v, tr, f"自動字幕（{rel(tr)}、30秒ごと。言った秒は行の中の ‹h:mm:ss›。{how}{note}）:\n\n```\n" + "\n".join(got) + "\n```"))
     if len(blocks) == 1 and not extra:
         return blocks[0][2]
     parts = [f"### {v}" + (f"（{stream_title(tr)}）" if tr else "") + "\n\n" + body for v, tr, body in blocks]
@@ -1164,7 +1184,7 @@ def build_writer(video, ranges: list, refs: list, about: str, n: int, chat: bool
         # 伏せた数は k に（n は表の行の数。2026-11-04 まで、ここで n を上書きしていて、伏せた数の行の表になっていた）
         tr, lines, k = masked_lines(v, rs)
         note = f"。{masked_note(k)}" if k else ""
-        body = f"自動字幕（{rel(tr)}、30秒ごと{note}）:\n\n```\n" + "\n".join(lines) + "\n```"
+        body = f"自動字幕（{rel(tr)}、30秒ごと。行の頭は30秒の窓の頭で、言った秒は行の中の ‹h:mm:ss›{note}）:\n\n```\n" + "\n".join(lines) + "\n```"
         parts.append(f"### {v}（{stream_title(tr)}）\n\n{body}" if multi else body)
         got += labeled(v, lines) if multi else lines
     if multi:

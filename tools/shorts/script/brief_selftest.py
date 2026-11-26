@@ -31,6 +31,7 @@
 | `w_real` | クラムチャウダーの回（E2oGYjnVQSA）の本物の字幕とチャットで、1:11:29・1:16:48 の書き込みを本人が読み上げた 1:12:00・1:17:00 の行が伏せられ、行の残りの字は残る（字は写さない。2026-11-04 に作文者が本人の言葉として拾った所） |
 | `w_short` | マトカ渓谷の回（eHBAnQF56-E）の本物で、6字に満たない書き込み（1:38:00 の5字・1:38:52 の5字）と、7字の書き込みの頭4字（1:37:48。末尾は笑いの w）を本人が読み上げた 1:38:00・1:39:00 の行が伏せられ、行の残りの字は残る（2026-11-12 に C 案の原稿に2回入った所） |
 | `w_keep` | 同じ回で、4〜5字の書き込みと同じ字を本人が窓の中で言った所のうち、ありふれた相づち・反応（ほかの回の1割を越える回に出る字。0:15:00・2:23:00・2:59:30）と、本人がこの回のほかの所でも言う字（1:25:00）は伏せない |
+| `w_marks` | 字幕の行の中の言った秒の印（`‹h:mm:ss›`。`python/stream_text.py`）: 印をまたいで読み上げた書き込みも伏せ、伏せた所に挟まった印は残す。読み上げの秒は印の秒で見る（行の頭の印が窓の後ろのほうなら、行の中の位置から見積もると「本人が先に言った」に見えて素通りした所） |
 | `w_corpus` | ほかの回の字幕を畳んだ字の控え（一時置き場）は、字幕が同じあいだは使い、1本でも変われば読み直す（控えるのは、対照の子が起き直すたびに1秒あまり読み直して、回し役の上限を越えたから） |
 | `w_multi` | 作文者の1枚に、`--video` 2本ぶんの字幕が回ごとの見出しで入り、2本目の回の読み上げも伏せる。区間の頭の `<videoId>@` で回を名指し、書かない区間は最初の回。区間の無い回は止まる。表の行の数は `--lines` のまま（伏せた数で上書きしない） |
 | `c_multi` | 批評役の1枚: spec の why・src の「videoId H:MM:SS」「videoId@H:MM:SS」から回ごとに区間を切る（回を書かない時刻は最初の回）。why で名指した、`--video` に無い回も入る。2本目にも伏せ字が効く |
@@ -106,7 +107,13 @@ CUTS = {
                  "表の4欄目（選んだ理由）を外す"),
     "orig_voice": ("brief.py", '    if r.get("orig_voice"):\n', "    if False:\n", {"ayato"}, "元の声の行に印を付けない"),
     "w_mask": ("brief.py", "        for a, b2 in sorted(spans):\n", "        for a, b2 in sorted([]):\n",
-               {"w_nochat", "w_read", "w_real", "w_short", "w_multi", "c_multi", "c_extra"}, "字幕の中のコメントの読み上げを伏せない"),
+               {"w_nochat", "w_read", "w_real", "w_short", "w_multi", "c_multi", "c_extra", "w_marks"}, "字幕の中のコメントの読み上げを伏せない"),
+    # 言った秒の印（2026-11-26。python/stream_text.py）
+    "mark_fold": ("brief.py", '        if ch in "[‹":\n', '        if ch == "[":\n', {"w_marks"}, "畳むときに言った秒の印の数字を残す"),
+    "mark_clock": ("brief.py", "        return got[-1] if got else t + w * k / n\n", "        return t + w * k / n\n", {"w_marks"},
+                   "読み上げの秒を、印があっても行の中の位置から見積もる（前の形）"),
+    "mark_keep": ("brief.py", "            text = text[:a] + READ_MARK + kept + text[b2:]\n", "            text = text[:a] + READ_MARK + text[b2:]\n",
+                  {"w_marks"}, "伏せた所に挟まった言った秒の印を消す"),
     # 読み上げの伏せ字（2026-11-04。クラムチャウダーの回で、6字・かな ↔ 漢字・絵文字の名前つきの書き込みが素通りした）
     # 6〜7字は、めずらしい字の決まり（本人がほかで言う字・ありふれた字は当てない）でも拾える。下限を上げると、本人がこの回の
     # ほかの所で言う字を読み上げた所（こしらえた字幕の 0:01:30）が残る
@@ -1300,12 +1307,38 @@ def leg_e_name(B):
             (f"勧める名前（{got}）は、頼んだことのある名前を飛ばした次（fra-a-v4）", got == "fra-a-v4")]
 
 
+# 言った秒の印の入った字幕（2026-11-26。`python/stream_text.py` が字幕の区切りごとに入れる）。字もチャットもこしらえたもの
+MARK_TR = ["[0:30:00] ‹0:30:02›今日は市場に来た。‹0:30:25›カボチャのスープ‹0:30:27›全部飲みたい。",
+           "[0:40:00] ‹0:40:27›ことこと煮込むのがコツ。"]
+MARK_CHAT = ["[0:30:20] @みはり1: かぼちゃのスープ全部飲みたい",
+             "[0:40:25] @みはり2: ことこと煮込む"]
+MARK_WANT = {"0:30:00": "‹0:30:02›今日は市場に来た。‹0:30:25›〔コメントの読み上げ〕‹0:30:27›。",
+             "0:40:00": "‹0:40:27›〔コメントの読み上げ〕のがコツ。"}
+
+
+def leg_w_marks(B):
+    real = B.STREAMS
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            d = Path(td) / "2026/08"
+            d.mkdir(parents=True)
+            (d / "2026-08-06_2200_Zzzzzzzzzz3.transcript.txt").write_text("# 印の回\n" + "\n".join(MARK_TR) + "\n", encoding="utf-8")
+            (d / "2026-08-06_2200_Zzzzzzzzzz3.chat.txt").write_text("\n".join(MARK_CHAT) + "\n", encoding="utf-8")
+            B.STREAMS = Path(td)
+            got = {ln.split("]")[0].lstrip("["): ln.split("] ", 1)[1] for ln in B.masked_lines("Zzzzzzzzzz3", [(0, 3600)])[1]}
+    finally:
+        B.STREAMS = real
+    return [("印をまたいで読み上げた書き込みを伏せ、伏せた所に挟まった印は残す（0:30:00）", got.get("0:30:00") == MARK_WANT["0:30:00"]),
+            ("読み上げの秒は印の秒（0:40:27。行の中の位置で見積もると 0:40:00 で、書き込みの25秒前に見える）",
+             got.get("0:40:00") == MARK_WANT["0:40:00"])]
+
+
 LEGS = {
     "cards": leg_cards, "full": leg_full, "replaced": leg_replaced, "grows": leg_grows, "holdout": leg_holdout,
     "ranges": leg_ranges, "fill": leg_fill, "ayato": leg_ayato,
     "c_source": leg_c_source, "c_ranges": leg_c_ranges, "c_leak": leg_c_leak, "c_cards": leg_c_cards, "rows_stop": leg_rows_stop,
     "w_fixed": leg_w_fixed, "w_order": leg_w_order, "w_nochat": leg_w_nochat, "w_ate": leg_w_ate, "w_watch": leg_w_watch,
-    "w_read": leg_w_read, "w_real": leg_w_real, "w_short": leg_w_short, "w_keep": leg_w_keep, "w_corpus": leg_w_corpus, "w_multi": leg_w_multi, "c_multi": leg_c_multi, "c_extra": leg_c_extra,
+    "w_read": leg_w_read, "w_real": leg_w_real, "w_short": leg_w_short, "w_keep": leg_w_keep, "w_corpus": leg_w_corpus, "w_marks": leg_w_marks, "w_multi": leg_w_multi, "c_multi": leg_c_multi, "c_extra": leg_c_extra,
     "c_pending": leg_c_pending, "w_pairs": leg_w_pairs, "w_stay": leg_w_stay, "c_retouch": leg_c_retouch,
     "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
     "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,

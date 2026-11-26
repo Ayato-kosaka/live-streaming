@@ -61,6 +61,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import stream_notes as sn  # noqa: E402
+import stream_text as st  # noqa: E402  言った秒の印（‹h:mm:ss›）の外しかた
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL = "sonnet"   # 2026-11-23 に Haiku と同じ3本で比べ、Haiku は話題の落ちが1割を越えた（16〜23%。Sonnet 12%）。SKILL.md §5
@@ -136,9 +137,14 @@ STAMP = re.compile(r"^\[-?\d+:\d\d:\d\d\]\s*")
 
 
 def mask_transcript(text: str) -> tuple[str, list[str]]:
+    """字幕の行の素性を伏せる。言った秒の印（‹h:mm:ss›）は先に外す。議事録は30秒の行の時刻で書き、
+    印の数字が年齢・日付の形（`‹0:46:19›歳`）に見えて伏せ字を誤らせ、トークンも食うので。"""
     out, bodies = [], []
     for line in text.splitlines():
+        if line == st.MARK_HEADER:
+            continue   # 印は外して渡すので、印の読みかたの1行も渡さない
         if STAMP.match(line):
+            line = st.unmark(line)
             b = mask_identity(STAMP.sub("", line), chat=False)
             out.append(STAMP.match(line).group(0) + b)
             bodies.append(b)
