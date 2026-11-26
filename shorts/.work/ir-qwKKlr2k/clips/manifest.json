@@ -5,73 +5,37 @@
  "dest": "ir-qwKKlr2k/clips",
  "video": "ir-qwKKlr2k",
  "channel": null,
- "request": "shorts/requests/seven-clips-ir-qwKKlr2k-20261126b1.json",
- "status": "ok",
+ "request": "shorts/requests/seven-clips-ir-qwKKlr2k-p5-20261126.json",
+ "status": "failed",
  "stages": {
-  "download": "ok",
-  "meta": "ok",
-  "clips": "ok",
-  "sheets": "ok"
+  "download": "failed"
  },
  "counts": {
-  "sheets": 11,
+  "sheets": 0,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
-  "clips": 3,
-  "clips_ok": 3,
-  "clip_seconds": 570.0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
   "channel_entries": 0,
-  "files": 22
+  "files": 2
  },
  "bytes": {
-  "plain": 180214214,
-  "tar_gz": 179783431,
-  "encrypted": 179783440
+  "plain": 1288,
+  "tar_gz": 1101,
+  "encrypted": 1104
  },
  "encrypted_files": [
   {
-   "name": "payload.enc.000",
-   "bytes": 47185920,
-   "sha256": "ebe6b40ca81fd2fff09f75721db6bf8d8cf3bf44e8c08263ccd338020966c7b6"
-  },
-  {
-   "name": "payload.enc.001",
-   "bytes": 47185920,
-   "sha256": "9578a772c298b2c5350e315bf9f4f1cbdf0aabbde93aef33f4f221b526102efa"
-  },
-  {
-   "name": "payload.enc.002",
-   "bytes": 47185920,
-   "sha256": "43695d447fb6e7143ba80c224bb54b946bf1f3ac48b63666afa1c8d0c365b271"
-  },
-  {
-   "name": "payload.enc.003",
-   "bytes": 38225680,
-   "sha256": "853a63712ea68d8a5919c237ac3ab9a1aafe731f7f5f252ecf1589c74d2399b3"
+   "name": "payload.enc",
+   "bytes": 1104,
+   "sha256": "314a9c13a0d2cccd6ac3d3a0eeb2e6a8961daa66b78f8f3e318a0c942c89a948"
   }
  ],
- "hmac_sha256": "b402ed30a817534384c823d4ae7254f5e456141fb4d1fa95352fe606552c1cce",
+ "hmac_sha256": "1a879deb10c4623b2280cd2b1ba5cf5a1a9f56ce98ba95cc0c86754d84591a31",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45717787298",
- "created_at": "2026-11-25T23:42:58+00:00",
- "sheets": {
-  "key_file": "sheets.key.enc",
-  "encrypted_files": [
-   {
-    "name": "sheets.enc",
-    "bytes": 2980144,
-    "sha256": "02f0413ec700f00ac8636b301ced0179906c9cdf217c4174d6fbd4e3e358a7ed"
-   }
-  ],
-  "hmac_sha256": "a4eee2a8a4692cefb0f7d8b54155161641c0a6d48995e9f1348667c50b486ef9",
-  "files": 15,
-  "sheets": 11,
-  "bytes": {
-   "plain": 3097055,
-   "tar_gz": 2980142,
-   "encrypted": 2980144
-  }
- }
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45896022117",
+ "created_at": "2026-11-26T21:13:16+00:00"
 }
