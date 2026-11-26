@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__hotwine-d-v3",
  "mode": "render",
- "dest": "render/hotwine-d-v3/inbox",
+ "dest": "render/hotwine-d-v3",
  "video": null,
  "channel": null,
  "request": "shorts/render/hotwine-d-v3.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 1006,
-  "tar_gz": 818,
-  "encrypted": 832
+  "plain": 35407,
+  "tar_gz": 9139,
+  "encrypted": 9152
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 832,
-   "sha256": "f09d2c66b3337e017a2309513d133f1bf6e27bd79d30e8fce10d206710d6e67c"
+   "bytes": 9152,
+   "sha256": "6d931f5d4d03352f93023de857a2a750998a32509024b64ff98fb3ef9c1a59d0"
   }
  ],
- "hmac_sha256": "25951bd0d2306c924c6cb6a2b59786cfd3e9bbe9b9f77b6177aa19d4177565cd",
+ "hmac_sha256": "54511bd1383b7ba7dfeb4655d8a440eb797c4a6ffc764e0eaf291380c18be64d",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-26T11:12:24+00:00",
+ "created_at": "2026-11-26T11:24:59+00:00",
  "nonce": "f9dc417138b94be325f20ed1"
 }
