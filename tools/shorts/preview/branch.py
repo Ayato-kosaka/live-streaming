@@ -5,6 +5,14 @@
 木を作り、commit を1つ積んで push する。断られたら（ほかの誰かが先に積んだら）
 取り直して積み直す。
 
+**作業箱では、共有の clone（リポジトリの `.git`）で作業枝を fetch しない。** 作業枝には clips・書き出しの
+暗号文が積まれ（2026-11-26 に計 2.7GB）、ふつうの fetch はそれを全部落とす。並んだ fetch で箱のディスクが
+0 になった。作業箱では、使い捨ての空の bare リポジトリ（一時の置き場）に `--depth=1 --filter=blob:none` で
+作業枝の先の木だけを取り、そこで積んで push する。中身（blob）は読むときに要る物だけが取りに行かれる
+（`read_json`・`extract`）。共有の clone は origin の URL と名前を読むだけで、1つも書かない。
+一時の置き場はプロセスが終わるときに消す（`cleanup()`）。Actions の中は使い捨てのランナーなので、今までどおり
+checkout した clone で浅く取る（認証も checkout の設定に乗る）。
+
 **平文を積まないことはここでも見る。** `shorts/.work/` の下に積めるのは
 manifest.json / key.enc / payload.enc(.NNN) / inbox.json だけ（inbox.json は
 Actions がその場で作った**公開鍵**と乱数だけを持つ）。90MB 以上のファイルは積まない
@@ -13,9 +21,11 @@ Actions がその場で作った**公開鍵**と乱数だけを持つ）。90MB 
 
 from __future__ import annotations
 
+import atexit
 import json
 import os
 import re
+import shutil
 import subprocess
 import tarfile
 import tempfile
@@ -31,20 +41,58 @@ BOT = {"GIT_AUTHOR_NAME": "github-actions[bot]",
        "GIT_AUTHOR_EMAIL": "41898282+github-actions[bot]@users.noreply.github.com"}
 
 
+_SCRATCH: list = []   # 作業箱の一時の置き場（プロセスに1つ）
+
+
+def _on_actions() -> bool:
+    return os.environ.get("GITHUB_ACTIONS") == "true"
+
+
+def _shared(*a: str) -> str:
+    """共有の clone を**読むだけ**（origin の URL・名前）。書く git はここを通さない。"""
+    r = subprocess.run(["git", "-C", str(ROOT), *a], capture_output=True)
+    return r.stdout.decode().strip() if r.returncode == 0 else ""
+
+
+def cleanup() -> None:
+    """一時の置き場を消す（プロセスの終わりにも呼ばれる）。"""
+    while _SCRATCH:
+        shutil.rmtree(_SCRATCH.pop(), ignore_errors=True)
+
+
+def repo() -> Path:
+    """git を回す置き場。Actions はランナーの clone、作業箱は使い捨ての bare リポジトリ。"""
+    if _on_actions():
+        return ROOT
+    if _SCRATCH:
+        return _SCRATCH[0]
+    url = _shared("remote", "get-url", "origin")
+    if not url:
+        raise RuntimeError("共有の clone に origin が無い")
+    d = Path(tempfile.mkdtemp(prefix="shorts-branch-"))
+    _SCRATCH.append(d)
+    for a in (["init", "--quiet", "--bare"], ["remote", "add", "origin", url],
+              # 欠けた中身は、読むときに要る物だけ origin から取る（取るときに中身を外すのは fetch の --filter）
+              ["config", "remote.origin.promisor", "true"]):
+        subprocess.run(["git", "-C", str(d), *a], capture_output=True, check=True)
+    return d
+
+
+atexit.register(cleanup)
+
+
 def git(*a: str, env: dict | None = None, data: bytes | None = None) -> str:
-    r = subprocess.run(["git", "-C", str(ROOT), *a], env=env, input=data, capture_output=True)
+    r = subprocess.run(["git", "-C", str(repo()), *a], env=env, input=data, capture_output=True)
     if r.returncode != 0:
         raise RuntimeError(f"git {a[0]} が落ちた: {r.stderr.decode(errors='replace').strip()[:300]}")
     return r.stdout.decode()
 
 
 def fetch(branch: str) -> str:
-    # **作業箱では --depth を付けない。** 共有の clone で `fetch --depth=1` を回すと、
-    # 取った先が .git/shallow に境目として書き足され、手元にある履歴まで見えなくなる
-    # （2026-10-16 に実際に踏んだ。HEAD から31件しか辿れなくなった）。浅く取るのは
-    # 使い捨てのランナーの中だけ。ほかのセッションの fetch と shallow.lock を取り合ったら待って取り直す
-    args = ["fetch", "--quiet"] + (["--depth=1"] if os.environ.get("GITHUB_ACTIONS") == "true"
-                                   else []) + ["origin", branch]
+    # 浅く取ってよいのは使い捨ての置き場だけ（ランナーの clone と、作業箱の一時の bare）。**共有の clone では
+    # fetch しない**（--depth=1 は .git/shallow に境目を書き足して履歴が見えなくなった 2026-10-16。--depth 無しは
+    # 作業枝の暗号文を全部落としてディスクを埋めた 2026-11-26）。作業箱は中身（blob）も取らない
+    args = ["fetch", "--quiet", "--depth=1"] + ([] if _on_actions() else ["--filter=blob:none"]) + ["origin", branch]
     for i in range(6):
         try:
             git(*args)
@@ -58,9 +106,17 @@ def fetch(branch: str) -> str:
 
 def _commit_env() -> dict:
     env = dict(os.environ)
-    if os.environ.get("GITHUB_ACTIONS") == "true":
+    if _on_actions():
         env.update(BOT, GIT_COMMITTER_NAME=BOT["GIT_AUTHOR_NAME"],
                    GIT_COMMITTER_EMAIL=BOT["GIT_AUTHOR_EMAIL"])
+        return env
+    # 一時の置き場には名前の設定が無いので、共有の clone の名前を読んで使う（無ければ git の既定に任せる）
+    for key, envs in (("user.name", ("GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME")),
+                      ("user.email", ("GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"))):
+        v = _shared("config", key)
+        for e in envs:
+            if v and e not in env:
+                env[e] = v
     return env
 
 
@@ -87,10 +143,12 @@ def push_change(branch: str, adds: dict[str, bytes | Path], removes: list[str],
         with tempfile.TemporaryDirectory() as td:
             env = dict(os.environ, GIT_INDEX_FILE=str(Path(td) / "index"))
             git("read-tree", base, env=env)
-            for prefix in removes:
-                for p in git("ls-tree", "-r", "--name-only", base, "--", prefix).splitlines():
-                    if p:
-                        git("update-index", "--force-remove", p, env=env)
+            # 消すのは --index-info の mode 0 の行で（--force-remove は作業ツリーを要り、作業箱の一時の bare で落ちる）
+            gone = [p for prefix in removes
+                    for p in git("ls-tree", "-r", "--name-only", base, "--", prefix).splitlines() if p]
+            if gone:
+                git("update-index", "--index-info", env=env,
+                    data="".join(f"0 {'0' * 40}\t{p}\n" for p in gone).encode())
             for path, sha in blobs.items():
                 git("update-index", "--add", "--cacheinfo", f"100644,{sha},{path}", env=env)
             # --missing-ok: Actions は中身（blob）を落とさない checkout（blob:none）で回る。write-tree は既定で
@@ -100,7 +158,7 @@ def push_change(branch: str, adds: dict[str, bytes | Path], removes: list[str],
         if tree == git("rev-parse", f"{base}^{{tree}}").strip():
             return None
         commit = git("commit-tree", tree, "-p", base, "-m", message, env=_commit_env()).strip()
-        r = subprocess.run(["git", "-C", str(ROOT), "push", "--quiet", "origin",
+        r = subprocess.run(["git", "-C", str(repo()), "push", "--quiet", "origin",
                             f"{commit}:refs/heads/{branch}"], capture_output=True)
         if r.returncode == 0:
             return commit
@@ -131,11 +189,38 @@ def wait_json(branch: str, path: str, ok, timeout: float, every: float = 5) -> t
 
 def extract(sha: str, rel: str, into: Path) -> Path:
     """作業枝の置き場を、作業ツリーを通さずに一時の場所へ出す。"""
-    r = subprocess.run(["git", "-C", str(ROOT), "archive", "--format=tar", sha, rel],
+    if not _on_actions():
+        return _extract_blobs(sha, rel, into)
+    r = subprocess.run(["git", "-C", str(repo()), "archive", "--format=tar", sha, rel],
                        capture_output=True, check=True)
     tar = into / "a.tar"
     tar.write_bytes(r.stdout)
     with tarfile.open(tar) as tf:
         tf.extractall(into, filter="data")
     tar.unlink()
+    return into / rel
+
+
+def _extract_blobs(sha: str, rel: str, into: Path) -> Path:
+    """作業箱の一時の置き場（中身を持たない）から出す。`git archive` は欠けた中身を取りに行けずに止まり、
+    中身の id を並べた fetch は浅い置き場の繋がりの検査で断られた（2026-11-26）。`cat-file` は欠けた中身を
+    1つずつ origin から取るので、それで書き出す（取るのはこの置き場の中身だけ）。"""
+    rows = []
+    for ln in git("ls-tree", "-r", "-z", sha, "--", rel).split("\0"):
+        if not ln:
+            continue
+        meta, path = ln.split("\t", 1)
+        mode, kind, oid = meta.split()
+        if kind == "blob":
+            rows.append((mode, oid, path))
+    base = into.resolve()
+    for mode, oid, path in rows:
+        dst = (into / path).resolve()
+        if base not in dst.parents:
+            raise RuntimeError(f"置き場の外を指す道: {path}")
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        r = subprocess.run(["git", "-C", str(repo()), "cat-file", "blob", oid], capture_output=True, check=True)
+        dst.write_bytes(r.stdout)
+        if mode == "100755":
+            dst.chmod(0o755)
     return into / rel
