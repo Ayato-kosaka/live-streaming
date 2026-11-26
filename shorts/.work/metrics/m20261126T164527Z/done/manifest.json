@@ -1,34 +1,40 @@
 {
  "format": "shorts-ingest/1",
- "key": "metrics__m20261126T164527Z__inbox",
+ "key": "metrics__m20261126T164527Z__done",
  "mode": "metrics",
- "dest": "metrics/m20261126T164527Z/inbox",
+ "dest": "metrics/m20261126T164527Z/done",
  "video": null,
  "channel": null,
  "request": "shorts/metrics/m20261126T164527Z.json",
  "status": "ok",
  "stages": {
-  "inbox": "ok"
+  "done": "ok"
  },
  "counts": {
+  "rows_in": 188,
+  "table_24h": 42,
+  "table_72h": 39,
+  "table_7d": 35,
+  "table_14d": 28,
+  "table_lifetime": 44,
   "files": 1
  },
  "bytes": {
-  "plain": 1007,
-  "tar_gz": 855,
-  "encrypted": 864
+  "plain": 427,
+  "tar_gz": 432,
+  "encrypted": 448
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 864,
-   "sha256": "4e0194aa75ff36b1d7b4b621df328f6df0cacbe56d47d5ce0d7e2706c9eec9aa"
+   "bytes": 448,
+   "sha256": "5f0eb4b8c362c0f3ec3b0b2e374ca7e14f45953d78982087996e961d437d1bfe"
   }
  ],
- "hmac_sha256": "feaa86a1d29b878c1219f66f5dc0230493e6f45e489b41cdd25fe4d09b406bd4",
+ "hmac_sha256": "a5b7690aa04f30010de544f726b684656d56937c5394e9c1cb40a594d51e2b84",
  "pubkey_sha256": "ddf5f6d6ff41989499f06c0eb341671e3f6e986cb97d61b9dafd7c3a75cb1e50",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45861692080",
- "created_at": "2026-11-26T16:45:47+00:00",
+ "created_at": "2026-11-26T16:46:10+00:00",
  "nonce": "44202cd59227a9742819690d"
 }
