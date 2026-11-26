@@ -1,4 +1,5 @@
 {
- "_note": "揚げパンの回 A（KjB_aBsTIf0・#1447）の様式。型は食べ物の反応（presets/food.json）をそのまま重ねる。配信の透かし・固定コメントの帯・投げ銭の表示の位置は clips が届いてから測り、帯（polish の bands）で切る",
- "extends": "presets/food.json"
+ "_note": "揚げパンの回 A（KjB_aBsTIf0・#1447）の様式。型は食べ物の反応（presets/food.json）を重ねる。配信の上 y100〜228 に固定のコメントの帯（チャンネルの告知）、下 y1090〜 にお城の絵と PRISM が焼き込まれているので、帯で切って元の y233〜1085 を使う（720x1280 の画素。2026-11-26 にコマで測った）",
+ "extends": "presets/food.json",
+ "watermarks": {"prism_live": {"bands": [[100, 228], [1090, 1280]], "margin": 5}}
 }

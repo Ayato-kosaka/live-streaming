@@ -1,0 +1,596 @@
+{
+ "_note": "build_edit.py が spec_A.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "A",
+ "style": "style_kjb.json",
+ "sources": {
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/ingest/KjB_aBsTIf0/clips/05_0-41-20_0-49-50.mp4",
+   "watermark": "prism_live",
+   "t0": 2480.0
+  },
+  "c02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/ingest/KjB_aBsTIf0/clips/02_0-32-00_0-34-00.mp4",
+   "watermark": "prism_live",
+   "t0": 1920.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/ingest/KjB_aBsTIf0/clips/04_0-39-30_0-41-00.mp4",
+   "watermark": "prism_live",
+   "t0": 2370.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/ingest/KjB_aBsTIf0/clips/03_0-37-00_0-38-50.mp4",
+   "watermark": "prism_live",
+   "t0": 2220.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c05",
+   "in": 5370,
+   "out": 5416,
+   "row": 0,
+   "zoom": {
+    "from": 1.04,
+    "to": 1.14,
+    "x": 0.5,
+    "y": 0.42
+   },
+   "note": "「ブルガリアのめちゃくちゃ美味しい揚げパンを」: 蜂蜜がたれる揚げパンをフォークで持ち上げた寄り（答えの画を意味を伏せて）"
+  },
+  {
+   "src": "c05",
+   "in": 7440,
+   "out": 7473,
+   "row": 0,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "「食べてみた！」: 揚げパンを口に運ぶ"
+  },
+  {
+   "src": "c02",
+   "in": 2985,
+   "out": 3027,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "店の看板（MEKI SA & COFFEE）"
+  },
+  {
+   "src": "c02",
+   "in": 3180,
+   "out": 3222,
+   "row": 1,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "店に入ったところ（カウンター）"
+  },
+  {
+   "src": "c04",
+   "in": 555,
+   "out": 607,
+   "row": 2,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "だれもいない2階の席"
+  },
+  {
+   "src": "c02",
+   "in": 2085,
+   "out": 2130,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.45,
+    "y": 0.5
+   },
+   "note": "窓口に並ぶメキツァの皿"
+  },
+  {
+   "src": "c04",
+   "in": 30,
+   "out": 75,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.6,
+    "y": 0.6
+   },
+   "note": "盆の上のメキツァとブルガリアの旗（名物）"
+  },
+  {
+   "src": "c03",
+   "in": 1005,
+   "out": 1047,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.4,
+    "y": 0.45
+   },
+   "note": "厨房で揚げてくれるおばちゃん（背中。顔は写らない）"
+  },
+  {
+   "src": "c03",
+   "in": 15,
+   "out": 50,
+   "row": 4,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "揚げ油の鍋"
+  },
+  {
+   "src": "c04",
+   "in": 360,
+   "out": 392,
+   "row": 5,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "揚げたての皿の寄り（蜂蜜で光る）"
+  },
+  {
+   "src": "c04",
+   "in": 450,
+   "out": 481,
+   "row": 5,
+   "zoom": {
+    "from": 1.06,
+    "to": 1.14,
+    "x": 0.5,
+    "y": 0.55
+   },
+   "note": "同じ皿をさらに寄せる"
+  },
+  {
+   "src": "c05",
+   "in": 5025,
+   "out": 5082,
+   "row": 6,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.5,
+    "y": 0.45
+   },
+   "note": "持ち上げた揚げパンから蜂蜜がたれる"
+  },
+  {
+   "src": "c05",
+   "in": 5610,
+   "out": 5670,
+   "row": 7,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.4
+   },
+   "note": "かぶりつく"
+  },
+  {
+   "src": "c05",
+   "in": 6579,
+   "out": 6638,
+   "row": 8,
+   "note": "本人の声「蜂蜜の味しかせえへん」（画も同じ秒）"
+  },
+  {
+   "src": "c05",
+   "in": 6750,
+   "out": 6794,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.6
+   },
+   "note": "もう一切れ持ち上げる"
+  },
+  {
+   "src": "c05",
+   "in": 7080,
+   "out": 7124,
+   "row": 9,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.6
+   },
+   "note": "噛みながら次を切る"
+  },
+  {
+   "src": "c05",
+   "in": 7995,
+   "out": 8057,
+   "row": 10,
+   "note": "本人の声「給食の時に食べた揚げパン、」を言う本人（F-087）"
+  },
+  {
+   "src": "c05",
+   "in": 6960,
+   "out": 7011,
+   "row": 10,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.5
+   },
+   "note": "「めっちゃ思い出すわ」: 揚げパンを持って笑う"
+  },
+  {
+   "src": "c05",
+   "in": 8295,
+   "out": 8334,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.06,
+    "x": 0.5,
+    "y": 0.6
+   },
+   "note": "コーヒーと食べかけの揚げパン"
+  },
+  {
+   "src": "c04",
+   "in": 150,
+   "out": 213,
+   "row": 11,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.08,
+    "x": 0.6,
+    "y": 0.6
+   },
+   "note": "盆のメキツァとコーヒー（問いの画）。終わりの札（※YouTubeで毎日22時から配信）が出る 28.8秒〜はこの顔の無い画にする（v1c で前のカットの顔に9コマ被った。F-013）"
+  }
+ ],
+ "title": {
+  "text": "🇧🇬ブルガリアの\nめちゃくちゃ美味しい揚げパンを食べてみた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "tempo": 1.4,
+  "lines": [
+   {
+    "text": "ブルガリアのめちゃくちゃ美味しい揚げパンを食べてみた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/01.wav",
+    "tts_text": "ブルガリアのめちゃくちゃ美味しい揚げパンを食べてみた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "行列店って書いてあった揚げパン屋に来たら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/02.wav",
+    "tts_text": "行列店って書いてあった、揚げパン屋に来たら……",
+    "at": 79
+   },
+   {
+    "text": "お客さん、僕1人やん！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/03.wav",
+    "tts_text": "お客さん、僕ひとりやん！",
+    "at": 163,
+    "big": "static_white",
+    "split": "お客さん、｜僕1人やん！"
+   },
+   {
+    "text": "ソフィアで甘いもんが欲しくて、頼んだのは名物のメキツァ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/04.wav",
+    "tts_text": "ソフィアで甘いもんが欲しくて、頼んだのは名物のメキツァ。",
+    "at": 215
+   },
+   {
+    "text": "おばちゃんが、ヨーグルト入りの生地を揚げてくれてる。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/05.wav",
+    "tts_text": "おばちゃんが、ヨーグルト入りの生地を揚げてくれてる。",
+    "at": 305
+   },
+   {
+    "text": "揚げたてに、蜂蜜がデロンデロン！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/06.wav",
+    "tts_text": "揚げたてに、蜂蜜がデロンデロン！",
+    "at": 382,
+    "mood": "up_pop"
+   },
+   {
+    "text": "持ち上げたら、蜂蜜こぼした。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/07.wav",
+    "tts_text": "持ち上げたら、蜂蜜こぼした。",
+    "at": 445
+   },
+   {
+    "text": "かぶりついたら……うま！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/08.wav",
+    "tts_text": "かぶりついたら……うま！",
+    "at": 502
+   },
+   {
+    "text": "結局、蜂蜜の味しかせえへん！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/narr/orig_A_08.wav",
+    "at": 562,
+    "parts": [
+     {
+      "text": "蜂蜜の味しかせえへん。",
+      "big": "taste_good",
+      "split": "蜂蜜の味しか｜せえへん。"
+     }
+    ]
+   },
+   {
+    "text": "けど、噛んでたら奥から揚げパンの味がして……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/10.wav",
+    "tts_text": "けど、噛んでたら奥から揚げパンの味がして……",
+    "at": 621
+   },
+   {
+    "text": "給食で食べた揚げパン、めっちゃ思い出すわ！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/11_own.wav",
+    "tts_text": "給食で食べた揚げパン、めっちゃ思い出すわ！",
+    "at": 709,
+    "parts": [
+     {
+      "text": "給食の時に食べた揚げパン、"
+     },
+     {
+      "text": "めっちゃ思い出すわ。",
+      "big": "taste_good",
+      "split": "めっちゃ｜思い出すわ。"
+     }
+    ],
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "みんなも、ブルガリアで給食の揚げパンを食べてみたい？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_KjB_aBsTIf0/voice/kjb-a-v1/A/12.wav",
+    "tts_text": "みんなも、ブルガリアで給食の揚げパンを食べてみたい？",
+    "at": 822
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/KjB_aBsTIf0/p1/spec_A.json",
+  "fps": 30,
+  "frames": 924,
+  "seconds": 30.8,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 79,
+    "voice_frames": 71,
+    "cuts": [
+     "0:44:19.0+1.53s",
+     "0:45:28.0+1.10s"
+    ],
+    "line": "ブルガリアのめちゃくちゃ美味しい揚げパンを食べてみた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 79,
+    "frames": 84,
+    "voice_frames": 64,
+    "cuts": [
+     "0:33:39.5+1.40s",
+     "0:33:46.0+1.40s"
+    ],
+    "line": "行列店って書いてあった揚げパン屋に来たら……",
+    "telop": null
+   },
+   {
+    "row": 2,
+    "from": 163,
+    "frames": 52,
+    "voice_frames": 44,
+    "cuts": [
+     "0:39:48.5+1.73s"
+    ],
+    "line": "お客さん、僕1人やん！",
+    "telop": null,
+    "big": "static_white"
+   },
+   {
+    "row": 3,
+    "from": 215,
+    "frames": 90,
+    "voice_frames": 82,
+    "cuts": [
+     "0:33:09.5+1.50s",
+     "0:39:31.0+1.50s"
+    ],
+    "line": "ソフィアで甘いもんが欲しくて、頼んだのは名物のメキツァ。",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 305,
+    "frames": 77,
+    "voice_frames": 69,
+    "cuts": [
+     "0:37:33.5+1.40s",
+     "0:37:00.5+1.17s"
+    ],
+    "line": "おばちゃんが、ヨーグルト入りの生地を揚げてくれてる。",
+    "telop": null
+   },
+   {
+    "row": 5,
+    "from": 382,
+    "frames": 63,
+    "voice_frames": 55,
+    "cuts": [
+     "0:39:42.0+1.07s",
+     "0:39:45.0+1.03s"
+    ],
+    "line": "揚げたてに、蜂蜜がデロンデロン！",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 445,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "0:44:07.5+1.90s"
+    ],
+    "line": "持ち上げたら、蜂蜜こぼした。",
+    "telop": null
+   },
+   {
+    "row": 7,
+    "from": 502,
+    "frames": 60,
+    "voice_frames": 40,
+    "cuts": [
+     "0:44:27.0+2.00s"
+    ],
+    "line": "かぶりついたら……うま！",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 562,
+    "frames": 59,
+    "voice_frames": 51,
+    "cuts": [
+     "0:44:59.3+1.97s"
+    ],
+    "line": "結局、蜂蜜の味しかせえへん！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "蜂蜜の味しかせえへん。",
+      "big": "taste_good",
+      "split": "蜂蜜の味しか｜せえへん。"
+     }
+    ],
+    "orig_voice": true
+   },
+   {
+    "row": 9,
+    "from": 621,
+    "frames": 88,
+    "voice_frames": 66,
+    "cuts": [
+     "0:45:05.0+1.47s",
+     "0:45:16.0+1.47s"
+    ],
+    "line": "けど、噛んでたら奥から揚げパンの味がして……",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 709,
+    "frames": 113,
+    "voice_frames": 105,
+    "cuts": [
+     "0:45:46.5+2.07s",
+     "0:45:12.0+1.70s"
+    ],
+    "line": "給食で食べた揚げパン、めっちゃ思い出すわ！",
+    "telop": null,
+    "parts": [
+     {
+      "text": "給食の時に食べた揚げパン、"
+     },
+     {
+      "text": "めっちゃ思い出すわ。",
+      "big": "taste_good",
+      "split": "めっちゃ｜思い出すわ。"
+     }
+    ]
+   },
+   {
+    "row": 11,
+    "from": 822,
+    "frames": 102,
+    "voice_frames": 79,
+    "cuts": [
+     "0:45:56.5+1.30s",
+     "0:39:35.0+2.10s"
+    ],
+    "line": "みんなも、ブルガリアで給食の揚げパンを食べてみたい？",
+    "telop": null
+   }
+  ],
+  "speech": {
+   "chars": 183,
+   "raw_voice_s": 28.83,
+   "tempo": 1.4,
+   "target_cps": 9.0,
+   "voiced_s": 20.63,
+   "cps_voiced": 8.87,
+   "video_s": 30.8,
+   "cps_video": 5.94
+  }
+ },
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "stickers": [
+  {
+   "image": "/home/user/live-streaming/site/public/guide/bulgaria/sofia/food-mekitsa-800.webp",
+   "from": 45,
+   "to": 100,
+   "x": 800,
+   "y": 1330,
+   "w": 300,
+   "rotate": 6,
+   "out": "fade",
+   "note": "F-079: 0秒目は配信の答えの画（蜂蜜がたれる揚げパン）、1.5秒目からソフィアの案内ページの揚げパンの絵を札で重ねる（高画質の画。全面にしない F-082）"
+  }
+ ],
+ "sfx": [
+  {
+   "at": 538,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/paku.mp3",
+   "db": -6,
+   "note": "かぶりつく所（配信の音は消してある）。presets/food.json「パクッと食べる」"
+  },
+  {
+   "at": 787,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/kirakirabuty.mp3",
+   "db": -3,
+   "note": "答え「めっちゃ思い出すわ」の大きい字の出。presets/food.json「上品なキラキラ」"
+  }
+ ],
+ "_polish": "KjB A: 札1枚（ソフィアの案内ページの揚げパンの絵・1.5〜3.3秒）・効果音2つ（パクッ・キラキラ。ポケットサウンド）。帯は様式 style_kjb.json。色の整えは外した（v2b で整えを入れると、座って食べる場面の画が似た見た目・同じ画と数えられ、似た見た目の連続 4.9秒・同じ画 47% で落ちた。整え無しの v1c では 2.6秒・10%）"
+}
