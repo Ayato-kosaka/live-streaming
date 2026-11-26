@@ -557,9 +557,11 @@ spec に書けないこと（どの画を使うか・どこに寄るか・誰の
 | `telop` / `telop_cuts` | テロップの文字を差し替える（`""` で出さない）/ 出すカットの番号 |
 | `telop_keep` / `highlight` | テロップを出すかを人が決める / 字幕で目立たせる言葉を人が決める |
 | `cuts[].zoom` / `gamma` / `inset` | 指示書の同じ欄へそのまま入る。`inset.keys` だけは時刻（`"t"`）で書き、窓のコマ番号に直す |
+| `cuts[].t` が `<ID> <秒>` / `cuts[].faces` | 撮影の素材のカット（`build_edit.py` の頭「撮影の素材」）/ `false` で帳面の顔の箱を掛けない |
+| `sfx` / `stickers` / `bands`（行の外）・行の `corner_note_to` | 仕上げ。組み直しても残る（`build_edit.py` の頭「仕上げ」） |
 
 帳面（`--blur`）は `{"regions": [{"from_t", "to_t", "rect" か "keys": [{"t", "rect"}], "cells", "note"}]}`。
-箱は元素材（720×1280）の画素。そのカットに掛かる時間のぶんだけ、指示書の `cuts[].blur` に入る。
+箱は元素材（720×1280）の画素。そのカットに掛かる時間のぶんだけ、指示書の `cuts[].blur` に入る。撮影の素材の箱は `from_t` を `<ID> <秒>` で書き、`footage.<ID>` に検出に通した記録を置く（`face_scan.py --footage` が書く）。
 
 ### 描いた絵・フリー素材を1カットにする（`art_clips.py`。帳面 F-014）
 

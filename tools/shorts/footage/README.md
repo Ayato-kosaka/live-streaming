@@ -59,12 +59,10 @@ python3 tools/shorts/footage/footage.py look  <配信の id> --key <秘密鍵.pe
 `table` は、その配信の時間帯に撮ったもの（配信の何分目か）と、配信の前後12時間に配信の外で撮ったものを分けて出す。
 `brief_section(<配信の id>)` が同じ表を `brief.py edit` の1枚に差し込む形で返す。
 
-指示書の素材には ID だけを書く（道は書かない）:
-
-```json
-"sources": { "f1": { "footage": "f3a9c21b0" } },
-"cuts": [ { "src": "f1", "in": 0, "out": 90 } ]
-```
+当てかた: spec の行の `src`（か overrides の `cuts[].t`）に **ID と作業用の頭からの秒**を書く（`"src": ["ffdb9709b1 0.3"]`。
+区間なら `ffdb9709b1 0.3–2.0`）。`build_edit.py` が `sources` の `{"footage": ID}` と作業用のコマ番号のカットを組む（道は書かない）。
+顔は組む前に `python3 tools/shorts/render/face_scan.py --footage <ID> <絵の置き場> --book <回の p1>/blur.json` で帳面に書いて
+`build_edit.py --blur` で渡す（記録の無い素材は組む段で止まる。書きかたは `tools/shorts/plan/build_edit.py` の頭）。
 
 - 書き出し（`render.py`）は、手元では `SHORTS_FOOTAGE_DIR` の `<ID>.mp4` を読む。Actions（`remote.py up`）では
   作業箱から上げず、prepare が私有の置き場から CAS に写す（私有の置き場に無ければ止まる。先に `stash`）

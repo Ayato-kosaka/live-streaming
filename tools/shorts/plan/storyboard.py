@@ -78,7 +78,12 @@ def still_of(r: dict) -> str:
     """その行の絵にする秒。still、無ければ src の1つ目の頭（回の名前つきなら、それも付けて）"""
     if r.get("still"):
         return str(r["still"])
-    v, a, _ = M.span((r.get("src") or [""])[0])
+    src = r.get("src") or [""]
+    # 撮影の素材の秒（`ffdb9709b1 0.3`）は配信のシートに無いので、配信の秒が他に無いときだけ素材の札にする
+    first = next((x for x in src if not M.footage_ref(x)), None)
+    if first is None:
+        return str(src[0])
+    v, a, _ = M.span(first)
     h, rem = divmod(a, 3600)
     return M.ref(v, f"{int(h)}:{int(rem // 60):02d}:{rem % 60:04.1f}")
 
@@ -156,6 +161,14 @@ def map_tile() -> Image.Image:
     return im
 
 
+def footage_tile(fid: str) -> Image.Image:
+    """撮影の素材の行の札（絵コンテは配信のシートから切るので、素材の画は持たない。書き出しでは作業用の mp4 が入る）"""
+    im = Image.new("RGB", (W, H), (64, 88, 80))
+    d = ImageDraw.Draw(im)
+    d.text((W // 2, H // 2), f"撮影の素材 {fid}", fill=(235, 235, 235), font=font(22), anchor="mm")
+    return im
+
+
 def fit(im: Image.Image, under: Image.Image | None = None) -> Image.Image:
     """9:16 の枠に収める。横長（寄せた箱も）は幅に合わせてまん中に置き、上下は元のコマをぼかして埋める。"""
     if im.height / im.width >= H / W * 0.9:
@@ -181,6 +194,8 @@ def wrap(text: str, f: ImageFont.FreeTypeFont, width: int) -> list[str]:
 
 
 def tag(still: str, default: str) -> str:
+    if M.footage_ref(still):
+        return f"撮影の素材 {still}"
     vid, _ = parse(still, default)
     hms = M.split_ref(still)[1]
     if M.is_map(sec(still)):
@@ -212,8 +227,9 @@ def main(argv: list[str] | None = None) -> int:
     tiles = []
     for (a, b, r), lines in zip(rows, texts):
         still = still_of(r)
-        vid, t = parse(still, default)
-        src = frame(root, vid, t)
+        foot = M.footage_ref(still)
+        vid, t = (foot[0], foot[1]) if foot else parse(still, default)
+        src = footage_tile(foot[0]) if foot else frame(root, vid, t)
         if r.get("crop"):
             x0, y0, x1, y1 = r["crop"]
             box = (int(x0 * src.width), int(y0 * src.height), int(x1 * src.width), int(y1 * src.height))

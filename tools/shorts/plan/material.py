@@ -11,6 +11,7 @@ zoom から組んだ archive の写しを作って回していた（2026-11-04 �
 | `0:53:10` / `0:53:10.5–0:53:13` | この回（`--material` の回・指示書の `--video`）の秒。区間の線は – — - ~ 〜 のどれでも |
 | `kunXt2sXnFQ 0:17:23.5–0:17:26` | **ほかの回の秒**。頭に videoId（11字）と空白。絵コンテの `still` は `kunXt2sXnFQ@0:17:24.5` も同じ |
 | `27:46:40.0–27:46:42.9` | **地図の行**（`tools/shorts/hookmap` の刺し素材）。配信の時間軸の外の秒（`MAP_T` から） |
+| `ffdb9709b1 0.3` / `ffdb9709b1 0.3–2.0` | **撮影の素材**（`shorts/footage/index.json` の ID。`f` と16進9桁）の、作業用の頭からの秒。音は無い（#1441・F-094） |
 """
 from __future__ import annotations
 
@@ -26,6 +27,8 @@ MAP_T = 100000.0
 # 頭の videoId（11字）と、空白か @。時刻（0:53:10 など）は「:」を含むので、ここに当たらない
 _REF = re.compile(r"^\s*([A-Za-z0-9_-]{11})(?:\s+|@)\s*(\S.*)$")
 _DASH = re.compile(r"\s*[–—\-~〜]\s*")
+# 撮影の素材の ID（tools/shorts/footage の台帳。f と16進9桁で10字）と、作業用の頭からの秒（省けば 0）。videoId（11字）には当たらない
+_FOOT = re.compile(r"^\s*(f[0-9a-f]{9})(?:\s+(\S.*?))?\s*$")
 # シートの余白（tools/shorts/ingest/media.py の SHEET_GAP・SHEET_HEAD。make_sheets と同じ並び）
 GAP, HEAD = 4, 30
 
@@ -56,6 +59,16 @@ def span(s: str) -> tuple[str | None, float, float | None]:
     if len(parts) == 2 and parts[1]:
         return video, sec(parts[0]), sec(parts[1])
     return video, sec(parts[0]), None
+
+
+def footage_ref(s) -> tuple[str, float, float | None] | None:
+    """'ffdb9709b1 0.3–2.0' →（'ffdb9709b1', 0.3, 2.0）。撮影の素材の秒でなければ None（配信の秒は span で読む）"""
+    m = _FOOT.match(str(s or ""))
+    if not m:
+        return None
+    parts = _DASH.split((m.group(2) or "0").strip())
+    a = sec(parts[0])
+    return m.group(1), a, (sec(parts[1]) if len(parts) == 2 and parts[1] else None)
 
 
 def is_map(t: float) -> bool:

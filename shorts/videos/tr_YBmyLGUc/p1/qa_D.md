@@ -31,6 +31,8 @@
 
 ## 作りかた（再現の手順）
 
+2026-11-26 から、下の 2・3 は道具に入った: spec と overrides の `<ID> <秒>`・overrides の `sfx`・`bands`・顔の箱の `blur.json`（v6 の箱をそのまま書き直したもの）で `build_edit.py … --blur blur.json` と組めば、v6 と同じ24カット（撮影の素材の ID と秒も同じ）・同じ効果音・同じ帯になる（顔の箱は v6 の箱を全部含む。f2a04232f8 は同じ秒を2カットで使ったので、もう一方のカットで見つけた箱も掛かる）。
+
 1. `build_edit.py spec_D.json --clips <窓の index.json> --voice <声>/lines.json --plan D --overrides overrides_D.json --style style_D.json`
 2. 撮影の素材の置き換え: build_edit は撮影の素材を引けないので、overrides の `FOOTAGE <ID> <秒>` の印のカットを、組んだあと `sources` の `{"footage": ID}` と作業用のコマ番号（30コマ/秒）に置き換えた（作業の置き場の footage_swap.py。音は付けない）
 3. 仕上げ（作業の置き場の polish.py）: 効果音2つ・1:34〜1:43 の窓の素材の帯・顔のぼかし（`face_scan.py` の列を少し大きめに貼る）

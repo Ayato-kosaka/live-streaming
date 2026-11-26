@@ -225,6 +225,8 @@ def row_spans(spec: dict, main: str) -> tuple[list[tuple[int, str, float, float]
     out, maps = [], []
     for i, r in enumerate(spec["rows"]):
         for s in r.get("src") or []:
+            if M.footage_ref(s):
+                continue   # 撮影の素材（音も配信の秒も無い）。配信の盛り上がりとは突き合わせない
             vid, a, b = M.span(s)
             if M.is_map(a):
                 if i not in maps:

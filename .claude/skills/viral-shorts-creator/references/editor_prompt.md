@@ -98,6 +98,10 @@
    `{{ov}}` に `{"rows": {"<0始まりの行>": {"cuts": [{"t": "H:MM:SS.s", "share": 0.6, "until": "…", "note": "なぜこの画か"}, …]}}}`。
    `share`（行の中の割合。全カットに書いたときだけ効く）か `len`（秒で固定）。ほかに `zoom`（`{"to": 1.1, "x": 0.5, "y": 0.75}`）・`hold`（行の後ろに足す秒）・
    `telop`（`""` で出さない）・`highlight`（字幕で黄色にする語）・`bgm_db`（全体の BGM の上げ下げ。行の外に書く）。
+   **撮影の素材**（`footage.py table <配信>` の ID）は `src` か `t` に `"<ID> <秒>"`（作業用の頭からの秒。音は使えないので `audio_db` は書かない）。
+   その素材の顔は組む前に `python3 tools/shorts/render/face_scan.py --footage <ID> $S/faces --book <回の p1>/blur.json` で帳面に書き（絵を見て漏れは手で足す）、
+   組むときに `--blur <回の p1>/blur.json`。効果音・札・窓の帯は `{{ov}}` の上の段の `sfx`・`stickers`・`bands`（時は `{"row": 行, "cut": 何本目, "f": コマ}`）に書く。
+   組んだ指示書を手で直さない（組み直すと消える）
    **書かなければ** 2カットは声の文の切れ目、3カット以上は等分（`split_row`）。題の札（spec の `title_card`。国旗の絵文字つき）は
    `title_card_seconds`（4.0まで）で消え、札が1行目と別の字なら1行目の字幕は札の下に出る
 4. **指示書を組む**: `python3 tools/shorts/plan/build_edit.py {{spec}} --clips <index.json>（配信ごとに --clips を重ねる） --voice $S/voice/{{name}}/lines.json --plan {{sid}} --bgm {{bgm}} --overrides {{ov}} --out {{edit}}`。

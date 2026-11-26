@@ -56,6 +56,32 @@ spec の `src`（と overrides の `cuts[].t`）に回の名前を付けて書�
 地図の素材（`hookmap.py` の index.json）から引く。どちらの窓も同じ秒を持ちうるので、名前で分けないと別の回の画を取る。
 「同上」の続きも、前の行と同じ回から取る。前は1本の時間軸でしか引けず、担当が回ごとに k×3600 秒ずらした一覧の写しを作っていた
 （その書きかた・名前の無い spec はそのまま通る）。
+
+## 撮影の素材（#1441・帳面 F-094）
+
+spec の `src`（と overrides の `cuts[].t`）に**撮影の素材の ID と作業用の頭からの秒**（`ffdb9709b1 0.3`。区間なら
+`ffdb9709b1 0.3–2.0`。書きかたは `material.py`）を書くと、そのカットは `sources` の `{"footage": ID}`（名前 `f_<ID>`）から、
+作業用（30コマ/秒）のコマ番号で取る。長さの上限は台帳（`--footage`、既定 `shorts/footage/index.json`）の `seconds`。
+越えるなら入りを前にずらして知らせる（区間の終わりと `until` も上限）。**音は無い**: そのカットに `audio_db` を書く・
+元の声の行（`orig_voice`）に当てると止まる（書き出しの `footage_guard` と同じ決まりを、組む段で先に断る）。
+「同上」の続きは同じ素材の続きのコマから。ぼかしの帳面の窓の箱（配信の秒）は掛からない。
+
+**撮影の素材に写る人の顔は必ずぼかす。** ぼかしの帳面（`--blur`。何冊でも）の `footage` に、その素材を顔の検出に
+通した記録（`face_scan.py --footage <ID>` が書く。顔が無くても記録は残る）が無いカットは、組まずに止まる。
+帳面の箱（`from_t` が `<ID> <秒>`）のうち、そのカットに掛かるものが `cuts[].blur` に入る。カメラを持つ本人しか
+写らない素材などで外すときだけ、overrides のそのカットに `"faces": false`。
+
+## 仕上げ（札・効果音・窓の帯）は overrides に（組み直しても消えない）
+
+前は組んだあとの指示書に、担当が手のスクリプトで `stickers`・`sfx`・素材の `bands` を足していて、組み直すたびに消えた
+（ビリヤニの回・ホットワインの回）。overrides の上の段に書けば、組むたびに入る。書かない回の指示書は1バイトも変わらない。
+
+- `sfx: [{"at": 時, "file", "db", "note"}]`・`stickers: [{"from": 時, "to": 時, …書き出しの欄}]` → 指示書の同じ欄。
+  時は、コマの数か `{"row": 行, "cut": その行の何本目（省けば行の頭）, "end": true（終わりから）, "frac": 0.5, "f": コマ, "s": 秒}`
+  （行やカットの長さが組み直しで動いても、言葉の出に付いていく）。`file`・`image` の相対の道は overrides の置き場から
+- `bands: [{"t": "1:34:00–1:44:00", "size", "rows", "margin"}]` → その区間に掛かる窓の素材の `bands`（固定コメントの帯が
+  窓によって違う所にある回）
+- 行の `corner_note_to`（時）→ その行の注を早く消す（2カット目が本人の顔の行など）
 """
 from __future__ import annotations
 
@@ -72,6 +98,7 @@ sys.path.insert(0, str(HERE))
 import material as M  # noqa: E402
 
 RENDER = HERE.parent / "render"
+FOOTAGE_INDEX = HERE.parents[2] / "shorts" / "footage" / "index.json"   # 撮影の素材の台帳（tools/shorts/footage）
 
 FPS = 30
 GAP_S = 0.25          # 行と行の間（声が終わってから次の行まで）
@@ -524,6 +551,133 @@ def library_for(lib: list[dict], clip: dict, t0: float, t1: float, pools: "Pools
     return blur_regions(out, clip)
 
 
+def fsec(s) -> float:
+    """撮影の素材の秒（'ffdb9709b1 1.0' でも '1.0' でも）"""
+    f = M.footage_ref(str(s))
+    return f[1] if f else sec(str(s))
+
+
+class Footage:
+    """撮影の素材の台帳と、ぼかしの帳面に書いた素材の顔の箱。台帳は撮影の素材のカットがあるときだけ読む
+    （無い回は、台帳が無くても今までどおり組める）"""
+
+    def __init__(self, index: Path, books: list[dict]) -> None:
+        self.index, self._items = Path(index), None
+        self.regions = [r for b in books for r in b.get("regions") or [] if M.footage_ref(str(r.get("from_t", "")))]
+        self.scanned: dict[str, dict] = {}
+        for b in books:
+            self.scanned.update(b.get("footage") or {})
+
+    def item(self, fid: str) -> dict:
+        if self._items is None:
+            if not self.index.is_file():
+                sys.exit(f"撮影の素材の台帳が無い: {self.index}（--footage で渡す）")
+            self._items = {it["id"]: it for it in json.loads(self.index.read_text()).get("items", [])}
+        if fid not in self._items:
+            sys.exit(f"撮影の素材 {fid} が台帳（{self.index}）に無い（tools/shorts/footage/footage.py pull）")
+        return self._items[fid]
+
+    def place(self, i: int, cs: dict, foot: tuple, m: int) -> int:
+        """カットの入り（作業用のコマ番号）。使ってよい最後のコマ（長さの端の1コマ・区間の終わり・until）を越えるなら前にずらす"""
+        fid, a, b = foot
+        lim = int(float(self.item(fid)["seconds"]) * FPS + 1e-6) - 1
+        for end in (b, fsec(cs["until"]) if cs.get("until") else None):
+            if end is not None:
+                lim = min(lim, round(end * FPS))
+        fin = round(a * FPS)
+        if fin + m > lim:
+            if lim - m < 0:
+                sys.exit(f"{i}行目: 撮影の素材 {fid} から {m / FPS:.2f}秒は取れない（使えるのは {lim / FPS:.2f}秒まで）")
+            print(f"  注意: {i}行目 撮影の素材 {fid} {a:.2f}秒から {m / FPS:.2f}秒は {lim / FPS:.2f}秒を越えるので、"
+                  f"{(lim - m) / FPS:.2f}秒からにした", file=sys.stderr)
+            fin = lim - m
+        return fin
+
+    def faces(self, i: int, fid: str, fin: int, fout: int) -> list[dict]:
+        """帳面の顔の箱のうち、このカットに掛かるもの（作業用のコマ番号に直し、カットの中に切る）。検出の記録が無ければ止まる"""
+        rec = self.scanned.get(fid)
+        if rec is None:
+            sys.exit(f"{i}行目: 撮影の素材 {fid} の顔を、まだ検出に通していない（ぼかしの帳面に記録が無い）。"
+                     f"python3 tools/shorts/render/face_scan.py --footage {fid} <見る絵の置き場> --book <帳面> を回して、"
+                     f"絵を見てから --blur で渡す（人の写らない素材でも記録は要る。外すならそのカットに \"faces\": false）")
+        sha = self.item(fid).get("sha256")
+        if rec.get("sha256") and sha and rec["sha256"] != sha:
+            sys.exit(f"{i}行目: 撮影の素材 {fid} の帳面は前の作業用の顔（sha256 が台帳と違う）。face_scan.py --footage で取り直す")
+        a, b = fin / FPS, fout / FPS
+        if not any(s0 - 0.5 / FPS <= a and b <= s1 + 0.5 / FPS for s0, s1 in rec.get("scanned") or []):   # 記録は 3桁に丸めてある
+            sys.exit(f"{i}行目: 撮影の素材 {fid} の {a:.2f}〜{b:.2f}秒は、顔の検出に通した範囲（{rec.get('scanned')}）の外")
+        out = []
+        for r in self.regions:
+            if M.footage_ref(str(r["from_t"]))[0] != fid:
+                continue
+            ra, rb = fsec(r["from_t"]), fsec(r["to_t"])
+            if not (ra < b and rb > a):
+                continue
+            o = {k: v for k, v in r.items() if k not in ("keys", "from_t", "to_t", "note")}
+            if "keys" in r:
+                o["keys"] = [{"f": round(fsec(k["t"]) * FPS), "rect": k["rect"]} for k in r["keys"]]
+            o["from"], o["to"] = max(fin, round(ra * FPS)), min(fout, round(rb * FPS))
+            if r.get("note"):
+                o["note"] = r["note"]
+            out.append(o)
+        return out
+
+
+def anchor(a, meta_rows: list[dict], cuts: list[dict], where: str) -> int:
+    """overrides の札・効果音の時（README の「仕上げ」）→ 動画のコマ。数ならそのまま"""
+    if isinstance(a, (int, float)) and not isinstance(a, bool):
+        return int(a)
+    if not isinstance(a, dict) or "row" not in a or set(a) - {"row", "cut", "end", "frac", "f", "s"}:
+        sys.exit(f"{where}: 時は、コマの数か {{\"row\", \"cut\", \"end\", \"frac\", \"f\", \"s\"}}（{a!r}）")
+    row = next((x for x in meta_rows if x["row"] == int(a["row"])), None)
+    if row is None:
+        sys.exit(f"{where}: {a['row']}行目が無い")
+    base, n = row["from"], row["frames"]
+    if "cut" in a:
+        rc = [c for c in cuts if c["row"] == row["row"]]
+        k = int(a["cut"])
+        if not 0 <= k < len(rc):
+            sys.exit(f"{where}: {row['row']}行目のカットは {len(rc)} 本（cut {k} が無い）")
+        base += sum(c["out"] - c["in"] for c in rc[:k])
+        n = rc[k]["out"] - rc[k]["in"]
+    return (base + (n if a.get("end") else 0) + math.floor(float(a.get("frac", 0)) * n) + int(a.get("f", 0))
+            + round(float(a.get("s", 0)) * FPS))
+
+
+def finish(edit: dict, ov: dict, ov_dir: Path, srcs_clip: dict, meta_rows: list[dict], note_of_row: dict,
+           rows_ov: dict) -> None:
+    """overrides の仕上げ（sfx・stickers・bands・corner_note_to）を指示書に入れる。書いていなければ何もしない"""
+    cuts = edit["cuts"]
+
+    def path(p: str) -> str:
+        q = Path(p).expanduser()
+        return str(q if q.is_absolute() else (ov_dir / q).resolve())
+    for i, n in note_of_row.items():
+        if "corner_note_to" in rows_ov.get(str(i), {}):
+            n["to"] = anchor(rows_ov[str(i)]["corner_note_to"], meta_rows, cuts, f"rows.{i}.corner_note_to")
+    if ov.get("stickers"):
+        edit["stickers"] = []
+        for k, st in enumerate(ov["stickers"]):
+            it = {**st, "from": anchor(st.get("from"), meta_rows, cuts, f"stickers[{k}].from"),
+                  "to": anchor(st.get("to"), meta_rows, cuts, f"stickers[{k}].to")}
+            if it.get("image"):
+                it["image"] = path(it["image"])
+            edit["stickers"].append(it)
+    if ov.get("sfx"):
+        edit["sfx"] = [{**x, "at": anchor(x.get("at"), meta_rows, cuts, f"sfx[{k}].at"),
+                        **({"file": path(x["file"])} if x.get("file") else {})} for k, x in enumerate(ov["sfx"])]
+    for k, bd in enumerate(ov.get("bands") or []):
+        video, a, b = M.span(bd["t"])
+        if b is None:
+            sys.exit(f"bands[{k}]: t は区間で書く（'1:34:00–1:44:00'）")
+        hit = [key for key, c in srcs_clip.items()
+               if c["start"] < b and c["end"] > a and (video is None or c.get("video") == video)]
+        if not hit:
+            print(f"  注意: bands[{k}] {bd['t']} に掛かる窓の素材が無い", file=sys.stderr)
+        for key in hit:
+            edit["sources"][key]["bands"] = {x: v for x, v in bd.items() if x not in ("t", "note")}
+
+
 def orig_pieces(i: int, specs: list[dict], clips: list[dict], pools: "Pools | None" = None) -> list[dict]:
     """元の声の行（spec の `orig_voice`。帳面 F-051）の、声と画に使う元動画の区間。
 
@@ -534,6 +688,9 @@ def orig_pieces(i: int, specs: list[dict], clips: list[dict], pools: "Pools | No
     """
     out = []
     for k, cs in enumerate(specs):
+        if M.footage_ref(cs["t"]):
+            sys.exit(f"{i}行目は元の声の行（orig_voice）: カット {k} の撮影の素材 {cs['t']} には音が無い"
+                     f"（元の声は配信の同じ秒から取る。撮影の素材は音を使わない。F-094）")
         t0, t1 = src_span(cs["t"])
         if cs.get("len"):
             m = round(float(cs["len"]) * FPS)
@@ -620,7 +777,10 @@ def orig_audio(pieces: list[dict], work: Path, name: str) -> Path:
 
 def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict:
     ov = json.loads(Path(args.overrides).read_text()) if args.overrides else {}
-    lib = json.loads(Path(args.blur).read_text())["regions"] if args.blur else []
+    books = [json.loads(Path(b).read_text()) for b in (args.blur or [])]
+    # 窓の箱（配信の秒）と、撮影の素材の箱（from_t が '<ID> <秒>'）を分ける
+    lib = [r for bk in books for r in bk["regions"] if not M.footage_ref(str(r.get("from_t", "")))]
+    foot = Footage(getattr(args, "footage", None) or FOOTAGE_INDEX, books)
     rows_ov = ov.get("rows", {})
     rows = spec["rows"]
     # 元の声の行（帳面 F-051）: AI の声を作らず、その秒の元の音を声の行に置く。声の一覧にはこの行のぶんが無い
@@ -746,6 +906,8 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     prev_spec: dict = {}
 
     sources: dict[str, dict] = {}
+    srcs_clip: dict[str, dict] = {}   # 窓の素材の名前 → 窓（overrides の bands が、どの窓に掛かるか）
+    note_of_row: dict[int, dict] = {}
     cuts, telops, meta_rows = [], [], []
     # 画の切り出しかた（対談系 #1104）。overrides の views に名前ごとの crop（元の画の使う範囲）と fit を書き、カットの view
     # （書かなければ view_default）で選ぶ。同じ窓でも、2人の帯（blur で全体）と話す人の寄り（cover で1人ぶん）を切り替える。
@@ -812,6 +974,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                 ln["face_overlap_ok"]["keep_size"] = True
         if r.get("corner_note"):
             notes.append({"from": t, "to": t + n, "text": r["corner_note"]})
+            note_of_row[i] = notes[-1]
         _, center = parse_telop(r.get("telop", ""))
         center = ro.get("telop", center)
         tel_meta = None
@@ -882,32 +1045,44 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         assert sum(lens) == n, f"{i}行目: カットの合計 {sum(lens)} コマ ≠ 行の長さ {n} コマ"
         row_cuts = []
         for k, (cs, m) in enumerate(zip(specs, lens)):
-            t0, _ = src_span(cs["t"])
-            video = pools.tag(src_video(cs["t"]))
-            if i in orig_rows:
-                clip, t0 = orig_place(i, k, cs, pieces[i][k], m)
+            fr = M.footage_ref(cs["t"])
+            if fr is not None:
+                # 撮影の素材（#1441）。音は無いので audio_db は断る。窓の帳面の箱は掛けず、素材の顔の箱を掛ける
+                fid = fr[0]
+                if cs.get("audio_db") is not None:
+                    sys.exit(f"{i}行目: 撮影の素材 {fid} のカットに audio_db は書けない（撮影の素材の音は使わない。F-094）")
+                fin = foot.place(i, cs, fr, m)
+                clip, video, key = {"start": 0.0}, fid, f"f_{fid}"
+                sources.setdefault(key, {"footage": fid})
+                cut = {"src": key, "in": fin, "out": fin + m, "row": i}
             else:
-                if cs.get("until") and t0 + m / FPS > sec(cs["until"]) + 1e-6:
-                    # ここより後ろは使えない（指が映る・場面が変わる）。足りないぶんは入りを前にずらす
-                    t1 = sec(cs["until"]) - m / FPS
-                    print(f"  注意: {i}行目 {M.ref(video, fmt(t0))} から {m / FPS:.2f}秒は {cs['until']} を越えるので、"
-                          f"{fmt(t1)} からにした", file=sys.stderr)
-                    t0 = t1
-                clip, t0 = find_clip(pools.get(video), t0, m / FPS, video)
-            key = clip.get("key") or f"c{int(clip.get('n', len(sources) + 1)):02d}"
-            vname = cs.get("view", view_default) if views else None
-            if vname is not None:
-                if vname not in views:
-                    sys.exit(f"{i}行目: view {vname!r} が overrides の views に無い（{', '.join(views)}）")
-                key = f"{key}@{vname}"
-                sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"],
-                                         "crop": [int(v) for v in views[vname]["crop"]]})
-            else:
-                sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"]})
-            fin = round((t0 - clip["start"]) * FPS)
-            cut = {"src": key, "in": fin, "out": fin + m, "row": i}
-            if vname is not None and views[vname].get("fit"):
-                cut["fit"] = views[vname]["fit"]
+                t0, _ = src_span(cs["t"])
+                video = pools.tag(src_video(cs["t"]))
+                if i in orig_rows:
+                    clip, t0 = orig_place(i, k, cs, pieces[i][k], m)
+                else:
+                    if cs.get("until") and t0 + m / FPS > sec(cs["until"]) + 1e-6:
+                        # ここより後ろは使えない（指が映る・場面が変わる）。足りないぶんは入りを前にずらす
+                        t1 = sec(cs["until"]) - m / FPS
+                        print(f"  注意: {i}行目 {M.ref(video, fmt(t0))} から {m / FPS:.2f}秒は {cs['until']} を越えるので、"
+                              f"{fmt(t1)} からにした", file=sys.stderr)
+                        t0 = t1
+                    clip, t0 = find_clip(pools.get(video), t0, m / FPS, video)
+                key = clip.get("key") or f"c{int(clip.get('n', len(sources) + 1)):02d}"
+                vname = cs.get("view", view_default) if views else None
+                if vname is not None:
+                    if vname not in views:
+                        sys.exit(f"{i}行目: view {vname!r} が overrides の views に無い（{', '.join(views)}）")
+                    key = f"{key}@{vname}"
+                    sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"],
+                                             "crop": [int(v) for v in views[vname]["crop"]]})
+                else:
+                    sources.setdefault(key, {"path": clip["path"], "watermark": "prism_live", "t0": clip["start"]})
+                srcs_clip.setdefault(key, clip)
+                fin = round((t0 - clip["start"]) * FPS)
+                cut = {"src": key, "in": fin, "out": fin + m, "row": i}
+                if vname is not None and views[vname].get("fit"):
+                    cut["fit"] = views[vname]["fit"]
             if "focus_x" in cs:
                 cut["focus_x"] = cs["focus_x"]
             if "focus_y" in cs:
@@ -917,7 +1092,12 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                     cut["zoom"] = {"from": 1.0, "to": ZOOM_TO, **cs["zoom"]}
             elif zooms[k]:
                 cut["zoom"] = {"from": 1.0, "to": ZOOM_TO}
-            blur = blur_regions(cs.get("blur"), clip) + library_for(lib, clip, t0, t0 + m / FPS, pools)
+            if fr is not None:
+                blur = blur_regions(cs.get("blur"), clip)
+                if cs.get("faces") is not False:
+                    blur += foot.faces(i, fr[0], fin, fin + m)
+            else:
+                blur = blur_regions(cs.get("blur"), clip) + library_for(lib, clip, t0, t0 + m / FPS, pools)
             if blur:
                 cut["blur"] = blur
             if cs.get("audio_db") is not None:
@@ -934,7 +1114,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             if cs.get("note"):
                 cut["note"] = cs["note"]  # なぜこの画にしたか（人が直すときに読む。書き出しは読まない）
             cuts.append(cut)
-            row_cuts.append(f"{M.ref(video, fmt(t0))}+{m / FPS:.2f}s")
+            row_cuts.append(f"{M.ref(fr[0], f'{fin / FPS:.2f}') if fr else M.ref(video, fmt(t0))}+{m / FPS:.2f}s")
         prev_end = clip["start"] + cuts[-1]["out"] / FPS
         prev_video = video
         prev_spec = specs[-1]
@@ -1013,6 +1193,9 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         db_ = args.bgm_db if args.bgm_db is not None else float(ov.get("bgm_db", 0))
         edit["bgm"] = {"path": str(Path(args.bgm).resolve()), "db": db_,
                        **({"start_s": ov["bgm_start_s"]} if "bgm_start_s" in ov else {})}
+    # 仕上げ（札・効果音・窓の帯）。前は組んだあとに手のスクリプトで足し、組み直すたびに消えていた
+    finish(edit, ov, Path(args.overrides).resolve().parent if args.overrides else Path.cwd(), srcs_clip,
+           meta_rows, note_of_row, rows_ov)
     return edit
 
 
@@ -1027,7 +1210,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--plan", help="声の一覧のどの案か（既定: spec の id）")
     ap.add_argument("--bgm")
     ap.add_argument("--overrides")
-    ap.add_argument("--blur", help="ぼかしの帳面（動画ごとに1冊。元動画の時刻で書いた顔の箱）")
+    ap.add_argument("--blur", action="append",
+                    help="ぼかしの帳面（動画ごとに1冊。元動画の時刻で書いた顔の箱・撮影の素材の顔の箱）。何冊でも")
+    ap.add_argument("--footage", type=Path, default=FOOTAGE_INDEX,
+                    help="撮影の素材の台帳（既定 shorts/footage/index.json。撮影の素材のカットがあるときだけ読む）")
     ap.add_argument("--speed", type=float, default=1.15, help="open_jtalk の速さ（下書きのとき）")
     ap.add_argument("--tail", type=float, default=0.5,
                     help="最後の行に足す秒。声が終わってから絵を少し見せて終わる（0.25秒の間と合わせて約0.75秒）")
