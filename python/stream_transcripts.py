@@ -375,8 +375,8 @@ def write_one(item: dict, cap: dict | None, chat: list[dict], fetched: str,
         (d / f"{stem}.transcript.txt").write_text(body, encoding="utf-8")
         # chars は**伏せる前**の字数。議事録の目安字数（stream_notes.py）がこの数から出ていて、
         # 伏せたあとで数えると、伏せる前に書いた議事録が目安の外に押し出される（実際に14本出た）。
-        # 列の意味を「字幕の字数」で揃えておく
-        row.update(caption="ok", chars=sum(len(s) for _, s in raw),
+        # 列の意味を「字幕の字数」で揃えておく。言った秒の印（‹h:mm:ss›）も数えない（印を入れる前の回と揃える）
+        row.update(caption="ok", chars=sum(len(st.unmark(s)) for _, s in raw),
                    note=st.music_note(head["caption_desc"], n_music))
     else:
         why = (cap or {}).get("why") or "取りに行かなかった"

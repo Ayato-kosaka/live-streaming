@@ -7,6 +7,7 @@
 ## 形
 
 - 文字起こし: `[h:mm:ss] 発話` を **30秒ごとに1行**。発話の無い30秒は行を作らない。
+  `[h:mm:ss]` は30秒の窓の頭で、言った秒は字幕の区切りごとに行の中の `‹h:mm:ss›`（`unmark` で外す）。
   `[音楽]` / `♪` のある30秒は `[h:mm:ss] [音楽]` だけにする（歌詞を公開しない。#969）
 - チャット: `[h:mm:ss] 名前: 本文`。投げ銭は `[h:mm:ss] ¥500 名前: 本文`
 - どちらも冒頭に `# ` で始まるヘッダを数行
@@ -138,8 +139,64 @@ def strip_overlap(prev: str, new: str, min_len: int = OVERLAP_MIN) -> str:
     return new
 
 
+# ---------------------------------------------------------------- 言った秒の印
+#
+# 行の頭の `[h:mm:ss]` は **30秒の窓の頭**（T〜T+30秒のどこかで言った）。読む側（ショートの区間・clip-cut・
+# brief.py の前後30秒・街のガイド）はこれを言った秒として使い、実際と 0〜30秒ずれていた
+# （2026-11-13 jnKVIXn4qQs を whisper の語の時刻と比べて、中央値 18.4秒・90%点 31.9秒）。
+# 30秒の行は残す（曲の区間を30秒ごとに伏せる #969・guide_facts.py の BIN=30 が乗っている）。
+# そのうえで、**字幕の区切りごとに、言い始めの秒を行の中に入れる**:
+#
+#     [0:46:00] ‹0:46:19›やばい。ちょい焦げした。‹0:46:24›…
+#
+# 印の形はこの1つ。字幕の字に出てこない字（‹ › U+2039/U+203A）で囲む。読む側で字を表示・照合するときは
+# `unmark` で外す（外すと、印を入れる前と同じ字になる）。秒が要るときは `said_at` で（秒, 字）に分ける。
+MARK_RE = re.compile(r"‹(\d+):(\d{2}):(\d{2})›")
+MARK_HEADER = f"# 行の頭は{BIN_SEC}秒の窓の頭。言い始めの秒は字幕の区切りごとに ‹h:mm:ss› で行の中にある"
+
+
+def mark(sec: float) -> str:
+    return f"‹{hms(int(max(0.0, sec)))}›"   # 切り捨て（印が行の窓 T〜T+30 からはみ出さない）
+
+
+def unmark(text: str) -> str:
+    """言った秒の印を外す。表示・照合に使う字はこれを通す。"""
+    return MARK_RE.sub("", text)
+
+
+def said_at(text: str, head: int | None = None) -> list[tuple[int | None, str]]:
+    """行の中身（`[T]` を外したもの）を（言い始めの秒, 字）に分ける。印の前の字は head の秒（印の無い古い行は丸ごと head）。"""
+    out, at, pos = [], head, 0
+    for m in MARK_RE.finditer(text):
+        if text[pos:m.start()].strip():
+            out.append((at, text[pos:m.start()].strip()))
+        at, pos = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + int(m.group(3)), m.end()
+    if text[pos:].strip():
+        out.append((at, text[pos:].strip()))
+    return out
+
+
+def head_time(row: dict, kept: str) -> float:
+    """重なりを落としたあとの字（kept）の、言い始めの秒。語の時刻があれば、落とした字のぶん語を進めた所。"""
+    full = row["text"].strip()
+    words = row.get("words") or []
+    cut = len(full.replace(" ", "")) - len(kept.replace(" ", ""))
+    if cut <= 0 or not words:
+        return row["start"]
+    seen = 0
+    for w in words:
+        seen += len(w["w"].replace(" ", "").replace("\n", ""))
+        if seen > cut:
+            return w["t"]
+    return words[-1]["t"]
+
+
 def bin_captions(rows: list[dict], width: int = BIN_SEC) -> list[tuple[int, str]]:
-    """字幕の行を `width` 秒ごとにまとめる。重なりは落とす。（秒の頭, 発話）の並び。"""
+    """字幕の行を `width` 秒ごとにまとめる。重なりは落とす。（秒の頭, 発話）の並び。
+
+    字幕の区切り（json3 の event・vtt の cue）ごとに、言い始めの秒の印（`mark`）を字の前に入れる。
+    箱は前と同じく区切りの頭の秒で決めるので、`unmark` で外すと印を入れる前と同じ字になる。
+    """
     bins: dict[int, str] = {}
     prev = ""
     for r in sorted(rows, key=lambda r: r["start"]):
@@ -148,7 +205,12 @@ def bin_captions(rows: list[dict], width: int = BIN_SEC) -> list[tuple[int, str]
             continue
         prev = (prev + t)[-200:]
         k = int(max(0, r["start"]) // width) * width
-        bins[k] = join_text(bins.get(k, ""), t)
+        cur = bins.get(k, "")
+        # 継ぎ目の空白は印を入れる前と同じに決める（印は空白のあと・字の前）
+        sep = join_text(cur, t)[len(cur):len(join_text(cur, t)) - len(t)]
+        # 句読点だけの区切り（「。」1字）には印を付けない。言い始めではないので
+        tag = mark(head_time(r, t)) if any(c.isalnum() for c in t) else ""
+        bins[k] = cur + sep + tag + t
     return sorted(bins.items())
 
 
@@ -231,7 +293,7 @@ def transcript_text(head: dict, bins: list[tuple[int, str]]) -> str:
     lines = [f"[{hms(t)}] {s}" for t, s in bins]
     out = header(head) + [f"# 字幕: {head.get('caption_desc', '?')}",
                           f"# 行数: {len(lines)}（{BIN_SEC}秒ごと）",
-                          MUSIC_HEADER, ""]
+                          MUSIC_HEADER, MARK_HEADER, ""]
     return "\n".join(out + lines) + "\n"
 
 

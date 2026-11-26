@@ -75,6 +75,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import stream_notes as sn  # noqa: E402  時刻の読みかた・投げ銭の行の形は議事録の道具と同じものを使う
+import stream_text as st  # noqa: E402  言った秒の印（‹h:mm:ss›）の外しかた
 
 ROOT = Path(__file__).resolve().parents[1]
 STREAMS = ROOT / "streams"
@@ -202,7 +203,10 @@ def same_sentence(q: str, c: str) -> bool:
 # ---------------------------------------------------------------- 材料を読む
 
 def read_transcript(p: Path) -> tuple[str, list[tuple[int, str]]]:
-    """（題名, [(秒, その30秒の発話)]）。頭の `# ` はヘッダ。"""
+    """（題名, [(秒, その30秒の発話)]）。頭の `# ` はヘッダ。
+
+    発話の中の言った秒の印（`‹h:mm:ss›`。stream_text.py）は外す。ここで見るのは30秒の行（BIN）で、
+    言い回しは字の一致で確かめるので、印が挟まると本人の言葉と合わなくなる。"""
     title, lines = "", []
     for raw in p.read_text(encoding="utf-8").splitlines():
         if raw.startswith("# ") and not lines:
@@ -210,7 +214,7 @@ def read_transcript(p: Path) -> tuple[str, list[tuple[int, str]]]:
             continue
         m = sn.LINE_TIME_RE.match(raw)
         if m:
-            lines.append((sn.sec(*m.groups()), raw[m.end():].strip()))
+            lines.append((sn.sec(*m.groups()), st.unmark(raw[m.end():]).strip()))
     return title, lines
 
 

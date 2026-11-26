@@ -32,6 +32,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 STREAMS = ROOT / "streams"
+sys.path.insert(0, str(ROOT / "python"))
+import stream_text as st  # noqa: E402  言った秒の印（‹h:mm:ss›）の外しかた
 
 # 目安字数（SKILL.md §2）。ふつうの回は約4,000字、字幕が短い回は字幕の25%（600字は割らない）。
 # 長時間の回は 4万字を超えたぶんの5%を足す（上限8,000字）。4,000字に押し込むと漏れが出るから
@@ -190,7 +192,8 @@ def check_one(md: Path, transcript_chars: int | None = None) -> list[str]:
 
     # (a) 字数
     if transcript_chars is None:
-        transcript_chars = len(transcript.read_text(encoding="utf-8")) if transcript.exists() else 0
+        # 言った秒の印（‹h:mm:ss›）は字数に入れない。印を入れる前の回と目安を揃える
+        transcript_chars = len(st.unmark(transcript.read_text(encoding="utf-8"))) if transcript.exists() else 0
     tgt = target_chars(transcript_chars)
     lo, hi = int(tgt * LOW), int(tgt * HIGH)
     # 下限600字に引き上げられた回（字幕の25%が600に届かない）は、材料そのものが
