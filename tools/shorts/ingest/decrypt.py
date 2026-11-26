@@ -1,8 +1,10 @@
 """`shorts/.work/` に届いた暗号文を、秘密鍵で開いて**リポジトリの外に**展開する。
 
-    git fetch origin claude/serene-darwin-sf09tt && git merge --ff-only FETCH_HEAD
-    python3 tools/shorts/ingest/decrypt.py --key ~/keys/ref_private.pem --out /path/outside/repo
-    python3 tools/shorts/ingest/decrypt.py --key K --out O shorts/.work/yk-by7R7iPA/archive
+    python3 tools/shorts/ingest/decrypt.py --key K --out O --branch claude/serene-darwin-sf09tt shorts/.work/yk-by7R7iPA/archive
+    python3 tools/shorts/ingest/decrypt.py --key ~/keys/ref_private.pem --out /path/outside/repo   # 取り込み済みの置き場を全部
+
+作業箱では作業枝を `git fetch` しない（ほかの担当の clips の暗号文まで落ちてディスクが埋まる。2026-11-26）。
+`--branch` は git を通さず、名指した置き場のファイルだけを API で取る。
 
 置き場を指さなければ `shorts/.work/` の下の manifest.json を全部見る。
 展開先は `<out>/<dest>/`（例 `<out>/yk-by7R7iPA/archive/`、

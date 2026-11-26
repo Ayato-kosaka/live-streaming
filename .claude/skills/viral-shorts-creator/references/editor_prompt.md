@@ -61,8 +61,10 @@
      区間ごと・2秒に1コマ。帯は「配信の時刻＋mp4 の中の秒」（例 `0:04:15 +0s`）。縦長は 6×5（1枚60秒）・横長は 5×6。同じ所に `sheets.csv`・`index.json`。
      **この形で取れるのは 62c63c0e より後に頼んだ clips だけ。** 「古い形」の配信は、下の mp4 を開いて手元で作る
      （`mkdir -p $S/sheets && ffmpeg -loglevel error -i <窓の mp4> -vf "fps=0.5,scale=240:-1,tile=6x5" $S/sheets/<番号>_%02d.jpg`。1枚 60秒ぶん）
-   - **mp4**（指示書を組む・書き出す・カクつきを測るのに要る）: `git fetch origin claude/serene-darwin-sf09tt && git merge --ff-only FETCH_HEAD` →
-     `python3 tools/shorts/ingest/decrypt.py --key $K --out $S/ingest shorts/.work/<videoId>/clips`（鍵違いは開かない）
+   - **mp4**（指示書を組む・書き出す・カクつきを測るのに要る）: **作業枝は `git fetch` しない**（ほかの担当の clips の暗号文まで落ちて
+     箱のディスクが 0 になった。2026-11-26）。API でこの回の置き場だけ取る:
+     `python3 tools/shorts/ingest/decrypt.py --key $K --out $S/ingest --branch claude/serene-darwin-sf09tt shorts/.work/<videoId>/clips`
+     （鍵違いは開かない。開いたら `$S/ingest/.sealed` の封の写しは消す。mp4 も使い終わったら消す）
    - **「下ろしてある」配信**: 書いてあるコミットの木から戻して開く。`git restore --source <コミット> -- shorts/.work/<videoId>/clips`
      （コマ一覧だけなら `…/clips/manifest.json` と `'…/clips/sheets.*'` だけ戻し、`--branch` を付けずに `--sheets`）→ 開いたら
      `rm -rf shorts/.work/<videoId>/clips`（`git add` しない）

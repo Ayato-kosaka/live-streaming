@@ -106,9 +106,9 @@ openssl pkey -in <スクラッチパッド>/keys/priv.pem -pubout -out <スク�
 ```bash
 # shorts/requests/<好きな名前>.json を claude/ の枝に足して push する
 {"mode": "captions", "videos": ["VusdZVyjgjQ"], "pubkey": "-----BEGIN PUBLIC KEY-----\n…"}
-# 置き場は shorts/.work/<id>/captions/。届いたら開く（数百KB なので git で取り込んでよい）
-git fetch origin claude/serene-darwin-sf09tt && git merge FETCH_HEAD
-python3 tools/shorts/ingest/decrypt.py --key <秘密鍵> --out <リポジトリの外> shorts/.work/VusdZVyjgjQ/captions
+# 置き場は shorts/.work/<id>/captions/。届いたら開く（作業枝は git fetch しない。API でこの置き場だけ取る）
+python3 tools/shorts/ingest/decrypt.py --key <秘密鍵> --out <リポジトリの外> \
+  --branch claude/serene-darwin-sf09tt shorts/.work/VusdZVyjgjQ/captions
 ```
 
 - **媒体は落とさない**（`yt-dlp --skip-download --write-subs --write-auto-subs --sub-langs ja-orig,ja`）。
@@ -160,10 +160,15 @@ HMAC はつないだ全体に掛けてある。`push.sh` は 90MB 以上のフ�
 ## 開きかた
 
 ```bash
-git fetch origin claude/serene-darwin-sf09tt && git merge --ff-only FETCH_HEAD
-python3 tools/shorts/ingest/decrypt.py --key <スクラッチパッド>/keys/priv.pem --out <スクラッチパッド>/ingest
-# 1つだけ: 末尾に shorts/.work/yk-by7R7iPA/archive のように置き場を足す
+python3 tools/shorts/ingest/decrypt.py --key <スクラッチパッド>/keys/priv.pem --out <スクラッチパッド>/ingest \
+  --branch claude/serene-darwin-sf09tt shorts/.work/yk-by7R7iPA/archive
+# clips の見る用の小さな封だけ: --sheets を足す（約1MB）
 ```
+
+**作業箱では作業枝を `git fetch` しない。** 作業枝にはほかの担当の clips の暗号文も積まれていて（2026-11-26 に計 2.7GB）、
+共有の clone に fetch すると全部落ちてディスクが 0 になった。`--branch` は git を通さず、名指した置き場のファイルだけを
+API で取る。開いたあとの封の写し（`<out>/.sealed/`）は要らなければ消す。作業枝へ依頼を積む・結果を読む道具は
+`tools/shorts/preview/branch.py`（使い捨ての bare で、木だけを取る）を通す。
 
 `<out>/<置き場>/` に開く（例 `<out>/yk-by7R7iPA/archive/`、`<out>/channels/cheethann3/shorts/`）。
 **展開先がリポジトリの中なら断る。** 鍵違い・暗号文の破損（HMAC 不一致）も開かない。

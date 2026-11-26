@@ -1,9 +1,11 @@
 """作業枝に置かれた付箋の暗号文を、手元で開いて表にする。**名前と本文はこの画面にだけ出す。**
 
-    git fetch origin claude/serene-darwin-sf09tt
-    python3 tools/shorts/stickies/read.py --key <スクラッチパッド>/keys/priv.pem --ref FETCH_HEAD
-    python3 tools/shorts/stickies/read.py --key K --ref FETCH_HEAD --theme ""        # テーマ横断
-    python3 tools/shorts/stickies/read.py --key K shorts/.work/stickies/shorts-idea  # 取り込んだ枝から
+    python3 tools/shorts/stickies/read.py --key K <置き場>/shorts/.work/stickies/shorts-idea  # branch.py で取り出した置き場から
+    python3 tools/shorts/stickies/read.py --key K --ref <ref> --theme ""             # 手元の git にある ref から（テーマ横断）
+
+作業箱では作業枝を `git fetch` しない（ほかの担当の clips の暗号文まで落ちてディスクが埋まる。2026-11-26）。
+置き場は `tools/shorts/preview/branch.py` の `extract(fetch('claude/<作業枝>'), 'shorts/.work/stickies/<テーマ>', <置き場>)`
+で、使い捨ての bare から3つだけ取り出す（README の 3）。
 
 `--ref` は作業ツリーに触らずに git から3つ（manifest.json / key.enc / payload.enc）を抜いて開く。
 統括のセッションが同じ clone で別の枝を開いていても、枝を切り替えずに読めるように。
@@ -75,7 +77,7 @@ def from_ref(ref: str, slot: str, into: Path) -> Path:
                            capture_output=True)
         if r.returncode != 0:
             raise SystemExit(f"!! {ref} に shorts/.work/stickies/{slot}/{name} が無い"
-                             "（git fetch した？ 暗号文を45MB で切った回は read.py ではなく decrypt.py で開く）")
+                             "（作業枝は fetch せず branch.py で取り出した置き場を渡す。暗号文を45MB で切った回は read.py ではなく decrypt.py で開く）")
         (d / name).write_bytes(r.stdout)
     return d
 

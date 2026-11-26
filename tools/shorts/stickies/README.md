@@ -28,9 +28,10 @@ pathlib.Path("shorts/stickies/2026-10-21-shorts-idea.json").write_text(
 EOF
 git add shorts/stickies/ && git commit -m "…" && git push origin HEAD:claude/<作業枝>
 
-# 3. run が終わったら、枝を切り替えずに開いて表にする
-git fetch origin claude/<作業枝>
-python3 tools/shorts/stickies/read.py --key <スクラッチパッド>/keys/priv.pem --ref FETCH_HEAD
+# 3. run が終わったら、作業枝を fetch せずに（共有の clone に暗号文を落とさない）3つだけ取り出して開き、表にする
+python3 -c "import sys, pathlib; sys.path.insert(0, 'tools/shorts/preview'); import branch as br; \
+br.extract(br.fetch('claude/<作業枝>'), 'shorts/.work/stickies/shorts-idea', pathlib.Path('<スクラッチパッド>/stickies'))"
+python3 tools/shorts/stickies/read.py --key <スクラッチパッド>/keys/priv.pem <スクラッチパッド>/stickies/shorts/.work/stickies/shorts-idea
 ```
 
 master に入ったあとは、手で起こしてもよい（入力は依頼と同じ。`branch` に結果を置く枝）:

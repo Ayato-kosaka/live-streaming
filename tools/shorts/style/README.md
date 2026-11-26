@@ -40,8 +40,9 @@
 鍵の作りかた・依頼の置きかた・開きかたは取り込みの README のとおり。
 
 ```bash
-git fetch origin <作業枝> && git merge --ff-only FETCH_HEAD
-python3 tools/shorts/ingest/decrypt.py --key <scratch>/keys/priv.pem --out <scratch>/ref shorts/.work/<動画ID>/clips
+# 作業枝は git fetch しない（ほかの担当の暗号文まで落ちてディスクが埋まる。2026-11-26）。API でこの置き場だけ取る
+python3 tools/shorts/ingest/decrypt.py --key <scratch>/keys/priv.pem --out <scratch>/ref \
+  --branch <作業枝> shorts/.work/<動画ID>/clips
 # → <scratch>/ref/<動画ID>/clips/01_0-00-00_0-01-01.mp4
 ```
 
