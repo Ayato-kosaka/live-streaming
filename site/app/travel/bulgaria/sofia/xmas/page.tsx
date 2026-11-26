@@ -5,6 +5,7 @@ import { jpDate } from "@/components/travel/article/scene";
 import { CITY_STREAMS } from "@/content/cityStreams";
 import { travelArticle, travelArticleCrumbs, travelArticleShare, travelCity, travelPage, TRAVEL, TRAVEL_LABEL } from "@/content/travel";
 import { ARTICLE as A } from "@/content/travel/bulgaria/sofia-xmas";
+import { ARTICLE as HOTWINE } from "@/content/travel/bulgaria/sofia-xmas-hotwine";
 import PageShell from "@/components/ui/PageShell";
 import { JsonLd, articleLd } from "@/lib/jsonld";
 
@@ -108,6 +109,7 @@ export default function SofiaXmasPage() {
 
         <NextRead
           items={[
+            { href: travelArticle(COUNTRY, CITY, "xmas-hotwine").href, title: HOTWINE.h1[0], note: "別の日に行った、ブルガリアで1番大きい会場。ホットワインとツリーの乗り物", icon: "wine" },
             { href: city.href, title: `${city.name}のガイド`, note: "見どころ・食べもの・気をつけること", icon: "guide" },
             { href: country.href, title: country.name, note: "国の案内。ことば・食べもの・お金", icon: "mountain" },
             { href: TRAVEL, title: TRAVEL_LABEL, note: "あやとが歩いた国の記録", icon: "globe" },
