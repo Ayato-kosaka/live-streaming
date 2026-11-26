@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__rom-p5-v2",
+ "mode": "render",
+ "dest": "render/rom-p5-v2/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/rom-p5-v2.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 2012,
+  "tar_gz": 1186,
+  "encrypted": 1200
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1200,
+   "sha256": "29579e297a86e880648758b630195f0d19854322b513e7a6474e4275d1ca16d1"
+  }
+ ],
+ "hmac_sha256": "588a349f0f08d957e590f52366c2e22c98f3bd784e295b60ae439de8ec95a2da",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-26T22:12:01+00:00",
+ "nonce": "4dae7c40e1c145d88098cb6a"
+}
