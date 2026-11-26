@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__sov-c-v5",
  "mode": "render",
- "dest": "render/sov-c-v5/inbox",
+ "dest": "render/sov-c-v5",
  "video": null,
  "channel": null,
  "request": "shorts/render/sov-c-v5.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1185,
-  "encrypted": 1200
+  "plain": 36727,
+  "tar_gz": 9473,
+  "encrypted": 9488
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1200,
-   "sha256": "c26d6abd9c39eb332aaa1d9aafbfdc0446a09eb6ed483af2e534ebfe7cfa6748"
+   "bytes": 9488,
+   "sha256": "9d9e5716f552b8a74097754abb8048c275b9da3678d4b28282c3ba8168e2282d"
   }
  ],
- "hmac_sha256": "554071dadd3c57bc158263c4f796879f29d73de2c6bf367f9a5c4dea0ad9e815",
+ "hmac_sha256": "2c6607f7b4e2a1a3f57e23888174b38cf4930024c6f325d0055510702e57bac7",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-26T02:37:35+00:00",
+ "created_at": "2026-11-26T02:49:33+00:00",
  "nonce": "aa3c89bc5fd4c0212b3e2b75"
 }
