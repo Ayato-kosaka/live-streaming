@@ -141,6 +141,8 @@ def mask_transcript(text: str) -> tuple[str, list[str]]:
     印の数字が年齢・日付の形（`‹0:46:19›歳`）に見えて伏せ字を誤らせ、トークンも食うので。"""
     out, bodies = [], []
     for line in text.splitlines():
+        if line == st.MARK_HEADER:
+            continue   # 印は外して渡すので、印の読みかたの1行も渡さない
         if STAMP.match(line):
             line = st.unmark(line)
             b = mask_identity(STAMP.sub("", line), chat=False)
