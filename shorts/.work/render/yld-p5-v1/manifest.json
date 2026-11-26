@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__yld-p5-v1",
  "mode": "render",
- "dest": "render/yld-p5-v1/inbox",
+ "dest": "render/yld-p5-v1",
  "video": null,
  "channel": null,
  "request": "shorts/render/yld-p5-v1.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 28168,
-  "tar_gz": 10547,
-  "encrypted": 10560
+  "plain": 35441,
+  "tar_gz": 9185,
+  "encrypted": 9200
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 10560,
-   "sha256": "888d7cd8e1f4acd890a6a7d4e7ad2b005dcc2cd4a8624ad6ac49fe2ccc7bffd0"
+   "bytes": 9200,
+   "sha256": "ba05faa456386133a920fd31aae62e68b391a69fc582b822ff97653f6c367d8a"
   }
  ],
- "hmac_sha256": "efaa25479efb23550f7ecf325f38b260b1ca79ddc1224635e32ad0be2ac41dcc",
+ "hmac_sha256": "32ec85f7c409f376c8c9d5da0bc25ffe4f7a5e1794effcbf7993acb567a5fc8b",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-26T21:54:46+00:00",
+ "created_at": "2026-11-26T22:03:14+00:00",
  "nonce": "614f2567f1488c70ed0bd810"
 }
