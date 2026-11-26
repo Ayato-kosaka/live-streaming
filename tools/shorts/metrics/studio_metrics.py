@@ -60,6 +60,7 @@ METRICS = {
 }
 RETENTION_COLS = ("ret_norm_3s", "ret_norm_8s", "keep_3to8_pct")
 
+IDS_PER_CALL = 50
 READ_ONLY = frozenset({"creator/get_creator_videos", "yta_web/get_cards"})
 
 VIDEO_MASK = {"videoId": True, "privacy": True, "lengthSeconds": True, "videoDurationMs": True,
@@ -181,7 +182,10 @@ def collect(api_fn, ids, now_s=None, sleep=1.0, skip=()):
     skip = set(skip)
     now_s = int(now_s if now_s is not None else time.time())
     ids = list(dict.fromkeys(i for i in ids if i))
-    got = call("creator/get_creator_videos", {"videoIds": ids, "mask": VIDEO_MASK}).get("videos", [])
+    # get_creator_videos は1回に50本まで。台帳が51本を超えた 2026-11-26 に、まとめて送って HTTP 400 で止まった
+    got = []
+    for k in range(0, len(ids), IDS_PER_CALL):
+        got += call("creator/get_creator_videos", {"videoIds": ids[k:k + IDS_PER_CALL], "mask": VIDEO_MASK}).get("videos", [])
     by_id = {v.get("videoId"): v for v in got}
     out = {"tool": TOOL_VERSION, "fetched_at": now_s, "videos": []}
     for vid in ids:

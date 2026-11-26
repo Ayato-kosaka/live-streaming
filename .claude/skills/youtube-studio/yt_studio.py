@@ -399,3 +399,43 @@ def prepend_description(t, video_id, line):
     time.sleep(3)
     after = get_videos(t, [video_id], mask=mask)[0].get("description", "")
     return {"before": len(before), "after": len(after), "exact": after == line + "\n" + before}
+
+
+def append_description(t, video_id, line):
+    """説明欄のいちばん後ろに改行と line を足して保存し、読み直して「前の説明＋改行＋line」と同じかを返す
+    （本編からショートの記事へ。#1453）。形と止まりかたは prepend_description と同じ。
+    戻り値には読み直した前後の字そのもの（before_text / after_text）も入れる（増えたのがその1行だけかを手元で比べる）"""
+    mask = {"videoId": True, "description": True}
+    before = get_videos(t, [video_id], mask=mask)[0].get("description", "")
+    if line in before:
+        return {"before": len(before), "after": len(before), "exact": True, "skipped": "already", "before_text": before, "after_text": before}
+    want = before.rstrip("\n") + "\n" + line
+    t = studio(f"{BASE}/video/{video_id}/edit")
+    if "accounts.google.com" in (t.url() or ""):
+        return {"error": "signed_out"}
+    _wait(t, f"!!{_DESC_BOX} && {_DESC_BOX}.offsetParent !== null", 40)
+    time.sleep(2)
+    if t.js(f"{_DESC_BOX}.innerText").rstrip("\n") != before.rstrip("\n"):
+        return {"error": "box_differs_from_api"}
+    t.click(_DESC_BOX)
+    t.js(f"""(() => {{ const e = {_DESC_BOX}; e.focus(); const r = document.createRange();
+        r.selectNodeContents(e); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }})()""")
+    time.sleep(0.3)
+    t.js("document.execCommand('insertLineBreak')")
+    time.sleep(0.3)
+    t.type(line)
+    time.sleep(1)
+    if t.js(f"{_DESC_BOX}.innerText").rstrip("\n") != want:
+        return {"error": "box_not_as_expected", "box": t.js(f"{_DESC_BOX}.innerText")[-200:]}
+    _wait(t, f"!!{_SAVE_BTN} && {_SAVE_BTN}.getAttribute('aria-disabled') !== 'true'", 15)
+    t.click(_SAVE_BTN)
+    end = time.time() + 40
+    while time.time() < end:
+        if t.js(f"!!{_dlg('本人確認')}"):
+            return {"error": "reauth"}
+        if t.js(f"{_SAVE_BTN}.getAttribute('aria-disabled') === 'true'"):
+            break
+        time.sleep(1)
+    time.sleep(3)
+    after = get_videos(t, [video_id], mask=mask)[0].get("description", "")
+    return {"before": len(before), "after": len(after), "exact": after == want, "before_text": before, "after_text": after}

@@ -39,6 +39,7 @@ python3 .claude/skills/ec2-chrome/ec2.py put .claude/skills/youtube-studio/yt_st
 | `claim_segments(t, id, claim)` | 申し立てが一致した区間（ミリ秒） |
 | `resolve_claim_ui(t, id, 曲名, how)` | 申し立て1件に**画面を押して**対応する。`how` は `erase`（曲だけ消し、声は残す）か `mute`（区間を全部無音）。**元に戻せない**。1本90秒ほど |
 | `prepend_description(t, id, 行)` | 説明欄の頭に1行足して保存し、読み直して「行＋改行＋前の説明」と同じかを返す（街のガイドの行。#664 の「つぎの国へ移ったら」）。**本人確認の窓が出たら `次へ` を押さずに `{"error": "reauth"}`**（2026-11-21 に保存で出た。押すとあやとのスマホが鳴る） |
+| `append_description(t, id, 行)` | 説明欄の**末尾**に改行と1行を足して保存し、読み直して「前の説明＋改行＋行」と同じかを返す（本編の配信アーカイブ → ショートの記事。#1453）。前後の字そのもの（`before_text` / `after_text`）も返すので、増えたのがその1行だけかを手元で比べる。止まりかたは `prepend_description` と同じ（2026-11-26 に揚げパン・ビリヤニの本編2本で通した） |
 
 EC2 で回すときの形:
 
