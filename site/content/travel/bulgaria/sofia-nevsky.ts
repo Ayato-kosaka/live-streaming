@@ -157,8 +157,15 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
    }
   }
  ],
+ "shorts": [
+  {
+   "youtube": "Z8_a7aU-9Rg",
+   "tiktok": "https://www.tiktok.com/@ayato_arigato/video/7712516131415674130",
+   "at": "2026-11-29T21:30:00+09:00"
+  }
+ ],
  "published": "2026-11-20",
- "updated": "2026-11-22",
- "hash": "b9c12396253d931c"
+ "updated": "2026-11-27",
+ "hash": "50e96fc49d040be9"
 }
 /* END GUIDE */;
