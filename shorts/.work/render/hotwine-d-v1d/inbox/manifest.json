@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__hotwine-d-v1d",
+ "mode": "render",
+ "dest": "render/hotwine-d-v1d/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/hotwine-d-v1d.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 28168,
+  "tar_gz": 10537,
+  "encrypted": 10544
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 10544,
+   "sha256": "b40d90ecfd7a922acae1d616c033d8c694bf32cd8362f94f59ea5dd26f4b635e"
+  }
+ ],
+ "hmac_sha256": "cbfeb5cbc1641ec68a7caffb074879cd416f5712b4520e7c04231988a8e68cd4",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-26T10:35:25+00:00",
+ "nonce": "f2100d9660ac5694c3159669"
+}
