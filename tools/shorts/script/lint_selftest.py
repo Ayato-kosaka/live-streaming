@@ -47,8 +47,8 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `later_rule_live` | ホステル p2 を 10-22 の決まりで当てると、T-FLAG だけが落ちる（承認のあとにできた決まりが効いている） |
 | `miete` | 「地下鉄1回に見えてきた」を 15行目で拾う。「海が見えてきた！」は拾わない |
 | `title_real` | 「銅像だらけの国で、僕まで銅像にされた」を拾う。あやとが書いた題4本（「海外キッチンで…」を含む）と、アプリの回の題は通す |
-| `title_metaphor` | 「〜みたいだった」の題を拾う。あやとの題は通す |
-| `flag` | 国旗が無い・違う国・国の名前の後ろ、を拾う。正しい旗と、国の名前が無い題は通す |
+| `title_metaphor` | 「〜みたいだった」の題を拾う。あやとの題は通す。「〜に行ったら天国みたいな世界だった！」（#1451。本当にした行動のあとの気持ちのたとえ）は △ だけ |
+| `flag` | 国旗が無い・違う国・国の名前の後ろ、を拾う。正しい旗と、国の名前が無い題は通す。「〜行きのバス」の行き先には旗を求めない（#1446 のあやとの題）。「ルーマニアに行ったら」には求める |
 | `narrator` `phrase` `yen` | 10-16 に直された p1 の行（あやとは・本人いわく・だそうです／国を出る／280レク。約550円）を拾い、言い換えた行は通す |
 | `length` | 391字で落ち、390字で通る |
 | `end` | 最後の行が問い・問い → アーカイブ・アーカイブだけ（#975）は通す。問いのあとの別の行・どちらも無い終わりを拾う |
@@ -83,7 +83,9 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `num38` | 題の直後から8秒（見込み）までに数（漢字の数も）が無ければ2行目に △。題の数は数えない。ボザ v9（4行目の1L）は通す（L-NUM38。#1403 Q5） |
 | `voice0` | 0〜8秒（見込み）に本人の声（orig_voice）の行が無ければ △。4行目（7.7秒）なら通し、7行目だけなら出す。spec が無ければ「見ていない」（L-VOICE0。#1403） |
 | `bang` | 山でない行の「！」が6行で △、5行は通す。題・【答】・本人の声・【大】の「！」は数えない（L-BANG。#1403） |
-| `new_fixtures` | 温泉 v5・ボザ v9（`approved/2EKBYEnv850_p1_v5`・`approved/bg-boza_p1_v9`。あやと #1441「ブラッシュアップ完璧」）が今日の決まりで ✕ 0（当て表 L-ATE は控えに入れていないので外す） |
+| `new_fixtures` | 温泉 v5・ボザ v9（`approved/2EKBYEnv850_p1_v5`・`approved/bg-boza_p1_v9`。あやと #1441「ブラッシュアップ完璧」）が今日の決まりで ✕ 0（当て表 L-ATE と、書く前の persona・baseline の L-BASE は控えに入れていないので外す） |
+| `base` | spec に persona（ペルソナ3つのどれかを名指す）と baseline（5〜7行）があれば通す。persona が無い・3つのどれも名指さない・基本線が4行・8行なら ✕。spec が無ければ「見ていない」。11-26 のあやとのコメントより前の時点では当てない（L-BASE。#1446・F-099） |
+| `voicen` | 本人の声（orig_voice・voice_src）の行が3つなら通し、2つなら △（✕ にはしない）。spec が無ければ「見ていない」（L-VOICEN。#1445・F-078） |
 """
 from __future__ import annotations
 
@@ -146,7 +148,7 @@ CUTS = {
     "ashi_rows": ("lint.py", '        if "【足】" in (r.get("why") or ""):\n            rows.add(i)\n', "        pass\n",
                   {"ashi"}, "spec の【足】の印を読まない"),
     "as_of": ("lint.py", "        if not in_force(r.since, as_of):\n", "        if False:\n",
-              {"as_of", "approved", "title_read", "as_of_id", "later_rule_live", "nick", "prev", "pickwhy"}, "決まりの日を見ない"),
+              {"as_of", "approved", "title_read", "as_of_id", "later_rule_live", "nick", "prev", "pickwhy", "base"}, "決まりの日を見ない"),
     "sorry": ("lint.py", "        m = SORRY.search(ln)\n", "        m = None\n",
               {"sorry"}, "謝る行を拾わない"),
     "spec_title": ("lint.py", '            card, came = s["title_card"], f"{sp.name} の title_card"\n', "            pass\n",
@@ -225,7 +227,7 @@ CUTS = {
     "ate_none": ("lint.py", "    if c.promises is None:\n", "    if False:\n", {"ate"}, "当て表の無い spec を、形の違いと区別しない"),
     "ate_read": ("lint.py", '        has_spec, promises = True, s.get("promises")\n', "        has_spec, promises = True, None\n", {"ate"},
                  "spec の promises を読まない"),
-    "as_of_cid": ("lint.py", "    return sc is None or ac is None or sc <= ac\n", "    return True\n", {"as_of_id", "approved", "prev", "pickwhy"},
+    "as_of_cid": ("lint.py", "    return sc is None or ac is None or sc <= ac\n", "    return True\n", {"as_of_id", "approved", "prev", "pickwhy", "base"},
                   "同じ日の決まりの前後をコメントID で分けない"),
     "rows_missing": ("lint.py", "        if not isinstance(rows, list):\n", "        if False:\n", {"spec_rows"}, "rows の無い spec を黙って読む"),
     "rows_count": ("lint.py", "        if len(rows) != len(lines):\n", "        if False:\n", {"spec_rows"}, "行の数の違う spec を黙って読む"),
@@ -237,7 +239,7 @@ CUTS = {
     "wide_count": ("lint.py", "    return [(i, spoken_chars(ln)) for i, ln in", "    return [(i, chars(ln)) for i, ln in",
                    {"wide"}, "L-SEC の数えかた（「ー」を数えない）で数える"),
     "wide_voice": ("lint.py", '    return isinstance(r, dict) and bool(r.get("orig_voice") or r.get("voice_src"))\n', "    return False\n",
-                   {"wide", "width_median", "voice0", "bang"}, "本人の声の行まで読み上げる行に数える（L-VOICE0・L-BANG も同じ見分けを使う）"),
+                   {"wide", "width_median", "voice0", "bang", "voicen"}, "本人の声の行まで読み上げる行に数える（L-VOICE0・L-BANG・L-VOICEN も同じ見分けを使う）"),
     "wide_vsrc": ("lint.py", 'bool(r.get("orig_voice") or r.get("voice_src"))', 'bool(r.get("orig_voice"))',
                   {"wide"}, "声だけ別の秒から取る本人の声（voice_src）を読み上げる行に数える"),
     "width_line": ("lint.py", "    if wl:\n        out.append(wl)\n", "", {"width_median"}, "行の字数の中央値を出さない"),
@@ -306,6 +308,16 @@ CUTS = {
                 "        m = None\n", {"pickwhy"}, "選んだ訳（〜から、…にした）を拾わない"),
     "pickwhy_head": ("lint.py", "        head = HEAD_CONJ.match(ln)\n", "        head = None\n",
                      {"pickwhy"}, "行の頭のつなぎ（だから、…にした）まで拾う"),
+    # ---- 2026-11-26（#1446・#1451・#1445、F-099・F-078）----
+    "base_who": ("lint.py", "    if not who or not any(k in who for k in PERSONAS):\n", "    if not who:\n",
+                 {"base"}, "ペルソナ3つのどれも名指さない persona を通す"),
+    "base_len": ("lint.py", "    if not BASE_MIN <= len(base) <= BASE_MAX:\n", "    if not base:\n",
+                 {"base"}, "基本線の行の数を見ない"),
+    "voicen": ("lint.py", "    if n >= VOICE_MIN:\n", "    if True:\n", {"voicen"}, "本人の声の数を見ない"),
+    "metaphor_feel": ("lint.py", "    if FEEL.match(m.group(0)) and DID.search(t[:m.start()]):\n", "    if False:\n",
+                      {"title_metaphor"}, "本当にした行動のあとの気持ちのたとえ（あやとの題）まで ✕ で落とす"),
+    "flag_dest": ("lint.py", " and not card.startswith(DEST, p[0] + len(p[1]))]\n", "]\n",
+                  {"flag"}, "「〜行きのバス」の行き先にも旗を求める"),
 }
 
 
@@ -384,6 +396,11 @@ def leg_title_metaphor(L):
             bool(title_hits(L, "🇸🇪 ストックホルムの地下鉄、迷路みたいだった", "T-METAPHOR")))]
     for t in AYATO_TITLES:
         out.append((f"あやとの題「{t.splitlines()[0]}…」は通す", not title_hits(L, t, "T-METAPHOR")))
+    book = "🇷🇴ルーマニアの光溢れる本屋さんに行ったら天国みたいな世界だった！"   # #1451 のあやとの題
+    out += [("あやとの題「…本屋さんに行ったら天国みたいな世界だった！」は ✕ にせず △ だけ",
+             not title_hits(L, book, "T-METAPHOR") and bool(title_looks(L, book, "T-METAPHOR"))),
+            ("行動の無い「ルーマニアの本屋、天国みたいな世界だった」は ✕",
+             bool(title_hits(L, "🇷🇴ルーマニアの本屋、天国みたいな世界だった", "T-METAPHOR")))]
     return out
 
 
@@ -425,6 +442,10 @@ def leg_flag(L):
         ("正しい旗（🇦🇱アルバニアの…）は通す", not title_hits(L, "🇦🇱アルバニアの1泊1400円ホステルが、\n異常すぎた", "T-FLAG")),
         ("国の名前の無い題（アプリの回）は通す", not title_hits(L, "アプリ作り始めて1年、\nついに1日4700人突破！", "T-FLAG")),
         ("「日本」だけの題は国旗を求めない", not title_hits(L, "日本の3倍の値段のコーヒー", "T-FLAG")),
+        ("あやとの題「🇧🇬ブルガリアからルーマニア行きのバス移動してみた！」は通す（行き先に旗を求めない）",
+         not title_hits(L, "🇧🇬ブルガリアからルーマニア行きのバス移動してみた！", "T-FLAG")),
+        ("「🇧🇬ブルガリアからルーマニアに行ったら…」は 🇷🇴 が無いので拾う",
+         bool(title_hits(L, "🇧🇬ブルガリアからルーマニアに行ったら、寒すぎた！", "T-FLAG"))),
     ]
 
 
@@ -1047,11 +1068,44 @@ def leg_bang(L):
             ("温泉 v5・ボザ v9 は通す", not [x for x in new_hits(L, fix(L, V5)) + new_hits(L, fix(L, V9)) if x[0] == "L-BANG"])]
 
 
+BASELINE = ["東欧を回ってる", "ブルガリアでバスに乗る", "お菓子を買って気分を上げる", "景色が綺麗", "着いたら夜で疲れた",
+            "ルーマニアは綺麗らしいから楽しみ"]   # #1446 のあやとの基本線
+
+
+def leg_base(L):
+    def got(persona="将来の海外旅の情報として見たい人", baseline=BASELINE, as_of=TODAY, spec=True):
+        lines = ["🇧🇬ブルガリアからルーマニア行きのバス移動してみた！", "みんなは乗ってみたい？"]
+        c = L.Ctx(lines=lines, title_card=None, title_from="足", rows=[{"line": ln} for ln in lines], has_spec=spec,
+                  persona=persona, baseline=baseline)
+        res = L.lint(c, as_of)
+        return "L-BASE" in res["blind"], [(h.line, h.look) for h in res["hits"] if h.rule == "L-BASE"]
+    return [("persona（情報）と基本線6行があれば通す", got() == (False, [])),
+            ("persona が無ければ ✕", got(persona=None)[1] == [(0, False)]),
+            ("ペルソナ3つのどれも名指さない persona（「旅好き」）は ✕", got(persona="旅好き")[1] == [(0, False)]),
+            ("基本線が4行・8行なら ✕", got(baseline=BASELINE[:4])[1] == [(None, False)]
+             and got(baseline=BASELINE + ["宿に着いた", "寝た"])[1] == [(None, False)]),
+            ("spec が無ければ「見ていない」", got(spec=False)[0]),
+            ("あやとのコメント（2026-11-26:7192063851）より前の時点では当てない",
+             got(persona=None, as_of="2026-11-26:7191788789")[1] == [])]
+
+
+def leg_voicen(L):
+    def got(n, spec=True):
+        lines = [f"{i}行目" for i in range(1, 9)]
+        rows = [{"line": ln, **({"orig_voice": "0:10:00〜0:10:02"} if 2 <= i < 2 + n else {})} for i, ln in enumerate(lines, 1)]
+        c = L.Ctx(lines=lines, title_card=None, title_from="足", rows=rows, has_spec=spec)
+        res = L.lint(c, TODAY)
+        return "L-VOICEN" in res["blind"], [h.look for h in res["hits"] if h.rule == "L-VOICEN"]
+    return [("本人の声の行が3つなら通す", got(3) == (False, [])),
+            ("2つなら △（✕ にはしない）", got(2) == (False, [True])),
+            ("spec が無ければ「見ていない」", got(0, spec=False)[0])]
+
+
 def leg_new_fixtures(L):
     """温泉 v5・ボザ v9 は今日の決まりで ✕ 0（当て表 L-ATE は控えに入れていないので外す）。"""
     out = []
     for rel in (V5, V9):
-        f = [h.rule for h in fails(L, fix(L, rel)) if h.rule != "L-ATE"]
+        f = [h.rule for h in fails(L, fix(L, rel)) if h.rule not in ("L-ATE", "L-BASE")]
         out.append((f"{rel} は今日の決まりで ✕ 0" + (f" ← {f}" if f else ""), not f))
     return out
 
@@ -1108,6 +1162,7 @@ LEGS = {
     "prev": leg_prev, "pickwhy": leg_pickwhy,
     "run": leg_run, "ansnext": leg_ansnext,
     "cliff": leg_cliff, "hook": leg_hook, "num38": leg_num38, "voice0": leg_voice0, "bang": leg_bang, "new_fixtures": leg_new_fixtures,
+    "base": leg_base, "voicen": leg_voicen,
 }
 
 if __name__ == "__main__":

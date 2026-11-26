@@ -112,6 +112,8 @@ class Ctx:
     next_stream: str | None = None                   # spec の next_stream（最後の行で言う次の配信。F-047）
     has_spec: bool = False                           # spec を読んだか（--no-spec・spec が無いなら False）
     promises: dict | None = None                     # spec の promises（作文者の当て表。F-050）。spec に鍵が無ければ None
+    persona: str | None = None                       # spec の persona（誰に向けてか。F-099）
+    baseline: list | None = None                     # spec の baseline（その回で実際にした行動の流れ。F-099）
 
     @property
     def title(self) -> str:
@@ -195,12 +197,16 @@ def flags_in(text: str) -> list:
 
 # ---------- 規則 ----------
 
+DEST = "行き"
+
+
 def t_flag(c: Ctx):
     """F-030 題の札に、国の名前の前に、その国の国旗。"""
     if c.title_card is None:
         return None
     card = c.title_card.replace("\n", "")
-    where = [p for p in places_in(card) if p[1] != HOME]
+    # 「ルーマニア行きのバス」の行き先は、乗り物の名前の一部で題の場所ではない（あやとの題 #1446「🇧🇬ブルガリアからルーマニア行きのバス移動してみた！」。F-099）
+    where = [p for p in places_in(card) if p[1] != HOME and not card.startswith(DEST, p[0] + len(p[1]))]
     if not where:
         return []
     flags = flags_in(card)
@@ -236,6 +242,8 @@ def t_real(c: Ctx):
 
 
 METAPHOR = re.compile(r"見えて(き|く)|みたい[なだにや]|のような|ように見え|と化し|気分(だ|や|に)")
+FEEL = re.compile(r"みたいな|のような")   # 「天国みたいな世界だった」。前に本当にした行動があれば、気持ちのたとえとして △
+DID = re.compile(r"(た|だ)ら[、,]?")
 
 
 def t_metaphor(c: Ctx):
@@ -246,6 +254,10 @@ def t_metaphor(c: Ctx):
     m = METAPHOR.search(t)
     if not m:
         return []
+    if FEEL.match(m.group(0)) and DID.search(t[:m.start()]):
+        # 本当にした行動（〜に行ったら）のあとの、気持ちのたとえ。作った見立てとは別（あやとの題 #1451「…本屋さんに行ったら天国みたいな世界だった！」）
+        return [Hit("T-METAPHOR", 0, t, f"題のたとえ（「{m.group(0)}」）は、本人がその場で言った気持ちか。作った見立てなら、本当に起きたことで言い切る"
+                    "（F-031・F-099）", look=True)]
     return [Hit("T-METAPHOR", 0, t, f"題が見立て（「{m.group(0)}」）。本当に起きたことで言い切る")]
 
 
@@ -1112,6 +1124,41 @@ def l_voice0(c: Ctx):
                 "（無ければ置かない。#1403）", look=True)]
 
 
+PERSONAS = ("ハプニング", "情報", "グルメ")   # F-099 のペルソナ3つ（`highlight_rubric.md`「誰に見せるか」）を名指す語
+BASE_MIN, BASE_MAX = 5, 7
+
+
+def l_base(c: Ctx):
+    """F-099 書く前に、誰に向けてか（spec の persona）と基本線（baseline。その回で実際にした行動の流れ5〜7行）を書いたか。"""
+    if not c.has_spec:
+        return None
+    out = []
+    who = str(c.persona or "").strip()
+    if not who or not any(k in who for k in PERSONAS):
+        out.append(Hit("L-BASE", 0, who or "（persona が無い）", "誰に向けてか（spec の persona）が無い・ペルソナ3つ（海外ハプニングを面白おかしく見たい人／"
+                       "将来の海外旅の情報として見たい人／海外グルメに興味がある人）のどれも名指していない。書く前に1つ選ぶ（F-099）"))
+    base = c.baseline if isinstance(c.baseline, list) else []
+    base = [str(b).strip() for b in base if str(b).strip()]
+    if not BASE_MIN <= len(base) <= BASE_MAX:
+        out.append(Hit("L-BASE", None, f"基本線 {len(base)}行", f"基本線（spec の baseline）が{BASE_MIN}〜{BASE_MAX}行でない。"
+                       "その回で実際にした行動の流れを配信の順に書き、そこへハプニング・気持ち・海外の情報を散らす（F-099）"))
+    return out
+
+
+VOICE_MIN = 3
+
+
+def l_voicen(c: Ctx):
+    """F-078 本人の声（spec の orig_voice・voice_src）の行が1本に3つ未満なら △（あやと #1445「もうちょっと生のセリフ多い方が良い」）。"""
+    if not c.has_spec:
+        return None
+    n = sum(1 for i in range(1, len(c.lines) + 1) if own_voice(row_at(c, i)))
+    if n >= VOICE_MIN:
+        return []
+    return [Hit("L-VOICEN", None, f"本人の声 {n}行", f"本人の声の行が{n}つ。食べた・見た直後の感想や驚いた所で、"
+                f"{VOICE_MIN}〜4か所にできるか（F-078 の2回目）", look=True)]
+
+
 def l_bang(c: Ctx):
     """#1403 「！」で終わる行が、山（題・【答】・【大】・本人の声）と締めの行を除いて1本に5行を越えたら △。
 
@@ -1186,6 +1233,9 @@ RULES = (
     Rule("L-BANG", (), "2026-11-25", f"山でない行の「！」が1本に{BANG_MAX}行を越える（△。確かめ用）", l_bang, src=("#1403",)),
     # ---- 2026-11-25（#1447、F-056）: 揚げパンの回 A の「ヌテラは全部ヌテラ味になるから、蜂蜜ナッツにした。」→「いらない」 ----
     Rule("L-PICKWHY", ("F-056",), "2026-11-25:7173925743", "選んだ訳（1行の中の「〜から、…にした」。題・締め・行の頭の「だから」は見ない）", l_pickwhy),
+    # ---- 2026-11-26（#1446・#1445、F-099・F-078）: 誰に向けてか・基本線・本人の声の数 ----
+    Rule("L-BASE", ("F-099",), "2026-11-26:7192063851", "spec に誰に向けてか（persona）・基本線（baseline 5〜7行）が無い", l_base),
+    Rule("L-VOICEN", ("F-078",), "2026-11-26:7191788789", f"本人の声の行が{VOICE_MIN}つ未満（△。spec がある原稿だけ）", l_voicen),
 )
 
 
@@ -1218,7 +1268,7 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
     lines, ashi, answer = read_script(script)
     rows, card, came, secs, nxt = None, None, "原稿の1行目（国旗は見ていない）", None, None
     sp = spec or spec_for(script)
-    has_spec, promises = False, None
+    has_spec, promises, persona, baseline = False, None, None, None
     if use_spec and sp.exists():
         s = json.loads(sp.read_text(encoding="utf-8"))
         rows = s.get("rows")
@@ -1229,6 +1279,7 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
         if len(rows) != len(lines):
             raise ValueError(f"{sp.name} の rows が {len(rows)} 行で、原稿は {len(lines)} 行（spec を原稿に合わせて直す）")
         has_spec, promises = True, s.get("promises")
+        persona, baseline = s.get("persona"), s.get("baseline")
         if s.get("title_card"):
             card, came = s["title_card"], f"{sp.name} の title_card"
         secs = s.get("title_card_seconds")
@@ -1241,7 +1292,7 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
     if next_stream is not None:
         nxt = next_stream
     return Ctx(lines=lines, title_card=card, title_from=came, rows=rows, ashi_marked=ashi, answer_marked=answer,
-               card_seconds=secs, next_stream=nxt, has_spec=has_spec, promises=promises)
+               card_seconds=secs, next_stream=nxt, has_spec=has_spec, promises=promises, persona=persona, baseline=baseline)
 
 
 AS_OF = re.compile(r"20\d\d-\d\d-\d\d(:\d+)?")
@@ -1300,6 +1351,8 @@ BLIND_WHY = {
     "L-ANSNEXT": "spec の rows に行の種類（kind）が無い・【答】の印が無い",
     "T-HOOK": "spec の題の行に visual も hook も無い",
     "L-VOICE0": "spec が無い（本人の声は spec の orig_voice・voice_src で見る）",
+    "L-BASE": "spec が無い（誰に向けてか・基本線は spec の persona・baseline に書く）",
+    "L-VOICEN": "spec が無い（本人の声は spec の orig_voice・voice_src で見る）",
 }
 
 

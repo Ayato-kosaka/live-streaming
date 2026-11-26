@@ -1051,6 +1051,18 @@ def leaks(text: str, k: int = 8) -> list:
     return out
 
 
+def aim_block(c) -> str:
+    """作文者が書く前に決めた「誰に向けてか」と「基本線」（spec の persona・baseline。帳面 F-099）。
+    批評役は、題と山がこの基本線の中で本当に起きたことか、選んだ人に刺さるかを当てる。"""
+    who = str(getattr(c, "persona", None) or "").strip()
+    base = [str(b).strip() for b in (getattr(c, "baseline", None) or []) if str(b).strip()]
+    if not who and not base:
+        return "\n\n- 誰に向けてか・基本線: 作文者が書いていない（spec の persona・baseline が無い。lint の L-BASE）"
+    lines = [f"- 誰に向けてか（作文者）: {who or '（無い）'}", "- 基本線（作文者。その回で実際にした行動の流れ）:"]
+    lines += [f"  {i}. {b}" for i, b in enumerate(base, 1)] or ["  （無い）"]
+    return "\n\n" + "\n".join(lines)
+
+
 def build_critic(script: Path, spec: Path | None, refs: list, about: str, video=None,
                  ranges: list | None = None, as_of: str | None = None, extra: list | None = None) -> str:
     """video は1本（字）か何本か（並び）。extra は足す写し（`[<videoId>=]<道>`。前日の回の whisper など）。"""
@@ -1064,7 +1076,7 @@ def build_critic(script: Path, spec: Path | None, refs: list, about: str, video=
     # いま見ている回（--video と、--extra に回を書いた写し）の組は入れない（作文者の1枚と同じ）
     mine = videos_of(video) + [p.partition("=")[0] for p in extra or [] if "=" in p]
     return fill(tmpl, {
-        "about": about.strip() or "（まとめ役が1〜3行で書く: 誰の何の配信か・この案の狙い）",
+        "about": (about.strip() or "（まとめ役が1〜3行で書く: 誰の何の配信か・この案の狙い）") + aim_block(c),
         "n": str(len(c.lines)),
         "table": script_table(c, rows),
         "lint": lint_block(script, sp if sp.exists() else None, as_of),
@@ -1182,7 +1194,7 @@ def build_writer(video, ranges: list, refs: list, about: str, n: int, chat: bool
     data = rewrites()
     first = rewrite_counts(mine, data)
     return fill(WRITER_TMPL.read_text(encoding="utf-8"), {
-        "about": about.strip() or "（まとめ役が1〜3行で書く: どの配信のどの出来事か・企画の型・伝えたいこと）",
+        "about": about.strip() or "（まとめ役が1〜3行で書く: どの配信のどの出来事か・誰に向けてか（ペルソナ3つのどれか。帳面 F-099）・伝えたいこと）",
         "cards": cards(first=first),
         "card_order": card_order_line(first),
         "retouch": retouch_block(mine, data),
