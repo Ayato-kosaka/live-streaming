@@ -1,0 +1,682 @@
+{
+ "_note": "build_edit.py が spec_C.json から組んだ。人が直すのは overrides か、この指示書の数字",
+ "version": 2,
+ "id": "C",
+ "style": "style_C.json",
+ "sources": {
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/ingest/sOvaH0tBzSg/clips/05_0-54-00_0-56-30.mp4",
+   "watermark": "prism_live",
+   "t0": 3240.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/ingest2/sOvaH0tBzSg/clips/01_1-37-30_1-47-00.mp4",
+   "watermark": "prism_live",
+   "t0": 5850.0
+  },
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/ingest/sOvaH0tBzSg/clips/03_0-37-30_0-47-30.mp4",
+   "watermark": "prism_live",
+   "t0": 2250.0
+  },
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/ingest/sOvaH0tBzSg/clips/04_0-47-30_0-50-00.mp4",
+   "watermark": "prism_live",
+   "t0": 2850.0
+  }
+ },
+ "cuts": [
+  {
+   "src": "c05",
+   "in": 3240,
+   "out": 3287,
+   "row": 0,
+   "note": "題の前半「ビリヤニを作ってみたら」: チキンとスパイスの鍋を混ぜる最中"
+  },
+  {
+   "src": "c2_01",
+   "in": 11694,
+   "out": 11742,
+   "row": 0,
+   "note": "題の後半「楽しすぎた！」: 炊き上がったビリヤニをひと口食べる本人（答えの画。F-073）。v3 までの 1:40:10 の鍋は、13・15・17行目の鍋と皿と同じ画に数えられ、使い回し4回で落ちた"
+  },
+  {
+   "src": "c03",
+   "in": 4080,
+   "out": 4144,
+   "row": 1,
+   "note": "4口のうち3口に鍋とフライパンが載ったコンロ。v2 の 0:48:12 は端にほかの宿泊客の顔が掛かり、字が被った"
+  },
+  {
+   "src": "c2_01",
+   "in": 4296,
+   "out": 4360,
+   "row": 1,
+   "note": "宿の共同キッチンを歩いて見回す画（コンロと調理台）。v4 は1カット目に置いて、題の後半の本人（同じ窓）と似た見た目 3.7秒で落ちたので2カット目に。v5 の 1:39:52 は光るつまみ2つが顔と読まれて字が被ったので、コンロの天板から調理台へ回る所に"
+  },
+  {
+   "src": "c05",
+   "in": 900,
+   "out": 950,
+   "row": 2
+  },
+  {
+   "src": "c04",
+   "in": 960,
+   "out": 1010,
+   "row": 2
+  },
+  {
+   "src": "c03",
+   "in": 2880,
+   "out": 2929,
+   "row": 3
+  },
+  {
+   "src": "c04",
+   "in": 480,
+   "out": 529,
+   "row": 3
+  },
+  {
+   "src": "c03",
+   "in": 17100,
+   "out": 17188,
+   "row": 4,
+   "note": "湯気の立つ鍋と、下で光る IH（火力えぐくて）。1カット 2.93秒。v6 までの 1:37:46 の光るつまみは、2本目の窓のキッチンを歩く画・フタの画と同じ画に数えられ、使い回し4回で落ちた"
+  },
+  {
+   "src": "c04",
+   "in": 120,
+   "out": 204,
+   "row": 5
+  },
+  {
+   "src": "c03",
+   "in": 15885,
+   "out": 15938,
+   "row": 6,
+   "note": "本人がカメラの前へ戻りながら「やばい、ちょい焦げした」と言う所（声と画が同じ秒）。0:46:06〜0:46:16 はほかの宿泊客が正面に写るので使わない"
+  },
+  {
+   "src": "c03",
+   "in": 16170,
+   "out": 16234,
+   "row": 7
+  },
+  {
+   "src": "c04",
+   "in": 1980,
+   "out": 2066,
+   "row": 8,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.35,
+    "x": 0.55,
+    "y": 0.35
+   },
+   "note": "奥のコンロで隣の人のパンケーキが焼けているフライパンに寄る（1カット。前は手前の玉ねぎの鍋を足していて、5行目の鍋と同じ画に数えられた）"
+  },
+  {
+   "src": "c05",
+   "in": 2010,
+   "out": 2059,
+   "row": 9
+  },
+  {
+   "src": "c03",
+   "in": 4980,
+   "out": 5044,
+   "row": 10
+  },
+  {
+   "src": "c2_01",
+   "in": 300,
+   "out": 361,
+   "row": 11
+  },
+  {
+   "src": "c03",
+   "in": 2682,
+   "out": 2769,
+   "row": 12,
+   "note": "「スリー、ツー、ワン」の間は、カメラに笑う本人（料理を始めたころの別の窓。声だけ配信の 1:40:01.3〜04.2。voice_src）。v1 はフタを持つ手、v2 は同じ窓の 1:38:58 の顔で、どちらも続くフタの2カットと似た見た目に数えられて落ちた。v3 は 0:39:02.4 に暗いコマが1つ入ったので、0.5秒前から取る"
+  },
+  {
+   "src": "c2_01",
+   "in": 4704,
+   "out": 4746,
+   "row": 12,
+   "note": "「オープン」。フタが上がって中が見える（声と同じ秒）"
+  },
+  {
+   "src": "c2_01",
+   "in": 4827,
+   "out": 4871,
+   "row": 12,
+   "note": "「おー」。炊き上がった鍋の寄り（声と同じ秒）"
+  },
+  {
+   "src": "c2_01",
+   "in": 2715,
+   "out": 2772,
+   "row": 13,
+   "note": "開ける前にカメラに笑う本人（香りの行）。鍋の上からの画を続けないため"
+  },
+  {
+   "src": "c2_01",
+   "in": 7380,
+   "out": 7434,
+   "row": 14,
+   "note": "皿に取ったチキンと、べちゃっとした米の寄り"
+  },
+  {
+   "src": "c2_01",
+   "in": 8940,
+   "out": 8991,
+   "row": 15,
+   "note": "べちゃっとした鍋を見たあと、カメラに向かって話す本人（おかゆなったやんか！）。皿の画を2つ続けないため"
+  },
+  {
+   "src": "c2_01",
+   "in": 10740,
+   "out": 10794,
+   "row": 16,
+   "note": "木の机に置いた皿の寄り（見た目だけはうまそう）。段の札「◆実食」はこのカットの間だけ出す（polish.py。次の顔に被せない）"
+  },
+  {
+   "src": "c2_01",
+   "in": 11595,
+   "out": 11649,
+   "row": 16,
+   "note": "皿を前に、ひと口目にいく本人（食べたら……）"
+  },
+  {
+   "src": "c2_01",
+   "in": 12765,
+   "out": 12837,
+   "row": 17,
+   "note": "「うまいなぁ」（1:44:35.6〜38.0）。噛みながらカメラを見る本人。字幕の「うわ」は音で聞き取れないので字から外した"
+  },
+  {
+   "src": "c2_01",
+   "in": 12874,
+   "out": 12932,
+   "row": 17,
+   "note": "「お店の味や」（1:44:39.2〜40.6）。間を詰めた。前のカットと1秒より離して、同じ瞬間に数えられないように"
+  },
+  {
+   "src": "c2_01",
+   "in": 15840,
+   "out": 15893,
+   "row": 18,
+   "note": "チキンを手で裂いてかぶりつく本人。終わりの札（1608コマ〜）より前に切り替える"
+  },
+  {
+   "src": "c2_01",
+   "in": 4362,
+   "out": 4427,
+   "row": 18,
+   "note": "宿の共同キッチンの調理台を歩いて見る画（人は写らない。2行目の続きの秒）。v1 の 1:38:19 は動かない引きで、止まったコマ 1.73秒で落ちた"
+  }
+ ],
+ "title": {
+  "text": "🇧🇬海外でビリヤニを作ってみたら楽しすぎた！",
+  "look": "card",
+  "from": 0,
+  "line": 0,
+  "to": 120
+ },
+ "telops": [],
+ "narration": {
+  "engine": "files",
+  "lines": [
+   {
+    "text": "海外でビリヤニを作ってみたら楽しすぎた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/01.wav",
+    "tts_text": "海外でビリヤニを作ってみたら楽しすぎた！",
+    "caption": "",
+    "at": 0
+   },
+   {
+    "text": "ブルガリアの宿のキッチン、コンロ4つのうち3つ埋まってた！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/02.wav",
+    "tts_text": "ブルガリアのやどのキッチン、コンロ四つのうち三つ埋まってた！",
+    "at": 95,
+    "big": "static_white"
+   },
+   {
+    "text": "残りの1つで、カレーの炊き込みご飯を作る。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/03.wav",
+    "tts_text": "残りの一つで、カレーの炊き込みご飯を作る。",
+    "at": 223
+   },
+   {
+    "text": "まわりの人と英語で喋りながら炒め開始。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/04.wav",
+    "tts_text": "まわりの人と英語で喋りながら炒め開始。",
+    "at": 323
+   },
+   {
+    "text": "けど、火力えぐくて弱火が無いんよ。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/05.wav",
+    "tts_text": "けど、火力えぐくて弱火が無いんよ。",
+    "at": 421,
+    "big": "jump_word"
+   },
+   {
+    "text": "玉ねぎは、強火でいっちゃいたい。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/06.wav",
+    "tts_text": "玉ねぎは、強火でいっちゃいたい。",
+    "at": 509
+   },
+   {
+    "text": "やばい。ちょい焦げした。",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/work/orig_C_06.wav",
+    "at": 593,
+    "big": "shake_white"
+   },
+   {
+    "text": "ニンニクと生姜を入れたら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/08.wav",
+    "tts_text": "ニンニクと生姜を入れたら……",
+    "at": 646
+   },
+   {
+    "text": "隣のパンケーキ、めっちゃええ匂い！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/09.wav",
+    "tts_text": "隣のパンケーキ、めっちゃええ匂い！",
+    "at": 710,
+    "mood": "up_pop"
+   },
+   {
+    "text": "チキンを入れたら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/10.wav",
+    "tts_text": "チキンを入れたら……",
+    "at": 796
+   },
+   {
+    "text": "めっちゃカレーの匂いしてきた。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/11.wav",
+    "tts_text": "めっちゃカレーの匂いしてきた。",
+    "at": 845
+   },
+   {
+    "text": "フタをして待ったら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/12.wav",
+    "tts_text": "フタをして待ったら……",
+    "at": 909
+   },
+   {
+    "text": "スリーツーワン、オープン！おお。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/13.wav",
+    "tts_text": "スリーツーワン、オープン！おお。",
+    "at": 970,
+    "mood": "up_pop",
+    "orig_voice": true,
+    "voice_src": true
+   },
+   {
+    "text": "香りはめちゃくちゃええけど、",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/14.wav",
+    "tts_text": "香りはめちゃくちゃええけど、",
+    "at": 1143
+   },
+   {
+    "text": "下のほうがベチャってる。",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/15.wav",
+    "tts_text": "下のほうがベチャってる。",
+    "at": 1200,
+    "mood": "tense_still"
+   },
+   {
+    "text": "おかゆなったやんか！",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/16.wav",
+    "tts_text": "おかゆなったやんか！",
+    "at": 1254,
+    "big": "shake_white"
+   },
+   {
+    "text": "見た目だけはうまそうやし、食べたら……",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/17.wav",
+    "tts_text": "見た目だけはうまそうやし、食べたら……",
+    "at": 1305
+   },
+   {
+    "text": "うまいなあ。お店の味や！",
+    "orig_voice": true,
+    "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/work/orig_C_17.wav",
+    "at": 1413,
+    "big": "taste_good"
+   },
+   {
+    "text": "みんなは、こんな宿のキッチンで料理してみたい？",
+    "audio": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/voice/sov-c-v1/C/19.wav",
+    "tts_text": "みんなは、こんなやどのキッチンで料理してみたい？",
+    "at": 1543
+   }
+  ]
+ },
+ "meta": {
+  "spec": "/home/user/live-streaming/shorts/videos/sOvaH0tBzSg/p1/spec_C.json",
+  "fps": 30,
+  "frames": 1661,
+  "seconds": 55.367,
+  "rows": [
+   {
+    "row": 0,
+    "from": 0,
+    "frames": 95,
+    "voice_frames": 87,
+    "cuts": [
+     "0:55:48.0+1.57s",
+     "1:43:59.8+1.60s"
+    ],
+    "line": "海外でビリヤニを作ってみたら楽しすぎた！",
+    "telop": null
+   },
+   {
+    "row": 1,
+    "from": 95,
+    "frames": 128,
+    "voice_frames": 120,
+    "cuts": [
+     "0:39:46.0+2.13s",
+     "1:39:53.2+2.13s"
+    ],
+    "line": "ブルガリアの宿のキッチン、コンロ4つのうち3つ埋まってた！",
+    "telop": null,
+    "big": "static_white"
+   },
+   {
+    "row": 2,
+    "from": 223,
+    "frames": 100,
+    "voice_frames": 92,
+    "cuts": [
+     "0:54:30.0+1.67s",
+     "0:48:02.0+1.67s"
+    ],
+    "line": "残りの1つで、カレーの炊き込みご飯を作る。",
+    "telop": null
+   },
+   {
+    "row": 3,
+    "from": 323,
+    "frames": 98,
+    "voice_frames": 90,
+    "cuts": [
+     "0:39:06.0+1.63s",
+     "0:47:46.0+1.63s"
+    ],
+    "line": "まわりの人と英語で喋りながら炒め開始。",
+    "telop": null
+   },
+   {
+    "row": 4,
+    "from": 421,
+    "frames": 88,
+    "voice_frames": 80,
+    "cuts": [
+     "0:47:00.0+2.93s"
+    ],
+    "line": "けど、火力えぐくて弱火が無いんよ。",
+    "telop": null,
+    "big": "jump_word"
+   },
+   {
+    "row": 5,
+    "from": 509,
+    "frames": 84,
+    "voice_frames": 68,
+    "cuts": [
+     "0:47:34.0+2.80s"
+    ],
+    "line": "玉ねぎは、強火でいっちゃいたい。",
+    "telop": null
+   },
+   {
+    "row": 6,
+    "from": 593,
+    "frames": 53,
+    "voice_frames": 45,
+    "cuts": [
+     "0:46:19.5+1.77s"
+    ],
+    "line": "やばい。ちょい焦げした。",
+    "telop": null,
+    "big": "shake_white",
+    "orig_voice": true
+   },
+   {
+    "row": 7,
+    "from": 646,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:46:29.0+2.13s"
+    ],
+    "line": "ニンニクと生姜を入れたら……",
+    "telop": null
+   },
+   {
+    "row": 8,
+    "from": 710,
+    "frames": 86,
+    "voice_frames": 78,
+    "cuts": [
+     "0:48:36.0+2.87s"
+    ],
+    "line": "隣のパンケーキ、めっちゃええ匂い！",
+    "telop": null
+   },
+   {
+    "row": 9,
+    "from": 796,
+    "frames": 49,
+    "voice_frames": 33,
+    "cuts": [
+     "0:55:07.0+1.63s"
+    ],
+    "line": "チキンを入れたら……",
+    "telop": null
+   },
+   {
+    "row": 10,
+    "from": 845,
+    "frames": 64,
+    "voice_frames": 56,
+    "cuts": [
+     "0:40:16.0+2.13s"
+    ],
+    "line": "めっちゃカレーの匂いしてきた。",
+    "telop": null
+   },
+   {
+    "row": 11,
+    "from": 909,
+    "frames": 61,
+    "voice_frames": 39,
+    "cuts": [
+     "1:37:40.0+2.03s"
+    ],
+    "line": "フタをして待ったら……",
+    "telop": null
+   },
+   {
+    "row": 12,
+    "from": 970,
+    "frames": 173,
+    "voice_frames": 165,
+    "cuts": [
+     "0:38:59.4+2.90s",
+     "1:40:06.8+1.40s",
+     "1:40:10.9+1.47s"
+    ],
+    "line": "スリーツーワン、オープン！おお。",
+    "telop": null
+   },
+   {
+    "row": 13,
+    "from": 1143,
+    "frames": 57,
+    "voice_frames": 49,
+    "cuts": [
+     "1:39:00.5+1.90s"
+    ],
+    "line": "香りはめちゃくちゃええけど、",
+    "telop": null
+   },
+   {
+    "row": 14,
+    "from": 1200,
+    "frames": 54,
+    "voice_frames": 46,
+    "cuts": [
+     "1:41:36.0+1.80s"
+    ],
+    "line": "下のほうがベチャってる。",
+    "telop": null
+   },
+   {
+    "row": 15,
+    "from": 1254,
+    "frames": 51,
+    "voice_frames": 43,
+    "cuts": [
+     "1:42:28.0+1.70s"
+    ],
+    "line": "おかゆなったやんか！",
+    "telop": null,
+    "big": "shake_white"
+   },
+   {
+    "row": 16,
+    "from": 1305,
+    "frames": 108,
+    "voice_frames": 82,
+    "cuts": [
+     "1:43:28.0+1.80s",
+     "1:43:56.5+1.80s"
+    ],
+    "line": "見た目だけはうまそうやし、食べたら……",
+    "telop": null
+   },
+   {
+    "row": 17,
+    "from": 1413,
+    "frames": 130,
+    "voice_frames": 122,
+    "cuts": [
+     "1:44:35.5+2.40s",
+     "1:44:39.1+1.93s"
+    ],
+    "line": "うまいなあ。お店の味や！",
+    "telop": null,
+    "big": "taste_good",
+    "orig_voice": true
+   },
+   {
+    "row": 18,
+    "from": 1543,
+    "frames": 118,
+    "voice_frames": 95,
+    "cuts": [
+     "1:46:18.0+1.77s",
+     "1:39:55.4+2.17s"
+    ],
+    "line": "みんなは、こんな宿のキッチンで料理してみたい？",
+    "telop": null
+   }
+  ]
+ },
+ "notes": [
+  {
+   "from": 95,
+   "to": 223,
+   "text": "◆宿の共同キッチン"
+  },
+  {
+   "from": 509,
+   "to": 593,
+   "text": "◆玉ねぎを炒める"
+  },
+  {
+   "from": 796,
+   "to": 845,
+   "text": "◆チキンを入れる"
+  },
+  {
+   "from": 909,
+   "to": 970,
+   "text": "◆炊き上がり"
+  },
+  {
+   "from": 1305,
+   "to": 1359,
+   "text": "◆実食"
+  }
+ ],
+ "bgm": {
+  "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/bgm/pocket_csikos.mp3",
+  "db": 0.0
+ },
+ "stickers": [
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/img/biryani.jpg",
+   "from": 45,
+   "to": 100,
+   "x": 800,
+   "y": 1330,
+   "w": 300,
+   "rotate": 6,
+   "out": "fade",
+   "note": "F-079: 0秒目は配信の玉ねぎを炒める画、1.5秒目から ChatGPT で描いたビリヤニの写真（高画質）を札で重ねる。全面にしない（F-082）"
+  },
+  {
+   "image": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_sOvaH0tBzSg/img/biryani.jpg",
+   "from": 273,
+   "to": 320,
+   "x": 800,
+   "y": 1330,
+   "w": 300,
+   "rotate": -5,
+   "out": "fade",
+   "note": "「カレーの炊き込みご飯」は配信のこの場面に写っていないので、同じ生成画を札で（F-014・F-080）"
+  }
+ ],
+ "sfx": [
+  {
+   "at": 95,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/hakuryoku.mp3",
+   "db": 0,
+   "note": "数「コンロ4つのうち3つ」の大きい字の出。presets/try.json「迫力のアクセント音」"
+  },
+  {
+   "at": 421,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/hakuryoku.mp3",
+   "db": 0,
+   "note": "逆接「けど、火力えぐくて」の大きい字の出。presets/try.json「迫力のアクセント音」"
+  },
+  {
+   "at": 1063,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/kirakirabuty18.mp3",
+   "db": -6,
+   "note": "フタが上がって炊き上がりが見えるコマ（1:40:07.0）。本人の声の行なので声より小さく"
+  },
+  {
+   "at": 1254,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/chin16.mp3",
+   "db": 0,
+   "note": "結果が悪い落ち「おかゆなったやんか！」の大きい字の出。presets/try.json「呆れ チーン」"
+  },
+  {
+   "at": 1416,
+   "file": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/sfx/kirakirabuty18.mp3",
+   "db": -6,
+   "note": "答え「お店の味や」の大きい字の出。本人の声の行なので声より小さく"
+  }
+ ],
+ "_polish": "sov C: 札2枚（ビリヤニの生成画・1.5〜3.3秒と「カレーの炊き込みご飯」の後半）・効果音5つ（迫力2・キラキラ2・チーン1。ポケットサウンド。55秒で10秒に約0.9回）。色の整えは入れない（揚げパンの回で、整えると似た画の連続で落ちた）"
+}
