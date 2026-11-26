@@ -177,6 +177,15 @@ ok("確かめが要る行にしか無い額", (code, "確かめが要る行" in 
 code, out = look(page().replace('class="tg ta"', 'class="ta"'))
 ok("本文（article.tg）の無い面を通さない", code, 2)
 
+# この記事のショート（#1453）: 名簿（python/data/shorts.json）に在る id だけ通す。予約中・貼り間違いは止める
+KNOWN_SHORT = json.loads((ga.SHORTS_JSON).read_text(encoding="utf-8"))["shorts"][0]["id"]
+code, out = bake_with({**BASE, "shorts": [{"youtube": KNOWN_SHORT, "tiktok": "https://www.tiktok.com/@ayato/video/1"}]})
+ok("名簿に在るショート", code, 0)
+code, out = bake_with({**BASE, "shorts": [{"youtube": "zzzzzzzzzzz"}]})
+ok("名簿に無いショート（予約中）", (code, "名簿" in out), (1, True))
+code, out = bake_with({**BASE, "shorts": [{"youtube": KNOWN_SHORT, "instagram": "https://example.com/reel/x"}]})
+ok("形の違う Instagram の URL", (code, "形が違う" in out), (1, True))
+
 # 写真の置き場: 記事の鍵（`<国>/<街>/<話>`）で取っても、面が読む街の置き場に落ちる（2026-11-23 ティラナ）。
 # 外に出ないよう、Commons から取る口を小さな絵に差し替え、置き場は一時の root に向ける
 def fetched_into(key: str) -> list[str]:

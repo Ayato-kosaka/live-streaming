@@ -1,15 +1,19 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+import ShortPlayer from "@/components/guidebook/ShortPlayer";
+import { shortOf } from "@/components/guidebook/Videos";
 import { Vid } from "@/components/streams/Vid";
 import Fold from "@/components/ui/Fold";
 import Icon, { type IconName } from "@/components/ui/Icon";
 import type { CityStream } from "@/content/cityStreams";
+import { shortHref } from "@/content/shorts";
 import { AYATO_SRC } from "@/lib/ayatoArt";
+import { JsonLd, videoLd } from "@/lib/jsonld";
 import { streamPart } from "@/lib/streamPart";
 
 import { hms, jpDate, md, videoUrl, watchUrl } from "./scene";
-import type { ArticleSection, Block, Day, Ext, Photo, PriceRow, Quote, Scene } from "./types";
+import type { ArticleSection, ArticleShort, Block, Day, Ext, Photo, PriceRow, Quote, Scene } from "./types";
 
 /**
  * 旅のガイドの記事（`/travel/<国>/<街>/<話>`）の部品。型は `docs/guide-design.md` の ★ の章と 3章。
@@ -382,6 +386,52 @@ export function Streams({ open, rest }: { open: CityStream[]; rest: CityStream[]
         </Fold>
       )}
     </>
+  );
+}
+
+/**
+ * この記事のショート（#1453）。記事 → ショートの向き（ショートと本編の説明 → 記事は、投稿の手順 `tools/shorts/post/README.md`）。
+ *
+ * 街のガイドの動画の欄（`docs/guide-design.md` ★4）と同じ部品を使う: 縦の枠で押すまではサムネイル（`ShortPlayer`）、
+ * 題と日付は名簿（`content/shorts.ts`。`shortOf` が無い id で書き出しを止める）、埋めたショートには `VideoObject`。
+ * その下に、同じショートの TikTok・Instagram（在るものだけ）
+ */
+export function Shorts({ shorts }: { shorts: ArticleShort[] }) {
+  return (
+    <ul className="ta-shorts">
+      {shorts.map((x) => {
+        const s = shortOf(x.youtube);
+        return (
+          <li key={x.youtube}>
+            <JsonLd data={videoLd({ id: x.youtube, name: s.title, uploadDate: s.date })} />
+            <ShortPlayer id={x.youtube} title={s.title} play={<Icon name="play" size={30} />} />
+            <div className="ta-short-b">
+              {/* 実在する題名の引用（絵文字もそのまま）。`data-quote="title"` は見張りへの目印 */}
+              <b data-quote="title">{s.title}</b>
+              <time dateTime={s.date}>{jpDate(s.date)}</time>
+              <span className="ta-short-go">
+                <a href={shortHref(x.youtube)} target="_blank" rel="noopener noreferrer">
+                  <Icon name="youtube" size={18} />
+                  YouTube
+                </a>
+                {x.tiktok && (
+                  <a href={x.tiktok} target="_blank" rel="noopener noreferrer">
+                    <Icon name="play" size={18} />
+                    TikTok
+                  </a>
+                )}
+                {x.instagram && (
+                  <a href={x.instagram} target="_blank" rel="noopener noreferrer">
+                    <Icon name="instagram" size={18} />
+                    Instagram
+                  </a>
+                )}
+              </span>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

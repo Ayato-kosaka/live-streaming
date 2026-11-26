@@ -70,6 +70,9 @@ export type ArticleSection = {
   scene?: Scene;
 };
 
+/** この記事のショート（#1453）。`youtube` は `content/shorts.ts` の id（題と日付はそちらが持つ）。TikTok・Instagram は在るときだけ */
+export type ArticleShort = { youtube: string; tiktok?: string; instagram?: string };
+
 export type GuideArticle = {
   slug: string;
   title: string;
@@ -93,6 +96,8 @@ export type GuideArticle = {
     note: string;
   };
   sections: ArticleSection[];
+  /** この記事のショート。空の間は鍵ごと無く、面に欄を出さない */
+  shorts?: ArticleShort[];
   published: string;
   updated: string;
   hash: string;

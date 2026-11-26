@@ -304,6 +304,10 @@ const ARTICLES: Omit<TravelArticle, "href">[] = [
   { country: "bulgaria", city: "sofia", slug: "hotspring", crumb: "温泉の蛇口" },
   /* ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきた【2026年11月】（#1228。マトカ渓谷と同じ型） */
   { country: "bulgaria", city: "sofia", slug: "nevsky", crumb: "ネフスキー大聖堂" },
+  /* ソフィアで揚げパンのメキツァを食べてきた【2026年11月】（#1453。③揚げパンのショートの行き先。マトカ渓谷と同じ型） */
+  { country: "bulgaria", city: "sofia", slug: "mekitsa", crumb: "メキツァ" },
+  /* ソフィアの宿の共同キッチンでビリヤニを作ってきた【2026年11月】（#1453。②ビリヤニのショートの行き先。マトカ渓谷と同じ型） */
+  { country: "bulgaria", city: "sofia", slug: "biryani", crumb: "ビリヤニ" },
   /* ティラナの中心を歩いて回ってきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */
   { country: "albania", city: "tirana", slug: "walk", crumb: "中心を歩いた日" },
   /* ティラナでスフラキとケバブを食べ比べてきた（#1228。マトカ渓谷と同じ型）。2026-11-23 に街の面と一緒に公開前の印を外した */

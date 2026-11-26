@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { Body, Head, NextRead, Points, SceneButton, Sec, Sources, Streams, Toc, Writer } from "@/components/travel/article/Article";
+import { Body, Head, NextRead, Points, SceneButton, Sec, Shorts, Sources, Streams, Toc, Writer } from "@/components/travel/article/Article";
 import { jpDate } from "@/components/travel/article/scene";
 import { CITY_STREAMS } from "@/content/cityStreams";
 import { travelArticle, travelArticleCrumbs, travelArticleShare, travelCity, travelPage, TRAVEL, TRAVEL_LABEL } from "@/content/travel";
@@ -49,6 +49,8 @@ export default function SofiaXmasPage() {
   });
   const ext = A.sections.flatMap((s) => s.keyword?.ext ?? []);
   const n = A.sections.length + 2;
+  /** この記事のショート（#1453）。空の間は欄も目次の行も出さない */
+  const shorts = A.shorts ?? [];
 
   return (
     <PageShell crumbs={travelArticleCrumbs(COUNTRY, CITY, SLUG)}>
@@ -82,6 +84,7 @@ export default function SofiaXmasPage() {
           items={[
             { id: A.answer.id, label: A.answer.toc, icon: A.answer.icon },
             ...A.sections.map((s) => ({ id: s.id, label: s.toc, icon: s.icon })),
+            ...(shorts.length ? [{ id: "shorts", label: "この記事のショート", icon: "film" as const }] : []),
             { id: "streams", label: "この記事の配信", icon: "youtube" as const },
           ]}
         />
@@ -93,7 +96,13 @@ export default function SofiaXmasPage() {
           </Sec>
         ))}
 
-        <Sec id="streams" n={n} icon="youtube" h="この記事の配信">
+        {shorts.length > 0 && (
+          <Sec id="shorts" n={n} icon="film" h="この記事のショート">
+            <Shorts shorts={shorts} />
+          </Sec>
+        )}
+
+        <Sec id="streams" n={shorts.length ? n + 1 : n} icon="youtube" h="この記事の配信">
           <Streams open={cited.slice(0, STREAMS_OPEN)} rest={cited.slice(STREAMS_OPEN)} />
         </Sec>
 

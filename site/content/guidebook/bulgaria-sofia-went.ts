@@ -9,8 +9,8 @@ import type { Went } from "./types";
 
 export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, { went: Went }> } = /* BEGIN GUIDE */
 {
- "updated": "2026-11-20",
- "hash": "6dd70336cc8e5a45",
+ "updated": "2026-11-26",
+ "hash": "7faaa7b2a34ad992",
  "items": {
   "todo/yogurt": {
    "went": {
@@ -304,6 +304,23 @@ export const SOFIA_WENT: { updated: string; hash: string; items: Record<string, 
      "alt": "1L入りのボザの瓶と、ピンクのお菓子（2026年11月14日）",
      "kind": "card",
      "date": "2026-11-14"
+    }
+   }
+  },
+  "eat/mekitsa": {
+   "went": {
+    "date": "2026-11-19",
+    "scene": {
+     "v": "KjB_aBsTIf0",
+     "t": 2700,
+     "date": "2026-11-19"
+    },
+    "story": [
+     "揚げパン専門店で、目の前で揚げてもらった蜂蜜ナッツのメキツァ。蜂蜜がデロンデロンで、奥から給食の揚げパンの味がしました。"
+    ],
+    "more": {
+     "href": "/travel/bulgaria/sofia/mekitsa",
+     "title": "ソフィアで揚げパンのメキツァを食べてきた【2026年11月】"
     }
    }
   }

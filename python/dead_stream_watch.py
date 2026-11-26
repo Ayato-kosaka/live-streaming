@@ -250,6 +250,8 @@ PAGES: dict[str, str] = {
     "sofia-xmas.ts": "ソフィアのクリスマスマーケットに行ってきたの記事（/travel/bulgaria/sofia/xmas）の、一言と場面のリンク",
     "sofia-hotspring.ts": "ソフィアの温泉の蛇口で温泉水を飲んできたの記事（/travel/bulgaria/sofia/hotspring）の、一言と場面のリンク",
     "sofia-nevsky.ts": "ソフィアのアレクサンドル・ネフスキー大聖堂に行ってきたの記事（/travel/bulgaria/sofia/nevsky）の、一言と場面のリンク",
+    "sofia-mekitsa.ts": "ソフィアで揚げパンのメキツァを食べてきたの記事（/travel/bulgaria/sofia/mekitsa）の、一言と場面のリンク",
+    "sofia-biryani.ts": "ソフィアの宿の共同キッチンでビリヤニを作ってきたの記事（/travel/bulgaria/sofia/biryani）の、一言と場面のリンク",
     "skopje-panpan.ts": "スコピエでバゲットを探して、パン屋パンパンへ行ってきたの記事（/travel/north-macedonia/skopje/panpan）の、一言と場面のリンク",
     "skopje-debar-maalo.ts": "スコピエのおしゃれ地区デバル・マーロを歩いてきたの記事（/travel/north-macedonia/skopje/debar-maalo）の、一言と場面のリンク",
     "skopje-clement.ts": "スコピエの聖クリメント・オフリド大聖堂に行ってきたの記事（/travel/north-macedonia/skopje/clement）の、一言と場面のリンク",
@@ -291,7 +293,7 @@ PAGES: dict[str, str] = {
 FRONT = ("projects.ts", "countries.ts", "recipes.ts", "apps.ts", "voices.ts",
          "countryStats.ts", "nordic.ts", "north-macedonia-skopje.ts", "albania-tirana.ts", "armenia-yerevan.ts", "bulgaria-sofia-went.ts",
          "skopje-prices.ts", "sofia-prices.ts", "skopje-matka.ts", "skopje-vodno.ts", "skopje-kale.ts", "sofia-yogurt.ts",
-         "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts",
+         "sofia-xmas.ts", "sofia-banitsa.ts", "sofia-hotspring.ts", "sofia-nevsky.ts", "sofia-mekitsa.ts", "sofia-biryani.ts",
          "skopje-oldtown.ts", "skopje-kosmos.ts", "skopje-square.ts", "skopje-panpan.ts", "skopje-clement.ts", "skopje-debar-maalo.ts", "tirana-walk.ts", "tirana-sufllaqe.ts", "tirana-mosque.ts", "tirana-gjelltore.ts", "tirana-airport.ts", "tirana-hostel.ts", "yerevan-sevan.ts", "yerevan-bus.ts", "yerevan-lake.ts",
          "yerevan-cascade.ts", "yerevan-memorial.ts", "yerevan-bakery.ts", "yerevan-market.ts",
          "india-street-food.ts")
