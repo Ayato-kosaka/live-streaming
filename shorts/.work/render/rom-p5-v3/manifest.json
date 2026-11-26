@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__rom-p5-v3",
  "mode": "render",
- "dest": "render/rom-p5-v3/inbox",
+ "dest": "render/rom-p5-v3",
  "video": null,
  "channel": null,
  "request": "shorts/render/rom-p5-v3.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 2012,
-  "tar_gz": 1184,
-  "encrypted": 1200
+  "plain": 36268,
+  "tar_gz": 9339,
+  "encrypted": 9344
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 1200,
-   "sha256": "c328456d4be19c6a9fe727d8fa80b4d0cf5e82c8d7d41b645755c2416fd902fd"
+   "bytes": 9344,
+   "sha256": "ec2dcd66fbffa6608c7d6dc161b998ec5e434249253fb7329981eb62fc6dc818"
   }
  ],
- "hmac_sha256": "882c1e6ab334beb4fdd93972da8fbe4761640570da5d9bbf43e6d33192f43fb6",
+ "hmac_sha256": "8ca62de6dc83062f30af0d72707af727639d6213abb37a263be7d8222536b479",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-26T22:15:27+00:00",
+ "created_at": "2026-11-26T22:23:39+00:00",
  "nonce": "0050c21e35338db3e903149f"
 }
