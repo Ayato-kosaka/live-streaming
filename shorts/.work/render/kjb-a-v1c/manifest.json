@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__kjb-a-v1c",
  "mode": "render",
- "dest": "render/kjb-a-v1c/inbox",
+ "dest": "render/kjb-a-v1c",
  "video": null,
  "channel": null,
  "request": "shorts/render/kjb-a-v1c.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 1006,
-  "tar_gz": 817,
-  "encrypted": 832
+  "plain": 35080,
+  "tar_gz": 9053,
+  "encrypted": 9056
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 832,
-   "sha256": "c8e22335e4a493aabee137a0938fb5b90ab8cec506ed9505e2aec3fbcdf095c7"
+   "bytes": 9056,
+   "sha256": "c618f507dd6becba9b4b05c17641c6b48ff84cb0af206bde8f331d8e178c4b48"
   }
  ],
- "hmac_sha256": "000c0c91af227d3bf4dea21ef9c7360ca0c91657ad97e1d0aa3db7d7de78b03b",
+ "hmac_sha256": "2f3b0e8c6c8e6a0829a7a284ee7dbcc9c5a64ae8c387d2a827a9617cb4c9ec32",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-26T00:47:52+00:00",
+ "created_at": "2026-11-26T00:54:26+00:00",
  "nonce": "efdcd773f983553d95819da6"
 }
