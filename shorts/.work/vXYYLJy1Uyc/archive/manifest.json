@@ -1,0 +1,48 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "vXYYLJy1Uyc__archive",
+ "mode": "archive",
+ "dest": "vXYYLJy1Uyc/archive",
+ "video": "vXYYLJy1Uyc",
+ "channel": null,
+ "request": "shorts/requests/seven-archive-vXYYLJy1Uyc-20261126.json",
+ "status": "ok",
+ "stages": {
+  "download": "ok",
+  "meta": "ok",
+  "captions": "ok",
+  "audio": "ok",
+  "visual": "ok",
+  "whisper": "ok",
+  "bench": "skipped",
+  "timeline10": "ok"
+ },
+ "counts": {
+  "sheets": 40,
+  "caption_segments": 1440,
+  "transcript_segments": 161,
+  "cuts": 36,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 54
+ },
+ "bytes": {
+  "plain": 14194319,
+  "tar_gz": 11590005,
+  "encrypted": 11590016
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 11590016,
+   "sha256": "f79781c56923da3c39ab64a179891cb3d37479b24bafa16eaf4bbddd6a7045ea"
+  }
+ ],
+ "hmac_sha256": "15941c240a31fd05780f877182b067473f28d85d5f2ea4d34cf1b854cb4531ba",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45726839729",
+ "created_at": "2026-11-26T01:22:34+00:00"
+}
