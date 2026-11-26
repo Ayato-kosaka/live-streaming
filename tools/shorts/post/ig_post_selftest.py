@@ -37,10 +37,13 @@
 | `gate_schedule` | 予約のときに押すのは「Schedule」。押したあと、できたリールの media の pk を応答（configure_to_clips）から1つ拾って ok |
 | `gate_facebook` | 「Facebook にもシェア」が外せない（オンのまま）なら押さない |
 | `gate_too_soon` | いまから15分を切る予約は窓を開く前に止める（近すぎると今すぐ出る・断られる） |
-| `cover_small` | カバーのコマを 0.5秒（55秒の動画で枠を 2px）にできる。数 px だけ引くと押しただけになって動かないので、いったん越えてから戻す |
-| `cover_far` | 2.2秒（44秒の動画）のコマを、引いた結果から 1px あたりの秒を測り直して選べる。動画より後ろの秒は止める |
-| `cover_wobbly` | 引いた幅と動いた秒の比が1回ごとに揺れる枠（2026-11-26 に Instagram で写した 0.76・1.0・0.94・0.84…）でも、39.5秒の動画の 2.5秒のコマを選べる。越えて戻す幅が大きいと、戻りのずれで的の両側を行き来する |
+| `cover_small` | カバーのコマを 0.5秒（55秒の動画で枠を 2px）にできる。枠は指の動きの頭の 3px では動かないので、その分を足して引く |
+| `cover_far` | 2.2秒（44秒の動画）のコマを選べる。動画より後ろの秒は止める |
+| `cover_deadzone` | 2026-11-26 に測った枠（31秒・39.5秒の動画、頭の 3px が効かない）で、0.5秒と 2.5秒のコマに1回で行ける |
+| `cover_snapped` | 枠の video の秒がキーフレーム（1.05秒おき）に寄って読める枠で、0.5秒を ±0.25秒では止め、投稿文の幅（±0.6秒）なら通す |
 | `week_months` | 予約の一覧の見出しの月。月をまたぐ週（11/29〜12/5）は「December 2026」と出たので、11/29・11/30 の予約は November と December のどちらの見出しでも読めたことにする。またがない週は1つだけ |
+| `ratio_ok` | 見えている枠の幅 ÷ 高さで、縦の 9:16（0.5625）だけを通す。1:1（1.0）・4:5（0.8）・16:9（1.78）・測れない（None）は止める |
+| `crop_original` | 切り抜きの段で「Select crop」→「Original」を押すと、枠が 1:1 から 9:16 になり ok。押しても 1:1 のまま（選べていない）なら crop_not_original で止める |
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
 
@@ -81,13 +84,14 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "button": ('    label = "Schedule" if want else "Share"\n', '    label = "Share"\n', {"gate_schedule", "gate_dry"},
                "予約なのに Share（今すぐ出る）を探して押す"),
     "soon": ("        if lead < 15:\n", "        if lead < -10 ** 9:\n", {"gate_too_soon"}, "近すぎる予約を止めない"),
-    "away": ("        if abs(dx) < 6:\n", "        if False:\n", {"cover_small", "cover_wobbly"}, "数 px だけ引く（押しただけになって枠が動かない）"),
-    "nudge": ('            dx += 12 if s["x"] - s["left"] < 40 else -12\n', '            dx += 30 if s["x"] - s["left"] < 40 else -30\n',
-              {"cover_wobbly"}, "越えて戻す幅を 30px に戻す（戻りのずれで的に入らない）"),
-    "week": ('    return sorted({f"{start:%B %Y}", f"{end:%B %Y}"})\n', '    return [f"{at:%B %Y}"]\n', {"week_months"},
-             "見出しの月を予約の日の月だけで読む（月をまたぐ週で、在る予約を無いと言う）"),
-    "cover_read": ("        if abs(s[\"t\"] - sec) <= tol:\n            return {\"ok\": True", "        if True:\n            return {\"ok\": True",
-                   {"cover_small", "cover_far", "cover_wobbly"}, "枠の秒を読み直さずに ok にする"),
+    "dead": ('        send = dx + (DEAD_PX if dx > 0 else -DEAD_PX)\n', "        send = dx\n", {"cover_small", "cover_far", "cover_deadzone", "cover_snapped"},
+             "頭の 3px が効かないのを足さずに引く（毎回 3px 手前で止まる）"),
+    "original": ('    if not press(t, "/^Original$/", f"({DLG}[0])", 1.5):\n        return {"ok": False, "error": "crop_original_not_found", "before": before}\n', "",
+                 {"crop_original"}, "切り抜きの比率を選ばずに進む（既定の 1:1 に切られる）"),
+    "ratio": ('    return bool(fr) and RATIO_OK[0] <= fr.get("ratio", 0) <= RATIO_OK[1]\n', "    return bool(fr)\n", {"ratio_ok", "crop_original"},
+              "枠の縦横比を見ない（正方形のまま出す）"),
+    "cover_read": ('    ok = at_px and abs(s["t"] - sec) <= tol\n', "    ok = at_px\n", {"cover_snapped"},
+                   "枠の video の秒を読み直さずに ok にする"),
 }
 
 # 2026-11-22 09:05 UTC に Instagram の投稿の窓で日付の箱を押して写した11月の暦（[字, aria-disabled, aria-selected]）。
@@ -296,20 +300,27 @@ def leg_wired_mismatch(m):
 
 
 class CoverTab:
-    """「Cover photo」の枠を真似る。帯は 771〜1062px、枠の幅 70px、放した所が押した所から 5px 未満なら押しただけ（動かない）"""
+    """「Cover photo」の枠を真似る。帯は 770.5〜1062.5px、枠の幅 70px、窓が開いた直後は 0.01秒。
+    指の動きの頭の 3px では枠が動かない（2026-11-26 に測った: ±8〜40px 引くと、どれも枠は 3px 少なく動いた）。
+    snap があれば、枠の video の秒はその間隔のキーフレームに寄って読める"""
 
-    def __init__(self, m, dur):
-        self.m, self.dur, self.t = m, dur, 0.01
-        self.left, self.right, self.w = 771, 1062, 70
+    def __init__(self, m, dur, snap=None):
+        self.m, self.dur, self.snap = m, dur, snap
+        self.left, self.right, self.w = 770.5, 1062.5, 70
+        self.x = self.left + 1 + 0.01 / dur * self.span()
         self.press_x = None
 
     def span(self):
         return self.right - self.left - self.w
 
+    @property
+    def t(self):
+        sec = (self.x - self.left - 1) / self.span() * self.dur
+        return round(sec / self.snap) * self.snap if self.snap and sec > 0.05 else max(sec, 0.01)
+
     def js(self, expr, await_promise=False):
         if expr == self.m.COVER_SEL:
-            x = self.left + self.t / self.dur * self.span()
-            return {"x": x, "y": 186, "w": self.w, "h": 102, "t": self.t, "dur": self.dur, "left": self.left, "right": self.right}
+            return {"x": self.x, "y": 186, "w": self.w, "h": 102, "t": self.t, "dur": self.dur, "left": self.left, "right": self.right}
         return None
 
     def call(self, method, **p):
@@ -317,9 +328,10 @@ class CoverTab:
             if p["type"] == "mousePressed":
                 self.press_x = p["x"]
             elif p["type"] == "mouseReleased" and self.press_x is not None:
-                dx = p["x"] - self.press_x
-                if abs(dx) >= 5:
-                    self.t = round(min(max(self.t + dx / self.span() * self.dur, 0.0), self.dur) * 30) / 30
+                d = p["x"] - self.press_x
+                if abs(d) > 3:
+                    lo, hi = self.left + 1, self.left + 1 + self.span()
+                    self.x = min(max(self.x + d - (3 if d > 0 else -3), lo), hi)
                 self.press_x = None
         return {}
 
@@ -337,25 +349,64 @@ def leg_cover_far(m):
             ("枠を動かせない所（動画より後ろ）は止める", _safe(m.set_cover_frame, CoverTab(m, 44.0), 50.0).get("error") == "cover_after_end")]
 
 
-def leg_cover_wobbly(m):
-    t = CoverTab(m, 39.467)
-    gains = iter([0.76, 1.0, 0.94, 0.84, 0.97, 0.9, 1.0, 0.92] * 2)
-    real = t.call
+def leg_cover_deadzone(m):
+    a, b = CoverTab(m, 30.8), CoverTab(m, 39.467)
+    ra, rb = _safe(m.set_cover_frame, a, 0.5), _safe(m.set_cover_frame, b, 2.5)
+    return [("31秒の動画で 0.5秒に1回で行ける", isinstance(ra, dict) and ra.get("ok") is True and len(ra["tries"]) <= 2),
+            ("39.5秒の動画で 2.5秒に1回で行ける", isinstance(rb, dict) and rb.get("ok") is True and len(rb["tries"]) <= 2)]
 
-    def call(method, **p):
-        # 放した所を、押した所から引いた幅 × 揺れの比 に置く（実物の写しの比をそのまま使う）
-        if method == "Input.dispatchMouseEvent" and p["type"] == "mouseReleased" and t.press_x is not None:
-            p["x"] = t.press_x + (p["x"] - t.press_x) * next(gains)
-        return real(method, **p)
-    t.call = call
-    r = _safe(m.set_cover_frame, t, 2.5)
-    return [("揺れる枠でも 39.5秒の動画の 2.5秒のコマを選べる", isinstance(r, dict) and r.get("ok") is True and abs(t.t - 2.5) <= 0.25)]
+
+def leg_cover_snapped(m):
+    strict = _safe(m.set_cover_frame, CoverTab(m, 30.8, snap=1.05), 0.5)
+    wide = _safe(m.set_cover_frame, CoverTab(m, 30.8, snap=1.05), 0.5, 0.6)
+    return [("秒がキーフレームに寄って ±0.25秒に入らなければ止める", isinstance(strict, dict) and strict.get("error") == "cover_frame_mismatch"),
+            ("投稿文の幅（±0.6秒）なら通す", isinstance(wide, dict) and wide.get("ok") is True)]
 
 
 def leg_week_months(m):
     return [("11/29（日）の週は November と December", m.week_months(D(2026, 11, 29, 12, 30)) == ["December 2026", "November 2026"]),
             ("11/30（月）の週も同じ", m.week_months(D(2026, 11, 30, 12, 30)) == ["December 2026", "November 2026"]),
             ("11/22 の週は November だけ", m.week_months(D(2026, 11, 22, 12, 30)) == ["November 2026"])]
+
+
+def leg_ratio_ok(m):
+    return [("9:16（0.5625）は通す", m.ratio_ok({"w": 332, "h": 590, "ratio": 0.563}) is True),
+            ("1:1 は止める", m.ratio_ok({"w": 590, "h": 590, "ratio": 1.0}) is False),
+            ("4:5 は止める", m.ratio_ok({"w": 472, "h": 590, "ratio": 0.8}) is False),
+            ("16:9 は止める", m.ratio_ok({"w": 590, "h": 332, "ratio": 1.777}) is False),
+            ("測れなければ止める", m.ratio_ok(None) is False)]
+
+
+class CropTab:
+    """切り抜きの段を真似る。左下の「Select crop」で比率の窓が開き、「Original」を押すと枠が 9:16 になる（stuck なら 1:1 のまま）。
+    既定は 1:1（2026-11-26 に写した窓: Original / 1:1（選ばれている）/ 9:16 / 16:9）"""
+    CROP, ORIG = (365.5, 689.0), (410.0, 486.0)
+
+    def __init__(self, m, stuck=False):
+        self.m, self.stuck, self.menu, self.ratio = m, stuck, False, 1.0
+
+    def js(self, expr, await_promise=False):
+        if expr == self.m.FRAME_RATIO:
+            return {"w": 590 if self.ratio == 1.0 else 332, "h": 590, "ratio": self.ratio}
+        if "Select crop" in expr:
+            return list(self.CROP)
+        if "Original" in expr:
+            return list(self.ORIG) if self.menu else None
+        return None
+
+    def click_at(self, x, y):
+        if (x, y) == self.CROP:
+            self.menu = not self.menu
+        elif (x, y) == self.ORIG and self.menu:
+            self.ratio = 1.0 if self.stuck else 0.5625
+            self.menu = False
+
+
+def leg_crop_original(m):
+    ok = _safe(m.set_crop_original, CropTab(m))
+    stuck = _safe(m.set_crop_original, CropTab(m, stuck=True))
+    return [("Original を押すと 9:16 になって ok", isinstance(ok, dict) and ok.get("ok") is True and ok["after"]["ratio"] == 0.5625),
+            ("押しても 1:1 のままなら crop_not_original", isinstance(stuck, dict) and stuck.get("ok") is False and stuck.get("error") == "crop_not_original")]
 
 
 class GateTab:
@@ -386,7 +437,7 @@ def _gate(m, *, at="2026-11-23T12:30", dry=False, fb_stuck=False, now=D(2026, 11
     """窓を作る手・字を貼る手・スイッチ・予約の手を差し替えて post() を回し、(押したか, 捨てたか, RESULT) を返す"""
     t = GateTab()
     out, discarded = [], []
-    m.compose = lambda tab, mp4, cover, tol=None: None
+    m.compose = lambda tab, mp4, cover, tol=None, ratios=None: None
     m.paste_caption = lambda tab, cap: cap
     sw = [list(r) for r in SW_OFF]
     if fb_stuck:
@@ -450,7 +501,8 @@ LEGS = {"pick_tomorrow": leg_pick_tomorrow, "pick_lead": leg_pick_lead, "past_re
         "wired_tomorrow": leg_wired_tomorrow, "wired_next_month": leg_wired_next_month, "wired_mismatch": leg_wired_mismatch,
         "gate_dry": leg_gate_dry, "gate_schedule": leg_gate_schedule, "gate_facebook": leg_gate_facebook,
         "gate_too_soon": leg_gate_too_soon, "cover_small": leg_cover_small, "cover_far": leg_cover_far,
-        "cover_wobbly": leg_cover_wobbly, "week_months": leg_week_months}
+        "cover_deadzone": leg_cover_deadzone, "cover_snapped": leg_cover_snapped, "week_months": leg_week_months,
+        "ratio_ok": leg_ratio_ok, "crop_original": leg_crop_original}
 # 門の足は関数を差し替えるので、足ごとに読み込み直す（差し替えがほかの足に漏れない）
 FRESH = {"gate_dry", "gate_schedule", "gate_facebook", "gate_too_soon"}
 

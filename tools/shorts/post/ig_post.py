@@ -11,11 +11,14 @@
     python3 ig_post.py post <mp4> <caption.txt> --cover-at <秒> --at 2026-11-22T12:30           # 予約する（--at が無ければ今すぐ出す）
     （--cover-tol <秒> で、カバーのコマを ok にする幅を既定の ±0.25秒から広げる。post.py は投稿文の cover_tol_s から渡す）
     python3 ig_post.py scheduled <題の行> 2026-11-22T12:30:00Z                  # 予約の一覧で読み直す
+    python3 ig_post.py delete <題の行> 2026-11-22T12:30:00Z [--dry]            # 予約を消す（札が1枚だけのとき。--dry は念押しの窓まで）
 
 どれも最後の行に結果を `RESULT {...}` の1行で出す。
 
 ## 押す前に必ず確かめること（ずれていたら押さない）
 
+- **切り抜きは「Original」（縦の 9:16 のまま）。** 既定は 1:1 で、何もしないと正方形に切られる（2026-11-22〜26 の予約・公開が全部そうだった。
+  あやと 2026-11-26「縦長16:9になってないやん」）。切り抜き・編集・最後の段で、見えている枠の幅 ÷ 高さが 0.5〜0.6 でなければ捨てて止める
 - キャプションの字が、渡した字と1字も違わない（編集欄の段を改行で繋いで読む）
 - 「AI ラベル」と「Facebook にもシェア」がオフ（あやとの頼みは Instagram だけ。TikTok と同じく AI の印は付けない）
 - 予約なら「Schedule content」がオンで、欄の日時が --at と同じ（EC2 の Chrome の時計は UTC。欄もその時刻）
@@ -181,8 +184,13 @@ def drag(t, x0, y, x1, steps=8, over=15):
     t.call("Input.dispatchMouseEvent", type="mouseReleased", x=x1, y=y, button="left", clickCount=1)
 
 
+# 枠を引くと、指の動きの頭の 3px は枠が動かない（2026-11-26 に 31秒の動画で ±8〜40px を引いて測った。どれも枠は 3px 少なく動き、
+# 往き来しても同じ位置に戻る）。前はこれを知らずに「動いた秒 ÷ 引いた px」で 1px の秒を測り直していて、毎回 3px ぶん外れた
+DEAD_PX = 3
+
+
 def cover_step(s, sec):
-    """選んだコマの枠を何 px 動かすか。帯の幅から枠の幅を引いた長さが、動画の頭から尻までに当たる見立て"""
+    """選んだコマの枠を何 px 動かすか。帯の幅から枠の幅を引いた長さが、動画の頭から尻までに当たる"""
     span = s["right"] - s["left"] - s["w"]
     return (sec - s["t"]) / s["dur"] * span if s["dur"] and span > 0 else None
 
@@ -191,8 +199,9 @@ def set_cover_frame(t, sec, tol=COVER_TOL):
     """カバーを、動画の sec 秒のコマにする。「Select from computer」に絵を渡しても Instagram は受け取らなかった
     （2026-11-22。欄に直に渡しても、ファイル選びの窓を横取りして渡しても、カバーの欄は替わらなかった）ので、
     人と同じく「Cover photo」のコマの枠を引いて選び、枠の video の currentTime で読み直す。
-    tol は ok にする秒の幅。枠は引くたびに ±0.3秒ほどずれ、±0.25秒に入らない回がある（2026-11-26）ので、
-    同じ画（題の札が見えている同じ場面）が続く回は、投稿文の cover_tol_s で幅を広げる"""
+    狙いは枠の位置で決める（頭の位置 + 秒 ÷ 長さ × 帯の幅）。引く幅は、動かしたい px に DEAD_PX を足す。
+    tol は ok にする秒の幅。枠の video の秒は、同じ位置でもキーフレームに寄って読める（31秒の動画で 1.05・2.1 など）ので、
+    題の札が見えている同じ場面が続く回は、投稿文の cover_tol_s で幅を広げる"""
     s = None
     for _ in range(10):
         s = t.js(COVER_SEL)
@@ -203,34 +212,59 @@ def set_cover_frame(t, sec, tol=COVER_TOL):
         return {"ok": False, "error": "cover_selector_not_found"}
     if sec > s["dur"]:
         return {"ok": False, "error": "cover_after_end", "dur": s["dur"]}
-    per_px = None  # 1 px で何秒動いたか（引いた結果から測り直す。最初は帯の幅からの見立て）
+    span = s["right"] - s["left"] - s["w"]
+    if span <= 0:
+        return {"ok": False, "error": "cover_strip_unexpected"}
+    x0 = s["x"] - s["t"] / s["dur"] * span  # 0秒の枠の位置（窓が開いた直後は 0.01秒にいる）
+    target = x0 + sec / s["dur"] * span
     seen = []
-    for _ in range(8):
-        seen.append(round(s["t"], 2))
-        if abs(s["t"] - sec) <= tol:
-            return {"ok": True, "t": round(s["t"], 2), "want": sec, "tries": seen}
-        dx = (sec - s["t"]) / per_px if per_px else cover_step(s, sec)
-        if dx is None:
-            return {"ok": False, "error": "cover_strip_unexpected"}
-        if abs(dx) < 6:
-            # 数 px だけ引いても、放した所が押した所に近いと押しただけになり、枠が動かない（0.5秒は 2px。2026-11-22）。
-            # いったん的を越えて 12px 先へ引き、次の回に引き戻す。越える幅は小さく保つ: 引いた幅と動いた秒の比は
-            # 1回ごとに 0.75〜1.0 倍ほど揺れ、30px 越えて戻すと戻りで ±0.3秒ずれて、的の両側を行き来したまま終わった
-            # （2026-11-26、39.5秒の動画の 2.5秒。1.89 → 7.73 → 2.77 → 6.98 → 2.13 …）
-            dx += 12 if s["x"] - s["left"] < 40 else -12
+    for _ in range(6):
+        seen.append([round(s["x"] - x0, 1), round(s["t"], 2)])
+        dx = target - s["x"]
+        if abs(dx) < 1:
+            break
+        send = dx + (DEAD_PX if dx > 0 else -DEAD_PX)
         cx, cy = s["x"] + s["w"] / 2, s["y"] + s["h"] / 2
-        drag(t, cx, cy, cx + dx)
+        drag(t, cx, cy, cx + send)
         time.sleep(1.5)
-        s2 = t.js(COVER_SEL) or s
-        moved = s2["t"] - s["t"]
-        if abs(moved) > 0.01 and moved * dx > 0:
-            per_px = moved / dx
-        s = s2
-    return {"ok": abs(s["t"] - sec) <= tol, "t": round(s["t"], 2), "want": sec, "tries": seen,
-            **({} if abs(s["t"] - sec) <= tol else {"error": "cover_frame_mismatch"})}
+        s = t.js(COVER_SEL) or s
+    at_px = abs(target - s["x"]) < 1.5
+    ok = at_px and abs(s["t"] - sec) <= tol
+    return {"ok": ok, "t": round(s["t"], 2), "want": sec, "px": round(s["x"] - x0, 1), "want_px": round(target - x0, 1), "tries": seen,
+            **({} if ok else {"error": "cover_frame_mismatch" if at_px else "cover_not_at_position"})}
 
 
-def compose(t, mp4, cover_at, cover_tol=COVER_TOL):
+# 窓の中の大きい動画が、実際に見えている枠の縦横比（幅 ÷ 高さ）。video の箱そのものは切り抜きの段でも 9:16 のままで、
+# はみ出しを親（overflow が visible でない祖先）が切っているので、祖先の箱と重なる所だけを数える
+FRAME_RATIO = f"""(() => {{ const d = {DLG}[0]; if (!d) return null;
+    const vs = [...d.querySelectorAll('video')].filter({VIS}).map(v => [v, v.getBoundingClientRect()]).sort((a, b) => b[1].width * b[1].height - a[1].width * a[1].height);
+    if (!vs.length) return null; let [e, r] = vs[0]; let x0 = r.left, y0 = r.top, x1 = r.right, y1 = r.bottom;
+    while ((e = e.parentElement) && e !== document.body) {{ const cs = getComputedStyle(e);
+      if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') {{ const q = e.getBoundingClientRect();
+        x0 = Math.max(x0, q.left); y0 = Math.max(y0, q.top); x1 = Math.min(x1, q.right); y1 = Math.min(y1, q.bottom); }} }}
+    const w = x1 - x0, h = y1 - y0; return w > 0 && h > 0 ? {{w: Math.round(w), h: Math.round(h), ratio: Math.round(w / h * 1000) / 1000}} : null; }})()"""
+# 縦の 9:16（0.5625）のまま出す。1:1（1.0）・4:5（0.8）に切られていたら出さない（あやと 2026-11-26「縦長16:9になってないやん」）
+RATIO_OK = (0.5, 0.6)
+
+
+def ratio_ok(fr):
+    return bool(fr) and RATIO_OK[0] <= fr.get("ratio", 0) <= RATIO_OK[1]
+
+
+def set_crop_original(t):
+    """切り抜きの段で、比率の釦（左下の「Select crop」）→「Original」を選び、枠の縦横比を測る。
+    何もしないと既定の 1:1 に切られる（2026-11-22〜26 の予約・公開はそれで正方形になっていた）"""
+    before = t.js(FRAME_RATIO)
+    if not press(t, "/^Select crop$/", f"({DLG}[0])", 1.5):
+        return {"ok": False, "error": "crop_button_not_found", "before": before}
+    if not press(t, "/^Original$/", f"({DLG}[0])", 1.5):
+        return {"ok": False, "error": "crop_original_not_found", "before": before}
+    press(t, "/^Select crop$/", f"({DLG}[0])", 1)  # 選ぶ窓を閉じる（開いたままでも Next は押せるが、写しが見えるように）
+    after = t.js(FRAME_RATIO)
+    return {"ok": ratio_ok(after), "before": before, "after": after, **({} if ratio_ok(after) else {"error": "crop_not_original"})}
+
+
+def compose(t, mp4, cover_at, cover_tol=COVER_TOL, ratios=None):
     """新しい投稿の窓を開き、動画を渡して、切り抜き → 編集（カバー）→ 最後の段まで進む。ok なら None、だめなら理由"""
     t.go(HOME, wait=6)
     if not signed_in(t):
@@ -248,9 +282,18 @@ def compose(t, mp4, cover_at, cover_tol=COVER_TOL):
         return "crop_not_shown"
     time.sleep(2)
     press(t, "/^OK$/")
+    ratios = {} if ratios is None else ratios
+    crop = set_crop_original(t)
+    ratios["crop"] = crop.get("after")
+    log("crop:", crop)
     shot(t, "ig_1_crop")
+    if not crop["ok"]:
+        return crop["error"]
     if not press(t, "/^Next$/", f"({DLG}[0])", 4) or not wait_dialog(t, "/Cover photo/", 60):
         return "edit_not_shown"
+    ratios["edit"] = t.js(FRAME_RATIO)
+    if not ratio_ok(ratios["edit"]):
+        return "edit_not_original"
     if cover_at is not None:
         r = set_cover_frame(t, cover_at, cover_tol)
         log("cover frame:", r)
@@ -259,6 +302,10 @@ def compose(t, mp4, cover_at, cover_tol=COVER_TOL):
     shot(t, "ig_2_edit")
     if not press(t, "/^Next$/", f"({DLG}[0])", 4) or not wait_dialog(t, "/Add a caption|Write a caption/", 60):
         return "final_not_shown"
+    ratios["final"] = t.js(FRAME_RATIO)
+    log("ratios:", ratios)
+    if not ratio_ok(ratios["final"]):
+        return "final_not_original"
     return None
 
 
@@ -437,10 +484,12 @@ def post(t, mp4, caption, cover_at=None, at=None, dry=False, probe=False, cover_
         if lead > 60 * 24 * 60:
             result({"ok": False, "error": "too_far", "minutes": round(lead)})
             return
-    why = compose(t, mp4, cover_at, cover_tol)
+    ratios = {}
+    why = compose(t, mp4, cover_at, cover_tol, ratios)
     if why:
         shot(t, "ig_x_compose")
-        result({"ok": False, "error": why, "dialogs": dialogs(t)})
+        result({"ok": False, "error": why, "ratios": ratios, "dialogs": dialogs(t)})
+        discard(t)
         return
     if want and t.js("new Date().getTimezoneOffset()") != 0:
         discard(t)
@@ -472,7 +521,7 @@ def post(t, mp4, caption, cover_at=None, at=None, dry=False, probe=False, cover_
     btn = find_btn(t, f"/^{label}$/", f"({DLG}[0])")
     shot(t, "ig_3_final")
     checks = {"caption_match": cap_ok, "ai_label_off": ai is False, "facebook_off": fb is False,
-              "schedule": sched, "schedule_switch": sched_on, "button": label if btn else None}
+              "schedule": sched, "schedule_switch": sched_on, "button": label if btn else None, "ratios": ratios}
     ok = cap_ok and ai is False and fb is False and bool(btn) and (sched["ok"] and sched_on is True if want else sched_on is False)
     log("checks:", json.dumps(checks, ensure_ascii=False))
     if not ok or dry or probe:
@@ -556,8 +605,83 @@ def scheduled(t, needle, at):
     cards = seen[-1].get("cards", []) if seen else []
     ok = len(cards) == 1 and cards[0] == [day, tm] and seen[-1].get("month") in months
     ids = sched_media_ids(t, needle)
-    result({"ok": ok, "want": [month, day, tm], "month": seen[-1].get("month") if seen else None, "cards": cards,
-            "media_ids": ids, "media_id": ids[0] if len(ids) == 1 else None})
+    # 札を開いて、予約した動画の枠の縦横比も読む（時刻だけ読んで、正方形に切られたのを見落とした。2026-11-26）
+    ratio = None
+    xy = t.js(f"""(n => {{ const c = [...document.querySelectorAll('[role=button]')].filter({VIS}).filter(e => (e.innerText || '').includes(n));
+        if (c.length !== 1) return null; const q = c[0].getBoundingClientRect(); return [q.x + q.width / 2, q.y + q.height / 2]; }})({json.dumps(needle)})""") if ok else None
+    if xy and open_card(t, xy):
+        time.sleep(2)
+        ratio = t.js(FRAME_RATIO)
+        shot(t, "ig_sched_card")
+        t.key("Escape", "Escape", 27)
+    result({"ok": ok and ratio_ok(ratio), "want": [month, day, tm], "month": seen[-1].get("month") if seen else None, "cards": cards,
+            "ratio": ratio, "media_ids": ids, "media_id": ids[0] if len(ids) == 1 else None,
+            **({} if not ok or ratio_ok(ratio) else {"error": "ratio_not_vertical"})})
+
+
+def find_card(t, needle, at):
+    """予約の一覧を開き、題の字を持つ札を探す（週を3つまで先へ送る）。({month, heads, cards}, 札の中心 or None)"""
+    want = parse_at(at)
+    day, tm = sched_label(want)
+    months = week_months(want)
+    t.call("Network.enable")
+    t.go(SCHEDULED, wait=8)
+    r = {}
+    for _ in range(4):
+        r = t.js(f"({SCHED_CARDS})({json.dumps(needle)})") or {}
+        if r.get("cards") or day in r.get("heads", []) and r.get("month") in months:
+            break
+        if not press(t, "/^Next week$/", wait=4):
+            break
+    ok = r.get("cards") == [[day, tm]] and r.get("month") in months
+    xy = t.js(f"""(n => {{ const c = [...document.querySelectorAll('[role=button]')].filter({VIS}).filter(e => (e.innerText || '').includes(n));
+        if (c.length !== 1) return null; const q = c[0].getBoundingClientRect(); return [q.x + q.width / 2, q.y + q.height / 2]; }})({json.dumps(needle)})""") if ok else None
+    return r, xy
+
+
+def open_card(t, xy):
+    """札を押して、予約の編集の窓（「Delete scheduled content」が在る）を開く。開けたら True"""
+    t.click_at(*xy)
+    return wait_dialog(t, "/Delete scheduled content/", 20)
+
+
+def delete_scheduled(t, needle, at, dry=False):
+    """予約を消す。題の字を持つ札が --at の日と時刻に1枚だけ在るときだけ、札 →「Delete scheduled content」→ 念押しの窓の Delete。
+    --dry は念押しの窓を開いて字を書き出し、Cancel で戻る。消したあとは一覧で札が0枚なのを読み直す（2026-11-26、比率を直して予約し直すため）"""
+    want = parse_at(at)
+    if not want:
+        result({"ok": False, "error": "bad_at", "at": at})
+        return
+    r, xy = find_card(t, needle, at)
+    if not xy:
+        result({"ok": False, "error": "card_not_unique", "seen": r})
+        return
+    ids = sched_media_ids(t, needle)
+    if not open_card(t, xy):
+        result({"ok": False, "error": "edit_not_shown", "dialogs": dialogs(t)})
+        return
+    ratio = t.js(FRAME_RATIO)
+    if not press(t, "/^Delete scheduled content$/", f"({DLG}[0])", 2.5):
+        result({"ok": False, "error": "delete_button_not_found"})
+        return
+    confirm = dialogs(t)
+    shot(t, "ig_del_confirm")
+    log("confirm:", confirm)
+    if dry:
+        press(t, "/^Cancel$/", wait=2)
+        t.key("Escape", "Escape", 27)
+        result({"ok": True, "dry": True, "confirm": confirm, "media_ids": ids, "ratio": ratio})
+        return
+    btns = t.js(f"{DLG}.map(d => [...d.querySelectorAll('button, [role=button]')].filter({VIS}).map(e => (e.innerText || '').trim()).filter(Boolean))")
+    log("confirm buttons:", btns)
+    # 念押しの窓（「Delete scheduled content? … Delete Cancel」）の「Delete」。編集の窓の「Delete scheduled content」とは字が違う
+    if not any(c.startswith("Delete scheduled content?") for c in confirm) or not press(t, "/^Delete$/", wait=4):
+        result({"ok": False, "error": "confirm_not_found", "confirm": confirm, "buttons": btns})
+        return
+    time.sleep(3)
+    r2, _ = find_card(t, needle, at)
+    gone = not r2.get("cards")
+    result({"ok": gone, "deleted": ids, "ratio_before": ratio, "after": r2, **({} if gone else {"error": "still_there"})})
 
 
 def sched_media_ids(t, needle):
@@ -594,6 +718,10 @@ if __name__ == "__main__":
         cover_tol = float(args[args.index("--cover-tol") + 1]) if "--cover-tol" in args else COVER_TOL
         t = fresh_tab()
         post(t, args[0], open(args[1], encoding="utf-8").read(), cover_at=cover_at, at=at, dry="--dry" in args, probe="--probe" in args, cover_tol=cover_tol)
+    elif cmd == "delete":
+        # 予約を消す: python3 ig_post.py delete <題の行> <UTC の ISO> [--dry]
+        t = fresh_tab()
+        delete_scheduled(t, sys.argv[2], sys.argv[3], dry="--dry" in sys.argv[4:])
     elif cmd == "scheduled":
         # 予約の読み直し: python3 ig_post.py scheduled <題の行> <UTC の ISO>
         t = fresh_tab()
