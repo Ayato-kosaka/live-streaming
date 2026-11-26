@@ -1522,6 +1522,8 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 承認・選択の返事・時刻の指定・素材の受け渡し・操作の報告。中身に指摘を含むコメントは、上の「指摘」に入れる（両方には入れない）。
 
 - https://github.com/Ayato-kosaka/live-streaming/issues/908#issuecomment-6197776061（声のプランの選択「B」）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1446#issuecomment-7203283724（原稿 p5 の承認「おけ」。チャットでも「つくって」）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1451#issuecomment-7203293514（原稿 p5 の承認「おけ」。チャットでも「つくって」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/926#issuecomment-6227852038（出す案「A」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/926#issuecomment-6227891396（出す案「B」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/926#issuecomment-6227891887（出す案「C」）
