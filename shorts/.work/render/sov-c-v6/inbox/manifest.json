@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__sov-c-v6",
+ "mode": "render",
+ "dest": "render/sov-c-v6/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/sov-c-v6.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 2012,
+  "tar_gz": 1181,
+  "encrypted": 1184
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1184,
+   "sha256": "45f5a921bc89e6386f8f16d85d1abe4a796625186fd95f942cacade17634e0ad"
+  }
+ ],
+ "hmac_sha256": "5a4fe5d9c9538b6f3d8024ecb20b5679736e47e59eebd40f861dca41b9d856f3",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-26T02:57:59+00:00",
+ "nonce": "b7b612ecee7bab907941107e"
+}
