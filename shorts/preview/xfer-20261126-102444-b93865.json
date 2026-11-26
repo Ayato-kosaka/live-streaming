@@ -1,0 +1,14 @@
+{
+ "name": "xfer-20261126-102444-b93865",
+ "place": "transfer",
+ "action": "up",
+ "files": [
+  {
+   "name": "00.wav",
+   "bytes": 1024078,
+   "sha256": "8e28b8eb0f81d18858e058afaf72ab9c1708e7b6743ad5323f88b376ba45a2c1"
+  }
+ ],
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA+CQuE6ww35tIVSHkAnNL\nQRx73bTKsoQ/TkQm/GjZywb/nrmvtZdU0EgxnHkeEUcT5OBdUXiuG5hhGINSi1ri\ngs9w2pgHuahvz1p+9X/BUj9px4G3lEtlG2luXm87FzE7lWCxLOit+IU9CHSqBsGz\nO2DqHljWPBIFoMnaU/fiQmPf6kexY/mHfRAMb7SSrDuM6Q5zTe9CfUIPwzrvX8Pn\n0jtyy5KXyg6j62QNxQIO2sMhqLaTjYcThujkusopGnus+979h0qxoHJX/3MJ2nOg\n+fjtOgldwaHVdwWvhMQ1PQlbNyfYeM/dcMxY2SyMMFQHJxXxCxA4W2QNwqNYujz/\nPaKmzpblHDz961RV1Li2Uc83KpxqDt9Q2N61PInoSrE+LgeFpvDNkXglYCf7nREs\nEPA8xiJWliuAtKSnbuhZ8fY4afjjNgtEHxWbNLMVdsoc8BDGPu6pdvyWTVcN2Af2\ngZfYguEqt2IZ0YRi/39e7KYiSowrLbYqd/yySh13b0nhAgMBAAE=\n-----END PUBLIC KEY-----\n",
+ "nonce": "eb35b68b2f4cac4710cab761"
+}
