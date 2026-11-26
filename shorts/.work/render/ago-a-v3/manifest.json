@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__ago-a-v3",
  "mode": "render",
- "dest": "render/ago-a-v3/inbox",
+ "dest": "render/ago-a-v3",
  "video": null,
  "channel": null,
  "request": "shorts/render/ago-a-v3.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 7042,
-  "tar_gz": 2947,
-  "encrypted": 2960
+  "plain": 37247,
+  "tar_gz": 9545,
+  "encrypted": 9552
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 2960,
-   "sha256": "ba9fad5de4a06a1b8cb4cc9ad11cf79f6f31f3fafa072c3d57d8fc71edf85153"
+   "bytes": 9552,
+   "sha256": "45a3b1e989b4a4eda413316c4f7c0c4818f3f1699c42964490cf0c6de548901b"
   }
  ],
- "hmac_sha256": "239491e8b2ac77cc31fdb1776cb93286070e97edb3d05f2d9b53aadc0740f581",
+ "hmac_sha256": "44a9dc412a95b7923b68f042f04e2f7a39ba4c374576f2fc1aa270afbe6433c5",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-26T01:02:10+00:00",
+ "created_at": "2026-11-26T01:09:53+00:00",
  "nonce": "f261a52e4df94bee20626187"
 }
