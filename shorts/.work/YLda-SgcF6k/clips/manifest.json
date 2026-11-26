@@ -1,0 +1,41 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "YLda-SgcF6k__clips",
+ "mode": "clips",
+ "dest": "YLda-SgcF6k/clips",
+ "video": "YLda-SgcF6k",
+ "channel": null,
+ "request": "shorts/requests/seven-clips-YLda-SgcF6k-p5-20261126.json",
+ "status": "failed",
+ "stages": {
+  "download": "failed"
+ },
+ "counts": {
+  "sheets": 0,
+  "caption_segments": 0,
+  "transcript_segments": 0,
+  "cuts": 0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
+  "channel_entries": 0,
+  "files": 2
+ },
+ "bytes": {
+  "plain": 1384,
+  "tar_gz": 1143,
+  "encrypted": 1152
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 1152,
+   "sha256": "3491eea38b2a21bf637a5b5736dfddd6cc3c39c700f6ab977dce08b0cdc847e9"
+  }
+ ],
+ "hmac_sha256": "bdd248c67d72d33410246f27b16a02c258601aeab104ec3dfbb3d43cc4e98ab1",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45895450717",
+ "created_at": "2026-11-26T21:10:28+00:00"
+}
