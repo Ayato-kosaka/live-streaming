@@ -53,6 +53,25 @@ python3 tools/shorts/post/post.py clean      --video <元の動画ID>           
     `tiktok.caption` のハッシュタグの行に `#ポケットサウンド`（ポケットサウンドの規約。決めた理由は `docs/shorts.md` 4）。
     城塞の回 #977 までの `post_*.json` は `BGM: OtoLogic（CC BY 4.0）` なので、写したら書き換える
 
+## 島の記事と双方向にリンクする（2026-11-26 から。#1453）
+
+あやと（2026-11-26）「ショート投稿する時に、あやと島の記事書いて欲しい…あやと島カードの写真も使って…記事をショートと本編からリンクして、
+記事からショートをリンクする双方向」。**予約する前に、その回の記事が本番に在ること**（説明に入れた URL が 404 のまま公開されないように）。
+記事は街の話題（`/travel/<国>/<街>/<話>`）。書きかたは `python/guide_article.py` の頭、見本はソフィアの記事（メキツァ・ビリヤニ・バニツァ）。
+
+| 順 | すること | どこに |
+| --- | --- | --- |
+| 1 | **その回の記事を探す。無ければ書く。** facts（`/guide-facts`）→ 台本 `python/data/guide/<国>/<街>/<話>.json`（その日の あやと島カードの写真を `photos` に。取るのは `python3 python/guide_bake.py <国>/<街>/<話> --photos`）→ `python3 python/guide_article.py <国>/<街>/<話>` → 面 `site/app/travel/<国>/<街>/<話>/page.tsx` と名簿（`content/travel.ts`・`content/travel/articles.ts`・`tools/fonts/subset.py`・`python/dead_stream_watch.py`）→ 札 `出す` | master から切った枝の PR |
+| 2 | **ショートの説明に記事の URL**（`https://ayato-arigato.com/travel/<国>/<街>/<話>`） | `post_<案>.json` の `youtube.description` と `tiktok.caption`（Instagram は TikTok と同じ字）。「配信のアーカイブ:」の段の次に「あやと島の記事:」の段 |
+| 3 | 予約（上の「手順」と下の「予約投稿」） | — |
+| 4 | **本編（配信アーカイブ）の説明に記事の URL** | Studio の動画の編集（`/youtube-studio`）。説明の終わりに「あやと島の記事:」の段を1つ足す。前の字は消さない |
+| 5 | **予約したら、記事にショートの URL** | 台本の `shorts`: `[{"youtube": "<ショートの id>", "tiktok": "<投稿の URL>", "instagram": "<リールの URL>", "at": "<公開の時刻 2026-11-27T21:30:00+09:00>"}]` → 焼き直す → 札 `出す`。**面は名簿（`content/shorts.ts`。公開されたショートだけを、公開の翌晩に `rebake.yml` の `build_shorts.py` が取り直す）に在るものだけを出す**——予約中のショートは開けないので、記事から先にリンクしない。名簿に入った晩の書き出しから欄がひとりでに出る（焼き直しは要らない）。Instagram のリールの URL は公開まで無いので、公開のあとに足す。`at` が無いのに名簿に無い・`at` から3日過ぎても名簿に無い id は、焼く道具が止める |
+
+- 記事がもう在る回（①ムサカ = `sofia/nevsky`、④クリスマスマーケット = `sofia/xmas`）は、在る記事に 2〜5 だけ当てる
+- 記事の欄は `components/travel/article/Article.tsx` の `Shorts`（街のガイドの動画の欄と同じ縦の枠・押すまでサムネイル・`VideoObject`。`docs/guide-design.md` ★4）。
+  **`shorts` が空の間は、欄も目次の行も出ない**
+- 記事に視聴者さんの名前・チャットの本文を書かない（`docs/README.md` D-9）。チャットの助言を本人の話にしない（`/guide-facts` 3）
+
 ## EC2 への送りかた（2026-10-18 から）
 
 **中身を SSM のコマンドに載せない。** 前の `send.py` は動画を base64 に割って SSM の send-command に載せていて、

@@ -286,6 +286,8 @@ SOLO = [
     "travel/bulgaria/sofia/banitsa",
     "travel/bulgaria/sofia/hotspring",
     "travel/bulgaria/sofia/nevsky",
+    "travel/bulgaria/sofia/mekitsa",
+    "travel/bulgaria/sofia/biryani",
     "travel/north-macedonia/skopje",
     "travel/north-macedonia/skopje/oldtown",
     "travel/north-macedonia/skopje/kosmos",

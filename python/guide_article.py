@@ -45,6 +45,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -55,6 +56,14 @@ import guide_watch as gw  # noqa: E402  書き出した面の3本の見張りと
 ROOT = gb.ROOT
 SCRIPTS = ROOT / "python/data/guide"
 CONTENT = gb.CONTENT
+
+# この記事のショート（#1453）の形。youtube は動画の id（11字）、ほかは投稿の URL。名簿は build_shorts.py の控え
+SHORTS_JSON = ROOT / "python/data/shorts.json"
+SHORT_URL = {
+    "youtube": r"[A-Za-z0-9_-]{11}",
+    "tiktok": r"https://www\.tiktok\.com/@[\w.-]+/video/\d+",
+    "instagram": r"https://www\.instagram\.com/(?:reel|p)/[\w-]+/?",
+}
 
 # 抜いて対照を当てる（`guide_article_selftest.py`）。本物の動きでは空
 #   numbers 焼くとき: 結んだ行に無い数 / quotes 1節に一言1つ / sum 見るとき: 足し直し / rowlink 表の行の場面
@@ -310,7 +319,7 @@ class ArticleBaker:
             add(sec.get("scene"))
         streams = [v for v, _ in sorted(cited.items(), key=lambda kv: (-kv[1], kv[0]))]
 
-        return {
+        out = {
             "slug": self.key.split("/")[2],
             "title": title,
             "h1": h1,
@@ -322,6 +331,58 @@ class ArticleBaker:
             "answer": answer,
             "sections": out_secs,
         }
+        shorts = self.shorts(s.get("shorts") or [])
+        if shorts:
+            # 空の間は欄ごと出さない（鍵も置かない。指紋が変わらないように）
+            out["shorts"] = shorts
+        return out
+
+    def shorts(self, rows: list[dict]) -> list[dict]:
+        """この記事のショート（#1453）。記事 → ショートの向き。鍵は YouTube のショートの id で、**題と日付は
+        `content/shorts.ts`（控え `python/data/shorts.json`）が持つ**（ここに写さない。`docs/spec/model.md` M-20）。
+        TikTok・Instagram は島のどこにも名簿が無いので、URL だけここに置く。
+
+        - **予約中のショートは、公開の時刻（`at`）を付けて先に置いてよい。** 面は名簿に在る id だけを出す
+          （`components/travel/article/Article.tsx` の `shownShorts`）。名簿は公開されたショートだけを持ち、公開の翌晩の
+          焼き直し（`rebake.yml` の `build_shorts.py`）で入るので、その書き出しから欄が出る。焼き直しは要らない
+        - 名簿に無いのに `at` が無い・`at` から3日過ぎても名簿に無い（予約が流れた・id の貼り間違い）は止める
+        - 形の違う URL は止める（貼り間違いを本番に出さない）"""
+        known = {x["id"] for x in json.loads(SHORTS_JSON.read_text(encoding="utf-8")).get("shorts", [])}
+        now = datetime.now(timezone.utc)
+        out = []
+        for i, r in enumerate(rows):
+            w = f"shorts[{i}]"
+            row: dict = {}
+            for k, pat in SHORT_URL.items():
+                v = (r.get(k) or "").strip()
+                if not v:
+                    continue
+                if not re.fullmatch(pat, v):
+                    self.errors.append(f"{w}.{k}: 形が違う「{v}」")
+                    continue
+                row[k] = v
+            if "youtube" not in row:
+                self.errors.append(f"{w}: YouTube のショートの id が無い（空の間は shorts に行を置かない）")
+                continue
+            at = (r.get("at") or "").strip()
+            if at:
+                try:
+                    t = datetime.fromisoformat(at)
+                    if t.tzinfo is None:
+                        raise ValueError
+                except ValueError:
+                    self.errors.append(f"{w}.at: 公開の時刻の形が違う「{at}」（例 2026-11-27T21:30:00+09:00）")
+                    continue
+                row["at"] = at
+            if row["youtube"] not in known:
+                if not at:
+                    self.errors.append(f"{w}: ショート {row['youtube']} が名簿（python/data/shorts.json）に無い。予約中なら公開の時刻（at）を付ける")
+                    continue
+                if now - t > timedelta(days=3):
+                    self.errors.append(f"{w}: ショート {row['youtube']} は {at} に公開のはずが、3日過ぎても名簿に無い（予約が流れたか、id の貼り間違い）")
+                    continue
+            out.append(row)
+        return out
 
     def report(self) -> str:
         used = len(self.b.used)

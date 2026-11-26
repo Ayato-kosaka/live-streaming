@@ -201,6 +201,17 @@
         }
       ],
       "article": "xmas"
+    },
+    "eat/mekitsa": {
+      "facts": ["KjB_aBsTIf0@2280#food", "KjB_aBsTIf0@2640#caution", "KjB_aBsTIf0@2700#quote"],
+      "scene": "KjB_aBsTIf0@2700#quote",
+      "story": [
+        {
+          "text": "揚げパン専門店で、目の前で揚げてもらった蜂蜜ナッツのメキツァ。蜂蜜がデロンデロンで、奥から給食の揚げパンの味がしました。",
+          "facts": ["KjB_aBsTIf0@2280#food", "KjB_aBsTIf0@2640#caution", "KjB_aBsTIf0@2700#quote"]
+        }
+      ],
+      "article": "mekitsa"
     }
   }
 }
