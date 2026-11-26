@@ -1,0 +1,34 @@
+{
+ "format": "shorts-ingest/1",
+ "key": "render__kjb-a-v1b",
+ "mode": "render",
+ "dest": "render/kjb-a-v1b/inbox",
+ "video": null,
+ "channel": null,
+ "request": "shorts/render/kjb-a-v1b.json",
+ "status": "ok",
+ "stages": {
+  "render": "ok"
+ },
+ "counts": {
+  "files": 1
+ },
+ "bytes": {
+  "plain": 5030,
+  "tar_gz": 2252,
+  "encrypted": 2256
+ },
+ "encrypted_files": [
+  {
+   "name": "payload.enc",
+   "bytes": 2256,
+   "sha256": "a61714e635b108bf582cc44d53435075b49becdd7b2847880bfc5f0c5469c973"
+  }
+ ],
+ "hmac_sha256": "868a7d9ded2364f67a4f79c72fbca834c803cfffad56e132059c9fc2759555f5",
+ "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
+ "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
+ "run": null,
+ "created_at": "2026-11-26T00:45:21+00:00",
+ "nonce": "3164d5bc82f814222dff539b"
+}
