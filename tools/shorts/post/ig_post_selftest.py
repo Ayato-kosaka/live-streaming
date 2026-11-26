@@ -41,6 +41,7 @@
 | `cover_far` | 2.2秒（44秒の動画）のコマを選べる。動画より後ろの秒は止める |
 | `cover_deadzone` | 2026-11-26 に測った枠（31秒・39.5秒の動画、頭の 3px が効かない）で、0.5秒と 2.5秒のコマに1回で行ける |
 | `cover_snapped` | 枠の video の秒がキーフレーム（1.05秒おき）に寄って読める枠で、0.5秒を ±0.25秒では止め、投稿文の幅（±0.6秒）なら通す |
+| `cover_neighbor` | 狙いの位置の秒だけが先のキーフレームに飛んで読める枠（55秒の動画の 0.5秒が 2.36秒）で、隣の位置（±1・±2px）を当たって 0.5±0.25秒に入れる |
 | `week_months` | 予約の一覧の見出しの月。月をまたぐ週（11/29〜12/5）は「December 2026」と出たので、11/29・11/30 の予約は November と December のどちらの見出しでも読めたことにする。またがない週は1つだけ |
 | `ratio_ok` | 見えている枠の幅 ÷ 高さで、縦の 9:16（0.5625）だけを通す。1:1（1.0）・4:5（0.8）・16:9（1.78）・測れない（None）は止める |
 | `crop_original` | 切り抜きの段で「Select crop」→「Original」を押すと、枠が 1:1 から 9:16 になり ok。押しても 1:1 のまま（選べていない）なら crop_not_original で止める |
@@ -84,12 +85,13 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
     "button": ('    label = "Schedule" if want else "Share"\n', '    label = "Share"\n', {"gate_schedule", "gate_dry"},
                "予約なのに Share（今すぐ出る）を探して押す"),
     "soon": ("        if lead < 15:\n", "        if lead < -10 ** 9:\n", {"gate_too_soon"}, "近すぎる予約を止めない"),
-    "dead": ('        send = dx + (DEAD_PX if dx > 0 else -DEAD_PX)\n', "        send = dx\n", {"cover_small", "cover_far", "cover_deadzone", "cover_snapped"},
+    "dead": ('        send = dx + (DEAD_PX if dx > 0 else -DEAD_PX)\n', "        send = dx\n", {"cover_small", "cover_far", "cover_deadzone", "cover_snapped", "cover_neighbor"},
              "頭の 3px が効かないのを足さずに引く（毎回 3px 手前で止まる）"),
     "original": ('    if not press(t, "/^Original$/", f"({DLG}[0])", 1.5):\n        return {"ok": False, "error": "crop_original_not_found", "before": before}\n', "",
                  {"crop_original"}, "切り抜きの比率を選ばずに進む（既定の 1:1 に切られる）"),
     "ratio": ('    return bool(fr) and RATIO_OK[0] <= fr.get("ratio", 0) <= RATIO_OK[1]\n', "    return bool(fr)\n", {"ratio_ok", "crop_original"},
               "枠の縦横比を見ない（正方形のまま出す）"),
+    "neighbor": ("    if at_px and abs(s[\"t\"] - sec) > tol:\n", "    if False:\n", {"cover_neighbor"}, "狙いの位置の秒が飛んだとき、隣を当たらない"),
     "cover_read": ('    ok = at_px and abs(s["t"] - sec) <= tol\n', "    ok = at_px\n", {"cover_snapped"},
                    "枠の video の秒を読み直さずに ok にする"),
 }
@@ -356,6 +358,21 @@ def leg_cover_deadzone(m):
             ("39.5秒の動画で 2.5秒に1回で行ける", isinstance(rb, dict) and rb.get("ok") is True and len(rb["tries"]) <= 2)]
 
 
+class JumpTab(CoverTab):
+    """狙いの位置の秒だけが先のキーフレーム（2.36秒）に飛んで読める枠（2026-11-26、55秒の動画の 0.5秒）"""
+
+    @property
+    def t(self):
+        sec = (self.x - self.left - 1) / self.span() * self.dur
+        return 2.36 if abs(sec - 0.5) < 0.12 else max(sec, 0.01)
+
+
+def leg_cover_neighbor(m):
+    t = JumpTab(m, 55.367)
+    r = _safe(m.set_cover_frame, t, 0.5)
+    return [("狙いの位置の秒が飛んでも、隣の位置で 0.5±0.25秒に入れば ok", isinstance(r, dict) and r.get("ok") is True and abs(t.t - 0.5) <= 0.25)]
+
+
 def leg_cover_snapped(m):
     strict = _safe(m.set_cover_frame, CoverTab(m, 30.8, snap=1.05), 0.5)
     wide = _safe(m.set_cover_frame, CoverTab(m, 30.8, snap=1.05), 0.5, 0.6)
@@ -501,7 +518,7 @@ LEGS = {"pick_tomorrow": leg_pick_tomorrow, "pick_lead": leg_pick_lead, "past_re
         "wired_tomorrow": leg_wired_tomorrow, "wired_next_month": leg_wired_next_month, "wired_mismatch": leg_wired_mismatch,
         "gate_dry": leg_gate_dry, "gate_schedule": leg_gate_schedule, "gate_facebook": leg_gate_facebook,
         "gate_too_soon": leg_gate_too_soon, "cover_small": leg_cover_small, "cover_far": leg_cover_far,
-        "cover_deadzone": leg_cover_deadzone, "cover_snapped": leg_cover_snapped, "week_months": leg_week_months,
+        "cover_deadzone": leg_cover_deadzone, "cover_snapped": leg_cover_snapped, "cover_neighbor": leg_cover_neighbor, "week_months": leg_week_months,
         "ratio_ok": leg_ratio_ok, "crop_original": leg_crop_original}
 # 門の足は関数を差し替えるので、足ごとに読み込み直す（差し替えがほかの足に漏れない）
 FRESH = {"gate_dry", "gate_schedule", "gate_facebook", "gate_too_soon"}

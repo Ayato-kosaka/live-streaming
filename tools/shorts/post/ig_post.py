@@ -229,6 +229,23 @@ def set_cover_frame(t, sec, tol=COVER_TOL):
         time.sleep(1.5)
         s = t.js(COVER_SEL) or s
     at_px = abs(target - s["x"]) < 1.5
+    # 狙いの位置でも、枠の video の秒が先のキーフレームに飛んで読めることがある（2026-11-26、55秒の動画で 0.5秒の位置が 2.36秒）。
+    # そのときは隣の位置（±1・±2px）を順に当たり、秒が幅に入る所で止める
+    if at_px and abs(s["t"] - sec) > tol:
+        base = s["x"]
+        for off in (-1, 1, -2, 2):
+            want_x = min(max(base + off, x0), x0 + span)
+            dx = want_x - s["x"]
+            if abs(dx) < 0.5:
+                continue
+            cx, cy = s["x"] + s["w"] / 2, s["y"] + s["h"] / 2
+            drag(t, cx, cy, cx + dx + (DEAD_PX if dx > 0 else -DEAD_PX))
+            time.sleep(1.5)
+            s = t.js(COVER_SEL) or s
+            seen.append([round(s["x"] - x0, 1), round(s["t"], 2)])
+            if abs(s["t"] - sec) <= tol:
+                break
+        at_px = abs(target - s["x"]) < 2.5
     ok = at_px and abs(s["t"] - sec) <= tol
     return {"ok": ok, "t": round(s["t"], 2), "want": sec, "px": round(s["x"] - x0, 1), "want_px": round(target - x0, 1), "tries": seen,
             **({} if ok else {"error": "cover_frame_mismatch" if at_px else "cover_not_at_position"})}

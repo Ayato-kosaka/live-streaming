@@ -185,6 +185,7 @@ python3 tools/shorts/post/post.py tt-post --video <元の動画ID> --option <案
     **枠は、指の動きの頭の 3px では動かない**（2026-11-26 に ±8〜40px 引いて測った。どれも枠は 3px 少なく動き、往き来しても同じ位置に戻る）。
     なので狙いは枠の位置（0秒の位置 + 秒 ÷ 長さ × 帯の幅）で決め、動かしたい px に 3px を足して1回で引く。前は動いた秒から 1px の秒を測り直していて、
     毎回 3px ずつ外れて的の両側を行き来した（クリスマスマーケットの回の 2.5秒）。枠の video の秒は、同じ位置でもキーフレームに寄って読めることがあるので、
+    狙いの位置で秒が飛んだら、隣の位置（±1・±2px）を当たる（55秒の動画で 0.5秒の位置が 2.36秒と読め、隣の 0.39秒で通った）。
     題の札が見えている同じ場面が続く回は、投稿文に `cover_tol_s`（ok にする秒の幅。既定 0.25）を書く
   - 予約は「Schedule content」をオン → 日付の箱（「Sun, Nov 22, 2026」。押すと暦。尻に次の月の日が並ぶ）→ 時刻の欄（Hours / Minutes / AM PM の
     spinbutton。12時間制で、打つと入る）。欄の時刻は Chrome の時計（UTC）。押すボタンの字が **Schedule** であることを見てから押す（Share は今すぐ出る）。
@@ -193,7 +194,7 @@ python3 tools/shorts/post/post.py tt-post --video <元の動画ID> --option <案
   - 読み直しは `python3 ig_post.py scheduled <題の行> <UTC の ISO>`（web の「Scheduled content」`https://www.instagram.com/scheduled_content/`。
     週の暦で、列の頭「Sun 22」と札の時刻「12:30 PM」を読む。月をまたぐ週の見出しは後ろの月（11/29〜12/5 は「December 2026」）。
     **時刻だけでなく比率も見る**: 札を開いた編集の窓の枠の縦横比を `ratio` に出し、縦（0.5〜0.6）でなければ ok にしない（時刻だけ読んで、正方形を見落とした）。
-    正方形の予約ではこの枠が 590x590・1.0 だった。9:16 の予約での値はまだ読んでいない（初めて読んだ回にここへ書く。縦でも枠が正方形に出るなら、読みかたを直す）
+    正方形の予約ではこの枠が 590x590・1.0、Original で入れ直した4本は 331x590・0.561 だった（2026-11-26）
   - 出したあとの縦横は、ログインした Chrome のページの中から `/api/v1/media/<pk>/info/`（`X-IG-App-ID` 付き）の `original_width` / `original_height` で読める
   - 予約を消すのは `python3 ig_post.py delete <題の行> <UTC の ISO> [--dry]`（札が1枚だけのとき。札 →「Delete scheduled content」→ 念押しの窓「Delete scheduled content?」の Delete →
     一覧で札が0枚なのを読み直す）。台帳は同じ sha256 が `done` のままなので、消して0枚を読んだあとにだけ `post.py ig-post … --again` で入れ直し、古い行の `note` に消したことを足す
