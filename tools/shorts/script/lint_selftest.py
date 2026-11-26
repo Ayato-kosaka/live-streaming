@@ -75,6 +75,7 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `wide` | 16字の行は △、15字の行は何も出さない。数えかたは `build_edit.py` の `spoken_chars` と同じ（「ー」を数える。読み込んで突き合わせる）。1行目の題・本人の声の行（`orig_voice`・`voice_src`）は見ない。✕ にはしない（L-WIDE。仮説 N5） |
 | `width_median` | 行の字数の中央値を1行で出す（題の1行目も入れ、本人の声の行は外す。偶数の行は真ん中2つの間）。L-WIDE を当てない日付でも出す |
 | `prev` | 十字架の登山の原稿 A の4行目「先週は雨で流れたリベンジや！」と、行の途中の「前回の配信で」を ✕。フォカッチャの添削版の締め「リベンジにワンパンピザを本日22時から…」・問いの前の締めの行・題が「リベンジ」を言っている回の本文・1行目の題は見ない。「昨日こねた生地」は前の回の事情ではないので見ない。あやとの書き直し（「…十字架まで歩きたい！」）は通す。11-13 のコメントより前の決まりでは当てない（L-PREV） |
+| `tenki` | 風邪の回 p4 の「今日は天気やから、外に出ることにした！」を ✕。あやとの直し「良い天気やから」は通す（L-TENKI。#1450・F-103） |
 | `pickwhy` | 揚げパンの回 A の6行目「ヌテラは全部ヌテラ味になるから、蜂蜜ナッツにした。」と B の8行目「…ヌテラ味やから、蜂蜜ナッツにした。」を ✕。あやとの直し（行を消した12行）・頼んだ物だけの「蜂蜜ナッツにした。」・行の頭のつなぎ「だから、全部を歩ける島にした。」・題・締めは見ない。11-25 のコメントより前の時点では当てない（L-PICKWHY。#1447・F-056） |
 | `hypo_link` | 規則はどれも、帳面の ID か仮説の台帳（`playbook.md`）の番号か出どころの issue（`#1403`）を持つ。台帳の番号は台帳の行にあり、その行が規則の名前を書いている。L-WIDE は帳面に足していない（あやとの指摘ではない）。L-RUN・L-ANSNEXT と 11-25 の5つ（L-CLIFF・T-HOOK・L-NUM38・L-VOICE0・L-BANG）は帳面にも台帳にも無く、出どころ #1403 だけを持つ |
 | `run` | spec の行の種類（`kind`）で、出来事・引っ張り・数の無い行が3行続いたら3行目から △（前置き・説明・前置き → 4行目、反応・反応・味・味 → 8・9行目）。題の1行目・締めの行（最後の問い、問い → 誘いの問いの行も）は数えない。数は続きを切る。付録A の書きかた（題読み・値段・数・締めの問い）でも読む。種類の無い行・決まりに無い種類・開け閉めの字は △。どの行にも kind が無ければ「見ていない」。診断の付録A の屋根裏25人部屋の種類で、診断の「続」と同じ 8・9・10・17行目。✕ にはしない（L-RUN。#1403） |
@@ -308,6 +309,9 @@ CUTS = {
                    {"prev"}, "締めの行（次の配信への誘いの「リベンジに…」）まで拾う"),
     "prev_title": ("lint.py", "    said = {m.group(0) for m in PREV.finditer(c.title)}\n", "    said = set()\n",
                    {"prev"}, "題の約束が「リベンジ」の回の本文まで拾う"),
+    # ---- 2026-11-26（#1450、F-103）: 天気やから ----
+    "tenki": ("lint.py", "            if any(ln[:m.start()].endswith(w) for w in TENKI_OK):\n", "            if True:\n",
+              {"tenki"}, "「天気やから」を拾わない"),
     # ---- 2026-11-25（#1447、F-056）: 選んだ訳 ----
     "pickwhy": ("lint.py", "        m = next((x for x in PICKWHY.finditer(ln) if not head or x.start() >= head.end()), None)\n",
                 "        m = None\n", {"pickwhy"}, "選んだ訳（〜から、…にした）を拾わない"),
@@ -792,6 +796,13 @@ def leg_prev(L):
             ("「昨日こねた生地」（その日の話の中の昨日）は見ない", not day)]
 
 
+def leg_tenki(L):
+    bad = hits_of(L, ctx(L, ["題", "宿で休むつもりやったけど、今日は天気やから、外に出ることにした！", "みんなは？"]), "L-TENKI")
+    good = hits_of(L, ctx(L, ["題", "宿で休むつもりやったけど、良い天気やから、外に出ることにした！", "みんなは？"]), "L-TENKI")
+    return [("風邪の回 p4 の「今日は天気やから、外に出ることにした！」を ✕（行 2）", [(h.line, h.look) for h in bad] == [(2, False)]),
+            ("あやとの直し「良い天気やから」は通す", not good)]
+
+
 def leg_pickwhy(L):
     a = ["ブルガリアのめちゃくちゃ美味しい揚げパンを食べてみた！", "行列店って書いてあった揚げパン屋に来たら……", "お客さん、僕1人やん！",
          "ソフィアで甘いもんが欲しくて、頼んだのは名物のメキツァ。", "おばちゃんが、ヨーグルト入りの生地を揚げてくれてる。",
@@ -1179,7 +1190,7 @@ LEGS = {
     "inner": leg_inner, "nick": leg_nick, "particle": leg_particle, "ate": leg_ate,
     "as_of_id": leg_as_of_id, "spec_rows": leg_spec_rows,
     "wide": leg_wide, "width_median": leg_width_median, "hypo_link": leg_hypo_link,
-    "prev": leg_prev, "pickwhy": leg_pickwhy,
+    "prev": leg_prev, "pickwhy": leg_pickwhy, "tenki": leg_tenki,
     "run": leg_run, "ansnext": leg_ansnext,
     "cliff": leg_cliff, "hook": leg_hook, "num38": leg_num38, "voice0": leg_voice0, "bang": leg_bang, "new_fixtures": leg_new_fixtures,
     "base": leg_base, "voicen": leg_voicen,
