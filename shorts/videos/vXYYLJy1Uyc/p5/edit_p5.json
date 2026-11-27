@@ -132,7 +132,7 @@
     "painted": false,
     "why": "国民の館が無く、ただの大通りの道中",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -153,7 +153,7 @@
     "painted": false,
     "why": "青空の下の国民の館と屋台の柵が写る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -443,7 +443,7 @@
     "painted": false,
     "why": "風邪や寒さと関係無い濡れた通りの穴埋め",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -464,7 +464,7 @@
     "painted": false,
     "why": "フードとマフラーで寒さに耐える顔だけ",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -484,7 +484,7 @@
     "painted": false,
     "why": "晴れた並木道へ外出する場面",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -504,7 +504,7 @@
     "painted": false,
     "why": "青空と雲の歩道で良い天気を示す",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -524,7 +524,7 @@
     "painted": false,
     "why": "車列の奥に国民の館が見える",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -549,7 +549,7 @@
     "painted": false,
     "why": "青空の国民の館と観覧車",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -569,7 +569,7 @@
     "painted": false,
     "why": "横断歩道に人が集まっている",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -589,7 +589,7 @@
     "painted": false,
     "why": "人の群れが横断歩道を渡る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -609,7 +609,7 @@
     "painted": false,
     "why": "混雑した交差点で東京を連想",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -629,7 +629,7 @@
     "painted": false,
     "why": "石造りの建物と並木の街並み",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -649,7 +649,7 @@
     "painted": false,
     "why": "石造りの店の正面と歩道",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -669,7 +669,7 @@
     "painted": false,
     "why": "石畳の広場の奥に国民の館",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -690,7 +690,7 @@
     "painted": false,
     "why": "立派な国民の館が大きく写る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -710,7 +710,7 @@
     "painted": false,
     "why": "国民の館と観覧車を正面から",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -737,7 +737,7 @@
     "painted": false,
     "why": "議会の建物（国民の館）が青空の下に大きく写る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -757,7 +757,7 @@
     "painted": false,
     "why": "議会の建物の国民の館が写る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -777,7 +777,7 @@
     "painted": false,
     "why": "館の前に屋台の小屋が並ぶ",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -798,7 +798,7 @@
     "painted": false,
     "why": "観覧車と屋台の小屋がはっきり写る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -818,7 +818,7 @@
     "painted": false,
     "why": "道を横切るテープと散る落ち葉が強い風の跡",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -838,7 +838,7 @@
     "painted": false,
     "why": "赤白テープが宙に浮き、風で道路を横切る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -863,7 +863,7 @@
     "painted": false,
     "why": "カフェDRIPの入口",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -883,7 +883,7 @@
     "painted": false,
     "why": "カフェのカウンターの豆挽き",
     "frames": 1,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -908,7 +908,7 @@
     "painted": false,
     "why": "カフェのカウンターに焼き菓子",
     "frames": 1,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -928,7 +928,7 @@
     "painted": false,
     "why": "コーヒーカップを手前に持つ本人",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   }

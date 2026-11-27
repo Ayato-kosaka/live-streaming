@@ -63,7 +63,7 @@ def call_lines(mid, sec, prompt, blocks, prefix=""):
     for b in blocks:
         head = {"wireToolInputs": {"t": {"command": prefix}}} if prefix else {}
         d = {**head, "type": "assistant", "timestamp": ts(sec),
-             "message": {"id": mid, "model": "claude-opus-5-5", "content": [b],
+             "message": {"id": mid, "model": "opus", "content": [b],
                          "usage": {"input_tokens": 2, "cache_read_input_tokens": prompt - 2, "cache_creation_input_tokens": 0,
                                    "output_tokens": 8}}}
         out.append(dumps(d))

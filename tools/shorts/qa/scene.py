@@ -117,7 +117,7 @@ TOUR = re.compile(r"(回って|巡って|巡り|散策|街歩き|1日で|一日�
 HEADING = re.compile(r"^\s*[0-9０-９]+\s*[.．、:：)）]")   # 段の見出し（「1. 1階は雑貨」）。◆ の注は行き先・手順の札なので数えない
 _DROP = re.compile(r"[\s　◆※・、。，．,.!！?？「」『』（）()〜~\-ー:：0-9０-９]")
 
-MODEL = os.environ.get("SHORTS_SCENE_MODEL", "claude-opus-5-5")
+MODEL = os.environ.get("SHORTS_SCENE_MODEL", "opus")  # 記録には書かない（リポジトリにモデル名を残さない）
 EFFORT = os.environ.get("SHORTS_SCENE_EFFORT", "medium")
 THUMB = (216, 384)
 MAX_IMAGES = 60       # 1回の検査役に渡すコマの上限（越えたら2回に分ける）
@@ -856,7 +856,7 @@ def run_judge(ctx: Ctx) -> dict:
                        "selfie": bool(ans.get("selfie")), "face_event": bool(ans.get("face_event")),
                        "painted": bool(ans.get("painted")),
                        "why": str(ans.get("why") or ""), "frames": len(it["frames"]),
-                       "model": MODEL if fn is claude_judge else "fake", "at": time.strftime("%Y-%m-%d")}
+                       "judge": "claude" if fn is claude_judge else "fake", "at": time.strftime("%Y-%m-%d")}
                 v[keys[it["id"]]] = rec
             if bi == 0:
                 for h in heads:
@@ -908,7 +908,7 @@ def check_scene_match(ctx: Ctx) -> dict:
     summ = (f"配信の画で関係無い {len(fails)}・人が見る {len(humans)}・答えの無い {len(missing)} / {len(rows_m)} カット"
             f"（検査役 {run.get('calls', 0)} 回）")
     return result(cid, title, status, summ, measured={"cuts": rows_m, "judge_calls": run.get("calls", 0),
-                                                     "judge_asked": run.get("asked", 0), "model": MODEL},
+                                                     "judge_asked": run.get("asked", 0)},
                   thresholds={"fail_if": "配信の画で related が false（event の無いカット）"}, problems=probs)
 
 

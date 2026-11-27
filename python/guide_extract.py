@@ -60,7 +60,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import guide_facts as gf  # noqa: E402
 import stream_notes as sn  # noqa: E402
 
-# ティラナの3本（観光の多い 10-03 を含む）を master の facts と並べて、Haiku（claude-haiku-5-5）でも
+# ティラナの3本（観光の多い 10-03 を含む）を master の facts と並べて、Haikuでも
 # 行った場所の行が落ちず・作り話0・NG 0 だったので、額が約9分の1の Haiku にした（SKILL.md §6。前は sonnet）。
 # トークンは約1.6倍（考える分の出力が多い）。--effort low は場所が落ちたので既定のまま
 MODEL = "haiku"

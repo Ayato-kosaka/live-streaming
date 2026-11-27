@@ -5,7 +5,7 @@
 
 ## 書かせかた
 
-前に原稿を書かせたときと同じ道: `brief.py writer` の1枚だけを `claude -p`（claude-opus-5-5・effort high）に渡し、`script.txt`・`spec.json` を書かせて lint を通させた。
+前に原稿を書かせたときと同じ道: `brief.py writer` の1枚だけを `claude -p`（opus・effort high）に渡し、`script.txt`・`spec.json` を書かせて lint を通させた。
 作業場は空の置き場（1枚と書き出す先だけ）で、ほかのファイルは読めない。**この回の差の表の組（教会）は、1枚に入っていない**（手本にも、カードの並びの数にも）。
 批評役は回していない（作文者の最初の原稿を測るため）。
 

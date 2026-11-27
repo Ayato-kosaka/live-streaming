@@ -411,7 +411,7 @@
     "painted": false,
     "why": "光る白い吹き抜けと本棚の本屋の中",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -2104,7 +2104,7 @@
     "painted": false,
     "why": "本屋の吹き抜けを上から見下ろす画",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -2125,7 +2125,7 @@
     "painted": false,
     "why": "着いたブカレストの国民の館と観覧車",
     "frames": 1,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -2149,7 +2149,7 @@
     "painted": false,
     "why": "ガイドページの本屋の項目が写る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -2173,7 +2173,7 @@
     "painted": false,
     "why": "ガイドページとカルセルの札が写る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -3329,7 +3329,7 @@
     "painted": false,
     "why": "cărturești の白い本屋の正面が写り、見つけた場面と合う",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -3354,7 +3354,7 @@
     "painted": false,
     "why": "ガイドの字に銀行の本店として建てたと書いてある",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -3568,7 +3568,7 @@
     "painted": false,
     "why": "元銀行の本屋の石造りの正面が写っている",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -4081,7 +4081,7 @@
     "painted": false,
     "why": "店内の白い吹き抜けと棚が写る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -4435,7 +4435,7 @@
     "painted": false,
     "why": "階段から白い吹き抜けを見下ろす",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -4982,7 +4982,7 @@
     "painted": false,
     "why": "雑貨屋のような棚の画で行と合う",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -5243,7 +5243,7 @@
     "painted": false,
     "why": "アドベントカレンダー等クリスマス売り場",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    },
    "scene_headings": [
@@ -5287,7 +5287,7 @@
     "painted": false,
     "why": "ひまわりのポットの箱が棚に写る",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -5341,7 +5341,7 @@
     "painted": false,
     "why": "ポットのふたを持ち上げる手",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -5623,7 +5623,7 @@
     "painted": false,
     "why": "上の階へ続く白いらせん階段",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    },
    "scene_headings": [
@@ -5686,7 +5686,7 @@
     "painted": false,
     "why": "本がぎっしりの本棚",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -5705,7 +5705,7 @@
     "painted": false,
     "why": "太宰治の本を指さす手",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -5729,7 +5729,7 @@
     "painted": false,
     "why": "太宰治本人の白黒写真",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -5749,7 +5749,7 @@
     "painted": false,
     "why": "棚の太宰治の本を手で指している",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -5805,7 +5805,7 @@
     "painted": false,
     "why": "見上げた吹き抜けの最上階が映る。ケーキは見えない",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    },
    "scene_headings": [
@@ -5910,7 +5910,7 @@
     "painted": false,
     "why": "カフェのケーキのショーケース",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -8590,7 +8590,7 @@
     "painted": false,
     "why": "上の階から吹き抜けを見下ろす画",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -8723,7 +8723,7 @@
     "painted": false,
     "why": "ツリーと白い吹き抜けの本屋",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   },
@@ -9473,7 +9473,7 @@
     "painted": false,
     "why": "ぬいぐるみが主で天国の吹き抜けが見えない",
     "frames": 2,
-    "model": "claude-opus-5-5",
+    "judge": "claude",
     "at": "2026-11-27"
    }
   }

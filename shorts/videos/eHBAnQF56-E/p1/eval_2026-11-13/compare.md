@@ -5,7 +5,7 @@
 
 ## 書かせかた
 
-前に原稿を書かせたときと同じ道: `brief.py writer` の1枚だけを `claude -p`（claude-opus-5-5・effort high）に渡し、`script.txt`・`spec.json` を書かせて lint を通させた。
+前に原稿を書かせたときと同じ道: `brief.py writer` の1枚だけを `claude -p`（opus・effort high）に渡し、`script.txt`・`spec.json` を書かせて lint を通させた。
 作業場は空の置き場（1枚と書き出す先だけ）で、ほかのファイルは読めない。**この回の差の表の組（マトカ渓谷）は、1枚に入っていない**。批評役は回していない。
 
 **区間は A 案（spec の why は 1:01:00〜3:05:30）より広い 1:00:00〜3:40:00 にした**（あやとが A と B をつないだので、帰りのタクシーまで選べるように）。

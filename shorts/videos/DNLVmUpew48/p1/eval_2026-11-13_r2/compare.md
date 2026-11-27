@@ -5,7 +5,7 @@
 
 ## 書かせかた
 
-1回目と同じ道と同じ引数（`../eval_2026-11-13/compare.md` の呼び出し）。`brief.py writer` の1枚だけを `claude -p`（claude-opus-5-5・effort high）に渡し、
+1回目と同じ道と同じ引数（`../eval_2026-11-13/compare.md` の呼び出し）。`brief.py writer` の1枚だけを `claude -p`（opus・effort high）に渡し、
 作業場は空の置き場（1枚と lint.py だけ。`--restricted` でファイルの道具は作業場の中だけ、Bash は lint だけ）。批評役は回していない。
 **この回の組（教会）は、1枚に入っていない**（直した行の例にも、残した行の例にも、カードの並びの数にも）。
 

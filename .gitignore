@@ -125,3 +125,6 @@ deno.lock
 
 # 書き出しの声の作業置き場（build_edit.py の --work を渡さないと、リポジトリの中の edit_*.narr にできる。声の素材を入れない）
 shorts/videos/**/*.narr/
+
+# 画の検査役の答えの控え（scene.py が回ごとに作る。答えは指示書のカットに押してあるので、控えはコミットしない）
+shorts/videos/*/*/*.scene/
