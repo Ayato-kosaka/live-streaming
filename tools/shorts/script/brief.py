@@ -1277,7 +1277,7 @@ def build_fact(script: Path, spec: Path | None, video, ranges: list, extra: list
 # 本編集の段に効く分類。題のうち「札」（書き出しで焼く題の札）の決まりも、ここで当てる（F-015・F-030・F-043）
 EDIT_CATS = ("画", "音", "投稿")
 CARD_WORD = "札"
-EDIT_DO = 80       # 帳面の項目の「する」の1行の字数（2026-11-27 に 100 → 80。フランス A の1枚が 19,972字で、上限の2万字まで28字だった）
+EDIT_DO = 70       # 帳面の項目の「する」の1行の字数（2026-11-27 に 100 → 70。フランス A の1枚が上限の2万字の手前にいた）
 EDIT_MAX = 20000   # 1枚の字数の上限（#1011）。越えたら雛形か抜き出しを削る。担当が毎回の呼び出しで読み直す量（SHEET_MAX["edit"]。越えたら止まる）
 # 企画の節のうち、本編集で読む小節の見出し。ほかは原稿の段の記録（拍の写し・【足】・確かめた事実）と往復の記録
 EDIT_HEADS = re.compile(r"本編集|書き出し|取り込み|似た見た目|(?<!企)画|0秒目|冒頭|決めごと|決定|あやとの直し|気をつけ|素材|カット|^声$|投稿")
@@ -1344,7 +1344,8 @@ def rule_do(it, width: int = 100) -> str:
 
 
 def edit_ledger_block(led=None) -> str:
-    """帳面の画・音・投稿（と題の札）の項目。検査が落とす項目は名前だけ、人が当てる項目は題の1行（2回以上・絶対の項目は「する」の1行つき）。"""
+    """帳面の画・音・投稿（と題の札）の項目。検査だけが落とす項目は名前だけ、検査と人の目の項目は題と検査の名前、
+    人の目だけの項目は題の1行（2回以上・絶対の項目は「する」の1行つき）。"""
     items = edit_items(led)
     machine = [it for it in items if check_only(it)]
     out = []
@@ -1352,9 +1353,14 @@ def edit_ledger_block(led=None) -> str:
         if it in machine:
             continue
         times = f"（{it.times}回）" if it.times > 1 else ""
-        # 「する」の1行は、2回以上言われたか「絶対」の項目だけ（2026-11-27。全部に付けると帳面が増えるたびに1枚が2万字を越えた。
-        # 1回の項目は題の1行が決まりで、全文は帳面にある）
-        do = f"\n  する: {rule_do(it, EDIT_DO)}" if ledger_mod.guard_target(it) else ""
+        # 「する」の1行は、2回以上言われたか「絶対」の項目で、検査（`check:`）がまだ当てていないものだけ（2026-11-27。全部に付けると
+        # 帳面が増えるたびに1枚が2万字を越えた。検査が当てる項目は、その名前を書けば summary.json の合否で分かる。全文は帳面にある）
+        if it.checks:
+            do = f"（検査 {'/'.join(sorted(it.checks))} ＋人の目）"
+        elif ledger_mod.guard_target(it):
+            do = f"\n  する: {rule_do(it, EDIT_DO)}"
+        else:
+            do = ""
         out.append(f"- **{it.id}**（{it.category}）{it.title}{times}{do}")
     if machine:
         out.append("- 検査が見る（`check.py` が落とす。`summary.json` の合否を読むだけ）: "
@@ -1524,8 +1530,12 @@ def material_block(vdir: Path, spec: dict | None, excerpt: str, scratch: str | N
         parts.append(f"- 時間軸（spec の `_note`）: {short(str(spec['_note']), 700)}")
     ids = stream_ids(vdir, spec)
     if ids:
+        # 状態ごとにまとめる（同じ状態を配信の数だけ書かない。9配信のフランス A で、同じ字が8回並んでいた）
+        by: dict = {}
+        for v in ids:
+            by.setdefault(clips_state(v), []).append(v)
         parts.append("- 配信と clips の暗号文（`shorts/.work/<videoId>/clips/`。開きかたは下の 1）: "
-                     + "・".join(f"{v}（{clips_state(v)}）" for v in ids))
+                     + " ／ ".join(f"{st}: {'・'.join(vs)}" for st, vs in by.items()))
     if scratch and ids:
         found = []
         for v in ids:

@@ -1068,8 +1068,11 @@ def leg_e_check(B):
     return [("check: だけの F-013・F-027・F-028 は「検査が見る」の1行に名前だけ",
              bool(line) and all(i in line[0] for i in ("F-013", "F-027", "F-028"))
              and not any(f"**{i}**" in block for i in ("F-013", "F-027", "F-028"))),
-            ("人の目が要る F-014・F-029 は「する」の1行つき",
-             "**F-014**" in block and "**F-029**" in block and "する: 書き出したコマで行ごとに" in block)]
+            ("人の目も要る F-014・F-029 は、題と検査の名前（similar_run）つき",
+             "**F-014**" in block and "**F-029**" in block and "similar_run ＋人の目" in block),
+            ("検査の無い2回以上の項目（F-084）は「する」の1行つき",
+             any(ln.startswith("- **F-084**") for ln in block.splitlines())
+             and "  する: " in block.split("- **F-084**", 1)[1].split("\n- ", 1)[0])]
 
 
 def table_rows(text: str) -> list:
@@ -1355,7 +1358,7 @@ def leg_caps_sheets(B):
     e = _lowered(B.SHEET_MAX, "edit", 1000, lambda: B.build_edit_brief(ep, None, "", None, None))
     c = _lowered(B.SHEET_MAX, "critic", 1000, lambda: B.build_critic(VUSD_NG, None, [], "x"))
     v = _lowered(B.SHEET_MAX, "viewer", 100, lambda: B.build_viewer(VUSD_NG))
-    f = _lowered(B.SHEET_MAX, "fact", 100, lambda: B.build_fact(VUSD_NG, None, "VusdZVyjgjQ", ["VusdZVyjgjQ@0:00:00-0:05:00"], []))
+    f = _lowered(B.SHEET_MAX, "fact", 100, lambda: B.build_fact(VUSD_NG, None, "VusdZVyjgjQ", ["0:00:00-0:05:00"], []))
     return [("上限は 本編集 2万・作文者 2万・事実 2万・視聴者 6,000・批評役 5万（上げていない）",
              B.SHEET_MAX == {"writer": 20000, "edit": 20000, "viewer": 6000, "fact": 20000, "critic": 50000}
              and B.EDIT_MAX == B.SHEET_MAX["edit"]),

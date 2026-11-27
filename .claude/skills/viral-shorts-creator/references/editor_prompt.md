@@ -54,11 +54,11 @@
 `E=.claude/skills/ec2-chrome/ec2.py`。
 **素材の取り出しと声は互いに待たない。** 声は EC2 の札（下）を取ってから。待つあいだは「札を待つあいだに」を先にやる。
 
-1. **素材を開く**（上の「素材」の配信ごとの状態で分かれる。手元に開いた置き場があればそれを使う。開く先は `$S`）:
+1. **素材を開く**（上の「素材」の配信ごとの状態で。手元に開いた置き場があればそれ。開く先は `$S`）:
    - **コマ一覧から見る（mp4 は開かない）**: 「作業枝に在る・コマ一覧の封あり」の配信は
      `python3 tools/shorts/ingest/decrypt.py --key $K --out $S/ingest --sheets --branch claude/serene-darwin-sf09tt`
-     （git fetch は要らない。約1MB・5秒。1か所だけなら末尾に `shorts/.work/<videoId>/clips`）→ `$S/ingest/<videoId>/clips/sheets/NN_PP.jpg` を Read。
-     区間ごと・2秒に1コマ。帯は「配信の時刻＋mp4 の中の秒」（例 `0:04:15 +0s`）。縦長は 6×5（1枚60秒）・横長は 5×6。同じ所に `sheets.csv`・`index.json`。
+     （1か所だけなら末尾に `shorts/.work/<videoId>/clips`）→ `$S/ingest/<videoId>/clips/sheets/NN_PP.jpg` を Read。
+     2秒に1コマ。帯は「配信の時刻＋mp4 の中の秒」（例 `0:04:15 +0s`）。同じ所に `sheets.csv`・`index.json`。
      **この形で取れるのは 62c63c0e より後に頼んだ clips だけ。** 「古い形」の配信は、下の mp4 を開いて手元で作る
      （`mkdir -p $S/sheets && ffmpeg -loglevel error -i <窓の mp4> -vf "fps=0.5,scale=240:-1,tile=6x5" $S/sheets/<番号>_%02d.jpg`。1枚 60秒ぶん）
    - **mp4**（指示書を組む・書き出す・カクつきを測るのに要る）: **作業枝は `git fetch` しない**（箱のディスクが埋まる）。API でこの回の置き場だけ取る:
@@ -69,22 +69,20 @@
      `rm -rf shorts/.work/<videoId>/clips`（`git add` しない）
    - `index.json` の `clips[]` が窓（`start`/`end` は配信の秒・`file` は mp4）
    - **配信が2本以上**なら、ほかの配信の秒は spec の `src`（overrides の `cuts[].t`）の頭に videoId を付けて書く（`kunXt2sXnFQ 0:17:23.5–0:17:26`）。
-     `build_edit.py` は名前の付いた秒をその配信の窓の一覧（index.json の `video`）から引くので、配信ごとに `--clips` を重ねるだけ（一覧の写しは作らない）。
-     名前の無い秒はこの回の窓から引く
+     `build_edit.py` には配信ごとに `--clips` を重ねるだけ（一覧の写しは作らない。名前の無い秒はこの回の窓）
    - **カクつき**: 使う区間は先に `python3 tools/shorts/qa/stutter.py <窓の mp4> --from <秒> --to <秒>` で測り、✕（繰り返し 60% 越え）の秒を避ける
    - **0秒目**: `python3 tools/shorts/plan/hook.py {{spec}} --material $S/ingest/<videoId> --out $S/hook`
-     （開いたままの clips・zoom から読む。archive も mp4 も要らない。ほかの配信の秒の行はその配信の置き場 `$S/ingest/<その videoId>` から、地図の行は外して回る。
-     顔の重みが無ければ取りに行き、取れなければ止まる）
+     （開いた clips・zoom から読む。ほかの配信の行はその配信の置き場から、地図の行は外して回る）
 2. **声**（Fish Audio・Holiday Twist。EC2 の Chrome）: 声に渡す字は `{{vl}}`（`key`・`plan`・`n`・`caption`・`tts_text`・`bytes`）。
    無ければ `python3 tools/shorts/script/brief.py edit --episode $V{{pat_arg}} --voice-lines {{vl}}` が spec の `tts_text` から作る。
    直すのは読み違えそうな所だけ（数・英字・読みが割れる漢字）。**言う中身は字幕と同じ。** かなの数が助詞と紛れるときは漢数字
-   （「とおか」「二千年」。「人生初」をかなにしたら「は」を「わ」と読んだ）。札を取ったら（下）:
+   （「とおか」「二千年」）。札を取ったら（下）:
    - 道具と字を置く: `python3 $E put tools/shorts/voice/fish_web.py /home/ubuntu/cdp/fish_web.py`（`asr_check.py` も同じ）・
      `python3 $E put {{vl}} /home/ubuntu/voice/{{name}}-lines_in.json`
    - `python3 $E run <(echo 'cd /home/ubuntu/cdp && python3 fish_web.py backup && python3 fish_web.py state --model <声のID>') 300`
-     （声のID は `grep -ho '"model_id": "[^"]*"' /home/ubuntu/voice/out/*/attempts.jsonl | sort | uniq -c` の Holiday Twist。`state` の残りのクレジットを控える）
+     （声のID は前の回の `attempts.jsonl` の `model_id` の Holiday Twist。`state` の残りのクレジットを控える）
    - `python3 $E run <(echo 'cd /home/ubuntu/cdp && nohup python3 fish_web.py gen --model <声のID> --lines /home/ubuntu/voice/{{name}}-lines_in.json --out /home/ubuntu/voice/out/{{name}} --budget-credits 2000 > /home/ubuntu/voice/{{name}}.log 2>&1 &') 60`
-     （1文2本・課金は送った字のバイト数。済んだ文は飛ばすので、止まったら同じ指示で続き）
+     （1文2本。済んだ文は飛ばすので、止まったら同じ指示で続き）
    - 聞き取り: `python3 $E run <(echo 'cd /home/ubuntu/cdp && /home/ubuntu/voice/asr-venv/bin/python asr_check.py /home/ubuntu/voice/out/{{name}} /home/ubuntu/voice/out/{{name}}/asr.json --model <int8 の large-v3-turbo の置き場> --pack 26') 1800`
      （模型は `find /home/ubuntu -maxdepth 4 -type d -name '*int8*'`。その前に fish の Chrome を閉じる。開いたままだと読み込みで落ちる）
    - 持ち帰って揃える: EC2 で `tar czf /home/ubuntu/voice/{{name}}.tgz -C /home/ubuntu/voice/out {{name}}` → `python3 $E get /home/ubuntu/voice/{{name}}.tgz $S/voice/raw.tgz` →
@@ -139,7 +137,7 @@
 ## EC2 の札（列 `fish`）
 
 fish の Chrome は声の担当と TikTok の担当が使い回す（同時に触ると下書きと入力欄を取り合う）。**列 `fish` の札で1人ずつ**（`ec2-chrome` の 2.5）。
-見る `python3 $E queue`。声と TikTok の道具は札を自分で取り、空くまで待つ。
+見る `python3 $E queue`。声と TikTok の道具は札を自分で取る。
 手で何手も触るなら `python3 $E hold fish --who <名前> --purpose '<何のため>' -- <コマンド>`。
 `backup` → `state` → `gen` を続けて守るなら `&&` でつないだ1本の sh を `nohup /usr/local/sbin/ec2-queue hold fish --who <名前> --purpose '声 <回>' -- sh -c '<つないだもの>' > <ログ> 2>&1 &`。
 鍵（`~/locks/fish-voice`）は置かない・見ない。止めるのは自分の札を返してから `python3 $E stop`（ほかの札があれば断られる。30分で見張りが止める）。
