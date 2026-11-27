@@ -18,29 +18,38 @@
 """
 import json
 import math
-import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "python"))
+from ts_read import read_array  # noqa: E402  TS を字で読むのはこの1本（ts_readers_selftest）
 
 
 def months() -> list[dict]:
-    src = (ROOT / "site/content/months.ts").read_text()
-    out = []
-    for blk in re.split(r"\n  \{\n", src)[1:]:
-        key = re.search(r'key: "(\d{4}-\d{2})"', blk)
-        denom = re.search(r"denom: (\d+)", blk)
-        att = re.search(r"attend: \[(.*?)\],\n", blk, re.S)
-        if not (key and denom and att):
-            continue
-        people = [
-            {"name": n, "d": int(d)}
-            for n, d in re.findall(r'\{n:"((?:[^"\\]|\\.)*)",d:(\d+)', att.group(1))
-        ]
-        out.append({"key": key.group(1), "denom": int(denom.group(1)), "attend": people})
-    return out
+    got = read_array(
+        (ROOT / "site/content/months.ts").read_text(encoding="utf-8"),
+        "MONTHS",
+        keys=("key", "from", "to", "denom", "people", "newcomers"),
+        nested={"attend": ("n", "d"), "streams": ("d",)},
+        id_key="key",
+    )
+    if got.missed:
+        sys.exit(f"months.ts を {got.missed} 件読み落とした（止める）")
+    return [
+        {
+            "key": r["key"],
+            "from": r["from"],
+            "to": r["to"],
+            "denom": int(r["denom"]),
+            "people": int(r["people"]),
+            "newcomers": int(r["newcomers"]),
+            "frames": len(r["streams"]),
+            "attend": [{"name": a["n"], "d": int(a["d"])} for a in r["attend"]],
+        }
+        for r in got.rows
+    ]
 
 
 def main() -> None:
@@ -63,7 +72,9 @@ def main() -> None:
                 break
         return n
 
-    words = json.loads((HERE / f"{key}.content.json").read_text()).get("kinkinWords", {})
+    cpath = HERE / f"{key}.content.json"
+    c = json.loads(cpath.read_text())
+    words = c.get("kinkinWords", {})
     missing = [n for n in full if n not in words]
     if missing:
         sys.exit(f"皆勤の人のひとことが無い: {missing}（content.json の kinkinWords に足す）")
@@ -73,27 +84,16 @@ def main() -> None:
         ({"name": n, "streak": streak(n), "word": words[n]} for n in full),
         key=lambda w: -w["streak"],
     )
-    others = [{"name": p["name"], "d": p["d"]} for p in cur["attend"] if p["d"] < denom and p["d"] >= floor]
+    others = [{"name": p["name"], "d": p["d"]} for p in cur["attend"] if floor <= p["d"] < denom]
     others.sort(key=lambda p: -p["d"])
-    y, mo = key.split("-")
-    frm = next(m for m in months() if m["key"] == key)
-    src = (ROOT / "site/content/months.ts").read_text()
-    period = re.search(rf'key: "{key}".*?from: "(\d{{4}})-(\d\d)-(\d\d)", to: "(\d{{4}})-(\d\d)-(\d\d)"', src, re.S)
-    f = f"{int(period.group(2))}/{int(period.group(3))}"
-    t = f"{int(period.group(5))}/{int(period.group(6))}"
+    md = lambda s: f"{int(s[5:7])}/{int(s[8:10])}"  # noqa: E731  "2026-10-31" → "10/31"
     out = {
         "denom": denom,
         "winners": winners,
         "others": others,
-        "note": f"{f}〜{t} に配信のあった{denom}日が分母。同じ日に何枠あっても1日で、朝6時より前に始まった続きの枠は前の日に数えています。",
+        "note": f"{md(cur['from'])}〜{md(cur['to'])} に配信のあった{denom}日が分母。同じ日に何枠あっても1日で、朝6時より前に始まった続きの枠は前の日に数えています。",
     }
-    blk = src[src.index(f'key: "{key}"'):]
-    blk = blk[: blk.index("\n  },")]
-    people = int(re.search(r"people: (\d+)", blk).group(1))
-    newcomers = int(re.search(r"newcomers: (\d+)", blk).group(1))
-    frames = len(re.findall(r"\{d:\"", re.search(r"streams: \[(.*?)\],\n", blk, re.S).group(1)))
-    cpath = HERE / f"{key}.content.json"
-    c = json.loads(cpath.read_text())
+    people, newcomers, frames = cur["people"], cur["newcomers"], cur["frames"]
     c["opening"]["stats"] = [
         {"n": str(denom), "unit": "日", "label": "配信のあった日"},
         {"n": str(frames), "unit": "枠", "label": "朝4時の到着も入れて"},
@@ -102,7 +102,8 @@ def main() -> None:
     ]
     c["newcomers"]["count"] = newcomers
     c["newcomers"]["note"] = f"今月はじめてコメントしてくれたのは{newcomers}人でした。"
-    c["ending"]["sub"] = re.sub(r"　.*$", f"　{denom}日・{frames}枠・{people}人", c["ending"]["sub"])
+    head = c["ending"]["sub"].split("\u3000")[0]
+    c["ending"]["sub"] = f"{head}\u3000{denom}日・{frames}枠・{people}人"
     cpath.write_text(json.dumps(c, ensure_ascii=False, indent=1) + "\n")
     print(f"content.json: 日 {denom} / 枠 {frames} / はじめまして {newcomers} / しゃべった人 {people}")
 
