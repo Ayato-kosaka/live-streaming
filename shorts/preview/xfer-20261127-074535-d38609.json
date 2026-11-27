@@ -1,0 +1,14 @@
+{
+ "name": "xfer-20261127-074535-d38609",
+ "place": "transfer",
+ "action": "up",
+ "files": [
+  {
+   "name": "00.jpg",
+   "bytes": 256029,
+   "sha256": "3edc8fa205e86f75614dc61cd158c362c875a8a893a89b6e34dda5bd94577aa9"
+  }
+ ],
+ "pubkey": "-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAxsO/+C8OyJJJGB/ieois\nhAuBsVtAgJuVzNpt8Jmk/Yb2XIDVtsUsiPrHXpyF1xBuQ8AuC6d3yuURuBMKdBwe\nHJITqd53HRXB0SKViX/q4YOJUInJwdWuRMj5AFFWxVDWFQBLo6JAIPJ3b7GUu4va\nujdKGy0qVBvlM0SQJyPXTYv71bnUnyWgKJWSznsnTRYJ5HvEo9xweEX/1kB7Iw9J\neWAwRZSCnbb5578WD6NdjcH/1vm7qDhXDnMbgSqdss8vuH6+X5VNAfX396JKffx6\nmzkWMzVg+A6LDb9nMWTTQRZSHmcuKnNsTnTNcOEx8+78XE3t11U/p1USoV5VrLCA\n2bC0eqs8MRMME3oPCMN8fVmezZhKDruftsQFBdM0ZWCAMvUX1MXcOBsFlL/rZVYY\n9fr/32n+xJse6ll6gtTQ4oii+S5vd8e5cgEuspj+N9HrD0GNcPWqYXAnQqEmWSTo\n1R8y39y4EY2B3hhdOQiF20/P1NgxC9zIpFrdENJlAp7XAgMBAAE=\n-----END PUBLIC KEY-----\n",
+ "nonce": "aabe762db3ed6dc83df23940"
+}
