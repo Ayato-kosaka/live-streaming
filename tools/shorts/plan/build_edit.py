@@ -1113,6 +1113,9 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                 cut["inset"] = ins
             if cs.get("note"):
                 cut["note"] = cs["note"]  # なぜこの画にしたか（人が直すときに読む。書き出しは読まない）
+            if cs.get("event") or r.get("event"):
+                # 出来事そのものが要る画（飲む・食べる瞬間の本人など）。画質の検査（qa/sharp.py）はフックでも落とさない
+                cut["event"] = cs.get("event") or r.get("event")
             cuts.append(cut)
             row_cuts.append(f"{M.ref(fr[0], f'{fin / FPS:.2f}') if fr else M.ref(video, fmt(t0))}+{m / FPS:.2f}s")
         prev_end = clip["start"] + cuts[-1]["out"] / FPS

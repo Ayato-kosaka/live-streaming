@@ -33,6 +33,7 @@ import cuts  # noqa: E402
 import faces  # noqa: E402
 import linebreak  # noqa: E402
 import reuse  # noqa: E402
+import sharp  # noqa: E402
 import still  # noqa: E402
 import stutter  # noqa: E402
 import text  # noqa: E402
@@ -62,13 +63,14 @@ CHECKS = {
     "still_image": still.check,
     "source_stutter": stutter.check,
     "shot_reuse": reuse.check,
+    "sharpness": sharp.check,
     "silence": audio.check_silence,
     "clipping": audio.check_clipping,
     "original_audio": audio.check_original_audio,
 }
 # 絵だけを見る検査（音を差し替えた動画には、前の結果がそのまま使える）
 VIDEO_ONLY = ("safe_area", "live_badge", "watermark", "faces", "text_on_face", "black", "frozen", "cut_length", "similar_run",
-              "still_image", "source_stutter", "shot_reuse")
+              "still_image", "source_stutter", "shot_reuse", "sharpness")
 # 下書き（render.py --draft）で回す最低限。中身を直している間に崩れやすいものだけ:
 # 字幕と声のずれ・字が安全域から出ていないか・真っ黒なコマ・強調の字の言い直し（時間割だけで測るので速い）。
 # 元素材のカクつきと使い回しも下書きで回す。どちらも「どの区間をどこに使うか」で決まり、それを直すのは

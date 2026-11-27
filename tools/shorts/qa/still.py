@@ -77,7 +77,7 @@ IMAGE_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff", 
 CHANGE_MAD = 0.5      # 隣のコマとの差がこれ以上なら「絵が変わった」（止め絵は 0.02 未満、動く映像の中央値は 0.27 以上）
 STILL_SHARE = 0.05    # 絵が変わった対がこれ未満のカットは止め絵（カクつく映像でも 19% はある）
 MIN_PAIRS = 5         # 隣どうしの対がこれに満たないカット（6コマ未満）は、画素では決めない
-ART_KINDS = ("generated", "free")   # 絵の窓の台帳の印（art_clips.py）。画像生成・フリー素材
+ART_KINDS = ("generated", "free", "card")   # 絵の窓の台帳の印（art_clips.py）。画像生成・フリー素材・あやと島カードの写真（F-094）
 ART_MIN_MOVE = 0.06   # 絵のカットは、時間割の寄せでこれ以上動く（倍率の比か、寄る先の流れ）。上の「絵のカット」
 STICKER_COVER_STILL = 0.6   # 札（stickers）が画面のこの割合以上を覆えば止め絵。上の「札で重ねた画像」
 
