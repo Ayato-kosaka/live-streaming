@@ -1031,7 +1031,9 @@
          ステップ: 0〜from-1 … 一覧（と、その面の前置き）/ from〜 … 1件ずつ大写し / 最後 … 全部が一覧に戻る */
       function spotScene(o) {
         const from = o.from ?? 1;
-        const phases = o.items.map((it) => (o.phases ? o.phases(it) : 1));
+        // 大写しにする順（一覧の並びとは別に決められる）。既定は一覧の上から
+        const order = o.order || o.items.map((_, j) => j);
+        const phases = order.map((j) => (o.phases ? o.phases(o.items[j]) : 1));
         const starts = [];
         let s = from;
         for (const n of phases) {
@@ -1046,11 +1048,12 @@
           confettiAt: o.confettiAt,
           confettiBig: o.confettiBig,
           spotAt(step) {
-            for (let j = 0; j < starts.length; j++) if (step >= starts[j] && step < starts[j] + phases[j]) return { j, phase: step - starts[j] };
+            for (let k = 0; k < starts.length; k++) if (step >= starts[k] && step < starts[k] + phases[k]) return { j: order[k], phase: step - starts[k] };
             return null;
           },
-          seenBefore(step) {
-            return starts.filter((st, j) => step >= st + phases[j]).length;
+          isSeen(step, j) {
+            const k = order.indexOf(j);
+            return k >= 0 && step >= starts[k] + phases[k];
           },
           render() {
             const smalls = o.items.map((it, j) => `<div class="spot-item" data-spot="${j}">${o.small(it, j)}</div>`);
@@ -1549,6 +1552,8 @@
         const rows = TIPS_PAGES[i];
         return spotScene({
           items: rows,
+          // 一覧は 4位から並べ、大写しは下の順位から上がっていく（あやと 2026-11-27「昇順にフォーカス」）。3位→2位→1位へつながる
+          order: rows.map((_, j) => rows.length - 1 - j),
           small: (p) => `
             <div class="row" data-row>
               <span class="rk">${p.rank}位</span>
@@ -1673,7 +1678,8 @@
       }
       push("guides", guidesScene());
       if (NO.omake != null) push("omake", omakeScene());
-      TIPS_PAGES.forEach((_, i) => push("tips", tipsListScene(i)));
+      // 面が2枚以上になっても、下の順位の面から出す（昇順。3位→2位→1位へつながる）
+      TIPS_PAGES.map((_, i) => i).reverse().forEach((i) => push("tips", tipsListScene(i)));
       if (tipsAt(3).length + tipsAt(2).length) push("tips", { total: 2, render: renderTipsTop23 });
       push("tips", { total: 2, render: renderTipsTop1, confettiAt: 1, confettiBig: true });
       LETTER_PAGES.forEach((rows, i) => push("letter", { total: rows.length + (i === LETTER_PAGES.length - 1 ? 1 : 0), render: () => renderLetter(i) }));
@@ -1856,8 +1862,7 @@
         const cur = s.spotAt(stepIdx);
         layer.classList.toggle("on", !!cur);
         // 大写しが済んだ札には、縁に金の印（どこまで読んだかが一覧で分かる）
-        const seen = s.seenBefore(stepIdx);
-        stage.querySelectorAll(".spot-item").forEach((el) => el.classList.toggle("seen", Number(el.dataset.spot) < seen && !(cur && Number(el.dataset.spot) === cur.j)));
+        stage.querySelectorAll(".spot-item").forEach((el) => el.classList.toggle("seen", s.isSeen(stepIdx, Number(el.dataset.spot)) && !(cur && Number(el.dataset.spot) === cur.j)));
         const live = layer.querySelector(".big-card:not(.leaving)");
         if (live && cur && Number(live.dataset.j) === cur.j) {
           setPhase(live, cur.phase);
