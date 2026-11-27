@@ -12,13 +12,19 @@
  *
  * - `202611.template.html` … 見た目と仕掛け（手で直すのはこちら。public の HTML は書き出したもの）
  * - `2026-11.content.json` … 中身。形は 10月版の REVIEW_DATA から kinkin と tips を抜いたもの
- *   （month, period, opening, recap, newcomers, quiz, buzzwords, meigen, funny, guides, omake, letter, ending）
+ *   （month, period, opening, recap, newcomers, quiz, buzzwords, meigen, funny, fusen, guides, omake, letter, ending）
+ *   - `recap[i].cards: [{img, caption}]` … 6分割の各コマに出す、あやと島カードの写真（1〜3枚。MR-14）
+ *   - `quiz[i].card: {img} | null`        … 問いと一緒に大きく出す写真（MR-15）
+ *   - `fusen: {lead, categories:[{label,text,by,hearts,date,after,img}], grandPrix:{同じ形}}` … 付箋大賞（MR-19）
+ *   `img` は tools/monthly_review/ からの相対パス。長い辺 960px の JPEG に縮めて data URI で焼き込む。
+ *   ファイルが無い写真は出さない（書き出しの終わりに「無い」と数えて出す）
  * - `2026-11.kinkin.json`  … 出席 `{denom, winners:[{name,streak,word}], others:[{name,d}], note}`
  * - `2026-11.tips.json`    … 投げ銭 `{rows:[{handle,display,yen,rank,icon}], total, period}`（貢献額。ここで割り算しない）
  * - アバター … YouTube のチャンネルページの og:image を `=s176-c-rj`（JPEG）で取って data URI。
  *   取れない人はイニシャルの丸（画面の側が出す）
  * - 投げ銭の絵 … 図鑑のキャラクター（`icon` が鍵）。島の口から 256px、だめなら public/review/c の 128px
  * - 城とピポ … public/alert/themes/castle/（11月の投げ銭アラートの絵そのまま）と castle.json
+ * - 画面は 1080×1080（docs/spec/monthly-review.md MR-6）。測るのは check.mjs
  * - 字 … 島の丸ゴシック（Zen Maru Gothic）を、この面で使う字だけに切って焼き込む。
  *   Google Fonts を実行時に読まない（オフラインで崩れる）。切る道具（fontTools）が無ければ端末の字に落ちる
  *
@@ -128,6 +134,17 @@ function validate(D) {
   need((T.rows || []).some((r) => r.rank === 1), "tips に 1位が無い");
   need(D.letter && arr(D.letter.paragraphs) && D.letter.sign, "letter{paragraphs[],sign}");
   need(D.ending && D.ending.title, "ending{title,sub,ps,tapGoal}");
+  for (const [i, r] of (D.recap || []).entries())
+    need(r.cards == null || (arr(r.cards) && r.cards.every((c) => c && typeof c.img === "string")), `recap[${i}].cards は [{img,caption}]`);
+  for (const [i, q] of (D.quiz || []).entries()) need(q.card == null || typeof q.card.img === "string", `quiz[${i}].card は {img} か null`);
+  need((D.quiz || []).every((q) => q.choices.length === 3), "クイズは A・B・C の3択（MR-15）");
+  if (D.fusen != null) {
+    const F = D.fusen;
+    const okNote = (f) => f && f.label && f.text && (f.hearts == null || Number.isFinite(Number(f.hearts)));
+    need(arr(F.categories) && F.categories.every(okNote), "fusen.categories[]{label,text,by,hearts,date,after,img}");
+    need((F.categories || []).length <= 5, "付箋大賞の部門賞は5まで（MR-11）");
+    need(F.grandPrix == null || okNote(F.grandPrix), "fusen.grandPrix{label,text,by,hearts,date,after,img}");
+  }
   // 見せる名前は「あやと島案内鳥」。画面にも署名にも中の名前を書かない
   const blob = JSON.stringify(D);
   need(!/claude/i.test(blob), "中身に「Claude」がある（視聴者さんに見せる名前は「あやと島案内鳥」）");
@@ -227,6 +244,58 @@ async function chars(ids) {
   return { got, small, miss };
 }
 
+/* ---------------------------------------------------------------- 写真（カード・付箋） */
+/** 中身の `img`（tools/monthly_review/ からの相対パス）を全部集める */
+function imagePaths(D) {
+  const out = [];
+  for (const r of D.recap || []) for (const c of r.cards || []) out.push(c.img);
+  for (const q of D.quiz || []) if (q.card) out.push(q.card.img);
+  for (const f of [...(D.fusen?.categories || []), D.fusen?.grandPrix]) if (f && f.img) out.push(f.img);
+  return [...new Set(out.filter((p) => typeof p === "string" && p))];
+}
+/** 長い辺 960px の JPEG に縮めて data URI にする（PIL）。縮めたものは .cache/img に置く */
+function images(paths) {
+  const dir = join(CACHE, "img");
+  mkdirSync(dir, { recursive: true });
+  const got = {};
+  const miss = [];
+  const todo = [];
+  for (const p of paths) {
+    const src = resolve(HERE, p);
+    if (!existsSync(src)) {
+      miss.push(p);
+      continue;
+    }
+    const st = readFileSync(src);
+    const f = join(dir, createHash("sha1").update(st).digest("hex").slice(0, 16) + ".jpg");
+    if (!existsSync(f)) todo.push([src, f]);
+    got[p] = f;
+  }
+  if (todo.length) {
+    const py = `
+import sys
+from PIL import Image, ImageOps
+for src, dst in zip(sys.argv[1::2], sys.argv[2::2]):
+    im = ImageOps.exif_transpose(Image.open(src))
+    if im.mode in ("RGBA", "LA", "P"):
+        im = im.convert("RGBA")
+        bg = Image.new("RGB", im.size, (255, 250, 228))
+        bg.paste(im, mask=im.split()[-1])
+        im = bg
+    im = im.convert("RGB")
+    im.thumbnail((960, 960), Image.LANCZOS)
+    im.save(dst, "JPEG", quality=82, optimize=True, progressive=True)
+`;
+    try {
+      execFileSync("python3", ["-I", "-c", py, ...todo.flat()], { stdio: "pipe" });
+    } catch (err) {
+      die(`写真を縮められない（PIL）: ${String(err.stderr || err).slice(0, 200)}`);
+    }
+  }
+  for (const [p, f] of Object.entries(got)) got[p] = dataUri(readFileSync(f), "image/jpeg");
+  return { got, miss };
+}
+
 /* ---------------------------------------------------------------- 城とピポ */
 function art() {
   const def = readJson(join(CASTLE, "castle.json"));
@@ -307,12 +376,14 @@ validate(data);
 const handles = handlesOf(data);
 const ids = [...new Set(data.tips.rows.map((r) => r.icon).filter(Boolean))];
 const [av, ch] = await Promise.all([avatars(handles), chars(ids)]);
+const img = images(imagePaths(data));
 const ART = art();
 
 let html = readFileSync(TEMPLATE, "utf8");
 html = put(html, "REVIEW_DATA", js(data));
 html = put(html, "AVATARS", js(av.got));
 html = put(html, "CHARS", js(ch.got));
+html = put(html, "IMAGES", js(img.got));
 html = put(html, "ART", js(ART));
 // 字は、雛形の字（データ URI を除く）と中身の字から数える
 const textForFont = html.replace(/data:[a-z/+-]+;base64,[A-Za-z0-9+/=]+/g, "") + "0123456789,.:/〜・…（）「」";
@@ -328,6 +399,8 @@ console.log(
     `中身: content=${used.content} kinkin=${used.kinkin} tips=${used.tips}`,
     `顔: ${Object.keys(av.got).length}/${handles.length}人${av.miss.length ? `（取れずイニシャル: ${av.miss.join(", ")}）` : ""}`,
     `投げ銭の絵: ${Object.keys(ch.got).length}/${ids.length}${ch.small.length ? `（128px で代用 ${ch.small.length}）` : ""}${ch.miss.length ? `（無し: ${ch.miss.length}）` : ""}`,
+    `写真: ${Object.keys(img.got).length}枚${img.miss.length ? `（ファイルが無く出さない: ${img.miss.join(", ")}）` : ""}`,
+    `付箋大賞: ${data.fusen ? `部門賞 ${(data.fusen.categories || []).length}・大賞 ${data.fusen.grandPrix ? 1 : 0}` : "中身に無い（コーナーを作らない）"}`,
     `字: ${font.css ? "丸ゴシックを焼き込み " : "焼き込みなし "}${font.note}`,
   ].join("\n")
 );

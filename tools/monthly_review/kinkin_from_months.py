@@ -9,7 +9,8 @@
 
 - 皆勤 = その月の分母と同じ日数来た人
 - 連続 = 当月から遡って、皆勤が途切れずに続いている月の数（1 は画面で「はじめての皆勤賞」）
-- 一覧（others）= 皆勤以外で、分母の4分の1以上来た人（10月版は 35日で 8日まで載せていた）
+- 一覧（others）= 皆勤から −1・−2・−3 日の人だけ（`docs/spec/monthly-review.md` MR-11。
+  あやと 2026-11-27「皆勤を −0 とすると −1・−2・−3 日まで」）
 - 皆勤の人のひとこと（word）は人が書く。`<月>.content.json` の `kinkinWords`（名前 → 文）から引く。
   無い人がいたら止まる——空のまま出さない
 - オープニングの4つの数・はじめましての人数・エンディングの1行も、同じ `months.ts` の値で
@@ -17,7 +18,6 @@
   （2026-11 は 11/1・11/12 夜・11/23）のぶん少なく出て、`/months` と食い違う
 """
 import json
-import math
 import sys
 from pathlib import Path
 
@@ -79,7 +79,7 @@ def main() -> None:
     if missing:
         sys.exit(f"皆勤の人のひとことが無い: {missing}（content.json の kinkinWords に足す）")
 
-    floor = max(5, math.ceil(denom / 4))
+    floor = max(1, denom - 3)
     winners = sorted(
         ({"name": n, "streak": streak(n), "word": words[n]} for n in full),
         key=lambda w: -w["streak"],

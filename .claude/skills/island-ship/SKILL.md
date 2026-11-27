@@ -129,7 +129,7 @@ run の要約に「札を付けたら → go / wait / fail」と、**何をマ�
    | `functions/` | Functions |
    | それ以外（`docs/` `python/` `.claude/` …） | 配らない |
 
-5. **本番と突き合わせる**（`live-streaming-d3cac.web.app`。`.firebaserc` から読む）:
+5. **本番と突き合わせる**（`https://ayato-arigato.com`。`site/content/site.ts` の `url`）:
    `public/` の変えたファイル最大20本を sha256 で / Expo を変えたら `/expo-app` の entry が引けて変わったか /
    `site/` を変えたら `/` と触った面が 200 で新しい書き出しの印を持つか / Functions は配りの結論
 6. PR に1コメント（5行以内）、`Closes #N` で閉じた issue に同じ1行。落ちたら落ちた行だけ
@@ -177,7 +177,7 @@ run の要約に「札を付けたら → go / wait / fail」と、**何をマ�
    Functions は2〜3分かかるので、デプロイ緑を見てから叩く
 
    ```bash
-   B="https://live-streaming-d3cac.web.app"; C="cb=$(date +%s)"
+   B="https://ayato-arigato.com"; C="cb=$(date +%s)"
    curl -s "$B/island-api/cards?$C" | head -c 400
    ```
 

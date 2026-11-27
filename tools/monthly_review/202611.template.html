@@ -10,26 +10,33 @@
       元は tools/monthly_review/202611.template.html（見た目と仕掛け）と
       tools/monthly_review/2026-11.*.json（中身・出席・投げ銭）。
         node tools/monthly_review/build_202611.mjs     # 書き出す
-        node tools/monthly_review/check.mjs            # 測る（#308 の線）
+        node tools/monthly_review/check.mjs            # 測る（docs/spec/monthly-review.md 6章）
     -->
     <style>
       /*@@FONT_FACE@@*/
       /* =========================================
          202611 月末配信「1ヶ月ふりかえり授賞式」
          テーマ: あやと島の紙の札 ＋ 11月の投げ銭アラート（ブラン城の小さな城主ピポ、#1078）
-         - OBS ブラウザソース 1920x1080 前提。**寸法は px で決める**（vw で決めない。
-           画面の幅で字が縮むと、横向きスマホの OBS でさらに縮む。#308）
-         - クリック / Enter / → で進行、← / Backspace で戻る
-         - 外部依存なし（オフラインOK。例外は Firestore 同期の gstatic SDK）。字も絵も焼き込み
+         決まりは docs/spec/monthly-review.md（MR-1〜）。ここはその形にしたもの。
 
-         決めごと（docs/island-misses.md #308 の線。tools/monthly_review/check.mjs が測る）:
-         - 一覧の1行の高さ 46px 以上。**1画面の行は 16 まで**。超えたら面を割る（列を増やして詰めない）
-         - 「…」で切らない。名前が入らないときは字を少しだけ縮める（.fit、下限 24px）
-         - 本文の字 22px 以上
-         - 色は島（site/app/css/tokens.css の紙・墨）と、城のアラート
-           （app/alertbox/themes.ts の castle: クリーム #FFF4DC・窓の灯り #FFD54A・こげ茶 #2A1206）から借りる
+         - **1080×1080 の正方形**（MR-6）。縦長の配信に載せ、残りに顔を映す。
+           窓が正方形でないときは、枠を真ん中に置いて外を夜空の地で埋める（透明にしない）
+         - 寸法は px で決める（vw で決めない。#308）
+         - クリック / Enter / → で進行、← / Backspace で戻る
+         - 外部依存なし（オフラインOK。例外は Firestore 同期の gstatic SDK）。字も絵も写真も焼き込み
+
+         一覧の面は「大写し」（MR-22）:
+           1押し目までは一覧を小さく見せる → 1押しごとに1件が真ん中に大きく出る（下は暗く沈む）→
+           次の1押しでそれが一覧の元の位置へ縮んで戻り、次の1件が上に重なって大きく出る →
+           最後の1押しで全部が一覧に戻る。`prefers-reduced-motion` では動かさず出し替えるだけ
+
+         受け入れの線（MR-22〜27。tools/monthly_review/check.mjs が全面・全ステップで測る）:
+         - 大写しの本文 40px 以上・名前 48px 以上
+         - 一覧の1行 56px 以上・1面 12 行まで。超えたら面を割る（列を増やして詰めない）
+         - 「…」で切らない。名前が入らないときは字を少しだけ縮める（.fit）
+         - 色は島（site/app/css/tokens.css の紙・墨）と、城のアラート（app/alertbox/themes.ts の castle）から借りる
          - 絵はアラートの絵をそのまま使う（public/alert/themes/castle/）。新しく描かない
-         - UI の印に絵文字を使わない（docs/island-design.md 1章）。視聴者さんの字と配信の題の中はそのまま
+         - UI の印に絵文字を使わない（MR-8）。視聴者さんの字と配信の題の中はそのまま
          ========================================= */
       :root {
         /* 冬の夜。黒にしない。上は紺、地平に向かって暖かい紫 */
@@ -58,6 +65,10 @@
         --berry-ink: #a81139; /* 紙の上の赤い字（tokens.css --accent-ink） */
         --mint: #c4f2d9;
         --mint-ink: #1d5b3e;
+        /* 付箋（島のホワイトボードの黄色い付箋） */
+        --note: #fff3a6;
+        --note-2: #ffe97a;
+        --note-edge: #e3c94f;
         --font: "Maru Review", "Hiragino Maru Gothic ProN", ui-rounded, "Hiragino Sans", "Noto Sans JP",
           "Yu Gothic", system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
       }
@@ -68,34 +79,37 @@
         font-weight: 700;
         color: var(--ink);
         overflow: hidden;
-        background: linear-gradient(180deg, var(--night-1) 0%, var(--night-2) 42%, var(--night-3) 78%, var(--night-4) 100%);
+        /* 正方形の外も島の夜空（OBS の枠が縦長でも、透明にしない） */
+        background: radial-gradient(70% 50% at 50% 100%, rgba(255, 196, 92, 0.18), rgba(255, 196, 92, 0) 70%),
+          linear-gradient(180deg, var(--night-1) 0%, var(--night-2) 42%, var(--night-3) 78%, var(--night-4) 100%);
         background-color: var(--night-1);
         user-select: none;
         cursor: pointer;
         -webkit-font-smoothing: antialiased;
       }
 
-      /* 1920x1080 の舞台。窓がそれ以外の大きさのときだけ、まるごと縮める（OBS では 1 倍） */
+      /* 1080x1080 の舞台。窓がそれ以外の大きさのときは、真ん中に置いて収まるまで縮める */
       #world {
         position: fixed;
         left: 50%;
         top: 50%;
-        width: 1920px;
+        width: 1080px;
         height: 1080px;
         transform: translate(-50%, -50%) scale(var(--k, 1));
         transform-origin: 50% 50%;
         overflow: hidden;
+        background: linear-gradient(180deg, var(--night-1) 0%, var(--night-2) 42%, var(--night-3) 78%, var(--night-4) 100%);
       }
 
       /* ============ 夜空・雪・灯りの紐 ============
          動かすのは小さな雪の粒だけ（transform のみ）。画面いっぱいの形は動かさない */
-      #sky { position: absolute; inset: 0; z-index: -3; pointer-events: none; overflow: hidden; }
+      #sky { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
       #sky .glow {
         position: absolute;
         inset: 0;
         background:
-          radial-gradient(46% 36% at 84% 92%, rgba(255, 196, 92, 0.32), rgba(255, 196, 92, 0) 70%),
-          radial-gradient(40% 30% at 10% 96%, rgba(255, 170, 110, 0.2), rgba(255, 170, 110, 0) 70%);
+          radial-gradient(56% 36% at 84% 92%, rgba(255, 196, 92, 0.32), rgba(255, 196, 92, 0) 70%),
+          radial-gradient(50% 30% at 10% 96%, rgba(255, 170, 110, 0.2), rgba(255, 170, 110, 0) 70%);
       }
       #sky .stars {
         position: absolute;
@@ -127,74 +141,72 @@
       }
       @keyframes snow {
         0% { transform: translate3d(0, 0, 0); }
-        100% { transform: translate3d(-40px, 1120px, 0); }
+        100% { transform: translate3d(-30px, 1120px, 0); }
       }
-      /* クリスマスマーケットの灯りの紐（上の端）。紐は細い線、電球はやわらかい階調 */
-      #garland { position: absolute; left: 0; top: 0; width: 1920px; height: 70px; z-index: -2; pointer-events: none; }
+      /* クリスマスマーケットの灯りの紐（上の端） */
+      #garland { position: absolute; left: 0; top: 0; width: 1080px; height: 60px; z-index: 0; pointer-events: none; }
       #garland .bulb { animation: twinkle 3.2s ease-in-out infinite; }
       #garland .bulb:nth-child(3n) { animation-delay: -1.1s; }
       #garland .bulb:nth-child(3n + 1) { animation-delay: -2.2s; }
       @keyframes twinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
       /* 足もとの雪。進行のドットはこの上 */
-      #ground { position: absolute; left: 0; bottom: 0; width: 1920px; height: 92px; z-index: -1; pointer-events: none; }
+      #ground { position: absolute; left: 0; bottom: 0; width: 1080px; height: 64px; z-index: 0; pointer-events: none; }
 
       /* ============ 舞台の骨組み ============ */
       #stage {
         position: absolute;
         inset: 0;
-        padding: 24px 80px 84px;
+        padding: 14px 40px 52px;
         display: flex;
         flex-direction: column;
         align-items: center;
         transition: opacity 0.3s ease;
-        /* 紙吹雪（z-index: 0）より前。札の地は不透明なので、紙吹雪は札のうしろ＝夜空にだけ降る。
-           上に降らせると、グランプリの引用や1位の名前に重なって読めなくなる（2026-11 の縮めた絵で見つけた） */
-        z-index: 1;
+        /* 紙吹雪（z-index: 2）より前。札の地は不透明なので、紙吹雪は札のうしろ＝夜空にだけ降る */
+        z-index: 3;
       }
       #stage.fading { opacity: 0; }
 
-      /* コーナーの頭: 小さな札 ＋ リボン（ribbon.png を左右の房だけ固定して伸ばす） */
-      /* 札（CORNER n）は左上に置いて、リボンの上に積まない。そのぶん紙を高く使える */
-      .head { flex: none; display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+      /* コーナーの頭: 小さな札（CORNER n）を上に、その下にリボン */
+      .head { flex: none; display: flex; flex-direction: column; align-items: center; margin-bottom: 12px; }
       .tag {
-        position: absolute;
-        left: 80px;
-        top: 50px;
         font-size: 24px;
         font-weight: 900;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.12em;
         color: var(--cream);
-        background: rgba(42, 18, 6, 0.42);
-        padding: 4px 20px;
+        background: rgba(42, 18, 6, 0.5);
+        padding: 1px 18px;
         border-radius: 999px;
-        line-height: 1.3;
+        line-height: 1.35;
+        margin-bottom: 4px;
+        white-space: nowrap;
       }
       .ribbon {
-        min-width: 560px;
-        height: 116px;
+        min-width: 440px;
+        max-width: 1000px;
+        height: 96px;
         border-style: solid;
-        border-width: 0 66px;
+        border-width: 0 56px;
         border-image-source: var(--ribbon-img);
         border-image-slice: 0 70 0 70 fill;
-        border-image-width: 0 66px;
+        border-image-width: 0 56px;
         border-image-repeat: round;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0 18px 12px;
+        padding: 0 14px 10px;
       }
       .ribbon .title {
         margin: 0;
-        font-size: 54px;
+        font-size: 46px;
         font-weight: 900;
         line-height: 1.1;
         color: var(--cream);
         white-space: nowrap;
         text-shadow: 0 3px 0 var(--ribbon-deep), 0 0 3px var(--ribbon-deep);
-        letter-spacing: 0.04em;
+        letter-spacing: 0.03em;
       }
-      .ribbon.big { height: 150px; border-width: 0 84px; border-image-width: 0 84px; padding-bottom: 16px; }
-      .ribbon.big .title { font-size: 76px; }
+      .ribbon.big { height: 124px; border-width: 0 68px; border-image-width: 0 68px; padding-bottom: 14px; }
+      .ribbon.big .title { font-size: 60px; }
 
       .body { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
@@ -202,31 +214,34 @@
       .panel {
         position: relative;
         width: 100%;
-        max-width: 1760px;
+        max-width: 1000px;
         background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
         border-radius: 28px;
         box-shadow: 0 8px 0 var(--paper-edge), 6px 22px 30px rgba(8, 6, 30, 0.42);
-        padding: 30px 44px;
+        padding: 26px 30px;
         color: var(--ink);
       }
       /* 札のうしろから顔を出すピポ（札の上の辺が、絵の下の辺を隠す） */
-      .pipo-on { position: absolute; right: 64px; bottom: calc(100% - 30px); height: 150px; z-index: -1; pointer-events: none; }
-      .pipo-on.peek { bottom: calc(100% - 4px); height: 128px; }
-      .pipo-on.left { right: auto; left: 64px; }
+      .pipo-on { position: absolute; right: 40px; bottom: calc(100% - 26px); height: 116px; z-index: -1; pointer-events: none; }
+      .pipo-on.peek { bottom: calc(100% - 4px); height: 100px; }
+      .pipo-on.left { right: auto; left: 40px; }
 
       /* ステップ表示 */
-      [data-step] { opacity: 0; transform: translateY(14px); transition: opacity 0.45s ease, transform 0.45s ease; }
+      [data-step] { opacity: 0; transform: translateY(12px); transition: opacity 0.45s ease, transform 0.45s ease; }
       [data-step].on { opacity: 1; transform: none; }
+      /* そのステップまで場所も取らない（出るときに下を押し下げる） */
+      [data-step][data-hold]:not(.on) { display: none; }
       .hide { display: none !important; }
 
-      .lead { font-size: 34px; font-weight: 900; color: var(--ink); text-align: center; line-height: 1.45; margin: 0 0 22px; }
-      .foot { font-size: 24px; color: var(--ink-2); line-height: 1.55; margin-top: 18px; text-align: center; }
+      .lead { font-size: 32px; font-weight: 900; color: var(--ink); text-align: center; line-height: 1.45; margin: 0 0 18px; }
+      .lead.on-sky { color: var(--cream); text-shadow: 0 2px 0 rgba(42, 18, 6, 0.6); }
+      .foot { font-size: 26px; color: var(--ink-2); line-height: 1.55; margin-top: 16px; text-align: center; }
       .pill {
         display: inline-flex;
         align-items: center;
         border-radius: 999px;
-        padding: 2px 16px;
-        font-size: 26px;
+        padding: 2px 14px;
+        font-size: 24px;
         font-weight: 900;
         line-height: 1.35;
         white-space: nowrap;
@@ -236,12 +251,14 @@
       .pill.red { background: var(--ribbon); color: var(--cream); }
       .pill.gold { background: linear-gradient(180deg, #ffe58a, var(--gold)); color: var(--cocoa); }
       .pill.mint { background: var(--mint); color: var(--mint-ink); }
+      .heart { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+      .heart svg { width: 0.9em; height: 0.9em; flex: none; }
 
       /* ============ 顔（YouTube のアイコン）と、島のキャラクターの絵 ============ */
       .av {
         flex: none;
-        width: 56px;
-        height: 56px;
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
         overflow: hidden;
         display: inline-grid;
@@ -254,42 +271,48 @@
         box-shadow: 0 3px 0 rgba(91, 63, 21, 0.25);
       }
       .av img { width: 100%; height: 100%; object-fit: cover; display: block; }
-      .av-lg { width: 150px; height: 150px; font-size: 52px; box-shadow: 0 5px 0 rgba(91, 63, 21, 0.25); }
-      .av-xl { width: 116px; height: 116px; font-size: 42px; }
+      .av-sm { width: 44px; height: 44px; font-size: 24px; }
+      .av-md { width: 120px; height: 120px; font-size: 44px; box-shadow: 0 5px 0 rgba(91, 63, 21, 0.25); }
+      .av-lg { width: 132px; height: 132px; font-size: 48px; box-shadow: 0 5px 0 rgba(91, 63, 21, 0.25); }
+      .av-xl { width: 220px; height: 220px; font-size: 80px; box-shadow: 0 6px 0 rgba(91, 63, 21, 0.25); }
       /* 島のキャラクターは全身の絵。**丸く切らない**（10月版と同じ） */
-      .ch { flex: none; width: 60px; height: 60px; display: inline-grid; place-items: center; }
+      .ch { flex: none; width: 56px; height: 56px; display: inline-grid; place-items: center; }
       .ch img { width: 100%; height: 100%; object-fit: contain; display: block; filter: drop-shadow(2px 4px 2px rgba(46, 60, 30, 0.3)); }
       .ch-none {
-        border-radius: 18px;
+        border-radius: 16px;
         background: linear-gradient(180deg, #ffe7a3, #f3c35e);
         color: var(--cocoa);
         font-size: 24px;
         font-weight: 900;
       }
-      .ch-lg { width: 150px; height: 150px; }
-      .ch-lg.ch-none { font-size: 52px; border-radius: 36px; }
-      .ch-xl { width: 210px; height: 210px; }
-      .ch-xl.ch-none { font-size: 72px; border-radius: 48px; }
+      .ch-lg { width: 168px; height: 168px; }
+      .ch-lg.ch-none { font-size: 60px; border-radius: 40px; }
+      .ch-end { width: 140px; height: 140px; }
+      .ch-end.ch-none { font-size: 52px; border-radius: 34px; }
+      .ch-xl { width: 250px; height: 250px; }
+      .ch-xl.ch-none { font-size: 88px; border-radius: 56px; }
+      .ch-big { width: 330px; height: 330px; }
+      .ch-big.ch-none { font-size: 120px; border-radius: 70px; }
 
       /* ============ 一覧（出席・投げ銭の4位以下） ============
-         1行 68px。2列で、上から下へ読む（左の列のあとに右の列）。1面 16 行まで */
-      .list { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-auto-flow: column; gap: 14px 40px; }
+         1行 72px。**1列**で、1面 12 行まで（MR-24）。名前を縮めずに読めるように */
+      .list { display: flex; flex-direction: column; gap: 10px; }
       .row {
         display: flex;
         align-items: center;
         gap: 16px;
-        min-height: 68px;
-        padding: 6px 28px 6px 8px;
+        min-height: 66px;
+        padding: 5px 28px 5px 8px;
         border-radius: 999px;
         background: linear-gradient(180deg, #fffdf4 0%, var(--paper-3) 100%);
         box-shadow: 0 4px 0 var(--slip-edge);
       }
-      .row .nm { flex: 1 1 auto; min-width: 0; font-size: 34px; font-weight: 900; color: var(--ink); white-space: nowrap; line-height: 1.2; }
-      .row .st { flex: none; font-size: 32px; font-weight: 900; color: var(--ink-2); white-space: nowrap; }
-      .row .st small { font-size: 24px; color: var(--ink-3); margin-left: 2px; }
+      .row .nm { flex: 1 1 auto; min-width: 0; font-size: 36px; font-weight: 900; color: var(--ink); white-space: nowrap; line-height: 1.2; }
+      .row .st { flex: none; font-size: 34px; font-weight: 900; color: var(--ink-2); white-space: nowrap; }
+      .row .st small { font-size: 26px; color: var(--ink-3); margin-left: 2px; }
       .row .rk {
         flex: none;
-        min-width: 86px;
+        min-width: 92px;
         text-align: center;
         font-size: 28px;
         font-weight: 900;
@@ -299,33 +322,114 @@
         padding: 4px 10px;
         white-space: nowrap;
       }
-      .row .yen { flex: none; font-size: 34px; font-weight: 900; color: var(--berry-ink); white-space: nowrap; }
+      .row .yen { flex: none; font-size: 36px; font-weight: 900; color: var(--berry-ink); white-space: nowrap; }
+
+      /* ============ 小さな札（一覧の1件） ============ */
+      .g1 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+      .g2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 18px; align-items: stretch; }
+      .g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+      .sc {
+        position: relative;
+        background: linear-gradient(180deg, #fffdf4, var(--paper-3));
+        border-radius: 22px;
+        box-shadow: 0 5px 0 var(--slip-edge);
+        padding: 14px 20px 16px;
+        min-width: 0;
+        height: 100%;
+      }
+      .sc .who { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .sc .nm { font-size: 28px; font-weight: 900; color: var(--ink); line-height: 1.25; min-width: 0; }
+      .sc .msg { font-size: 28px; font-weight: 900; color: var(--ink); line-height: 1.45; margin-top: 8px; }
+      .sc .badge { position: absolute; right: 14px; top: -14px; }
+      /* 大写し中の1件（元の場所は空けておく。戻ってきたときに同じ所に収まる） */
+      .spot-item { min-width: 0; }
+      .spot-item.lifted { visibility: hidden; }
+      .spot-item.seen > * { box-shadow: 0 5px 0 var(--gold-deep); }
+
+      /* ============ 大写し（MR-22・23） ============ */
+      .spot-layer { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
+      .spot-dim { position: absolute; inset: 0; background: rgba(16, 14, 44, 0.68); opacity: 0; transition: opacity 0.35s ease; }
+      .spot-layer.on .spot-dim { opacity: 1; }
+      .spot-layer .big-card { position: absolute; inset: 34px 36px 50px; margin: auto; height: fit-content; }
+      .big-card {
+        --bs: 1;
+        width: 960px;
+        max-height: 996px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+        border-radius: 32px;
+        box-shadow: 0 10px 0 var(--paper-edge), 8px 26px 40px rgba(8, 6, 30, 0.55);
+        padding: 34px 44px 38px;
+        color: var(--ink);
+        transform-origin: 50% 50%;
+      }
+      .big-card > * { flex: none; }
+      .big-card .pill { font-size: 34px; padding: 3px 20px; }
+      .b-top { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+      .b-no {
+        flex: none;
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--ribbon);
+        color: var(--cream);
+        font-size: 40px;
+        font-weight: 900;
+      }
+      .b-who { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-top: 14px; }
+      .b-title { font-size: calc(56px * var(--bs)); font-weight: 900; line-height: 1.3; color: var(--ink); margin-top: 14px; }
+      .b-name { font-size: calc(58px * var(--bs)); font-weight: 900; line-height: 1.25; color: var(--ink); min-width: 0; }
+      .b-body { font-size: calc(48px * var(--bs)); font-weight: 900; line-height: 1.5; color: var(--ink); margin-top: 16px; }
+      .b-body.sub { font-size: calc(46px * var(--bs)); font-weight: 700; color: var(--ink-2); margin-top: 12px; }
+      .b-word { font-size: calc(120px * var(--bs)); font-weight: 900; line-height: 1.15; color: var(--berry-ink); text-align: center; margin: 6px 0 4px; }
+      .b-photos { flex: 0 1 620px; min-height: 200px; display: flex; gap: 16px; justify-content: center; align-items: center; margin-top: 18px; overflow: hidden; }
+      .b-photos img { height: 100%; min-width: 0; object-fit: contain; border-radius: 20px; display: block; box-shadow: 0 5px 0 rgba(91, 63, 21, 0.2); }
+      .b-photos.n2 img { max-width: calc(50% - 8px); }
+      .b-photos.n3 img { max-width: calc(33.3% - 11px); }
+      .b-cap { font-size: 32px; color: var(--ink-2); text-align: center; line-height: 1.45; margin-top: 10px; }
+      /* 2段の大写し: 1段目は写真を大きく、2段目で本文が出て写真は小さくなる */
+      .big-card .b-p1 { display: none; }
+      .big-card.p1 .b-p1 { display: block; }
+      .big-card.p1 .b-p0 { display: none; }
+      .big-card.p1 .b-photos { flex-basis: 300px; }
+      .big-card.center { text-align: center; }
+      /* 付箋の大賞は、紙吹雪が透けて見えるように沈めかたを浅く */
+      .gp-layer .spot-dim { background: rgba(16, 14, 44, 0.4); }
+      .big-card.center .b-top, .big-card.center .b-who { justify-content: center; }
 
       /* ============ オープニング ============ */
-      .op { flex: 1; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center; }
-      .op-left { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; }
-      .op-period { font-size: 30px; font-weight: 900; color: var(--cream); background: rgba(42, 18, 6, 0.42); border-radius: 999px; padding: 6px 24px; }
-      .op-sub { font-size: 34px; font-weight: 900; color: var(--cream); line-height: 1.5; margin: 0; text-shadow: 0 2px 0 rgba(42, 18, 6, 0.6); }
-      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 100%; }
+      .op { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; padding-top: 30px; }
+      .op-period { font-size: 30px; font-weight: 900; color: var(--cream); background: rgba(42, 18, 6, 0.45); border-radius: 999px; padding: 4px 24px; }
+      .op-sub { font-size: 34px; font-weight: 900; color: var(--cream); line-height: 1.5; margin: 0; text-shadow: 0 2px 0 rgba(42, 18, 6, 0.6); text-align: center; max-width: 960px; }
+      .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; width: 100%; }
       .stat {
         background: linear-gradient(180deg, var(--paper), var(--paper-2));
         border-radius: 24px;
         box-shadow: 0 6px 0 var(--paper-edge), 4px 14px 20px rgba(8, 6, 30, 0.35);
-        padding: 16px 6px 14px;
+        padding: 14px 6px 12px;
         text-align: center;
       }
-      .stat .n { font-size: 64px; font-weight: 900; color: var(--ink); line-height: 1.05; }
+      .stat .n { font-size: 66px; font-weight: 900; color: var(--ink); line-height: 1.05; }
       .stat .n small { font-size: 30px; margin-left: 2px; }
-      .stat .l { font-size: 26px; color: var(--ink-2); margin-top: 6px; line-height: 1.35; }
+      .stat .l { font-size: 24px; color: var(--ink-2); margin-top: 6px; line-height: 1.35; }
+      .op-bottom { flex: 1; width: 100%; display: flex; align-items: flex-end; gap: 22px; }
       .program {
+        flex: 1;
+        min-width: 0;
         display: flex;
         flex-wrap: wrap;
+        align-content: flex-start;
         gap: 10px;
         background: rgba(255, 250, 228, 0.12);
         border-radius: 24px;
         padding: 16px;
+        margin-bottom: 12px;
       }
-      .program span { font-size: 26px; font-weight: 900; color: var(--ink); background: var(--paper-2); border-radius: 999px; padding: 4px 16px; }
+      .program span { font-size: 28px; font-weight: 900; color: var(--ink); background: var(--paper-2); border-radius: 999px; padding: 3px 16px; white-space: nowrap; }
 
       /* ============ 城（アラートの絵そのもの）。下の階から窓に灯りがともる ============ */
       .castle { position: relative; flex: none; }
@@ -333,7 +437,7 @@
       .castle .c-lit { transition: clip-path 1.6s ease; }
       .castle .c-glow {
         position: absolute;
-        inset: -14% 0 -6%; /* 横には出さない（隣の札の幅を押し広げない） */
+        inset: -14% 0 -6%;
         background: radial-gradient(closest-side, rgba(255, 213, 74, 0.5), rgba(255, 170, 60, 0.2) 55%, rgba(255, 170, 60, 0) 100%);
         opacity: 0;
         transition: opacity 1.6s ease;
@@ -343,105 +447,84 @@
       @keyframes wave { 0%, 100% { transform: skewY(0deg); } 50% { transform: skewY(-4deg) scaleX(0.96); } }
       .castle .c-pipo { position: absolute; display: block; }
 
-      /* ============ ふりかえり（3コマ） ============ */
-      .recap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; align-items: stretch; }
-      .rc {
-        background: linear-gradient(180deg, #fffdf4, var(--paper-3));
-        border-radius: 24px;
-        box-shadow: 0 5px 0 var(--slip-edge);
-        padding: 22px 26px 26px;
-      }
-      .rc .top { display: flex; align-items: center; gap: 12px; }
-      .rc .no {
-        width: 52px;
-        height: 52px;
+      /* ============ ふりかえり（6分割） ============ */
+      .rc { display: flex; flex-direction: column; gap: 10px; }
+      .rc .top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .no {
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         display: grid;
         place-items: center;
         background: var(--ribbon);
         color: var(--cream);
-        font-size: 30px;
+        font-size: 28px;
         font-weight: 900;
         flex: none;
       }
-      .rc h3 { margin: 14px 0 10px; font-size: 38px; font-weight: 900; line-height: 1.3; color: var(--ink); }
-      .rc p { margin: 0; font-size: 30px; line-height: 1.6; color: var(--ink-2); }
+      .rc .thumb { width: 100%; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; background: var(--paper-3); }
+      .rc .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .rc h3 { margin: 0; font-size: 30px; font-weight: 900; line-height: 1.3; color: var(--ink); }
+      .rc.nophoto h3 { font-size: 36px; margin-top: 10px; }
 
       /* ============ 皆勤賞 ============ */
-      .kk { display: flex; align-items: flex-end; gap: 36px; width: 100%; }
-      .kk .cards { flex: 1; display: flex; gap: 24px; justify-content: center; align-items: stretch; }
+      .kk-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; }
       .kc {
-        flex: 1 1 0;
-        max-width: 460px;
         background: linear-gradient(180deg, #fffdf4, var(--paper-3));
         border-radius: 28px;
         box-shadow: 0 6px 0 var(--slip-edge);
-        padding: 24px 22px 26px;
+        padding: 20px 22px 22px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
         text-align: center;
+        height: 100%;
       }
-      .kc .nm { font-size: 38px; font-weight: 900; color: var(--ink); line-height: 1.25; max-width: 100%; white-space: nowrap; }
+      .kc .nm { font-size: 40px; font-weight: 900; color: var(--ink); line-height: 1.25; max-width: 100%; white-space: nowrap; overflow-wrap: anywhere; }
       .kc .d { font-size: 28px; font-weight: 900; color: var(--ink-2); }
-      .kc .w { font-size: 26px; line-height: 1.55; color: var(--ink-2); }
+      .kc .w { font-size: 28px; line-height: 1.55; color: var(--ink-2); text-align: left; }
       .kc .pill { font-size: 28px; }
-
-      /* ============ 引用の札（名言・おもしろ・はじめまして・調べもの） ============ */
-      .qs { display: flex; flex-direction: column; gap: 20px; }
-      .q2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px 28px; }
-      .qc {
-        background: linear-gradient(180deg, #fffdf4, var(--paper-3));
-        border-radius: 24px;
-        box-shadow: 0 5px 0 var(--slip-edge);
-        padding: 18px 28px 20px;
-        min-width: 0;
-      }
-      .qc .who { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-      .qc .who .nm { font-size: 30px; font-weight: 900; color: var(--ink); }
-      .qc .msg { font-size: 34px; font-weight: 900; color: var(--ink); line-height: 1.5; margin-top: 10px; }
-      .qc .note { font-size: 26px; color: var(--ink-2); line-height: 1.55; margin-top: 6px; }
-      /* 調べもの大賞は**1面に収める**ので、札を一段だけ詰める（それでも字は 24px 以上） */
-      .gd { padding-top: 22px; padding-bottom: 24px; }
-      .gd .lead { margin-bottom: 14px; }
-      .gd .q2 { gap: 14px 24px; }
-      .gd .qc { padding: 12px 24px 14px; }
-      .gd .qc .av { width: 40px; height: 40px; font-size: 20px; }
-      .gd .qc .who .nm { font-size: 28px; }
-      .gd .qc .msg { font-size: 28px; margin-top: 4px; line-height: 1.4; }
-      .gd .qc .note { font-size: 24px; margin-top: 2px; line-height: 1.5; }
-      .gd.dense .qc .msg { font-size: 26px; }
+      .kk-cards { width: 100%; }
 
       /* ============ はじめまして ============ */
-      .count { display: flex; align-items: baseline; justify-content: center; gap: 16px; margin-bottom: 22px; }
-      .count .n { font-size: 110px; font-weight: 900; color: var(--berry-ink); line-height: 1; }
-      .count .l { font-size: 38px; font-weight: 900; color: var(--ink); }
+      .count { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; column-gap: 14px; margin-bottom: 18px; }
+      .count .n { font-size: 108px; font-weight: 900; color: var(--berry-ink); line-height: 1; }
+      .count .l { font-size: 36px; font-weight: 900; color: var(--ink); }
+
+      /* ============ 引用の札を1枚だけ大きく（件数が少ない面） ============ */
+      .qbig .who { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+      .qbig .nm { font-size: 44px; font-weight: 900; color: var(--ink); }
+      .qbig .msg { font-size: 42px; font-weight: 900; color: var(--ink); line-height: 1.5; margin-top: 14px; }
+      .qbig .note { font-size: 32px; color: var(--ink-2); line-height: 1.55; margin-top: 10px; }
 
       /* ============ クイズ ============ */
-      .quiz-q { display: flex; align-items: center; gap: 24px; margin-bottom: 26px; }
+      .quiz-q { display: flex; align-items: flex-start; gap: 20px; }
       .quiz-q .qn {
         flex: none;
-        width: 104px;
-        height: 104px;
+        width: 88px;
+        height: 88px;
         border-radius: 50%;
         display: grid;
         place-items: center;
         background: var(--ribbon);
         color: var(--cream);
-        font-size: 44px;
+        font-size: 38px;
         font-weight: 900;
       }
       .quiz-q .qt { font-size: 44px; font-weight: 900; line-height: 1.4; color: var(--ink); }
       .quiz-q .hint2 { font-size: 26px; color: var(--ink-3); margin-top: 4px; }
-      .choices { display: flex; flex-direction: column; gap: 16px; }
+      .qphoto { display: flex; justify-content: center; margin-top: 18px; height: 520px; transition: height 0.45s ease, opacity 0.35s ease, margin 0.45s ease; }
+      .qphoto img { height: 100%; max-width: 100%; object-fit: contain; border-radius: 20px; box-shadow: 0 5px 0 rgba(91, 63, 21, 0.2); }
+      .quiz.after .qphoto { height: 0; opacity: 0; margin-top: 0; }
+      .choices { display: flex; flex-direction: column; gap: 14px; margin-top: 22px; }
       .choice {
         display: flex;
         align-items: center;
-        gap: 20px;
-        min-height: 86px;
-        padding: 10px 30px 10px 14px;
-        border-radius: 999px;
+        gap: 18px;
+        min-height: 80px;
+        padding: 8px 26px 8px 12px;
+        border-radius: 40px;
         background: linear-gradient(180deg, #fffdf4, var(--paper-3));
         box-shadow: 0 5px 0 var(--slip-edge);
         font-size: 36px;
@@ -451,8 +534,8 @@
       }
       .choice .abc {
         flex: none;
-        width: 60px;
-        height: 60px;
+        width: 58px;
+        height: 58px;
         border-radius: 50%;
         display: grid;
         place-items: center;
@@ -460,64 +543,95 @@
         color: var(--cream);
         font-size: 32px;
       }
-      .choice .ok { margin-left: auto; flex: none; visibility: hidden; }
+      .choice .tx { flex: 1 1 auto; min-width: 0; }
+      .choice .ok { flex: none; visibility: hidden; }
       .choices.done .choice { opacity: 0.45; }
       .choices.done .choice.right { opacity: 1; background: linear-gradient(180deg, #fff3b8, var(--gold)); box-shadow: 0 5px 0 var(--gold-deep); }
       .choices.done .choice.right .abc { background: var(--ribbon); }
       .choices.done .choice.right .ok { visibility: visible; }
-      .answer { margin-top: 22px; font-size: 30px; line-height: 1.55; color: var(--ink-2); text-align: center; }
-      .answer b { font-size: 34px; color: var(--ink); }
+      .answer { margin-top: 20px; font-size: 32px; line-height: 1.55; color: var(--ink-2); text-align: left; }
+      .answer b { font-size: 36px; color: var(--ink); }
 
       /* ============ 流行語 ============ */
-      .bw .word { font-size: 44px; font-weight: 900; color: var(--berry-ink); line-height: 1.25; }
+      .bw .word { font-size: 46px; font-weight: 900; color: var(--berry-ink); line-height: 1.2; width: 100%; }
+      .bw .who { margin-top: 6px; }
 
       /* ============ 発表（ドラムロール → 大賞） ============ */
-      .drum { font-size: 60px; font-weight: 900; color: var(--ink); text-align: center; letter-spacing: 0.06em; margin: 8px 0 18px; }
+      .drum { font-size: 64px; font-weight: 900; color: var(--ink); text-align: center; letter-spacing: 0.06em; margin: 20px 0; }
+      .drum.on-sky { color: var(--cream); text-shadow: 0 3px 0 rgba(42, 18, 6, 0.7); }
       .win { text-align: center; position: relative; }
       .win .prize { display: inline-block; font-size: 32px; }
-      .win .big { font-size: 120px; font-weight: 900; color: var(--berry-ink); line-height: 1.15; margin: 16px 0 10px; }
-      .win .msg { font-size: 46px; font-weight: 900; color: var(--ink); line-height: 1.5; margin: 18px 0 12px; }
-      .win .note { font-size: 30px; color: var(--ink-2); line-height: 1.6; }
-      .win .who { display: inline-flex; align-items: center; gap: 16px; font-size: 32px; font-weight: 900; margin-top: 10px; }
+      .win .big { font-weight: 900; color: var(--berry-ink); line-height: 1.15; margin: 16px 0 12px; }
+      /* 長い引用・説明は、面に入るまで少しずつ縮める（--sh。下限は引用 42px・説明 32px） */
+      .win .msg { font-size: calc(52px * var(--sh, 1)); font-weight: 900; color: var(--ink); line-height: 1.5; margin: 20px 0 16px; }
+      .win .note { font-size: calc(40px * var(--sh, 1)); color: var(--ink-2); line-height: 1.55; text-align: left; }
+      .win .big { font-size: calc(128px * var(--sh, 1)); }
+      .win .who { display: inline-flex; align-items: center; gap: 18px; font-size: 48px; font-weight: 900; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+
+      /* ============ 付箋 ============ */
+      .fs {
+        position: relative;
+        background: linear-gradient(180deg, var(--note) 0%, var(--note-2) 100%);
+        border-radius: 6px 6px 18px 6px;
+        box-shadow: 0 5px 0 var(--note-edge), 4px 12px 16px rgba(8, 6, 30, 0.25);
+        padding: 22px 20px 16px;
+        height: 100%;
+        transform: rotate(-0.8deg);
+      }
+      .g2 > .spot-item:nth-child(2n) .fs { transform: rotate(0.9deg); }
+      .fs::before, .big-card.fusen::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -12px;
+        width: 120px;
+        height: 28px;
+        transform: translateX(-50%) rotate(-2deg);
+        background: rgba(255, 250, 228, 0.72);
+        box-shadow: 0 1px 2px rgba(91, 63, 21, 0.18);
+      }
+      .fs .flabel { font-size: 30px; }
+      .fs .fby { font-size: 28px; font-weight: 900; color: var(--ink); margin-top: 10px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding-right: 4px; }
+      .fs .fby .pill { font-size: 24px; }
+      .fs .fthumb { float: right; width: 120px; height: 90px; object-fit: cover; border-radius: 10px; margin: 0 0 6px 12px; box-shadow: 0 3px 0 rgba(91, 63, 21, 0.2); }
+      .big-card.fusen { background: linear-gradient(180deg, var(--note) 0%, var(--note-2) 100%); border-radius: 10px 10px 34px 10px; box-shadow: 0 10px 0 var(--note-edge), 8px 26px 40px rgba(8, 6, 30, 0.55); }
+      .big-card.fusen::before { width: 200px; height: 40px; top: -18px; }
+      .big-card.fusen.gp { box-shadow: 0 10px 0 var(--gold-deep), 0 0 0 8px rgba(255, 213, 74, 0.55), 8px 26px 40px rgba(8, 6, 30, 0.55); }
+      .b-after { border-top: 3px dashed rgba(149, 113, 40, 0.45); padding-top: 14px; }
+      .b-after .pill { margin-bottom: 4px; }
 
       /* ============ おまけ ============ */
-      .om { display: grid; gap: 28px; }
-      .om .oc {
-        position: relative;
-        background: linear-gradient(180deg, #fffdf4, var(--paper-3));
-        border-radius: 24px;
-        box-shadow: 0 5px 0 var(--slip-edge);
-        padding: 26px 30px 30px;
-      }
-      .om h3 { margin: 0 0 12px; font-size: 40px; font-weight: 900; color: var(--ink); line-height: 1.3; padding-right: 120px; }
-      .om p { margin: 0; font-size: 29px; line-height: 1.65; color: var(--ink-2); }
-      .om .stamp { position: absolute; right: 22px; top: -36px; height: 120px; }
+      .oc { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+      .oc .stamp { height: 120px; }
+      .oc h3 { margin: 0; font-size: 32px; font-weight: 900; color: var(--ink); line-height: 1.35; }
+      .oc p { margin: 0; font-size: 30px; line-height: 1.6; color: var(--ink-2); text-align: left; }
+      .b-stamp { height: 170px; align-self: center; }
 
       /* ============ 投げ銭 ============ */
-      .tp { display: flex; align-items: flex-end; gap: 40px; width: 100%; }
-      .tp .side { flex: 1; display: flex; flex-direction: column; gap: 24px; justify-content: center; min-width: 0; }
+      .tp { display: flex; flex-direction: column; align-items: center; gap: 22px; width: 100%; }
       .tier {
+        width: 100%;
         display: flex;
         align-items: center;
-        gap: 24px;
+        gap: 22px;
         background: linear-gradient(180deg, #fffdf4, var(--paper-3));
         border-radius: 28px;
-        box-shadow: 0 6px 0 var(--slip-edge);
-        padding: 18px 36px 18px 22px;
+        box-shadow: 0 6px 0 var(--slip-edge), 4px 16px 24px rgba(8, 6, 30, 0.35);
+        padding: 16px 32px 16px 22px;
         min-width: 0;
       }
-      .tier .rkn { font-size: 32px; font-weight: 900; color: var(--ink-2); }
-      .tier .nm { font-size: 46px; font-weight: 900; color: var(--ink); line-height: 1.25; white-space: nowrap; }
       .tier .who { flex: 1 1 auto; min-width: 0; }
-      .tier .yen { flex: none; font-size: 54px; font-weight: 900; color: var(--berry-ink); white-space: nowrap; }
+      .tier .rkn { font-size: 32px; font-weight: 900; color: var(--ink-2); }
+      .tier .nm { font-size: 54px; font-weight: 900; color: var(--ink); line-height: 1.25; white-space: nowrap; }
+      .tier .yen { font-size: 60px; font-weight: 900; color: var(--berry-ink); white-space: nowrap; line-height: 1.2; }
       .medal {
         flex: none;
-        width: 74px;
-        height: 74px;
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
         display: grid;
         place-items: center;
-        font-size: 38px;
+        font-size: 42px;
         font-weight: 900;
         color: var(--cocoa);
         box-shadow: 0 4px 0 rgba(91, 63, 21, 0.25);
@@ -525,37 +639,38 @@
       .medal.m1 { background: radial-gradient(circle at 35% 30%, #fff3b8, #ffd54a 55%, #e0a91b); }
       .medal.m2 { background: radial-gradient(circle at 35% 30%, #ffffff, #dfe4ec 55%, #aab4c3); }
       .medal.m3 { background: radial-gradient(circle at 35% 30%, #ffe0c4, #eaa874 55%, #c27a44); }
-      .tier.t1 { padding: 26px 40px 26px 26px; }
-      .tier.t1 .nm { font-size: 64px; }
-      .tier.t1 .yen { font-size: 80px; }
-      .tier.t1 .medal { width: 96px; height: 96px; font-size: 50px; }
-      .total { display: flex; align-items: center; justify-content: center; gap: 18px; font-size: 44px; font-weight: 900; color: var(--cream); text-shadow: 0 3px 0 rgba(42, 18, 6, 0.7); }
-      .total img { height: 72px; }
+      .tier.t1 { padding: 22px 34px 22px 22px; box-shadow: 0 6px 0 var(--gold-deep), 0 0 0 6px rgba(255, 213, 74, 0.5), 4px 16px 24px rgba(8, 6, 30, 0.35); }
+      .tier.t1 .nm { font-size: 70px; }
+      .tier.t1 .yen { font-size: 92px; }
+      .tier.t1 .medal { width: 100px; height: 100px; font-size: 54px; }
+      .total { display: flex; align-items: center; justify-content: center; gap: 16px; font-size: 46px; font-weight: 900; color: var(--cream); text-shadow: 0 3px 0 rgba(42, 18, 6, 0.7); flex-wrap: wrap; }
+      .total img { height: 70px; }
       .total .th { font-size: 36px; }
+      .b-tip { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+      .b-tip .b-yen { font-size: calc(84px * var(--bs)); font-weight: 900; color: var(--berry-ink); line-height: 1.2; }
 
       /* ============ 手紙 ============ */
       .letter {
         background:
-          repeating-linear-gradient(180deg, rgba(91, 63, 21, 0) 0 55px, rgba(201, 160, 90, 0.22) 55px 56px),
+          repeating-linear-gradient(180deg, rgba(91, 63, 21, 0) 0 68px, rgba(201, 160, 90, 0.22) 68px 69px),
           linear-gradient(180deg, var(--paper), var(--paper-2));
-        padding: 36px 64px 40px;
+        padding: 32px 48px 36px;
       }
-      .letter p { margin: 0 0 16px; font-size: 32px; line-height: 1.75; color: var(--ink); text-indent: 1em; }
-      .letter.dense p { font-size: 28px; }
-      .letter .sig { text-align: right; font-size: 36px; font-weight: 900; color: var(--ink); margin-top: 10px; }
+      .letter p { margin: 0 0 16px; font-size: 42px; line-height: 1.65; color: var(--ink); text-indent: 1em; }
+      .letter.dense p { font-size: 38px; }
+      .letter .sig { text-align: right; font-size: 38px; font-weight: 900; color: var(--ink); margin-top: 8px; }
 
       /* ============ エンディング ============ */
-      .end { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+      .end { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 14px; padding-top: 30px; }
       .end .sub { font-size: 32px; font-weight: 900; color: var(--cream); text-shadow: 0 2px 0 rgba(42, 18, 6, 0.6); text-align: center; margin: 0; line-height: 1.5; }
-      .end .row2 { flex: 1; display: flex; align-items: flex-end; gap: 44px; width: 100%; justify-content: center; }
-      .end .panel { max-width: 1080px; text-align: center; }
-      .faces { display: flex; justify-content: center; gap: 22px; margin-bottom: 14px; }
-      .end .thanks { font-size: 32px; line-height: 1.55; color: var(--ink); }
+      .end .panel { text-align: center; }
+      .faces { display: flex; justify-content: center; align-items: flex-end; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
+      .end .thanks { font-size: 36px; line-height: 1.55; color: var(--ink); }
       .tap {
         display: inline-flex;
         align-items: baseline;
         gap: 16px;
-        margin-top: 16px;
+        margin-top: 14px;
         padding: 8px 30px;
         border-radius: 999px;
         background: linear-gradient(180deg, #fff3b8, var(--gold));
@@ -563,17 +678,18 @@
       }
       .tap .l { font-size: 28px; font-weight: 900; color: var(--cocoa); }
       .tap .n { font-size: 48px; font-weight: 900; color: var(--cocoa); }
-      .end .ps { font-size: 28px; color: var(--ink-2); margin-top: 14px; line-height: 1.5; }
+      .end .ps { font-size: 30px; color: var(--ink-2); margin-top: 12px; line-height: 1.5; }
+      .end .foot-castle { flex: 1; display: flex; align-items: flex-end; justify-content: center; width: 100%; }
 
       /* ============ 進行（雪の上のドット）と、合図 ============ */
-      #progress { position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; gap: 12px; align-items: center; z-index: 5; }
-      #progress .dot { width: 14px; height: 14px; border-radius: 999px; background: rgba(114, 82, 27, 0.32); transition: all 0.3s ease; }
-      #progress .dot.act { width: 40px; background: var(--ribbon); }
-      #hint { position: absolute; right: 36px; bottom: 22px; color: var(--ink-2); font-size: 22px; font-weight: 900; z-index: 5; transition: opacity 1s ease; }
+      #progress { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; z-index: 30; }
+      #progress .dot { width: 13px; height: 13px; border-radius: 999px; background: rgba(114, 82, 27, 0.32); transition: all 0.3s ease; }
+      #progress .dot.act { width: 36px; background: var(--ribbon); }
+      #hint { position: absolute; right: 22px; bottom: 14px; color: var(--ink-2); font-size: 20px; font-weight: 900; z-index: 30; transition: opacity 1s ease; }
       #hint.gone { opacity: 0; }
 
       /* ============ 紙吹雪 ============ */
-      #confetti-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+      #confetti-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
       .confetti { position: absolute; top: -40px; width: 14px; height: 22px; border-radius: 4px; opacity: 0.95; animation: fall linear forwards; }
       @keyframes fall {
         0% { transform: translateY(-60px) rotate(0deg); }
@@ -582,7 +698,7 @@
 
       @media (prefers-reduced-motion: reduce) {
         #sky .snow i, #garland .bulb, .castle .c-flag img { animation: none; }
-        [data-step], .castle .c-lit, .castle .c-flag, .castle .c-glow { transition: none; }
+        [data-step], .castle .c-lit, .castle .c-flag, .castle .c-glow, .spot-dim, .qphoto, #stage { transition: none; }
       }
 
       /* ============ コントローラ（?role=ctrl。あやとの手元のスマホ） ============ */
@@ -639,8 +755,8 @@
         <div class="stars"></div>
         <div class="snow" id="snow"></div>
       </div>
-      <svg id="garland" viewBox="0 0 1920 70" aria-hidden="true"></svg>
-      <svg id="ground" viewBox="0 0 1920 92" preserveAspectRatio="none" aria-hidden="true">
+      <svg id="garland" viewBox="0 0 1080 60" aria-hidden="true"></svg>
+      <svg id="ground" viewBox="0 0 1080 64" preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id="snowg" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#f7f9ff" />
@@ -651,12 +767,12 @@
             <stop offset="1" stop-color="#c3cdea" />
           </linearGradient>
         </defs>
-        <path d="M0 40 C 220 6, 460 30, 700 26 C 960 20, 1180 2, 1420 22 C 1620 38, 1800 14, 1920 24 L1920 92 L0 92 Z" fill="url(#snowg2)" />
-        <path d="M0 58 C 260 30, 520 52, 820 44 C 1100 36, 1320 54, 1600 42 C 1760 36, 1860 48, 1920 46 L1920 92 L0 92 Z" fill="url(#snowg)" />
+        <path d="M0 28 C 130 4, 260 22, 400 18 C 540 14, 660 2, 800 16 C 910 26, 1010 10, 1080 16 L1080 64 L0 64 Z" fill="url(#snowg2)" />
+        <path d="M0 40 C 150 20, 290 36, 460 30 C 620 24, 740 38, 900 30 C 990 25, 1050 33, 1080 32 L1080 64 L0 64 Z" fill="url(#snowg)" />
       </svg>
       <main id="stage" role="main" aria-live="polite"></main>
       <div id="progress" aria-hidden="true"></div>
-      <div id="hint">クリック / Enter で進む ・ ← で戻る</div>
+      <div id="hint">Enter で進む ・ ← で戻る</div>
       <div id="confetti-layer" aria-hidden="true"></div>
     </div>
 
@@ -686,21 +802,23 @@
 
       /* =========================================================
          11月のふりかえり授賞式
-         中身は書き出しの道具が下の4つに差し込む（手で書かない）:
+         中身は書き出しの道具が下の5つに差し込む（手で書かない）:
            REVIEW_DATA … 2026-11.content.json ＋ 2026-11.kinkin.json ＋ 2026-11.tips.json
            AVATARS     … YouTube のチャンネルの og:image（=s176-c-rj）。取れない人はイニシャルの丸
            CHARS       … 投げ銭の絵（図鑑のキャラクター。tips の icon が鍵）
+           IMAGES      … あやと島カードの写真・付箋の絵（中身の `img` の字がそのまま鍵。無い写真は出さない）
            ART         … 11月の投げ銭アラートの絵（public/alert/themes/castle/）と castle.json
 
          決めごと:
          ・引用は原文のまま。`escapeHtml` を必ず通す
-         ・**個人別のコメント数は1つも出さない**（欄も作らない）
-         ・投げ銭は貢献額をそのまま出す。**画面で式を説明しない**
-         ・見せる名前は「あやと島案内鳥」
+         ・**個人別のコメント数は1つも出さない**（欄も作らない。MR-5）
+         ・投げ銭は貢献額をそのまま出す。**画面で式を説明しない**（MR-10）
+         ・見せる名前は「あやと島案内鳥」（MR-9）
          ========================================================= */
       const REVIEW_DATA = /*@@REVIEW_DATA@@*/ null;
       const AVATARS = /*@@AVATARS@@*/ {};
       const CHARS = /*@@CHARS@@*/ {};
+      const IMAGES = /*@@IMAGES@@*/ {};
       const ART = /*@@ART@@*/ {};
       const AVATAR_ALIAS = {};
 
@@ -716,6 +834,7 @@
       const e = escapeHtml;
       const clamp01 = (v) => Math.max(0, Math.min(1, Number(v) || 0));
       const yen = (n) => Number(n).toLocaleString("ja-JP");
+      const W = 1080; // 舞台の一辺
 
       function initials(name) {
         const s = String(name).trim().replace(/^@/, "").replace(/ さん$/, "");
@@ -753,6 +872,12 @@
         if (src) return `<span class="ch ${size || ""}"><img src="${src}" alt="" decoding="async" /></span>`;
         return `<span class="ch ch-none ${size || ""}">${e(initials(dispName(row.display)))}</span>`;
       }
+      /* 写真（あやと島カード・付箋の絵）。焼き込めなかったものは出さない */
+      const imgOf = (p) => (p && IMAGES[p]) || null;
+      const photosOf = (list) => (list || []).filter((c) => c && imgOf(c.img)).slice(0, 3);
+      /* ハートは字の絵文字にしない（端末で色の絵に化ける）。線の絵で描く */
+      const HEART = `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#d2335a" d="M12 21s-7.6-4.6-9.6-9.3C1 8.3 3 5 6.3 5c2.1 0 3.4 1.2 4.2 2.4h3C14.3 6.2 15.6 5 17.7 5 21 5 23 8.3 21.6 11.7 19.6 16.4 12 21 12 21z"/></svg>`;
+      const heartHtml = (n) => (n != null && n !== "" ? `<span class="heart">${HEART}<span>${e(n)}</span></span>` : "");
 
       /* ---------- ピポ（アラートの絵そのまま） ---------- */
       function pipoOn(pose, opts) {
@@ -810,8 +935,8 @@
       }
 
       /* ---------- 面の割りかた ----------
-         **1画面の行は 16 まで**（#308）。超えたら面を割る。列を増やして詰めない */
-      const PER_SCREEN = 16;
+         **1画面の行は 12 まで**（MR-24）。超えたら面を割る。列を増やして詰めない */
+      const PER_SCREEN = 12;
       function split(rows, per) {
         const n = Math.max(1, Math.ceil(rows.length / per));
         const size = Math.ceil(rows.length / n);
@@ -842,7 +967,28 @@
         if (cur.length || !out.length) out.push(cur);
         return out;
       }
-      const PANEL_H = 700; // 頭（札＋リボン）と進行のドットを除いた、紙の中に置ける高さの目安
+      /* 2列の札を、行ごとの高い方で数えて詰める */
+      function pack2(items, cost, budget, maxPer, gap) {
+        const out = [];
+        let cur = [];
+        const height = (list) => {
+          let h = 0;
+          for (let k = 0; k < list.length; k += 2) h += Math.max(cost(list[k]), list[k + 1] ? cost(list[k + 1]) : 0) + (k ? gap : 0);
+          return h;
+        };
+        for (const it of items) {
+          if (cur.length && (cur.length >= maxPer || height([...cur, it]) > budget)) {
+            out.push(cur);
+            cur = [];
+          }
+          cur.push(it);
+        }
+        if (cur.length || !out.length) out.push(cur);
+        return out;
+      }
+      /* 頭（札＋リボン）と進行のドットを除いた、紙の中に置ける高さの目安（1080 四方で） */
+      const PANEL_H = 800;
+      const COL2 = 420; // 2列の札1枚の、字の入る幅
 
       function head(tag, title, big) {
         return `
@@ -851,111 +997,166 @@
             <div class="ribbon${big ? " big" : ""}"><h2 class="title">${e(title)}</h2></div>
           </header>`;
       }
-      const pageTag = (n, i, len) => `CORNER ${n}${len > 1 ? `　${i + 1} / ${len}` : ""}`;
 
-      function quoteCard(o, step, opts) {
-        const x = opts || {};
-        return `
-          <div class="qc" ${step != null ? `data-step="${step}"` : ""}>
-            <div class="who">
-              ${x.label ? `<span class="pill red">${e(x.label)}</span>` : ""}
-              ${avatarHtml(o.name)}
-              <span class="nm">${e(dispName(o.name))}</span>
-              ${o.date ? `<span class="pill">${e(o.date)}</span>` : ""}
-              ${x.extra ? `<span class="pill gold">${e(x.extra)}</span>` : ""}
-            </div>
-            <div class="msg">「${e(o.msg)}」</div>
-            ${o.note ? `<div class="note">${e(o.note)}</div>` : ""}
-          </div>`;
-      }
-      /* 1列の引用の札の高さの見積もり（紙の内幅 1672px） */
-      const quoteCost = (o) => 18 + 20 + 60 + linesOf(`「${o.msg}」`, 34, 1610) * 51 + (o.note ? 6 + linesOf(o.note, 26, 1610) * 40 : 0) + 20;
-      /* 2列の引用の札（1枚の内幅 760px） */
-      const quoteCost2 = (o) => 18 + 20 + 60 + linesOf(`「${o.msg}」`, 34, 760) * 51 + (o.note ? 6 + linesOf(o.note, 26, 760) * 40 : 0) + 20;
-
-      /* ======================== 各シーン描画 ======================== */
+      /* ======================== コーナー ========================
+         並びは MR-11。番号は**中身にあるコーナーから数える**（付箋が無い月は詰まる）。手で振らない */
       const D = REVIEW_DATA;
       const YEAR = 2026;
       const PERIOD_FROM = String(D.period).split("〜")[0].trim();
+      const HAS_FUSEN = !!(D.fusen && ((D.fusen.categories || []).length || D.fusen.grandPrix));
+      const CORNERS = [
+        { key: "open", label: "オープニング" },
+        { key: "recap", label: "今月の6分割ふりかえり", short: "6分割ふりかえり" },
+        { key: "attend", label: "今月の出席日数", short: "出席日数" },
+        { key: "kinkin", label: "皆勤賞" },
+        { key: "new", label: "はじめまして" },
+        { key: "quiz", label: "どの配信でしょうクイズ", short: "クイズ" },
+        { key: "buzz", label: "流行語大賞" },
+        { key: "meigen", label: "名言・いい話アワード", short: "名言" },
+        { key: "funny", label: "おもしろコメント大賞", short: "おもしろ" },
+        HAS_FUSEN ? { key: "fusen", label: "付箋大賞" } : null,
+        { key: "guides", label: "調べもの大賞", short: "調べもの" },
+        D.omake && D.omake.length ? { key: "omake", label: `${D.month}のおまけ`, short: "おまけ" } : null,
+        { key: "tips", label: "投げ銭ありがとう", short: "投げ銭" },
+        { key: "letter", label: "あやと島案内鳥 からの手紙", short: "手紙" },
+        { key: "end", label: "エンディング" },
+      ].filter(Boolean);
+      const NO = Object.fromEntries(CORNERS.map((c, i) => [c.key, i]));
+      const DOT_LABELS = CORNERS.map((c) => c.label);
+      const tagOf = (key, i, len, extra) => `CORNER ${NO[key]}${len > 1 ? `　${i + 1} / ${len}` : ""}${extra ? `　${extra}` : ""}`;
+
+      /* ======================== 大写し（MR-22） ========================
+         一覧の面を作る。`items` を一覧に小さく並べ、1押しごとに1件ずつ `big` を真ん中に出す。
+         `phases(it)` が 2 の札は、同じ1件で2押しぶん（2押し目で続きの字が出る）。
+         ステップ: 0〜from-1 … 一覧（と、その面の前置き）/ from〜 … 1件ずつ大写し / 最後 … 全部が一覧に戻る */
+      function spotScene(o) {
+        const from = o.from ?? 1;
+        const phases = o.items.map((it) => (o.phases ? o.phases(it) : 1));
+        const starts = [];
+        let s = from;
+        for (const n of phases) {
+          starts.push(s);
+          s += n;
+        }
+        const total = s; // 最後の1押しで全部が一覧に戻る
+        return {
+          total,
+          spotFrom: from,
+          spotCount: o.items.length,
+          confettiAt: o.confettiAt,
+          confettiBig: o.confettiBig,
+          spotAt(step) {
+            for (let j = 0; j < starts.length; j++) if (step >= starts[j] && step < starts[j] + phases[j]) return { j, phase: step - starts[j] };
+            return null;
+          },
+          seenBefore(step) {
+            return starts.filter((st, j) => step >= st + phases[j]).length;
+          },
+          render() {
+            const smalls = o.items.map((it, j) => `<div class="spot-item" data-spot="${j}">${o.small(it, j)}</div>`);
+            const tpls = o.items.map((it, j) => `<template data-tpl="${j}">${o.big(it, j)}</template>`).join("");
+            return o.wrap(smalls.join("")) + tpls + `<div class="spot-layer" aria-hidden="true"><div class="spot-dim"></div></div>`;
+          },
+        };
+      }
+
+      /* ======================== 各シーン描画 ======================== */
 
       /* ⓪ オープニング。城の窓に、ステップごとに下から灯りがともる */
       function renderOpening() {
         return `
           <div class="op">
-            <div class="op-left">
-              <div class="op-period" data-step="0">${e(YEAR)} ・ ${e(D.period)}</div>
-              <div class="ribbon big" data-step="0"><h1 class="title">${e(D.opening.title)}</h1></div>
-              <p class="op-sub" data-step="0">${e(D.opening.sub)}</p>
-              <div class="stats" data-step="1">
-                ${D.opening.stats
-                  .map(
-                    (s) => `
-                  <div class="stat">
-                    <div class="n">${e(s.n)}<small>${e(s.unit)}</small></div>
-                    <div class="l">${e(s.label)}</div>
-                  </div>`
-                  )
-                  .join("")}
-              </div>
-              <div class="program" data-step="2">
-                ${DOT_LABELS.slice(1, -1).map((x) => `<span>${e(x)}</span>`).join("")}
-              </div>
-            </div>
-            ${castleHtml(600, { lv: 0.2, flag: 0, steps: [[1, 0.6, 0.4], [2, 1, 1]], pipos: [{ pose: "wait" }] })}
-          </div>`;
-      }
-
-      /* ① 今月の6分割ふりかえり: 3コマずつ */
-      const RECAP_PAGES = split(D.recap, 3);
-      function renderRecap(i) {
-        const rows = RECAP_PAGES[i];
-        const base = RECAP_PAGES.slice(0, i).reduce((n, p) => n + p.length, 0);
-        return `
-          ${head(pageTag(1, i, RECAP_PAGES.length), "今月の6分割ふりかえり")}
-          <div class="body"><div class="panel">
-            ${pipoOn("walk0")}
-            <div class="recap">
-              ${rows
+            <div class="op-period" data-step="0">${e(YEAR)} ・ ${e(D.period)}</div>
+            <div class="ribbon big" data-step="0"><h1 class="title">${e(D.opening.title)}</h1></div>
+            <p class="op-sub" data-step="0">${e(D.opening.sub)}</p>
+            <div class="stats" data-step="1">
+              ${D.opening.stats
                 .map(
-                  (r, j) => `
-                <div class="rc" data-step="${j + 1}">
-                  <div class="top"><span class="no">${base + j + 1}</span><span class="pill">${e(r.when)}</span></div>
-                  <h3>${e(r.title)}</h3>
-                  <p>${e(r.body)}</p>
+                  (s) => `
+                <div class="stat">
+                  <div class="n">${e(s.n)}<small>${e(s.unit)}</small></div>
+                  <div class="l">${e(s.label)}</div>
                 </div>`
                 )
                 .join("")}
             </div>
-          </div></div>`;
+            <div class="op-bottom">
+              ${castleHtml(460, { lv: 0.2, flag: 0, steps: [[1, 0.6, 0.4], [2, 1, 1]], pipos: [{ pose: "wait" }] })}
+              <div class="program" data-step="2">
+                ${CORNERS.slice(1, -1).map((c) => `<span>${e(c.short || c.label)}</span>`).join("")}
+              </div>
+            </div>
+          </div>`;
       }
 
-      /* ② 出席日数リスト。**皆勤賞より先。** 1面 16 行まで。超えたら割る */
-      const KINKIN_PAGES = split(D.kinkin.others, PER_SCREEN);
-      function renderKinkinList(i) {
+      /* ① 6分割ふりかえり: 3列×2段の一覧 → 1コマずつ大写し。
+         写真（あやと島カード）のあるコマは2押し: 1押し目は写真を大きく、2押し目で本文 */
+      const RECAP_PAGES = split(D.recap, 6);
+      function recapScene(i) {
+        const rows = RECAP_PAGES[i];
+        const base = RECAP_PAGES.slice(0, i).reduce((n, p) => n + p.length, 0);
+        return spotScene({
+          items: rows,
+          phases: (r) => (photosOf(r.cards).length ? 2 : 1),
+          small: (r, j) => {
+            const ph = photosOf(r.cards);
+            return `
+              <div class="sc rc${ph.length ? "" : " nophoto"}">
+                <div class="top"><span class="no">${base + j + 1}</span><span class="pill">${e(r.when)}</span></div>
+                ${ph.length ? `<div class="thumb"><img src="${imgOf(ph[0].img)}" alt="" decoding="async" /></div>` : ""}
+                <h3>${e(r.title)}</h3>
+              </div>`;
+          },
+          big: (r, j) => {
+            const ph = photosOf(r.cards);
+            const caps = ph.map((c) => c.caption).filter(Boolean);
+            return `
+              <div class="big-card">
+                <div class="b-top"><span class="b-no">${base + j + 1}</span><span class="pill">${e(r.when)}</span></div>
+                <div class="b-title">${e(r.title)}</div>
+                ${ph.length ? `<div class="b-photos n${ph.length}">${ph.map((c) => `<img src="${imgOf(c.img)}" alt="" decoding="async" />`).join("")}</div>` : ""}
+                ${caps.length ? `<div class="b-cap b-p0">${e(caps.join("　／　"))}</div>` : ""}
+                <div class="b-body${ph.length ? " b-p1" : ""}">${e(r.body)}</div>
+              </div>`;
+          },
+          wrap: (items) => `
+            ${head(tagOf("recap", i, RECAP_PAGES.length), "今月の6分割ふりかえり")}
+            <div class="body"><div class="panel">
+              ${pipoOn("walk0")}
+              <div class="g3" data-step="0">${items}</div>
+            </div></div>`,
+        });
+      }
+
+      /* ② 出席日数。**皆勤賞より先**（MR-11）。皆勤から −1・−2・−3 日の人だけ。
+         1列・1面 12 行まで。件数が少ないので大写しにしない */
+      const ATTEND = D.kinkin.others;
+      const ATTEND_PAGES = split(ATTEND, PER_SCREEN);
+      function renderAttend(i) {
         const K = D.kinkin;
-        const rows = KINKIN_PAGES[i];
-        const last = i === KINKIN_PAGES.length - 1;
+        const rows = ATTEND_PAGES[i];
         return `
-          ${head(pageTag(2, i, KINKIN_PAGES.length), "今月の出席日数")}
+          ${head(tagOf("attend", i, ATTEND_PAGES.length), "今月の出席日数")}
           <div class="body"><div class="panel">
             ${pipoOn("sit")}
-            <div class="list" data-step="0" style="grid-template-rows:repeat(${Math.ceil(rows.length / 2)}, auto)">
+            <p class="lead" data-step="0">あと少しで皆勤だった人</p>
+            <div class="list" data-step="0">
               ${rows
                 .map(
                   (p) => `
                 <div class="row" data-row>
                   ${avatarHtml(p.name)}
                   <span class="nm fit">${e(dispName(p.name))}</span>
+                  <span class="pill">あと${K.denom - p.d}日</span>
                   <span class="st">${p.d}<small>/${K.denom}日</small></span>
                 </div>`
                 )
                 .join("")}
             </div>
-            ${last && K.note ? `<div class="foot" data-step="1">${e(K.note)}</div>` : ""}
           </div></div>`;
       }
 
-      /* ③ 皆勤賞: 城に灯りがともって、表彰台。「N ヶ月連続」を必ず出す。
+      /* ③ 皆勤賞: 城に灯りがともって、札が並ぶ → 1人ずつ大写し。「N ヶ月連続」を必ず出す。
          **1ヶ月目は「1ヶ月連続」と書かない**——別の言葉と別の色 */
       function streakHtml(n) {
         const v = Number(n || 0);
@@ -963,83 +1164,158 @@
         if (v === 1) return `<span class="pill mint">はじめての皆勤賞</span>`;
         return "";
       }
-      function renderKinkinPodium() {
+      function kinkinScene() {
         const K = D.kinkin;
-        const many = K.winners.length > 3;
-        return `
-          ${head("CORNER 3", "皆勤賞")}
-          <div class="body">
-            <p class="lead" data-step="0" style="color:var(--cream);text-shadow:0 2px 0 rgba(42,18,6,.6)">${e(PERIOD_FROM)}からの${K.denom}日間、ぜんぶの日に来てくれた${K.winners.length}人</p>
-            <div class="kk">
-              ${many ? "" : castleHtml(420, { lv: 0, flag: 0, steps: [[1, 1, 1]], pipos: [{ pose: "wait", until: 0 }, { pose: "cheer", from: 1 }] })}
-              <div class="cards" data-step="1">
-                ${K.winners
-                  .map(
-                    (p) => `
-                  <div class="kc">
-                    <span class="pill red">皆勤賞</span>
-                    ${avatarHtml(p.name, "av-lg")}
-                    <div class="nm fit">${e(dispName(p.name))}</div>
-                    <div class="d">出席 ${K.denom}/${K.denom}日</div>
-                    ${streakHtml(p.streak)}
-                    ${p.word ? `<div class="w">${e(p.word)}</div>` : ""}
-                  </div>`
-                  )
-                  .join("")}
+        const ws = K.winners;
+        const cols = ws.length >= 3 ? "g3" : ws.length === 2 ? "g2" : "g1";
+        return spotScene({
+          items: ws,
+          from: 2,
+          confettiAt: 1,
+          small: (p) => `
+            <div class="kc">
+              <span class="pill red">皆勤賞</span>
+              ${avatarHtml(p.name, ws.length >= 3 ? "av-md" : "av-lg")}
+              <div class="nm fit" data-min="30">${e(dispName(p.name))}</div>
+              <div class="d">出席 ${K.denom}/${K.denom}日</div>
+              ${streakHtml(p.streak)}
+            </div>`,
+          big: (p) => `
+            <div class="big-card center">
+              <div class="b-top"><span class="pill red">皆勤賞</span>${streakHtml(p.streak)}</div>
+              <div class="b-who" style="flex-direction:column;gap:12px">${avatarHtml(p.name, "av-xl")}<span class="b-name fit" data-min="48">${e(dispName(p.name))}</span></div>
+              <div class="b-body" style="text-align:center;margin-top:6px">出席 ${K.denom}/${K.denom}日</div>
+              ${p.word ? `<div class="b-body sub" style="text-align:left">${e(p.word)}</div>` : ""}
+            </div>`,
+          wrap: (items) => `
+            ${head(tagOf("kinkin", 0, 1), "皆勤賞")}
+            <div class="body">
+              <div class="kk-wrap">
+                <p class="lead on-sky" data-step="0">${e(PERIOD_FROM)}からの${K.denom}日間、ぜんぶの日に来てくれた${ws.length}人</p>
+                <div class="kk-cards ${cols}" data-step="1">${items}</div>
+                ${ws.length <= 3 ? castleHtml(360, { lv: 0, flag: 0, steps: [[1, 1, 1]], pipos: [{ pose: "wait", until: 0 }, { pose: "cheer", from: 1 }] }) : ""}
               </div>
+            </div>`,
+        });
+      }
+
+      /* 引用の札（はじめまして・名言・おもしろ）。小さい札と、大写しの札 */
+      function quoteSmall(o, x) {
+        const opt = x || {};
+        return `
+          <div class="sc">
+            <div class="who">
+              ${opt.label ? `<span class="pill red">${e(opt.label)}</span>` : ""}
+              ${avatarHtml(o.name, "av-sm")}
+              <span class="nm">${e(dispName(o.name))}</span>
+              ${o.date ? `<span class="pill">${e(o.date)}</span>` : ""}
             </div>
+            <div class="msg">「${e(o.msg)}」</div>
+          </div>`;
+      }
+      function quoteBig(o, x) {
+        const opt = x || {};
+        return `
+          <div class="big-card">
+            ${opt.label || opt.extra ? `<div class="b-top">${opt.label ? `<span class="pill red">${e(opt.label)}</span>` : ""}${opt.extra ? `<span class="pill gold">${e(opt.extra)}</span>` : ""}</div>` : ""}
+            <div class="b-who">
+              ${avatarHtml(o.name, "av-md")}
+              <span class="b-name">${e(dispName(o.name))}</span>
+              ${o.date ? `<span class="pill">${e(o.date)}</span>` : ""}
+            </div>
+            <div class="b-body">「${e(o.msg)}」</div>
+            ${o.note ? `<div class="b-body sub">${e(o.note)}</div>` : ""}
+          </div>`;
+      }
+      /* 2列の小さい札の高さの見積もり（字の入る幅 420px・28px）。名前の行は、札・顔・名前・日付が1行に入らなければ折り返す */
+      const whoRows = (o, label) => {
+        const w = (label ? Array.from(label).length * 24 + 38 : 0) + 54 + Array.from(dispName(o.name)).length * 28 + (o.date ? 100 : 0);
+        return Math.max(1, Math.ceil(w / COL2));
+      };
+      const quoteSmallCost = (o, label) => 32 + whoRows(o, label) * 50 + 8 + linesOf(`「${o.msg}」`, 28, COL2) * 41;
+      /* 件数の少ない面（大写しにしない）の1枚の札 */
+      function quoteWide(o, step, x) {
+        const opt = x || {};
+        return `
+          <div class="sc qbig" data-step="${step}">
+            <div class="who">
+              ${opt.label ? `<span class="pill red">${e(opt.label)}</span>` : ""}
+              ${avatarHtml(o.name, "av-md")}
+              <span class="nm">${e(dispName(o.name))}</span>
+              ${o.date ? `<span class="pill">${e(o.date)}</span>` : ""}
+              ${opt.extra ? `<span class="pill gold">${e(opt.extra)}</span>` : ""}
+            </div>
+            <div class="msg">「${e(o.msg)}」</div>
+            ${o.note ? `<div class="note">${e(o.note)}</div>` : ""}
           </div>`;
       }
 
-      /* ④ はじめまして: 総数は出す。札にして並べるのは厳選した人だけ（2列、高さで面を割る） */
-      const NEW_PAGES = pack(D.newcomers.featured, (o) => quoteCost2(o) / 2 + 10, PANEL_H - 150, 4);
-      function renderNewcomers(i) {
+      /* 一覧の面を、3件以上なら大写しに、2件までなら大きな札を順に出す形にする（MR-22 は3件以上） */
+      const SPOT_MIN = 3;
+      /* 大きな札（quoteWide）の高さの見積もり（字の入る幅 880px）。2件までの面を割るときに使う */
+      const wideCost = (o) => 56 + 132 + linesOf(`「${o.msg}」`, 42, 880) * 63 + (o.note ? 10 + linesOf(o.note, 32, 880) * 50 : 0) + 16;
+
+      /* ④ はじめまして: 総数は出す。札にするのは厳選した人だけ */
+      const NEW_FEAT = D.newcomers.featured || [];
+      const NEW_PAGES = NEW_FEAT.length >= SPOT_MIN ? pack2(NEW_FEAT, (o) => quoteSmallCost(o), PANEL_H - 200, 6, 16) : pack(NEW_FEAT, wideCost, PANEL_H - 200, 2);
+      function newcomersScene(i) {
         const N = D.newcomers;
         const rows = NEW_PAGES[i];
-        const first = i === 0;
-        const last = i === NEW_PAGES.length - 1;
-        return `
-          ${head(pageTag(4, i, NEW_PAGES.length), "はじめまして")}
+        const countHtml = (st) =>
+          i === 0 ? `<div class="count" data-step="${st}"><span class="l">${e(D.month)}、はじめてコメントしてくれたのは</span><span class="n">${e(N.count)}</span><span class="l">人</span></div>` : "";
+        const top = (inner) => `
+          ${head(tagOf("new", i, NEW_PAGES.length), "はじめまして")}
           <div class="body"><div class="panel">
             ${pipoOn("peekWave")}
-            ${first ? `<div class="count" data-step="1"><span class="l">${e(D.month)}、はじめてコメントしてくれたのは</span><span class="n">${e(N.count)}</span><span class="l">人</span></div>` : ""}
-            <div class="${rows.length > 1 ? "q2" : "qs"}">
-              ${rows.map((o, j) => quoteCard(o, j + 2, { extra: "初コメント" })).join("")}
-            </div>
-            ${last && N.note ? `<div class="foot" data-step="${rows.length + 2}">${e(N.note)}</div>` : ""}
+            ${inner}
           </div></div>`;
+        if (NEW_FEAT.length < SPOT_MIN) {
+          const at = i === 0 ? 1 : 0;
+          return {
+            total: rows.length - 1 + at,
+            render: () => top(`${countHtml(0)}<div class="g1">${rows.map((o, j) => quoteWide(o, j + at, { extra: "初コメント" })).join("")}</div>`),
+          };
+        }
+        return spotScene({
+          items: rows,
+          small: (o) => quoteSmall(o),
+          big: (o) => quoteBig(o, { extra: "初コメント" }),
+          wrap: (items) => top(`${countHtml(0)}<div class="g2" data-step="0">${items}</div>`),
+        });
       }
 
-      /* ⑤ どの配信でしょうクイズ: 1問1面。step0 問題 / step1 選択肢 / step2 正解 */
+      /* ⑤ どの配信でしょうクイズ: 1問1面。step0 問題（カードの写真があれば大きく）/ step1 選択肢 / step2 正解 */
       function renderQuiz(qi) {
         const q = D.quiz[qi];
         const abc = ["A", "B", "C", "D"];
+        const photo = q.card && imgOf(q.card.img);
         return `
-          ${head(`CORNER 5　Q${qi + 1} / ${D.quiz.length}`, "どの配信でしょうクイズ")}
-          <div class="body"><div class="panel">
+          ${head(tagOf("quiz", 0, 1, `Q${qi + 1} / ${D.quiz.length}`), "どの配信でしょうクイズ")}
+          <div class="body"><div class="panel quiz" ${photo ? `data-at="1:after"` : ""}>
             ${pipoOn("peek")}
             <div class="quiz-q" data-step="0">
               <span class="qn">Q${qi + 1}</span>
               <div><div class="qt">${e(q.q)}</div><div class="hint2">チャットで答えてね</div></div>
             </div>
-            <div class="choices" data-step="1" data-done-at="2">
+            ${photo ? `<div class="qphoto" data-step="0"><img src="${photo}" alt="" decoding="async" /></div>` : ""}
+            <div class="choices" data-step="1" data-done-at="2"${photo ? " data-hold" : ""}>
               ${q.choices
                 .map(
                   (c, i) => `
                 <div class="choice${i === q.answer ? " right" : ""}">
-                  <span class="abc">${abc[i]}</span><span>${e(c)}</span>
+                  <span class="abc">${abc[i]}</span><span class="tx">${e(c)}</span>
                   <span class="ok pill red">正解</span>
                 </div>`
                 )
                 .join("")}
             </div>
-            <div class="answer" data-step="2"><b>正解は ${abc[q.answer]}</b>　${e(q.note)}</div>
+            <div class="answer" data-step="2"${photo ? " data-hold" : ""}><b>正解は ${abc[q.answer]}</b>${q.date ? `　<span class="pill">${e(q.date)}</span>` : ""}　${e(q.note)}</div>
           </div></div>`;
       }
 
-      /* ⑥ 流行語大賞: ノミネート（2列・6つまで）と発表。
-         `first` は道具の「初出の日」。**今月より前から在る語は null** で、そのときは
-         「◯◯から」を出さずに今月の件数だけ出す（件数は個人別ではないので出してよい。SKILL §6-2-3） */
+      /* ⑥ 流行語大賞: ノミネート（2列・6つまで）を1つずつ大写し → 発表。
+         `first` は道具の「初出の日」。**期間より前から在る語は null** で、そのときは
+         「◯◯から」を出さずに今月の件数だけ出す（件数は個人別ではないので出してよい。MR-18） */
       function buzzWhen(n) {
         const parts = [];
         if (n.first) parts.push(`<span class="pill">${e(n.first)} から</span>`);
@@ -1047,214 +1323,303 @@
         return parts.join("");
       }
       const BUZZ_PAGES = split(D.buzzwords.nominees, 6);
-      function renderBuzzNominees(i) {
-        const rows = BUZZ_PAGES[i];
-        return `
-          ${head(pageTag(6, i, BUZZ_PAGES.length), "今月の流行語大賞")}
-          <div class="body"><div class="panel">
-            ${pipoOn("sit")}
-            <p class="lead" data-step="0">ノミネート</p>
-            <div class="q2">
-              ${rows
-                .map(
-                  (n, j) => `
-                <div class="qc bw" data-step="${j + 1}">
-                  <div class="who"><span class="word">${e(n.word)}</span>${buzzWhen(n)}</div>
-                  <div class="note">${e(n.note)}</div>
-                </div>`
-                )
-                .join("")}
-            </div>
-          </div></div>`;
+      function buzzScene(i) {
+        return spotScene({
+          items: BUZZ_PAGES[i],
+          small: (n) => `
+            <div class="sc bw">
+              <div class="word">${e(n.word)}</div>
+              <div class="who">${buzzWhen(n)}</div>
+            </div>`,
+          big: (n) => `
+            <div class="big-card">
+              <div class="b-top" style="justify-content:center"><span class="pill red">ノミネート</span>${buzzWhen(n)}</div>
+              <div class="b-word">${e(n.word)}</div>
+              <div class="b-body sub">${e(n.note)}</div>
+            </div>`,
+          wrap: (items) => `
+            ${head(tagOf("buzz", i, BUZZ_PAGES.length), "今月の流行語大賞")}
+            <div class="body"><div class="panel">
+              ${pipoOn("sit")}
+              <p class="lead" data-step="0">ノミネート</p>
+              <div class="g2" data-step="0">${items}</div>
+            </div></div>`,
+        });
       }
       function renderBuzzWinner() {
         const B = D.buzzwords;
         return `
-          ${head("CORNER 6", "今月の流行語大賞")}
+          ${head(tagOf("buzz", 0, 1, "大賞"), "今月の流行語大賞")}
           <div class="body"><div class="panel">
             ${pipoOn("cheer")}
-            <div class="drum" data-step="0">大賞は・・・・・・</div>
-            <div class="win" data-step="1">
+            <div class="drum" data-step="0" data-until="0">大賞は・・・・・・</div>
+            <div class="win" data-step="1" data-hold>
               <span class="pill red prize">${YEAR}年${e(D.month)} 流行語大賞</span>
               <div class="big">${e(B.grandPrix.word)}</div>
+              <div class="who" style="display:flex;margin:0 0 14px">${buzzWhen(B.grandPrix)}</div>
               <div class="note">${e(B.grandPrix.note)}</div>
-              <div class="who" style="justify-content:center;display:flex;margin-top:14px">${buzzWhen(B.grandPrix)}</div>
             </div>
           </div></div>`;
       }
 
-      /* ⑦ 名言・いい話: 1列。高さで面を割る（3枚まで） */
-      const MEIGEN_PAGES = pack(D.meigen, quoteCost, PANEL_H, 3);
-      function renderMeigen(i) {
-        const rows = MEIGEN_PAGES[i];
-        return `
-          ${head(pageTag(7, i, MEIGEN_PAGES.length), "名言・いい話アワード")}
-          <div class="body"><div class="panel">
-            ${pipoOn("wait")}
-            <div class="qs">${rows.map((m, j) => quoteCard(m, j + 1)).join("")}</div>
-          </div></div>`;
-      }
-
-      /* ⑧ おもしろコメント大賞: 部門賞（1列、3枚まで）→ グランプリ1 */
-      const FUNNY_PAGES = pack(D.funny.categories, quoteCost, PANEL_H, 3);
-      function renderFunnyCats(i) {
-        const rows = FUNNY_PAGES[i];
-        return `
-          ${head(pageTag(8, i, FUNNY_PAGES.length), "おもしろコメント大賞　部門賞")}
-          <div class="body"><div class="panel">
-            ${pipoOn("jump")}
-            <div class="qs">${rows.map((c, j) => quoteCard(c, j + 1, { label: c.label })).join("")}</div>
-          </div></div>`;
+      /* ⑦ 名言・いい話 / ⑧ おもしろ部門賞: 2列の一覧（高さで面を割る）→ 1枚ずつ大写し */
+      function quoteListScenes(key, title, list, pipo, labelOf) {
+        if (list.length < SPOT_MIN) {
+          const wide = pack(list, wideCost, PANEL_H, 2);
+          return wide.map((rows, i) => ({
+            total: rows.length - 1,
+            render: () => `
+              ${head(tagOf(key, i, wide.length), title)}
+              <div class="body"><div class="panel">
+                ${pipoOn(pipo)}
+                <div class="g1">${rows.map((o, j) => quoteWide(o, j, { label: labelOf(o) })).join("")}</div>
+              </div></div>`,
+          }));
+        }
+        const pages = pack2(list, (o) => quoteSmallCost(o, labelOf(o)), PANEL_H - 20, 6, 16);
+        return pages.map((rows, i) =>
+          spotScene({
+            items: rows,
+            small: (o) => quoteSmall(o, { label: labelOf(o) }),
+            big: (o) => quoteBig(o, { label: labelOf(o) }),
+            wrap: (items) => `
+              ${head(tagOf(key, i, pages.length), title)}
+              <div class="body"><div class="panel">
+                ${pipoOn(pipo)}
+                <div class="g2" data-step="0">${items}</div>
+              </div></div>`,
+          })
+        );
       }
       function renderFunnyGP() {
         const gp = D.funny.grandPrix;
         return `
-          ${head("CORNER 8　グランプリ", "おもしろコメント大賞")}
+          ${head(tagOf("funny", 0, 1, "グランプリ"), "おもしろコメント大賞")}
           <div class="body"><div class="panel">
             ${pipoOn("cheer")}
-            <div class="drum" data-step="0">グランプリは・・・・・・</div>
-            <div class="win" data-step="1">
+            <div class="drum" data-step="0" data-until="0">グランプリは・・・・・・</div>
+            <div class="win" data-step="1" data-hold>
               <span class="pill red prize">${YEAR}年${e(D.month)} おもしろコメント大賞</span>
               <div class="msg">「${e(gp.winner.msg)}」</div>
-              <div class="who">${avatarHtml(gp.winner.name, "av-xl")}<span>${e(dispName(gp.winner.name))}</span><span class="pill">${e(gp.winner.date)}</span></div>
-              ${gp.note ? `<div class="note" style="margin-top:12px">${e(gp.note)}</div>` : ""}
+              <div class="who">${avatarHtml(gp.winner.name, "av-lg")}<span class="fit" data-min="48">${e(dispName(gp.winner.name))}</span>${gp.winner.date ? `<span class="pill">${e(gp.winner.date)}</span>` : ""}</div>
+              ${gp.note ? `<div class="note" style="margin-top:16px">${e(gp.note)}</div>` : ""}
             </div>
           </div></div>`;
       }
 
-      /* ⑨ 調べもの大賞: **1面に収める**（あやと 2026-10-31。割ると見渡せない）。2列。
-         入りきらない量のときは字を一段だけ小さくする（.dense。それでも 24px） */
-      function renderGuides() {
+      /* ⑨ 付箋大賞（MR-19）: 部門賞を1枚ずつ大写し → 大賞（紙吹雪）。
+         1件ごとに 付箋の本文（原文）・貼った人・ハート・そのあと。「そのあと」は2押し目 */
+      const FUSEN = D.fusen || { categories: [] };
+      const FUSEN_CATS = FUSEN.categories || [];
+      function fusenBy(f) {
+        return `${e(f.by || "名乗らずに貼ってくれた人")}`;
+      }
+      /* 一覧の付箋は「どの部門を・誰が」だけ。本文（長い）は大写しで読む。5部門を1面で見渡せるように */
+      function fusenSmall(f) {
+        const photo = imgOf(f.img);
+        return `
+          <div class="fs">
+            ${photo ? `<img class="fthumb" src="${photo}" alt="" decoding="async" />` : ""}
+            <span class="pill red flabel">${e(f.label)}</span>
+            <div class="fby"><span>${fusenBy(f)}</span>${heartHtml(f.hearts)}</div>
+            ${f.date ? `<div class="fby"><span class="pill">${e(f.date)}</span></div>` : ""}
+          </div>`;
+      }
+      function fusenBig(f, gp) {
+        const photo = imgOf(f.img);
+        return `
+          <div class="big-card fusen${gp ? " gp" : ""}">
+            <div class="b-top">${gp ? `<span class="pill gold">${YEAR}年${e(D.month)} 付箋大賞</span>` : ""}<span class="pill red">${e(f.label)}</span>${f.date ? `<span class="pill">${e(f.date)}</span>` : ""}</div>
+            <div class="b-body">${e(f.text)}</div>
+            <div class="b-who" style="margin-top:12px"><span class="b-name">${fusenBy(f)}</span><span class="b-name heart">${HEART}<span>${e(f.hearts ?? 0)}</span></span></div>
+            ${photo ? `<div class="b-photos n1 b-p0"><img src="${photo}" alt="" decoding="async" /></div>` : ""}
+            ${f.after ? `<div class="b-after b-p1" style="margin-top:18px"><span class="pill gold">そのあと</span><div class="b-body sub" style="margin-top:6px">${e(f.after)}</div></div>` : ""}
+          </div>`;
+      }
+      const fusenCost = (f) => 38 + 44 + 10 + Math.ceil(((f.by || "名乗らずに貼ってくれた人").length * 28 + 60) / (COL2 - 120)) * 40 + 46;
+      const FUSEN_PAGES = FUSEN_CATS.length ? pack2(FUSEN_CATS, fusenCost, PANEL_H - 60, 6, 16) : [];
+      function fusenScene(i) {
+        return spotScene({
+          items: FUSEN_PAGES[i],
+          phases: (f) => (f.after ? 2 : 1),
+          small: (f) => fusenSmall(f),
+          big: (f) => fusenBig(f, false),
+          wrap: (items) => `
+            ${head(tagOf("fusen", i, FUSEN_PAGES.length, "部門賞"), "付箋大賞")}
+            <div class="body"><div class="panel">
+              ${pipoOn("flag")}
+              ${i === 0 && FUSEN.lead ? `<p class="lead" data-step="0">${e(FUSEN.lead)}</p>` : ""}
+              <div class="g2" data-step="0">${items}</div>
+            </div></div>`,
+        });
+      }
+      function renderFusenGP() {
+        const gp = FUSEN.grandPrix;
+        /* 大賞は大写しと同じ枠（頭の上まで使う）に1枚だけ。そのあとは2押し目 */
+        return `
+          ${head(tagOf("fusen", 0, 1, "大賞"), "付箋大賞")}
+          <div class="body">
+            <div class="drum on-sky" data-step="0" data-until="0">大賞は・・・・・・</div>
+          </div>
+          <div class="spot-layer on gp-layer" data-step="1" data-hold data-at="2:p1-host"><div class="spot-dim"></div>${fusenBig(gp, true)}</div>`;
+      }
+
+      /* ⑩ 調べもの大賞: **1面に収める**（MR-20）。2列の一覧 → 1枚ずつ大写し */
+      function guidesScene() {
         const G = D.guides;
-        const card = (r) => r ? 26 + 40 + 4 + linesOf(`「${r.msg}」`, 28, 786) * 39 + 2 + linesOf(r.what, 24, 786) * 36 : 0;
-        const cost = Array.from({ length: Math.ceil(G.rows.length / 2) }, (_, k) => Math.max(card(G.rows[2 * k]), card(G.rows[2 * k + 1]))).reduce((a, b) => a + b + 14, 0);
-        const dense = cost > PANEL_H + 20;
-        return `
-          ${head("CORNER 9", "調べもの大賞")}
-          <div class="body"><div class="panel gd${dense ? " dense" : ""}">
-            ${pipoOn("catch")}
-            <p class="lead" data-step="0">${e(G.lead)}</p>
-            <div class="q2">
-              ${G.rows
-                .map(
-                  (r, j) => `
-                <div class="qc" data-step="${j + 1}">
-                  <div class="who">
-                    ${avatarHtml(r.name)}
-                    <span class="nm">${e(dispName(r.name))}</span>
-                    <span class="pill">${e(r.date)}</span>
-                    ${r.hero ? `<span class="pill gold">大賞</span>` : ""}
-                  </div>
-                  <div class="msg">「${e(r.msg)}」</div>
-                  <div class="note">${e(r.what)}</div>
-                </div>`
-                )
-                .join("")}
-            </div>
-          </div></div>`;
+        return spotScene({
+          items: G.rows,
+          small: (r) => `
+            <div class="sc">
+              ${r.hero ? `<span class="pill gold badge">大賞</span>` : ""}
+              <div class="who">${avatarHtml(r.name, "av-sm")}<span class="nm">${e(dispName(r.name))}</span>${r.date ? `<span class="pill">${e(r.date)}</span>` : ""}</div>
+              <div class="msg">「${e(r.msg)}」</div>
+            </div>`,
+          big: (r) => `
+            <div class="big-card">
+              ${r.hero ? `<div class="b-top"><span class="pill gold">調べもの大賞</span></div>` : ""}
+              <div class="b-who">${avatarHtml(r.name, "av-md")}<span class="b-name">${e(dispName(r.name))}</span>${r.date ? `<span class="pill">${e(r.date)}</span>` : ""}</div>
+              <div class="b-body">「${e(r.msg)}」</div>
+              ${r.what ? `<div class="b-body sub">${e(r.what)}</div>` : ""}
+            </div>`,
+          wrap: (items) => `
+            ${head(tagOf("guides", 0, 1), "調べもの大賞")}
+            <div class="body"><div class="panel">
+              ${pipoOn("catch")}
+              ${G.lead ? `<p class="lead" data-step="0">${e(G.lead)}</p>` : ""}
+              <div class="g2" data-step="0">${items}</div>
+            </div></div>`,
+        });
       }
 
-      /* ⑩ 11月のおまけ。`emoji` 欄は画面に出さない（docs/island-design.md 1章）。印はピポの絵 */
+      /* ⑪ その月のおまけ。`emoji` 欄は画面に出さない（MR-8）。印はピポの絵 */
       const OMAKE_STAMPS = ["flag", "catch", "yawn"];
-      function renderOmake() {
-        const n = Math.min(3, Math.max(1, D.omake.length));
-        return `
-          ${head("CORNER 10", `${D.month}のおまけ`)}
-          <div class="body"><div class="panel">
-            <div class="om" style="grid-template-columns:repeat(${n}, 1fr)">
-              ${D.omake
-                .map(
-                  (o, i) => `
-                <div class="oc" data-step="${i + 1}">
-                  ${ART.pipo && ART.pipo[OMAKE_STAMPS[i % 3]] ? `<img class="stamp" src="${ART.pipo[OMAKE_STAMPS[i % 3]]}" alt="" />` : ""}
-                  <h3>${e(o.title)}</h3>
-                  <p>${e(o.body)}</p>
-                </div>`
-                )
-                .join("")}
-            </div>
-          </div></div>`;
+      const stampOf = (i) => (ART.pipo && ART.pipo[OMAKE_STAMPS[i % 3]]) || "";
+      function omakeScene() {
+        const list = D.omake;
+        const title = `${D.month}のおまけ`;
+        if (list.length < 2) {
+          return {
+            total: list.length,
+            render: () => `
+              ${head(tagOf("omake", 0, 1), title)}
+              <div class="body"><div class="panel">
+                <div class="g1">
+                  ${list
+                    .map(
+                      (o, i) => `
+                    <div class="sc oc" data-step="${i + 1}" style="flex-direction:row;align-items:flex-start;text-align:left;gap:18px">
+                      ${stampOf(i) ? `<img class="stamp" src="${stampOf(i)}" alt="" style="height:110px" />` : ""}
+                      <div><h3>${e(o.title)}</h3><p style="margin-top:8px">${e(o.body)}</p></div>
+                    </div>`
+                    )
+                    .join("")}
+                </div>
+              </div></div>`,
+          };
+        }
+        return spotScene({
+          items: list,
+          small: (o, i) => `
+            <div class="sc oc">
+              ${stampOf(i) ? `<img class="stamp" src="${stampOf(i)}" alt="" />` : ""}
+              <h3>${e(o.title)}</h3>
+            </div>`,
+          big: (o, i) => `
+            <div class="big-card">
+              ${stampOf(i) ? `<img class="b-stamp" src="${stampOf(i)}" alt="" />` : ""}
+              <div class="b-title" style="text-align:center">${e(o.title)}</div>
+              <div class="b-body sub">${e(o.body)}</div>
+            </div>`,
+          wrap: (items) => `
+            ${head(tagOf("omake", 0, 1), title)}
+            <div class="body"><div class="panel">
+              <div class="${list.length === 3 ? "g3" : list.length === 1 ? "g1" : "g2"}" data-step="0">${items}</div>
+            </div></div>`,
+        });
       }
 
-      /* ⑪ 投げ銭: 4位以下の一覧（1面 16 行まで）→ 3位・2位 → ドラムロール → 1位＋紙吹雪 → 合計。
+      /* ⑫ 投げ銭: 4位以下の一覧（1列・1面 12 行まで。1人ずつ大写し）→ 3位・2位 → ドラムロール → 1位＋紙吹雪 → 合計。
          城の灯りは、順位が上がるほど上の階までともる（アラートと同じ見せかた） */
-      const TIPS_LOW = D.tips.rows.filter((p) => p.rank >= 4);
+      const TIPS_ROWS = D.tips.rows.slice().sort((a, b) => a.rank - b.rank || b.yen - a.yen);
+      const TIPS_LOW = TIPS_ROWS.filter((p) => p.rank >= 4);
       const TIPS_PAGES = TIPS_LOW.length ? split(TIPS_LOW, PER_SCREEN) : [];
-      const tipsAt = (r) => D.tips.rows.filter((p) => p.rank === r);
-      function renderTipsList(i) {
+      const tipsAt = (r) => TIPS_ROWS.filter((p) => p.rank === r);
+      function tipsListScene(i) {
         const rows = TIPS_PAGES[i];
-        return `
-          ${head(pageTag(11, i, TIPS_PAGES.length), "投げ銭ありがとう")}
-          <div class="body"><div class="panel">
-            ${pipoOn("catch")}
-            <p class="lead" data-step="0">応援してくれたみなさん（第${rows[0].rank}位〜）</p>
-            <div class="list" data-step="1" style="grid-template-rows:repeat(${Math.ceil(rows.length / 2)}, auto)">
-              ${rows
-                .map(
-                  (p) => `
-                <div class="row" data-row>
-                  <span class="rk">${p.rank}位</span>
-                  ${charHtml(p)}
-                  <span class="nm fit">${e(dispName(p.display))}</span>
-                  <span class="yen">${yen(p.yen)}円</span>
-                </div>`
-                )
-                .join("")}
-            </div>
-          </div></div>`;
+        return spotScene({
+          items: rows,
+          small: (p) => `
+            <div class="row" data-row>
+              <span class="rk">${p.rank}位</span>
+              ${charHtml(p)}
+              <span class="nm fit">${e(dispName(p.display))}</span>
+              <span class="yen">${yen(p.yen)}円</span>
+            </div>`,
+          big: (p) => `
+            <div class="big-card b-tip">
+              <span class="pill gold">第${p.rank}位</span>
+              ${charHtml(p, "ch-big")}
+              <span class="b-name fit" data-min="48">${e(dispName(p.display))}</span>
+              <span class="b-yen">${yen(p.yen)}円</span>
+            </div>`,
+          wrap: (items) => `
+            ${head(tagOf("tips", i, TIPS_PAGES.length), "投げ銭ありがとう")}
+            <div class="body"><div class="panel">
+              ${pipoOn("catch")}
+              <p class="lead" data-step="0">応援してくれたみなさん（第${rows[0].rank}位〜）</p>
+              <div class="list" data-step="0">${items}</div>
+            </div></div>`,
+        });
       }
       function tierCard(p, rank, step, cls) {
         return `
           <div class="tier ${cls || ""}" ${step != null ? `data-step="${step}"` : ""}>
             <span class="medal m${rank}">${rank}</span>
             ${charHtml(p, rank === 1 ? "ch-xl" : "ch-lg")}
-            <div class="who"><div class="rkn">第${rank}位</div><div class="nm fit">${e(dispName(p.display))}</div></div>
-            <span class="yen">${yen(p.yen)}円</span>
+            <div class="who"><div class="rkn">第${rank}位</div><div class="nm fit" data-min="44">${e(dispName(p.display))}</div><div class="yen">${yen(p.yen)}円</div></div>
           </div>`;
       }
       function renderTipsTop23() {
         const r3 = tipsAt(3);
         const r2 = tipsAt(2);
         return `
-          ${head("CORNER 11", "投げ銭ありがとう")}
+          ${head(tagOf("tips", 0, 1, "第3位・第2位"), "投げ銭ありがとう")}
           <div class="body">
             <div class="tp">
-              ${castleHtml(620, { lv: 0.3, flag: 0.2, steps: [[1, 0.55, 0.45], [2, 0.8, 0.7]], pipos: [{ pose: "catch" }] })}
-              <div class="side">
-                ${r3.map((p) => tierCard(p, 3, 1)).join("")}
-                ${r2.map((p) => tierCard(p, 2, 2)).join("")}
-              </div>
+              ${r3.map((p) => tierCard(p, 3, 1)).join("")}
+              ${r2.map((p) => tierCard(p, 2, 2)).join("")}
+              ${castleHtml(360, { lv: 0.3, flag: 0.2, steps: [[1, 0.55, 0.45], [2, 0.8, 0.7]], pipos: [{ pose: "catch" }] })}
             </div>
           </div>`;
       }
       function renderTipsTop1() {
         const r1 = tipsAt(1);
         return `
-          ${head("CORNER 11　第1位", "投げ銭ありがとう")}
+          ${head(tagOf("tips", 0, 1, "第1位"), "投げ銭ありがとう")}
           <div class="body">
             <div class="tp">
-              ${castleHtml(640, { lv: 0.8, flag: 0.7, steps: [[1, 1, 1]], pipos: [{ pose: "wait", until: 0 }, { pose: "cheer", from: 1 }] })}
-              <div class="side">
-                <div class="drum" data-step="0" style="color:var(--cream);text-shadow:0 3px 0 rgba(42,18,6,.7)">第1位は・・・・・・</div>
-                ${r1.map((p) => tierCard(p, 1, 1, "t1")).join("")}
-                <div class="total" data-step="2">
-                  ${ART.coin ? `<img src="${ART.coin}" alt="" />` : ""}
-                  <span>合計 ${yen(D.tips.total)}円</span><span class="th">ありがとうございました</span>
-                </div>
+              <div class="drum on-sky" data-step="0" data-until="0">第1位は・・・・・・</div>
+              ${r1.map((p) => tierCard(p, 1, 1, "t1").replace('class="tier t1"', 'class="tier t1" data-hold')).join("")}
+              <div class="total" data-step="2" data-hold>
+                ${ART.coin ? `<img src="${ART.coin}" alt="" />` : ""}
+                <span>合計 ${yen(D.tips.total)}円</span><span class="th">ありがとうございました</span>
               </div>
+              ${castleHtml(r1.length > 1 ? 300 : 380, { lv: 0.8, flag: 0.7, steps: [[1, 1, 1]], pipos: [{ pose: "wait", until: 0 }, { pose: "cheer", from: 1 }] })}
             </div>
           </div>`;
       }
 
-      /* ⑫ 手紙: 段落の字数で面を割る（1面 11 行ぶんまで。1行 49 字の見積もり） */
-      const LETTER_LINES = 11;
-      const LETTER_PAGES = pack(D.letter.paragraphs, (p) => linesOf(p, 32, 1600), LETTER_LINES, 6);
+      /* ⑬ 手紙: 段落の字数で面を割る（1面 10 行ぶんまで。1行 21 字の見積もり。読み上げるので字は大きく） */
+      const LETTER_LINES = 10;
+      const LETTER_W = 900;
+      const LETTER_PAGES = pack(D.letter.paragraphs, (p) => linesOf(p, 42, LETTER_W), LETTER_LINES, 3);
       function renderLetter(i) {
         const rows = LETTER_PAGES[i];
         const last = i === LETTER_PAGES.length - 1;
-        const dense = rows.reduce((n, p) => n + linesOf(p, 32, 1600), 0) > LETTER_LINES;
+        const dense = rows.reduce((n, p) => n + linesOf(p, 42, LETTER_W), 0) > LETTER_LINES;
         return `
-          ${head(pageTag(12, i, LETTER_PAGES.length), "あやと島案内鳥 からの手紙")}
+          ${head(tagOf("letter", i, LETTER_PAGES.length), "あやと島案内鳥 からの手紙")}
           <div class="body"><div class="panel letter${dense ? " dense" : ""}">
             ${pipoOn("sit")}
             ${rows.map((x, j) => `<p data-step="${j + 1}">${e(x)}</p>`).join("")}
@@ -1262,71 +1627,58 @@
           </div></div>`;
       }
 
-      /* ⑬ エンディング。城はぜんぶ灯って、ピポは門の前で眠る */
+      /* ⑭ エンディング。**投げ銭してくれた人が主役**（MR-11）。皆勤の人を象徴にしない。
+         並べる顔は投げ銭の順（島のキャラクターの絵）。城はぜんぶ灯って、ピポは門の前で眠る */
+      const END_FACES = 6;
       function renderEnding() {
-        const W = D.kinkin.winners;
+        const top = TIPS_ROWS.slice(0, END_FACES);
         const talkers = (D.opening.stats || []).find((s) => /しゃべ|コメントしてくれた|話してくれた/.test(s.label || ""));
         return `
           <div class="end">
             <div class="ribbon big" data-step="0"><h1 class="title">${e(D.ending.title)}</h1></div>
             <p class="sub" data-step="0">${e(D.ending.sub)}</p>
-            <div class="row2">
-              ${castleHtml(600, { lv: 0.6, flag: 0.6, steps: [[1, 1, 1]], pipos: [{ pose: "sleep" }] })}
-              <div class="panel" data-step="1">
-                ${W.length ? `<div class="faces">${W.map((p) => avatarHtml(p.name, "av-xl")).join("")}</div>` : ""}
-                <div class="thanks">${W.length ? `${D.kinkin.denom}日ぜんぶに来てくれた${W.length}人と、` : ""}${talkers ? `しゃべってくれた${e(talkers.n)}人に。` : "コメントしてくれたみなさんに。"}ありがとうございました。</div>
-                ${D.ending.tapGoal ? `<div class="tap"><span class="l">タップタップ 今月の目標</span><span class="n">${yen(D.ending.tapGoal)}</span></div>` : ""}
-                ${D.ending.ps ? `<div class="ps">${e(D.ending.ps)}</div>` : ""}
-              </div>
+            <div class="panel" data-step="1">
+              ${top.length ? `<div class="faces">${top.map((p) => charHtml(p, "ch-end")).join("")}</div>` : ""}
+              <div class="thanks">${TIPS_ROWS.length ? `投げ銭で島を支えてくれた${TIPS_ROWS.length}人と、` : ""}${talkers ? `しゃべってくれた${e(talkers.n)}人に。` : "コメントしてくれたみなさんに。"}ありがとうございました。</div>
+              ${D.ending.tapGoal ? `<div class="tap"><span class="l">タップタップ 今月の目標</span><span class="n">${yen(D.ending.tapGoal)}</span></div>` : ""}
+              ${D.ending.ps ? `<div class="ps">${e(D.ending.ps)}</div>` : ""}
             </div>
+            <div class="foot-castle">${castleHtml(360, { lv: 0.6, flag: 0.6, steps: [[1, 1, 1]], pipos: [{ pose: "sleep" }] })}</div>
           </div>`;
       }
 
       /* ======================== シーン定義 ========================
          何面に割るかは**行数と字数から数える**。手で「2面」と書くと、人数が変わって黙って溢れる */
       const SCENES = [];
-      const CORNER_OF = []; // シーンごとの「どのコーナーか」。手で数えない
-      const push = (corner, scene) => {
+      const CORNER_OF = []; // シーンごとの「どのコーナーか」（ドットの番号）。手で数えない
+      const push = (key, scene) => {
         SCENES.push(scene);
-        CORNER_OF.push(corner);
+        CORNER_OF.push(NO[key]);
       };
 
-      push(0, { total: 2, render: renderOpening });
-      RECAP_PAGES.forEach((rows, i) => push(1, { total: rows.length, render: () => renderRecap(i) }));
-      KINKIN_PAGES.forEach((_, i) => push(2, { total: i === KINKIN_PAGES.length - 1 && D.kinkin.note ? 1 : 0, render: () => renderKinkinList(i) }));
-      push(3, { total: 1, render: renderKinkinPodium, confettiAt: 1 });
-      NEW_PAGES.forEach((rows, i) => push(4, { total: rows.length + 1 + (i === NEW_PAGES.length - 1 && D.newcomers.note ? 1 : 0), render: () => renderNewcomers(i) }));
-      D.quiz.forEach((_, i) => push(5, { total: 2, render: () => renderQuiz(i) }));
-      BUZZ_PAGES.forEach((rows, i) => push(6, { total: rows.length, render: () => renderBuzzNominees(i) }));
-      push(6, { total: 1, render: renderBuzzWinner, confettiAt: 1 });
-      MEIGEN_PAGES.forEach((rows, i) => push(7, { total: rows.length, render: () => renderMeigen(i) }));
-      FUNNY_PAGES.forEach((rows, i) => push(8, { total: rows.length, render: () => renderFunnyCats(i) }));
-      push(8, { total: 1, render: renderFunnyGP, confettiAt: 1, confettiBig: true });
-      // **1ページに収める**（あやと 2026-10-31）
-      push(9, { total: D.guides.rows.length, render: renderGuides });
-      push(10, { total: D.omake.length, render: renderOmake });
-      TIPS_PAGES.forEach((_, i) => push(11, { total: 1, render: () => renderTipsList(i) }));
-      if (tipsAt(3).length + tipsAt(2).length) push(11, { total: 2, render: renderTipsTop23 });
-      push(11, { total: 2, render: renderTipsTop1, confettiAt: 1, confettiBig: true });
-      LETTER_PAGES.forEach((rows, i) => push(12, { total: rows.length + (i === LETTER_PAGES.length - 1 ? 1 : 0), render: () => renderLetter(i) }));
-      push(13, { total: 1, render: renderEnding, confettiAt: 1, confettiBig: true });
+      push("open", { total: 2, render: renderOpening });
+      RECAP_PAGES.forEach((_, i) => push("recap", recapScene(i)));
+      ATTEND_PAGES.forEach((rows, i) => rows.length && push("attend", { total: 0, render: () => renderAttend(i) }));
+      push("kinkin", kinkinScene());
+      NEW_PAGES.forEach((_, i) => push("new", newcomersScene(i)));
+      D.quiz.forEach((_, i) => push("quiz", { total: 2, render: () => renderQuiz(i) }));
+      BUZZ_PAGES.forEach((_, i) => push("buzz", buzzScene(i)));
+      push("buzz", { total: 1, render: renderBuzzWinner, confettiAt: 1 });
+      quoteListScenes("meigen", "名言・いい話アワード", D.meigen, "wait", () => null).forEach((s) => push("meigen", s));
+      quoteListScenes("funny", "おもしろコメント大賞　部門賞", D.funny.categories, "jump", (o) => o.label).forEach((s) => push("funny", s));
+      push("funny", { total: 1, render: renderFunnyGP, confettiAt: 1, confettiBig: true });
+      if (HAS_FUSEN) {
+        FUSEN_PAGES.forEach((_, i) => push("fusen", fusenScene(i)));
+        if (FUSEN.grandPrix) push("fusen", { total: FUSEN.grandPrix.after ? 2 : 1, render: renderFusenGP, confettiAt: 1, confettiBig: true });
+      }
+      push("guides", guidesScene());
+      if (NO.omake != null) push("omake", omakeScene());
+      TIPS_PAGES.forEach((_, i) => push("tips", tipsListScene(i)));
+      if (tipsAt(3).length + tipsAt(2).length) push("tips", { total: 2, render: renderTipsTop23 });
+      push("tips", { total: 2, render: renderTipsTop1, confettiAt: 1, confettiBig: true });
+      LETTER_PAGES.forEach((rows, i) => push("letter", { total: rows.length + (i === LETTER_PAGES.length - 1 ? 1 : 0), render: () => renderLetter(i) }));
+      push("end", { total: 1, render: renderEnding, confettiAt: 1, confettiBig: true });
 
-      const DOT_LABELS = [
-        "オープニング",
-        "今月の6分割ふりかえり",
-        "今月の出席日数",
-        "皆勤賞",
-        "はじめまして",
-        "どの配信でしょうクイズ",
-        "流行語大賞",
-        "名言・いい話アワード",
-        "おもしろコメント大賞",
-        "調べもの大賞",
-        `${D.month}のおまけ`,
-        "投げ銭ありがとう",
-        "あやと島案内鳥 からの手紙",
-        "エンディング",
-      ];
       const DOT_OF_SCENE = CORNER_OF;
       const DOT_COUNT = DOT_LABELS.length;
       if (Math.max(...CORNER_OF) !== DOT_LABELS.length - 1) {
@@ -1345,9 +1697,9 @@
 
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      /* 1920x1080 でない窓（手元の確かめ）では、舞台をまるごと縮める。OBS では 1 倍のまま */
+      /* 1080x1080 でない窓では、真ん中に置いて収まるまで縮める（外は body の夜空）。OBS の 1080 幅では 1 倍 */
       function fitWorld() {
-        const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+        const k = Math.min(window.innerWidth / W, window.innerHeight / W);
         world.style.setProperty("--k", String(k));
       }
       window.addEventListener("resize", fitWorld);
@@ -1358,7 +1710,7 @@
       (function buildSky() {
         const snow = document.getElementById("snow");
         let h = "";
-        for (let i = 0; i < 26; i++) {
+        for (let i = 0; i < 18; i++) {
           const x = (i * 73.7) % 100;
           const size = 6 + ((i * 7) % 6);
           const dur = 16 + ((i * 5) % 11);
@@ -1370,14 +1722,14 @@
         const colors = ["#ffd54a", "#ff9a6b", "#fff4dc", "#ffcf4d", "#ff7f8f"];
         let svg = "";
         let bulbs = "";
-        [[0, 960], [960, 1920]].forEach(([a, b]) => {
+        [[0, 540], [540, 1080]].forEach(([a, b]) => {
           const mid = (a + b) / 2;
-          svg += `<path d="M${a} 4 Q ${mid} 64 ${b} 4" fill="none" stroke="rgba(42,18,6,.55)" stroke-width="2" />`;
-          for (let x = a + 40; x < b - 20; x += 64) {
+          svg += `<path d="M${a} 4 Q ${mid} 54 ${b} 4" fill="none" stroke="rgba(42,18,6,.55)" stroke-width="2" />`;
+          for (let x = a + 34; x < b - 16; x += 56) {
             const t = (x - a) / (b - a);
-            const y = 4 + 2 * t * (1 - t) * 60;
-            const c = colors[Math.round(x / 64) % colors.length];
-            bulbs += `<circle class="bulb" cx="${x}" cy="${(y + 9).toFixed(1)}" r="8" fill="${c}" />`;
+            const y = 4 + 2 * t * (1 - t) * 50;
+            const c = colors[Math.round(x / 56) % colors.length];
+            bulbs += `<circle class="bulb" cx="${x}" cy="${(y + 8).toFixed(1)}" r="7" fill="${c}" />`;
           }
         });
         g.innerHTML = svg + `<g>${bulbs}</g>`;
@@ -1391,20 +1743,131 @@
         [...progress.children].forEach((d, i) => d.classList.toggle("act", i === cur));
       }
 
-      /* 名前が札に入らないときは、字を少しだけ縮める（「…」で切らない。#308）。下限 24px */
-      function fitTexts() {
-        stage.querySelectorAll(".fit").forEach((el) => {
+      /* 名前が札に入らないときは、字を少しだけ縮める（「…」で切らない。#308）。下限は data-min（既定 24px） */
+      function fitTexts(root) {
+        (root || stage).querySelectorAll(".fit").forEach((el) => {
           el.style.fontSize = "";
+          const min = Number(el.dataset.min) || 24;
           let fs = parseFloat(getComputedStyle(el).fontSize);
           let guard = 0;
-          while (el.scrollWidth - el.clientWidth > 1 && fs > 24 && guard++ < 40) {
+          el.style.whiteSpace = "";
+          while (el.scrollWidth - el.clientWidth > 1 && fs > min && guard++ < 60) {
             fs -= 1;
             el.style.fontSize = fs + "px";
+          }
+          // 下限まで縮めても入らない名前は、切らずに折り返す
+          if (el.scrollWidth - el.clientWidth > 1) el.style.whiteSpace = "normal";
+        });
+      }
+
+      /* 発表の札（.win）が面に入らないときは、字を少しずつ縮める（下限 0.8 倍） */
+      function shrinkToFit() {
+        stage.querySelectorAll(".win").forEach((win) => {
+          const body = win.closest(".body");
+          const panel = win.closest(".panel");
+          if (!body || !panel) return;
+          let sh = 1;
+          win.style.setProperty("--sh", "1");
+          let guard = 0;
+          while (panel.getBoundingClientRect().height > body.getBoundingClientRect().height + 1 && sh > 0.8 && guard++ < 12) {
+            sh = Math.max(0.8, sh - 0.04);
+            win.style.setProperty("--sh", sh.toFixed(2));
           }
         });
       }
 
-      function applySteps() {
+      /* ---------- 大写し ---------- */
+      const canAnimate = (el) => !reduceMotion && ROLE !== "ctrl" && typeof el.animate === "function";
+      /* 札が枠に入らないときは、本文と名前を少しずつ縮める。下限は本文 40px・名前 48px（MR-23） */
+      const BS_MIN = 40 / 46;
+      function fitBig(card) {
+        let bs = 1;
+        card.style.setProperty("--bs", "1");
+        fitTexts(card);
+        let guard = 0;
+        while (card.scrollHeight - card.clientHeight > 1 && bs > BS_MIN && guard++ < 30) {
+          bs = Math.max(BS_MIN, bs - 0.02);
+          card.style.setProperty("--bs", bs.toFixed(3));
+        }
+        fitTexts(card);
+      }
+      function setPhase(card, phase) {
+        card.classList.toggle("p1", phase >= 1);
+        fitBig(card);
+      }
+      /* 舞台の中の座標（#world の 1080 四方。縮めて見ている窓でも同じ数になる） */
+      function worldRect(el) {
+        const w = world.getBoundingClientRect();
+        const k = w.width / W || 1;
+        const r = el.getBoundingClientRect();
+        return { x: (r.left - w.left) / k, y: (r.top - w.top) / k, w: r.width / k, h: r.height / k };
+      }
+      function flipTo(card, item) {
+        const a = worldRect(item);
+        const b = worldRect(card);
+        const s = Math.max(0.04, Math.min(a.w / b.w, a.h / b.h));
+        return `translate(${(a.x + a.w / 2 - (b.x + b.w / 2)).toFixed(1)}px, ${(a.y + a.h / 2 - (b.y + b.h / 2)).toFixed(1)}px) scale(${s.toFixed(3)})`;
+      }
+      const itemOf = (j) => stage.querySelector(`.spot-item[data-spot="${j}"]`);
+      function spotEnter(layer, cur, animate) {
+        const tpl = stage.querySelector(`template[data-tpl="${cur.j}"]`);
+        if (!tpl) return;
+        const card = tpl.content.firstElementChild.cloneNode(true);
+        card.dataset.j = String(cur.j);
+        layer.appendChild(card);
+        setPhase(card, cur.phase);
+        const item = itemOf(cur.j);
+        if (item) item.classList.add("lifted");
+        if (animate && item && canAnimate(card)) {
+          card.animate(
+            [
+              { transform: flipTo(card, item), opacity: 0.35 },
+              { opacity: 1, offset: 0.3 },
+              { transform: "none", opacity: 1 },
+            ],
+            { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)" }
+          );
+        }
+      }
+      function spotLeave(card, animate) {
+        card.classList.add("leaving");
+        card.getAnimations().forEach((a) => a.cancel());
+        const item = itemOf(card.dataset.j);
+        // 元の場所はすぐ空ける（縮んで戻ってきた札と重なって消える）
+        if (item) item.classList.remove("lifted");
+        if (animate && item && canAnimate(card)) {
+          const a = card.animate(
+            [
+              { transform: "none", opacity: 1 },
+              { opacity: 1, offset: 0.6 },
+              { transform: flipTo(card, item), opacity: 0 },
+            ],
+            { duration: 440, easing: "cubic-bezier(.4,0,.2,1)", fill: "forwards" }
+          );
+          const done = () => card.remove();
+          a.onfinish = done;
+          a.oncancel = done;
+        } else card.remove();
+      }
+      function applySpot(animate) {
+        const s = SCENES[sceneIdx];
+        const layer = stage.querySelector(".spot-layer");
+        if (!layer || !s.spotAt) return;
+        const cur = s.spotAt(stepIdx);
+        layer.classList.toggle("on", !!cur);
+        // 大写しが済んだ札には、縁に金の印（どこまで読んだかが一覧で分かる）
+        const seen = s.seenBefore(stepIdx);
+        stage.querySelectorAll(".spot-item").forEach((el) => el.classList.toggle("seen", Number(el.dataset.spot) < seen && !(cur && Number(el.dataset.spot) === cur.j)));
+        const live = layer.querySelector(".big-card:not(.leaving)");
+        if (live && cur && Number(live.dataset.j) === cur.j) {
+          setPhase(live, cur.phase);
+          return;
+        }
+        if (live) spotLeave(live, animate);
+        if (cur) spotEnter(layer, cur, animate);
+      }
+
+      function applySteps(animate) {
         stage.querySelectorAll("[data-step]").forEach((el) => {
           el.classList.toggle("on", Number(el.dataset.step) <= stepIdx);
         });
@@ -1415,6 +1878,18 @@
         });
         stage.querySelectorAll("[data-done-at]").forEach((el) => {
           el.classList.toggle("done", Number(el.dataset.doneAt) <= stepIdx);
+        });
+        /* `data-at="1:after"` … そのステップから、その class を付ける */
+        stage.querySelectorAll("[data-at]").forEach((el) => {
+          for (const part of el.dataset.at.split(/\s+/)) {
+            const [st, cls] = part.split(":");
+            el.classList.toggle(cls, Number(st) <= stepIdx);
+          }
+        });
+        /* 付箋の大賞は札1枚の2段（大写しの札と同じ形）。2段目で「そのあと」 */
+        stage.querySelectorAll(".p1-host, [data-at*='p1-host']").forEach((host) => {
+          const card = host.querySelector(".big-card");
+          if (card) setPhase(card, host.classList.contains("p1-host") ? 1 : 0);
         });
         stage.querySelectorAll(".castle").forEach((c) => {
           let lv = Number(c.dataset.lv0);
@@ -1429,8 +1904,11 @@
           c.querySelector(".c-flag").style.transform = flagShift(fl, Number(c.dataset.s));
           c.querySelector(".c-glow").style.opacity = String(clamp01(lv));
         });
+        fitTexts();
+        shrinkToFit();
+        applySpot(animate !== false);
         const s = SCENES[sceneIdx];
-        if (s.confettiAt != null && stepIdx === s.confettiAt) {
+        if (s.confettiAt != null && stepIdx === s.confettiAt && animate !== false) {
           spawnConfetti(s.confettiBig ? 160 : 90);
         }
       }
@@ -1439,10 +1917,10 @@
         stage.innerHTML = SCENES[sceneIdx].render();
         updateDots();
         fitTexts();
-        // 初期ステップ(0)を即時表示
-        requestAnimationFrame(() => requestAnimationFrame(applySteps));
+        // 入った面のステップを、動かさずに出す（大写しも、その場に出す）
+        requestAnimationFrame(() => requestAnimationFrame(() => applySteps(false)));
       }
-      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTexts);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitTexts());
 
       function gotoScene(i, step) {
         sceneIdx = Math.max(0, Math.min(SCENES.length - 1, i));
@@ -1491,7 +1969,7 @@
         for (let i = 0; i < count; i++) {
           const c = document.createElement("div");
           c.className = "confetti";
-          c.style.left = Math.random() * 1920 + "px";
+          c.style.left = Math.random() * W + "px";
           c.style.background = COLORS[(Math.random() * COLORS.length) | 0];
           c.style.width = 10 + Math.random() * 10 + "px";
           c.style.height = 16 + Math.random() * 12 + "px";
@@ -1538,7 +2016,8 @@
       window.__state = () => ({ scene: sceneIdx, step: stepIdx, total: SCENES[sceneIdx].total, corner: CORNER_OF[sceneIdx] });
       window.__totals = SCENES.map((s) => s.total);
       window.__cornerOf = CORNER_OF.slice();
-
+      window.__cornerKeys = CORNER_OF.map((n) => CORNERS[n].key);
+      window.__spotInfo = SCENES.map((s) => (s.spotAt ? { from: s.spotFrom, count: s.spotCount, steps: Array.from({ length: s.total + 1 }, (_, t) => s.spotAt(t)) } : null));
 
       /* =========================================================
          リモート同期(Firestore)

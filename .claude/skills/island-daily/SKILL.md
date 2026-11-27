@@ -99,8 +99,8 @@ WHERE DATE(donated_at) >= '2026-09-11' ORDER BY d DESC
 
 ```bash
 q() { python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$1"; }
-curl -s "https://live-streaming-d3cac.web.app/island-api/characters/lookup?channel=$(q '@まこも-z3i')"
-curl -s "https://live-streaming-d3cac.web.app/island-api/characters/lookup?alias=$(q 'もっと豆挽けコーヒー商店')"
+curl -s "https://ayato-arigato.com/island-api/characters/lookup?channel=$(q '@まこも-z3i')"
+curl -s "https://ayato-arigato.com/island-api/characters/lookup?alias=$(q 'もっと豆挽けコーヒー商店')"
 ```
 
 スパチャは `?channel=`（YouTube の表示名）、Doneru は `?alias=`（呼び名）。
@@ -128,7 +128,7 @@ Doneru の「ayato arigato」が実際にそれで、**名前で引くと出て�
 **先に空いているか見る。** 絵文字はいまのところ1人1つで、かぶると見分けがつかない。
 
 ```bash
-curl -s "https://live-streaming-d3cac.web.app/island-api/characters" | python3 -c "
+curl -s "https://ayato-arigato.com/island-api/characters" | python3 -c "
 import sys,json
 cs=json.load(sys.stdin); cs=cs.get('characters') or cs
 print(''.join(sorted({c.get('emoji','') for c in cs if c.get('emoji')})))"
@@ -184,7 +184,7 @@ print(''.join(sorted({c.get('emoji','') for c in cs if c.get('emoji')})))"
 食い違っていれば必ず気づく。
 
 ```bash
-curl -s "https://live-streaming-d3cac.web.app/island-api/streamevents?day=2026-09-18" \
+curl -s "https://ayato-arigato.com/island-api/streamevents?day=2026-09-18" \
   | python3 -c "import sys,json;[print(x['id'],x['title']) for x in json.load(sys.stdin)['events']]"
 ```
 

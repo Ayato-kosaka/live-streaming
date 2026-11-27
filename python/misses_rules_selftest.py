@@ -86,7 +86,8 @@ def targets(standards: str, readme: str, docs: Path) -> callable:
             return m.group(1) in chapters
         if m := re.fullmatch(r"README (D-\d+)", t):
             return m.group(1) in ds
-        if re.fullmatch(r"[a-z0-9-]+\.md", t):
+        # 新しい仕様は docs/spec/ に置く（README D-5）。行き先にもそこを書ける
+        if re.fullmatch(r"(?:spec/)?[a-z0-9-]+\.md", t):
             return (docs / t).is_file() and f"`docs/{t}` | 仕様" in readme
         return False
     return ok
