@@ -3,7 +3,7 @@
 # 対象: 帳面（references/ayato_feedback.md）の項目のうち、「言われた」が2行以上か、題か決まりに「絶対」がある項目。
 # 対象の項目は、当てる場所に機械の名前を1つ以上持つ。名前は全部、コードに在ること:
 #   `lint:<規則>`  … tools/shorts/script/lint.py の Rule("<規則>", …)
-#   `check:<項目>` … tools/shorts/qa/check.py の "<項目>"
+#   `check:<項目>` … tools/shorts/qa/check.py の CHECKS の鍵
 #   `brief:<札>`   … tools/shorts/script/brief.py の GATES の鍵
 #   `post:<関所>`  … tools/shorts/post/*.py の GATES の鍵
 # `lint:`・`check:` を持たない（`brief:`・`post:` だけの）項目は、`- **機械にできない理由:** …` の欄も要る。

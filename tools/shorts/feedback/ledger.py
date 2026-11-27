@@ -2,7 +2,7 @@
 """**あやとの指摘の帳面**（`.claude/skills/viral-shorts-creator/references/ayato_feedback.md`）を読む。
 
     python3 tools/shorts/feedback/ledger.py            # 決まりを分類ごとに1行ずつ（書く人・批評役に渡す一覧）
-    python3 tools/shorts/feedback/ledger.py --check    # 帳面の形が崩れていないか
+    python3 tools/shorts/feedback/ledger.py --check    # 帳面の形が崩れていないか・2回以上の指摘が機械の関所を持つか
 
 終了コード 0=読めた（`--check` なら形も揃っている）/ 1=形が崩れている / 2=帳面が無い・読めない。
 
@@ -12,6 +12,21 @@
 決まりと直しの全文で「約束のカード」にする。lint の L-NICK（呼び名）・L-ATE（当て表）も、同じ項目と欄から読む。
 
 置き換わった字は「置き換わった」の欄に移して、題と決まりからは消す（1枚には出さない）。
+
+## 2回目からは、人の目だけにしない（`--check`。2026-11-27）
+
+「言われた」が2行以上か、題か決まりに「絶対」がある項目は、当てる場所に**機械の名前**を1つ以上持つ。名前は全部コードに在ること
+（`lint:<規則>` は `lint.py` の `Rule("<規則>"`・`check:<項目>` は `check.py` の `CHECKS` の鍵・`brief:<札>` は `brief.py` の `GATES`・
+`post:<関所>` は `tools/shorts/post/*.py` の `GATES`）。`lint:`・`check:` を持たず関所（`brief:`・`post:`）だけの項目は、
+`- **機械にできない理由:**` の欄も要る（承認の読みかた・進めかた・好みの選択のように、機械が当否を決められない項目。
+関所は、担当が埋める欄や止まる段で、中身を数えられるもの）。
+
+いま違反している項目は、控え（`tools/shorts/feedback/unguarded.txt`）に1行ずつ載る。**減ることしか許さない**:
+控えに無い項目が違反したら落ちる／控えに在る項目が直ったのに行が残っていたら落ちる／`GUARD_FROZEN` より後に言われた項目は、
+控えに在っても落ちる（2回目が来た項目を、控えに足して逃がさない）。
+
+前は「直したと思った指摘が、また来る」が続いた。F-014（ナレーションが名指す物が画に写っている）は4回言われ、
+当てる場所は人の目だけで、5回目に絶対の決まり（F-104）になった。
 
 ## 帳面の形（ここが読むところだけ）
 
@@ -61,6 +76,12 @@ ITEM = re.compile(r"^### (F-\d{3}) (.+?)\s*$")
 FIELD = re.compile(r"^- \*\*(.+?):\*\*\s*(.*)$")
 DATE = re.compile(r"20\d\d-\d\d-\d\d")
 LINT = re.compile(r"`lint:([A-Z]-[A-Z]+)`")
+# 機械の名前（当てる場所の `<種類>:<名前>`）。種類ごとに、どこを引けば在るかが分かる（`code_names`）
+MACHINE = re.compile(r"`(lint|check|brief|post):([A-Za-z0-9_-]+)`")
+JUDGES = ("lint", "check")   # 当否を機械が決めるもの。brief・post は関所（止まる段・埋める欄）
+REASON = "機械にできない理由"
+UNGUARDED = ROOT / "tools/shorts/feedback/unguarded.txt"
+GUARD_FROZEN = "2026-11-27"   # 控えに載せてよいのは、この日までに言われた項目だけ
 CHECK = re.compile(r"`check:([a-z_]+)`")
 CRITIC = "批評役 (h)"
 HUMAN = "人の目"
@@ -113,6 +134,15 @@ class Item:
     @property
     def checks(self) -> set:
         return set(CHECK.findall(self.place))
+
+    @property
+    def machine(self) -> set:
+        """当てる場所の機械の名前（(種類, 名前) の組）。"""
+        return set(MACHINE.findall(self.place))
+
+    @property
+    def last_date(self) -> str:
+        return max(DATE.findall(self.fields.get("言われた", "")), default="")
 
 
 @dataclass
@@ -212,6 +242,86 @@ def parse(text: str) -> Ledger:
     return led
 
 
+def guard_target(it) -> bool:
+    """機械の関所が要る項目か（2回以上言われた・題か決まりに「絶対」がある）。"""
+    return it.times >= 2 or "絶対" in it.title or "絶対" in it.fields.get("決まり", "")
+
+
+def _gate_keys(text: str, name: str = "GATES") -> set:
+    """Python の字のうち、頭の段の `<name> = {…}` の鍵（読み込まずに字で読む。brief.py は帳面を読み込むので、引き返さない）。"""
+    import ast
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return set()
+    out = set()
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == name for t in node.targets) \
+                and isinstance(node.value, ast.Dict):
+            out |= {k.value for k in node.value.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)}
+    return out
+
+
+def code_names(root: Path = ROOT) -> dict:
+    """種類 → コードに在る名前の集合。"""
+    def read(rel):
+        p = root / rel
+        return p.read_text(encoding="utf-8") if p.exists() else ""
+    return {
+        "lint": set(re.findall(r'Rule\(\s*"([A-Z]-[A-Z0-9]+)"', read("tools/shorts/script/lint.py"))),
+        "check": _gate_keys(read("tools/shorts/qa/check.py"), "CHECKS"),
+        "brief": _gate_keys(read("tools/shorts/script/brief.py")),
+        "post": set().union(*[_gate_keys(p.read_text(encoding="utf-8"))
+                              for p in sorted((root / "tools/shorts/post").glob("*.py"))]),
+    }
+
+
+def unguarded(it, names: dict) -> list:
+    """その項目が、機械の関所の決まりに違反している理由（空なら違反していない）。"""
+    out = [f"`{k}:{n}` がコードに無い" for k, n in sorted(it.machine) if n not in names.get(k, set())]
+    if guard_target(it):
+        kinds = {k for k, _ in it.machine}
+        if not kinds:
+            out.append("当てる場所に機械の名前（`lint:`・`check:`・`brief:`・`post:`）が無い")
+        elif not kinds & set(JUDGES) and not it.fields.get(REASON, "").strip():
+            out.append(f"関所（`brief:`・`post:`）だけで、「{REASON}」の欄が無い")
+    return out
+
+
+def read_allow(text: str) -> dict:
+    """控えの字 → F-ID → 行番号。頭の F-NNN だけを読む（`#` で始まる行と空の行は読まない）。"""
+    out = {}
+    for no, raw in enumerate(text.splitlines(), 1):
+        ln = raw.strip()
+        if not ln or ln.startswith("#"):
+            continue
+        m = re.match(r"(F-\d{3})\b", ln)
+        out[m.group(1) if m else f"?{no}"] = no
+    return out
+
+
+def guard(led: Ledger, allow_text: str, names: dict) -> tuple:
+    """（崩れの一覧, 違反している項目の ID）。控えと突き合わせる。減ることしか許さない。"""
+    allow = read_allow(allow_text)
+    bad = {it.id: unguarded(it, names) for it in led.items.values()}
+    bad = {k: v for k, v in bad.items() if v}
+    probs = []
+    for fid, no in allow.items():
+        if fid.startswith("?"):
+            probs.append(f"控えの {no}行目が F-NNN で始まっていない")
+        elif fid not in led.items:
+            probs.append(f"控えの {fid} が帳面に無い（消した項目なら、控えの行も消す）")
+        elif fid not in bad:
+            probs.append(f"控えの {fid} はもう違反していない。控えから消す（減ることしか許さない）")
+        elif led.items[fid].last_date > GUARD_FROZEN:
+            probs.append(f"控えの {fid} は {led.items[fid].last_date} に言われた（{GUARD_FROZEN} より後は控えに置けない。"
+                         f"機械の名前を当てる場所に書く）")
+    for fid, why in bad.items():
+        if fid not in allow:
+            probs.append(f"{fid}: {'／'.join(why)}（控えに無い。機械の関所を足す）")
+    return probs, sorted(bad)
+
+
 def load(path: Path | str = PATH) -> Ledger:
     return parse(Path(path).read_text(encoding="utf-8"))
 
@@ -246,7 +356,8 @@ def script_items(led: Ledger | None = None) -> list:
 def main() -> int:
     ap = argparse.ArgumentParser(description="あやとの指摘の帳面を読む")
     ap.add_argument("--path", default=str(PATH))
-    ap.add_argument("--check", action="store_true", help="形が崩れていないかだけを見る")
+    ap.add_argument("--check", action="store_true", help="形が崩れていないか・2回以上の指摘が機械の関所を持つかを見る")
+    ap.add_argument("--allow", default=str(UNGUARDED), help="控え（減ることしか許さない）")
     a = ap.parse_args()
     try:
         led = load(a.path)
@@ -254,11 +365,18 @@ def main() -> int:
         print(f"帳面を読めない: {e}", file=sys.stderr)
         return 2
     if a.check:
-        for p in led.problems:
+        try:
+            allow_text = Path(a.allow).read_text(encoding="utf-8")
+        except OSError as e:
+            print(f"控えを読めない: {e}", file=sys.stderr)
+            return 2
+        gprobs, bad = guard(led, allow_text, code_names())
+        for p in led.problems + gprobs:
             print(f"✕ {p}")
         print(f"項目 {len(led.items)}・指摘のコメント {len(led.feedback)}・指摘ではないコメント {len(led.other)}"
-              f"・崩れ {len(led.problems)}")
-        return 1 if led.problems else 0
+              f"・崩れ {len(led.problems)}・機械の関所の崩れ {len(gprobs)}"
+              f"（機械の関所の要る項目 {sum(guard_target(it) for it in led.items.values())}・控え {len(bad)}）")
+        return 1 if led.problems or gprobs else 0
     for cat in CATEGORIES:
         rows = [it for it in led.items.values() if it.category == cat]
         if not rows:
