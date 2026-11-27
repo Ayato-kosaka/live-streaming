@@ -6,6 +6,7 @@
 - 同じ sha256 × 同じ場所の、いちばん新しい記録が `done` → 止める（出ている投稿 ID を出す）
 - `pending` → 止める（前の回が途中で切れた。投稿先で見てから `mark --done --id …` か `--again`）
 - `--again` を付けたときだけ、記録があっても通す（後ろに新しい記録を足す。前の記録は消さない）
+- `dropped` → 通す（投稿先に出ていない・出さないと決めて閉じた記録。`note` に訳が要る。`post.py mark --dropped "<訳>"`）
 - 投稿を始める直前に `pending` を書き、ID が取れたら `done` に書き換える。
   **落ちたら `pending` のまま残る**——それが狙い
 
@@ -30,7 +31,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # 見張りは使い捨ての台帳に差し替えて回す（本物の台帳を書き換えない）
 LEDGER = os.path.join(HERE, "posted.json")
 PLACES = ("youtube", "tiktok", "instagram")
-STATES = ("pending", "done")
+# dropped（2026-11-27）: 投稿先で見て、出ていない・下書きを消したと確かめて閉じた記録。前は pending のまま閉じる道が無く、
+# 10-24 に消した TikTok の下書き（nordic-shinkiro/p2tt）が1か月 audit に「止まった pending」で出続けた
+STATES = ("pending", "done", "dropped")
 SHA_RE = re.compile(r"[0-9a-f]{64}")
 # 投稿 ID の形。URL ごと貼る・場所を取り違える、を書き込む前に断る
 # Instagram は media の pk（数字）。予約のうちは /reel/<符号>/ の符号が返らないので、予約の応答（configure_to_clips）が返す pk で控える
@@ -81,6 +84,8 @@ def bad_record(r):
         return f"{r['place']} の投稿 ID の形ではない: {vid!r}"
     if r["state"] == "done" and vid is None:
         return "done なのに投稿 ID が無い（止めたときに、何を見ればいいか言えない）"
+    if r["state"] == "dropped" and not str(r.get("note") or "").strip():
+        return "dropped なのに note に訳が無い（出ていないとどこで確かめたか・なぜ閉じたかを書く）"
     if "approval" in r and not (isinstance(r["approval"], str) and r["approval"].isdigit()):
         return f"承認のコメントID の形ではない: {r['approval']!r}"
     return None
@@ -154,6 +159,8 @@ def refusal(rows, sha, place, again=False):
         return done_msg(r)
     if r["state"] == "pending":
         return pending_msg(r)
+    if r["state"] == "dropped":
+        return None   # 出ていないと確かめて閉じた記録。出し直してよい
     return f"止めた: 知らない状態 {r['state']!r}"
 
 
@@ -218,6 +225,19 @@ def mark(sha, place, vid, plan=None, path=None):
         raise Refused(f"もう done になっている（投稿 ID {r['id']}）。直すなら posted.json を手で直してコミットする")
     else:
         r.update(state="done", id=vid)
+    save(rows, path)
+    return r
+
+
+def drop(sha, place, why, path=None):
+    """人が投稿先で見て、出ていない（下書きを消した・出さないと決めた）と確かめた pending を閉じる（pending → dropped）"""
+    if not str(why or "").strip():
+        raise Refused("--dropped には訳が要る（投稿先のどこで出ていないと確かめたか・なぜ閉じるか）")
+    rows = load(path)
+    r = latest(rows, sha, place)
+    if r is None or r["state"] != "pending":
+        raise Refused(f"閉じられるのは pending の記録だけ（{'記録が無い' if r is None else r['state']}）")
+    r.update(state="dropped", note=(str(r.get("note") or "").rstrip("。") + "。" if r.get("note") else "") + str(why).strip())
     save(rows, path)
     return r
 

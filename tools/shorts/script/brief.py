@@ -58,6 +58,8 @@
 1枚には、その回の原稿（行・秒・素材の時刻・画）・企画の取り込みの表・帳面の画・音・投稿（と題の札）の項目・企画の節の
 どこを読むかの地図・道具の呼び出しの形（雛形）を入れる。**検査（`check.py`）が落とす項目は名前だけ**にする。
 雛形に書いた道具と引数が今の道具に在るかを毎回見て、無ければ作らない（古い呼び出しを渡すと、担当はソースを読みに行く）。
+**視聴者役が通した原稿だけを本編集へ**（2026-11-27、帳面 F-100。`viewer_pass`）: 原稿の隣に、今の原稿の指紋つきの視聴者役の返事
+（`critic_viewer.py --keep` が置く `viewer*.txt`）が無い・✕ が残るなら、1枚を作らない。
 """
 from __future__ import annotations
 
@@ -87,6 +89,7 @@ STREAMS = ROOT / "streams"
 WORK = ROOT / "shorts/.work"
 sys.path.insert(0, str(ROOT / "tools/shorts/feedback"))
 sys.path.insert(0, str(HERE))
+import critic_viewer as viewer_mod  # noqa: E402
 import ledger as ledger_mod  # noqa: E402
 import lint as lint_mod  # noqa: E402
 
@@ -1105,6 +1108,7 @@ GATES = {
     "no_chat": "作文者の1枚にチャットの本文を入れない（帳面 F-048）",
     "read_mask": "字幕の中の、本人が読み上げた視聴者さんの書き込みを伏せる（帳面 F-048）",
     "tool_calls": "本編集の雛形に書いた道具と引数が、いまの道具に在る（無ければ作らない）",
+    "viewer_pass": "本編集の1枚: 今の原稿の指紋つきの視聴者役の返事（viewer*.txt）が無い・ストレス1以上の行が残るなら作らない（帳面 F-100）",
 }
 
 
@@ -1775,6 +1779,8 @@ def main() -> int:
     ed.add_argument("--pattern", help="案（script_A.txt の A。案が1つの回は付けない）")
     ed.add_argument("--name", help="書き出しの名前（remote.py の --name。既定は検査の記録の版の次）")
     ed.add_argument("--scratch", help="作業の置き場（スクラッチパッド）。手元に開いた素材を探し、鍵・BGM の道を埋める")
+    ed.add_argument("--viewer", help="視聴者役の返事（既定は原稿の隣の viewer*.txt。critic_viewer.py --keep が置く）。"
+                                     "今の原稿の指紋が無い・✕ が残るなら1枚を作らない（F-100）")
     ed.add_argument("--voice-lines", help="1枚は作らず、声に渡す字の雛形を spec の tts_text からこの道に書く")
     ed.add_argument("--type", help="回の型（tools/shorts/render/presets の food・try・trouble・surprise・money）。"
                                    "その型の様式と編集の決めの要点を1枚に入れる（無ければ、選ぶための表）")
@@ -1808,6 +1814,8 @@ def main() -> int:
             print(f"{a.voice_lines}（{len(items)}文・{sum(x['bytes'] for x in items):,}バイト）")
             return 0
         elif a.who == "edit":
+            _, sc, _ = pick(Path(a.episode), a.pattern)
+            viewer_mod.gate(sc, Path(a.viewer) if a.viewer else None)   # F-100: 視聴者役が通した原稿だけを本編集へ
             text = build_edit_brief(Path(a.episode), a.pattern, a.about, a.name, a.scratch, a.type)
         else:
             text, sizes = build_writer(a.video, a.range, a.about, a.chat, a.extra, Path(a.spec) if a.spec else None,

@@ -18,6 +18,10 @@
 | `send_wire` | `post.py send` が、関所に当たる投稿文・指示書の無い送りを、送る前に止める |
 | `instagram` | YouTube・TikTok に出した案（11-22 から）に Instagram が無ければ `clean` が止まる。そろっていれば片づける（F-090） |
 | `plain` | 囲みの字だけの原稿は通し、`<details>` の外の表・囲みの中の欄の区切り・行番号は止める（F-098） |
+| `gray` | 規約・権利を理由に「使えない・外す」と書いた行は、黒の前例の URL（`前例: https://…`）が無ければ止める。前例があれば・グレーとして使うと書けば・囲みの中なら通す。`issue-text` が止まる（F-001） |
+| `looks` | 指示書の字の見た目（look_sheet.py の指紋）が控えに在れば通し、字幕の色を変えた様式は止める。音だけ変えた様式は同じ見た目。控えの chosen の行に URL が無い・baseline が増えたら止める（F-084） |
+| `looks_wire` | `send` の関所が見た目を数え、`remote.py up` が下書きでない書き出しの前に見た目の関所を呼ぶ |
+| `looks_pick` | 控えに足す（look_sheet.py chosen）のは、見本のコメントに印が在り、あやと本人が見本のあとに選んだときだけ |
 | `gates_named` | 帳面の当てる場所の `post:<関所>` が全部 `GATES` に在り、`GATES` の鍵が全部どこかの項目に名指されている |
 | `passed` | あやとが通して出した ①〜④ の投稿文（記事・クレジット）は通る |
 """
@@ -74,6 +78,25 @@ CUTS = {
     "table": ("preflight.py", "        if details <= 0 and TABLE.match(ln):\n", "        if False:\n", {"plain"}, "表を見ない"),
     "fence": ("preflight.py", "        if fence:\n            for rx, what in IN_FENCE_BAD:", "        if False:\n            for rx, what in IN_FENCE_BAD:",
               {"plain"}, "囲みの中を見ない"),
+    # ---- 2026-11-27: 控えの F-001・F-084 ----
+    "gray": ("preflight.py", "        if r and b:\n", "        if False:\n", {"gray"}, "規約を理由に外すと書いた行を見ない"),
+    "gray_prec": ("preflight.py", "    if PRECEDENT.search(text):\n        return []\n", "", {"gray"}, "黒の前例を並べても止める"),
+    "gray_fence": ("preflight.py", "        if fence:\n            continue\n        r, b =", "        r, b =", {"gray"},
+                   "囲みの中（原稿の字）の「規約」まで数える"),
+    "wire_gray": ("preflight.py", "plain_why(body) + gray_why(body) if", "plain_why(body) if", {"gray"}, "issue-text がグレーの関所を呼ばない"),
+    "looks": ("preflight.py", '    if fp not in {r.get("fp") for r in d["looks"]}:\n', "    if False:\n", {"looks", "looks_wire"},
+              "控えに無い見た目を通す"),
+    "looks_url": ("preflight.py", "        if not ok:\n", "        if False:\n",
+                  {"looks"}, "URL の無い chosen の行（手で足した行）を数える"),
+    "looks_base": ("preflight.py", "    if len(base) > LOOKS_BASELINE:\n", "    if False:\n", {"looks"}, "baseline を増やせる"),
+    "wire_looks_send": ("preflight.py", " + looks_why(Path(edit_path))", "", {"looks_wire"}, "send が見た目の関所を呼ばない"),
+    "wire_looks_up": ("remote.py", "            stops = [w for e in a.edits for w in preflight.looks_why(Path(e))]\n",
+                      "            stops = []\n", {"looks_wire"}, "remote.py up が見た目の関所を呼ばない"),
+    "pick_mark": ("look_sheet.py", '    if sheet.get("marker") not in str(c1.get("body") or ""):\n', "    if False:\n", {"looks_pick"},
+                  "見本の印の無いコメントでも、見本を出したことにする"),
+    "pick_owner": ("look_sheet.py", "    if not is_ayato(c2):\n", "    if False:\n", {"looks_pick"}, "あやと本人でない返事でも、選んだことにする"),
+    "pick_order": ("look_sheet.py", '    elif str(c2.get("created_at") or "") < str(c1.get("created_at") or ""):\n', "    elif False:\n",
+                   {"looks_pick"}, "見本より前の返事でも、選んだことにする"),
 }
 
 AYATO = {"user": {"login": "Ayato-kosaka", "type": "User"}, "body": "Aは今出して"}
@@ -89,6 +112,9 @@ GOOD_POST = {
     "tiktok": {"caption": "…\n記事 https://ayato-arigato.com/travel/bulgaria/sofia/mekitsa\nBGM：ポケットサウンド – https://pocket-se.info/\n#ブルガリア #ポケットサウンド"},
 }
 POCKET = {"bgm": {"path": "/tmp/x/bgm/pocket_csikos.mp3"}}
+# 見た目の見張りの様式（控えには、この見た目だけを入れておく）。send の足の指示書（POCKET）は様式を書かないので style.json を引く
+LOOK = {"fonts": {"caption": "MPLUSRounded1c-Black.ttf"}, "caption": {"font": "caption", "size": 66, "color": "#FFFFFF", "stroke": 8},
+        "audio": {"bgm_rms_dbfs": -30}}
 
 
 class Box:
@@ -146,15 +172,22 @@ _TMP = tempfile.TemporaryDirectory(prefix="preflight-selftest-")
 def setup(cut):
     c = CUTS[cut] if cut else None
     sys.modules["ec2"] = ec2 = fake_ec2()
-    for n in ("post", "posted", "preflight"):
+    for n in ("post", "posted", "preflight", "look_sheet"):
         sys.modules.pop(n, None)
+    ls = legs.load(ROOT / "tools/shorts/style/look_sheet.py", "look_sheet", (c[1], c[2]) if c and c[0] == "look_sheet.py" else None)
+    ls.CHOSEN = Path(tempfile.mkdtemp(dir=_TMP.name)) / "looks_chosen.json"
+    ls.CHOSEN.write_text(json.dumps({"looks": [{"fp": ls.fingerprint(LOOK), "from": "baseline", "style": "見張り"}]}), encoding="utf-8")
     pre = legs.load(HERE / "preflight.py", "preflight", (c[1], c[2]) if c and c[0] == "preflight.py" else None)
     pre.FETCH = lambda cid: COMMENTS[cid]
     post = legs.load(HERE / "post.py", "post", (c[1], c[2]) if c and c[0] == "post.py" else None)
     # send は send.py（GCS と Actions）を起こす。守りを外した子が本当に送らないように、起こす口を偽物にする
     post.subprocess = types.SimpleNamespace(run=lambda *a, **k: types.SimpleNamespace(returncode=0))
     posted = sys.modules["posted"]
-    return Box(pre, post, posted, ec2, Path(tempfile.mkdtemp(dir=_TMP.name)))
+    box = Box(pre, post, posted, ec2, Path(tempfile.mkdtemp(dir=_TMP.name)))
+    box.ls = ls
+    remote = (ROOT / "tools/shorts/render/remote.py").read_text(encoding="utf-8")
+    box.remote = remote.replace(c[1], c[2]) if c and c[0] == "remote.py" else remote
+    return box
 
 
 def now_iso(hours_ago: float = 0) -> str:
@@ -309,6 +342,84 @@ def leg_plain(b):
             ("囲みの中の秒は止める", len(b.pre.plain_why(secs)) == 1)]
 
 
+def leg_gray(b):
+    bad = "Holiday Twist は規約で使えないので、A/B/C から選んでください"
+    prec = bad + "\n前例: https://example.com/takedown/1"
+    gray = "TikTok の規約の上ではグレーですが、運用の実績があるので EC2 の Chrome から出します"
+    fenced = "```\n著作権フリーの曲は使わない\n```"
+    f = b.file("issue.md", bad)
+    with redirect_stdout(io.StringIO()):
+        rc = b.pre.main(["issue-text", str(f)])
+    return [("規約を理由に「使えない」と書いた行を止める", len(b.pre.gray_why(bad)) == 1),
+            ("黒の前例の URL を並べれば通す", b.pre.gray_why(prec) == []),
+            ("グレーとして使うと書いた行は通す", b.pre.gray_why(gray) == []),
+            ("囲みの中（原稿の字）は数えない", b.pre.gray_why(fenced) == []),
+            (f"issue-text が止まる（終了コード {rc}）", rc == 1)]
+
+
+def _look_edit(b, style: dict) -> Path:
+    d = b.tmp / f"look{b.n}"
+    b.n += 1
+    d.mkdir(parents=True)
+    (d / "style_x.json").write_text(json.dumps(style, ensure_ascii=False), encoding="utf-8")
+    e = d / "edit_x.json"
+    e.write_text(json.dumps(dict(POCKET, style="style_x.json")), encoding="utf-8")
+    return e
+
+
+def leg_looks(b):
+    same = _look_edit(b, LOOK)
+    loud = _look_edit(b, dict(LOOK, audio={"bgm_rms_dbfs": -20}))
+    yellow = _look_edit(b, dict(LOOK, caption=dict(LOOK["caption"], color="#F9D342")))
+    out = [("控えに在る見た目の指示書は通す", b.pre.looks_why(same) == []),
+           ("音だけ変えた様式は同じ見た目（通す）", b.pre.looks_why(loud) == []),
+           ("字幕の色を変えた様式は止める", len(b.pre.looks_why(yellow)) == 1 and "F-084" in b.pre.looks_why(yellow)[0])]
+    keep = b.ls.CHOSEN.read_text(encoding="utf-8")
+    d = json.loads(keep)
+    try:
+        b.ls.CHOSEN.write_text(json.dumps({"looks": d["looks"] + [{"fp": b.ls.edit_fp(yellow), "from": "chosen"}]}), encoding="utf-8")
+        hand = b.pre.looks_why(yellow)
+        b.ls.CHOSEN.write_text(json.dumps({"looks": d["looks"] + [{"fp": f"{i:016x}", "from": "baseline"} for i in range(15)]}),
+                               encoding="utf-8")
+        grown = b.pre.looks_why(same)
+    finally:
+        b.ls.CHOSEN.write_text(keep, encoding="utf-8")
+    return out + [("URL の無い chosen の行（手で足した行）は数えない", any("URL" in w for w in hand)),
+                  ("baseline の行を増やしたら止める", any("baseline" in w for w in grown))]
+
+
+def leg_looks_wire(b):
+    yellow = _look_edit(b, dict(LOOK, caption=dict(LOOK["caption"], color="#F9D342")))
+    stops = b.pre.send_problems(GOOD_POST, yellow)
+    up = b.remote[b.remote.index("def cmd_up("):b.remote.index("def fetch_result(")]
+    guard = up.find("        if not a.draft:\n")
+    call = up.find("preflight.looks_why(Path(e))")
+    return [("send の関所が、控えに無い見た目を止める", any("F-084" in w for w in stops)),
+            ("remote.py up が、下書きでない書き出しの前（素材を集める前）に見た目の関所を呼ぶ",
+             0 <= guard < call < up.find("body = collect(") and "if stops:" in up[call:])]
+
+
+def leg_looks_pick(b):
+    sheet = {"marker": "LOOKS:abcd1234", "looks": [{"name": "A", "fp": "1" * 16, "style": "a.json"},
+                                                    {"name": "B", "fp": "2" * 16, "style": "b.json"}]}
+    url = "https://github.com/Ayato-kosaka/live-streaming/issues/1266#issuecomment-{}"
+    cs = {1: {"body": "見本です（見本の印 LOOKS:abcd1234）。どれが良いですか？", "created_at": "2026-11-27T01:00:00Z",
+              "user": {"login": "Ayato-kosaka", "type": "User"}},
+          2: {"body": "Bで", "created_at": "2026-11-27T02:00:00Z", "user": {"login": "Ayato-kosaka", "type": "User"}},
+          3: {"body": "見本です", "created_at": "2026-11-27T01:00:00Z", "user": {"login": "Ayato-kosaka", "type": "User"}},
+          4: {"body": "Bで", "created_at": "2026-11-27T02:00:00Z", "user": {"login": "github-actions[bot]", "type": "Bot"}},
+          5: {"body": "Bで", "created_at": "2026-11-26T02:00:00Z", "user": {"login": "Ayato-kosaka", "type": "User"}}}
+
+    def probs(c1, c2, pick="B"):
+        return b.ls.chosen_problems(sheet, pick, url.format(c1), url.format(c2), fetch=lambda cid: cs[cid],
+                                    is_ayato=lambda c: c["user"]["type"] == "User")
+    return [("見本の印のあるコメントに、あやとが見本のあとで選んだなら足せる", probs(1, 2) == []),
+            ("見本のコメントに印が無ければ足せない", len(probs(3, 2)) == 1),
+            ("返事があやと本人でなければ足せない", len(probs(1, 4)) == 1),
+            ("見本より前の返事では足せない", len(probs(1, 5)) == 1),
+            ("見本に無い案は足せない", len(probs(1, 2, pick="C")) == 1)]
+
+
 def leg_gates_named(b):
     led = LEDGER_MD.read_text(encoding="utf-8")
     named = set(re.findall(r"`post:([A-Za-z0-9_-]+)`", led))
@@ -334,6 +445,7 @@ LEGS = {
     "approval": leg_approval, "approval_wire": leg_approval_wire, "one": leg_one, "article": leg_article, "credit": leg_credit,
     "bgm": leg_bgm, "rounds": leg_rounds, "send_wire": leg_send_wire, "instagram": leg_instagram, "plain": leg_plain,
     "gates_named": leg_gates_named, "passed": leg_passed,
+    "gray": leg_gray, "looks": leg_looks, "looks_wire": leg_looks_wire, "looks_pick": leg_looks_pick,
 }
 
 if __name__ == "__main__":

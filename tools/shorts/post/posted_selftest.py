@@ -31,6 +31,7 @@
 | `needs_sha` | sha256 が分からない投稿は、EC2 に触らずに止まる |
 | `broken_stops` | 台帳が読めなければ止まる（空として通さない）。台帳を上書きしない |
 | `mark` | 人が見て確かめた結果を done にできる。URL を ID として渡すと断る |
+| `dropped` | 出ていないと確かめて閉じた記録（`dropped`）なら、同じ動画をもう一度出せる。`mark --dropped "<訳>"` は pending だけを閉じ、訳が無ければ断る。訳の無い dropped の台帳は読めないとして止まる（2026-11-27） |
 | `real_ledger` | git に入っている台帳に、台帳より前に出した6件が done で残っている |
 
 ## 守りを1つずつ外す（§15「対照は、足の数だけ用意する」）
@@ -97,6 +98,13 @@ CUTS: dict[str, tuple[str, str, str, set[str], str]] = {
               {"needs_sha"}, "sha256 が無くても先へ進む"),
     "broken": ("posted.py", '        raise Broken(f"台帳 {p} が JSON として読めない: {e}")\n', "        return []\n",
                {"broken_stops"}, "読めない台帳を空として扱う"),
+    "dropped_pass": ("posted.py", '    if r["state"] == "dropped":\n        return None   #', '    if r["state"] == "dropped":\n        return pending_msg(r)   #',
+                     {"dropped"}, "閉じた記録でも止める（出し直せない）"),
+    "dropped_note": ("posted.py", '    if r["state"] == "dropped" and not str(r.get("note") or "").strip():\n', "    if False:\n",
+                     {"dropped"}, "訳の無い dropped を読む"),
+    "dropped_only_pending": ("posted.py", '    if r is None or r["state"] != "pending":\n        raise Refused(f"閉じられるのは', '    if r is None:\n        raise Refused(f"閉じられるのは',
+                             {"dropped"}, "done の記録まで閉じる"),
+    "wire_dropped": ("post.py", "            r = posted.drop(sha, a.place, a.dropped)\n", "            r = {}\n", {"dropped"}, "mark --dropped が台帳を書かない"),
     "idform": ("posted.py",
                "    if not (isinstance(vid, str) and ID_RE[place].fullmatch(vid)):\n        raise Refused",
                "    if False:\n        raise Refused",
@@ -366,6 +374,31 @@ def leg_mark(b: Bench):
             (f"mark は EC2 に触らない（{len(f.calls)}回）", f.calls == [])]
 
 
+def leg_dropped(b: Bench):
+    why = "投稿先の下書きの一覧で、消したのを見た（見張り）"
+    p = b.ledger([rec(SHA_X, "tiktok", "pending", None)])
+    f = Fake(SHA_X, TT_OK)
+    rc0, _ = b.call(f, ["mark", "--place", "tiktok", "--sha", SHA_X, "--dropped", " "])
+    rc1, _ = b.call(f, ["mark", "--place", "tiktok", "--sha", SHA_X, "--dropped", why])
+    r = b.last(SHA_X, "tiktok") or {}
+    b.call(f, TT + ["--sha", SHA_X])
+    posts = len(f.posts())
+    b.ledger([rec(SHA_X, "tiktok", "done", TT_ID)])
+    rc3, _ = b.call(Fake(SHA_X, TT_OK), ["mark", "--place", "tiktok", "--sha", SHA_X, "--dropped", why])
+    p.write_text(json.dumps([rec(SHA_X, "tiktok", "dropped", None)]), encoding="utf-8")
+    try:
+        b.posted.load(str(p))
+        broken = False
+    except b.posted.Broken:
+        broken = True
+    return [(f"訳が空の --dropped は断る（終了コード {rc0}）", rc0 != 0),
+            (f"pending → dropped・訳を note に書く（終了コード {rc1}・{r.get('state')}）", rc1 == 0 and r.get("state") == "dropped"
+             and why in str(r.get("note"))),
+            (f"閉じた記録の動画は、もう一度出せる（投稿を頼む {posts}回）", posts == 1),
+            (f"done の記録は閉じない（終了コード {rc3}）", rc3 != 0),
+            ("訳の無い dropped の台帳は読めないとして止まる", broken)]
+
+
 def leg_real_ledger(b: Bench):
     path = HERE / "posted.json"
     try:
@@ -393,6 +426,7 @@ LEGS = {
     "needs_sha": leg_needs_sha,
     "broken_stops": leg_broken_stops,
     "mark": leg_mark,
+    "dropped": leg_dropped,
     "real_ledger": leg_real_ledger,
 }
 

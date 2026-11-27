@@ -20,7 +20,7 @@ F-080・F-086〜F-089・F-096・F-104〜F-106）を、ここで数える。ど�
 - `kind`: 素材の種類。`stream`（配信の画）・`footage`（あやとの撮影の動画）・`card`（あやと島カードの写真）・
   `island`（あやと島の画面の録画）・`map`（地図の動画。`hookmap.py`）・`art`（描いた絵・生成した絵）・`stock`（商用可の素材）・
   `screen`（ほかの画面の録画: YouTube・Google マップ）。書かなければ、撮影の素材の印 → `footage`、取り込みの台帳の
-  `art`（card → `card`・free → `stock`・ほか → `art`）、台帳の `range` が `hook-map` → `map`、画像のファイル → `art`、
+  `art`（card → `card`・free → `stock`・island → `island`・ほか → `art`）、台帳の `range` が `hook-map` → `map`、画像のファイル → `art`、
   どれでもなければ `stream`（**配信の画とみなす側に倒す。** 島の画面・カードを印なしで使うと、配信の画の決まりで落ちる）
 - `event`（任意）: 出来事そのものが要る画（食べる瞬間の本人・驚いた顔）。自撮りと配信の画の例外の理由
 - `order_ok`（任意）: 配信の起きた順と逆に置く理由（答えを先に見せる、など）
@@ -58,6 +58,10 @@ F-094（本編の粗い配信の画）・F-080 は `sharp.py`（`sharpness`）�
   作業箱で `scene.py <edit.json> --stamp` を回すと、答えを指示書のカット（`scene`。見出しは `scene_headings`）に押す。
   書き出しはカットの欄をそのまま時間割へ運ぶので、Actions の check.py も同じ答えで判定する。指紋（行の番号と字・入りと尻・
   `shows`・種類）がずれた答えは使わない（`shows` や行を直したら聞き直す）
+- 撮影の素材（`footage`）のカットは、手元の私有の置き場の作業用（`SHORTS_FOOTAGE_DIR`、既定 ~/.cache/shorts/footage の
+  `<ID>.mp4`。書き出しの `render.py` と同じ道）のコマを渡す（2026-11-27。前は道が無く、担当が道を足した写しで答えを取っていた）
+- **コマの無い答えは使わない・残さない**（2026-11-27）。コマを渡さずに得た答え（`frames` が 0）は、控えから読んでも・指示書に
+  押してあっても数えず、控えにも指示書にも書かない（⑦で1回、「コマ無し」の答えが控えと指示書に残った）
 - `SHORTS_SCENE_JUDGE=0` で起こさない（selftest は偽の検査役を差し込む）。起こした回数は `measured.judge_calls`
 
 ## 線と例外（なぜその線か）
@@ -94,7 +98,7 @@ KINDS = ("stream", "footage", "card", "island", "map", "art", "stock", "screen")
 PRETTY = ("footage", "card", "stock")          # 旅の前置きに当てる、配信の外の綺麗な画
 STILL_KINDS = ("card", "art")                   # 1枚の絵（寄せて動かしても、止め絵）
 IMAGE_EXT = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff", ".heic", ".avif"}
-ART_KIND = {"card": "card", "free": "stock"}    # 取り込みの台帳の art の印 → 種類（ほかは art）
+ART_KIND = {"card": "card", "free": "stock", "island": "island"}    # 取り込みの台帳の art の印 → 種類（ほかは art）
 
 HOOK_S = 3.0          # F-086 の「0〜3秒」
 HOOK_STILL_S = 1.5    # F-086「1.5秒より長く1枚で置かない」
@@ -666,15 +670,26 @@ def _read_frame(path: Path, t: float) -> bytes | None:
     return r.stdout if r.returncode == 0 and r.stdout else None
 
 
+def footage_file(fid: str) -> Path:
+    """撮影の素材の作業用（手元の私有の置き場。`render.py` の source_path と同じ道）。"""
+    return Path(os.environ.get("SHORTS_FOOTAGE_DIR") or "~/.cache/shorts/footage").expanduser() / f"{fid}.mp4"
+
+
+def with_frames(key: str, ans) -> bool:
+    """控え・指示書から読んでよい答えか（カットの答えは、コマを渡して得たものだけ）。"""
+    return isinstance(ans, dict) and (not str(key).startswith("c:") or bool(ans.get("frames")))
+
+
 def cut_frames(ctx: Ctx, k: int) -> list[bytes]:
-    """カットのコマ（1秒以上なら2枚、短ければ1枚）。字なしの版 → 仕上がり → 元の素材の順に探す。"""
+    """カットのコマ（1秒以上なら2枚、短ければ1枚）。字なしの版 → 仕上がり → 元の素材 → 撮影の素材の作業用の順に探す。"""
     def load():
         plan = ctx.plan
         c = plan["cuts"][k]
         fps = float(plan.get("fps") or 30)
         fr = [0.5] if c["frames"] < fps else [1 / 3, 2 / 3]
         for src, base, step in ((ctx.plate, c["at"], 1), (ctx.mp4 if ctx.mp4 and ctx.mp4.suffix == ".mp4" else None, c["at"], 1),
-                                (Path(c["path"]) if c.get("path") else None, c["in"], 1)):
+                                (Path(c["path"]) if c.get("path") else None, c["in"], 1),
+                                (footage_file(c["footage"]) if c.get("footage") else None, c["in"], 1)):
             if src is None or not Path(src).exists():
                 continue
             got = [_frame_bytes(Path(src), (base + f * c["frames"]) / fps) for f in fr]
@@ -715,11 +730,12 @@ def cached_verdicts(ctx: Ctx) -> dict:
             v = json.loads(verdict_path(ctx).read_text(encoding="utf-8"))
         except (OSError, ValueError):
             v = {}
+        v = {k: a for k, a in (v.items() if isinstance(v, dict) else []) if with_frames(k, a)}
         plan = ctx.plan or {}
         rs = rows(plan) if plan.get("cuts") else []
         for k, c in enumerate(plan.get("cuts") or []):
             st = c.get("scene")
-            if isinstance(st, dict) and st.get("key") == item_key(plan, rs, k):
+            if isinstance(st, dict) and st.get("key") == item_key(plan, rs, k) and with_frames(st["key"], st):
                 v.setdefault(st["key"], {x: y for x, y in st.items() if x != "key"})
             for hd in c.get("scene_headings") or []:   # 見出しの答えは、見出しの出はじめに掛かるカットに押す
                 if isinstance(hd, dict) and hd.get("key"):
@@ -730,6 +746,7 @@ def cached_verdicts(ctx: Ctx) -> dict:
 
 def save_verdicts(ctx: Ctx, v: dict) -> None:
     p = verdict_path(ctx)
+    v = {k: a for k, a in v.items() if with_frames(k, a)}   # コマの無い答えは控えに残さない
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps(v, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -1008,7 +1025,7 @@ def stamp(edit_path: Path, ctx: Ctx) -> int:
         key = item_key(plan, rs, k)
         c.pop("scene", None)
         c.pop("scene_headings", None)
-        if key in v:
+        if key in v and with_frames(key, v[key]):   # コマの無い答えは指示書に押さない
             c["scene"] = {"key": key, **v[key]}
             n += 1
     for hd in headings(plan):

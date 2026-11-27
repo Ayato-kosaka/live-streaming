@@ -320,6 +320,14 @@ def cmd_up(a) -> int:
             if miss:
                 print(f"!! {e} の国旗をランナーで描けない: " + " / ".join(miss))
                 return 1
+        if not a.draft:
+            # 字の見た目は、あやとが見本から選んだものだけで本番を書き出す（帳面 F-084。preflight.py の looks）。下書きは見本のために回すので止めない
+            sys.path.insert(0, str(HERE.parent / "post"))
+            import preflight  # noqa: E402
+            stops = [w for e in a.edits for w in preflight.looks_why(Path(e))]
+            if stops:
+                print("!! " + "\n!! ".join(stops))
+                return 1
         for e in a.edits:
             ep = Path(e)
             body = collect(ep, objects, stage / "narration", footage)

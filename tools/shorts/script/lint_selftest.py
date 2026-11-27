@@ -88,6 +88,8 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `new_fixtures` | 温泉 v5・ボザ v9（`approved/2EKBYEnv850_p1_v5`・`approved/bg-boza_p1_v9`。あやと #1441「ブラッシュアップ完璧」）が今日の決まりで ✕ 0（当て表 L-ATE と、書く前の persona・baseline の L-BASE は控えに入れていないので外す。ボザの「捨てる覚悟で買った！」の L-BUY は、承認 11-25 のあとの F-102（11-26）なので外す） |
 | `base` | spec に persona（ペルソナ3つのどれかを名指す）と baseline（5〜7行）があれば通す。persona が無い・3つのどれも名指さない・基本線が4行・8行なら ✕。spec が無ければ「見ていない」。11-26 のあやとのコメントより前の時点では当てない（L-BASE。#1446・F-099） |
 | `voicen` | 本人の声（orig_voice・voice_src）の行が3つなら通し、2つなら △（✕ にはしない）。spec が無ければ「見ていない」（L-VOICEN。#1445・F-078） |
+| `kind_turn` | spec の全部の行に種類（kind）と問いの開け閉め（turn）が決まりの字で無ければ ✕（L-KIND。2026-11-27、帳面 F-093 を控えから出した）。spec が無ければ「見ていない」 |
+| `shape` | spec に回の型（shape）が無ければ ✕（L-SHAPE。帳面 F-052）。「配信」でない型の回には、配信の回の型の規則（終わりの問い・です調・語り手・題の札・次の配信）を当てず、ほかの規則は当てる |
 | `gourmet` | グルメの回の題「行列店に並んだら、大当たりやった！」と「AIに聞いたら、名物は」を ✕。あやとの直し（大衆食堂を食べてみた）・グルメでない回は見ない（L-GOURMET。F-055） |
 | `town` | 「エディンバラで、羊の内臓料理ハギスを食べてみた！」を街と内臓で ✕。あやとの直し・知られた街（パリ）は通し、街歩きの題（あやとが通したエディンバラの1日）は △ だけ（T-TOWN。F-057）。街の名前は `cityStreams.ts` の街だけ見える（ヨークは拾えない） |
 | `easy` | 題が「簡単」の回の「うわあ、最悪や！」と、温度・時間・分量の数の無い原稿を ✕。あやとの直し（1時間・230℃で30分）は通す（T-EASY。F-061） |
@@ -338,6 +340,19 @@ CUTS = {
     "flag_dest": ("lint.py", " and not card.startswith(DEST, p[0] + len(p[1]))]\n", "]\n",
                   {"flag"}, "「〜行きのバス」の行き先にも旗を求める"),
     # ---- 2026-11-27（あやと「同じ指摘がないように永続化してください」）: 2回以上言われたのに人の目だけだった項目 ----
+    "kind_need": ("lint.py", "        if k is None or k not in KINDS:\n            bad_k.append",
+                  "        if k is not None and k not in KINDS:\n            bad_k.append", {"kind_turn"}, "種類（kind）の無い行を ✕ にしない（F-093）"),
+    "turn_need": ("lint.py", "        if t is None or t not in TURNS:\n            bad_t.append",
+                  "        if t is not None and t not in TURNS:\n            bad_t.append", {"kind_turn"},
+                  "開け閉め（turn）の無い行を ✕ にしない（F-093）"),
+    "kind_odd": ("lint.py", "        if k is None or k not in KINDS:\n            bad_k.append", "        if k is None:\n            bad_k.append",
+                 {"kind_turn"}, "決まりに無い種類の字を通す"),
+    "shape_need": ("lint.py", "    if str(c.shape or \"\").strip():\n        return []\n", "    if True:\n        return []\n", {"shape"},
+                   "回の型（shape）の無い spec を通す（F-052）"),
+    "shape_off": ("lint.py", "        if c.shape and c.shape != STREAM_SHAPE and stream_only(r):\n", "        if False:\n", {"shape"},
+                  "型の違う回にも、配信の回の型の規則（問い・関西弁・札）を当てる（F-052）"),
+    "shape_read": ("lint.py", '        shape = str(s.get("shape") or "").strip() or None\n', "        shape = None\n", {"shape"},
+                   "spec の shape を読まない"),
     "gourmet_eval": ("lint.py", "    m = EVAL_ONLY.search(t)\n", "    m = None\n", {"gourmet"}, "グルメの回の題の「大当たり」を拾わない"),
     "gourmet_ai": ("lint.py", "        m = AI_MENU.search(ln)\n", "        m = None\n", {"gourmet"}, "AI に聞いたメニューを拾わない"),
     "gourmet_scope": ("lint.py", "    if not GOURMET.search(t):\n        return []\n", "", {"gourmet"}, "グルメでない回の題まで拾う"),
@@ -1166,6 +1181,57 @@ def leg_base(L):
              got(persona=None, as_of="2026-11-26:7191788789")[1] == [])]
 
 
+def leg_kind_turn(L):
+    """F-093 spec の全部の行に kind と turn。無い・決まりに無い字は ✕。spec が無ければ「見ていない」。"""
+    lines = ["🇧🇬ブルガリアの温泉に行ってみた！", "入ったら……", "みんなは入ってみたい？"]
+    good = [{"line": lines[0], "kind": "題", "turn": "o"}, {"line": lines[1], "kind": "引っ張り", "turn": "o"},
+            {"line": lines[2], "kind": "締め", "turn": "c"}]
+
+    def got(rows, spec=True):
+        c = L.Ctx(lines=lines, title_card=None, title_from="足", rows=rows, has_spec=spec)
+        res = L.lint(c, TODAY)
+        return "L-KIND" in res["blind"], sorted((h.line, h.look) for h in res["hits"] if h.rule == "L-KIND")
+    no_kind = [dict(good[0]), {"line": lines[1], "turn": "o"}, dict(good[2])]
+    no_turn = [dict(good[0]), dict(good[1]), {"line": lines[2], "kind": "締め"}]
+    odd = [dict(good[0]), {"line": lines[1], "kind": "ひっぱり", "turn": "x"}, dict(good[2])]
+    return [("全部の行に kind と turn があれば通す", got(good) == (False, [])),
+            ("kind の無い2行目を ✕", got(no_kind)[1] == [(2, False)]),
+            ("turn の無い3行目を ✕", got(no_turn)[1] == [(3, False)]),
+            ("決まりに無い kind と turn は2つとも ✕", got(odd)[1] == [(2, False), (2, False)]),
+            ("全部の行に無くても、欄ごとに1つの ✕ にまとめる", got([{"line": ln} for ln in lines])[1] == [(1, False), (1, False)]),
+            ("spec が無ければ「見ていない」", got(None, spec=False)[0])]
+
+
+def leg_shape(L):
+    """F-052 spec に回の型（shape）が無ければ ✕。「配信」でない型の回には、配信の回の型の規則（L-END・L-ASK・L-DESU…）を当てない。"""
+    lines = ["🇸🇪スウェーデンの親友に会いに行ったお話", "ポーランドから1,377km、ヒッチハイクだけで旅をしました。",
+             "僕にとって一生忘れられない宝物になった。"]
+
+    def got(shape, spec=True):
+        c = L.Ctx(lines=lines, title_card=None, title_from="足", rows=[{"line": ln} for ln in lines], has_spec=spec, shape=shape)
+        res = L.lint(c, TODAY)
+        return {h.rule for h in res["hits"]}, res
+    none_rules, _ = got(None)
+    stream_rules, stream = got("配信")
+    novel_rules, novel = got("小説の語り")
+    built = L.build(FIX / "approved/passed7/ro-move_p5" / "script.txt")
+    with tempfile.TemporaryDirectory() as td:
+        sc = Path(td) / "script.txt"
+        sc.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        (Path(td) / "spec.json").write_text(json.dumps({"shape": "小説の語り", "rows": [{"line": ln} for ln in lines]},
+                                                       ensure_ascii=False), encoding="utf-8")
+        read = L.build(sc).shape
+    return [("shape の無い spec は L-SHAPE ✕", "L-SHAPE" in none_rules),
+            ("shape「配信」なら L-SHAPE は通り、配信の回の型の規則も外さない",
+             "L-SHAPE" not in stream_rules and not stream["off"]),
+            ("shape「小説の語り」なら、配信の回の型の規則（L-END・L-ASK・L-DESU・L-NARRATOR・T-CARD・T-READ・L-NEXT）を当てない",
+             "L-SHAPE" not in novel_rules and not set(novel["ran"]) & {"L-END", "L-ASK", "L-DESU"}
+             and {"L-END", "L-ASK", "L-DESU", "L-NARRATOR", "T-CARD", "T-READ", "L-NEXT"} <= set(novel["off"])),
+            ("配信の回の型でない規則（L-LENGTH・L-INNER）は、型が違っても当てる", {"L-LENGTH", "L-INNER"} <= set(novel["ran"])),
+            (f"spec の shape を読む（「{read}」。無い本物の spec は None）", read == "小説の語り" and built.shape is None),
+            ("spec が無ければ「見ていない」", "L-SHAPE" in L.lint(L.Ctx(lines=lines, title_card=None, title_from="足", rows=None), TODAY)["blind"])]
+
+
 def leg_voicen(L):
     def got(n, spec=True):
         lines = [f"{i}行目" for i in range(1, 9)]
@@ -1182,7 +1248,8 @@ def leg_new_fixtures(L):
     """温泉 v5・ボザ v9 は今日の決まりで ✕ 0（当て表 L-ATE は控えに入れていないので外す）。"""
     out = []
     for rel in (V5, V9):
-        f = [h.rule for h in fails(L, fix(L, rel)) if h.rule not in ("L-ATE", "L-BASE", "L-BUY")]
+        # L-SHAPE（回の型。2026-11-27）は2本が通ったあとの決まり。2本の spec は配信の回の型のまま shape の欄を持たない
+        f = [h.rule for h in fails(L, fix(L, rel)) if h.rule not in ("L-ATE", "L-BASE", "L-BUY", "L-SHAPE")]
         out.append((f"{rel} は今日の決まりで ✕ 0" + (f" ← {f}" if f else ""), not f))
     return out
 
@@ -1375,7 +1442,7 @@ LEGS = {
     "prev": leg_prev, "pickwhy": leg_pickwhy, "tenki": leg_tenki,
     "run": leg_run, "ansnext": leg_ansnext,
     "cliff": leg_cliff, "hook": leg_hook, "num38": leg_num38, "voice0": leg_voice0, "bang": leg_bang, "new_fixtures": leg_new_fixtures,
-    "base": leg_base, "voicen": leg_voicen,
+    "base": leg_base, "voicen": leg_voicen, "kind_turn": leg_kind_turn, "shape": leg_shape,
     "gourmet": leg_gourmet, "town": leg_town, "easy": leg_easy, "pitch": leg_pitch, "setup": leg_setup, "buy": leg_buy,
     "four": leg_four, "mood": leg_mood, "shout": leg_shout, "passed7": leg_passed7,
 }

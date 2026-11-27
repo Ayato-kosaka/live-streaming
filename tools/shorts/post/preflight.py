@@ -5,6 +5,7 @@
     python3 tools/shorts/post/preflight.py issue-text <原稿のコメント.md>             # 制作 issue に出す原稿が、貼れる字か（F-098）
     python3 tools/shorts/post/preflight.py approval <あやとのコメントの URL>          # 承認に数えてよい、あやと本人のコメントか（F-002）
     python3 tools/shorts/post/preflight.py audit                                      # 台帳: Instagram の抜け（F-090）・止まった pending（F-085）
+    python3 tools/shorts/post/preflight.py looks <edit_X.json>                        # 字の見た目が、あやとが見本から選んだものか（F-084）
 
 終了コード 0=通る / 1=止める / 2=読めない。
 
@@ -21,6 +22,12 @@
 | `rounds` | F-044 | send（`--edit`） | あやとに見せた版（`shorts/videos/<id>/p<N>`）が ROUNDS_MAX を越えたのに、`--rounds-why` で訳を書いていない |
 | `instagram` | F-090 | clean・audit | YouTube・TikTok に出した案（2026-11-22 から）に、Instagram の done の行が無い |
 | `plain` | F-098 | issue-text | 原稿のコメントに、`<details>` の外の表・囲みの中の欄の区切り（`|`）・行番号・秒・【】の印がある |
+| `gray` | F-001 | issue-text | 制作 issue に出す字の1行に、規約・権利を理由に「使えない・外す・避ける・違反」と書いたのに、黒の前例の URL（`前例: https://…`）が無い |
+| `looks` | F-084 | send（`--edit`）・`remote.py up`（下書きでない書き出し） | 指示書の字の見た目（`tools/shorts/style/look_sheet.py` の指紋）が、あやとが見本から選んだ見た目の控え（`looks_chosen.json`）に無い・控えの行が崩れている |
+
+`gray` と `looks` は 2026-11-27 から（控え `unguarded.txt` に残っていた F-001・F-084 を、数えられる関所にした）。
+F-001 の黒かグレーかは機械では決まらない。数えるのは「外すと書くなら、黒の前例を並べたか」。F-084 のどれが良いかは、あやとが選ぶ。
+数えるのは「控えに無い見た目を、見本を出して選んでもらう前に書き出していないか」。
 """
 from __future__ import annotations
 
@@ -45,6 +52,8 @@ GATES = {
     "rounds": "F-044 あやとに見せた版の数が上限を越えたら、訳を書くまで止める",
     "instagram": "F-090 YouTube・TikTok に出した案に Instagram の行が無ければ止める",
     "plain": "F-098 制作 issue に出す原稿が表・欄の区切りなら止める",
+    "gray": "F-001 制作 issue に出す字で、規約を理由に外すと書いた行があるのに、黒の前例の URL が無ければ止める",
+    "looks": "F-084 指示書の字の見た目が、あやとが見本から選んだ見た目の控えに無ければ、書き出し・送る前に止める",
 }
 
 ARTICLE = re.compile(r"https://ayato-arigato\.com/travel/[\w/-]+")
@@ -201,7 +210,7 @@ def send_problems(post: dict, edit_path: Path | None, why: str | None = None) ->
     out += bgm_why(edit)
     if CSIKOS.search(os.path.basename(str((edit.get("bgm") or {}).get("path") or ""))):
         out += credit_why(post)   # あやとが別の曲に決めた回（not_csikos）は、その曲の決まりで書く
-    return out + rounds_why(Path(edit_path), why)
+    return out + rounds_why(Path(edit_path), why) + looks_why(Path(edit_path))
 
 
 # ---------- F-098 貼れる字 ----------
@@ -232,11 +241,84 @@ def plain_why(text: str) -> list:
     return out
 
 
+# ---------- F-001 グレーを黒と言わない ----------
+
+RULE_WORD = re.compile(r"規約|ガイドライン|ポリシー|著作権|権利|ライセンス")
+BLACK_WORD = re.compile(r"使えない|使わない|外す|外し|避け|違反|危う|おすすめしません|おすすめできない|NG|ダメ|禁止|アウト|できません|出せない")
+PRECEDENT = re.compile(r"前例\s*[:：]\s*https://\S+")
+
+
+def gray_why(text: str) -> list:
+    """規約・権利を理由に外すと書いた行（F-001）。字の中のどこかに黒の前例の URL（`前例: https://…`）が無ければ、止める訳の並び。"""
+    if PRECEDENT.search(text):
+        return []
+    out, fence = [], False
+    for no, ln in enumerate(text.splitlines(), 1):
+        if FENCE.match(ln):
+            fence = not fence
+            continue
+        if fence:
+            continue
+        r, b = RULE_WORD.search(ln), BLACK_WORD.search(ln)
+        if r and b:
+            out.append(f"{no}行目: 「{r.group(0)}」を理由に「{b.group(0)}」と書いた。黒（はっきり禁じられ、止められた前例がある）なら"
+                       "その前例の URL を `前例: https://…` の1行で並べる。前例が無ければグレーとして、実績のある道を第一の案にする（F-001）")
+    return out
+
+
+# ---------- F-084 字の見た目は、見本から選んでもらう ----------
+
+LOOKS_BASELINE = 15   # 2026-11-27 の控えの baseline の行の数。増やせない（足すのは look_sheet.py chosen の行だけ）
+
+
+def _look_sheet():
+    root = HERE.parents[2]
+    p = str(root / "tools/shorts/style")
+    if p not in sys.path:
+        sys.path.insert(0, p)
+    import look_sheet  # noqa: E402
+    return look_sheet
+
+
+def looks_ledger_why(d: dict) -> list:
+    """控え（looks_chosen.json）の崩れ: baseline が増えた・chosen の行に見本と返事のコメントの URL が無い。"""
+    ls = _look_sheet()
+    rows = d.get("looks") or []
+    out = []
+    base = [r for r in rows if r.get("from") == "baseline"]
+    if len(base) > LOOKS_BASELINE:
+        out.append(f"見た目の控えの baseline が {len(base)}行（{LOOKS_BASELINE}行から増やせない。足すのは look_sheet.py chosen だけ。F-084）")
+    for r in rows:
+        if r.get("from") == "baseline":
+            continue
+        ok = r.get("from") == "chosen" and ls.COMMENT.match(str(r.get("sheet") or "")) and ls.COMMENT.match(str(r.get("pick") or ""))
+        if not ok:
+            out.append(f"見た目の控えの行 {r.get('fp')} に、見本を出したコメントとあやとが選んだコメントの URL が無い"
+                       "（手で足した行は数えない。look_sheet.py chosen で足す。F-084）")
+    return out
+
+
+def looks_why(edit_path: Path) -> list:
+    """指示書の字の見た目が、あやとが見本から選んだ見た目の控えに在るか（F-084）。止める訳の並び。"""
+    ls = _look_sheet()
+    d = ls.load_chosen()
+    out = looks_ledger_why(d)
+    try:
+        fp = ls.edit_fp(Path(edit_path))
+    except (OSError, ValueError) as e:
+        return out + [f"指示書 {edit_path} の様式を読めない: {e}"]
+    if fp not in {r.get("fp") for r in d["looks"]}:
+        out.append(f"指示書 {Path(edit_path).name} の字の見た目（指紋 {fp}）が、あやとが選んだ見た目の控えに無い。"
+                   "様式を変えるなら、look_sheet.py make で2〜4案の見本を並べて制作 issue に出し、あやとが選んだら "
+                   "look_sheet.py chosen で控えてから書き出す（F-084）")
+    return out
+
+
 # ---------- 入口 ----------
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="出す前の関所（帳面の投稿・進めかたの指摘）")
-    ap.add_argument("cmd", choices=("post", "issue-text", "approval", "audit"))
+    ap.add_argument("cmd", choices=("post", "issue-text", "approval", "audit", "looks"))
     ap.add_argument("target", nargs="?")
     ap.add_argument("--edit")
     ap.add_argument("--rounds-why")
@@ -258,13 +340,19 @@ def main(argv=None) -> int:
         return 1 if miss else 0
     if not a.target:
         ap.error("読むものが要る")
+    if a.cmd == "looks":
+        probs = looks_why(Path(a.target))
+        for p in probs:
+            print(f"✕ {p}")
+        print(f"結果: ✕ {len(probs)}")
+        return 1 if probs else 0
     if a.cmd == "approval":
         cid, why = approval(a.target)
         print(why or f"○ コメント {cid} はあやと本人の言葉（承認に数えてよい。中身は担当が読む）")
         return 1 if why else 0
     try:
         body = Path(a.target).read_text(encoding="utf-8")
-        probs = plain_why(body) if a.cmd == "issue-text" else send_problems(json.loads(body), Path(a.edit) if a.edit else None,
+        probs = plain_why(body) + gray_why(body) if a.cmd == "issue-text" else send_problems(json.loads(body), Path(a.edit) if a.edit else None,
                                                                              a.rounds_why)
     except (OSError, ValueError) as e:
         print(f"読めない: {e}")

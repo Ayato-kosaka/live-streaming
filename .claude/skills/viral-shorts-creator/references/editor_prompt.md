@@ -99,6 +99,7 @@
    その素材の顔は組む前に `python3 tools/shorts/render/face_scan.py --footage <ID> $S/faces --book <回の p1>/blur.json` で帳面に書き（絵を見て漏れは手で足す）、
    組むときに `--blur <回の p1>/blur.json`。効果音・札・窓の帯は `{{ov}}` の上の段の `sfx`・`stickers`・`bands`（時は `{"row": 行, "cut": 何本目, "f": コマ}`）に書く。
    **カットごとに `shows`（写っている物・場所の短い言葉。狙いでなく写っている物）を必ず書き、配信でない画は `kind`（`footage`・`card`・`island`・`map`・`art`・`stock`・`screen`）も**（帳面 F-104。`scene.py` が行の言葉と突き合わせ、無ければ落ちる）。
+   行ごとに書くなら spec の行の `cut_kind`（行の `kind` は作文者の行の種類で、カットの種類ではない）。島の画面の絵の窓は `art_clips.py --kind island`、見出しの札「1. …」は字幕と同じ言葉でも消えない。
    組んだ指示書を手で直さない（組み直すと消える）
    **書かなければ** 2カットは声の文の切れ目、3カット以上は等分（`split_row`）。題の札（spec の `title_card`。国旗の絵文字つき）は
    `title_card_seconds`（4.0まで）で消え、札が1行目と別の字なら1行目の字幕は札の下に出る

@@ -25,6 +25,12 @@ plan.json は編集指示書の置き場を持っていないので、指示書�
   2つの間の偶然の3字（「でした」「ている」）はよく起きるので 1. は4字にしたが、
   3つが同時に同じ3字を持つ偶然はまず無い
 
+## 段の見出しの札は比べない（2026-11-27）
+
+番号つきのテロップ（「1. 1階は雑貨」。`qa/scene.py` の `HEADING` と同じ形）は段の名前で、言い直しではない。
+本屋の回 ⑦ v4d で「1. 1階は雑貨」が字幕「1階は雑貨やった」と重なって落ち、担当は見出しを約1秒しか出せなかった。
+見出しの言葉が写っているかは `note_words`（scene.py）が見る。
+
 ## そろえ方（比べる前に）
 
 NFKC（全角・半角をそろえる）→ 小文字 → 空白・句読点・括弧・記号（「」『』（）→ ＝ ≒ ～ など）を消す
@@ -32,6 +38,7 @@ NFKC（全角・半角をそろえる）→ 小文字 → 空白・句読点・�
 """
 from __future__ import annotations
 
+import re
 import unicodedata
 
 from common import FAIL, NA, PASS, Ctx, result
@@ -41,6 +48,7 @@ MIN_RUN = 4       # 共通とみなす並びの長さ（これより短い一致
 TRIPLE_RUN = 3    # はじめの3秒に、3つ全部に同じ並びがあるとみなす長さ
 OPENING_SEC = 3.0  # 3つ並びを見るはじめの秒
 DROP_CHARS = set("約")
+HEADING = re.compile(r"^\s*[0-9０-９]+\s*[.．、:：)）]")   # 段の見出しの札（qa/scene.py の HEADING と同じ）。言い直しに数えない
 
 
 def norm(s: str) -> str:
@@ -125,7 +133,8 @@ def check(ctx: Ctx) -> dict:
         return result("text_dup", title, NA, "時間割に字の中身が無い（overlays[].text も lines も無い）",
                       thresholds=th)
     fps = float(plan.get("fps") or ctx.fps or 30)
-    telops = [i for i in its if i["kind"] == "telop"]
+    heads = [i for i in its if i["kind"] == "telop" and HEADING.match(i["text"] or "")]
+    telops = [i for i in its if i["kind"] == "telop" and i not in heads]
     titles = [i for i in its if i["kind"] == "title"]
     caps = [i for i in its if i["kind"] == "caption"]
 
@@ -171,7 +180,8 @@ def check(ctx: Ctx) -> dict:
                     hits.append(f"{sec(a)}〜{sec(b)}秒: 「{'・'.join(seen)}」がタイトル「{ti['text']}」・"
                                 f"強調「{t['text']}」・字幕「{c['text']}」の3つに同時に出る")
     m = {"source": "overlays[].text" if any("text" in o for o in plan.get("overlays") or []) else "titles/captions/telops",
-         "telops": len(telops), "captions": len(caps), "titles": len(titles), "pairs": rows, "triples": triple}
+         "telops": len(telops), "headings": len(heads), "captions": len(caps), "titles": len(titles), "pairs": rows,
+         "triples": triple}
     worst = max((r["share"] for r in rows), default=0.0)
     return result("text_dup", title, FAIL if hits else PASS,
                   f"強調の字 {len(telops)} 個・同時に出る字との組 {len(rows)}・いちばん重なる {worst:.0%}"

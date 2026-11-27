@@ -117,6 +117,7 @@ class Ctx:
     plan: str | None = None                          # 隣の plan.md の字（3案の比べ。F-022）。無ければ None
     option: str | None = None                        # 案の字（script_A.txt なら A）。script.txt なら None
     no_price: str | None = None                      # spec の no_price（買った物の値段を配信で言っていない訳。F-102）
+    shape: str | None = None                         # spec の shape（回の型。「配信」か、別の型の名前。F-052）
 
     @property
     def title(self) -> str:
@@ -1171,6 +1172,58 @@ def l_base(c: Ctx):
 VOICE_MIN = 3
 
 
+# ---------- 2026-11-27: 控え（unguarded.txt）に残っていた2つを、字で数える ----------
+# F-093「温泉・ボザで磨いた形を全部の回に」: 行の種類（kind）と問いの開け閉め（turn）を全部の行に書く。前は L-RUN・L-ANSNEXT が
+# 「kind の無い spec は見ない」で、書かなかった回は新しい作りかたを1つも当てられずに通った。いまは書いていない行を ✕ にする。
+# F-052「型の違うショートに配信の回の型を持ち込まない」: spec の shape に回の型を書く。「配信」でない回には、配信の回の型の規則
+# （関西弁・最後の問い・最後の札・題の札・次の配信の誘い。STREAM_IDS の帳面の項目だけを持つ規則）を当てない。✕ を消すために
+# 型の違う回へ問いや札を足す、をさせない（F-052 の「しない」）。
+
+STREAM_SHAPE = "配信"
+STREAM_IDS = {"F-004", "F-015", "F-032", "F-042", "F-047", "F-091"}   # 配信の回の型の決まり（帳面 F-052 の決まりが名指すもの）
+
+
+def stream_only(r) -> bool:
+    """配信の回の型の決まりだけを持つ規則か（型の違う回には当てない）。"""
+    return bool(r.ledger) and set(r.ledger) <= STREAM_IDS
+
+
+def l_kind(c: Ctx):
+    """F-093 spec の全部の行に、種類（kind）と問いの開け閉め（turn）が決まりの字で書いてあるか（✕）。
+
+    欄ごとに1つの当たりにまとめる（行ごとに出すと、書いていない spec の lint の結果が行の数の2倍に膨らむ）。行は最初の1行。"""
+    if not c.has_spec:
+        return None
+    bad_k, bad_t = [], []
+    for i in range(1, len(c.lines) + 1):
+        r = row_at(c, i)
+        k, t = kind_of(r), turn_of(r)
+        if k is None or k not in KINDS:
+            bad_k.append((i, k))
+        if t is None or t not in TURNS:
+            bad_t.append((i, t))
+    out = []
+    for bad, what, field_, allowed in ((bad_k, "種類", "kind", KINDS), (bad_t, "問いの開け閉め", "turn", TURNS)):
+        if not bad:
+            continue
+        rows = "・".join(f"{i}" + (f"「{v}」" if v else "") for i, v in bad[:12]) + ("…" if len(bad) > 12 else "")
+        out.append(Hit("L-KIND", bad[0][0], c.lines[bad[0][0] - 1],
+                       f"{what}（spec の {field_}）が無い・決まりの字でない行: {rows}行目（{len(bad)}行）。"
+                       f"全部の行に {'・'.join(allowed)} のどれかを書く（F-093。温泉・ボザで磨いた作りかたを全部の回に）"))
+    return out
+
+
+def l_shape(c: Ctx):
+    """F-052 spec に回の型（shape）が書いてあるか（✕）。「配信」でない型の回は、配信の回の型の規則を当てない（`lint` が外す）。"""
+    if not c.has_spec:
+        return None
+    if str(c.shape or "").strip():
+        return []
+    return [Hit("L-SHAPE", None, "（shape が無い）", f"回の型（spec の shape）が無い。配信アーカイブを本人の声で語る回は「{STREAM_SHAPE}」、"
+                "曲に写真を合わせる回・小説のように語る回など型の違う回はその型の名前を書く。型が違えば、関西弁・最後の問い・札など"
+                "配信の回の型の規則は当てない（F-052。✕ を消すために問いや札を足さない）")]
+
+
 def l_voicen(c: Ctx):
     """F-078 本人の声（spec の orig_voice・voice_src）の行が1本に3つ未満なら △（あやと #1445「もうちょっと生のセリフ多い方が良い」）。"""
     if not c.has_spec:
@@ -1553,6 +1606,9 @@ RULES = (
     Rule("L-FOUR", ("F-022",), "2026-10-18", "3案の企画で、この案の土台・山・結末・終わりのどれかが plan.md の比べに無い", l_four),
     Rule("L-MOOD", ("F-011",), "2026-10-16:6219894353", "感情の字（mood）の行が半分を越える（✕）・2系統の外の名前（△）", l_mood),
     Rule("L-SHOUT", ("F-051",), "2026-10-23:6372556052", "叫び・驚き（うわー・やばい・ああっ）で始まる行を AI の声で読む", l_shout),
+    # ---- 2026-11-27: 控えの F-093・F-052 を字で数える ----
+    Rule("L-KIND", ("F-093",), "2026-11-27", "spec の行に種類（kind）・問いの開け閉め（turn）が無い・決まりの字でない", l_kind),
+    Rule("L-SHAPE", ("F-052",), "2026-11-27", "spec に回の型（shape）が無い（「配信」でない型には配信の回の型の規則を当てない）", l_shape),
 )
 
 
@@ -1586,6 +1642,7 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
     rows, card, came, secs, nxt = None, None, "原稿の1行目（国旗は見ていない）", None, None
     sp = spec or spec_for(script)
     has_spec, promises, persona, baseline, no_price = False, None, None, None, None
+    shape = None
     if use_spec and sp.exists():
         s = json.loads(sp.read_text(encoding="utf-8"))
         rows = s.get("rows")
@@ -1602,6 +1659,7 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
             card, came = s["title_card"], f"{sp.name} の title_card"
         secs = s.get("title_card_seconds")
         nxt = s.get("next_stream") or None
+        shape = str(s.get("shape") or "").strip() or None
         for i, r in enumerate(rows or [], 1):
             if "【答】" in (r.get("why") or ""):
                 answer.add(i)
@@ -1615,7 +1673,7 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
     plan = pl.read_text(encoding="utf-8") if pl.exists() else None
     return Ctx(lines=lines, title_card=card, title_from=came, rows=rows, ashi_marked=ashi, answer_marked=answer,
                card_seconds=secs, next_stream=nxt, has_spec=has_spec, promises=promises, persona=persona, baseline=baseline,
-               plan=plan, option=option, no_price=no_price)
+               plan=plan, option=option, no_price=no_price, shape=shape)
 
 
 AS_OF = re.compile(r"20\d\d-\d\d-\d\d(:\d+)?")
@@ -1645,10 +1703,14 @@ def lint(c: Ctx, as_of: str | None = None) -> dict:
 
     Returns:
         {"hits": [Hit], "ran": [規則], "blind": [(規則, 理由)], "later": [規則]}
-        blind は入力が無くて見ていない規則、later は as_of より後にできた規則、retired は as_of の時点で退いた規則
+        blind は入力が無くて見ていない規則、later は as_of より後にできた規則、retired は as_of の時点で退いた規則、
+        off は回の型（spec の shape）が「配信」でないので当てない配信の回の型の規則（F-052）
     """
-    hits, ran, blind, later, retired = [], [], [], [], []
+    hits, ran, blind, later, retired, off = [], [], [], [], [], []
     for r in RULES:
+        if c.shape and c.shape != STREAM_SHAPE and stream_only(r):
+            off.append(r.id)
+            continue
         if r.until and not in_force(r.since, as_of, r.until) and in_force(r.since, as_of):
             retired.append(r.id)
             continue
@@ -1661,7 +1723,7 @@ def lint(c: Ctx, as_of: str | None = None) -> dict:
             continue
         ran.append(r.id)
         hits.extend(got)
-    return {"hits": hits, "ran": ran, "blind": blind, "later": later, "retired": retired}
+    return {"hits": hits, "ran": ran, "blind": blind, "later": later, "retired": retired, "off": off}
 
 
 BLIND_WHY = {
@@ -1685,6 +1747,8 @@ BLIND_WHY = {
     "L-FOUR": "隣に plan.md の「3案の比べ」が無い・案の列が無い・原稿が script_<案>.txt でない",
     "L-MOOD": "spec が無い（感情の字は spec の mood で見る）",
     "L-SHOUT": "spec が無い（本人の声は spec の orig_voice・voice_src で見る）",
+    "L-KIND": "spec が無い（行の種類と開け閉めは spec の kind・turn に書く）",
+    "L-SHAPE": "spec が無い（回の型は spec の shape に書く）",
 }
 
 
@@ -1702,6 +1766,8 @@ def report(path: str, c: Ctx, res: dict, as_of: str | None) -> str:
         out.append(f"見ていない: {rid}（{BLIND_WHY.get(rid, '入力が無い')}）")
     if res["later"]:
         out.append(f"{as_of} より後の決まりなので当てていない: {'・'.join(res['later'])}")
+    if res.get("off"):
+        out.append(f"回の型が「{c.shape}」（配信の回でない）ので当てていない配信の回の型の規則: {'・'.join(res['off'])}（F-052）")
     if res.get("retired"):
         out.append(f"退かせた決まり（{RETIRE}。頼む文と食い違う）: {'・'.join(res['retired'])}")
     wl = width_line(c)

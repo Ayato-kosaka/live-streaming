@@ -20,7 +20,7 @@
 
 ## 台帳の印（`art`）
 
-窓ごとに `art`（`generated`＝画像生成・`free`＝フリー素材）と、元の絵の名前（`art_image`）と sha256 を書く。
+窓ごとに `art`（`generated`＝画像生成・`free`＝フリー素材・`card`＝あやと島カードの写真・`island`＝あやと島の画面）と、元の絵の名前（`art_image`）と sha256 を書く。
 止め絵の検査は、この印の付いた窓だけを「絵のカット」として扱い、**時間割の寄せで動いているときだけ**通す
 （動かない絵のカットは、今までどおり止め絵で落ちる）。印の無い止め絵（配信の1コマを止めたもの）は今までどおり落ちる。
 Actions では素材が sha256 の名前に並び替わるので、印は `remote.py` が指示書の素材の欄に写して運ぶ（`stream_info`）。
@@ -43,7 +43,9 @@ import tempfile
 from pathlib import Path
 
 FPS = 30
-KINDS = ("generated", "free", "card")   # 画像生成 / フリー素材 / あやと島カードの写真（あやとが撮った写真。帳面 F-094）
+# 画像生成 / フリー素材 / あやと島カードの写真（あやとが撮った写真。帳面 F-094）/ あやと島の画面（ガイドの頁の写し。帳面 F-105。
+# 2026-11-27 に足した。⑦本屋の回は free で作って overrides に kind: island を書いて回り道した）
+KINDS = ("generated", "free", "card", "island")
 GAP = 60                           # 窓どうしを、配信の時刻で何秒離して並べるか（同じ配信の 10秒以内を「同じ場面」と読む検査がある）
 VIDEO = re.compile(r"^[A-Za-z0-9_-]{11}$")   # 指示書の秒に付ける回の名前と同じ形（build_edit が読む）
 
@@ -119,7 +121,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("images", nargs="+", type=Path)
     ap.add_argument("--out", type=Path, required=True, help="絵の窓の置き場（リポジトリの外）")
     ap.add_argument("--video", required=True, help="指示書の秒に付ける名前（英数字と _- の11字。配信の id と重ねない）")
-    ap.add_argument("--kind", choices=KINDS, required=True, help="generated＝画像生成 / free＝フリー素材 / card＝あやと島カードの写真")
+    ap.add_argument("--kind", choices=KINDS, required=True,
+                    help="generated＝画像生成 / free＝フリー素材 / card＝あやと島カードの写真 / island＝あやと島の画面")
     ap.add_argument("--sec", type=float, default=8.0, help="1枚の窓の長さ（カットは3秒未満なので、寄せの余りを見て 8秒）")
     ap.add_argument("--notes", type=Path, help="絵の名前（拡張子なし）→ 何を描いた絵か、の JSON（台帳に写す）")
     a = ap.parse_args(argv)

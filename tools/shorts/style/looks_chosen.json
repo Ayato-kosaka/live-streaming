@@ -1,0 +1,95 @@
+{
+ "_note": "あやとが見本から選んだ字の見た目の指紋（tools/shorts/style/look_sheet.py の fingerprint）。関所 preflight.py の looks が読む。baseline は 2026-11-27 の時点で書き出していた指示書（n は同じ見た目の指示書の数・style はその1つ）と、書き出しの元の様式（2026-11-20 にあやとがテロップ A「今のまま」を選んだ。帳面 F-084）。足すのは look_sheet.py chosen だけ（手で足さない）",
+ "looks": [
+  {
+   "fp": "c557189515b9fc5e",
+   "from": "baseline",
+   "style": "shorts/videos/2EKBYEnv850/p1/edit_p1.json",
+   "n": 8
+  },
+  {
+   "fp": "54a93bae5e62efe5",
+   "from": "baseline",
+   "style": "shorts/videos/2ij1R53ifcU/p2/edit_p2.json",
+   "n": 20
+  },
+  {
+   "fp": "e76cf906bb8bc5a4",
+   "from": "baseline",
+   "style": "shorts/videos/CKJvprUMOgA/p2/edit_p2.json",
+   "n": 1
+  },
+  {
+   "fp": "a3be2694da9d04b1",
+   "from": "baseline",
+   "style": "shorts/videos/DNLVmUpew48/p1/edit_p1.json",
+   "n": 2
+  },
+  {
+   "fp": "a60af8505348999b",
+   "from": "baseline",
+   "style": "shorts/videos/E2oGYjnVQSA/p1/edit_p1.json",
+   "n": 4
+  },
+  {
+   "fp": "5a619ff66854f4c1",
+   "from": "baseline",
+   "style": "shorts/videos/KjB_aBsTIf0/p1/edit_A.json",
+   "n": 1
+  },
+  {
+   "fp": "2e9b7424b543b483",
+   "from": "baseline",
+   "style": "shorts/videos/LxrbXwHssF0/p1/edit_C.json",
+   "n": 1
+  },
+  {
+   "fp": "37990d70b8878c74",
+   "from": "baseline",
+   "style": "shorts/videos/Xvdk_P4gKoU/p1/edit_p1_A.json",
+   "n": 3
+  },
+  {
+   "fp": "223a7b5ea7983252",
+   "from": "baseline",
+   "style": "shorts/videos/YLda-SgcF6k/p5/edit_p5.json",
+   "n": 1
+  },
+  {
+   "fp": "2f86a32cdf4be016",
+   "from": "baseline",
+   "style": "shorts/videos/baguette/p2/edit_p2.json",
+   "n": 1
+  },
+  {
+   "fp": "bbf3edf21be5b401",
+   "from": "baseline",
+   "style": "shorts/videos/ro-move/p5/edit_p5.json",
+   "n": 3
+  },
+  {
+   "fp": "214d130d86662d66",
+   "from": "baseline",
+   "style": "shorts/videos/totoro-cat/p2/edit_p2.json",
+   "n": 1
+  },
+  {
+   "fp": "62353639ce81364c",
+   "from": "baseline",
+   "style": "shorts/videos/tr_YBmyLGUc/p1/edit_D.json",
+   "n": 1
+  },
+  {
+   "fp": "2005017a4ba5ef34",
+   "from": "baseline",
+   "style": "tools/shorts/render/style_p3.json",
+   "n": 0
+  },
+  {
+   "fp": "3deddb2a3c392d06",
+   "from": "baseline",
+   "style": "tools/shorts/render/presets/money.json",
+   "n": 0
+  }
+ ]
+}

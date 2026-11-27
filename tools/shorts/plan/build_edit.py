@@ -221,6 +221,9 @@ def telop_parts(telop: str, line: str, start: int, voice_frames: int) -> list[di
 
 # ---------------------------------------------------------------- テロップは「言っていないこと」だけ
 
+# 段の見出しの札（「1. 1階は雑貨」。qa/scene.py・qa/textdup.py の HEADING と同じ）。行の字幕と同じ言葉でも消さない
+# （見出しは段の名前で、言い直しではない。本屋の回 ⑦ は消されて、見出しを約1秒しか出せなかった。2026-11-27）
+HEADING = re.compile(r"^\s*[0-9０-９]+\s*[.．、:：)）]")
 TELOP_DUP = 0.6  # テロップの字のこの割合以上が、その行の字幕かタイトルに出ているなら、同じことの繰り返し
 _DROP = set(" 　「」『』（）()[]【】、。，．,.!！?？…‥・~〜→⇒＝=≒≈＋+/／:：")
 _SPLIT = re.compile(r"[\s　＋+→⇒＝=≒≈/／・「」『』（）()?？!！…‥:：]+")
@@ -517,6 +520,10 @@ def split_row(n_frames: int, n_cuts: int, voice_frames: int, pauses, text: str, 
 
 
 KINDS = ("stream", "footage", "card", "island", "map", "art", "stock", "screen")   # qa/scene.py の KINDS と同じ
+# spec の行の種類（作文者が書く。lint.py の KINDS と KIND_ALIAS の字）。**カットの素材の種類ではない。** 前は spec の行の kind を
+# カットの kind と同じ欄で読み、行の種類（題・数…）を書いた spec が「kind '題' は … のどれでもない」で止まった（⑤ v9 は全部のカットの
+# kind を overrides に書いて回り道した。2026-11-27）。行のカットの種類は spec の行の `cut_kind` に書く（overrides の cuts[].kind が勝つ）
+LINE_KINDS = ("題", "出来事", "引っ張り", "数", "前置き", "説明", "反応", "味", "締め", "題読み", "値段・数", "値段", "締めの問い", "配信へ")
 
 
 def clip_kind(clip: dict) -> str | None:
@@ -524,7 +531,7 @@ def clip_kind(clip: dict) -> str | None:
     if clip.get("kind") in KINDS:
         return clip["kind"]
     if clip.get("art"):
-        return {"card": "card", "free": "stock"}.get(clip["art"], "art")
+        return {"card": "card", "free": "stock", "island": "island"}.get(clip["art"], "art")
     if clip.get("range") == "hook-map":
         return "map"
     return None
@@ -999,8 +1006,9 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             # 消したテロップの言葉は、字幕の中で黄色にして目に入れる
             cap_text = ln.get("caption") or ln["text"]
             cov = coverage(center, [cap_text, title])
-            keep = ro.get("telop_keep", cov < TELOP_DUP)
-            tel_meta = {"text": center, "coverage": round(cov, 2), "shown": bool(keep)}
+            heading = bool(HEADING.match(center))
+            keep = ro.get("telop_keep", cov < TELOP_DUP or heading)
+            tel_meta = {"text": center, "coverage": round(cov, 2), "shown": bool(keep), **({"heading": True} if heading else {})}
             if not keep:
                 hl = ro.get("highlight") or highlight_phrases(center, cap_text)
                 if hl:
@@ -1141,7 +1149,8 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
                 cut["shows"] = str(shows)
             else:
                 no_shows.append(f"{i}行目の{k + 1}本目")
-            kind = cs.get("kind") or r.get("kind") or ("footage" if fr is not None else clip_kind(clip))
+            row_kind = r.get("cut_kind") or (r.get("kind") if r.get("kind") not in LINE_KINDS else None)
+            kind = cs.get("kind") or row_kind or ("footage" if fr is not None else clip_kind(clip))
             if kind:
                 if kind not in KINDS:
                     sys.exit(f"{i}行目: kind {kind!r} は {', '.join(KINDS)} のどれでもない")

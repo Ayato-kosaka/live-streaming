@@ -12,6 +12,7 @@
     python3 tools/shorts/post/post.py tt-post    --video yk-by7R7iPA --option A --sha <sha256> [--at 2026-10-17T05:00:00Z]
     python3 tools/shorts/post/post.py ig-post    --video yk-by7R7iPA --option A --sha <sha256> --cover --post-json <post_A.json> [--at 2026-10-17T05:00:00Z] [--dry]
     python3 tools/shorts/post/post.py mark       --place tiktok --sha <sha256> --done --id <投稿ID>
+    python3 tools/shorts/post/post.py mark       --place tiktok --sha <sha256> --dropped "<出ていないと確かめた所・閉じる訳>"
     python3 tools/shorts/post/post.py clean    --video yk-by7R7iPA
 
 手順と判断の基準は同じ置き場の README.md。EC2 で動くのは yt_post.py / tt_post.py / ig_post.py。
@@ -293,13 +294,21 @@ def cmd_yt_thumb(a):
 
 def cmd_mark(a):
     """投稿先で見て確かめた結果を台帳に書く（pending → done）。EC2 には触らない"""
-    if not a.done:
-        print("止めた: mark は --done だけ（出ていなかったなら、投稿の段に --again を付けてやり直す）")
+    if not a.done and not a.dropped:
+        print("止めた: mark は --done か --dropped（出ていなかったなら、投稿の段に --again を付けてやり直すか、--dropped \"<訳>\" で閉じる）")
         return 1
     sha, why = ledger_sha(a)
     if why:
         print(f"止めた: {why}")
         return 1
+    if a.dropped:
+        try:
+            r = posted.drop(sha, a.place, a.dropped)
+        except (posted.Broken, posted.Refused) as e:
+            print(f"止めた: {e}")
+            return 1
+        print("台帳: " + json.dumps(r, ensure_ascii=False))
+        return 0
     plan = f"{a.video}/{a.option}" if a.video and a.option else None
     try:
         r = posted.mark(sha, a.place, a.id, plan)
@@ -345,6 +354,7 @@ def main(argv=None):
     p.add_argument("--place", help="mark: youtube / tiktok / instagram")
     p.add_argument("--remote", help="EC2 の置き場（<REMOTE>/ の下）。無ければ --video。ほかの担当と置き場を分けて送ったとき")
     p.add_argument("--done", action="store_true", help="mark: 投稿先で出ているのを見た（--id と一緒に）")
+    p.add_argument("--dropped", help="mark: 投稿先で出ていない（下書きを消した・出さないと決めた）と確かめた pending を閉じる訳")
     p.add_argument("--approval", help="yt-draft / tt-post / ig-post: あやとが出してよいと書いたコメントの URL（あやと本人のコメントか見て、ID を台帳に残す。F-002）")
     p.add_argument("--edit", help="send: その版の指示書 edit_*.json（BGM の曲と、あやとに見せた版の数を数える。F-038・F-044）")
     p.add_argument("--rounds-why", help="send: あやとに見せた版が上限を越えた訳（どこで往復が増え、頼む文のどこを直したか。F-044）")
