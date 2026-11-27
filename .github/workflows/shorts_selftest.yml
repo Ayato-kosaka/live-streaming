@@ -243,6 +243,25 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/script/brief_selftest.py
 
+      # 版の名前（claude-<系統>-<数>）を、追跡しているファイルに入れない（2026-11-27。scene.py が指示書に版の名前を押していた）。
+      # 呼び出しは系統の名前（opus・haiku）で書く。例外はコミットの文の Co-Authored-By の行だけで、ファイルには無い。
+      # git grep は手元のファイルだけを読む（古いコミットの暗号文は落とさない）。物差しが壊れて 0 になるのを、先に作った字で確かめる
+      - name: 追跡しているファイルに、版の名前が無いか
+        if: ${{ !cancelled() }}
+        run: |
+          set -uo pipefail
+          pat='claude-(opus|sonnet|haiku|fable)-[0-9]'
+          sample=$(printf 'claude-%s-%s' opus 9)
+          if ! printf '%s\n' "$sample" | grep -qE "$pat"; then echo "::error::物差しが版の名前を拾えない（0 を答えにしない）"; exit 2; fi
+          hits=$(git grep -nIE "$pat" -- . || true)
+          n=$(printf '%s' "$hits" | grep -c . || true)
+          echo "版の名前の入ったファイルの行: ${n}"
+          if [ "$n" -ne 0 ]; then
+            printf '%s\n' "$hits" | cut -c1-200 | head -40
+            echo "::error::追跡しているファイルに版の名前が ${n} 行ある。系統の名前（opus・haiku）にする"
+            exit 1
+          fi
+
       # 名指しで回すつもりで find から外した見張りに、名指しの step があるか（外しただけで、どこからも走らない、を作らない）
       - name: 名指しで外した見張りが、どれかの job で走っているか
         if: ${{ !cancelled() }}
