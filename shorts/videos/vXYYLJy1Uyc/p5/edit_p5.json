@@ -28,75 +28,70 @@
    "watermark": "prism_live",
    "t0": 455.0
   },
-  "c04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/03_0-19-20_0-19-50_s1160-1166.mp4",
-   "watermark": "prism_live",
-   "t0": 1160.0
-  },
-  "c05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/03_0-19-20_0-19-50_s1175-1182.mp4",
-   "watermark": "prism_live",
-   "t0": 1175.0
-  },
-  "c06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1425-1431.mp4",
-   "watermark": "prism_live",
-   "t0": 1425.0
-  },
-  "c07": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1435-1441.mp4",
-   "watermark": "prism_live",
-   "t0": 1435.0
-  },
-  "c08": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1450-1459.mp4",
-   "watermark": "prism_live",
-   "t0": 1450.0
-  },
   "c09": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/05_0-33-20_0-34-20_s2008-2015.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2150-2156.mp4",
    "watermark": "prism_live",
-   "t0": 2008.0
-  },
-  "c10": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/05_0-33-20_0-34-20_s2050-2057.mp4",
-   "watermark": "prism_live",
-   "t0": 2050.0
-  },
-  "c11": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2160-2165.mp4",
-   "watermark": "prism_live",
-   "t0": 2160.0
-  },
-  "c12": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2185-2188h.mp4",
-   "watermark": "prism_live",
-   "t0": 2185.0
+   "t0": 2150.0
   },
   "c2_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/art/01_03_ndT1N8gfDX8SClDuAg9O.mp4",
    "watermark": "prism_live",
    "t0": 0.0
   },
-  "c13": {
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1425-1431.mp4",
+   "watermark": "prism_live",
+   "t0": 1425.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1435-1441.mp4",
+   "watermark": "prism_live",
+   "t0": 1435.0
+  },
+  "c06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1450-1459.mp4",
+   "watermark": "prism_live",
+   "t0": 1450.0
+  },
+  "c07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/05_0-33-20_0-34-20_s2008-2015.mp4",
+   "watermark": "prism_live",
+   "t0": 2008.0
+  },
+  "c08": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/05_0-33-20_0-34-20_s2050-2057.mp4",
+   "watermark": "prism_live",
+   "t0": 2050.0
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2160-2165.mp4",
+   "watermark": "prism_live",
+   "t0": 2160.0
+  },
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2185-2188h.mp4",
+   "watermark": "prism_live",
+   "t0": 2185.0
+  },
+  "c12": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2188h-2192.mp4",
    "watermark": "prism_live",
    "t0": 2188.5
   },
-  "c14": {
+  "c13": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/07_0-38-00_0-38-50_s2290-2298.mp4",
    "watermark": "prism_live",
    "t0": 2290.0
   },
   "c15": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/08_0-41-50_0-42-30_s2522-2529.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/08_0-41-50_0-42-30_s2522-2528.mp4",
    "watermark": "prism_live",
    "t0": 2522.0
   },
   "c16": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/09_0-44-00_0-44-20_s2650-2656.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/08_0-41-50_0-42-30_s2532-2538.mp4",
    "watermark": "prism_live",
-   "t0": 2650.0
+   "t0": 2532.0
   },
   "c2_02": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/art/02_04_3nWjf38nKwjrBgNjnBaQ.mp4",
@@ -125,14 +120,42 @@
    "in": 9,
    "out": 50,
    "row": 0,
-   "note": "題の前半「風邪ひいたけど、快晴やから」: あやとが撮った当日の朝の大通り（朝日で建物が赤く染まる澄んだ空）。v5 の配信の画（鮮明さ 38.8）は粗く、フックに使わない決まり（F-094 3回目）"
+   "note": "題の前半「風邪ひいたけど、快晴やから」: 当日の朝のあやとの撮影の動画",
+   "shows": "朝日で建物が赤く染まる、澄んだ空の大通り",
+   "kind": "footage",
+   "scene": {
+    "key": "c:f09482147f22620f",
+    "related": false,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "国民の館が無く、ただの大通りの道中",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "f_fb1e1f5471",
    "in": 0,
    "out": 62,
    "row": 0,
-   "note": "題の後半「国民の館に行ってみた」: 撮影の素材の青空の国民の館（答えの画）"
+   "note": "題の後半「国民の館に行ってみた」: 撮影の動画の館",
+   "shows": "青空の国民の館と屋台の白い柵",
+   "kind": "footage",
+   "scene": {
+    "key": "c:6ae20b105a054833",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "青空の下の国民の館と屋台の柵が写る",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "f_f6116e9612",
@@ -408,144 +431,416 @@
      "note": "face_scan（1箱・幅 21px まで）"
     }
    ],
-   "note": "「東欧を旅してて、冬のルーマニアの寒さで」: あやとが撮った当日の朝の濡れた大通り（冬の寒い朝）。v5 は自撮り2本で、どちらも粗かった"
+   "note": "「冬のルーマニアの寒さで」: 当日の朝の撮影の動画",
+   "shows": "夜明けの濡れた大通りと車のライト",
+   "kind": "footage",
+   "scene": {
+    "key": "c:987edee2d8a30ed7",
+    "related": false,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "風邪や寒さと関係無い濡れた通りの穴埋め",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c01",
    "in": 60,
    "out": 113,
    "row": 1,
-   "note": "「完全に風邪ひいた」: マフラーにくるまって鼻声で話す本人（風邪の顔そのものが要る画。配信にしか無い）"
+   "note": "「完全に風邪ひいた」: 風邪の顔そのもの",
+   "event": "鼻声で「完全に風邪ひいた」と言う本人の顔（風邪をひいた様子そのもの。配信にしか無い）",
+   "shows": "マフラーにくるまって鼻声で話す本人の自撮り",
+   "scene": {
+    "key": "c:0658f107e4c33ddb",
+    "related": true,
+    "shows_true": true,
+    "selfie": true,
+    "face_event": false,
+    "painted": false,
+    "why": "フードとマフラーで寒さに耐える顔だけ",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c02",
    "in": 60,
    "out": 112,
    "row": 2,
-   "note": "宿を出て、青空の通りを歩き出す"
+   "note": "宿を出て、青空の通りを歩き出す",
+   "shows": "青空の下、宿を出て歩く並木の歩道",
+   "scene": {
+    "key": "c:20d517eb0ce7750d",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "晴れた並木道へ外出する場面",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c03",
    "in": 60,
    "out": 111,
    "row": 2,
-   "note": "真っ青な空と雲・通り（良い天気）"
-  },
-  {
-   "src": "c04",
-   "in": 30,
-   "out": 78,
-   "row": 3,
-   "note": "長い影の大通り（国民の館の方へ歩き出す）"
-  },
-  {
-   "src": "c05",
-   "in": 60,
-   "out": 108,
-   "row": 3,
-   "note": "横断歩道を渡って進む"
-  },
-  {
-   "src": "c06",
-   "in": 0,
-   "out": 54,
-   "row": 4,
-   "note": "横断歩道に集まる通勤の人"
-  },
-  {
-   "src": "c07",
-   "in": 75,
-   "out": 129,
-   "row": 4,
-   "note": "横断歩道を渡る人の群れ。v3 は 0:23:56 で1カット目と 9.2秒しか離れず、似た見た目の連続で落ちた"
-  },
-  {
-   "src": "c08",
-   "in": 76,
-   "out": 150,
-   "row": 5,
-   "note": "「ちょっと東京思い出すわ」（本人の声と同じ秒）。人の多い交差点"
+   "note": "真っ青な空と雲・通り（良い天気）",
+   "shows": "真っ青な空と雲と歩道",
+   "scene": {
+    "key": "c:c67cb17258ffb97c",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "青空と雲の歩道で良い天気を示す",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c09",
+   "in": 60,
+   "out": 108,
+   "row": 3,
+   "note": "「目指すは」: 向かう先に館が見える配信の秒。v6 は館の写らない道中（大通りと横断歩道）で、検査役が関係無いと言った",
+   "shows": "並木と車の列の奥に見えてくる国民の館",
+   "scene": {
+    "key": "c:2ac96ad8ea7d9955",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "車列の奥に国民の館が見える",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c2_01",
+   "in": 30,
+   "out": 78,
+   "row": 3,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「この国でいちばんすごい建物『国民の館』！」: カードの写真。寄せで動かし1.5秒まで",
+   "shows": "青空の国民の館と観覧車（あやと島カードの写真）",
+   "kind": "card",
+   "scene": {
+    "key": "c:937c30be1b369d4c",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "青空の国民の館と観覧車",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c04",
+   "in": 0,
+   "out": 54,
+   "row": 4,
+   "note": "横断歩道に集まる通勤の人",
+   "shows": "横断歩道に集まる通勤の人たち",
+   "scene": {
+    "key": "c:c810d33fda50e261",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "横断歩道に人が集まっている",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c05",
+   "in": 75,
+   "out": 129,
+   "row": 4,
+   "note": "横断歩道を渡る人の群れ。v3 は 0:23:56 で1カット目と 9.2秒しか離れず、似た見た目の連続で落ちた",
+   "shows": "横断歩道を渡る人の群れ",
+   "scene": {
+    "key": "c:600390e52c82fb3a",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "人の群れが横断歩道を渡る",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c06",
+   "in": 76,
+   "out": 150,
+   "row": 5,
+   "note": "「ちょっと東京思い出すわ」（本人の声と同じ秒）。人の多い交差点",
+   "shows": "人でいっぱいの横断歩道",
+   "scene": {
+    "key": "c:51be9b4c9580fb4d",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "混雑した交差点で東京を連想",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c07",
    "in": 30,
    "out": 70,
    "row": 6,
-   "note": "石造りの建物が並ぶ並木の歩道（パリみたい）"
+   "note": "石造りの建物が並ぶ並木の歩道（パリみたい）",
+   "shows": "石造りの建物が並ぶ並木の歩道",
+   "scene": {
+    "key": "c:608e9ee64f4c9b41",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "石造りの建物と並木の街並み",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c10",
+   "src": "c08",
    "in": 30,
    "out": 71,
    "row": 6,
-   "note": "同じ通りの、店が並ぶ建物の正面"
+   "note": "同じ通りの、店が並ぶ建物の正面",
+   "shows": "店が並ぶ石造りの建物の正面と歩道",
+   "scene": {
+    "key": "c:7dcdd422632c3251",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "石造りの店の正面と歩道",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c11",
+   "src": "c10",
    "in": 15,
    "out": 65,
    "row": 7,
-   "note": "広場の奥に国民の館が見え始める（着いた所。配信の画）"
+   "note": "広場の奥に国民の館が見え始める（着いた所。配信の画）",
+   "shows": "広場の奥に国民の館が見える",
+   "scene": {
+    "key": "c:be4fcc5920b51a3e",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "石畳の広場の奥に国民の館",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "f_fb1e1f5471",
    "in": 0,
    "out": 62,
    "row": 7,
-   "note": "「どーん！」: 撮影の素材の青空の国民の館。v5 は配信の 0:36:13（鮮明さ 43.5）"
+   "note": "「どーん！」: 撮影の素材の青空の国民の館。v5 は配信の 0:36:13（鮮明さ 43.5）",
+   "shows": "青空の国民の館",
+   "kind": "footage",
+   "scene": {
+    "key": "c:02969d5be530499a",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "立派な国民の館が大きく写る",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c12",
+   "src": "c11",
    "in": 33,
    "out": 73,
    "row": 8,
-   "note": "「バカかっこいいよ」（本人の声と同じ秒。語ごとの時刻 0:36:26.10〜27.12）。館と観覧車の正面。2回目（0:36:30.9）は窓の終わり 0:36:32 に掛かるので1回目を使う"
+   "note": "「バカかっこいいよ」（本人の声と同じ秒。語ごとの時刻 0:36:26.10〜27.12）。館と観覧車の正面。2回目（0:36:30.9）は窓の終わり 0:36:32 に掛かるので1回目を使う",
+   "shows": "国民の館と観覧車の正面",
+   "scene": {
+    "key": "c:1165ca5496f21cad",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "国民の館と観覧車を正面から",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c2_01",
-   "in": 30,
-   "out": 74,
+   "in": 90,
+   "out": 141,
    "row": 9,
    "zoom": {
     "from": 1.0,
-    "to": 1.1
+    "to": 1.1,
+    "x": 0.35,
+    "y": 0.45
    },
-   "note": "「議会の建物で」: あやと島カードの写真（青空の国民の館と観覧車・2026-11-24）。止め絵は 1.5秒まで・寄せで動かす（F-085）"
+   "note": "「なんとこれ、議会の建物で」: カードの写真の館（3行目と同じ写真を、館の左に寄せて）。配信の 0:41:53 は館が柵に隠れ、検査役が関係無いと言った",
+   "shows": "青空の国民の館と観覧車（あやと島カードの写真）",
+   "kind": "card",
+   "scene": {
+    "key": "c:a9ad08dd045935ca",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "議会の建物（国民の館）が青空の下に大きく写る",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c12",
+   "in": 15,
+   "out": 66,
+   "row": 9,
+   "note": "「重さは世界一らしい」: 館と観覧車の正面（配信の画）",
+   "shows": "国民の館と観覧車の正面",
+   "scene": {
+    "key": "c:b89685a014c464fd",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "議会の建物の国民の館が写る",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c13",
-   "in": 15,
-   "out": 73,
-   "row": 9,
-   "note": "「重さは世界一らしい」: 館と観覧車の正面（配信の画）"
-  },
-  {
-   "src": "c14",
    "in": 30,
    "out": 107,
    "row": 10,
-   "note": "館の前の広場に並ぶ屋台の小屋（マーケットの準備中）"
+   "note": "館の前の広場に並ぶ屋台の小屋（マーケットの準備中）",
+   "shows": "館の前の広場に並ぶクリスマスマーケットの屋台の小屋",
+   "scene": {
+    "key": "c:536fc814c24c77e2",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "館の前に屋台の小屋が並ぶ",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "f_fb1e1f5471",
    "in": 66,
    "out": 137,
    "row": 11,
-   "note": "撮影の素材の観覧車と屋台（館から観覧車へ流れる後半）"
+   "note": "撮影の素材の観覧車と屋台（館から観覧車へ流れる後半）",
+   "shows": "観覧車と屋台の小屋",
+   "kind": "footage",
+   "scene": {
+    "key": "c:6b8761b2a5073450",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "観覧車と屋台の小屋がはっきり写る",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c15",
-   "in": 30,
-   "out": 68,
+   "in": 120,
+   "out": 158,
    "row": 12,
-   "note": "風で道に張ったテープ・舞う落ち葉（風が強い）"
+   "note": "「けど風が強くて」: 風でテープが舞う秒",
+   "shows": "強風で宙に舞う赤白の規制テープと、吹き寄せられた落ち葉の道",
+   "scene": {
+    "key": "c:e2604e5cee90aefe",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "道を横切るテープと散る落ち葉が強い風の跡",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c16",
-   "in": 30,
-   "out": 69,
+   "in": 135,
+   "out": 174,
    "row": 12,
-   "note": "風で倒れた柵とテープ（「手袋してても手が凍るわ」の直後）"
+   "note": "「手袋してても手が凍る」: 配信に手袋の手が写る秒は無い（0:44:09 の声の所も道の画）。風の画を続ける",
+   "shows": "風に飛ばされた赤白テープが道路を横切り、落ち葉が散る",
+   "scene": {
+    "key": "c:229ea063b59d5aa8",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "赤白テープが宙に浮き、風で道路を横切る",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c2_02",
@@ -556,14 +851,41 @@
     "from": 1.0,
     "to": 1.1
    },
-   "note": "「たまらず、あったかいカフェに逃げ込んで」: あやと島カードの写真（カフェ DRIP の店先）。v5 は配信の店先（鮮明さ 11.3）"
+   "note": "「たまらず、あったかいカフェに逃げ込んで」: あやと島カードの写真（カフェ DRIP の店先）。v5 は配信の店先（鮮明さ 11.3）",
+   "shows": "カフェ DRIP の店先（あやと島カードの写真）",
+   "kind": "card",
+   "scene": {
+    "key": "c:e3f071ad0e9ed368",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "カフェDRIPの入口",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c17",
    "in": 90,
    "out": 117,
    "row": 13,
-   "note": "カウンターの豆挽き（注文。配信の画）"
+   "note": "カウンターの豆挽き（注文。配信の画）",
+   "shows": "カウンターのコーヒー豆挽き",
+   "scene": {
+    "key": "c:7a6cfef0a3de71b3",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "カフェのカウンターの豆挽き",
+    "frames": 1,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c2_03",
@@ -574,14 +896,41 @@
     "from": 1.0,
     "to": 1.1
    },
-   "note": "「アメリカーノを頼んだ」: あやと島カードの写真（同じカフェのカウンター）"
+   "note": "「アメリカーノを頼んだ」: あやと島カードの写真（同じカフェのカウンター）",
+   "shows": "カフェのカウンターとケーキ（あやと島カードの写真）",
+   "kind": "card",
+   "scene": {
+    "key": "c:a089116bf1950978",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "カフェのカウンターに焼き菓子",
+    "frames": 1,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c18",
    "in": 178,
    "out": 240,
    "row": 14,
-   "note": "「あったかくて美味しいよ」（本人の声と同じ秒）。コーヒーを前にした本人"
+   "note": "「あったかくて美味しいよ」（本人の声と同じ秒）。コーヒーを前にした本人",
+   "shows": "コーヒーを前にした本人",
+   "scene": {
+    "key": "c:0f65a5ccd0aa5a91",
+    "related": true,
+    "shows_true": true,
+    "selfie": true,
+    "face_event": true,
+    "painted": false,
+    "why": "コーヒーカップを手前に持つ本人",
+    "frames": 2,
+    "model": "claude-opus-5-5",
+    "at": "2026-11-27"
+   }
   }
  ],
  "title": {
@@ -743,8 +1092,8 @@
     "frames": 96,
     "voice_frames": 88,
     "cuts": [
-     "0:19:21.0+1.60s",
-     "0:19:37.0+1.60s"
+     "0:35:52.0+1.60s",
+     "cardRo1124a 0:00:01.0+1.60s"
     ],
     "line": "目指すは、この国でいちばんすごい建物「国民の館」！",
     "telop": null
@@ -817,8 +1166,8 @@
     "frames": 102,
     "voice_frames": 94,
     "cuts": [
-     "cardRo1124a 0:00:01.0+1.47s",
-     "0:36:29.0+1.93s"
+     "cardRo1124a 0:00:03.0+1.70s",
+     "0:36:29.0+1.70s"
     ],
     "line": "なんとこれ、議会の建物で、重さは世界一らしい！",
     "telop": null,
@@ -852,8 +1201,8 @@
     "frames": 77,
     "voice_frames": 69,
     "cuts": [
-     "0:42:03.0+1.27s",
-     "0:44:11.0+1.30s"
+     "0:42:06.0+1.27s",
+     "0:42:16.5+1.30s"
     ],
     "line": "けど風が強くて、手袋してても手が凍る！",
     "telop": null,
