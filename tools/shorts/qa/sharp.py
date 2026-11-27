@@ -31,8 +31,11 @@
 - **落ち**: フック（`titles` の出ている間）に掛かる配信の画で、鮮明さが線より下のもの。ただし spec の行かカットに
   `event`（その場の出来事そのものが要る画: 飲む・食べる瞬間の本人など。理由を字で書く）があれば落とさない。
   その場合も、同じ素材の窓の中で 0.5秒ごとに測り、いちばん鮮明な秒を並べる。使った秒より 1.5倍以上鮮明な秒があれば人が見る
-- **人が見る**: 本編の粗い配信の画のうち、同じ配信の ±180秒に撮った撮影の動画が台帳（`shorts/footage/index.json`）に
-  在り、その動画をこの回でまだ1度も使っていないもの（同じ物が写る、もっと良い素材がありうる）。どの素材かを並べる
+- **落ち（本編。2026-11-27、帳面 F-094 本編・F-080）**: 本編の粗い配信の画のうち、同じ配信の ±180秒に撮った撮影の動画が
+  台帳（`shorts/footage/index.json`）に在るか、同じ場所（カットの `place` と台帳の `place`）の撮影の動画・カード・あやと島の画面が
+  在り、その素材をこの回でまだ1度も使っていないもの。どの素材かを並べる。前は「人が見る」で、粗い画が本編に18カット残ったまま
+  出ていた（国民の館 v6）。出来事そのものの画（`event`）と、本人の声の行（`orig_voice`・`voice_src`。声を出している本人の映像が
+  要る。F-087）は落とさない。線は同じ 300
 - ほかは合格。カットごとの数は `measured.cuts` に並ぶ（人の目の表で、粗い行を見る手がかりにする）
 """
 from __future__ import annotations
@@ -68,8 +71,14 @@ def laplacian_var(gray: np.ndarray, mask: np.ndarray | None = None) -> float:
     return float(lap.var())
 
 
+# カットに書いた素材の種類（qa/scene.py の KINDS）→ ここでの分け方。島の画面・地図・ほかの画面の録画は「その他」（判定しない）
+KIND_OF = {"stream": "stream", "footage": "footage", "card": "image", "art": "image", "stock": "image"}
+
+
 def kind_of(ctx: Ctx, s: dict) -> str:
     cut = (ctx.plan or {}).get("cuts", [])[s["k"]]
+    if cut.get("kind"):
+        return KIND_OF.get(cut["kind"], "other")
     if cut.get("footage"):
         return "footage"
     if Path(s["path"]).suffix.lower() in IMAGE_EXT or clip_entry(Path(s["path"])).get("art"):
@@ -93,7 +102,8 @@ def text_mask(plan: dict, f: int, W: int, H: int) -> np.ndarray | None:
     return m
 
 
-def footage_near(video: str, t: float) -> list[dict]:
+def footage_near(video: str, t: float, place: str | None = None) -> list[dict]:
+    """同じ配信の ±NEAR_FOOTAGE_S 秒に撮ったか、同じ場所（place）の撮影の動画・カード・島の画面（台帳の items）。"""
     try:
         items = json.loads(FOOTAGE_INDEX.read_text(encoding="utf-8")).get("items", [])
     except (OSError, ValueError):
@@ -101,9 +111,20 @@ def footage_near(video: str, t: float) -> list[dict]:
     out = []
     for it in items:
         st = it.get("stream") or {}
-        if st.get("video") == video and st.get("at_s") is not None and abs(float(st["at_s"]) - t) <= NEAR_FOOTAGE_S:
-            out.append({"id": it["id"], "at": st.get("at"), "desc": it.get("desc", "")})
+        near = st.get("video") == video and st.get("at_s") is not None and abs(float(st["at_s"]) - t) <= NEAR_FOOTAGE_S
+        same_place = bool(place) and str(it.get("place") or "") == place
+        if near or same_place:
+            out.append({"id": it["id"], "at": st.get("at") or "", "desc": it.get("desc", ""),
+                        "why": f"配信の {st.get('at')}" if near else f"同じ場所「{place}」"})
     return out
+
+
+def voice_rows(plan: dict) -> set[int]:
+    """本人の声の行（元の声・声だけ配信の音）の番号。時間割の narration は行の順に並ぶ。"""
+    lines = plan.get("narration") or []
+    if isinstance(lines, dict):
+        lines = lines.get("lines") or []
+    return {i for i, ln in enumerate(lines) if isinstance(ln, dict) and (ln.get("orig_voice") or ln.get("voice_src"))}
 
 
 def best_in_window(s: dict, fps: float, W: int, H: int) -> dict | None:
@@ -142,6 +163,7 @@ def check(ctx: Ctx) -> dict:
     for f, g in iter_frames(src, [f for fs in want.values() for f in fs], ctx.W, ctx.H, gray=True):
         vals[f] = laplacian_var(g, text_mask(plan, f, ctx.W, ctx.H) if use_mask else None)
     hook_to = max([int(t.get("to", 0)) for t in plan.get("titles") or []] + [0])
+    voices = voice_rows(plan)
     rows, problems, fails, humans = [], [], [], []
     for s in segs:
         cut = plan["cuts"][s["k"]]
@@ -165,22 +187,27 @@ def check(ctx: Ctx) -> dict:
                 problems.append(f"{where(s)}: フック（題の札の間）に粗い配信の画（鮮明さ {sharp}・線 {SHARP_MIN:.0f}）"
                                 f" → 撮影の動画・あやと島カードの写真に替える。出来事そのものが要る画なら spec の行に event を書く")
         elif row["coarse"]:
-            near = footage_near(s["stream"], (s["src_from"] + s["src_to"]) / 2)
+            near = footage_near(s["stream"], (s["src_from"] + s["src_to"]) / 2, cut.get("place"))
             used = {c.get("footage") for c in plan["cuts"] if c.get("footage")}   # もう使った素材は見たうえで選んでいる
             near = [x for x in near if x["id"] not in used]
             if near:
                 row["near_footage"] = near
-                humans.append(row)
-                problems.append(f"{where(s)}: 粗い配信の画（鮮明さ {sharp}）。同じ場面の撮影の動画 "
-                                + "・".join(f"{x['id']}（配信の {x['at']}・{x['desc']}）" for x in near[:3])
-                                + " がある → 同じ物が写るなら替える")
+                if row["event"] or cut.get("row") in voices:
+                    row["exempt"] = row["event"] or "本人の声の行"
+                else:
+                    fails.append(row)
+                    problems.append(f"{where(s)}: 本編に粗い配信の画（鮮明さ {sharp}・線 {SHARP_MIN:.0f}）。同じ場面の素材 "
+                                    + "・".join(f"{x['id']}（{x['why']}・{x['desc']}）" for x in near[:3])
+                                    + " をまだ使っていない → 替える。出来事そのものが要る画なら spec の行に event を書く（F-094・F-080）")
         rows.append(row)
     by = {k: [r["sharp"] for r in rows if r["kind"] == k and r["sharp"] is not None] for k in ("stream", "footage", "image", "other")}
     m = {"cuts": rows, "by_kind": {k: {"n": len(v), "min": min(v), "max": max(v)} for k, v in by.items() if v},
          "hook_to_s": round(hook_to / fps, 2), "coarse_hook": len([r for r in rows if r["coarse"] and r["hook"]]),
          "coarse_body": len([r for r in rows if r["coarse"] and not r["hook"]]), "measured_on": "no_text" if not use_mask else "mp4"}
     if fails:
-        status, summ = FAIL, f"フックに粗い配信の画 {len(fails)} カット（鮮明さ {', '.join(str(r['sharp']) for r in fails)}・線 {SHARP_MIN:.0f}）"
+        nh = sum(1 for r in fails if r["hook"])
+        status, summ = FAIL, (f"粗い配信の画で落ちる {len(fails)} カット（フック {nh}・本編で替えられる素材がある {len(fails) - nh}。"
+                              f"鮮明さ {', '.join(str(r['sharp']) for r in fails)}・線 {SHARP_MIN:.0f}）")
     elif humans:
         status, summ = HUMAN, f"粗い配信の画のうち、もっと良い素材がありうるもの {len(humans)} カット"
     else:

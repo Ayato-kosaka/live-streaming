@@ -516,6 +516,20 @@ def split_row(n_frames: int, n_cuts: int, voice_frames: int, pauses, text: str, 
     return [base] * (n_cuts - 1) + [n_frames - base * (n_cuts - 1)]
 
 
+KINDS = ("stream", "footage", "card", "island", "map", "art", "stock", "screen")   # qa/scene.py の KINDS と同じ
+
+
+def clip_kind(clip: dict) -> str | None:
+    """窓の台帳の行から、素材の種類（カード・絵・地図）。配信の窓は None（品質チェックが配信の画とみなす）。"""
+    if clip.get("kind") in KINDS:
+        return clip["kind"]
+    if clip.get("art"):
+        return {"card": "card", "free": "stock"}.get(clip["art"], "art")
+    if clip.get("range") == "hook-map":
+        return "map"
+    return None
+
+
 def blur_regions(regs: list[dict], clip: dict) -> list[dict]:
     """overrides のぼかし（元動画の時刻）→ 指示書のぼかし（窓の頭からのコマ番号）。"""
     out = []
@@ -909,6 +923,7 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
     srcs_clip: dict[str, dict] = {}   # 窓の素材の名前 → 窓（overrides の bands が、どの窓に掛かるか）
     note_of_row: dict[int, dict] = {}
     cuts, telops, meta_rows = [], [], []
+    no_shows: list[str] = []   # 写っている物（shows）を書いていないカット（組んだあとに1行で知らせる）
     # 画の切り出しかた（対談系 #1104）。overrides の views に名前ごとの crop（元の画の使う範囲）と fit を書き、カットの view
     # （書かなければ view_default）で選ぶ。同じ窓でも、2人の帯（blur で全体）と話す人の寄り（cover で1人ぶん）を切り替える。
     # views を書かない回（対談系の前の回は全部）は、素材の名前も中身も今までどおり
@@ -1116,6 +1131,24 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
             if cs.get("event") or r.get("event"):
                 # 出来事そのものが要る画（飲む・食べる瞬間の本人など）。画質の検査（qa/sharp.py）はフックでも落とさない
                 cut["event"] = cs.get("event") or r.get("event")
+            # 写っている物（必須）と素材の種類（帳面 F-104・F-014。qa/scene.py が行の言葉と突き合わせる）。
+            # カットの指定（overrides の cuts[]）に書けばそれ、無ければ spec の行の shows（字ならその行の全部のカット、
+            # 並びなら何本目か）。種類は書いたもの → 撮影の素材 → 窓の台帳（カード・絵・地図）。書かない回の指示書にも
+            # 何も足さない（shows の無いカットは品質チェックの shows_tag が落とす）
+            shows = cs.get("shows") or (r.get("shows")[k] if isinstance(r.get("shows"), list) and k < len(r["shows"])
+                                        else r.get("shows") if isinstance(r.get("shows"), str) else None)
+            if shows:
+                cut["shows"] = str(shows)
+            else:
+                no_shows.append(f"{i}行目の{k + 1}本目")
+            kind = cs.get("kind") or r.get("kind") or ("footage" if fr is not None else clip_kind(clip))
+            if kind:
+                if kind not in KINDS:
+                    sys.exit(f"{i}行目: kind {kind!r} は {', '.join(KINDS)} のどれでもない")
+                cut["kind"] = kind
+            for key in ("order_ok", "selfie"):
+                if cs.get(key):
+                    cut[key] = cs[key]
             cuts.append(cut)
             row_cuts.append(f"{M.ref(fr[0], f'{fin / FPS:.2f}') if fr else M.ref(video, fmt(t0))}+{m / FPS:.2f}s")
         prev_end = clip["start"] + cuts[-1]["out"] / FPS
@@ -1185,6 +1218,13 @@ def build(spec: dict, clips: list[dict], voice: list[dict] | None, args) -> dict
         edit["title"]["highlight"] = [str(h) for h in spec["title_card_highlight"]]
     if notes:
         edit["notes"] = notes
+    for key in ("follows", "tour"):
+        # 続きものの前の回の指示書（F-089）・街を回る回の印（F-060）。品質チェック（qa/scene.py）が読む
+        if spec.get(key) is not None:
+            edit[key] = spec[key]
+    if no_shows:
+        print(f"  注意: 写っている物（shows）の無いカット {len(no_shows)} 本（{'・'.join(no_shows[:6])}"
+              f"{' ほか' if len(no_shows) > 6 else ''}）。品質チェックの shows_tag で落ちる", file=sys.stderr)
     if speech:
         speech["video_s"] = round(t / FPS, 2)
         speech["cps_video"] = round(speech["chars"] / (t / FPS), 2)

@@ -33,6 +33,7 @@ import cuts  # noqa: E402
 import faces  # noqa: E402
 import linebreak  # noqa: E402
 import reuse  # noqa: E402
+import scene  # noqa: E402
 import sharp  # noqa: E402
 import still  # noqa: E402
 import stutter  # noqa: E402
@@ -64,13 +65,27 @@ CHECKS = {
     "source_stutter": stutter.check,
     "shot_reuse": reuse.check,
     "sharpness": sharp.check,
+    # 画と言葉（帳面 F-104・F-014・F-058・F-060・F-064・F-086〜F-089・F-096・F-105・F-106。scene.py の頭）
+    "shows_tag": scene.check_shows_tag,
+    "scene_match": scene.check_scene_match,
+    "preface_scene": scene.check_preface_scene,
+    "island_scene": scene.check_island_scene,
+    "selfie_rows": scene.check_selfie_rows,
+    "badge_text": scene.check_badge_text,
+    "hook_still": scene.check_hook_still,
+    "voice_rows": scene.check_voice_rows,
+    "series_reuse": scene.check_series_reuse,
+    "time_order": scene.check_time_order,
+    "note_words": scene.check_note_words,
+    "hook_map": scene.check_hook_map,
+    "photo_look": scene.check_photo_look,
     "silence": audio.check_silence,
     "clipping": audio.check_clipping,
     "original_audio": audio.check_original_audio,
 }
 # 絵だけを見る検査（音を差し替えた動画には、前の結果がそのまま使える）
 VIDEO_ONLY = ("safe_area", "live_badge", "watermark", "faces", "text_on_face", "black", "frozen", "cut_length", "similar_run",
-              "still_image", "source_stutter", "shot_reuse", "sharpness")
+              "still_image", "source_stutter", "shot_reuse", "sharpness") + tuple(scene.CHECKS)
 # 下書き（render.py --draft）で回す最低限。中身を直している間に崩れやすいものだけ:
 # 字幕と声のずれ・字が安全域から出ていないか・真っ黒なコマ・強調の字の言い直し（時間割だけで測るので速い）。
 # 元素材のカクつきと使い回しも下書きで回す。どちらも「どの区間をどこに使うか」で決まり、それを直すのは
@@ -84,8 +99,9 @@ VIDEO_ONLY = ("safe_area", "live_badge", "watermark", "faces", "text_on_face", "
 # 字の改行（語の途中で割れていないか）は、字を直している下書きの段で崩れやすく、時間割の字だけで測るので一瞬
 # YouTube ライブの札（出す回だけ。出さない回は対象外で pass）も、字の置き場が決まる下書きの段でぶつかりが分かる。
 # 1秒に1コマを読むだけで軽い
+# 画と言葉の検査（scene.py）も、検査役を起こす scene_match のほかは時間割の字だけで決まるので下書きで回す
 DRAFT_CHECKS = ("subtitle_sync", "safe_area", "live_badge", "black", "text_dup", "line_breaks", "cut_length", "similar_run",
-                "still_image", "source_stutter", "shot_reuse")
+                "still_image", "source_stutter", "shot_reuse") + scene.PLAN_ONLY
 
 LABEL = {PASS: "合格", FAIL: "不合格", HUMAN: "人が見る", NA: "測れない"}
 

@@ -1,0 +1,72 @@
+{
+  "type": "object",
+  "properties": {
+    "cuts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "related": {
+            "type": "boolean"
+          },
+          "shows_true": {
+            "type": "boolean"
+          },
+          "selfie": {
+            "type": "boolean"
+          },
+          "why": {
+            "type": "string"
+          },
+          "painted": {
+            "type": "boolean"
+          },
+          "face_event": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "related",
+          "shows_true",
+          "selfie",
+          "face_event",
+          "painted",
+          "why"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "headings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "names_content": {
+            "type": "boolean"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "names_content",
+          "why"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "cuts",
+    "headings"
+  ],
+  "additionalProperties": false
+}

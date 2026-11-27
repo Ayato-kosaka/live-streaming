@@ -100,6 +100,7 @@
    **撮影の素材**（`footage.py table <配信>` の ID）は `src` か `t` に `"<ID> <秒>"`（作業用の頭からの秒。音は使えないので `audio_db` は書かない）。
    その素材の顔は組む前に `python3 tools/shorts/render/face_scan.py --footage <ID> $S/faces --book <回の p1>/blur.json` で帳面に書き（絵を見て漏れは手で足す）、
    組むときに `--blur <回の p1>/blur.json`。効果音・札・窓の帯は `{{ov}}` の上の段の `sfx`・`stickers`・`bands`（時は `{"row": 行, "cut": 何本目, "f": コマ}`）に書く。
+   **カットごとに `shows`（写っている物・場所の短い言葉。狙いでなく写っている物）を必ず書き、配信でない画は `kind`（`footage`・`card`・`island`・`map`・`art`・`stock`・`screen`）も**（帳面 F-104。`scene.py` が行の言葉と突き合わせ、無ければ落ちる）。
    組んだ指示書を手で直さない（組み直すと消える）
    **書かなければ** 2カットは声の文の切れ目、3カット以上は等分（`split_row`）。題の札（spec の `title_card`。国旗の絵文字つき）は
    `title_card_seconds`（4.0まで）で消え、札が1行目と別の字なら1行目の字幕は札の下に出る
@@ -123,6 +124,7 @@
    | `cut_length`・`similar_run` | 行を overrides の `cuts` で割る（3.0秒ちょうども落ちる）／間に見た目の違う画を挟む |
    | `still_image` | 写真・画面の写し・止めたコマを、動く画に替える（寄せて動かしても止め絵） |
    | `source_stutter` | `stutter.py` で同じ物の写る別の区間を探す。無ければそのまま使い、探した範囲を記録に書く。カクつく素材に寄せを掛けない |
+   | `shows_tag`・`scene_match`・`preface_scene`・`island_scene` ほか（`scene.py`） | 言葉と関係無い配信の画を、言葉の物が写る画か配信の外の素材に替える。組んだら `python3 tools/shorts/qa/scene.py {{edit}} --stamp` |
    | `shot_reuse` | 同じ画（同じ素材の別の時刻も）は尺の 25%・3回まで。2回目より後を別の画に |
    | `text_dup` | テロップを消す（`"telop": ""`）か、その語を `highlight` に |
    | `voice_vs_bgm` | overrides の `bgm_db` を下げる（話している間、声との差 9dB 以上） |

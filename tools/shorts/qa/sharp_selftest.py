@@ -4,7 +4,7 @@
 
 あやと（#1450、2026-11-26）「特にフックは画質悪いの使わないのを絶対ルールにしてるはず（飲んでるシーンとかは除く）」。
 フック（題の札の間）に粗い配信の画があれば落ち、出来事そのものの画（`event`）は落とさず、本編の粗い画は同じ場面の
-撮影の動画が台帳にあるときだけ人に回すことを、合成の素材と時間割だけで当てる（書き出しは通さない。
+撮影の動画が台帳にあって使っていないとき落とす（2026-11-27、F-094 本編・F-080）ことを、合成の素材と時間割だけで当てる（書き出しは通さない。
 `cuts_selftest.py` と同じ作り）。
 
 | 足 | 並べ方（0〜2秒がフック、2〜4秒が本編） | sharpness |
@@ -13,7 +13,10 @@
 | hook_coarse | フックに粗い配信の画（720x1280 をぼかして広げたもの） | **fail** |
 | hook_event | 同じ並びで、カットに `event`（飲む瞬間） | pass（落とさない。窓の中にもっと鮮明な秒は無い） |
 | hook_sharp_stream | フックに配信の画だが、鮮明（線より上） | pass（種類ではなく鮮明さで決める） |
-| body_near_footage | clean の本編の配信の時刻の 60秒あとに撮った、まだ使っていない撮影の動画が台帳にある | **needs-human** |
+| body_near_footage | clean の本編の配信の時刻の 60秒あとに撮った、まだ使っていない撮影の動画が台帳にある | **fail** |
+| body_near_event | 同じ台帳で、本編のカットに `event` | pass（出来事そのものの画） |
+| body_near_voice | 同じ台帳で、本編が本人の声の行（`orig_voice`） | pass（声を出している本人の映像が要る） |
+| body_same_place | 時刻は離れているが、本編のカットと台帳の撮影の動画が同じ `place` | **fail** |
 | body_used_footage | 同じ台帳で、その撮影の動画をフックで使っている | pass（見たうえで選んでいる） |
 | map_hook | フックに配信でも撮影でもない平らな絵（地図の動画など） | pass（判定しない） |
 
@@ -68,10 +71,12 @@ def plate(d: Path, name: str, first: Path, second: Path) -> Path:
 
 
 def plan_of(first: tuple[Path, dict], second: tuple[Path, dict]) -> dict:
-    cuts = []
+    cuts, narr = [], []
     for i, (path, extra) in enumerate((first, second)):
-        cuts.append({"path": str(path), "in": 0, "out": 60, "at": 60 * i, "frames": 60, "row": i, **extra})
-    return {"fps": FPS, "size": [W, H], "cuts": cuts, "titles": [{"from": 0, "to": 60, "text": "題"}]}
+        cut = {k: v for k, v in extra.items() if not k.startswith("_")}
+        cuts.append({"path": str(path), "in": 0, "out": 60, "at": 60 * i, "frames": 60, "row": i, **cut})
+        narr.append({"at": 60 * i, "frames": 60, "text": f"{i}行目", **({"orig_voice": True} if extra.get("_voice") else {})})
+    return {"fps": FPS, "size": [W, H], "cuts": cuts, "narration": narr, "titles": [{"from": 0, "to": 60, "text": "題"}]}
 
 
 def run(keep: Path | None) -> int:
@@ -87,13 +92,20 @@ def run(keep: Path | None) -> int:
     near = d / "footage_near.json"
     near.write_text(json.dumps({"items": [{"id": "ffsynth002", "desc": "合成の撮影の動画（この回でまだ使っていない）",
                                             "stream": {"video": "SYNTHvid000", "at": "0:11:01", "at_s": 661}}]}))
+    place = d / "footage_place.json"
+    place.write_text(json.dumps({"items": [{"id": "ffsynth003", "desc": "合成の撮影の動画（同じ場所・別の時刻）",
+                                             "place": "国民の館", "stream": {"video": "SYNTHvid000", "at": "2:00:00",
+                                                                           "at_s": 7200}}]}, ensure_ascii=False))
     foot = (p["sharp"], {"footage": "ffsynth001"})
     legs = [
         ("clean", foot, (p["coarse"], {}), ledger, "pass"),
         ("hook_coarse", (p["coarse"], {}), (p["coarse"], {}), ledger, "fail"),
         ("hook_event", (p["coarse"], {"event": "飲む瞬間の本人"}), (p["coarse"], {}), ledger, "pass"),
         ("hook_sharp_stream", (p["sharp_stream"], {}), (p["coarse"], {}), ledger, "pass"),
-        ("body_near_footage", foot, (p["coarse"], {}), near, "needs-human"),
+        ("body_near_footage", foot, (p["coarse"], {}), near, "fail"),
+        ("body_near_event", foot, (p["coarse"], {"event": "食べた瞬間の本人"}), near, "pass"),
+        ("body_near_voice", foot, (p["coarse"], {"_voice": True}), near, "pass"),
+        ("body_same_place", foot, (p["coarse"], {"place": "国民の館"}), place, "fail"),
         ("body_used_footage", (p["sharp"], {"footage": "ffsynth002"}), (p["coarse"], {}), near, "pass"),
         ("map_hook", (p["flat"], {}), (p["coarse"], {}), ledger, "pass"),
     ]

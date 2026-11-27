@@ -24,6 +24,7 @@
 | `voice_src` | 声だけを配信の別の秒から取った行（spec の `voice_src`。画は別の秒。猫の回 p2）: 本番の声で組むと、その行に `orig_voice`・`voice_src` の印が行の最後に付く（書き出しが元の声として揃える）・声は声の一覧のその行の音（`audio`）で、元の音は切らない・ほかの行には付かない・仮の声（`--voice` 無し）なら付けない・`orig_voice` と両方ある行は元の声の行として組む |
 | `vsrc_tempo` | voice_src の行（本人の声）は速めない: 本番の声で組むと、その行は素の速さの長さで組み（偽の測りは書き出しと同じく voice_src の印の行に倍率を掛けない）、喋る速さの倍率は AI の声の行の字と長さだけから決める。仮の声なら、ふつうの行として倍率に数えて速める（ハトのフンの回 v2 は 17・18行の叫びが 1.4倍の早送りだった。帳面 F-019） |
 | `orig_voice` | 元の声の行（あやと F-051「叫びは配信の本人の声で」）: 声の一覧にその行のぶんが無くても組む（あれば止まる）・その行の声はカットと同じ区間の元の音（`file`）で、仮の声にも倍率にも数えない・画は声と同じコマから取り、最後のカットだけ行の間ぶん延ばす・【大】でも声を遅らせない・延ばした画が until を越えるなら入りをずらさずに止まる |
+| `shows_kind` | 写っている物と素材の種類（帳面 F-104・F-014）: spec の行の `shows`（字は行の全部のカット・並びは何本目か）と overrides のカットの `shows` を運ぶ・`kind` は書いたもの、無ければ窓の台帳（カード・地図）・spec の `follows`・`tour` を指示書の頭に・書いていないカットを1行で知らせる・知らない kind で止まる |
 | `named_src` | ほかの回の秒（`OTHERvid_02 0:01:00–…`。夫婦の車の回 A・クラムチャウダーの回）: 名前の付いた秒はその回の窓から・名前の無い秒は同じ秒を持つほかの回の窓を取らずにこの回の窓から・地図の行（`27:46:40.0`）は地図の窓から・「同上」の続きは前の行と同じ回から・ぼかしの帳面は名前の付いた回の窓にだけ掛かる・index.json に video が無い一覧は `<videoId>=<index.json>` で名指せる・窓の無い回は止まる |
 
 数の手計算（`expect_frames`）は `build_edit.py` の関数を使わずに書く。見張りの側が本物と同じ式を
@@ -77,6 +78,12 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
                    {"under_cap", "orig_voice", "vsrc_tempo"}, "要る倍率が上限以内でも、上限で読ませる"),
     "style_cap": ("        args.max_tempo = R.tempo_cap(st_all)\n", "        args.max_tempo = 1.4\n",
                   {"over_cap_fits"}, "上限を様式から読まない"),
+    # 写っている物と素材の種類（帳面 F-104・F-014）
+    "shows": ('                cut["shows"] = str(shows)\n', "                pass\n",
+              {"shows_kind"}, "写っている物（shows）を指示書に運ばない"),
+    "kind_ledger": ('            kind = cs.get("kind") or r.get("kind") or ("footage" if fr is not None else clip_kind(clip))\n',
+                    '            kind = cs.get("kind") or r.get("kind") or ("footage" if fr is not None else None)\n',
+                    {"shows_kind"}, "素材の種類を窓の台帳（カード・地図）から読まない"),
     # 題の札と1行目が別の言葉のとき（あやと F-043）
     "card_always_same": ("    card_own = card_row is not None and bare_text(title) != bare_text(rows[card_row][\"line\"])\n",
                          "    card_own = False\n",
@@ -124,8 +131,9 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
                  "            else 0 for i, (lk, r) in enumerate(zip(looks, rows))]\n",
                  {"orig_voice"}, "元の声の行が【大】のとき、字が出きるまで声を遅らせる（同じ秒の画とずれる）"),
     # ほかの回の秒（spec の src に回の名前。2026-11-04 の絵コンテ5件で、担当が回ごとにずらした一覧の写しを作っていた）
+    # shows_kind もカードの窓を回の名前（islCardS01x）で引くので、一緒に落ちる
     "named_pool": ("        if video and video != self.default:\n", "        if False:\n",
-                   {"named_src"}, "回の名前を付けた秒も、どの回の窓からでも引く（同じ秒を持つ別の回の画を取る）"),
+                   {"named_src", "shows_kind"}, "回の名前を付けた秒も、どの回の窓からでも引く（同じ秒を持つ別の回の画を取る）"),
     "default_pool": ("        return [c for c in self.clips\n"
                      "                if not c.get(\"video\") or c.get(\"video\") == self.default or c.get(\"video\") not in self.named]\n",
                      "        return list(self.clips)\n",
@@ -138,7 +146,7 @@ CUTS: dict[str, tuple[str, str, set[str], str]] = {
                   {"named_src"}, "ぼかしの帳面の箱を、秒だけで突き合わせる（別の回の同じ秒のカットに掛かる）"),
     "index_video": ("        video = m.group(1) if m else M.index_video(path, d)\n",
                     "        video = m.group(1) if m else None\n",
-                    {"named_src"}, "窓の一覧がどの回のものかを index.json の video から読まない"),
+                    {"named_src", "shows_kind"}, "窓の一覧がどの回のものかを index.json の video から読まない"),
 }
 
 FPS = 30
@@ -587,6 +595,73 @@ def leg_named_src(b: Bench):
     return out
 
 
+def leg_shows_kind(b: Bench):
+    """写っている物（shows）と素材の種類（kind）を運ぶ（帳面 F-104・F-014。qa/scene.py が行の言葉と突き合わせる）:
+    行の shows（字）はその行の全部のカットに・並びは何本目かに・overrides のカットの shows が勝つ・kind は書いたもの、
+    無ければ窓の台帳（art: card → card・range: hook-map → map）・spec の follows と tour は指示書の頭に。
+    書いていないカットは1行で知らせ、知らない kind では止まる"""
+    d = b.tmp / "shows"
+    d.mkdir(exist_ok=True)
+    main_ = d / "main_index.json"
+    main_.write_text(json.dumps({"video": MAIN_V, "clips": [{"n": 1, "start": 0, "end": 600, "file": "m01.mp4"}]}))
+    card = d / "card_index.json"
+    card.write_text(json.dumps({"video": "islCardS01x", "art": True, "clips": [
+        {"n": 1, "start": 0, "end": 10, "file": "card1.mp4", "art": "card"}]}))
+    hmap = d / "map_index.json"
+    hmap.write_text(json.dumps({"clips": [{"n": 1, "range": "hook-map", "start": MAP_T, "end": MAP_T + 3,
+                                           "file": "hook_map.mp4"}]}))
+    rows = [{"line": "あいうえおかきくけこ。", "src": ["0:01:00", "0:02:00"], "shows": "店の前の通り"},
+            {"line": "さしすせそたちつてと。", "src": ["0:03:00", "0:04:00"], "shows": ["棚の本", "本の表紙"]},
+            {"line": "なにぬねのはひふへほ。", "src": ["islCardS01x 0:00:01.0"], "shows": "カードの写真"},
+            {"line": "まみむめもやゆよらり。", "src": ["27:46:40.0–27:46:41.5"]},
+            {"line": "るれろわをんあいうえ。", "src": ["0:05:00"], "kind": "island", "shows": "あやと島のガイドの頁"}]
+    b.n += 1
+    spec_d = b.tmp / f"run{b.n}"
+    spec_d.mkdir()
+    ov = spec_d / "ov.json"
+    # 2本の行は share で分ける（文の切れ目で分けると、偽の render に無い sentences を呼ぶ）
+    ov.write_text(json.dumps({"rows": {"0": {"cuts": [{"t": "0:01:00", "share": 0.5}, {"t": "0:02:00", "share": 0.5}]},
+                                       "1": {"cuts": [{"t": "0:03:00", "share": 0.5, "shows": "上の階の本棚"},
+                                                      {"t": "0:04:00", "share": 0.5}]}}}, ensure_ascii=False))
+    spec = spec_d / "spec_S.json"
+    spec.write_text(json.dumps({"id": "S", "title": "見張り", "rows": rows, "tour": True,
+                                "follows": ["shorts/videos/X/p1/edit_A.json"]}, ensure_ascii=False))
+    sys.modules["render"] = fake_render(CAP)
+    b.be.narration_frames = lambda lines, narr, work: [(45, []) for _ in lines]
+
+    def go(spec_path: Path) -> tuple[int, str, dict | None]:
+        out = spec_path.parent / "edit_S.json"
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf), redirect_stderr(buf):
+                rc = b.be.main([str(spec_path), "--clips", str(main_), "--clips", str(card), "--clips", str(hmap),
+                                "--overrides", str(ov), "--out", str(out), "--work", str(spec_path.parent / "work")])
+        except SystemExit as e:
+            rc = e.code if isinstance(e.code, int) else 1
+            buf.write("" if isinstance(e.code, int) or e.code is None else str(e.code))
+        except Exception:
+            rc = 1
+            buf.write(traceback.format_exc())
+        return rc, buf.getvalue(), (json.loads(out.read_text()) if out.exists() else None)
+    rc, text, e = go(spec)
+    cuts = (e or {}).get("cuts") or []
+    shows = [c.get("shows") for c in cuts]
+    kinds = [c.get("kind") for c in cuts]
+    want_s = ["店の前の通り", "店の前の通り", "上の階の本棚", "本の表紙", "カードの写真", None, "あやと島のガイドの頁"]
+    want_k = [None, None, None, None, "card", "map", "island"]
+    out = [(f"組む（終了コード {rc}）{'' if rc == 0 else text[-300:]}", rc == 0 and bool(e)),
+           (f"shows を運ぶ（{shows} / 欲しいのは {want_s}）", shows == want_s),
+           (f"kind を運ぶ（{kinds} / 欲しいのは {want_k}）", kinds == want_k),
+           ("spec の follows・tour が指示書の頭に",
+            (e or {}).get("tour") is True and (e or {}).get("follows") == ["shorts/videos/X/p1/edit_A.json"]),
+           ("shows の無いカットを1行で知らせる", "shows）の無いカット 1 本（3行目の1本目）" in text)]
+    rows[4]["kind"] = "isle"
+    spec.write_text(json.dumps({"id": "S", "title": "見張り", "rows": rows}, ensure_ascii=False))
+    rc2, text2, _ = go(spec)
+    out.append((f"知らない kind で止まる（終了コード {rc2}）", rc2 != 0 and "kind 'isle'" in text2))
+    return out
+
+
 LEGS = {
     "under_cap": leg_under_cap,
     "over_cap_fits": leg_over_cap_fits,
@@ -596,6 +671,7 @@ LEGS = {
     "voice_src": leg_voice_src,
     "vsrc_tempo": leg_vsrc_tempo,
     "named_src": leg_named_src,
+    "shows_kind": leg_shows_kind,
 }
 
 

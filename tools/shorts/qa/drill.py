@@ -15,7 +15,7 @@
 
 ## 何を当てるか
 
-壊れていない1本（clean）は**21の検査が全部 pass**（`live_badge` は札を出さない回なので対象外の pass）。壊した1本ごとに、
+壊れていない1本（clean）は**全部の検査が pass**（`live_badge` は札を出さない回なので対象外の pass）。壊した1本ごとに、
 **壊したところを見る検査だけが落ち、ほかは pass のまま**であること（字と顔の検査は字なしの版で
 しか測れないので、字なしの版を渡さない足では not-checkable が正しい）。
 落ちないなら、その検査は何も見ていない（緑は2通りに読める。CLAUDE.md）。
@@ -262,8 +262,10 @@ def build_edit(box: Path, name: str, *, voices: dict[int, Path], style: Path, bg
         "version": 1, "id": f"qa-{name}", "style": style.name,
         "sources": {"s": {"path": str(box / "source.mp4")}},
         # 元の音は、書き出しの既定では消える。カットに audio_db を書いたときだけ、その dB で入る
-        "cuts": [{"src": "s", "in": a, "out": b,
-                  **({} if cut_audio_db is None else {"audio_db": cut_audio_db})} for a, b in CUTS],
+        # 写っている物（shows）は、画と言葉の検査（scene.py の shows_tag ほか）が読む。練習問題では合成の場面の名前。
+        # 素材の種類（kind）は書かない（書くと画質の検査が合成の場面を配信の画として測り、フックで落とす）
+        "cuts": [{"src": "s", "in": a, "out": b, "shows": f"合成の場面{k + 1}",
+                  **({} if cut_audio_db is None else {"audio_db": cut_audio_db})} for k, (a, b) in enumerate(CUTS)],
         "narration": {"engine": "files", "lines": [
             {"at": at, "text": txt, "file": str(voices[i]), **({} if captions else {"caption": ""})}
             for i, (at, _, txt) in enumerate(LINES)]},
@@ -985,7 +987,14 @@ def run(half: str, keep: Path | None = None) -> int:
         return 2
     import check as C
     import numpy as np
+    import scene
     from common import NA, PASS, video_md5
+
+    # 画と言葉の検査（scene.py）の検査役は、ここでは偽物（どのカットも「行の言葉と関係ある・写真の見た目」）。
+    # 練習問題の合成の場面は言葉を持たないので、本物の検査役に聞く中身が無い。検査役で落ちる足は scene_selftest.py
+    scene.JUDGE = lambda items, heads: (
+        {it["id"]: {"related": True, "shows_true": True, "selfie": False, "painted": False, "why": "練習問題の合成の場面"}
+         for it in items}, {h["id"]: {"names_content": True, "why": "練習問題"} for h in heads})
 
     names = [n for n, (h, _, _) in CASES.items() if half == "all" or h in (half, "both")]
     t_all = time.monotonic()
