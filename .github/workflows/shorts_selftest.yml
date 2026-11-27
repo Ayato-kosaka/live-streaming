@@ -21,34 +21,50 @@
 #
 # ## いつ走るか
 #
-# `tools/shorts/` の下と、このファイルを変えた PR・master への push。
+# `tools/shorts/` の下・ショートの手引き（`.claude/skills/viral-shorts-creator/`）・このファイルを変えた
+# PR と、master と**作業枝（`claude/**`）への push**。
 # 品質チェックの線は `render.py`・`style.json`（どちらも `tools/shorts/render/`）に
 # ぶら下がるので、書き出しを直した PR でも走る。手で回すときは workflow_dispatch。
+#
+# 作業枝の push で回すのは 2026-11-27 から。ショートの道具は1週間ずっと作業枝で直していて PR を出しておらず、
+# そのあいだ `brief_selftest.py` が赤のままだった（本編集の1枚が2万字を越え、対照70本も全部外れていた）。
+# 見張りが走らない枝では、赤は誰にも見えない。帳面（`ayato_feedback.md`）は手引きの下にあり、
+# 帳面の形の検査（`ledger.py --check`）が名指しを引くので、手引きだけを直した push でも回す。
+#
+# ## job は2つ（2026-11-27）
+#
+# 1本の job で 23分（2026-11-26）になり、上限 30分の手前にいた。書き出しの重い見張り（`render`）と、
+# Python だけで回る原稿・帳面・取り込みの見張り（`tools`）に分けて並べる。`tools` の最後の step は
+# `tools/shorts` の下の `*_selftest.py` のうち、上で名指ししなかったものを**全部** `find` で拾う
+# （名指しの除外に書いたのに名指しの step が無い見張りは、`check` の step が落とす）。
 name: ショートの道具の見張り
 
 on:
   pull_request:
     paths:
       - "tools/shorts/**"
+      - ".claude/skills/viral-shorts-creator/**"
       - ".github/workflows/shorts_selftest.yml"
   push:
-    branches: [master]
+    branches: [master, "claude/**"]
     paths:
       - "tools/shorts/**"
+      - ".claude/skills/viral-shorts-creator/**"
       - ".github/workflows/shorts_selftest.yml"
   workflow_dispatch:
 
-# Selftests と同じ。PR は枝ごとに前の run を止めてよい。master は sha ごとに別の group にして、
-# 順番待ちの run が黙って差し替えられないようにする（`selftest.yml` の頭に経緯）
+# Selftests と同じ。PR と作業枝は枝ごとに前の run を止めてよい（何人もが同じ作業枝に続けて push する）。
+# master は sha ごとに別の group にして、順番待ちの run が黙って差し替えられないようにする（`selftest.yml` の頭に経緯）
 concurrency:
-  group: shorts-selftest-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: shorts-selftest-${{ github.ref != 'refs/heads/master' && github.event_name != 'workflow_dispatch' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && github.event_name != 'workflow_dispatch' }}
 
 permissions:
   contents: read
 
 jobs:
-  shorts-selftest:
+  render:
+    name: 書き出し・品質チェックの見張り
     runs-on: ubuntu-24.04
     # 2本で7〜9分（4コアの箱で、ほかの書き出しと並んで 232秒と 252秒。2026-10-19）。
     # 道具を入れるのに1分ほど。倍以上の余裕を見る
@@ -166,6 +182,40 @@ jobs:
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/footage/footage_selftest.py
 
+  tools:
+    name: 原稿・帳面・取り込みの見張り
+    runs-on: ubuntu-24.04
+    # 帳面の3本は数秒、頼む1枚（brief_selftest）は数分、残りを find で拾う step が 6〜7分（2026-11-26）
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # ffmpeg はランナーに入っていない。書体は M PLUS（書き出しの本物）を落とさず、
+      # DejaVu を見張りが同じ名前で置き直して使う（検査は字の形を見ない。和文は豆腐になる）。
+      # OpenCV は **5 未満**に止める。顔の検出に使う Haar の型が OpenCV 5 で削られた
+      # （5.0.0 の wheel に `cv2.data.haarcascades` の中身も `CascadeClassifier` も無い）。
+      # budoux は**要る**（書き出しが行を割り、字の改行の検査 line_breaks が割ってよい所を決める。無いと書き出しが止まる）。
+      # 版は 0.9.3 に止める。割ってよい所の線（仮名どうしの点）をこの版で測った。版が変わると文節の切れ目が変わり
+      # （0.10.0 は「あり？なし？」「手間すぎるやろ」を 0.9.3 と違う所で切った）、書き出しの Actions（shorts_render.yml）と
+      # 作業箱の版とも食い違う（tools/shorts/qa/linebreak.py の BUDOUX_PIN）。
+      # PyYAML は取り込みの判定の見張り（`ingest/gate_selftest.py`）が自分のワークフローを
+      # 読むのに要る。Selftests は入れているので、あちらでは落ちずにここだけ落ちていた
+      # 2026-10-23 に、ここの apt が止まって job の上限20分まで動かず、見張りが1本も回らなかった（#1015）。
+      # 取り込み・書き出しと同じく、コマンドごとに上限を置いて1回だけ取り直し（retry.sh）、ffmpeg は
+      # ffmpeg.sh（入っていれば apt に触らない・man-db の索引を止める・詰まったら静的ビルド）で入れる
+      - name: 道具を入れる（ffmpeg・OpenCV 4）
+        timeout-minutes: 12
+        run: |
+          R="bash tools/shorts/ingest/retry.sh"
+          bash tools/shorts/ingest/ffmpeg.sh fonts-dejavu-core
+          ffmpeg -version > /dev/null
+          $R 180 python -m pip install --upgrade pip
+          $R 300 pip install 'opencv-python-headless==4.12.0.88' numpy Pillow 'budoux==0.9.3' PyYAML
+
       # あやとの指摘の帳面（2026-10-21）。原稿の機械の検査（`tools/shorts/script/lint.py`）・帳面の形と名指し・
       # 取りこぼしの見張り（`tools/shorts/feedback/watch.py`）の3本。Python だけで数秒。Selftests でも回し役が拾う
       # （帳面を書き崩した PR は、ショートを触っていなくても止まる）が、ショートの道具が全部緑かをここで1つに読めるように名指しする
@@ -180,6 +230,33 @@ jobs:
       - name: 帳面の取りこぼしの見張りの見張り
         if: ${{ !cancelled() }}
         run: python3 tools/shorts/feedback/watch_selftest.py
+
+      # 2回以上言われた指摘・絶対の決まりが、当てる場所にコードに在る機械の名前を持つか（2026-11-27）。
+      # いまの違反は控え（tools/shorts/feedback/unguarded.txt）にあり、減ることしか許さない
+      - name: あやとの指摘の帳面の検査（形・機械の関所・控え）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/feedback/ledger.py --check
+
+      # 作文者・本編集・批評役・視聴者役・事実の確かめ役の1枚（`brief.py`）。上限を越えた1枚を渡さないか・
+      # 本物の回の本編集の1枚が2万字以下か。対照 80本ほどを子で並べて回す（数分）
+      - name: 頼む1枚の見張り（上限・帳面・字幕の伏せ字）
+        if: ${{ !cancelled() }}
+        run: python3 tools/shorts/script/brief_selftest.py
+
+      # 名指しで回すつもりで find から外した見張りに、名指しの step があるか（外しただけで、どこからも走らない、を作らない）
+      - name: 名指しで外した見張りが、どれかの job で走っているか
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          wf=.github/workflows/shorts_selftest.yml
+          bad=0
+          for p in $(grep -o "! -path 'tools/[a-z_/]*[.]py'" "$wf" | sed "s/! -path '//;s/'$//"); do
+            if ! grep -qE "^ +run: python3 $p\$" "$wf"; then echo "::error::$p は find から外してあるのに、名指しの step が無い"; bad=1; fi
+            if [ ! -f "$p" ]; then echo "::error::$p が無い（名前が変わったなら、ここを直す）"; bad=1; fi
+          done
+          n=$(find tools/shorts -name '*_selftest.py' | wc -l)
+          echo "tools/shorts の見張り ${n}本（名指し $(grep -o "! -path 'tools/[a-z_/]*[.]py'" "$wf" | wc -l)本・残りは下の find で全部）"
+          exit "$bad"
 
       # 取り込みの見張りは Selftests でも走るが、ショートを触った PR では
       # ここにも並べておく（ショートの道具が全部緑か、を1つの run で読めるように）。
@@ -198,6 +275,7 @@ jobs:
             ! -path 'tools/shorts/render/talk_selftest.py' ! -path 'tools/shorts/render/polish_selftest.py' \
             ! -path 'tools/shorts/script/lint_selftest.py' ! -path 'tools/shorts/feedback/ledger_selftest.py' \
             ! -path 'tools/shorts/feedback/watch_selftest.py' ! -path 'tools/shorts/footage/footage_selftest.py' \
+            ! -path 'tools/shorts/script/brief_selftest.py' \
             -print0 | sort -z)
           if [ "${#found[@]}" -eq 0 ]; then
             echo "::error::tools/shorts の見張りを1本も拾えなかった"

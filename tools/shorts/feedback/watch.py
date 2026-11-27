@@ -7,6 +7,7 @@
     python3 tools/shorts/feedback/watch.py --from 置き場.json   # 置いておいたもので突き合わせる（issue は読みに出ない）
     python3 tools/shorts/feedback/watch.py --ledger 写し.md      # 帳面をこのファイルにする（何本でも。合わせて数える）
     python3 tools/shorts/feedback/watch.py --branches --apply  # issue を開く／書き換える／閉じる
+    python3 tools/shorts/feedback/watch.py --guard [--apply]   # 帳面の形と機械の関所（ledger.py --check）を数え、別の issue に合わせる
 
 終了コード **0=全部入っている / 1=帳面に入っていないあやとのコメントがある / 2=数えられなかった**
 （GitHub に届かない・帳面を1つも読めない・札 `shorts` の issue か、あやとのコメントが1つも無い。
@@ -73,6 +74,9 @@ TITLE = "【見張り】ショートへのあやとの指摘が帳面に入っ�
 WORKFLOW_FILE = "shorts_feedback_watch.yml"
 CALL = "あやと島案内鳥が呼んでいます"
 GRACE_HOURS = 3.0
+# 帳面の形と機械の関所（`ledger.py --check`）の見張り（2026-11-27）。札は同じ、印と題で別の1本
+GUARD_MARK = "<!-- shorts-ledger-guard -->"
+GUARD_TITLE = "【見張り】ショートの帳面: 2回以上言われた指摘が、機械の関所を持っていない"
 PER_PAGE = 100
 
 
@@ -272,6 +276,48 @@ def run(gh, a: dict, apply: bool) -> dict:
     return run_watch.apply_plan(gh, what, issue, TITLE, want, LABEL, log=logger)
 
 
+def guard_survey(path, allow_path) -> dict:
+    """帳面の形と機械の関所の崩れ（`ledger.py --check` と同じもの）。読めなければ down は None。"""
+    try:
+        led = ledger.load(path)
+        allow = Path(allow_path).read_text(encoding="utf-8")
+    except OSError as e:
+        return {"down": None, "why": str(e)[:200], "problems": []}
+    probs = led.problems + ledger.guard(led, allow, ledger.code_names())[0]
+    return {"down": bool(probs), "why": "", "problems": probs}
+
+
+def guard_body(g: dict) -> str:
+    return "\n".join([
+        GUARD_MARK,
+        "",
+        f"**ショートの帳面（`{ledger.REL}`）の検査 `ledger.py --check` が {len(g['problems'])} 件で落ちています。**",
+        "",
+        "2回以上言われた指摘と「絶対」の決まりは、当てる場所にコードに在る機械の名前（`lint:`・`check:`・`brief:`・`post:`）を持つ。"
+        "持てない項目は控え（`tools/shorts/feedback/unguarded.txt`）に在るものだけで、控えは減ることしか許さない。",
+        "",
+        *[f"- {x}" for x in g["problems"]],
+        "",
+        "### 直しかた",
+        "",
+        "1. 控えに無い違反: その指摘を当てる機械の関所（lint の規則・check.py の検査・brief.py か post の GATES）を足し、"
+        "帳面の当てる場所に名前を書く。機械にできない項目は関所に `- **機械にできない理由:**` の欄を添える",
+        "2. 「もう違反していない」: 控えから、その行を消す",
+        "3. 手元で `python3 tools/shorts/feedback/ledger.py --check` が 0 を返せば、次の回でこの issue はひとりでに閉じる",
+    ]) + "\n"
+
+
+def guard_run(gh, g: dict, apply: bool) -> dict:
+    issues = gh.list_issues(LABEL)
+    issue = run_watch.find_issue(issues, GUARD_MARK)
+    want = guard_body(g) if g["down"] else ""
+    what = run_watch.decide(issue, want, g["down"])
+    if not apply:  # --guard の見るだけ
+        logger.info("--apply を付けていないので GitHub には書きません（付けると: %s）", run_watch.PLAN[what])
+        return {"action": "dry", "planned": what, "number": issue["number"] if issue else None}
+    return run_watch.apply_plan(gh, what, issue, GUARD_TITLE, want, LABEL, log=logger)
+
+
 def say(a: dict) -> None:
     if a["down"] is None:
         logger.error("数えられませんでした: %s（issue は開きも閉じもしません）", a["why"])
@@ -294,11 +340,32 @@ def main(argv=None, gh=None, now=None) -> int:
     ap.add_argument("--save", help="読んだ issue とコメントを置いておく")
     ap.add_argument("--grace-hours", type=float, default=GRACE_HOURS, help="書いてから何時間は数えないか")
     ap.add_argument("--apply", action="store_true", help="issue を実際に開く／書き換える／閉じる")
+    ap.add_argument("--guard", action="store_true", help="帳面の形と機械の関所（ledger.py --check）を数えて、別の issue に合わせる")
+    ap.add_argument("--allow", default=str(ledger.UNGUARDED), help="--guard の控え")
     a = ap.parse_args(argv)
 
     now = now or datetime.now(timezone.utc)
     token = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN") or ""
     gh = gh or Gh(os.getenv("GITHUB_REPOSITORY") or ledger.REPO, token)
+
+    if a.guard:
+        g = guard_survey((a.ledger or [str(ledger.PATH)])[0], a.allow)
+        if g["down"] is None:
+            logger.error("帳面か控えを読めませんでした: %s（issue は開きも閉じもしません）", g["why"])
+            return 2
+        for x in g["problems"]:
+            logger.warning("✕ %s", x)
+        logger.info("帳面の形と機械の関所: 崩れ %d件", len(g["problems"]))
+        if a.apply:
+            if not getattr(gh, "token", "x"):
+                logger.error("--apply には GITHUB_TOKEN が要ります")
+                return 2
+            try:
+                guard_run(gh, g, apply=True)
+            except (urllib.error.URLError, OSError, ValueError) as e:
+                logger.error("issue を合わせられませんでした（権限 issues: write を見る）: %s", str(e)[:200])
+                return 2
+        return 1 if g["down"] else 0
 
     issues = None
     try:

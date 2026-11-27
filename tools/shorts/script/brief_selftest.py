@@ -190,8 +190,9 @@ CUTS = {
                        "        return True\n", {"c_retouch"}, "いま見る原稿の行を引いている例も、批評役に見せる"),
     "c_retouch_mine": ("brief.py", '    mine = videos_of(video) + [p.partition("=")[0] for p in extra or [] if "=" in p]\n', "    mine = []\n",
                        {"c_retouch"}, "批評役の1枚に、いま見ている回の組も入れる"),
+    # 区間の外まで入れると、作文者の --spec の切り（w_caps）が効かず、配信を入れた批評役の1枚は上限（5万字）を越えて止まる（c_retouch）
     "ranges": ("brief.py", "        if not any(a - step < t <= b for a, b in ranges):\n", "        if False:\n",
-               {"ranges", "c_source"}, "区間の外の行まで入れる"),
+               {"ranges", "c_source", "c_retouch", "w_caps"}, "区間の外の行まで入れる"),
     "fill": ("brief.py", "    if left:\n", "    if False:\n", {"fill"}, "埋めていない所を見逃す"),
     "ayato": ("brief.py", '    if AYATO.search(why):\n', "    if False:\n", {"ayato"}, "【あやと】を付けない"),
     "ayato_num": ("brief.py", r"(?:\s*#\d+\s*)?の(題|骨|", "の(題|", {"ayato"},
@@ -200,7 +201,7 @@ CUTS = {
     "c_video": ("brief.py", "    if not videos and not extra:\n", "    if True:\n", {"c_source", "c_multi", "c_extra"},
                 "批評役の1枚に配信の字幕を入れない"),
     "c_cited": ("brief.py", '                pts.setdefault(cur, []).append(hms(m.group("t")))\n', "                pass\n",
-                {"c_ranges", "c_source", "c_multi"}, "spec の why・src の時刻を読まない"),
+                {"c_ranges", "c_source", "c_multi", "w_caps"}, "spec の why・src の時刻を読まない（作文者の --spec の切りも効かない）"),
     "c_merge": ("brief.py", "        if out and a <= out[-1][1]:\n", "        if False:\n", {"c_ranges"}, "重なる区間をまとめない"),
     "c_leak": ("brief.py", "            if any(n[i:i + k] in body for i in range(len(n) - k + 1)):\n", "            if False:\n",
                {"c_leak"}, "雛形が対照の行を引いても見逃す"),
@@ -235,6 +236,18 @@ CUTS = {
                     "型が無いとき、選ぶための並びを出さない"),
     "e_seal": ("brief.py", 'SHEETS = re.compile(r"/sheets\\.enc(\\.\\d{3})?$")\n', 'SHEETS = re.compile(r"$^")\n', {"e_clips"},
                "コマ一覧の小さな封を見分けない"),
+    # ---- 2026-11-27: どの1枚も、上限を越えたら渡さない（帳面 F-101。前は本編集の1枚が「注意」を出して渡していた） ----
+    "cap_sheet": ("brief.py", "    if total > cap:\n", "    if False:\n", {"caps_sheets"}, "1枚の上限を見ない"),
+    "cap_edit": ("brief.py", '    sheet_gate("edit", parts)\n', "", {"caps_sheets"}, "本編集の1枚の上限を見ない（前の形）"),
+    "cap_critic": ("brief.py", '    sheet_gate("critic", parts)\n', "", {"caps_sheets"}, "批評役の1枚の上限を見ない（前の形）"),
+    "cap_viewer": ("brief.py", '    sheet_gate("viewer", {', '    dict({', {"caps_sheets"}, "視聴者役の1枚の上限を見ない"),
+    "cap_fact": ("brief.py", '    sheet_gate("fact", {', '    dict({', {"caps_sheets"}, "事実の確かめ役の1枚の上限を見ない"),
+    "cap_fixed": ("brief.py", "    if cap is not None and len(text) > cap:\n", "    if False:\n", {"caps_fixed"},
+                  "固定の頼む文の上限を見ない"),
+    "cap_edit_tmpl": ("brief.py", "    fixed_text(EDIT_TMPL)   # 雛形そのものの上限（FIXED_MAX）\n", "", {"caps_fixed"},
+                      "本編集の雛形（editor_prompt.md）の上限を見ない"),
+    "cap_critic_tmpl": ("brief.py", "    fixed_text(CRITIC_TMPL)   # 雛形そのものの上限（FIXED_MAX）\n", "", {"caps_fixed"},
+                        "批評役の雛形（critic_prompt.md）の上限を見ない"),
 }
 
 VIDEOS = ROOT / "shorts/videos"
@@ -1317,6 +1330,60 @@ def leg_e_name(B):
             (f"勧める名前（{got}）は、頼んだことのある名前を飛ばした次（fra-a-v4）", got == "fra-a-v4")]
 
 
+# ---------- どの1枚も、上限を越えたら渡さない（2026-11-27、帳面 F-101） ----------
+
+def _stops(fn) -> str:
+    try:
+        fn()
+    except ValueError as e:
+        return str(e)
+    return ""
+
+
+def _lowered(table: dict, key: str, cap: int, fn) -> str:
+    real = table[key]
+    try:
+        table[key] = cap
+        return _stops(fn)
+    finally:
+        table[key] = real
+
+
+def leg_caps_sheets(B):
+    """本編集・批評役・視聴者役・事実の確かめ役の1枚が、上限を越えたら止まり、どの節が何字かを出す。"""
+    ep = Path("shorts/videos/CKJvprUMOgA")
+    e = _lowered(B.SHEET_MAX, "edit", 1000, lambda: B.build_edit_brief(ep, None, "", None, None))
+    c = _lowered(B.SHEET_MAX, "critic", 1000, lambda: B.build_critic(VUSD_NG, None, [], "x"))
+    v = _lowered(B.SHEET_MAX, "viewer", 100, lambda: B.build_viewer(VUSD_NG))
+    f = _lowered(B.SHEET_MAX, "fact", 100, lambda: B.build_fact(VUSD_NG, None, "VusdZVyjgjQ", ["VusdZVyjgjQ@0:00:00-0:05:00"], []))
+    return [("上限は 本編集 2万・作文者 2万・事実 2万・視聴者 6,000・批評役 5万（上げていない）",
+             B.SHEET_MAX == {"writer": 20000, "edit": 20000, "viewer": 6000, "fact": 20000, "critic": 50000}
+             and B.EDIT_MAX == B.SHEET_MAX["edit"]),
+            ("本編集の1枚: 越えたら止まり、帳面・原稿の表・雛形の字数を出す", all(k in e for k in ("上限 1,000字", "帳面", "原稿の表", "雛形"))),
+            ("批評役の1枚: 越えたら止まり、カードの字数を出す", "上限 1,000字" in c and "カード" in c),
+            ("視聴者役の1枚: 越えたら止まる", "上限 100字" in v and "原稿" in v),
+            ("事実の確かめ役の1枚: 越えたら止まり、字幕の字数を出す", "上限" in f and "字幕" in f),
+            ("上限の内なら止まらない（本編集・批評役・視聴者役）",
+             not _stops(lambda: B.build_edit_brief(ep, None, "", None, None)) and not _stops(lambda: B.build_critic(VUSD_NG, None, [], "x"))
+             and not _stops(lambda: B.build_viewer(VUSD_NG)))]
+
+
+def leg_caps_fixed(B):
+    """固定の頼む文（references/）は、ファイルごとに上限を持つ。越えたら、その雛形を使う1枚は作らない。"""
+    sizes = {k: len(B.fixed_text(B.REFS / k)) for k in B.FIXED_MAX}
+    over = {k: v for k, v in sizes.items() if v > B.FIXED_MAX[k]}
+    e = _lowered(B.FIXED_MAX, "editor_prompt.md", 100, lambda: B.build_edit_brief(Path("shorts/videos/CKJvprUMOgA"), None, "", None, None))
+    c = _lowered(B.FIXED_MAX, "critic_prompt.md", 100, lambda: B.build_critic(VUSD_NG, None, [], "x"))
+    v = _lowered(B.FIXED_MAX, "viewer_critic_prompt.md", 100, lambda: B.build_viewer(VUSD_NG))
+    return [(f"固定の頼む文 {len(sizes)}本が、それぞれの上限の内（{'・'.join(f'{k} {v:,}/{B.FIXED_MAX[k]:,}' for k, v in sizes.items())}）",
+             not over and len(sizes) == 6),
+            ("作文者の頼む文・見本の上限は、作文者の1枚の上限と同じ", B.FIXED_MAX["writer_prompt.md"] == B.WRITER_MAX["頼む文"]
+             and B.FIXED_MAX["writer_pairs.md"] == B.WRITER_MAX["見本"]),
+            ("editor_prompt.md が上限を越えたら、本編集の1枚を作らない", "editor_prompt.md" in e and "上限 100字" in e),
+            ("critic_prompt.md が上限を越えたら、批評役の1枚を作らない", "critic_prompt.md" in c),
+            ("viewer_critic_prompt.md が上限を越えたら、視聴者役の1枚を作らない", "viewer_critic_prompt.md" in v)]
+
+
 LEGS = {
     "cards": leg_cards, "full": leg_full, "replaced": leg_replaced, "grows": leg_grows, "holdout": leg_holdout,
     "ranges": leg_ranges, "fill": leg_fill, "ayato": leg_ayato,
@@ -1327,7 +1394,7 @@ LEGS = {
     "e_ledger": leg_e_ledger, "e_check": leg_e_check, "e_lines": leg_e_lines, "e_secs": leg_e_secs,
     "e_plan": leg_e_plan, "e_streams": leg_e_streams, "e_fill": leg_e_fill, "e_others": leg_e_others,
     "e_pick": leg_e_pick, "e_cmds": leg_e_cmds, "e_voice": leg_e_voice, "e_clips": leg_e_clips, "e_name": leg_e_name,
-    "e_type": leg_e_type}
+    "e_type": leg_e_type, "caps_sheets": leg_caps_sheets, "caps_fixed": leg_caps_fixed}
 
 
 class _Tee:

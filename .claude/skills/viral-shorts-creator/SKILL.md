@@ -139,6 +139,13 @@ spec の still は `H:MM:SS`（その回）か `videoId@H:MM:SS`（同じ置き�
 
 - **あやとの指摘: `references/ayato_feedback.md`**（指摘1つ＝1項目。決まり・直す前 → 直した後・当てる場所つき）。分類ごとの一覧は
   `python3 tools/shorts/feedback/ledger.py`。原稿の機械の検査は `tools/shorts/script/lint.py`（規則は帳面の ID を持つ）
+- **あやとの指摘を受けたら、帳面に足すのと同じ PR で機械の関所を足す。2回目からは人の目だけにしない**（2026-11-27）。
+  「言われた」が2行以上か「絶対」の項目は、当てる場所にコードに在る名前（`lint:<規則>`・`check:<検査>`・`brief:<札>`・`post:<関所>`）を持つ。
+  機械が当否を決められない項目（承認の読みかた・進めかた・好みの選択）は、担当が埋める欄や止まる段を関所にし、`- **機械にできない理由:**` を書く。
+  `python3 tools/shorts/feedback/ledger.py --check` が名前をコードから引いて確かめ、まだ持たない項目は控え `tools/shorts/feedback/unguarded.txt`
+  に在るものだけ通す（減ることしか許さない。直したら行を消す）。作業枝への push でも `shorts_selftest.yml` が回し、毎日 `shorts_feedback_watch.yml` が数える
+- **頼む1枚（`tools/shorts/script/brief.py`）は、上限を越えたら渡さない。** 作文者・本編集・事実の確かめ役 2万字・視聴者役 6,000字・批評役 5万字と、
+  固定の頼む文（`references/*_prompt.md`・`writer_pairs.md`）のファイルごとの上限。止まったら、出た節ごとの字数の大きい所から削る（上限は上げない。変えるときはチケットで）
 - 動画ごとの制作記録: `shorts/videos/<videoId>/`（企画・原稿・絵コンテ・編集指示書・投稿の URL・確かめる仮説）
 - **作り方の学び（本編集〜完成を見せるまで）: `references/production.md`。直しが出るたびに、決めたことと人の目の検査の表に足す**
 - **参考の見た目と音（書体・大きさ・位置・縁・色・動き・BGM の差）: `references/style_reference.md`。参考を渡されたら、台本だけでなくここも測ってから作る**（`docs/island-misses.md` #278）

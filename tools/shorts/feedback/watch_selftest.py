@@ -27,6 +27,7 @@
 | `apply_create` | 取りこぼしがあれば、題・札・待ちの札つきで issue を1本立てる。本文に URL、コメントの字は写さない |
 | `apply_close` | 取りこぼしが無くなれば、開いている issue を閉じる |
 | `apply_noop_unknown` | 数えられない日は、開いている issue を閉じない |
+| `guard_red` `guard_create` `guard_close` | `--guard`: 帳面の機械の関所が崩れていれば 1 で、別の題・印の issue を立てる。直れば、その1本だけを閉じる |
 """
 from __future__ import annotations
 
@@ -72,6 +73,10 @@ CUTS = {
     "body_url": ("watch.py", "        rows.append(f\"| #{e['issue']} {title} | {e['at'][:10]} | {e['url']} |\")\n",
                  "        rows.append(f\"| #{e['issue']} {title} | {e['at'][:10]} |\")\n",
                  {"apply_create"}, "本文に URL を書かない"),
+    "guard_probs": ("watch.py", "    probs = led.problems + ledger.guard(led, allow, ledger.code_names())[0]\n", "    probs = led.problems\n",
+                    {"guard_red", "guard_create"}, "--guard が機械の関所の崩れを数えない"),
+    "guard_mark": ("watch.py", "    issue = run_watch.find_issue(issues, GUARD_MARK)\n", "    issue = run_watch.find_issue(issues, MARK)\n",
+                   {"guard_close"}, "--guard が取りこぼしの見張りの issue と見分けない"),
     "apply_gate": ("watch.py", "    if not apply:\n        logger.info(", "    if True:\n        logger.info(",
                    {"apply_create", "apply_close"}, "--apply でも書かない"),
 }
@@ -271,6 +276,40 @@ def leg_apply_noop_unknown(b):
     return [("数えられない日（issue 0本）は 2 で、開いている issue を閉じない", rc == 2 and not f.patched and not f.made)]
 
 
+def guarded(b, ledger_text_, allow=""):
+    a = b.tmp / f"allow_{b.n}.txt"
+    a.write_text(allow, encoding="utf-8")
+    return ("--guard", "--allow", str(a))
+
+
+def two_said():
+    return ledger_text(feedback=[(975, 101), (975, 102)])
+
+
+def leg_guard_red(b):
+    return [("2回言われて人の目だけの項目が控えに無い → 1", b.run(Fake([]), two_said(), *guarded(b, two_said())) == 1),
+            ("控えに載っていれば → 0", b.run(Fake([]), two_said(), *guarded(b, two_said(), "F-001\n")) == 0)]
+
+
+def leg_guard_create(b):
+    f = Fake([])
+    rc = b.run(f, two_said(), *guarded(b, two_said()), "--apply")
+    title, text, label = f.made[0] if f.made else ("", "", "")
+    return [("--guard --apply で、崩れがあれば 1 で issue を1本立てる", rc == 1 and len(f.made) == 1),
+            ("題と印は取りこぼしの見張りと別（同じ札）", title == b.W.GUARD_TITLE and b.W.GUARD_MARK in text
+             and b.W.MARK not in text and label == b.W.LABEL),
+            ("本文に崩れた項目の ID と直しかた", "F-001" in text and "unguarded.txt" in text)]
+
+
+def leg_guard_close(b):
+    mine = {"number": 43, "state": "open", "body": b.W.GUARD_MARK + "\n前の本文", "labels": [b.W.LABEL, WAIT_US]}
+    other = {"number": 42, "state": "open", "body": b.W.MARK + "\n前の本文", "labels": [b.W.LABEL, WAIT_US]}
+    f = Fake([], existing=[other, mine])
+    rc = b.run(f, two_said(), *guarded(b, two_said(), "F-001\n"), "--apply")
+    return [("直れば、--guard の issue（43）だけを閉じ、取りこぼしの見張りの issue（42）には触らない",
+             rc == 0 and [n for n, _ in f.patched] == [43] and f.patched[0][1].get("state") == "closed")]
+
+
 LEGS = {
     "missing_red": leg_missing_red, "feedback_green": leg_feedback_green, "other_green": leg_other_green,
     "signed_ignored": leg_signed_ignored, "quoted_sig_counts": leg_quoted_sig_counts,
@@ -278,6 +317,7 @@ LEGS = {
     "branch_union": leg_branch_union, "grace": leg_grace, "zero": leg_zero, "no_ledger": leg_no_ledger,
     "unreachable": leg_unreachable, "apply_create": leg_apply_create, "apply_close": leg_apply_close,
     "apply_noop_unknown": leg_apply_noop_unknown,
+    "guard_red": leg_guard_red, "guard_create": leg_guard_create, "guard_close": leg_guard_close,
 }
 
 if __name__ == "__main__":

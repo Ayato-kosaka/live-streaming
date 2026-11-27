@@ -1046,7 +1046,8 @@ def build_critic(script: Path, spec: Path | None, refs: list, about: str, video=
                        + " / ".join(f"{n}「{ln}」" for n, ln in bad[:4]))
     # いま見ている回（--video と、--extra に回を書いた写し）の組は入れない（作文者の1枚と同じ）
     mine = videos_of(video) + [p.partition("=")[0] for p in extra or [] if "=" in p]
-    return fill(tmpl, {
+    fixed_text(CRITIC_TMPL)   # 雛形そのものの上限（FIXED_MAX）
+    text, parts = parts_of(tmpl, {
         "about": (about.strip() or "（まとめ役が1〜3行で書く: 誰の何の配信か・この案の狙い）") + aim_block(c),
         "n": str(len(c.lines)),
         "table": script_table(c, rows),
@@ -1055,7 +1056,9 @@ def build_critic(script: Path, spec: Path | None, refs: list, about: str, video=
         "ids": ids_line(),
         "refs": beats(refs) if refs else "（参考の指定なし）",
         "source": critic_source(video, ranges or [], rows, extra or []),
-    })
+    }, {"cards": "カード", "table": "原稿の表", "lint": "lint", "refs": "参考の拍", "source": "字幕"})
+    sheet_gate("critic", parts)
+    return text
 
 
 # ---------- 作文者へ ----------
@@ -1069,10 +1072,67 @@ WRITER_MAX = {"頼む文": 6000, "見本": 3000, "材料": 8000}
 WRITER_TOTAL = 20000
 WRITER_PAD = 30   # spec・plan に書いた時刻の前後に足す秒（30秒ごとの字幕なら前後1行ずつ）
 
+# ---------- 1枚の上限（2026-11-27、帳面 F-101） ----------
+#
+# 前は作文者の1枚だけが止まり、本編集の1枚は上限の2万字を越えても「注意」を出して渡していた（見張りの中でしか効かなかった）。
+# 批評役の1枚には上限が無かった。**どの1枚も、上限を越えたら渡さない**（どの節が何字かを出して、終了コード 2 で止まる）。
+# 固定の頼む文（references/ の雛形）も、ファイルごとに上限を置く。雛形が膨らむと、どの回の1枚も一緒に膨らむから。
+# 上限は MARK より下の、担当に渡る字で数える。上げるときはチケットで（前後はコミットに残る）
+FIXED_MAX = {
+    "writer_prompt.md": 6000,          # = WRITER_MAX["頼む文"]
+    "writer_pairs.md": 3000,           # = WRITER_MAX["見本"]
+    "viewer_critic_prompt.md": 3000,   # = VIEWER_MAX
+    "fact_check_prompt.md": 2000,      # = FACT_MAX
+    "editor_prompt.md": 10000,         # 本編集の1枚（2万字）の半分まで。残りは回ごとの表・素材・帳面
+    "critic_prompt.md": 9000,
+}
+SHEET_MAX = {
+    "writer": WRITER_TOTAL,
+    "edit": 20000,     # = EDIT_MAX（#1011）
+    "viewer": 6000,    # 頼む文 3,000 ＋ 題の札と原稿の行と画の短い説明
+    "fact": 20000,     # 頼む文 2,000 ＋ 原稿 ＋ 字幕（16,000 まで）。F-101 の「合わせて2万字」
+    # 批評役（流れでは使わない前の関所）はカードを全文で入れるので、ほかより大きい。越えたら、カードか字幕を削る
+    "critic": 50000,
+}
+# 機械の関所の名前。帳面の当てる場所が `brief:<名前>` で名指す（`ledger.py --check` がこの鍵を引いて、在るかを見る）
+GATES = {
+    "writer_size": "作文者の1枚: 頼む文 6,000・見本 3,000・材料 8,000・合わせて 2万字を1つでも越えたら渡さない",
+    "edit_size": "本編集の1枚: 2万字を越えたら渡さない（節ごとの字数を出す）",
+    "critic_size": "批評役の1枚: 5万字を越えたら渡さない",
+    "viewer_size": "視聴者役の1枚: 6,000字を越えたら渡さない",
+    "fact_size": "事実の確かめ役の1枚: 2万字を越えたら渡さない",
+    "fixed_size": "固定の頼む文（references/*_prompt.md・writer_pairs.md）が、ファイルごとの上限を越えたら、どの1枚にも入れない",
+    "no_chat": "作文者の1枚にチャットの本文を入れない（帳面 F-048）",
+    "read_mask": "字幕の中の、本人が読み上げた視聴者さんの書き込みを伏せる（帳面 F-048）",
+    "tool_calls": "本編集の雛形に書いた道具と引数が、いまの道具に在る（無ければ作らない）",
+}
+
+
+def sheet_gate(who: str, parts: dict) -> None:
+    """1枚の上限。越えたら、節ごとの字数を出して止まる（ValueError）。parts は 節 → 字（合わせて1枚の全部）。"""
+    total, cap = sum(parts.values()), SHEET_MAX[who]
+    if total > cap:
+        sizes = "・".join(f"{k} {v:,}字" for k, v in sorted(parts.items(), key=lambda kv: -kv[1]))
+        raise ValueError(f"{who} の1枚が {total:,}字で、上限 {cap:,}字を越えた — {sizes}（大きい節から削る。上限は上げない）")
+
+
+def parts_of(tmpl: str, values: dict, names: dict) -> tuple:
+    """雛形に埋めた1枚と、節ごとの字数（names に載せた欄はその名前で、残りは「雛形」にまとめる）。"""
+    text = fill(tmpl, values)
+    parts = {names[k]: len(v) * fill(tmpl, {kk: ("\0" if kk == k else "") for kk in values}).count("\0")
+             for k, v in values.items() if k in names}
+    parts["雛形"] = len(text) - sum(parts.values())
+    return text, parts
+
 
 def fixed_text(path: Path) -> str:
-    """固定のファイルのうち、線（MARK）より後ろ（担当に渡る字）。"""
-    return path.read_text(encoding="utf-8").split(MARK, 1)[-1].strip("\n") + "\n"
+    """固定のファイルのうち、線（MARK）より後ろ（担当に渡る字）。`FIXED_MAX` に載ったファイルが上限を越えたら止まる。"""
+    text = path.read_text(encoding="utf-8").split(MARK, 1)[-1].strip("\n") + "\n"
+    cap = FIXED_MAX.get(path.name) if path.parent == REFS else None
+    if cap is not None and len(text) > cap:
+        raise ValueError(f"固定の頼む文 {path.name} が {len(text):,}字で、上限 {cap:,}字を越えた"
+                         "（決まりの中身を変えずに削る。変えるときはチケットで。帳面 F-101）")
+    return text
 
 
 def plan_points(plan: Path, videos: list) -> dict:
@@ -1189,7 +1249,9 @@ def build_viewer(script: Path, spec: Path | None = None) -> str:
     for i, (ln, r) in enumerate(rows, 1):
         vis = visual_text(str(r.get("visual") or ""))
         out.append(f"{i}. {ln}" + (f"｜画: {vis}" if vis else ""))
-    return tmpl + "\n".join(out) + "\n"
+    body = "\n".join(out) + "\n"
+    sheet_gate("viewer", {"頼む文": len(tmpl), "原稿": len(body)})
+    return tmpl + body
 
 
 def build_fact(script: Path, spec: Path | None, video, ranges: list, extra: list) -> str:
@@ -1205,7 +1267,9 @@ def build_fact(script: Path, spec: Path | None, video, ranges: list, extra: list
     mat = material(video, ranges, "", extra, use_spec if not ranges else None)
     if len(mat) > WRITER_MAX["材料"] * 2:
         raise ValueError(f"字幕が {len(mat):,}字で、上限 {WRITER_MAX['材料'] * 2:,}字を越えた（spec の why に根拠の時刻を書くか、--range を狭める）")
-    return tmpl + "\n".join(out) + "\n\n" + mat + "\n"
+    body = "\n".join(out) + "\n\n"
+    sheet_gate("fact", {"頼む文": len(tmpl), "原稿": len(body), "字幕": len(mat) + 1})
+    return tmpl + body + mat + "\n"
 
 
 # ---------- 本編集の担当へ（edit） ----------
@@ -1213,7 +1277,8 @@ def build_fact(script: Path, spec: Path | None, video, ranges: list, extra: list
 # 本編集の段に効く分類。題のうち「札」（書き出しで焼く題の札）の決まりも、ここで当てる（F-015・F-030・F-043）
 EDIT_CATS = ("画", "音", "投稿")
 CARD_WORD = "札"
-EDIT_MAX = 20000   # 1枚の字数の上限（#1011）。越えたら雛形か抜き出しを削る。担当が毎回の呼び出しで読み直す量
+EDIT_DO = 80       # 帳面の項目の「する」の1行の字数（2026-11-27 に 100 → 80。フランス A の1枚が 19,972字で、上限の2万字まで28字だった）
+EDIT_MAX = 20000   # 1枚の字数の上限（#1011）。越えたら雛形か抜き出しを削る。担当が毎回の呼び出しで読み直す量（SHEET_MAX["edit"]。越えたら止まる）
 # 企画の節のうち、本編集で読む小節の見出し。ほかは原稿の段の記録（拍の写し・【足】・確かめた事実）と往復の記録
 EDIT_HEADS = re.compile(r"本編集|書き出し|取り込み|似た見た目|(?<!企)画|0秒目|冒頭|決めごと|決定|あやとの直し|気をつけ|素材|カット|^声$|投稿")
 PAT_HEAD = re.compile(r"^## ([A-Z])[\s　]")
@@ -1279,7 +1344,7 @@ def rule_do(it, width: int = 100) -> str:
 
 
 def edit_ledger_block(led=None) -> str:
-    """帳面の画・音・投稿（と題の札）の項目。検査が落とす項目は名前だけ、人が当てる項目は「する」の1行つき。"""
+    """帳面の画・音・投稿（と題の札）の項目。検査が落とす項目は名前だけ、人が当てる項目は題の1行（2回以上・絶対の項目は「する」の1行つき）。"""
     items = edit_items(led)
     machine = [it for it in items if check_only(it)]
     out = []
@@ -1287,7 +1352,10 @@ def edit_ledger_block(led=None) -> str:
         if it in machine:
             continue
         times = f"（{it.times}回）" if it.times > 1 else ""
-        out.append(f"- **{it.id}**（{it.category}）{it.title}{times}\n  する: {rule_do(it)}")
+        # 「する」の1行は、2回以上言われたか「絶対」の項目だけ（2026-11-27。全部に付けると帳面が増えるたびに1枚が2万字を越えた。
+        # 1回の項目は題の1行が決まりで、全文は帳面にある）
+        do = f"\n  する: {rule_do(it, EDIT_DO)}" if ledger_mod.guard_target(it) else ""
+        out.append(f"- **{it.id}**（{it.category}）{it.title}{times}{do}")
     if machine:
         out.append("- 検査が見る（`check.py` が落とす。`summary.json` の合否を読むだけ）: "
                    + "・".join(f"{it.id} {'/'.join(sorted(it.checks))}" for it in machine))
@@ -1643,8 +1711,9 @@ def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str |
         where.append(f"- 企画（`{rel(plan)}`）が無い")
 
     tmpl = EDIT_TMPL.read_text(encoding="utf-8")
+    fixed_text(EDIT_TMPL)   # 雛形そのものの上限（FIXED_MAX）
     check_tools(tmpl.split(MARK, 1)[-1])
-    return fill(tmpl, {
+    text, parts = parts_of(tmpl, {
         "about": about.strip() or "（まとめ役が1〜3行で書く: 何の回のどの案か・この版で何をするか（初めての本編集／前の版の直し）・期限）",
         "where": "\n".join(where),
         "secs_from": (f"書き出した指示書 `{files['指示書'].name}` の実際の秒" if real
@@ -1657,7 +1726,9 @@ def build_edit_brief(episode: Path, pattern: str | None, about: str, name: str |
         "ep": rel(vdir), "pat_arg": f" --pattern {pattern}" if pattern else "",
         "spec": "$V/" + files["spec"].name, "ov": "$V/" + files["上書き"].name, "edit": "$V/" + files["指示書"].name,
         "vl": "$V/" + files["声の字"].name, "qa": "$V/" + files["検査の記録"].name,
-    })
+    }, {"where": "置き場", "table": "原稿の表", "material": "素材", "ledger": "帳面", "axis": "回の型"})
+    sheet_gate("edit", parts)
+    return text
 
 
 def main() -> int:
@@ -1736,8 +1807,6 @@ def main() -> int:
     except (OSError, KeyError, ValueError) as e:
         print(f"作れない: {e}", file=sys.stderr)
         return 2
-    if a.who == "edit" and len(text) > EDIT_MAX:
-        print(f"注意: 1枚が {len(text):,}字で、上限 {EDIT_MAX:,}字を越えた（雛形か抜き出しを削る）", file=sys.stderr)
     if a.out:
         Path(a.out).write_text(text, encoding="utf-8")
         print(f"{a.out}（{len(text):,}字）")

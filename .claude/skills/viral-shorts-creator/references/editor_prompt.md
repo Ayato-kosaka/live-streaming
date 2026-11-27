@@ -61,8 +61,7 @@
      区間ごと・2秒に1コマ。帯は「配信の時刻＋mp4 の中の秒」（例 `0:04:15 +0s`）。縦長は 6×5（1枚60秒）・横長は 5×6。同じ所に `sheets.csv`・`index.json`。
      **この形で取れるのは 62c63c0e より後に頼んだ clips だけ。** 「古い形」の配信は、下の mp4 を開いて手元で作る
      （`mkdir -p $S/sheets && ffmpeg -loglevel error -i <窓の mp4> -vf "fps=0.5,scale=240:-1,tile=6x5" $S/sheets/<番号>_%02d.jpg`。1枚 60秒ぶん）
-   - **mp4**（指示書を組む・書き出す・カクつきを測るのに要る）: **作業枝は `git fetch` しない**（ほかの担当の clips の暗号文まで落ちて
-     箱のディスクが 0 になった。2026-11-26）。API でこの回の置き場だけ取る:
+   - **mp4**（指示書を組む・書き出す・カクつきを測るのに要る）: **作業枝は `git fetch` しない**（箱のディスクが埋まる）。API でこの回の置き場だけ取る:
      `python3 tools/shorts/ingest/decrypt.py --key $K --out $S/ingest --branch claude/serene-darwin-sf09tt shorts/.work/<videoId>/clips`
      （鍵違いは開かない。開いたら `$S/ingest/.sealed` の封の写しは消す。mp4 も使い終わったら消す）
    - **「下ろしてある」配信**: 書いてあるコミットの木から戻して開く。`git restore --source <コミット> -- shorts/.work/<videoId>/clips`
@@ -137,7 +136,7 @@
 
 ## EC2 の札（列 `fish`）
 
-fish の Chrome は声の担当と TikTok の担当が使い回す（同時に触ると下書きと入力欄を取り合う。10-24 に起きた）。**列 `fish` の札で1人ずつ**（`ec2-chrome` の 2.5）。
+fish の Chrome は声の担当と TikTok の担当が使い回す（同時に触ると下書きと入力欄を取り合う）。**列 `fish` の札で1人ずつ**（`ec2-chrome` の 2.5）。
 見る `python3 $E queue`。声と TikTok の道具は札を自分で取り、空くまで待つ。
 手で何手も触るなら `python3 $E hold fish --who <名前> --purpose '<何のため>' -- <コマンド>`。
 `backup` → `state` → `gen` を続けて守るなら `&&` でつないだ1本の sh を `nohup /usr/local/sbin/ec2-queue hold fish --who <名前> --purpose '声 <回>' -- sh -c '<つないだもの>' > <ログ> 2>&1 &`。

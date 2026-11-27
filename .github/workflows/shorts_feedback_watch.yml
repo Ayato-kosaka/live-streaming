@@ -30,6 +30,14 @@ name: ショートへのあやとの指摘を帳面と突き合わせる
 # 1日1回。あやとの返事は日本の昼に来るので、その日の分が入ったかを夜（JST 23時台）に見る。
 # cron はこのリポジトリでは何時間も遅れて走る（`python3 python/cron_lag.py`）。遅れても1日1回見られれば足りる。
 #
+# ## 帳面の機械の関所も、毎日見る（2026-11-27）
+#
+# 2回以上言われた指摘と「絶対」の決まりが、当てる場所にコードに在る機械の名前を持つか（`ledger.py --check`）を、
+# 最後の step で数える（`watch.py --guard`）。落ちたら、同じ札で別の題の issue
+# 「【見張り】ショートの帳面: 2回以上言われた指摘が、機械の関所を持っていない」を1本だけ開き、直れば閉じる。
+# 取りこぼしの step が赤でも回す（`!cancelled()`）。ショートの見張り（`shorts_selftest.yml`）は push のたびに同じ検査を回すが、
+# あちらは帳面を触った枝でしか走らない。こちらは毎日、既定の枝を見る。
+#
 # ## 手で押すときの既定は「見るだけ」
 #
 # `apply` の既定は false（数えて赤くするだけで、issue には書かない）。cron のぶんは読む人がいないので apply。
@@ -114,6 +122,30 @@ jobs:
               echo "### 数えられませんでした"
               echo ""
               echo '取りこぼしが無かった、という意味ではありません。issue は開きも閉じもしていません。'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$rc"
+
+      - name: 帳面の機械の関所を数える（2回以上言われた指摘が、人の目だけになっていないか）
+        if: ${{ !cancelled() }}
+        env:
+          APPLY: ${{ github.event_name == 'workflow_dispatch' && inputs.apply || github.event_name != 'workflow_dispatch' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          rc=0
+          if [ "$APPLY" = "true" ]; then
+            python3 tools/shorts/feedback/watch.py --guard --apply || rc=$?
+          else
+            python3 tools/shorts/feedback/watch.py --guard || rc=$?
+          fi
+          echo "終了コード: $rc（0=揃っている / 1=機械の関所の崩れがある / 2=読めなかった）"
+          if [ "$rc" = "1" ]; then
+            {
+              echo "### 2回以上言われた指摘が、機械の関所を持っていません"
+              echo ""
+              echo '`python3 tools/shorts/feedback/ledger.py --check` の一覧を直す（控えは `tools/shorts/feedback/unguarded.txt`。減ることしか許さない）。'
+              echo '一覧は、上の step のログと、見張りの issue（`shorts-feedback` の札）にあります。'
             } >> "$GITHUB_STEP_SUMMARY"
           fi
           exit "$rc"

@@ -26,6 +26,14 @@
 | `dup_id` `missing_field` `category` `date` `place` `order` | それぞれの崩れを、こしらえた帳面で拾う |
 | `both_sections` | 同じコメントが「指摘」と「指摘ではない」の両方に在るのを拾う |
 | `outside_sections` | 前書きに書いた URL は、入っているコメントに数えない |
+| `guard_real` | 本物の帳面と控え（`unguarded.txt`）と本物のコード: 機械の関所の崩れが0 |
+| `guard_drop` `guard_new` | 控えから1行消すと落ちる／控えに無い違反（2回言われて人の目だけ）を1つ足すと落ちる |
+| `guard_stale` `guard_frozen` | 直った項目が控えに残ると落ちる／締めの日より後に言われた項目は控えに在っても落ちる |
+| `guard_names` `guard_reason` `guard_absolute` | コードに無い名前・関所だけで理由の無い項目を拾う／1回でも「絶対」は対象 |
+| `guard_cli` | `ledger.py --check` が、控えから1行消した写しで 1 を返す |
+
+4. **2回目からは、人の目だけにしない**（2026-11-27）。「言われた」が2行以上か「絶対」の項目は、当てる場所に
+   コードに在る機械の名前（`lint:`・`check:`・`brief:`・`post:`）を持つ。いまの違反は控えに載せ、減ることしか許さない
 """
 from __future__ import annotations
 
@@ -40,7 +48,8 @@ import legs  # noqa: E402
 CHECK_PY = ROOT / "tools/shorts/qa/check.py"
 WIRES = (
     (".claude/skills/viral-shorts-creator/SKILL.md", ("references/ayato_feedback.md", "tools/shorts/script/lint.py")),
-    (".claude/skills/viral-shorts-creator/references/script_writing.md", ("ayato_feedback.md", "| (h) |", "tools/shorts/script/lint.py")),
+    # (h) の表は #1457（2026-11-26）で批評役が視聴者役と事実の確かめ役に分かれたときに消えた。残る (h) の段を名指す
+    (".claude/skills/viral-shorts-creator/references/script_writing.md", ("ayato_feedback.md", "（(h)）", "tools/shorts/script/lint.py")),
     (".claude/skills/hand-off/SKILL.md", ("ayato_feedback.md",)),
     ("docs/island-misses.md", ("ayato_feedback.md",)),
 )
@@ -62,6 +71,21 @@ CUTS = {
              {"date"}, "日付の無い項目を通す"),
     "place": ("ledger.py", "        if it.place and not (it.lint or it.checks or CRITIC in it.place or HUMAN in it.place):\n",
               "        if False:\n", {"place"}, "当てる場所の無い項目を通す"),
+    # ---- 2回目からは人の目だけにしない（2026-11-27） ----
+    "g_allow": ("ledger.py", "        if fid not in allow:\n", "        if False:\n", {"guard_drop", "guard_new", "guard_cli"},
+                "控えに無い違反を通す"),
+    "g_stale": ("ledger.py", "        elif fid not in bad:\n", "        elif False:\n", {"guard_stale"}, "直った項目が控えに残っても通す"),
+    "g_frozen": ("ledger.py", "        elif led.items[fid].last_date > GUARD_FROZEN:\n", "        elif False:\n", {"guard_frozen"},
+                 "締めの日より後に言われた項目も控えで逃がす"),
+    "g_names": ("ledger.py", '    out = [f"`{k}:{n}` がコードに無い" for k, n in sorted(it.machine) if n not in names.get(k, set())]\n',
+                "    out = []\n", {"guard_names"}, "コードに無い名前を見ない"),
+    "g_reason": ("ledger.py", '        elif not kinds & set(JUDGES) and not it.fields.get(REASON, "").strip():\n', "        elif False:\n",
+                 {"guard_reason"}, "関所だけの項目に理由を求めない"),
+    "g_nomachine": ("ledger.py", "        if not kinds:\n", "        if False:\n", {"guard_new"}, "機械の名前の無い項目を、名前が無いと言わない"),
+    "g_target": ("ledger.py", '    return it.times >= 2 or "絶対" in it.title or "絶対" in it.fields.get("決まり", "")\n',
+                 "    return it.times >= 2\n", {"guard_absolute", "guard_real"}, "1回の「絶対」を対象にしない"),
+    "g_exit": ("ledger.py", "        return 1 if led.problems or gprobs else 0\n", "        return 1 if led.problems else 0\n",
+               {"guard_cli"}, "`--check` が機械の関所の崩れで落ちない"),
     "lint_token": ("ledger.py", "LINT = re.compile(r\"`lint:([A-Z]-[A-Z]+)`\")", "LINT = re.compile(r\"(?!x)x\")",
                    {"lint_link", "real_ledger"}, "帳面の `lint:` を読まない"),
 }
@@ -207,10 +231,119 @@ def leg_outside_sections(c):
             ("指摘の節（1）と指摘ではない節（3）は数える", set(led.refs()) == {1, 3})]
 
 
+# ---- 2回目からは、人の目だけにしない（2026-11-27） ----
+NAMES = {"lint": {"L-NICK"}, "check": {"cut_length"}, "brief": {"edit_size"}, "post": set()}
+
+
+def said(n: int, date: str = "2026-10-21") -> str:
+    return "\n  - ".join(f"{date} #975 {U.format(975, 100 + i)}" for i in range(n))
+
+
+def guard(c, items, allow="", names=NAMES):
+    return c.ledger.guard(c.ledger.parse(ledger_text(items)), allow, names)[0]
+
+
+def why(c, one, names=NAMES):
+    """1項目が違反している理由（控えと突き合わせる前）。"""
+    return c.ledger.unguarded(c.ledger.parse(ledger_text([one])).items["F-001"], names)
+
+
+def leg_guard_real(c):
+    led = c.ledger.load()
+    allow = c.ledger.UNGUARDED.read_text(encoding="utf-8")
+    probs, bad = c.ledger.guard(led, allow, c.ledger.code_names())
+    n = sum(c.ledger.guard_target(it) for it in led.items.values())
+    return [(f"本物の帳面と控えと本物のコード: 機械の関所の崩れが無い（対象 {n}項目・控え {len(bad)}行）"
+             + (f" ← {probs[:3]}" if probs else ""), not probs),
+            ("対象の項目が1つ以上ある（0 を答えにしない）", n > 0),
+            ("本物のコードから名前を引ける（lint の L-NICK・check.py の cut_length・brief.py の edit_size）",
+             all(x in c.ledger.code_names()[k] for k, x in (("lint", "L-NICK"), ("check", "cut_length"), ("brief", "edit_size"))))]
+
+
+def leg_guard_drop(c):
+    led = c.ledger.load()
+    allow = c.ledger.UNGUARDED.read_text(encoding="utf-8")
+    rows = [ln for ln in allow.splitlines() if ln.startswith("F-")]
+    if not rows:
+        return [("控えが空（全部直った）。消す行が無いので、こしらえた控えで見る",
+                 any("控えに無い" in p for p in guard(c, [item(said=said(2))], "")))]
+    cut = allow.replace(rows[0] + "\n", "", 1)
+    probs = c.ledger.guard(led, cut, c.ledger.code_names())[0]
+    return [(f"控えから {rows[0][:5]} を消すと落ちる", any(rows[0][:5] in p and "控えに無い" in p for p in probs))]
+
+
+def leg_guard_new(c):
+    two = item(said=said(2))
+    return [("2回言われて人の目だけの項目が、控えに無ければ落ちる（機械の名前が無い、と言う）",
+             any("F-001" in p and "機械の名前" in p for p in guard(c, [two], ""))),
+            ("同じ項目を控えに載せれば通る", not guard(c, [two], "F-001  画  決まり\n")),
+            ("`check:cut_length` を持てば、控え無しで通る", not guard(c, [item(said=said(2), place="`check:cut_length` ／ 人の目")], "")),
+            ("1回だけの人の目の項目は対象でない", not guard(c, [item()], ""))]
+
+
+def leg_guard_stale(c):
+    ok = item(said=said(2), place="`lint:L-NICK`")
+    return [("直った項目が控えに残っていたら落ちる", any("もう違反していない" in p for p in guard(c, [ok], "F-001\n"))),
+            ("帳面に無い ID が控えにあれば落ちる", any("帳面に無い" in p for p in guard(c, [ok], "F-002\n")))]
+
+
+def leg_guard_frozen(c):
+    late = item(said=said(1) + f"\n  - 2026-11-28 #975 {U.format(975, 9)}")
+    return [("締めの日より後に言われた項目は、控えに在っても落ちる", any("より後" in p for p in guard(c, [late], "F-001\n"))),
+            ("締めの日までの項目は控えで通る", not guard(c, [item(said=said(2))], "F-001\n"))]
+
+
+def leg_guard_names(c):
+    probs = why(c, item(place="`lint:L-NOPE` ／ `brief:no_such_gate`"))
+    return [("コードに無い `lint:L-NOPE`・`brief:no_such_gate` を拾う（1回の項目でも）",
+             any("L-NOPE" in p for p in probs) and any("no_such_gate" in p for p in probs)),
+            ("コードに在る名前だけなら通る", not why(c, item(said=said(2), place="`lint:L-NICK` ／ `brief:edit_size`")))]
+
+
+def leg_guard_reason(c):
+    gate = item(said=said(2), place="`brief:edit_size` ／ 人の目")
+    with_why = gate.replace("- **当てる場所:**", "- **機械にできない理由:** 承認の読みかたは機械が決められない\n- **当てる場所:**")
+    return [("関所（brief:）だけで理由の欄が無い項目を拾う", any("機械にできない理由" in p for p in why(c, gate))),
+            ("理由の欄があれば通る", not why(c, with_why))]
+
+
+def leg_guard_absolute(c):
+    one = item().replace(" する — x", " する — x（絶対）")
+    return [("1回でも決まりに「絶対」がある項目は対象（人の目だけなら違反）", bool(why(c, one))),
+            ("1回で「絶対」の無い人の目の項目は対象でない", not why(c, item()))]
+
+
+def leg_guard_cli(c):
+    import contextlib
+    import io
+    import tempfile
+    allow = c.ledger.UNGUARDED.read_text(encoding="utf-8")
+    rows = [ln for ln in allow.splitlines() if ln.startswith("F-")]
+    with tempfile.TemporaryDirectory() as td:
+        led_p, allow_p = Path(td) / "led.md", Path(td) / "allow.txt"
+        if rows:
+            led_p.write_text(c.ledger.PATH.read_text(encoding="utf-8"), encoding="utf-8")
+            allow_p.write_text(allow.replace(rows[0] + "\n", "", 1), encoding="utf-8")
+        else:
+            led_p.write_text(ledger_text([item(said=said(2))]), encoding="utf-8")
+            allow_p.write_text("", encoding="utf-8")
+        argv = sys.argv
+        try:
+            sys.argv = ["ledger.py", "--check", "--path", str(led_p), "--allow", str(allow_p)]
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc = c.ledger.main()
+        finally:
+            sys.argv = argv
+    return [("`--check` は、控えから1行消した写しで 1 を返す", rc == 1)]
+
+
 LEGS = {
     "real_ledger": leg_real_ledger, "lint_link": leg_lint_link, "check_link": leg_check_link, "wiring": leg_wiring,
     "dup_id": leg_dup_id, "missing_field": leg_missing_field, "category": leg_category, "date": leg_date,
     "place": leg_place, "order": leg_order, "both_sections": leg_both_sections, "outside_sections": leg_outside_sections,
+    "guard_real": leg_guard_real, "guard_drop": leg_guard_drop, "guard_new": leg_guard_new, "guard_stale": leg_guard_stale,
+    "guard_frozen": leg_guard_frozen, "guard_names": leg_guard_names, "guard_reason": leg_guard_reason,
+    "guard_absolute": leg_guard_absolute, "guard_cli": leg_guard_cli,
 }
 
 if __name__ == "__main__":
