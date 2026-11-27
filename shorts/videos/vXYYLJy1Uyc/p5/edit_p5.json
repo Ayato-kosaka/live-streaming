@@ -4,13 +4,14 @@
  "id": "p5",
  "style": "style_p5.json",
  "sources": {
-  "c03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/02_0-07-10_0-07-50_s432-438.mp4",
-   "watermark": "prism_live",
-   "t0": 432.0
+  "f_f1d4845d13": {
+   "footage": "f1d4845d13"
   },
   "f_fb1e1f5471": {
    "footage": "fb1e1f5471"
+  },
+  "f_f6116e9612": {
+   "footage": "f6116e9612"
   },
   "c01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/01_0-01-00_0-01-30_s65-72.mp4",
@@ -18,101 +19,101 @@
    "t0": 65.0
   },
   "c02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/01_0-01-00_0-01-30_s77-84.mp4",
-   "watermark": "prism_live",
-   "t0": 77.0
-  },
-  "c04": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/02_0-07-10_0-07-50_s442-448.mp4",
    "watermark": "prism_live",
    "t0": 442.0
   },
-  "c05": {
+  "c03": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/02_0-07-10_0-07-50_s455-462.mp4",
    "watermark": "prism_live",
    "t0": 455.0
   },
-  "c06": {
+  "c04": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/03_0-19-20_0-19-50_s1160-1166.mp4",
    "watermark": "prism_live",
    "t0": 1160.0
   },
-  "c07": {
+  "c05": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/03_0-19-20_0-19-50_s1175-1182.mp4",
    "watermark": "prism_live",
    "t0": 1175.0
   },
-  "c08": {
+  "c06": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1425-1431.mp4",
    "watermark": "prism_live",
    "t0": 1425.0
   },
-  "c09": {
+  "c07": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1435-1441.mp4",
    "watermark": "prism_live",
    "t0": 1435.0
   },
-  "c10": {
+  "c08": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/04_0-23-40_0-24-40_s1450-1459.mp4",
    "watermark": "prism_live",
    "t0": 1450.0
   },
-  "c11": {
+  "c09": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/05_0-33-20_0-34-20_s2008-2015.mp4",
    "watermark": "prism_live",
    "t0": 2008.0
   },
-  "c12": {
+  "c10": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/05_0-33-20_0-34-20_s2050-2057.mp4",
    "watermark": "prism_live",
    "t0": 2050.0
   },
-  "c13": {
+  "c11": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2160-2165.mp4",
    "watermark": "prism_live",
    "t0": 2160.0
   },
-  "c14": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2170-2176.mp4",
-   "watermark": "prism_live",
-   "t0": 2170.0
-  },
-  "c15": {
+  "c12": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2185-2188h.mp4",
    "watermark": "prism_live",
    "t0": 2185.0
   },
-  "c16": {
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/art/01_03_ndT1N8gfDX8SClDuAg9O.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
+  },
+  "c13": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/06_0-35-50_0-37-10_s2188h-2192.mp4",
    "watermark": "prism_live",
    "t0": 2188.5
   },
-  "c17": {
+  "c14": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/07_0-38-00_0-38-50_s2290-2298.mp4",
    "watermark": "prism_live",
    "t0": 2290.0
   },
-  "c18": {
+  "c15": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/08_0-41-50_0-42-30_s2522-2529.mp4",
    "watermark": "prism_live",
    "t0": 2522.0
   },
-  "c19": {
+  "c16": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/09_0-44-00_0-44-20_s2650-2656.mp4",
    "watermark": "prism_live",
    "t0": 2650.0
   },
-  "c20": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/10_1-03-20_1-03-40_s3800-3807.mp4",
+  "c2_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/art/02_04_3nWjf38nKwjrBgNjnBaQ.mp4",
    "watermark": "prism_live",
-   "t0": 3800.0
+   "t0": 60.0
   },
-  "c21": {
+  "c17": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/11_1-04-35_1-05-00_s3878-3886.mp4",
    "watermark": "prism_live",
    "t0": 3878.0
   },
-  "c23": {
+  "c2_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/art/03_05_BM8tw83kygCXmVqMmdbN.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
+  },
+  "c18": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_vXYYLJy1Uyc/ingest/vXYYLJy1Uyc/clips/13_1-09-50_1-10-20_s4195-4212.mp4",
    "watermark": "prism_live",
    "t0": 4195.0
@@ -120,133 +121,406 @@
  },
  "cuts": [
   {
-   "src": "c03",
-   "in": 114,
-   "out": 155,
+   "src": "f_f1d4845d13",
+   "in": 9,
+   "out": 50,
    "row": 0,
-   "note": "題の前半「風邪ひいたけど、快晴やから」: 外に出てカメラを青空と木へ向ける（F-073）。v3 の 0:07:13 は標識と濡れた地面で空が写らなかった"
+   "note": "題の前半「風邪ひいたけど、快晴やから」: あやとが撮った当日の朝の大通り（朝日で建物が赤く染まる澄んだ空）。v5 の配信の画（鮮明さ 38.8）は粗く、フックに使わない決まり（F-094 3回目）"
   },
   {
    "src": "f_fb1e1f5471",
    "in": 0,
    "out": 62,
    "row": 0,
-   "note": "題の後半「国民の館に行ってみた」: 撮影の素材の青空の国民の館（答えの画・高画質。F-079・F-094）"
+   "note": "題の後半「国民の館に行ってみた」: 撮影の素材の青空の国民の館（答えの画）"
+  },
+  {
+   "src": "f_f6116e9612",
+   "in": 9,
+   "out": 63,
+   "row": 1,
+   "blur": [
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 0,
+       "rect": [
+        555,
+        1029,
+        46,
+        63
+       ]
+      },
+      {
+       "f": 5,
+       "rect": [
+        546,
+        1016,
+        61,
+        85
+       ]
+      },
+      {
+       "f": 10,
+       "rect": [
+        537,
+        1010,
+        58,
+        85
+       ]
+      },
+      {
+       "f": 15,
+       "rect": [
+        527,
+        1011,
+        53,
+        75
+       ]
+      },
+      {
+       "f": 20,
+       "rect": [
+        511,
+        1000,
+        61,
+        82
+       ]
+      }
+     ],
+     "from": 9,
+     "to": 25,
+     "note": "face_scan（5箱・幅 21px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 10,
+       "rect": [
+        907,
+        1033,
+        34,
+        46
+       ]
+      }
+     ],
+     "from": 9,
+     "to": 15,
+     "note": "face_scan（1箱・幅 12px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 25,
+       "rect": [
+        501,
+        1002,
+        46,
+        63
+       ]
+      },
+      {
+       "f": 26,
+       "rect": [
+        497,
+        999,
+        53,
+        70
+       ]
+      }
+     ],
+     "from": 21,
+     "to": 31,
+     "note": "face_scan（2箱・幅 18px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 30,
+       "rect": [
+        485,
+        993,
+        49,
+        66
+       ]
+      }
+     ],
+     "from": 26,
+     "to": 35,
+     "note": "face_scan（1箱・幅 17px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 45,
+       "rect": [
+        421,
+        969,
+        58,
+        78
+       ]
+      }
+     ],
+     "from": 41,
+     "to": 50,
+     "note": "face_scan（1箱・幅 20px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 45,
+       "rect": [
+        6,
+        1072,
+        112,
+        136
+       ]
+      }
+     ],
+     "from": 41,
+     "to": 50,
+     "note": "face_scan（1箱・幅 39px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 45,
+       "rect": [
+        161,
+        1066,
+        92,
+        117
+       ]
+      }
+     ],
+     "from": 41,
+     "to": 50,
+     "note": "face_scan（1箱・幅 32px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 53,
+       "rect": [
+        -10,
+        970,
+        119,
+        160
+       ]
+      }
+     ],
+     "from": 49,
+     "to": 58,
+     "note": "face_scan（1箱・幅 41px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 53,
+       "rect": [
+        122,
+        1059,
+        99,
+        117
+       ]
+      },
+      {
+       "f": 55,
+       "rect": [
+        113,
+        1051,
+        99,
+        126
+       ]
+      }
+     ],
+     "from": 49,
+     "to": 60,
+     "note": "face_scan（2箱・幅 34px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 53,
+       "rect": [
+        389,
+        959,
+        58,
+        75
+       ]
+      },
+      {
+       "f": 55,
+       "rect": [
+        378,
+        955,
+        58,
+        82
+       ]
+      }
+     ],
+     "from": 49,
+     "to": 60,
+     "note": "face_scan（2箱・幅 20px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 60,
+       "rect": [
+        358,
+        954,
+        54,
+        70
+       ]
+      }
+     ],
+     "from": 56,
+     "to": 63,
+     "note": "face_scan（1箱・幅 19px まで）"
+    },
+    {
+     "cells": 7,
+     "keys": [
+      {
+       "f": 65,
+       "rect": [
+        334,
+        944,
+        61,
+        82
+       ]
+      }
+     ],
+     "from": 61,
+     "to": 63,
+     "note": "face_scan（1箱・幅 21px まで）"
+    }
+   ],
+   "note": "「東欧を旅してて、冬のルーマニアの寒さで」: あやとが撮った当日の朝の濡れた大通り（冬の寒い朝）。v5 は自撮り2本で、どちらも粗かった"
   },
   {
    "src": "c01",
    "in": 60,
-   "out": 114,
+   "out": 113,
    "row": 1,
-   "note": "マフラーにくるまって鼻声で話す本人（冬の寒さ・風邪の顔。声は AI）"
+   "note": "「完全に風邪ひいた」: マフラーにくるまって鼻声で話す本人（風邪の顔そのものが要る画。配信にしか無い）"
   },
   {
    "src": "c02",
-   "in": 150,
-   "out": 203,
-   "row": 1,
-   "note": "建物を背に、顔を上に寄せて話す本人（字が顔に被らない時刻）。v2 の 0:01:19 は顔が画面の下半分で字に被った"
-  },
-  {
-   "src": "c04",
    "in": 60,
    "out": 112,
    "row": 2,
    "note": "宿を出て、青空の通りを歩き出す"
   },
   {
-   "src": "c05",
+   "src": "c03",
    "in": 60,
    "out": 111,
    "row": 2,
    "note": "真っ青な空と雲・通り（良い天気）"
   },
   {
-   "src": "c06",
+   "src": "c04",
    "in": 30,
    "out": 78,
    "row": 3,
    "note": "長い影の大通り（国民の館の方へ歩き出す）"
   },
   {
-   "src": "c07",
+   "src": "c05",
    "in": 60,
    "out": 108,
    "row": 3,
    "note": "横断歩道を渡って進む"
   },
   {
-   "src": "c08",
+   "src": "c06",
    "in": 0,
    "out": 54,
    "row": 4,
    "note": "横断歩道に集まる通勤の人"
   },
   {
-   "src": "c09",
+   "src": "c07",
    "in": 75,
    "out": 129,
    "row": 4,
    "note": "横断歩道を渡る人の群れ。v3 は 0:23:56 で1カット目と 9.2秒しか離れず、似た見た目の連続で落ちた"
   },
   {
-   "src": "c10",
+   "src": "c08",
    "in": 76,
    "out": 150,
    "row": 5,
    "note": "「ちょっと東京思い出すわ」（本人の声と同じ秒）。人の多い交差点"
   },
   {
-   "src": "c11",
+   "src": "c09",
    "in": 30,
    "out": 70,
    "row": 6,
    "note": "石造りの建物が並ぶ並木の歩道（パリみたい）"
   },
   {
-   "src": "c12",
+   "src": "c10",
    "in": 30,
    "out": 71,
    "row": 6,
    "note": "同じ通りの、店が並ぶ建物の正面"
   },
   {
-   "src": "c13",
+   "src": "c11",
    "in": 15,
    "out": 65,
    "row": 7,
-   "note": "広場の奥に国民の館が見え始める"
+   "note": "広場の奥に国民の館が見え始める（着いた所。配信の画）"
   },
   {
-   "src": "c14",
-   "in": 90,
-   "out": 152,
+   "src": "f_fb1e1f5471",
+   "in": 0,
+   "out": 62,
    "row": 7,
-   "note": "木の向こうに国民の館が大きく（どーん）。v3 は 0:36:12 で1カット目と 9.8秒しか離れず、似た見た目の連続で落ちた"
+   "note": "「どーん！」: 撮影の素材の青空の国民の館。v5 は配信の 0:36:13（鮮明さ 43.5）"
   },
   {
-   "src": "c15",
+   "src": "c12",
    "in": 33,
    "out": 73,
    "row": 8,
    "note": "「バカかっこいいよ」（本人の声と同じ秒。語ごとの時刻 0:36:26.10〜27.12）。館と観覧車の正面。2回目（0:36:30.9）は窓の終わり 0:36:32 に掛かるので1回目を使う"
   },
   {
-   "src": "f_fb1e1f5471",
-   "in": 0,
-   "out": 51,
+   "src": "c2_01",
+   "in": 30,
+   "out": 74,
    "row": 9,
-   "note": "撮影の素材の青空の国民の館（議会の建物）"
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「議会の建物で」: あやと島カードの写真（青空の国民の館と観覧車・2026-11-24）。止め絵は 1.5秒まで・寄せで動かす（F-085）"
   },
   {
-   "src": "c16",
+   "src": "c13",
    "in": 15,
-   "out": 66,
+   "out": 73,
    "row": 9,
-   "note": "館と観覧車の正面（重さは世界一）。v2 は撮影の素材1本で 3.4秒になり、カットの長さで落ちた"
+   "note": "「重さは世界一らしい」: 館と観覧車の正面（配信の画）"
   },
   {
-   "src": "c17",
+   "src": "c14",
    "in": 30,
    "out": 107,
    "row": 10,
@@ -260,35 +534,50 @@
    "note": "撮影の素材の観覧車と屋台（館から観覧車へ流れる後半）"
   },
   {
-   "src": "c18",
+   "src": "c15",
    "in": 30,
    "out": 68,
    "row": 12,
    "note": "風で道に張ったテープ・舞う落ち葉（風が強い）"
   },
   {
-   "src": "c19",
+   "src": "c16",
    "in": 30,
    "out": 69,
    "row": 12,
    "note": "風で倒れた柵とテープ（「手袋してても手が凍るわ」の直後）"
   },
   {
-   "src": "c20",
+   "src": "c2_02",
    "in": 30,
-   "out": 71,
+   "out": 66,
    "row": 13,
-   "note": "カフェの店先（逃げ込む）"
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「たまらず、あったかいカフェに逃げ込んで」: あやと島カードの写真（カフェ DRIP の店先）。v5 は配信の店先（鮮明さ 11.3）"
   },
   {
-   "src": "c21",
+   "src": "c17",
    "in": 90,
-   "out": 141,
+   "out": 117,
    "row": 13,
-   "note": "カウンターのコーヒーの豆挽き（アメリカーノを頼んだ）。v4 まで3本目に置いた 1:06:40 の机は、カップが端にしか写らず弱かったので外した（カップは次の行の本人の画に写る）"
+   "note": "カウンターの豆挽き（注文。配信の画）"
   },
   {
-   "src": "c23",
+   "src": "c2_03",
+   "in": 30,
+   "out": 59,
+   "row": 13,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「アメリカーノを頼んだ」: あやと島カードの写真（同じカフェのカウンター）"
+  },
+  {
+   "src": "c18",
    "in": 178,
    "out": 240,
    "row": 14,
@@ -418,7 +707,7 @@
     "frames": 103,
     "voice_frames": 95,
     "cuts": [
-     "0:07:15.8+1.37s",
+     "f1d4845d13 0.30+1.37s",
      "fb1e1f5471 0.00+2.07s"
     ],
     "line": "ルーマニアで風邪ひいたけど、快晴やから国民の館に行ってみた！",
@@ -430,8 +719,8 @@
     "frames": 107,
     "voice_frames": 99,
     "cuts": [
-     "0:01:07.0+1.80s",
-     "0:01:22.0+1.77s"
+     "f6116e9612 0.30+1.80s",
+     "0:01:07.0+1.77s"
     ],
     "line": "東欧を旅してて、冬のルーマニアの寒さで、完全に風邪ひいた。",
     "telop": null
@@ -504,7 +793,7 @@
     "voice_frames": 94,
     "cuts": [
      "0:36:00.5+1.67s",
-     "0:36:13.0+2.07s"
+     "fb1e1f5471 0.00+2.07s"
     ],
     "line": "国民の館に着いたら、とんでもなく立派な建物がどーん！",
     "telop": null,
@@ -528,8 +817,8 @@
     "frames": 102,
     "voice_frames": 94,
     "cuts": [
-     "fb1e1f5471 0.00+1.70s",
-     "0:36:29.0+1.70s"
+     "cardRo1124a 0:00:01.0+1.47s",
+     "0:36:29.0+1.93s"
     ],
     "line": "なんとこれ、議会の建物で、重さは世界一らしい！",
     "telop": null,
@@ -576,8 +865,9 @@
     "frames": 92,
     "voice_frames": 84,
     "cuts": [
-     "1:03:21.0+1.37s",
-     "1:04:41.0+1.70s"
+     "cardRo1124a 0:01:01.0+1.20s",
+     "1:04:41.0+0.90s",
+     "cardRo1124a 0:02:01.0+0.97s"
     ],
     "line": "たまらず、あったかいカフェに逃げ込んで、アメリカーノを頼んだ。",
     "telop": null
