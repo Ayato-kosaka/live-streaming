@@ -14,7 +14,7 @@
  * **同じ人が複数の島に出てよい**（`docs/island-atlas.md` 3章）。
  * 島ごとに重複を消さない。ずっと来てくれている人は、ずっと島にいる。
  *
- * 数えた日: 2026-11-26
+ * 数えた日: 2026-11-27
  */
 export type ChapterResident = {
   /** キャラクターの絵（Google Drive の id）。`content/residents.ts` の icon と同じ */
@@ -266,21 +266,21 @@ export const CHAPTER_STATS: Record<string, ChapterStat> = {
   },
   // バルカン諸国周遊
   "balkans": {
-    people: 265,
-    streams: 68,
+    people: 271,
+    streams: 69,
     residents: [
-      { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 59 },
-      { icon: "cf129e7ea06f499693a002543dcd7c290", days: 59 },
-      { icon: "f203e9529b7941c89940a568e03b83b00", days: 58 },
-      { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", days: 55 },
+      { icon: "cf129e7ea06f499693a002543dcd7c290", days: 61 },
+      { icon: "18okO58dwMaci-9R1go0Rj1dTqliSWlz3", days: 60 },
+      { icon: "f203e9529b7941c89940a568e03b83b00", days: 60 },
+      { icon: "1ekFUI08fLxau-_-f3YOlizDLLYpYi21x", days: 57 },
       { icon: "1XUYZEts8lz9SFqQmKuBd4G8KMRfBmPL-", days: 53 },
-      { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", days: 50 },
-      { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 46 },
-      { icon: "0c8468a6411842cdb144f70eefee5b7b0", days: 45 },
+      { icon: "1qWjhGcv3Y--7hTEnrzOZk_rzud3qdzqb", days: 53 },
+      { icon: "1b0Xiz4G4ITGoNeTsNFkzUTXO_xNQd-LU", days: 48 },
+      { icon: "0c8468a6411842cdb144f70eefee5b7b0", days: 46 },
       { icon: "11ygwplCCuzh5OItBynAVyglM1eZyVUO-", days: 38 },
       { icon: "1wQzpWPNZKnty7DIiEkrSyib145QIWy4K", days: 37 },
-      { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", days: 26 },
-      { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", days: 20 },
+      { icon: "1L3c-p3QtcO5HLqCPUtGisxI-_SpwEaZt", days: 28 },
+      { icon: "1oRv9hYOkvlbBvDepLcDWEd6CWm19BJkS", days: 22 },
       { icon: "508cd9231743446bb25a93ae17dd3abf0", days: 15 },
       { icon: "1pnLoE5eN_KBshkVkc-im25pkffjC3mwc", days: 14 },
       { icon: "1t-p13QOO6AKU1hfzLERn9UtQi7KaCkj_", days: 13 },
