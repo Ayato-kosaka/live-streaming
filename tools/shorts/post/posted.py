@@ -81,6 +81,8 @@ def bad_record(r):
         return f"{r['place']} の投稿 ID の形ではない: {vid!r}"
     if r["state"] == "done" and vid is None:
         return "done なのに投稿 ID が無い（止めたときに、何を見ればいいか言えない）"
+    if "approval" in r and not (isinstance(r["approval"], str) and r["approval"].isdigit()):
+        return f"承認のコメントID の形ではない: {r['approval']!r}"
     return None
 
 
@@ -155,10 +157,12 @@ def refusal(rows, sha, place, again=False):
     return f"止めた: 知らない状態 {r['state']!r}"
 
 
-def begin(sha, place, plan, again=False, path=None):
-    """投稿を始める直前に pending を書く。**落ちたら pending のまま残る**のが狙い"""
+def begin(sha, place, plan, again=False, path=None, approval=None):
+    """投稿を始める直前に pending を書く。**落ちたら pending のまま残る**のが狙い。approval は承認に数えたあやとのコメントID（F-002）"""
     rows = load(path)
     rec = {"plan": plan, "place": place, "state": "pending", "id": None, "sha256": sha, "at": now()}
+    if approval:
+        rec["approval"] = approval
     if again and latest(rows, sha, place):
         rec["again"] = True
     rows.append(rec)

@@ -114,6 +114,9 @@ class Ctx:
     promises: dict | None = None                     # spec の promises（作文者の当て表。F-050）。spec に鍵が無ければ None
     persona: str | None = None                       # spec の persona（誰に向けてか。F-099）
     baseline: list | None = None                     # spec の baseline（その回で実際にした行動の流れ。F-099）
+    plan: str | None = None                          # 隣の plan.md の字（3案の比べ。F-022）。無ければ None
+    option: str | None = None                        # 案の字（script_A.txt なら A）。script.txt なら None
+    no_price: str | None = None                      # spec の no_price（買った物の値段を配信で言っていない訳。F-102）
 
     @property
     def title(self) -> str:
@@ -1200,6 +1203,282 @@ def l_bang(c: Ctx):
                 f"{BANG_MAX}行までにし、起きたことは「〜た。」で言う（#1403）", look=True)]
 
 
+# ---------- 2026-11-27（あやと「同じ指摘がないように永続化してください」）: 2回以上言われたのに人の目だけだった項目 ----------
+# 帳面の決まりのうち字で決まる所だけ。中身（店の空気が伝わるか・初見に通じるか）は批評役の (h) と視聴者役（`critic_viewer.py`）が数える。
+# どの規則も、あやとが通した7本（①〜④と p5 の3本）に今日の決まりで当てて ✕ が出ないことを確かめた（`lint_selftest.py` の `passed7`）
+
+def _title_line(c: Ctx) -> int:
+    """題の当たりを置く行（題の札があれば 0、無ければ読み上げる1行目）。"""
+    return 0 if c.title_card is not None else 1
+
+
+GOURMET = re.compile(r"食べ|料理|グルメ|食堂|レストラン|屋台|店")
+AI_MENU = re.compile(r"AI(に|で|が)(聞|訊|調べ|言)")
+EVAL_ONLY = re.compile(r"大当たり|大ハズレ|当たり(やった|だった)[！!]*$")
+
+
+def l_gourmet(c: Ctx):
+    """F-055 グルメの回（題に 食べ・料理・食堂・店…）で、題が評価の言葉（大当たり）で閉じる・メニューの話を AI に聞いた話で埋める、を ✕。
+
+    店の空気（行列・相席・目の前で焼いている物）が入っているかは字では決まらないので、批評役の (h) で当てる。
+    """
+    t = c.title
+    if not t:
+        return None
+    if not GOURMET.search(t):
+        return []
+    out = []
+    m = EVAL_ONLY.search(t)
+    if m:
+        out.append(Hit("L-GOURMET", _title_line(c), t, f"グルメの回の題が評価の言葉（「{m.group(0)}」）で閉じる。"
+                       "場所と何を食べたかを「〇〇食べてみた」で言う（あやとの直し:「北マケドニアの行列店のファーストフード食べてみた！」）"))
+    for i, ln in enumerate(c.lines[1:], 2):
+        m = AI_MENU.search(ln)
+        if m:
+            out.append(Hit("L-GOURMET", i, ln, f"メニューの話を AI に聞いた話（「{m.group(0)}」）で埋めている。"
+                           "何を食べたくなって何を頼んだかを、焼いている所・出てきた所の画で言う（F-055 の2回目）"))
+    return out
+
+
+# 題の主役にしてよい、日本でも知られている街（F-057「知られていない街の名前で題を引かない」の外）
+WELL_KNOWN = {"パリ", "ロンドン", "ローマ", "ニューヨーク", "ドバイ", "イスタンブール", "ベルリン", "アムステルダム", "ウィーン",
+              "プラハ", "バルセロナ", "ミラノ", "ヴェネツィア", "ソウル", "バンコク", "台北", "香港", "シンガポール",
+              "モン・サン・ミシェル", "ペトラ", "死海", "南フランス", "カイロ"}
+FOOD_TITLE = re.compile(r"食べ|料理|グルメ|名物|本場|ティー|飲み|飲ん|カフェ|店|食堂|スイーツ")
+PUTOFF = re.compile(r"内臓|臓物|胃袋|脳みそ|血の")
+
+
+def _countries() -> set:
+    try:
+        return {e.get("name") for e in json.loads(FLAGS.read_text(encoding="utf-8")).values() if e.get("name")}
+    except (OSError, ValueError):
+        return set()
+
+
+COUNTRY_NAMES = _countries()
+
+
+def t_town(c: Ctx):
+    """F-057 題を、知られていない街の名前（ヨーク・エディンバラ）や引く言葉（内臓）で引かない。国と「本場」「めちゃくちゃ美味しい」の大きい枠で。
+
+    グルメ・名物の題（食べ・料理・本場・ティー…）に知られていない街があれば ✕、ほかの題（街を1日で回る回）は △。
+    「エディンバラを1日で回った」（nxWncbFtsSU p2）は、あやとが通した街歩きの題なので落とさない。
+    """
+    t = c.title
+    if not t:
+        return None
+    out = []
+    food = bool(FOOD_TITLE.search(t))
+    for _, name, _ in places_in(t):
+        if name in COUNTRY_NAMES or name == HOME or name in WELL_KNOWN:
+            continue
+        out.append(Hit("T-TOWN", _title_line(c), t, f"題に知られていない街の名前（「{name}」）。国と「本場」「めちゃくちゃ美味しい」の大きい枠で引き、"
+                       "街の名前は題の札の国旗・出来事の行の中で出す（F-057）", look=not food))
+    m = PUTOFF.search(t)
+    if m:
+        out.append(Hit("T-TOWN", _title_line(c), t, f"題が引く言葉（「{m.group(0)}」）を言う。名物は食べたくなる言葉で題にし、"
+                       "中身の説明は本文へ（あやとの直し:「イギリスのめちゃくちゃ美味しい料理、ハギスを食べてみた！」）"))
+    return out
+
+
+FAIL_WORD = re.compile(r"最悪|失敗|潰れ|焦げ|焦が|こぼし|こぼれ|やらかし")
+RECIPE_NUM = re.compile(r"[0-9０-９一二三四五六七八九十百]+\s*(℃|度|分|時間|g|グラム|cc|ml|ミリ|個|杯|cm|回)")
+
+
+def t_easy(c: Ctx):
+    """F-061 題が「簡単」の回で、失敗を山にした行と、温度・時間・分量の数が1つも無い原稿を ✕。"""
+    if "簡単" not in c.title:
+        return []
+    out = []
+    for i, ln in enumerate(c.lines[1:], 2):
+        m = FAIL_WORD.search(ln)
+        if m:
+            out.append(Hit("T-EASY", i, ln, f"題が「簡単」なのに失敗（「{m.group(0)}」）の行。山は膨らんだ・焼き上がったの変化で作る（F-061）"))
+    if not any(RECIPE_NUM.search(ln) for ln in c.lines[1:]):
+        out.append(Hit("T-EASY", None, "原稿ぜんぶ", "題が「簡単」なのに、温度・時間・分量の数が1つも無い。"
+                       "手順を数字つきで並べ、見た人が真似できるレシピにする（F-061 の2回目: 粉300g・塩4g・230℃で30分）"))
+    return out
+
+
+PITCH = re.compile(r"挑戦[！!。]|チャレンジ[！!。]|を感じたくて")
+
+
+def l_pitch(c: Ctx):
+    """F-070 企画の都合の言い回し（「日本を感じたくて、宿で一から挑戦！」）を ✕。題と締めの行は見ない。
+
+    「なぜやるのか」は見る人が自分のこととして分かる気持ち（日本が恋しい）で言う。初見に通じるか・次が気になるかは
+    視聴者役（`critic_viewer.py`）と批評役の (h) が数える。
+    """
+    out = []
+    for i in range(2, closing_index(c.lines)):
+        ln = c.lines[i - 1]
+        m = PITCH.search(ln)
+        if m:
+            out.append(Hit("L-PITCH", i, ln, f"企画の都合の言い回し（「{m.group(0)}」）。見る人が共感できる気持ちで言う"
+                           "（あやとの直し:「海外に住んで二年になるけど、そろそろ日本が恋しい！」。F-070）"))
+    return out
+
+
+WISH = re.compile(r"(食べ|飲み|見|行き|乗り)た(かった|い)|欲し(かった|い)")
+SURPRISE = re.compile(r"まさかの")
+WORDS = re.compile(r"[ァ-ヴー]{2,}|[一-龥]{2,}")
+
+
+def l_setup(c: Ctx):
+    """F-095 「まさかの〜」の落ちに出る物を、それより前の行で「〜が食べたかった」と前ふりしている行を ✕。
+
+    お任せ・偶然で出てきた物を落ちにする回は、注文の前に願いを言わせない（ago-a-v4 の「名物のムサカ、食べたかったんよ。」）。
+    「伝統料理が食べたい」のように、落ちの物を名指さない願いは見ない（聖ソフィア教会の回 A。あやとが通した形）。
+    """
+    out = []
+    for j, ln in enumerate(c.lines[1:], 2):
+        m = SURPRISE.search(ln)
+        if not m:
+            continue
+        words = set(WORDS.findall(ln[m.end():]))
+        for i in range(2, j):
+            prev = c.lines[i - 1]
+            if not WISH.search(prev):
+                continue
+            shared = sorted(w for w in words if w in prev)
+            if shared:
+                out.append(Hit("L-SETUP", i, prev, f"{j}行目の「まさかの」の落ち（「{shared[0]}」）を、先に願いで前ふりしている。"
+                               "その時点の本人がしない前ふりは消し、出てきた時点の驚きで言う（F-095）"))
+    return out
+
+
+BOUGHT = re.compile(r"買(った|うた|って(?!(ない|へん|なかった)))|購入(?!せ|しな)")
+YEN = re.compile(r"[0-9０-９一二三四五六七八九十百千万]+\s*円")
+
+
+def l_buy(c: Ctx):
+    """F-102 原稿に買った物（買った・買って・購入）があるのに、円の値段が1つも無ければ ✕。買った物が無い回（買わなかった）は見ない。
+
+    帳面の決まりは「配信で言っていたら」。言っていない回は、spec の `no_price` にその訳（どの時刻の字幕を見たか）を書けば通す。
+    """
+    if c.no_price:
+        return []
+    got = next(((i, ln, m) for i, ln in enumerate(c.lines, 1) for m in [BOUGHT.search(ln)] if m), None)
+    if not got or any(YEN.search(ln) for ln in c.lines):
+        return []
+    i, ln, m = got
+    return [Hit("L-BUY", i, ln, f"買った物（「{m.group(0)}」）の値段が無い。配信で言っていた値段を円で1つ入れる"
+                "（あやとの直し:「ボザも購入！」→ 500mlで80円ぐらい。F-102）")]
+
+
+PILLARS = ("土台", "山", "結末", "終わり")
+PILLAR_ALIAS = {"問い": "終わり", "締め": "終わり", "終わりかた": "終わり", "オチ": "結末", "落ち": "結末"}   # 前の書きかた（F-022 の1回目は「土台 → 山 → 結末 → 問い」）
+EMPTY = {"", "—", "-", "なし", "無し", "無い"}
+
+
+def _cells(ln: str) -> list:
+    return [x.strip() for x in ln.strip().strip("|").split("|")]
+
+
+def _letter(cell: str) -> str | None:
+    m = re.match(r"^[*\s]*(?:案\s*)?([A-Z])(?![A-Za-z])", cell)
+    return m.group(1) if m else None
+
+
+def _put(got: dict, name: str, text: str) -> None:
+    """表の1つの欄を、柱（土台・山・結末・終わり）に振る。「土台・山・結末」の欄は「土台 …／山 …／結末 …」を分ける。"""
+    name = PILLAR_ALIAS.get(name, name)
+    if name in PILLARS:
+        got.setdefault(name, text)
+        return
+    if all(p in name for p in ("土台", "山", "結末")):
+        for part in re.split(r"[／/]", text):
+            p = part.strip()
+            for k in ("土台", "山", "結末"):
+                if p.startswith(k):
+                    got.setdefault(k, p[len(k):].strip())
+
+
+def plan_pillars(plan: str, opt: str) -> dict | None:
+    """plan.md の「3案の比べ」と案の節から、案 opt の 土台・山・結末・終わり の字。比べの表に案の列（行）が無ければ None。"""
+    sec = re.search(r"^## 3案の比べ\s*$(.*?)(?=^## |\Z)", plan, re.M | re.S)
+    if not sec:
+        return None
+    rows = [_cells(ln) for ln in sec.group(1).splitlines() if ln.strip().startswith("|")]
+    rows = [r for r in rows if not all(re.fullmatch(r":?-+:?", x) for x in r if x)]
+    if not rows:
+        return None
+    head, got, found = rows[0], {}, False
+    if any(_letter(h) == opt for h in head[1:]):            # 案が列（行は柱）
+        j = next(k for k, h in enumerate(head) if k and _letter(h) == opt)
+        found = True
+        for r in rows[1:]:
+            if j < len(r):
+                _put(got, r[0], r[j])
+    else:                                                   # 案が行（列は柱）
+        for r in rows[1:]:
+            if r and _letter(r[0]) == opt:
+                found = True
+                for k, h in enumerate(head):
+                    if k < len(r):
+                        _put(got, h, r[k])
+    if not found:
+        return None
+    one = re.search(rf"^## (?:{opt}案|案{opt})\b.*?$(.*?)(?=^## |\Z)", plan, re.M | re.S)
+    for ln in (one.group(1).splitlines() if one else []):
+        if ln.strip().startswith("|"):
+            r = _cells(ln)
+            if len(r) >= 2:
+                _put(got, r[0], r[1])
+    return got
+
+
+def l_four(c: Ctx):
+    """F-022 3案の企画で、この案の 土台・山・結末・終わり のどれかが plan.md の「3案の比べ」に無ければ ✕（案ごとに強みを分けない）。"""
+    if not c.plan or not c.option:
+        return None
+    got = plan_pillars(c.plan, c.option)
+    if got is None:
+        return None
+    miss = [p for p in PILLARS if got.get(p, "").strip().strip("*") in EMPTY]
+    if not miss:
+        return []
+    return [Hit("L-FOUR", None, f"plan.md の案{c.option}", f"案{c.option}に{'・'.join(miss)}が無い。どの案にも土台・山・結末・終わりを持たせ、"
+                "違えるのは入りかた・山の置きかた・見せかた（F-022）")]
+
+
+MOOD_FAMILIES = ("tense_", "up_")   # 2系統（張りつめる＝白に濃紺の縁／上がる＝黄に茶の縁。`style_v3.json` の moods）
+# 感情の字の行の割合の上限（越えたら ✕）。あやとが通した回の多いほうは 0.45（城塞 p1 の 9/20・ジョージアの犬 7/16）、
+# 「AI 臭い」と返された地下鉄 p1 は 9/17（0.53）。帳面の決まりは「感情が動く行だけ」で、行の数そのものは言われていないので、通した回を落とさない線
+MOOD_SHARE = 0.5
+
+
+def l_mood(c: Ctx):
+    """F-011 感情の字（spec の mood）が行の半分を越えたら ✕。2系統（tense_・up_）の外の名前は △（様式に無く、plain で出る）。"""
+    if not c.has_spec:
+        return None
+    moved = [(i, str(row_at(c, i).get("mood") or "")) for i in range(1, len(c.lines) + 1)]
+    moved = [(i, m) for i, m in moved if m and m != "plain"]
+    out = [Hit("L-MOOD", i, c.lines[i - 1], f"感情の字「{m}」が2系統（張りつめる tense_・上がる up_）のどちらでもない。"
+               "様式（style_v3.json）に無い名前は普通の字で出る。感情を出すなら2系統のどちらかに（F-011）", look=True)
+           for i, m in moved if not m.startswith(MOOD_FAMILIES)]
+    if len(moved) > len(c.lines) * MOOD_SHARE:
+        out.append(Hit("L-MOOD", None, f"感情の字 {len(moved)}行", f"感情の字が{len(moved)}/{len(c.lines)}行で半分を越える。"
+                       "感情が動く行だけに付け、ほかは plain（F-011）"))
+    return out
+
+
+SHOUT = re.compile(r"^[…\s]*(う[わぁ]+ー*|ああ+っ?|ぎゃ|ひゃ|やば[いっ]?|おお+っ?|まじ[かで]|え[えっ]+|すげ|すご[いっ])[ー〜]*[！!、。？?…]")
+
+
+def l_shout(c: Ctx):
+    """F-051 叫び・驚きの声（うわー・やばい・ああっ）で始まる行を AI の声で読む（spec に orig_voice・voice_src が無い）なら ✕。"""
+    if not c.has_spec:
+        return None
+    out = []
+    for i, ln in enumerate(c.lines[1:], 2):
+        m = SHOUT.match(ln)
+        if m and not own_voice(row_at(c, i)):
+            out.append(Hit("L-SHOUT", i, ln, f"叫び・驚き（「{m.group(1)}」）を AI の声で読む。その秒の本人の声（spec の orig_voice）を流す"
+                           "（あやとの直し:「ああっ！沼にはまった！」→ 配信 0:10:20 前後の本人の叫び。F-051）"))
+    return out
+
+
 # 規則の since。同じ日の決まりは、あやとのコメントID で前後を分ける（`--as-of 2026-10-23:6354242835` なら、朝の
 # フォカッチャの添削の時点。夕方の滝の回の直しでできた規則は当てない）
 S1019 = "2026-10-23:6370959237"
@@ -1264,6 +1543,16 @@ RULES = (
     # ---- 2026-11-26（#1446・#1445、F-099・F-078）: 誰に向けてか・基本線・本人の声の数 ----
     Rule("L-BASE", ("F-099",), "2026-11-26:7192063851", "spec に誰に向けてか（persona）・基本線（baseline 5〜7行）が無い", l_base),
     Rule("L-VOICEN", ("F-078",), "2026-11-26:7191788789", f"本人の声の行が{VOICE_MIN}つ未満（△。spec がある原稿だけ）", l_voicen),
+    # ---- 2026-11-27（あやと「同じ指摘がないように永続化してください」）: 2回以上言われたのに人の目だけだった項目。since は言われた日 ----
+    Rule("L-GOURMET", ("F-055",), "2026-10-28:6467902838", "グルメの回の題が評価の言葉（大当たり）で閉じる・メニューを AI に聞いた話で埋める", l_gourmet),
+    Rule("T-TOWN", ("F-057",), "2026-10-29:6495119160", "題に知られていない街（グルメ・名物の題は ✕、ほかは △）・引く言葉（内臓）", t_town),
+    Rule("T-EASY", ("F-061",), "2026-10-31:6550407728", "題が「簡単」の回の失敗の行・温度・時間・分量の数が無い", t_easy),
+    Rule("L-PITCH", ("F-070",), "2026-11-11:6800754106", "企画の都合の言い回し（〜を感じたくて・挑戦！。題と締めは見ない）", l_pitch),
+    Rule("L-SETUP", ("F-095",), "2026-11-26:7188503464", "「まさかの〜」の落ちの物を、前の行の願い（〜が食べたかった）で前ふり", l_setup),
+    Rule("L-BUY", ("F-102",), "2026-11-26:7202945549", "買った物（買った・購入）があるのに、円の値段が1つも無い", l_buy),
+    Rule("L-FOUR", ("F-022",), "2026-10-18", "3案の企画で、この案の土台・山・結末・終わりのどれかが plan.md の比べに無い", l_four),
+    Rule("L-MOOD", ("F-011",), "2026-10-16:6219894353", "感情の字（mood）の行が半分を越える（✕）・2系統の外の名前（△）", l_mood),
+    Rule("L-SHOUT", ("F-051",), "2026-10-23:6372556052", "叫び・驚き（うわー・やばい・ああっ）で始まる行を AI の声で読む", l_shout),
 )
 
 
@@ -1296,7 +1585,7 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
     lines, ashi, answer = read_script(script)
     rows, card, came, secs, nxt = None, None, "原稿の1行目（国旗は見ていない）", None, None
     sp = spec or spec_for(script)
-    has_spec, promises, persona, baseline = False, None, None, None
+    has_spec, promises, persona, baseline, no_price = False, None, None, None, None
     if use_spec and sp.exists():
         s = json.loads(sp.read_text(encoding="utf-8"))
         rows = s.get("rows")
@@ -1308,6 +1597,7 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
             raise ValueError(f"{sp.name} の rows が {len(rows)} 行で、原稿は {len(lines)} 行（spec を原稿に合わせて直す）")
         has_spec, promises = True, s.get("promises")
         persona, baseline = s.get("persona"), s.get("baseline")
+        no_price = str(s.get("no_price") or "").strip() or None
         if s.get("title_card"):
             card, came = s["title_card"], f"{sp.name} の title_card"
         secs = s.get("title_card_seconds")
@@ -1319,8 +1609,13 @@ def build(script: Path, title: str | None = None, spec: Path | None = None, use_
         card, came = title, "--title"
     if next_stream is not None:
         nxt = next_stream
+    stem = script.stem
+    option = stem[len("script_"):] if stem.startswith("script_") else None
+    pl = script.with_name("plan.md")
+    plan = pl.read_text(encoding="utf-8") if pl.exists() else None
     return Ctx(lines=lines, title_card=card, title_from=came, rows=rows, ashi_marked=ashi, answer_marked=answer,
-               card_seconds=secs, next_stream=nxt, has_spec=has_spec, promises=promises, persona=persona, baseline=baseline)
+               card_seconds=secs, next_stream=nxt, has_spec=has_spec, promises=promises, persona=persona, baseline=baseline,
+               plan=plan, option=option, no_price=no_price)
 
 
 AS_OF = re.compile(r"20\d\d-\d\d-\d\d(:\d+)?")
@@ -1386,6 +1681,10 @@ BLIND_WHY = {
     "L-VOICE0": "spec が無い（本人の声は spec の orig_voice・voice_src で見る）",
     "L-BASE": "spec が無い（誰に向けてか・基本線は spec の persona・baseline に書く）",
     "L-VOICEN": "spec が無い（本人の声は spec の orig_voice・voice_src で見る）",
+    "L-GOURMET": "題が空", "T-TOWN": "題が空",
+    "L-FOUR": "隣に plan.md の「3案の比べ」が無い・案の列が無い・原稿が script_<案>.txt でない",
+    "L-MOOD": "spec が無い（感情の字は spec の mood で見る）",
+    "L-SHOUT": "spec が無い（本人の声は spec の orig_voice・voice_src で見る）",
 }
 
 

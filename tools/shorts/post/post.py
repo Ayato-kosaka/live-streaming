@@ -82,6 +82,12 @@ def tt_caption(post):
 def cmd_send(a):
     mp4, pj = os.path.join(a.dir, f"{a.option}.mp4"), os.path.join(a.dir, f"post_{a.option}.json")
     post = json.load(open(pj))
+    # 出す前の関所（preflight.py）: 記事のリンク F-097・BGM とクレジット F-038・往復の数 F-044。1つでも当たれば送らない
+    import preflight
+    stops = preflight.send_problems(post, a.edit and preflight.Path(a.edit), a.rounds_why)
+    if stops:
+        print("止めた（送る前の関所）:\n" + "\n".join(f"  ✕ {x}" for x in stops))
+        return 1
     cap = tt_caption(post)
     capf = os.path.join(tempfile.mkdtemp(), f"tt_caption_{a.option}.txt")
     open(capf, "w", encoding="utf-8").write(cap)
@@ -128,6 +134,12 @@ def ledger_sha(a):
 def posting(a, place, body, timeout):
     """投稿の段を台帳で挟む。**EC2 に触る前に引く** → EC2 の mp4 を照らす → 始める直前に pending →
     ID が取れたら done。落ちたら pending のまま残る（次の回が止まる）"""
+    # 承認に数えるのは、あやと本人のコメントだけ（F-002。preflight.py の approval）。字の中身は担当が読む
+    import preflight
+    cid, why = preflight.approval(getattr(a, "approval", None))
+    if why:
+        print(why)
+        return 1
     sha, why = ledger_sha(a)
     if why:
         print(f"止めた: {why}")
@@ -137,6 +149,12 @@ def posting(a, place, body, timeout):
     except posted.Broken as e:
         print(f"止めた: {e}")
         return 1
+    # 1本ずつ（F-085）: ほかの案の投稿が途中のまま、次の案を始めない
+    busy = preflight.others_pending(rows, f"{a.video}/{a.option}")
+    if busy:
+        print("止めた: ほかの案の投稿が pending のまま（" + "・".join(f"{r['plan']} の {r['place']}" for r in busy)
+              + "）。その1本を出し切ってから次へ（F-085）\n" + posted.next_step(busy[0]))
+        return 1
     stop = posted.refusal(rows, sha, place, a.again)
     if stop:
         print(stop)
@@ -144,7 +162,7 @@ def posting(a, place, body, timeout):
     # 台帳に書く sha256 が、実際に上げるもの（EC2 に送った mp4）と同じであること
     if not remote_sha_ok(a, sha):
         return 1
-    rec = posted.begin(sha, place, f"{a.video}/{a.option}", a.again)
+    rec = posted.begin(sha, place, f"{a.video}/{a.option}", a.again, approval=str(cid))
     r = remote_run(body, timeout, LANES[place])
     if r.get("error") in ("desktop_busy", "queue_busy"):
         # GUARD は本体を1行も動かさずに戻る（札が取れなかったときも、EC2 では何も始まっていない）。pending を残さない
@@ -294,6 +312,16 @@ def cmd_mark(a):
 
 def cmd_clean(a):
     # 送った動画を消すだけ。SSM のログには触らない（send.py の頭）
+    # 片づけの前に、YouTube・TikTok に出した案が Instagram にも出ているか（F-090。preflight.py の instagram）
+    import preflight
+    try:
+        miss = preflight.ig_missing(posted.load(), f"{a.video}/")
+    except posted.Broken as e:
+        print(f"止めた: {e}")
+        return 1
+    if miss:
+        print("止めた: Instagram に出ていない案がある（" + "・".join(miss) + "）。ig-post で出してから片づける（F-090）")
+        return 1
     return subprocess.run([sys.executable, os.path.join(HERE, "send.py"), "clean", f"{REMOTE}/{a.video}"]).returncode
 
 
@@ -317,6 +345,9 @@ def main(argv=None):
     p.add_argument("--place", help="mark: youtube / tiktok / instagram")
     p.add_argument("--remote", help="EC2 の置き場（<REMOTE>/ の下）。無ければ --video。ほかの担当と置き場を分けて送ったとき")
     p.add_argument("--done", action="store_true", help="mark: 投稿先で出ているのを見た（--id と一緒に）")
+    p.add_argument("--approval", help="yt-draft / tt-post / ig-post: あやとが出してよいと書いたコメントの URL（あやと本人のコメントか見て、ID を台帳に残す。F-002）")
+    p.add_argument("--edit", help="send: その版の指示書 edit_*.json（BGM の曲と、あやとに見せた版の数を数える。F-038・F-044）")
+    p.add_argument("--rounds-why", help="send: あやとに見せた版が上限を越えた訳（どこで往復が増え、頼む文のどこを直したか。F-044）")
     a = p.parse_args(argv)
     fn = {"send": cmd_send, "yt-draft": cmd_yt_draft, "yt-unschedule": cmd_yt_unschedule, "yt-related": cmd_yt_related,
           "yt-publish": cmd_yt_publish, "tt-post": cmd_tt_post, "ig-post": cmd_ig_post, "yt-thumb": cmd_yt_thumb, "cover": cmd_cover,

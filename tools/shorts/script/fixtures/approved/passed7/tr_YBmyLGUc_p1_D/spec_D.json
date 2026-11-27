@@ -1,0 +1,119 @@
+{
+ "_note": "shorts/videos/tr_YBmyLGUc/p1/spec_D.json から、lint が読む欄だけ（根拠の why は【答】の印だけ）。通した時点 2026-11-26:7191788789",
+ "title_card": "🇧🇬ブルガリア最大のクリスマスマーケットで、\nノンアルのホットワインを買ったらまさかの事態に！",
+ "title_card_seconds": 4.0,
+ "rows": [
+  {
+   "line": "ブルガリア最大のクリスマスマーケットで、ノンアルのホットワインを買ったらまさかの事態に！",
+   "kind": "題",
+   "turn": "o",
+   "orig_voice": "",
+   "visual": "0秒目: 配信 2:00:30〜2:00:50 湯気の立つカップを持って「熱い熱い」と歩く所（中身の意味は伏せる）→ 1"
+  },
+  {
+   "line": "店が90軒ぐらいある大型クリスマスマーケットに来たけど、",
+   "kind": "数",
+   "turn": "o",
+   "orig_voice": ""
+  },
+  {
+   "line": "メリーゴーランドとか、絵本の世界すぎる！",
+   "kind": "反応",
+   "turn": "c",
+   "orig_voice": ""
+  },
+  {
+   "line": "そして、樽のホットワインがええ匂いすぎるんよ。",
+   "kind": "出来事",
+   "turn": "o",
+   "orig_voice": ""
+  },
+  {
+   "line": "果物ごと温めて、甘くしてるらしい。",
+   "kind": "説明",
+   "turn": "-",
+   "orig_voice": ""
+  },
+  {
+   "line": "けど、僕、お酒が苦手なんよ……",
+   "kind": "前置き",
+   "turn": "c",
+   "orig_voice": ""
+  },
+  {
+   "line": "探し回ったら、ノンアルのホットワインが「ある」って店を発見。",
+   "kind": "出来事",
+   "turn": "oc",
+   "orig_voice": ""
+  },
+  {
+   "line": "何回も「ノンアル？」って確かめて、ゲット。",
+   "kind": "出来事",
+   "turn": "o",
+   "orig_voice": ""
+  },
+  {
+   "line": "けど、匂ってみたら……",
+   "kind": "引っ張り",
+   "turn": "o",
+   "mood": "tense_still",
+   "orig_voice": ""
+  },
+  {
+   "line": "めちゃくちゃアルコールの匂いする！",
+   "kind": "出来事",
+   "turn": "oc",
+   "orig_voice": "",
+   "big": true
+  },
+  {
+   "line": "配信では初めての、お酒で乾杯！",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "up_pop",
+   "orig_voice": ""
+  },
+  {
+   "line": "……うま！けど、めちゃくちゃワインやん！",
+   "kind": "味",
+   "turn": "c",
+   "orig_voice": "",
+   "big": true
+  },
+  {
+   "line": "気分良くなってきたし、",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "up_pop",
+   "orig_voice": ""
+  },
+  {
+   "line": "クリスマスツリーの金の玉に乗れるメリーゴーランドを試してみるか！",
+   "kind": "出来事",
+   "turn": "c",
+   "orig_voice": ""
+  },
+  {
+   "line": "回り始めたら、怖い怖い……",
+   "kind": "引っ張り",
+   "turn": "o",
+   "mood": "tense_shake",
+   "orig_voice": ""
+  },
+  {
+   "line": "すごい！",
+   "kind": "反応",
+   "turn": "-",
+   "orig_voice": "3:22:48.4〜3:22:49.55（「すごい、すごい、すごい」。EC2 の聞き取り large-v3-turbo の語の時刻で確かめた）"
+  },
+  {
+   "line": "映画の景色やぁ！",
+   "kind": "反応",
+   "turn": "c",
+   "orig_voice": "",
+   "big": true,
+   "why": "【答】"
+  }
+ ],
+ "next_stream": ""
+}

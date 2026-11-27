@@ -118,8 +118,10 @@ SHA_Y = "b" * 64
 YT_ID = "selftestYT1"
 TT_ID = "7000000000000000001"
 PLAN = "selftest000/A"
-YT = ["yt-draft", "--video", "selftest000", "--option", "A"]
-TT = ["tt-post", "--video", "selftest000", "--option", "A"]
+# 承認のコメント（あやと本人のコメントかの見分けは preflight_selftest.py が見る。ここでは通る偽物の口で引く）
+OK_APPROVAL = ["--approval", "https://github.com/Ayato-kosaka/live-streaming/issues/1#issuecomment-1"]
+YT = ["yt-draft", "--video", "selftest000", "--option", "A"] + OK_APPROVAL
+TT = ["tt-post", "--video", "selftest000", "--option", "A"] + OK_APPROVAL
 
 # EC2 の返事（`RESULT {...}` の1行）。形は yt_post.py / tt_post.py の result() と同じ
 YT_OK = 'RESULT {"ok": true, "video_id": "%s"}' % YT_ID
@@ -166,8 +168,15 @@ def load_tools(src: Path):
         yield "fake-ticket"
     box.lease, box.default_who, box.QueueError = lease, (lambda: "selftest"), type("QueueError", (Exception,), {})
     sys.modules["ec2"] = box
-    for n in ("post", "posted"):
+    for n in ("post", "posted", "preflight"):
         sys.modules.pop(n, None)
+    # 出す前の関所（post.py が段の中で読み込む）。承認のコメントは外へ読みに行かず、あやと本人のコメントとして返す
+    pspec = importlib.util.spec_from_file_location("preflight", src / "preflight.py")
+    pre = importlib.util.module_from_spec(pspec)
+    sys.modules["preflight"] = pre
+    pspec.loader.exec_module(pre)
+    pre.FETCH = lambda cid: {"id": cid, "user": {"login": "Ayato-kosaka"}, "body": "出して"}
+    pre._is_ayato = lambda: (lambda c: (c.get("user") or {}).get("login") == "Ayato-kosaka")
     spec = importlib.util.spec_from_file_location("post", src / "post.py")
     post = importlib.util.module_from_spec(spec)
     sys.modules["post"] = post
@@ -407,7 +416,7 @@ def run_legs(src: Path, tmp: Path, quiet: bool) -> tuple[list[str], int]:
 
 def cut_copy(name: str, dst: Path) -> None:
     """本物の post.py / posted.py を写して、守りを1つだけ外す。外す字が無ければ 2 で落ちる"""
-    for f in ("post.py", "posted.py"):
+    for f in ("post.py", "posted.py", "preflight.py"):
         shutil.copy(HERE / f, dst / f)
     fname, old, new, _, _ = CUTS[name]
     text = (dst / fname).read_text(encoding="utf-8")

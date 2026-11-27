@@ -1,0 +1,120 @@
+{
+ "_note": "shorts/videos/aGOz5otlEs8/p1/spec_A.json から、lint が読む欄だけ（根拠の why は【答】の印だけ）。通した時点 2026-11-26:7191714724",
+ "title_card": "🇧🇬ブルガリアの食堂でお任せしたら、\nめちゃくちゃ美味しい家庭料理が出てきた！",
+ "title_card_seconds": 4.0,
+ "rows": [
+  {
+   "line": "ブルガリアの食堂でお任せしたら、めちゃくちゃ美味しい家庭料理が出てきた！",
+   "kind": "題",
+   "turn": "o",
+   "big": false,
+   "visual": "0秒目: おばちゃんがケースから皿に盛っている最中（1:42:30〜1:43:30）。「家庭料理が出てきた」からムサカの"
+  },
+  {
+   "line": "目当ての店に着いたら、昼休憩中。",
+   "kind": "出来事",
+   "turn": "oc",
+   "mood": "tense_still",
+   "big": false
+  },
+  {
+   "line": "代わりに、市場の食堂へ。",
+   "kind": "出来事",
+   "turn": "oc",
+   "mood": "plain",
+   "big": false
+  },
+  {
+   "line": "おかずは100gごとの量り売り。",
+   "kind": "数",
+   "turn": "oc",
+   "big": true
+  },
+  {
+   "line": "せっかくやし、伝統料理が食べたい。",
+   "kind": "前置き",
+   "turn": "-",
+   "mood": "plain",
+   "big": false
+  },
+  {
+   "line": "迷ったから、おばちゃんにお任せしたら……",
+   "kind": "引っ張り",
+   "turn": "o",
+   "mood": "plain",
+   "big": false
+  },
+  {
+   "line": "僕が変なこと言うから、険しい顔……",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "tense_tilt",
+   "big": false
+  },
+  {
+   "line": "なんか怒ってる、怒ってるよ！",
+   "kind": "反応",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": true,
+   "big": false
+  },
+  {
+   "line": "渡された皿は、なんかぬるぬるしたやつ……",
+   "kind": "引っ張り",
+   "turn": "oc",
+   "mood": "plain",
+   "big": false
+  },
+  {
+   "line": "まさかの、食べたかったムサカや！",
+   "kind": "出来事",
+   "turn": "oc",
+   "big": true
+  },
+  {
+   "line": "挽き肉とじゃがいもを、卵とヨーグルトで焼いた家庭料理らしい。",
+   "kind": "説明",
+   "turn": "c",
+   "mood": "plain",
+   "big": false
+  },
+  {
+   "line": "切ろうとしたら、絶望的に切れへん！",
+   "kind": "出来事",
+   "turn": "oc",
+   "mood": "tense_tilt",
+   "big": false
+  },
+  {
+   "line": "ひと口食べたら……",
+   "kind": "引っ張り",
+   "turn": "o",
+   "mood": "plain",
+   "big": false
+  },
+  {
+   "line": "美味しい、美味しい！",
+   "kind": "味",
+   "turn": "c",
+   "mood": "plain",
+   "orig_voice": true,
+   "big": false
+  },
+  {
+   "line": "肉じゃがの、分厚いオムレツや！",
+   "kind": "味",
+   "turn": "c",
+   "big": true,
+   "why": "【答】"
+  },
+  {
+   "line": "みんなやったら、海外の食堂でお任せしてみる？",
+   "kind": "締め",
+   "turn": "o",
+   "mood": "plain",
+   "big": false
+  }
+ ],
+ "next_stream": ""
+}

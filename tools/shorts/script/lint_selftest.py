@@ -85,9 +85,19 @@ L-PARTICLE・L-ATE）は、城塞 p1（ポチ・「夕日見に行ったら」�
 | `num38` | 題の直後から8秒（見込み）までに数（漢字の数も）が無ければ2行目に △。題の数は数えない。ボザ v9（4行目の1L）は通す（L-NUM38。#1403 Q5） |
 | `voice0` | 0〜8秒（見込み）に本人の声（orig_voice）の行が無ければ △。4行目（7.7秒）なら通し、7行目だけなら出す。spec が無ければ「見ていない」（L-VOICE0。#1403） |
 | `bang` | 山でない行の「！」が6行で △、5行は通す。題・【答】・本人の声・【大】の「！」は数えない（L-BANG。#1403） |
-| `new_fixtures` | 温泉 v5・ボザ v9（`approved/2EKBYEnv850_p1_v5`・`approved/bg-boza_p1_v9`。あやと #1441「ブラッシュアップ完璧」）が今日の決まりで ✕ 0（当て表 L-ATE と、書く前の persona・baseline の L-BASE は控えに入れていないので外す） |
+| `new_fixtures` | 温泉 v5・ボザ v9（`approved/2EKBYEnv850_p1_v5`・`approved/bg-boza_p1_v9`。あやと #1441「ブラッシュアップ完璧」）が今日の決まりで ✕ 0（当て表 L-ATE と、書く前の persona・baseline の L-BASE は控えに入れていないので外す。ボザの「捨てる覚悟で買った！」の L-BUY は、承認 11-25 のあとの F-102（11-26）なので外す） |
 | `base` | spec に persona（ペルソナ3つのどれかを名指す）と baseline（5〜7行）があれば通す。persona が無い・3つのどれも名指さない・基本線が4行・8行なら ✕。spec が無ければ「見ていない」。11-26 のあやとのコメントより前の時点では当てない（L-BASE。#1446・F-099） |
 | `voicen` | 本人の声（orig_voice・voice_src）の行が3つなら通し、2つなら △（✕ にはしない）。spec が無ければ「見ていない」（L-VOICEN。#1445・F-078） |
+| `gourmet` | グルメの回の題「行列店に並んだら、大当たりやった！」と「AIに聞いたら、名物は」を ✕。あやとの直し（大衆食堂を食べてみた）・グルメでない回は見ない（L-GOURMET。F-055） |
+| `town` | 「エディンバラで、羊の内臓料理ハギスを食べてみた！」を街と内臓で ✕。あやとの直し・知られた街（パリ）は通し、街歩きの題（あやとが通したエディンバラの1日）は △ だけ（T-TOWN。F-057）。街の名前は `cityStreams.ts` の街だけ見える（ヨークは拾えない） |
+| `easy` | 題が「簡単」の回の「うわあ、最悪や！」と、温度・時間・分量の数の無い原稿を ✕。あやとの直し（1時間・230℃で30分）は通す（T-EASY。F-061） |
+| `pitch` | 「海外でも日本を感じたくて、宿で一から挑戦！」を ✕。あやとの直し「そろそろ日本が恋しい！」・締めの行は見ない（L-PITCH。F-070） |
+| `setup` | ago-a-v4 の「名物のムサカ、食べたかったんよ。」（あとの「まさかの、食べたかったムサカや！」の前ふり）を ✕。あやとが通した A の「伝統料理が食べたい」・看板にあっただけの行は見ない（L-SETUP。F-095） |
+| `buy` | p4 の「ボザも購入！」（値段なし）を ✕。あやとの直し（500mlで80円ぐらい）・「まだ買ってない」・spec の no_price は通す（L-BUY。F-102） |
+| `four` | plan.md の3案の比べで、案の土台・山・結末・終わりのどれかが無ければ ✕。案が列でも行でも、前の書きかた（オチ・問い）・「土台・山・結末」の1つの欄と案の節の終わりも読む。plan.md が無い・案の列が無ければ「見ていない」（L-FOUR。F-022） |
+| `mood` | 感情の字（mood）が17行で9行なら ✕、16行で8行は通す。様式に無い名前（anxious）は △ だけ（通した回に残っている）。spec が無ければ「見ていない」（L-MOOD。F-011） |
+| `shout` | 「ああっ！沼にはまった！」を AI の声で読むと ✕、本人の声（orig_voice）なら通す。「うまっ！」は叫びに数えない（L-SHOUT。F-051） |
+| `passed7` | あやとが通した7本（①〜④・p5 の3本。`approved/passed7/`。spec は lint が読む欄だけ、why は【答】の印だけ）が、通した時点で 2026-11-27 の規則の ✕ 0。今日の決まりで当たるのは④ホットワインの L-BUY だけ（承認 7191788789 が F-102 の 7202945549 より前） |
 """
 from __future__ import annotations
 
@@ -152,7 +162,7 @@ CUTS = {
     "ashi_rows": ("lint.py", '        if "【足】" in (r.get("why") or ""):\n            rows.add(i)\n', "        pass\n",
                   {"ashi"}, "spec の【足】の印を読まない"),
     "as_of": ("lint.py", "        if not in_force(r.since, as_of):\n", "        if False:\n",
-              {"as_of", "approved", "title_read", "as_of_id", "later_rule_live", "nick", "prev", "pickwhy", "base"}, "決まりの日を見ない"),
+              {"as_of", "approved", "title_read", "as_of_id", "later_rule_live", "nick", "prev", "pickwhy", "base", "passed7"}, "決まりの日を見ない"),
     "sorry": ("lint.py", "        m = SORRY.search(ln)\n", "        m = None\n",
               {"sorry"}, "謝る行を拾わない"),
     "spec_title": ("lint.py", '            card, came = s["title_card"], f"{sp.name} の title_card"\n', "            pass\n",
@@ -231,7 +241,7 @@ CUTS = {
     "ate_none": ("lint.py", "    if c.promises is None:\n", "    if False:\n", {"ate"}, "当て表の無い spec を、形の違いと区別しない"),
     "ate_read": ("lint.py", '        has_spec, promises = True, s.get("promises")\n', "        has_spec, promises = True, None\n", {"ate"},
                  "spec の promises を読まない"),
-    "as_of_cid": ("lint.py", "    return sc is None or ac is None or sc <= ac\n", "    return True\n", {"as_of_id", "approved", "prev", "pickwhy", "base"},
+    "as_of_cid": ("lint.py", "    return sc is None or ac is None or sc <= ac\n", "    return True\n", {"as_of_id", "approved", "prev", "pickwhy", "base", "passed7"},
                   "同じ日の決まりの前後をコメントID で分けない"),
     "rows_missing": ("lint.py", "        if not isinstance(rows, list):\n", "        if False:\n", {"spec_rows"}, "rows の無い spec を黙って読む"),
     "rows_count": ("lint.py", "        if len(rows) != len(lines):\n", "        if False:\n", {"spec_rows"}, "行の数の違う spec を黙って読む"),
@@ -243,9 +253,9 @@ CUTS = {
     "wide_count": ("lint.py", "    return [(i, spoken_chars(ln)) for i, ln in", "    return [(i, chars(ln)) for i, ln in",
                    {"wide"}, "L-SEC の数えかた（「ー」を数えない）で数える"),
     "wide_voice": ("lint.py", '    return isinstance(r, dict) and bool(r.get("orig_voice") or r.get("voice_src"))\n', "    return False\n",
-                   {"wide", "width_median", "voice0", "bang", "voicen"}, "本人の声の行まで読み上げる行に数える（L-VOICE0・L-BANG・L-VOICEN も同じ見分けを使う）"),
+                   {"wide", "width_median", "voice0", "bang", "voicen", "shout", "passed7", "new_fixtures"}, "本人の声の行まで読み上げる行に数える（L-VOICE0・L-BANG・L-VOICEN も同じ見分けを使う）"),
     "wide_vsrc": ("lint.py", 'bool(r.get("orig_voice") or r.get("voice_src"))', 'bool(r.get("orig_voice"))',
-                  {"wide"}, "声だけ別の秒から取る本人の声（voice_src）を読み上げる行に数える"),
+                  {"wide", "new_fixtures"}, "声だけ別の秒から取る本人の声（voice_src）を読み上げる行に数える"),
     "width_line": ("lint.py", "    if wl:\n        out.append(wl)\n", "", {"width_median"}, "行の字数の中央値を出さない"),
     "retire": ("lint.py", "    if until and when(as_of or date.today().isoformat())[0] >= until:\n", "    if False:\n", {"retired"},
                "退かせた規則も今日の決まりで当てる"),
@@ -273,7 +283,7 @@ CUTS = {
                 "答えの次が開かなくても出さない"),
     "ans_open": ("lint.py", "        while j < end and t <= ANS_WINDOW:\n", "        while False:\n", {"ansnext"},
                  "答えの次が開いていても出す"),
-    "ans_close": ("lint.py", "        if nxt in c.answer_marked or nxt >= end:\n", "        if nxt in c.answer_marked:\n", {"ansnext"},
+    "ans_close": ("lint.py", "        if nxt in c.answer_marked or nxt >= end:\n", "        if nxt in c.answer_marked:\n", {"ansnext", "passed7"},
                   "答えのすぐあとが締めでも出す"),
     "ans_turn": ("lint.py", ' or "o" in (turn_of(row_at(c, j)) or ""):\n', ":\n", {"ansnext"}, "turn の o（問いを開く）を見ない"),
     "ans_window": ("lint.py", "ANS_WINDOW = 3.0", "ANS_WINDOW = 0.0", {"ansnext"}, "短い反応のあと3秒のうちに開いても出す"),
@@ -327,6 +337,42 @@ CUTS = {
                       {"title_metaphor"}, "本当にした行動のあとの気持ちのたとえ（あやとの題）まで ✕ で落とす"),
     "flag_dest": ("lint.py", " and not card.startswith(DEST, p[0] + len(p[1]))]\n", "]\n",
                   {"flag"}, "「〜行きのバス」の行き先にも旗を求める"),
+    # ---- 2026-11-27（あやと「同じ指摘がないように永続化してください」）: 2回以上言われたのに人の目だけだった項目 ----
+    "gourmet_eval": ("lint.py", "    m = EVAL_ONLY.search(t)\n", "    m = None\n", {"gourmet"}, "グルメの回の題の「大当たり」を拾わない"),
+    "gourmet_ai": ("lint.py", "        m = AI_MENU.search(ln)\n", "        m = None\n", {"gourmet"}, "AI に聞いたメニューを拾わない"),
+    "gourmet_scope": ("lint.py", "    if not GOURMET.search(t):\n        return []\n", "", {"gourmet"}, "グルメでない回の題まで拾う"),
+    "town_city": ("lint.py", "        if name in COUNTRY_NAMES or name == HOME or name in WELL_KNOWN:\n", "        if True:\n",
+                  {"town"}, "題の知られていない街を拾わない"),
+    "town_known": ("lint.py", "        if name in COUNTRY_NAMES or name == HOME or name in WELL_KNOWN:\n",
+                   "        if name in COUNTRY_NAMES or name == HOME:\n", {"town"}, "パリのような知られた街まで拾う"),
+    "town_food": ("lint.py", "（F-057）\", look=not food))", "（F-057）\", look=True))", {"town"},
+                  "グルメの題の知られていない街を ✕ にしない"),
+    "town_putoff": ("lint.py", "    m = PUTOFF.search(t)\n", "    m = None\n", {"town"}, "題の引く言葉（内臓）を拾わない"),
+    "easy_fail": ("lint.py", "        m = FAIL_WORD.search(ln)\n", "        m = None\n", {"easy"}, "「簡単」の回の失敗の行を拾わない"),
+    "easy_num": ("lint.py", "    if not any(RECIPE_NUM.search(ln) for ln in c.lines[1:]):\n", "    if False:\n", {"easy"},
+                 "「簡単」の回のレシピの数を見ない"),
+    "pitch": ("lint.py", "        m = PITCH.search(ln)\n", "        m = None\n", {"pitch"}, "企画の都合の言い回しを拾わない"),
+    "pitch_close": ("lint.py", "    for i in range(2, closing_index(c.lines)):\n        ln = c.lines[i - 1]\n        m = PITCH",
+                    "    for i in range(2, len(c.lines) + 1):\n        ln = c.lines[i - 1]\n        m = PITCH", {"pitch"}, "締めの行まで見る"),
+    "setup": ("lint.py", "            shared = sorted(w for w in words if w in prev)\n", "            shared = []\n", {"setup"},
+              "落ちの物の前ふりを拾わない"),
+    "setup_wish": ("lint.py", "            if not WISH.search(prev):\n                continue\n", "", {"setup"},
+                   "願いでない行（看板にあった）まで前ふりに数える"),
+    "buy": ("lint.py", "    if not got or any(YEN.search(ln) for ln in c.lines):\n", "    if not got:\n", {"buy", "passed7"}, "値段があっても落とす"),
+    "buy_off": ("lint.py", "    if not got or any(YEN.search(ln) for ln in c.lines):\n", "    if True:\n", {"buy", "passed7"}, "買った物の値段を見ない"),
+    "buy_why": ("lint.py", "    if c.no_price:\n        return []\n", "", {"buy"}, "配信で値段を言っていない訳（no_price）を読まない"),
+    "buy_neg": ("lint.py", "買(った|うた|って(?!(ない|へん|なかった)))", "買(った|うた|って)", {"buy"}, "「買ってない」まで買った物に数える"),
+    "four": ("lint.py", '    miss = [p for p in PILLARS if got.get(p, "").strip().strip("*") in EMPTY]\n', "    miss = []\n", {"four"},
+             "案の柱の抜けを見ない"),
+    "four_alias": ("lint.py", "    name = PILLAR_ALIAS.get(name, name)\n", "", {"four"}, "前の書きかた（問い・オチ）を柱に数えない"),
+    "four_joint": ("lint.py", '    if all(p in name for p in ("土台", "山", "結末")):\n', "    if False:\n", {"four"},
+                   "「土台・山・結末」の1つの欄を分けない"),
+    "mood_count": ("lint.py", "    if len(moved) > len(c.lines) * MOOD_SHARE:\n", "    if False:\n", {"mood"}, "感情の字の行の数を見ない"),
+    "mood_family": ("lint.py", "感情を出すなら2系統のどちらかに（F-011）\", look=True)", "感情を出すなら2系統のどちらかに（F-011）\", look=False)",
+                    {"mood"}, "様式に無い名前（anxious）を ✕ で落とす（通した回に残っている）"),
+    "shout": ("lint.py", "        if m and not own_voice(row_at(c, i)):\n", "        if False:\n", {"shout"}, "叫びを AI の声で読む行を拾わない"),
+    "shout_own": ("lint.py", "        if m and not own_voice(row_at(c, i)):\n", "        if m:\n", {"shout", "passed7", "new_fixtures"},
+                  "本人の声の叫びまで落とす"),
 }
 
 
@@ -1136,7 +1182,7 @@ def leg_new_fixtures(L):
     """温泉 v5・ボザ v9 は今日の決まりで ✕ 0（当て表 L-ATE は控えに入れていないので外す）。"""
     out = []
     for rel in (V5, V9):
-        f = [h.rule for h in fails(L, fix(L, rel)) if h.rule not in ("L-ATE", "L-BASE")]
+        f = [h.rule for h in fails(L, fix(L, rel)) if h.rule not in ("L-ATE", "L-BASE", "L-BUY")]
         out.append((f"{rel} は今日の決まりで ✕ 0" + (f" ← {f}" if f else ""), not f))
     return out
 
@@ -1179,6 +1225,142 @@ def leg_hypo_link(L):
             ("issue の形でない出どころ（1403）を拾う", any("L-ODD" in p for p in odd))]
 
 
+# ---- 2026-11-27: 2回以上言われたのに人の目だけだった項目の規則 ----
+def rows_of(lines, over=None):
+    """原稿の行の数だけの spec の行（over は 行番号 → 欄）。"""
+    return [dict({"line": ln}, **(over or {}).get(i, {})) for i, ln in enumerate(lines, 1)]
+
+
+def sctx(L, lines, rows=None, **kw):
+    """spec を読んだ形の Ctx。"""
+    return L.Ctx(lines=list(lines), title_card=kw.pop("title_card", None), title_from="足", rows=rows or rows_of(lines),
+                 has_spec=True, **kw)
+
+
+def leg_gourmet(L):
+    bad = hits_of(L, ctx(L, ["北マケドニアの行列店に並んだら、大当たりやった！", "AIに聞いたら、名物はチェバピ", "みんなは？"]), "L-GOURMET")
+    good = hits_of(L, ctx(L, ["北マケドニアの行列店の大衆食堂を食べてみた！", "この炭で焼いてるチェバピって言うのが食べたい！", "みんなは？"]), "L-GOURMET")
+    other = hits_of(L, ctx(L, ["ルーマニア行きのバスが大当たりやった！", "AIに聞いたら、7時間かかるらしい。", "みんなは？"]), "L-GOURMET")
+    return [("題「行列店に並んだら、大当たりやった！」（行 1）と「AIに聞いたら、名物は」（行 2）を ✕",
+             [(h.line, h.look) for h in bad] == [(1, False), (2, False)]),
+            ("あやとの直し（大衆食堂を食べてみた・炭で焼いてるチェバピが食べたい）は通す", not good),
+            ("グルメでない回（バス）は見ない", not other)]
+
+
+def leg_town(L):
+    t = lambda title: [(h.line, h.look) for h in hits_of(L, ctx(L, [title, "みんなは？"]), "T-TOWN")]  # noqa: E731
+    return [("「イギリスのエディンバラで、羊の内臓料理ハギスを食べてみた！」は街と内臓で ✕ 2",
+             t("イギリスのエディンバラで、羊の内臓料理ハギスを食べてみた！") == [(1, False), (1, False)]),
+            ("あやとの直し「イギリスのめちゃくちゃ美味しい料理、ハギスを食べてみた！」は通す",
+             t("イギリスのめちゃくちゃ美味しい料理、ハギスを食べてみた！") == []),
+            ("街歩きの題（「エディンバラを、1日で回ったら」。あやとが通した）は △ だけ",
+             t("イギリスのエディンバラを、1日で回ったらやばかった！") == [(1, True)]),
+            ("知られた街（パリ）の題は見ない", t("パリで本場のクロワッサンを食べてみた！") == [])]
+
+
+def leg_easy(L):
+    bad = ["フォカッチャ、海外の宿でも簡単すぎた！", "あとは2つの生地を鉄板に移すだけやのに", "うわあ、最悪や！", "みんなは作ってみたい？"]
+    good = ["フォカッチャ、海外の宿でも簡単すぎた！", "朝起きて打ち粉して1時間2次発酵すると...", "あとは鉄板に移して230℃で30分 Vai! Vai!",
+            "みんなは作ってみたい？"]
+    other = ["ルーマニアのバスで最悪や！", "みんなは？"]
+    got = [(h.line, h.look) for h in hits_of(L, ctx(L, bad), "T-EASY")]
+    return [(f"p1 の「うわあ、最悪や！」（行 3）と、数の無い原稿を ✕ ← {got}", got == [(3, False), (None, False)]),
+            ("あやとの直し（1時間・230℃で30分）は通す", not hits_of(L, ctx(L, good), "T-EASY")),
+            ("題が「簡単」でない回は見ない", not hits_of(L, ctx(L, other), "T-EASY"))]
+
+
+def leg_pitch(L):
+    bad = hits_of(L, ctx(L, ["海外の宿で、うどんを一から作ってみた！", "海外でも日本を感じたくて、宿で一から挑戦！", "みんなは？"]), "L-PITCH")
+    good = hits_of(L, ctx(L, ["海外の宿で、うどんを一から作ってみた！", "海外に住んで二年になるけど、そろそろ日本が恋しい！", "みんなは？"]), "L-PITCH")
+    close = hits_of(L, ctx(L, ["題", "宿に着いた。", "みんなも、海外で挑戦！"]), "L-PITCH")
+    return [("「海外でも日本を感じたくて、宿で一から挑戦！」（行 2）を ✕", [(h.line, h.look) for h in bad] == [(2, False)]),
+            ("あやとの直し「そろそろ日本が恋しい！」は通す", not good),
+            ("締めの行は見ない", not close)]
+
+
+def leg_setup(L):
+    v4 = ["ブルガリアの食堂でお任せしたら、まさかの料理が出てきた！", "市場の食堂へ。", "名物のムサカ、食べたかったんよ。",
+          "おばちゃんにお任せしたら……", "まさかの、食べたかったムサカや！", "みんなは？"]
+    a = ["題", "せっかくやし、伝統料理が食べたい。", "おばちゃんにお任せしたら……", "まさかの、食べたかったムサカや！", "みんなは？"]
+    sign = ["題", "店の前に、ムサカの看板があった。", "お任せしたら……", "まさかのムサカや！", "みんなは？"]
+    got = [(h.line, h.look) for h in hits_of(L, ctx(L, v4), "L-SETUP")]
+    return [(f"ago-a-v4 の「名物のムサカ、食べたかったんよ。」（行 3）を ✕ ← {got}", got == [(3, False)]),
+            ("あやとが通した A（「伝統料理が食べたい」は落ちの物を名指さない）は通す", not hits_of(L, ctx(L, a), "L-SETUP")),
+            ("願いでない行（看板にあった）は前ふりに数えない", not hits_of(L, ctx(L, sign), "L-SETUP"))]
+
+
+def leg_buy(L):
+    p4 = ["題", "ブルガリアでハマった、小麦で作る甘酒のボザも購入！", "みんなは？"]
+    p5 = ["題", "ブルガリアでハマった、小麦で作る甘酒のボザも購入！", "500mlで80円ぐらい、安っ！", "みんなは？"]
+    neg = ["題", "まだ買ってないけど、ボザが気になる！", "みんなは？"]
+    why = L.Ctx(lines=p4, title_card=None, title_from="足", rows=None, no_price="配信 1:00〜1:20 の字幕に値段が無い")
+    return [("p4 の「ボザも購入！」（値段なし。行 2）を ✕", [(h.line, h.look) for h in hits_of(L, ctx(L, p4), "L-BUY")] == [(2, False)]),
+            ("あやとの直し（500mlで80円ぐらい）は通す", not hits_of(L, ctx(L, p5), "L-BUY")),
+            ("買っていない回（「まだ買ってないけど」）は見ない", not hits_of(L, ctx(L, neg), "L-BUY")),
+            ("配信で値段を言っていない訳（spec の no_price）があれば通す", not hits_of(L, why, "L-BUY"))]
+
+
+PLAN_OK = "## 3案の比べ\n\n| | A 揚げパン | B 夢 |\n| --- | --- | --- |\n| 土台 | 2〜4行 | 4行 |\n| 山 | 6〜11行 | 2〜14行 |\n| 結末 | 12 | 15 |\n| 終わり | 問い | 問い |\n"
+PLAN_ROWS = "## 3案の比べ\n\n| 案 | 型 | 土台 | 山 | 結末 | 終わり |\n| --- | --- | --- | --- | --- | --- |\n| **A** | グルメ | 2行 | 3〜5行 | 6行 | — |\n"
+PLAN_OLD = "## 3案の比べ\n\n| | A |\n| --- | --- |\n| 土台 | 2行 |\n| 山 | 3行 |\n| オチ | 6行 |\n| 問い | みんなは？ |\n"
+PLAN_JOINT = "## 3案の比べ\n\n| 案 | 型 |\n| --- | --- |\n| A | グルメ |\n\n## A案 グルメ\n\n| 項目 | 中身 |\n| --- | --- |\n| 土台・山・結末 | 土台 2行／山 3〜5行／結末 6行 |\n| 終わり | question |\n"
+
+
+def leg_four(L):
+    def got(plan, option="A"):
+        c = L.Ctx(lines=["題", "みんなは？"], title_card=None, title_from="足", rows=None, plan=plan, option=option)
+        res = L.lint(c, TODAY)
+        return "L-FOUR" in res["blind"], [(h.line, h.look) for h in res["hits"] if h.rule == "L-FOUR"]
+    return [("4つの柱が全部ある案は通す", got(PLAN_OK) == (False, [])),
+            ("案が行の表で「終わり」が — なら ✕", got(PLAN_ROWS) == (False, [(None, False)])),
+            ("前の書きかた（オチ・問い）も柱に数える", got(PLAN_OLD) == (False, [])),
+            ("「土台・山・結末」の1つの欄と、案の節の終わりを読む", got(PLAN_JOINT) == (False, [])),
+            ("plan.md が無い・案の列が無い（D）なら「見ていない」", got(None)[0] and got(PLAN_OK, "D")[0])]
+
+
+def leg_mood(L):
+    def got(n, total, name="up_pop"):
+        lines = [f"{i}行目" for i in range(1, total + 1)]
+        rows = rows_of(lines, {i: {"mood": name} for i in range(2, 2 + n)})
+        return [(h.line, h.look) for h in hits_of(L, sctx(L, lines, rows), "L-MOOD")]
+    blind = "L-MOOD" in L.lint(ctx(L, ["題", "みんなは？"]), TODAY)["blind"]
+    return [("17行で9行（地下鉄 p1 の 0.53）は ✕", got(9, 17) == [(None, False)]),
+            ("16行で8行（半分ちょうど）は通す", got(8, 16) == []),
+            ("様式に無い名前（anxious）は △ だけ", got(1, 10, "anxious") == [(2, True)]),
+            ("spec が無ければ「見ていない」", blind)]
+
+
+def leg_shout(L):
+    lines = ["題", "ああっ！沼にはまった！", "うまっ！めっちゃ濃厚！", "みんなは？"]
+    ai = [(h.line, h.look) for h in hits_of(L, sctx(L, lines), "L-SHOUT")]
+    own = hits_of(L, sctx(L, lines, rows_of(lines, {2: {"orig_voice": "0:10:20〜0:10:22"}})), "L-SHOUT")
+    blind = "L-SHOUT" in L.lint(ctx(L, lines), TODAY)["blind"]
+    return [(f"「ああっ！沼にはまった！」を AI の声で読むと ✕（行 2。「うまっ！」は叫びに数えない）← {ai}", ai == [(2, False)]),
+            ("配信の本人の声（orig_voice）なら通す", not own),
+            ("spec が無ければ「見ていない」", blind)]
+
+
+NEW27 = ("L-GOURMET", "T-TOWN", "T-EASY", "L-PITCH", "L-SETUP", "L-BUY", "L-FOUR", "L-MOOD", "L-SHOUT")
+# あやとが通した7本（①〜④と p5 の3本）。名前 → (原稿, 通した時点。p5 の2本はまだ出していないので今日)
+PASSED7 = {"KjB_aBsTIf0_p1_A": ("script_A.txt", "2026-11-26:7188529428"), "sOvaH0tBzSg_p1_C": ("script_C.txt", "2026-11-26:7188422917"),
+           "aGOz5otlEs8_p1_A": ("script_A.txt", "2026-11-26:7191714724"), "tr_YBmyLGUc_p1_D": ("script_D.txt", "2026-11-26:7191788789"),
+           "ro-move_p5": ("script.txt", "2026-11-27:7205947005"), "vXYYLJy1Uyc_p5": ("script.txt", TODAY),
+           "YLda-SgcF6k_p5": ("script.txt", TODAY)}
+
+
+def leg_passed7(L):
+    """通した7本に、2026-11-27 に足した規則の ✕ が出ない（通した時点で）。今日の決まりで当たるのは④の L-BUY だけ（承認が F-102 より前）。"""
+    out = []
+    for name, (script, at) in PASSED7.items():
+        c = fix(L, f"approved/passed7/{name}", script)
+        then = [h.rule for h in fails(L, c, at) if h.rule in NEW27]
+        now = [h.rule for h in fails(L, c) if h.rule in NEW27]
+        want = ["L-BUY"] if name == "tr_YBmyLGUc_p1_D" else []
+        out.append((f"{name} は通した時点（{at}）で新しい規則の ✕ 0・今日は {want or '0'}" + (f" ← {then}・{now}" if then or now != want else ""),
+                    not then and now == want))
+    return out
+
+
 LEGS = {
     "approved": leg_approved, "later_rule_live": leg_later_rule_live, "miete": leg_miete,
     "title_real": leg_title_real, "title_metaphor": leg_title_metaphor, "title_hide": leg_title_hide, "flag": leg_flag,
@@ -1194,6 +1376,8 @@ LEGS = {
     "run": leg_run, "ansnext": leg_ansnext,
     "cliff": leg_cliff, "hook": leg_hook, "num38": leg_num38, "voice0": leg_voice0, "bang": leg_bang, "new_fixtures": leg_new_fixtures,
     "base": leg_base, "voicen": leg_voicen,
+    "gourmet": leg_gourmet, "town": leg_town, "easy": leg_easy, "pitch": leg_pitch, "setup": leg_setup, "buy": leg_buy,
+    "four": leg_four, "mood": leg_mood, "shout": leg_shout, "passed7": leg_passed7,
 }
 
 if __name__ == "__main__":

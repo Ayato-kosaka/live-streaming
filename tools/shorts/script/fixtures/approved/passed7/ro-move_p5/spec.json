@@ -1,0 +1,139 @@
+{
+ "_note": "shorts/videos/ro-move/p5/spec.json から、lint が読む欄だけ（根拠の why は【答】の印だけ）。通した時点 2026-11-27:7205947005",
+ "title_card": "🇧🇬ブルガリアからルーマニア行きのバス移動してみた！",
+ "title_card_seconds": 4.0,
+ "rows": [
+  {
+   "line": "ブルガリアからルーマニア行きのバス移動してみた！",
+   "kind": "題",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": "",
+   "hook": "最中",
+   "visual": "0〜2秒: A_cJ9CNM0G8 1:13:00 緑のバスが乗り場に入ってくる最中 → 2〜4秒: A_cJ9CNM0"
+  },
+  {
+   "line": "東欧を旅してて、今日はバス乗り場からルーマニアまで7時間の移動！",
+   "kind": "数",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": "",
+   "big": true
+  },
+  {
+   "line": "乗るのは、ヨーロッパで一番安くて評判の悪いフリックスバス。",
+   "kind": "説明",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": ""
+  },
+  {
+   "line": "長旅やから、遠足気分でスーパーにおやつを買いに行く！",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": ""
+  },
+  {
+   "line": "ブルガリアでハマった、小麦で作る甘酒のボザも購入！",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": ""
+  },
+  {
+   "line": "500mlで80円ぐらい、安っ！",
+   "kind": "数",
+   "turn": "c",
+   "mood": "plain",
+   "orig_voice": "",
+   "big": true
+  },
+  {
+   "line": "乗り場に戻って荷物を預けたら、ブルガリア最後のボザで乾杯！",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": ""
+  },
+  {
+   "line": "うまっ！めっちゃ濃厚！",
+   "kind": "味",
+   "turn": "c",
+   "mood": "up_pop",
+   "orig_voice": "A_cJ9CNM0G8 1:17:30 前後『うま』＋ 1:17:00 前後『めっちゃ濃厚』（波形で合わせる）",
+   "big": true
+  },
+  {
+   "line": "乗り込んだら、定刻の2分前にもう出発！",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": "",
+   "big": true
+  },
+  {
+   "line": "車内は思ってたより広いし、充電もできる！",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": ""
+  },
+  {
+   "line": "全然揺れへんし、このフリックスバス当たりやな！",
+   "kind": "反応",
+   "turn": "c",
+   "mood": "plain",
+   "orig_voice": "",
+   "voice_src": "前半『全然揺れへんし、』は AI の声、後半『このフリックスバス当たりやな』は A_cJ9CNM0G8 1:45:30 前後の本人の声をつないだ声",
+   "big": true
+  },
+  {
+   "line": "でかい窓の外は景色がきれいで、羊まで出てきた！",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": ""
+  },
+  {
+   "line": "ルーマニアの首都ブカレストに着いたら、もう夜。",
+   "kind": "出来事",
+   "turn": "o",
+   "mood": "plain",
+   "orig_voice": ""
+  },
+  {
+   "line": "宿で紅茶を入れてひと息ついたら、なんか微妙な味……",
+   "kind": "引っ張り",
+   "turn": "o",
+   "mood": "tense_tilt",
+   "orig_voice": "",
+   "big": true
+  },
+  {
+   "line": "疲れすぎて、舌がバグってるんかな。",
+   "kind": "反応",
+   "turn": "c",
+   "mood": "tense_still",
+   "orig_voice": "",
+   "why": "【答】"
+  },
+  {
+   "line": "明日から2週間、東欧のパリって呼ばれるブカレストを歩くのが楽しみ！",
+   "kind": "締め",
+   "turn": "c",
+   "mood": "up_pop",
+   "orig_voice": ""
+  }
+ ],
+ "persona": "将来の海外旅の情報として見たい人（いつか行く海外旅の情報として見たい人）",
+ "baseline": [
+  "東欧を回ってる（A_cJ9CNM0G8 1:35:00）",
+  "今回はブルガリアからバスに乗る（A_cJ9CNM0G8 0:12:00・0:39:00）",
+  "お菓子とかも買って気分上げていく（A_cJ9CNM0G8 0:34:00・0:54:00）",
+  "景色綺麗（A_cJ9CNM0G8 1:21:30・2:27:30）",
+  "ついたらもう夜で疲れた（ir-qwKKlr2k 0:00:30・0:04:00）",
+  "ルーマニア綺麗らしいから楽しみ（ir-qwKKlr2k 0:09:30・0:15:30）"
+ ],
+ "next_stream": ""
+}

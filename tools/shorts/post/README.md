@@ -12,6 +12,7 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 | `yt_post.py` | EC2（`~/cdp/`） | Studio: 上げる → 非公開で保存 → 関連動画 → 公開。結果は最後の `RESULT {...}` の1行 |
 | `tt_post.py` | EC2（`~/cdp/`） | TikTok Studio: 上げる → キャプションを貼る → 設定を読む → 投稿（`--dry` で手前まで）。予約の日を暦で押す手の見張りは `tt_post_selftest.py`（手元で回る。EC2 に触らない） |
 | `ig_post.py` | EC2（`~/cdp/`） | Instagram（web）: リールを上げる → カバーのコマを選ぶ → キャプションを貼る → 予約の日時 → Schedule（`--dry` で手前まで）・予約の一覧で読み直す（`scheduled`）。見張りは `ig_post_selftest.py`（手元で回る。EC2 に触らない） |
+| `preflight.py` | 手元 | **出す前の関所**（あやとに2回以上言われた投稿・進めかたの指摘）。`send` の前に記事のリンク（F-097）・BGM とクレジット（F-038）・あやとに見せた版の数（F-044）、投稿の段の前に承認のコメント（F-002）と他の案の pending（F-085）、`clean` の前に Instagram の抜け（F-090）を数えて止める。制作 issue に出す原稿は `preflight.py issue-text <字>`（F-098）、台帳の見回りは `preflight.py audit`。帳面の `post:<関所>` はここの `GATES`。見張りは `preflight_selftest.py` |
 | `posted.py` / `posted.json` | 手元（git に入れる） | 出した記録の台帳（動画の sha256 × 場所 → 状態・投稿 ID）。投稿の段が EC2 に触る前に引く。見張りは `posted_selftest.py` |
 | `desktop_guard_selftest.py` | 手元 | 遠隔デスクトップの見張り（`GUARD` と、EC2 の `desktop-input`・idle-stop）の見張り。EC2 に触らない |
 
@@ -24,17 +25,18 @@ Studio の読み書きは `.claude/skills/youtube-studio/SKILL.md`。
 
 ```bash
 D=<動画と投稿文の置き場（A.mp4 post_A.json …）>
-python3 tools/shorts/post/post.py send       --dir $D --video <元の動画ID> --option A   # 1分ほど（ほとんどが Actions の URL 待ち）
-python3 tools/shorts/post/post.py yt-draft   --video <元の動画ID> --option A --sha <sha256>   # 非公開で保存。ショートの ID が出る（sha256 は send が出す mp4_sha256）
+python3 tools/shorts/post/post.py send       --dir $D --video <元の動画ID> --option A --edit shorts/videos/<id>/<版>/edit_A.json   # 1分ほど（ほとんどが Actions の URL 待ち）。送る前に関所（記事・BGM・クレジット・版の数）。版が3を越えたら --rounds-why "<どこで往復が増え、頼む文のどこを直したか>"
+A=<あやとが出してよいと書いたコメントの URL>   # 投稿の段は全部 --approval $A が要る（あやと本人のコメントか見て、ID を台帳に残す。F-002）
+python3 tools/shorts/post/post.py yt-draft   --video <元の動画ID> --option A --sha <sha256> --approval $A   # 非公開で保存。ショートの ID が出る（sha256 は send が出す mp4_sha256）
 python3 tools/shorts/post/post.py yt-related --video <元の動画ID> --id <ショートのID>   # 関連動画に元のアーカイブ
 python3 tools/shorts/post/post.py cover      --dir $D --video <元の動画ID> --option A   # 題の札が見えるコマ（既定 1.0秒）を切り出して送る
 python3 tools/shorts/post/post.py yt-thumb   --video <元の動画ID> --option A --id <ショートのID>   # それをサムネイルに
 python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A --dry --cover   # 投稿の手前まで確かめる
 # 出すのは、あやとが issue かチャットで「出して」と言った案だけ。EC2 の mp4 の sha256 を照らして出す
 python3 tools/shorts/post/post.py yt-publish --video <元の動画ID> --option A --id <ショートのID> --sha <sha256>   # --video/--option が無いと EC2 の mp4 を引けず MISMATCH で止まる
-python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A --cover --sha <sha256>
-python3 tools/shorts/post/post.py ig-post    --video <元の動画ID> --option A --cover --post-json $D/post_A.json --sha <sha256>   # Instagram（2026-11-22 から。#1353）
-python3 tools/shorts/post/post.py clean      --video <元の動画ID>                     # 送った動画を消す（SSM のログには触らない）
+python3 tools/shorts/post/post.py tt-post    --video <元の動画ID> --option A --cover --sha <sha256> --approval $A
+python3 tools/shorts/post/post.py ig-post    --video <元の動画ID> --option A --cover --post-json $D/post_A.json --sha <sha256> --approval $A   # Instagram（2026-11-22 から。#1353）
+python3 tools/shorts/post/post.py clean      --video <元の動画ID>                     # 送った動画を消す（SSM のログには触らない）。Instagram に出ていない案があれば止まる（F-090）
 ```
 
 - **同じ動画を同じ場所へ2回出さない**（#920）。`yt-draft` と `tt-post` は EC2 に触る前に台帳 `posted.json` を引き、
