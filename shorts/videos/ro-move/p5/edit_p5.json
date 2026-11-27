@@ -14,7 +14,7 @@
    "watermark": "prism_live",
    "t0": 240.0
   },
-  "c4_01": {
+  "c5_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/hm/hook_map.mp4",
    "watermark": null,
    "t0": 100000.0
@@ -24,7 +24,7 @@
    "watermark": "prism_live",
    "t0": 0.0
   },
-  "c05": {
+  "c06": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-16-02.5.mp4",
    "watermark": "prism_live",
    "t0": 4562.5,
@@ -42,7 +42,7 @@
     "margin": 4
    }
   },
-  "c09": {
+  "c10": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-18-04.0.mp4",
    "watermark": "prism_live",
    "t0": 4684.0,
@@ -60,10 +60,10 @@
     "margin": 4
    }
   },
-  "c02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k0-56-07.5.mp4",
+  "c03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k0-57-38.0.mp4",
    "watermark": "prism_live",
-   "t0": 3367.5,
+   "t0": 3458.0,
    "bands": {
     "size": [
      720,
@@ -83,7 +83,7 @@
    "watermark": "prism_live",
    "t0": 120.0
   },
-  "c03": {
+  "c04": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-00-45.5.mp4",
    "watermark": "prism_live",
    "t0": 3645.5,
@@ -106,7 +106,7 @@
    "watermark": "prism_live",
    "t0": 180.0
   },
-  "c04": {
+  "c05": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-01-04.5.mp4",
    "watermark": "prism_live",
    "t0": 3664.5,
@@ -124,7 +124,7 @@
     "margin": 4
    }
   },
-  "c07": {
+  "c08": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-16.0.mp4",
    "watermark": "prism_live",
    "t0": 4636.0,
@@ -142,7 +142,7 @@
     "margin": 4
    }
   },
-  "c08": {
+  "c09": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-37.5.mp4",
    "watermark": "prism_live",
    "t0": 4657.5,
@@ -160,7 +160,7 @@
     "margin": 4
    }
   },
-  "c06": {
+  "c07": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-03.5.mp4",
    "watermark": "prism_live",
    "t0": 4623.5,
@@ -178,7 +178,7 @@
     "margin": 4
    }
   },
-  "c11": {
+  "c12": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-20-27.5.mp4",
    "watermark": "prism_live",
    "t0": 4827.5,
@@ -196,7 +196,7 @@
     "margin": 4
    }
   },
-  "c12": {
+  "c13": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-21-19.5.mp4",
    "watermark": "prism_live",
    "t0": 4879.5,
@@ -214,7 +214,7 @@
     "margin": 4
    }
   },
-  "c10": {
+  "c11": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-18-25.0.mp4",
    "watermark": "prism_live",
    "t0": 4705.0,
@@ -232,7 +232,7 @@
     "margin": 4
    }
   },
-  "c13": {
+  "c14": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-21-37.0.mp4",
    "watermark": "prism_live",
    "t0": 4897.0,
@@ -250,7 +250,7 @@
     "margin": 4
    }
   },
-  "c14": {
+  "c15": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-45-23.5.mp4",
    "watermark": "prism_live",
    "t0": 6323.5,
@@ -268,7 +268,7 @@
     "margin": 4
    }
   },
-  "c15": {
+  "c16": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k2-27-43.5.mp4",
    "watermark": "prism_live",
    "t0": 8863.5,
@@ -291,30 +291,25 @@
    "watermark": "prism_live",
    "t0": 300.0
   },
-  "c2_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-00-15.5.mp4",
-   "watermark": "prism_live",
-   "t0": 15.5
-  },
-  "c2_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-03-06.5.mp4",
-   "watermark": "prism_live",
-   "t0": 186.5
-  },
-  "c2_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-03-46.5.mp4",
-   "watermark": "prism_live",
-   "t0": 226.5
-  },
-  "c2_04": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-15-21.0.mp4",
-   "watermark": "prism_live",
-   "t0": 921.0
-  },
   "c3_07": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/art/07_22_03_vwMkwF.mp4",
    "watermark": "prism_live",
    "t0": 360.0
+  },
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-03-06.5.mp4",
+   "watermark": "prism_live",
+   "t0": 186.5
+  },
+  "c2_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-03-46.5.mp4",
+   "watermark": "prism_live",
+   "t0": 226.5
+  },
+  "c4_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/art2/01_22_00_f4y6Dt.mp4",
+   "watermark": "prism_live",
+   "t0": 0.0
   }
  },
  "cuts": [
@@ -327,7 +322,21 @@
     "from": 1.0,
     "to": 1.1
    },
-   "note": "「ブルガリアからルーマニア行きの」: あやと島カードの写真（乗り場の緑のフリックスバス・2026-11-21。0秒目）。v7 は配信の乗り場（フックの鮮明さ 5.8）。止め絵は 1.5秒まで・寄せで動かす"
+   "note": "「ブルガリアからルーマニア行きの」: あやと島カードの写真（乗り場の緑のフリックスバス・2026-11-21。0秒目）。v7 は配信の乗り場（フックの鮮明さ 5.8）。止め絵は 1.5秒まで・寄せで動かす",
+   "shows": "乗り場に停まる緑のフリックスバスの車体と開いた荷物入れ",
+   "kind": "card",
+   "scene": {
+    "key": "c:f8e02db65cc4e431",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "乗り場のフリックスバスの車体",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c3_05",
@@ -338,14 +347,42 @@
     "from": 1.0,
     "to": 1.1
    },
-   "note": "「バス移動してみた！」: あやと島カードの写真（バスの大きな窓と野原）。v7 は配信の車窓（鮮明さ 20.5）。駅の写真は SOFIA CENTRAL STATION の字が題の札と重なるので2行目へ"
+   "note": "「バス移動してみた！」: あやと島カードの写真（バスの大きな窓と野原）。v7 は配信の車窓（鮮明さ 20.5）。駅の写真は SOFIA CENTRAL STATION の字が題の札と重なるので2行目へ",
+   "shows": "バスの大きな窓から見た野原と道",
+   "kind": "card",
+   "scene": {
+    "key": "c:c387aebe187ec575",
+    "related": false,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "窓の外の野原だけでバスが見えない",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c4_01",
+   "src": "c5_01",
    "in": 0,
    "out": 78,
    "row": 1,
-   "note": "地図: ソフィア発 → ブカレスト着の道のり（p3/hookmap.json と同じ仕組み。あやと #1446「映像は地図のやつ」）"
+   "note": "地図: ソフィア発 → ブカレスト着の道のり（p3/hookmap.json と同じ仕組み。あやと #1446「映像は地図のやつ」）",
+   "shows": "ブルガリアとルーマニアの地図とソフィアからブカレストへの道のり",
+   "kind": "map",
+   "scene": {
+    "key": "c:59e76dd4865cd0a4",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "ソフィアからの経路と7時間の地図",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c3_01",
@@ -356,28 +393,84 @@
     "from": 1.0,
     "to": 1.1
    },
-   "note": "「バス乗り場から」: あやと島カードの写真（ソフィア中央駅・バス乗り場の隣）。v7 は配信のバスターミナル"
+   "note": "「バス乗り場から」: あやと島カードの写真（ソフィア中央駅・バス乗り場の隣）。v7 は配信のバスターミナル",
+   "shows": "ソフィア中央駅の正面と SOFIA CENTRAL STATION の字",
+   "kind": "card",
+   "scene": {
+    "key": "c:19909d1f8a62fc9a",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "出発地のソフィア中央駅",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c05",
+   "src": "c06",
    "in": 135,
    "out": 189,
    "row": 2,
-   "note": "「フリックスバス」: 緑の車体と FLIX の字・荷物入れ"
+   "note": "「フリックスバス」: 緑の車体と FLIX の字・荷物入れ",
+   "shows": "緑のフリックスバスの車体と開いた荷物入れ",
+   "kind": "stream",
+   "scene": {
+    "key": "c:50a5e8baae3a7037",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "緑のフリックスバスと荷物入れが写る",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c09",
+   "src": "c10",
    "in": 15,
    "out": 59,
    "row": 2,
-   "note": "「乗るのは」: 緑のバスの乗り口の段（v3 は同じ車体の続きで似た見た目が 3.3秒続いた）"
+   "note": "「乗るのは」: 緑のバスの乗り口の段（v3 は同じ車体の続きで似た見た目が 3.3秒続いた）",
+   "shows": "緑のバスの乗り口の段と車体",
+   "kind": "stream",
+   "scene": {
+    "key": "c:ac8a57524a15fd9f",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "フリックスバスの乗り口",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c02",
-   "in": 15,
-   "out": 65,
+   "src": "c03",
+   "in": 0,
+   "out": 50,
    "row": 3,
-   "note": "「スーパーに…買いに行く」: 乗り場の前を歩く影（動く画）"
+   "note": "「スーパーに…買いに行く」: スーパーに入った通路と棚（v9。v8c は乗り場の前を歩く影で、検査役が『スーパーが無い』）",
+   "shows": "スーパーの通路と惣菜・パンの棚",
+   "kind": "stream",
+   "scene": {
+    "key": "c:454faf74d40cd7c8",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "スーパー店内の通路と棚が写る",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c3_03",
@@ -388,14 +481,42 @@
     "from": 1.0,
     "to": 1.1
    },
-   "note": "「おやつ」: あやと島カードの写真（その日のパンとお菓子の棚）。v7 は配信のドーナツの棚"
+   "note": "「おやつ」: あやと島カードの写真（その日のパンとお菓子の棚）。v7 は配信のドーナツの棚",
+   "shows": "パン屋の棚に並ぶパンとお菓子",
+   "kind": "card",
+   "scene": {
+    "key": "c:fb96dfa525884936",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "おやつのパンや菓子の棚",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c03",
+   "src": "c04",
    "in": 15,
    "out": 64,
    "row": 4,
-   "note": "「ボザ」: 冷蔵の棚に並ぶボザ"
+   "note": "「ボザ」: 冷蔵の棚に並ぶボザ",
+   "shows": "スーパーの冷蔵の棚に並ぶボザのボトル",
+   "kind": "stream",
+   "scene": {
+    "key": "c:fa15a9ab8d2a9532",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "棚に並ぶボザのボトル",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c3_04",
@@ -406,91 +527,275 @@
     "from": 1.0,
     "to": 1.1
    },
-   "note": "「購入！」: あやと島カードの写真（買ったパン・コーヒーのビスケット・ボザ）。v7 は配信のベンチの同じ物"
-  },
-  {
-   "src": "c04",
-   "in": 15,
-   "out": 88,
-   "row": 5,
-   "note": "「500mlで80円ぐらい」: 手に持った 500ml のボザ（БОЗА の赤い札）"
+   "note": "「購入！」: あやと島カードの写真（買ったパン・コーヒーのビスケット・ボザ）。v7 は配信のベンチの同じ物",
+   "shows": "ベンチに置いた買ったパンとコーヒーのビスケットとボザのボトル",
+   "kind": "card",
+   "scene": {
+    "key": "c:db2bacae359d39a5",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "買ったボザとおやつ",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c05",
    "in": 15,
-   "out": 63,
-   "row": 6,
-   "note": "「荷物を預けたら」: バスの荷物入れ（v4 は字が顔の誤検出に掛かったので入りを後ろへ）"
-  },
-  {
-   "src": "c07",
-   "in": 15,
-   "out": 73,
-   "row": 6,
-   "note": "「乾杯！」: ボザを掲げて乾杯（配信 1:17:17『乾杯』）。v5 は入りの数コマで字が顔に掛かったので後ろへ"
-  },
-  {
-   "src": "c08",
-   "in": 13,
-   "out": 54,
-   "row": 7,
-   "note": "本人の声「うまー」（聞き取り 1:17:38.04〜39.16）・飲んだ直後の本人の顔"
+   "out": 88,
+   "row": 5,
+   "note": "「500mlで80円ぐらい」: 手に持った 500ml のボザ（БОЗА の赤い札）",
+   "shows": "手に持った 500ml のボザのボトルと БОЗА の赤い札",
+   "kind": "stream",
+   "scene": {
+    "key": "c:822b6f2df0b40861",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "手に持った500mlのボザ",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c06",
+   "in": 15,
+   "out": 63,
+   "row": 6,
+   "note": "「荷物を預けたら」: バスの荷物入れ（v4 は字が顔の誤検出に掛かったので入りを後ろへ）",
+   "shows": "緑のバスの荷物入れ",
+   "kind": "stream",
+   "scene": {
+    "key": "c:e213ac2dc234f0fd",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "荷物を預けるバスの荷物入れ",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c08",
+   "in": 15,
+   "out": 73,
+   "row": 6,
+   "note": "「乾杯！」: ボザを掲げて乾杯（配信 1:17:17『乾杯』）。v5 は入りの数コマで字が顔に掛かったので後ろへ",
+   "shows": "ボザのボトルを掲げて乾杯する本人",
+   "kind": "stream",
+   "scene": {
+    "key": "c:5b2345c47299ec5f",
+    "related": true,
+    "shows_true": true,
+    "selfie": true,
+    "face_event": true,
+    "painted": false,
+    "why": "ボザを掲げて乾杯する自撮り",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c09",
+   "in": 13,
+   "out": 54,
+   "row": 7,
+   "note": "本人の声「うまー」（聞き取り 1:17:38.04〜39.16）・飲んだ直後の本人の顔",
+   "event": "本人の声「うまー」の行。飲んだ直後の顔が出来事",
+   "shows": "ボザを飲んだ直後に笑う本人",
+   "kind": "stream",
+   "scene": {
+    "key": "c:e4f4f85491036e62",
+    "related": true,
+    "shows_true": true,
+    "selfie": true,
+    "face_event": true,
+    "painted": false,
+    "why": "ボトルを口に飲む顔の自撮り",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c07",
    "in": 28,
    "out": 87,
    "row": 7,
-   "note": "本人の声「めっちゃ濃厚」（聞き取り 1:17:04.54〜06.00）・ボトルの口から見たボザの濃さ"
-  },
-  {
-   "src": "c11",
-   "in": 15,
-   "out": 55,
-   "row": 8,
-   "note": "「定刻の2分前に」: スマホの時計 13:13 を見せる本人"
+   "note": "本人の声「めっちゃ濃厚」（聞き取り 1:17:04.54〜06.00）・ボトルの口から見たボザの濃さ",
+   "shows": "ボトルの口から見た濃いボザ",
+   "kind": "stream",
+   "scene": {
+    "key": "c:50805fd095fddee9",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "濃いボザの中身",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c12",
-   "in": 15,
-   "out": 54,
+   "in": 54,
+   "out": 93,
    "row": 8,
-   "note": "「もう出発！」: 動き出した車窓・乗り場のバスが流れる"
-  },
-  {
-   "src": "c10",
-   "in": 15,
-   "out": 56,
-   "row": 9,
-   "note": "「車内は思ってたより広い」: 空いた座席と窓（v4 は買い物袋が揺れる画だった）"
+   "note": "「定刻の2分前に」: スマホの時計 13:13 が見える秒から（v9。v8c は 1:20:28 でスマホの裏しか写らず、検査役が『時計が無い』）",
+   "event": "定刻の2分前（13:13）を時計で見せる。時計が出来事",
+   "shows": "13:13 を出したスマホの時計を見せる本人",
+   "kind": "stream",
+   "scene": {
+    "key": "c:4f6da60a1e92a546",
+    "related": true,
+    "shows_true": true,
+    "selfie": true,
+    "face_event": true,
+    "painted": false,
+    "why": "自撮りで時刻を見せ早発を示す",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c13",
    "in": 15,
-   "out": 49,
-   "row": 9,
-   "note": "「充電もできる」: 座席の充電口とケーブル"
+   "out": 55,
+   "row": 8,
+   "note": "「もう出発！」: 動き出した車窓・乗り場のバスが流れる",
+   "shows": "乗り場と停まっているバス",
+   "kind": "stream",
+   "scene": {
+    "key": "c:9833e85c3c2bd68e",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "乗るバスと乗り場の画で、乗車の行と合う",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c14",
-   "in": 285,
-   "out": 345,
-   "row": 10,
-   "note": "「全然揺れへんし」: 走る車内（乗客は後ろ姿）。v3 の 1:45:36〜 は配信がカクついていた（繰り返し 74%）"
+   "src": "c11",
+   "in": 15,
+   "out": 56,
+   "row": 9,
+   "note": "「車内は思ってたより広い」: 空いた座席と窓（v4 は買い物袋が揺れる画だった）",
+   "shows": "バスの空いた座席と窓",
+   "kind": "stream",
+   "scene": {
+    "key": "c:0656b67f490daaf7",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "バス車内の座席と窓",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c14",
    "in": 15,
-   "out": 74,
-   "row": 10,
-   "note": "「当たりやな」: 晴れた車窓の野原（カクつきの少ない区間）"
+   "out": 49,
+   "row": 9,
+   "note": "「充電もできる」: 座席の充電口とケーブル",
+   "shows": "座席の横の充電口",
+   "kind": "stream",
+   "scene": {
+    "key": "c:04bb227a28d0bfe7",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "座席横の充電口",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c15",
+   "in": 285,
+   "out": 344,
+   "row": 10,
+   "note": "「全然揺れへんし」: 走る車内（乗客は後ろ姿）。v3 の 1:45:36〜 は配信がカクついていた（繰り返し 74%）",
+   "shows": "走るバスの車内の座席と窓と黄色いカーテン",
+   "kind": "stream",
+   "scene": {
+    "key": "c:1f3e7906724418f3",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "バス車内の天井・カーテン・窓が写る",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c06",
+   "in": 369,
+   "out": 429,
+   "row": 10,
+   "note": "「このフリックスバス当たりやな」: 緑のフリックスバスの車体（v9。v8c は窓の外の野原で、検査役が『バスと無関係』。本人の声の行なので配信の画）",
+   "shows": "緑のフリックスバスの車体の側面と荷物入れ",
+   "kind": "stream",
+   "scene": {
+    "key": "c:76bf69dd5b11268c",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "緑のフリックスバス側面と荷物入れが写る",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c16",
    "in": 15,
    "out": 102,
    "row": 11,
-   "note": "「でかい窓の外は景色がきれいで、羊まで出てきた」: 車窓の野原（配信の画では羊が見えないので、羊の写真の札を重ねる）。窓の写真はフックへ回した"
+   "note": "「でかい窓の外は景色がきれいで、羊まで出てきた」: 車窓の野原（配信の画では羊が見えないので、羊の写真の札を重ねる）。窓の写真はフックへ回した",
+   "shows": "走るバスの窓から見た曇り空の野原とガードレール",
+   "kind": "stream",
+   "scene": {
+    "key": "c:89ca6bf8b35202d9",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "窓外の景色は写るが羊はいない",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c3_06",
@@ -501,60 +806,157 @@
     "from": 1.0,
     "to": 1.1
    },
-   "note": "「着いたら、もう夜」: あやと島カードの写真（夕暮れの車窓）"
-  },
-  {
-   "src": "c2_01",
-   "in": 15,
-   "out": 55,
-   "row": 12,
-   "note": "「ブカレストに着いたら、もう夜」: 宿に着いた直後の本人"
-  },
-  {
-   "src": "c2_02",
-   "in": 15,
-   "out": 69,
-   "row": 13,
-   "note": "「宿で紅茶を入れて」: 宿の給湯器で紅茶を入れる手"
-  },
-  {
-   "src": "c2_03",
-   "in": 15,
-   "out": 68,
-   "row": 13,
-   "note": "「なんか微妙な味……」: 紅茶をすする本人"
-  },
-  {
-   "src": "c2_03",
-   "in": 360,
-   "out": 421,
-   "row": 14,
-   "note": "「疲れすぎて、舌がバグってる」: 頭に手をやる本人"
-  },
-  {
-   "src": "c2_04",
-   "in": 15,
-   "out": 46,
-   "row": 15,
-   "note": "「明日から2週間、東欧のパリって呼ばれる」: 宿で話す本人（21時）"
+   "note": "「着いたら、もう夜」: あやと島カードの写真（夕暮れの車窓）",
+   "shows": "夕暮れの空と電線と民家をバスの窓から",
+   "kind": "card",
+   "scene": {
+    "key": "c:3151239db860752f",
+    "related": false,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "夕暮れの民家でブカレスト到着が見えない",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
    "src": "c3_07",
    "in": 30,
+   "out": 70,
+   "row": 12,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「ブカレストに着いたら、もう夜」: あやと島カードの写真（ブカレストの夕方の川と灯り・2026-11-22）。v8c は着いた直後に話す自撮り（F-058）、宿に入る画は検査役が『ブカレストも夜も無い』",
+   "shows": "夕方のブカレストの川と街の灯り",
+   "kind": "card",
+   "scene": {
+    "key": "c:e4071fc6d4fd99e4",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "灯りの点いたブカレストの川辺の夕景",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c2_04",
+   "in": 15,
    "out": 69,
+   "row": 13,
+   "note": "「宿で紅茶を入れて」: 宿の給湯器で紅茶を入れる手",
+   "shows": "宿の給湯器で紅茶を入れる手",
+   "kind": "stream",
+   "scene": {
+    "key": "c:e10c19b9d82545b4",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "宿で紅茶を入れる手",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c2_05",
+   "in": 15,
+   "out": 68,
+   "row": 13,
+   "note": "「なんか微妙な味……」: 紅茶をすする本人",
+   "event": "紅茶をすすって「微妙な味」と思う瞬間",
+   "shows": "紅茶のカップをすする本人",
+   "kind": "stream",
+   "scene": {
+    "key": "c:6be48b67618ee0c1",
+    "related": true,
+    "shows_true": true,
+    "selfie": true,
+    "face_event": true,
+    "painted": false,
+    "why": "紅茶をすする自撮り",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c2_05",
+   "in": 360,
+   "out": 421,
+   "row": 14,
+   "note": "「疲れすぎて、舌がバグってる」: 頭に手をやる本人",
+   "event": "疲れて頭を抱える仕草（舌がバグってる）",
+   "shows": "紅茶のカップを持って頭に手をやる本人",
+   "kind": "stream",
+   "scene": {
+    "key": "c:732c0ee281999db1",
+    "related": true,
+    "shows_true": true,
+    "selfie": true,
+    "face_event": true,
+    "painted": false,
+    "why": "紅茶を持ち疲れた仕草の自撮り",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
+  },
+  {
+   "src": "c4_01",
+   "in": 30,
+   "out": 82,
    "row": 15,
    "zoom": {
     "from": 1.0,
     "to": 1.1
    },
-   "note": "「ブカレストを歩くのが」: あやと島カードの写真（次の日の夕方のブカレストの川）"
+   "note": "「明日から2週間、東欧のパリって呼ばれる」: あやと島カードの写真（次の日の昼のブカレストの川・2026-11-22）。v8c は宿で話す本人の自撮り（selfie_rows・F-058。宣言の行に話すだけの顔）",
+   "shows": "晴れた昼のブカレストの川と並木",
+   "kind": "card",
+   "scene": {
+    "key": "c:935befa9833a6df2",
+    "related": true,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": false,
+    "why": "これから歩くブカレストの川と並木",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   },
   {
-   "src": "c4_01",
-   "in": 18,
+   "src": "c5_01",
+   "in": 0,
    "out": 78,
    "row": 15,
-   "note": "「ブカレストを歩くのが楽しみ！」: 2行目の地図の終わり（ソフィア → ブカレストの道のりが引き終わる）に戻して締める。終わりの注（左上）が本人の顔に掛からない画"
+   "note": "「ブカレストを歩くのが楽しみ！」: 地図（ソフィア → ブカレストの道のりが引き終わる）で締める。夕方の川の写真は13行目へ回した",
+   "shows": "ブルガリアとルーマニアの地図とソフィアからブカレストへの道のり",
+   "kind": "map",
+   "scene": {
+    "key": "c:9ae3d39be8e78e9f",
+    "related": false,
+    "shows_true": true,
+    "selfie": false,
+    "face_event": false,
+    "painted": true,
+    "why": "ソフィアからの経路図で街歩きの画ではない",
+    "frames": 2,
+    "judge": "claude",
+    "at": "2026-11-27"
+   }
   }
  ],
  "title": {
@@ -781,7 +1183,7 @@
     "frames": 94,
     "voice_frames": 86,
     "cuts": [
-     "A_cJ9CNM0G8 0:56:08.0+1.67s",
+     "A_cJ9CNM0G8 0:57:38.0+1.67s",
      "cardRo1121a 0:02:01.0+1.47s"
     ],
     "line": "長旅やから、遠足気分でスーパーにおやつを買いに行く！",
@@ -843,8 +1245,8 @@
     "frames": 79,
     "voice_frames": 71,
     "cuts": [
-     "A_cJ9CNM0G8 1:20:28.0+1.33s",
-     "A_cJ9CNM0G8 1:21:20.0+1.30s"
+     "A_cJ9CNM0G8 1:20:29.3+1.30s",
+     "A_cJ9CNM0G8 1:21:20.0+1.33s"
     ],
     "line": "乗り込んだら、定刻の2分前にもう出発！",
     "telop": null,
@@ -877,8 +1279,8 @@
     "frames": 119,
     "voice_frames": 111,
     "cuts": [
-     "A_cJ9CNM0G8 1:45:33.0+2.00s",
-     "A_cJ9CNM0G8 1:45:24.0+1.97s"
+     "A_cJ9CNM0G8 1:45:33.0+1.97s",
+     "A_cJ9CNM0G8 1:16:14.8+2.00s"
     ],
     "line": "全然揺れへんし、このフリックスバス当たりやな！",
     "telop": null,
@@ -911,7 +1313,7 @@
     "voice_frames": 65,
     "cuts": [
      "cardRo1121a 0:05:01.0+1.10s",
-     "ir-qwKKlr2k 0:00:16.0+1.33s"
+     "cardRo1121a 0:06:01.0+1.33s"
     ],
     "line": "ルーマニアの首都ブカレストに着いたら、もう夜。",
     "telop": null
@@ -954,9 +1356,8 @@
     "frames": 130,
     "voice_frames": 107,
     "cuts": [
-     "ir-qwKKlr2k 0:15:21.5+1.03s",
-     "cardRo1121a 0:06:01.0+1.30s",
-     "27:46:40.6+2.00s"
+     "cardRo1122b 0:00:01.0+1.73s",
+     "27:46:40.0+2.60s"
     ],
     "line": "明日から2週間、東欧のパリって呼ばれるブカレストを歩くのが楽しみ！",
     "telop": null,
