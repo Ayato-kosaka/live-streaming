@@ -30,7 +30,7 @@
 | `guard_drop` `guard_new` | 控えから1行消すと落ちる／控えに無い違反（2回言われて人の目だけ）を1つ足すと落ちる |
 | `guard_stale` `guard_frozen` | 直った項目が控えに残ると落ちる／締めの日より後に言われた項目は控えに在っても落ちる |
 | `guard_names` `guard_reason` `guard_absolute` | コードに無い名前・関所だけで理由の無い項目を拾う／1回でも「絶対」は対象 |
-| `guard_cli` | `ledger.py --check` が、控えから1行消した写しで 1 を返す |
+| `guard_cli` | `ledger.py --check` が、こしらえた帳面と控えから1行消した写しで 1 を返す |
 
 4. **2回目からは、人の目だけにしない**（2026-11-27）。「言われた」が2行以上か「絶対」の項目は、当てる場所に
    コードに在る機械の名前（`lint:`・`check:`・`brief:`・`post:`）を持つ。いまの違反は控えに載せ、減ることしか許さない
@@ -81,9 +81,11 @@ CUTS = {
                 "    out = []\n", {"guard_names"}, "コードに無い名前を見ない"),
     "g_reason": ("ledger.py", '        elif not kinds & set(JUDGES) and not it.fields.get(REASON, "").strip():\n', "        elif False:\n",
                  {"guard_reason"}, "関所だけの項目に理由を求めない"),
-    "g_nomachine": ("ledger.py", "        if not kinds:\n", "        if False:\n", {"guard_new"}, "機械の名前の無い項目を、名前が無いと言わない"),
+    # 違反には数えたまま、理由の字だけを外す（`if not kinds` を外すと、理由の欄だけ書いた本物の項目まで動き、帳面の今の中身で落ちる足が変わる）
+    "g_nomachine": ("ledger.py", '            out.append("当てる場所に機械の名前（`lint:`・`check:`・`brief:`・`post:`）が無い")\n',
+                    '            out.append("違反")\n', {"guard_new"}, "機械の名前の無い項目を、名前が無いと言わない"),
     "g_target": ("ledger.py", '    return it.times >= 2 or "絶対" in it.title or "絶対" in it.fields.get("決まり", "")\n',
-                 "    return it.times >= 2\n", {"guard_absolute", "guard_real"}, "1回の「絶対」を対象にしない"),
+                 "    return it.times >= 2\n", {"guard_absolute"}, "1回の「絶対」を対象にしない"),
     "g_exit": ("ledger.py", "        return 1 if led.problems or gprobs else 0\n", "        return 1 if led.problems else 0\n",
                {"guard_cli"}, "`--check` が機械の関所の崩れで落ちない"),
     "lint_token": ("ledger.py", "LINT = re.compile(r\"`lint:([A-Z]-[A-Z]+)`\")", "LINT = re.compile(r\"(?!x)x\")",
@@ -260,16 +262,17 @@ def leg_guard_real(c):
              all(x in c.ledger.code_names()[k] for k, x in (("lint", "L-NICK"), ("check", "cut_length"), ("brief", "edit_size"))))]
 
 
+def two_bad():
+    """こしらえた帳面: 2回言われて人の目だけの項目が2つ（どちらも違反）。本物の帳面の今の中身に頼らない。"""
+    return [item("F-001", said=said(2)), item("F-002", said=said(2))]
+
+
 def leg_guard_drop(c):
-    led = c.ledger.load()
-    allow = c.ledger.UNGUARDED.read_text(encoding="utf-8")
-    rows = [ln for ln in allow.splitlines() if ln.startswith("F-")]
-    if not rows:
-        return [("控えが空（全部直った）。消す行が無いので、こしらえた控えで見る",
-                 any("控えに無い" in p for p in guard(c, [item(said=said(2))], "")))]
-    cut = allow.replace(rows[0] + "\n", "", 1)
-    probs = c.ledger.guard(led, cut, c.ledger.code_names())[0]
-    return [(f"控えから {rows[0][:5]} を消すと落ちる", any(rows[0][:5] in p and "控えに無い" in p for p in probs))]
+    full = "F-001  画  決まり\nF-002  画  決まり\n"
+    probs = guard(c, two_bad(), full.replace("F-001  画  決まり\n", ""))
+    return [("違反2つを控えに載せれば通る", not guard(c, two_bad(), full)),
+            ("控えから F-001 の1行を消すと落ちる（F-001 が控えに無い、と言う）",
+             any("F-001" in p and "控えに無い" in p for p in probs) and not any("F-002" in p for p in probs))]
 
 
 def leg_guard_new(c):
@@ -317,24 +320,21 @@ def leg_guard_cli(c):
     import contextlib
     import io
     import tempfile
-    allow = c.ledger.UNGUARDED.read_text(encoding="utf-8")
-    rows = [ln for ln in allow.splitlines() if ln.startswith("F-")]
-    with tempfile.TemporaryDirectory() as td:
-        led_p, allow_p = Path(td) / "led.md", Path(td) / "allow.txt"
-        if rows:
-            led_p.write_text(c.ledger.PATH.read_text(encoding="utf-8"), encoding="utf-8")
-            allow_p.write_text(allow.replace(rows[0] + "\n", "", 1), encoding="utf-8")
-        else:
-            led_p.write_text(ledger_text([item(said=said(2))]), encoding="utf-8")
-            allow_p.write_text("", encoding="utf-8")
-        argv = sys.argv
-        try:
-            sys.argv = ["ledger.py", "--check", "--path", str(led_p), "--allow", str(allow_p)]
-            with contextlib.redirect_stdout(io.StringIO()):
-                rc = c.ledger.main()
-        finally:
-            sys.argv = argv
-    return [("`--check` は、控えから1行消した写しで 1 を返す", rc == 1)]
+
+    def rc_of(allow: str) -> int:
+        with tempfile.TemporaryDirectory() as td:
+            led_p, allow_p = Path(td) / "led.md", Path(td) / "allow.txt"
+            led_p.write_text(ledger_text(two_bad()), encoding="utf-8")
+            allow_p.write_text(allow, encoding="utf-8")
+            argv = sys.argv
+            try:
+                sys.argv = ["ledger.py", "--check", "--path", str(led_p), "--allow", str(allow_p)]
+                with contextlib.redirect_stdout(io.StringIO()):
+                    return c.ledger.main()
+            finally:
+                sys.argv = argv
+    return [("`--check` は、こしらえた帳面と揃った控えで 0", rc_of("F-001\nF-002\n") == 0),
+            ("控えから1行消した写しで 1", rc_of("F-002\n") == 1)]
 
 
 LEGS = {
