@@ -1,54 +1,33 @@
 {
  "_note": "build_edit.py が spec.json から組んだ。人が直すのは overrides か、この指示書の数字",
  "version": 2,
- "id": "A_cJ9CNM0G8-p5",
+ "id": "p5",
  "style": "presets/try.json",
  "sources": {
-  "c13": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_p1-17-59.50.mp4",
+  "c3_02": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/art/02_21_07_66xzlr.mp4",
    "watermark": "prism_live",
-   "t0": 4679.5,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      130,
-      246
-     ]
-    ],
-    "margin": 4
-   }
+   "t0": 60.0
   },
-  "c16": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-21-19.5.mp4",
+  "c3_05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/art/05_21_09_QHpZ2K.mp4",
    "watermark": "prism_live",
-   "t0": 4879.5,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      130,
-      246
-     ]
-    ],
-    "margin": 4
-   }
+   "t0": 240.0
   },
-  "c3_01": {
+  "c4_01": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/hm/hook_map.mp4",
-   "watermark": "prism_live",
+   "watermark": null,
    "t0": 100000.0
   },
-  "c01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k0-55-53.5.mp4",
+  "c3_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/art/01_21_05_eQJbn8.mp4",
    "watermark": "prism_live",
-   "t0": 3353.5,
+   "t0": 0.0
+  },
+  "c05": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-16-02.5.mp4",
+   "watermark": "prism_live",
+   "t0": 4562.5,
    "bands": {
     "size": [
      720,
@@ -63,10 +42,10 @@
     "margin": 4
    }
   },
-  "c08": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_p1-16-06.50.mp4",
+  "c09": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-18-04.0.mp4",
    "watermark": "prism_live",
-   "t0": 4566.5,
+   "t0": 4684.0,
    "bands": {
     "size": [
      720,
@@ -82,9 +61,9 @@
    }
   },
   "c02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k0-56-07.0.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k0-56-07.5.mp4",
    "watermark": "prism_live",
-   "t0": 3367.0,
+   "t0": 3367.5,
    "bands": {
     "size": [
      720,
@@ -98,26 +77,13 @@
     ],
     "margin": 4
    }
+  },
+  "c3_03": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/art/03_21_10_3PsU04.mp4",
+   "watermark": "prism_live",
+   "t0": 120.0
   },
   "c03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k0-57-43.0.mp4",
-   "watermark": "prism_live",
-   "t0": 3463.0,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      130,
-      246
-     ]
-    ],
-    "margin": 4
-   }
-  },
-  "c04": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-00-45.5.mp4",
    "watermark": "prism_live",
    "t0": 3645.5,
@@ -135,28 +101,15 @@
     "margin": 4
    }
   },
-  "c06": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_1-13-55.50.mp4",
+  "c3_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/art/04_21_06_jWo7PI.mp4",
    "watermark": "prism_live",
-   "t0": 4435.5,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      130,
-      246
-     ]
-    ],
-    "margin": 4
-   }
+   "t0": 180.0
   },
-  "c05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-00-55.0.mp4",
+  "c04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-01-04.5.mp4",
    "watermark": "prism_live",
-   "t0": 3655.0,
+   "t0": 3664.5,
    "bands": {
     "size": [
      720,
@@ -172,9 +125,9 @@
    }
   },
   "c07": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-16-01.0.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-16.0.mp4",
    "watermark": "prism_live",
-   "t0": 4561.0,
+   "t0": 4636.0,
    "bands": {
     "size": [
      720,
@@ -189,25 +142,7 @@
     "margin": 4
    }
   },
-  "c11": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-14.0.mp4",
-   "watermark": "prism_live",
-   "t0": 4634.0,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      130,
-      246
-     ]
-    ],
-    "margin": 4
-   }
-  },
-  "c12": {
+  "c08": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-37.5.mp4",
    "watermark": "prism_live",
    "t0": 4657.5,
@@ -225,7 +160,7 @@
     "margin": 4
    }
   },
-  "c10": {
+  "c06": {
    "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-17-03.5.mp4",
    "watermark": "prism_live",
    "t0": 4623.5,
@@ -243,10 +178,64 @@
     "margin": 4
    }
   },
-  "c15": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-20-27.0.mp4",
+  "c11": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-20-27.5.mp4",
    "watermark": "prism_live",
-   "t0": 4827.0,
+   "t0": 4827.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c12": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-21-19.5.mp4",
+   "watermark": "prism_live",
+   "t0": 4879.5,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c10": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-18-25.0.mp4",
+   "watermark": "prism_live",
+   "t0": 4705.0,
+   "bands": {
+    "size": [
+     720,
+     1280
+    ],
+    "rows": [
+     [
+      130,
+      246
+     ]
+    ],
+    "margin": 4
+   }
+  },
+  "c13": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-21-37.0.mp4",
+   "watermark": "prism_live",
+   "t0": 4897.0,
    "bands": {
     "size": [
      720,
@@ -262,43 +251,7 @@
    }
   },
   "c14": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-18-19.5.mp4",
-   "watermark": "prism_live",
-   "t0": 4699.5,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      130,
-      246
-     ]
-    ],
-    "margin": 4
-   }
-  },
-  "c17": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-21-35.5.mp4",
-   "watermark": "prism_live",
-   "t0": 4895.5,
-   "bands": {
-    "size": [
-     720,
-     1280
-    ],
-    "rows": [
-     [
-      130,
-      246
-     ]
-    ],
-    "margin": 4
-   }
-  },
-  "c18": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_1-45-20t.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k1-45-23.5.mp4",
    "watermark": "prism_live",
    "t0": 6323.5,
    "bands": {
@@ -315,10 +268,10 @@
     "margin": 4
    }
   },
-  "c19": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_2-27-36t.mp4",
+  "c15": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/A_cJ9CNM0G8/A_cJ9CNM0G8_k2-27-43.5.mp4",
    "watermark": "prism_live",
-   "t0": 8863.0,
+   "t0": 8863.5,
    "bands": {
     "size": [
      720,
@@ -333,193 +286,227 @@
     "margin": 4
    }
   },
-  "c2_01": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-00-14.0.mp4",
+  "c3_06": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/art/06_21_08_txkfZo.mp4",
    "watermark": "prism_live",
-   "t0": 14.0
+   "t0": 300.0
+  },
+  "c2_01": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-00-15.5.mp4",
+   "watermark": "prism_live",
+   "t0": 15.5
   },
   "c2_02": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_0-03-06.50.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-03-06.5.mp4",
    "watermark": "prism_live",
    "t0": 186.5
   },
   "c2_03": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_0-03-45.mp4",
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-03-46.5.mp4",
    "watermark": "prism_live",
-   "t0": 225.0
+   "t0": 226.5
   },
-  "c2_05": {
-   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_0-15-21.mp4",
+  "c2_04": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/clips/ir-qwKKlr2k/ir-qwKKlr2k_k0-15-21.0.mp4",
    "watermark": "prism_live",
    "t0": 921.0
+  },
+  "c3_07": {
+   "path": "/tmp/claude-0/-home-user-live-streaming/7b54307b-9720-512c-9147-76f79b3cf92a/scratchpad/edit_ro-move/art/07_22_03_vwMkwF.mp4",
+   "watermark": "prism_live",
+   "t0": 360.0
   }
  },
  "cuts": [
   {
-   "src": "c13",
-   "in": 24,
-   "out": 65,
+   "src": "c3_02",
+   "in": 30,
+   "out": 68,
    "row": 0,
-   "note": "「ブルガリアからルーマニア行きの」: 乗り場の緑のフリックスバスの横を歩いて乗り口へ（動く画。0秒目）"
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「ブルガリアからルーマニア行きの」: あやと島カードの写真（乗り場の緑のフリックスバス・2026-11-21。0秒目）。v7 は配信の乗り場（フックの鮮明さ 5.8）。止め絵は 1.5秒まで・寄せで動かす"
   },
   {
-   "src": "c16",
-   "in": 240,
-   "out": 273,
+   "src": "c3_05",
+   "in": 30,
+   "out": 66,
    "row": 0,
-   "note": "「バス移動してみた」: 動き出した車窓から乗り場の出口（F-073 の後半）"
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「バス移動してみた！」: あやと島カードの写真（バスの大きな窓と野原）。v7 は配信の車窓（鮮明さ 20.5）。駅の写真は SOFIA CENTRAL STATION の字が題の札と重なるので2行目へ"
   },
   {
-   "src": "c3_01",
+   "src": "c4_01",
    "in": 0,
    "out": 78,
    "row": 1,
    "note": "地図: ソフィア発 → ブカレスト着の道のり（p3/hookmap.json と同じ仕組み。あやと #1446「映像は地図のやつ」）"
   },
   {
-   "src": "c01",
-   "in": 15,
-   "out": 50,
+   "src": "c3_01",
+   "in": 30,
+   "out": 65,
    "row": 1,
-   "note": "「バス乗り場から」: 青空のソフィアのバスターミナル"
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「バス乗り場から」: あやと島カードの写真（ソフィア中央駅・バス乗り場の隣）。v7 は配信のバスターミナル"
   },
   {
-   "src": "c08",
-   "in": 15,
-   "out": 69,
+   "src": "c05",
+   "in": 135,
+   "out": 189,
    "row": 2,
    "note": "「フリックスバス」: 緑の車体と FLIX の字・荷物入れ"
   },
   {
-   "src": "c13",
-   "in": 150,
-   "out": 194,
+   "src": "c09",
+   "in": 15,
+   "out": 59,
    "row": 2,
    "note": "「乗るのは」: 緑のバスの乗り口の段（v3 は同じ車体の続きで似た見た目が 3.3秒続いた）"
   },
   {
    "src": "c02",
-   "in": 30,
-   "out": 72,
+   "in": 15,
+   "out": 65,
    "row": 3,
    "note": "「スーパーに…買いに行く」: 乗り場の前を歩く影（動く画）"
   },
   {
-   "src": "c03",
-   "in": 45,
-   "out": 97,
+   "src": "c3_03",
+   "in": 30,
+   "out": 74,
    "row": 3,
-   "note": "「おやつ」: スーパーのドーナツの棚（v4 は入りの数コマに左端の買い物客の顔が掛かったので 1秒後ろへ）"
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「おやつ」: あやと島カードの写真（その日のパンとお菓子の棚）。v7 は配信のドーナツの棚"
   },
   {
-   "src": "c04",
+   "src": "c03",
    "in": 15,
-   "out": 61,
+   "out": 64,
    "row": 4,
    "note": "「ボザ」: 冷蔵の棚に並ぶボザ"
   },
   {
-   "src": "c06",
-   "in": 45,
-   "out": 92,
+   "src": "c3_04",
+   "in": 30,
+   "out": 74,
    "row": 4,
-   "note": "「購入！」: 乗り場のベンチに並べた買った物（コーヒーのビスケットの袋が写る所から）。v3 は棚・手のボトル・手のボトルで似た見た目が 5.5秒続いた"
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「購入！」: あやと島カードの写真（買ったパン・コーヒーのビスケット・ボザ）。v7 は配信のベンチの同じ物"
   },
   {
-   "src": "c05",
-   "in": 300,
-   "out": 373,
+   "src": "c04",
+   "in": 15,
+   "out": 88,
    "row": 5,
    "note": "「500mlで80円ぐらい」: 手に持った 500ml のボザ（БОЗА の赤い札）"
   },
   {
-   "src": "c07",
-   "in": 60,
-   "out": 108,
+   "src": "c05",
+   "in": 15,
+   "out": 63,
    "row": 6,
    "note": "「荷物を預けたら」: バスの荷物入れ（v4 は字が顔の誤検出に掛かったので入りを後ろへ）"
   },
   {
-   "src": "c11",
-   "in": 75,
-   "out": 133,
+   "src": "c07",
+   "in": 15,
+   "out": 73,
    "row": 6,
    "note": "「乾杯！」: ボザを掲げて乾杯（配信 1:17:17『乾杯』）。v5 は入りの数コマで字が顔に掛かったので後ろへ"
   },
   {
-   "src": "c12",
+   "src": "c08",
    "in": 13,
    "out": 54,
    "row": 7,
    "note": "本人の声「うまー」（聞き取り 1:17:38.04〜39.16）・飲んだ直後の本人の顔"
   },
   {
-   "src": "c10",
+   "src": "c06",
    "in": 28,
    "out": 87,
    "row": 7,
    "note": "本人の声「めっちゃ濃厚」（聞き取り 1:17:04.54〜06.00）・ボトルの口から見たボザの濃さ"
   },
   {
-   "src": "c15",
-   "in": 30,
-   "out": 70,
+   "src": "c11",
+   "in": 15,
+   "out": 55,
    "row": 8,
    "note": "「定刻の2分前に」: スマホの時計 13:13 を見せる本人"
   },
   {
-   "src": "c16",
+   "src": "c12",
    "in": 15,
    "out": 54,
    "row": 8,
    "note": "「もう出発！」: 動き出した車窓・乗り場のバスが流れる"
   },
   {
-   "src": "c14",
-   "in": 180,
-   "out": 221,
+   "src": "c10",
+   "in": 15,
+   "out": 56,
    "row": 9,
    "note": "「車内は思ってたより広い」: 空いた座席と窓（v4 は買い物袋が揺れる画だった）"
   },
   {
-   "src": "c17",
-   "in": 60,
-   "out": 94,
+   "src": "c13",
+   "in": 15,
+   "out": 49,
    "row": 9,
    "note": "「充電もできる」: 座席の充電口とケーブル"
   },
   {
-   "src": "c18",
+   "src": "c14",
    "in": 285,
    "out": 345,
    "row": 10,
    "note": "「全然揺れへんし」: 走る車内（乗客は後ろ姿）。v3 の 1:45:36〜 は配信がカクついていた（繰り返し 74%）"
   },
   {
-   "src": "c18",
+   "src": "c14",
    "in": 15,
    "out": 74,
    "row": 10,
    "note": "「当たりやな」: 晴れた車窓の野原（カクつきの少ない区間）"
   },
   {
-   "src": "c17",
-   "in": 270,
-   "out": 309,
+   "src": "c15",
+   "in": 15,
+   "out": 102,
    "row": 11,
-   "note": "「でかい窓の外は景色がきれいで」: 窓の外の雪山と青空（v4 は手前の壁の画だった）"
+   "note": "「でかい窓の外は景色がきれいで、羊まで出てきた」: 車窓の野原（配信の画では羊が見えないので、羊の写真の札を重ねる）。窓の写真はフックへ回した"
   },
   {
-   "src": "c19",
+   "src": "c3_06",
    "in": 30,
-   "out": 78,
-   "row": 11,
-   "note": "「羊まで出てきた」: 車窓の野原（配信の画では羊が見えないので、羊の写真の札を重ねる）"
+   "out": 63,
+   "row": 12,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「着いたら、もう夜」: あやと島カードの写真（夕暮れの車窓）"
   },
   {
    "src": "c2_01",
-   "in": 60,
-   "out": 133,
+   "in": 15,
+   "out": 55,
    "row": 12,
    "note": "「ブカレストに着いたら、もう夜」: 宿に着いた直後の本人"
   },
@@ -532,27 +519,38 @@
   },
   {
    "src": "c2_03",
-   "in": 60,
-   "out": 113,
+   "in": 15,
+   "out": 68,
    "row": 13,
    "note": "「なんか微妙な味……」: 紅茶をすする本人"
   },
   {
    "src": "c2_03",
-   "in": 405,
-   "out": 466,
+   "in": 360,
+   "out": 421,
    "row": 14,
    "note": "「疲れすぎて、舌がバグってる」: 頭に手をやる本人"
   },
   {
-   "src": "c2_05",
+   "src": "c2_04",
    "in": 15,
-   "out": 85,
+   "out": 46,
    "row": 15,
    "note": "「明日から2週間、東欧のパリって呼ばれる」: 宿で話す本人（21時）"
   },
   {
-   "src": "c3_01",
+   "src": "c3_07",
+   "in": 30,
+   "out": 69,
+   "row": 15,
+   "zoom": {
+    "from": 1.0,
+    "to": 1.1
+   },
+   "note": "「ブカレストを歩くのが」: あやと島カードの写真（次の日の夕方のブカレストの川）"
+  },
+  {
+   "src": "c4_01",
    "in": 18,
    "out": 78,
    "row": 15,
@@ -738,8 +736,8 @@
     "frames": 74,
     "voice_frames": 66,
     "cuts": [
-     "1:18:00.3+1.37s",
-     "1:21:27.5+1.10s"
+     "cardRo1121a 0:01:01.0+1.27s",
+     "cardRo1121a 0:04:01.0+1.20s"
     ],
     "line": "ブルガリアからルーマニア行きのバス移動してみた！",
     "telop": null
@@ -751,7 +749,7 @@
     "voice_frames": 105,
     "cuts": [
      "27:46:40.0+2.60s",
-     "0:55:54.0+1.17s"
+     "cardRo1121a 0:00:01.0+1.17s"
     ],
     "line": "東欧を旅してて、今日はバス乗り場からルーマニアまで7時間の移動！",
     "telop": null,
@@ -771,8 +769,8 @@
     "frames": 98,
     "voice_frames": 90,
     "cuts": [
-     "1:16:07.0+1.80s",
-     "1:18:04.5+1.47s"
+     "A_cJ9CNM0G8 1:16:07.0+1.80s",
+     "A_cJ9CNM0G8 1:18:04.5+1.47s"
     ],
     "line": "乗るのは、ヨーロッパで一番安くて評判の悪いフリックスバス。",
     "telop": null
@@ -783,8 +781,8 @@
     "frames": 94,
     "voice_frames": 86,
     "cuts": [
-     "0:56:08.0+1.40s",
-     "0:57:44.5+1.73s"
+     "A_cJ9CNM0G8 0:56:08.0+1.67s",
+     "cardRo1121a 0:02:01.0+1.47s"
     ],
     "line": "長旅やから、遠足気分でスーパーにおやつを買いに行く！",
     "telop": null
@@ -795,8 +793,8 @@
     "frames": 93,
     "voice_frames": 85,
     "cuts": [
-     "1:00:46.0+1.53s",
-     "1:13:57.0+1.57s"
+     "A_cJ9CNM0G8 1:00:46.0+1.63s",
+     "cardRo1121a 0:03:01.0+1.47s"
     ],
     "line": "ブルガリアでハマった、小麦で作る甘酒のボザも購入！",
     "telop": null
@@ -807,7 +805,7 @@
     "frames": 73,
     "voice_frames": 65,
     "cuts": [
-     "1:01:05.0+2.43s"
+     "A_cJ9CNM0G8 1:01:05.0+2.43s"
     ],
     "line": "500mlで80円ぐらい、安っ！",
     "telop": null,
@@ -819,8 +817,8 @@
     "frames": 106,
     "voice_frames": 98,
     "cuts": [
-     "1:16:03.0+1.60s",
-     "1:17:16.5+1.93s"
+     "A_cJ9CNM0G8 1:16:03.0+1.60s",
+     "A_cJ9CNM0G8 1:17:16.5+1.93s"
     ],
     "line": "乗り場に戻って荷物を預けたら、ブルガリア最後のボザで乾杯！",
     "telop": null
@@ -831,8 +829,8 @@
     "frames": 100,
     "voice_frames": 92,
     "cuts": [
-     "1:17:37.9+1.37s",
-     "1:17:04.4+1.97s"
+     "A_cJ9CNM0G8 1:17:37.9+1.37s",
+     "A_cJ9CNM0G8 1:17:04.4+1.97s"
     ],
     "line": "うまっ！めっちゃ濃厚！",
     "telop": null,
@@ -845,8 +843,8 @@
     "frames": 79,
     "voice_frames": 71,
     "cuts": [
-     "1:20:28.0+1.33s",
-     "1:21:20.0+1.30s"
+     "A_cJ9CNM0G8 1:20:28.0+1.33s",
+     "A_cJ9CNM0G8 1:21:20.0+1.30s"
     ],
     "line": "乗り込んだら、定刻の2分前にもう出発！",
     "telop": null,
@@ -867,8 +865,8 @@
     "frames": 75,
     "voice_frames": 67,
     "cuts": [
-     "1:18:25.5+1.37s",
-     "1:21:37.5+1.13s"
+     "A_cJ9CNM0G8 1:18:25.5+1.37s",
+     "A_cJ9CNM0G8 1:21:37.5+1.13s"
     ],
     "line": "車内は思ってたより広いし、充電もできる！",
     "telop": null
@@ -879,8 +877,8 @@
     "frames": 119,
     "voice_frames": 111,
     "cuts": [
-     "1:45:33.0+2.00s",
-     "1:45:24.0+1.97s"
+     "A_cJ9CNM0G8 1:45:33.0+2.00s",
+     "A_cJ9CNM0G8 1:45:24.0+1.97s"
     ],
     "line": "全然揺れへんし、このフリックスバス当たりやな！",
     "telop": null,
@@ -901,8 +899,7 @@
     "frames": 87,
     "voice_frames": 79,
     "cuts": [
-     "1:21:44.5+1.30s",
-     "2:27:44.0+1.60s"
+     "A_cJ9CNM0G8 2:27:44.0+2.90s"
     ],
     "line": "でかい窓の外は景色がきれいで、羊まで出てきた！",
     "telop": null
@@ -913,7 +910,8 @@
     "frames": 73,
     "voice_frames": 65,
     "cuts": [
-     "ir-qwKKlr2k 0:00:16.0+2.43s"
+     "cardRo1121a 0:05:01.0+1.10s",
+     "ir-qwKKlr2k 0:00:16.0+1.33s"
     ],
     "line": "ルーマニアの首都ブカレストに着いたら、もう夜。",
     "telop": null
@@ -956,7 +954,8 @@
     "frames": 130,
     "voice_frames": 107,
     "cuts": [
-     "ir-qwKKlr2k 0:15:21.5+2.33s",
+     "ir-qwKKlr2k 0:15:21.5+1.03s",
+     "cardRo1121a 0:06:01.0+1.30s",
      "27:46:40.6+2.00s"
     ],
     "line": "明日から2週間、東欧のパリって呼ばれるブカレストを歩くのが楽しみ！",
@@ -1018,7 +1017,7 @@
    "y": 1250,
    "w": 560,
    "rotate": -4,
-   "from": 1065,
+   "from": 1026,
    "to": 1111,
    "note": "配信の車窓では羊が小さくて見えない（F-014）。Wikimedia Commons の羊の写真（パブリックドメイン）"
   }
