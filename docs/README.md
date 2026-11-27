@@ -50,6 +50,7 @@
 | `docs/island-atlas.md` | 仕様 | 島の連なり（旅ごとの島）のかたち | 有効 |
 | `docs/island-ux.md` | 仕様 | 操作感。面の分けかたは `spec/model.md` と `spec/routes.md` が正 | 有効 |
 | `docs/island-money.md` | 仕様 | 視聴者さんに見せる額の式 | 有効 |
+| `docs/spec/monthly-review.md` | 仕様 | 月末配信の授賞式（期間・画面の形・コーナーと並び・中身の選びかた・読みやすさの線） | 有効 |
 | `docs/island-cards.md` | 仕様 | あやと島カード | 有効 |
 | `docs/card-import.md` | 仕様 | 写真のまとめ取り込み | 有効 |
 | `docs/island-here.md` | 仕様 | いま島にいる人を島に出す | 有効 |

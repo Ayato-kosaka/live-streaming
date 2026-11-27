@@ -116,7 +116,7 @@ run_admin_script  script=firestore_read  args={"collection":"islandDoneruHealth"
 「0件だ」と誤報する。実際に1回やった）。
 
 ```bash
-B="https://live-streaming-d3cac.web.app/island-api"; C="cb=$(date +%s)"
+B="https://ayato-arigato.com/island-api"; C="cb=$(date +%s)"
 curl -s "$B/cards?$C" | python3 -c 'import sys,json
 for c in json.load(sys.stdin)["cards"]: print(c["day"], c["photoId"], c["channelId"], c["streamEventId"])'
 curl -s "$B/streamevents?day=2026-09-11&$C"
