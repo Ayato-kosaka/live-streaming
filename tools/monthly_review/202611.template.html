@@ -147,6 +147,9 @@
         flex-direction: column;
         align-items: center;
         transition: opacity 0.3s ease;
+        /* 紙吹雪（z-index: 0）より前。札の地は不透明なので、紙吹雪は札のうしろ＝夜空にだけ降る。
+           上に降らせると、グランプリの引用や1位の名前に重なって読めなくなる（2026-11 の縮めた絵で見つけた） */
+        z-index: 1;
       }
       #stage.fading { opacity: 0; }
 
@@ -570,7 +573,7 @@
       #hint.gone { opacity: 0; }
 
       /* ============ 紙吹雪 ============ */
-      #confetti-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 30; }
+      #confetti-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
       .confetti { position: absolute; top: -40px; width: 14px; height: 22px; border-radius: 4px; opacity: 0.95; animation: fall linear forwards; }
       @keyframes fall {
         0% { transform: translateY(-60px) rotate(0deg); }
