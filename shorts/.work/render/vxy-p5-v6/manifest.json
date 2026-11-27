@@ -2,7 +2,7 @@
  "format": "shorts-ingest/1",
  "key": "render__vxy-p5-v6",
  "mode": "render",
- "dest": "render/vxy-p5-v6/inbox",
+ "dest": "render/vxy-p5-v6",
  "video": null,
  "channel": null,
  "request": "shorts/render/vxy-p5-v6.json",
@@ -11,24 +11,24 @@
   "render": "ok"
  },
  "counts": {
-  "files": 1
+  "files": 2
  },
  "bytes": {
-  "plain": 8048,
-  "tar_gz": 3362,
-  "encrypted": 3376
+  "plain": 36707,
+  "tar_gz": 9477,
+  "encrypted": 9488
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 3376,
-   "sha256": "71fb7477d691d4cf388fef15a7c7fd1edcaa66343ef3ac1849acdb2009e80662"
+   "bytes": 9488,
+   "sha256": "996f2f84795424e0759867999523e9729f86c16a83c0fa68639870bfcd2e245a"
   }
  ],
- "hmac_sha256": "8e2a18bf20bf2d9f4126e124f0375436cd5e2fff67655790c15d44422cf73863",
+ "hmac_sha256": "ea038f6f24ef5694a65b64ebe6ecee8c3a1f06dc1fb788d733c056d369078d8b",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
  "run": null,
- "created_at": "2026-11-27T00:14:46+00:00",
+ "created_at": "2026-11-27T00:25:41+00:00",
  "nonce": "dacfdedf001ae770bf1a1d91"
 }
