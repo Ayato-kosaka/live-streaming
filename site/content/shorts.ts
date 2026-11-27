@@ -168,6 +168,7 @@ export const SHORTS: Record<string, Short[]> = {
     { id: "wFJRlaGjMPw", date: "2026-11-24", title: "🇧🇬ブルガリアのクリスマスマーケット、初日に行ったら想像を超えてきた！" },
     { id: "7NKut2IFOeE", date: "2026-11-25", title: "🇧🇬ブルガリアで温泉を飲んでみたら、激まずすぎた！" },
     { id: "L4Znk-Cb9rY", date: "2026-11-25", title: "無帰国2年の海外ライバーが、世界一わかりやすい観光ガイドサイトを作ってみた！" },
+    { id: "_hclwFDTACQ", date: "2026-11-26", title: "🇧🇬ブルガリアの名物ドリンク、ボザを飲んでみた！" },
   ],
 };
 
