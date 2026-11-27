@@ -287,6 +287,18 @@ JSエラー0・飾りが字にかぶっていないことまで測ってから�
 
 ### 8-1. 道具
 
+**2026-11 から、中身と画面を分けて `tools/monthly_review/` で書き出す。** 手で HTML に貼らない。
+
+```bash
+python3 tools/monthly_review/kinkin_from_months.py 2026-11   # months.ts → 出席・皆勤の連続・オープニングの数
+node tools/monthly_review/build_202611.mjs                   # content / kinkin / tips の JSON → public/202611_monthly_review.html
+node tools/monthly_review/check.mjs                          # 8-0 の線を全面・最後のステップで測る（1行の高さ・行数・切れ・字・JSエラー・Enter/Backspace・ctrl 5タップ）
+```
+
+- 中身は `<月>.content.json`（人が選ぶもの）、投げ銭は `<月>.tips.json`（`monthly_tips_run` のログの JSON）
+- **出席とオープニングの数は `months.ts` から。** 手元の `chat.txt` で数えると、取り込みでチャットが空の枠のぶん少なく出る（2026-11 は3本）
+- 次の月は `202611.template.html` と `build_202611.mjs` を写して月の名前を替える
+
 - Playwright(`playwright-core` + `executablePath: '/opt/pw-browsers/chromium-*/chrome-linux/chrome'`, `args: ['--no-sandbox']`)+ `python3 -m http.server`。
 - **`window.__jump(面, 99)` で、その面を最後まで出した状態にできる**（`gotoScene` が `total` で丸める）。
   `window.__sceneCount` が面の数。**step 0 で撮ると何も出ていない空の面が写る。**
