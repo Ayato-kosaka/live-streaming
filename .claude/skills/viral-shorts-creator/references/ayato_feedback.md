@@ -1660,4 +1660,6 @@ issue を立てる。帳面はどの枝にあっても数える（作業枝に�
 - https://github.com/Ayato-kosaka/live-streaming/issues/1446#issuecomment-7212388052（バス移動の回: 12/1 に予約した rom-p5-v7 を、フックを直した rom-p5-v8c に「かえて」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1450#issuecomment-7212415146（国民の館の回: vxy-p5-v6 を「12/2」に出す。時刻の指定は無いので 2026/12/2 21:30 JST）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1451（本屋の回: コメント 7212523061 の「直したら12/3で出して」＝ F-094・F-104〜F-106 を直した版を、もう一度見せずに 2026/12/3 21:30 JST に出す。指摘は上の各項目に置いた）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1446#issuecomment-7216411131（バス移動の回: 12/1 に予約した rom-p5-v8c を、行の言葉と関係の無い画を替えた rom-p5-v9 に「かえて」）
+- https://github.com/Ayato-kosaka/live-streaming/issues/1450#issuecomment-7216431774（国民の館の回: 12/2 に予約した vxy-p5-v6 を、行の言葉と関係の無い画を替えた vxy-p5-v7 に「かえて」）
 - https://github.com/Ayato-kosaka/live-streaming/issues/1448#issuecomment-7191714724（聖ソフィア教会の回: いまの版（ago-a-v5）を「2026/11/29」に出す。時刻の指定は無いので 21:30 JST）
