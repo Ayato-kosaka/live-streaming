@@ -5,63 +5,37 @@
  "dest": "A_cJ9CNM0G8/clips",
  "video": "A_cJ9CNM0G8",
  "channel": null,
- "request": "shorts/requests/seven-clips-A_cJ9CNM0G8-p5b-20261126.json",
- "status": "ok",
+ "request": "shorts/requests/seven-clips-A_cJ9CNM0G8-p5v8-20261127.json",
+ "status": "failed",
  "stages": {
-  "download": "ok",
-  "meta": "ok",
-  "clips": "ok",
-  "sheets": "ok"
+  "download": "failed"
  },
  "counts": {
-  "sheets": 4,
+  "sheets": 0,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
-  "clips": 4,
-  "clips_ok": 4,
-  "clip_seconds": 135.0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
   "channel_entries": 0,
-  "files": 16
+  "files": 2
  },
  "bytes": {
-  "plain": 73390890,
-  "tar_gz": 73296283,
-  "encrypted": 73296288
+  "plain": 1550,
+  "tar_gz": 1159,
+  "encrypted": 1168
  },
  "encrypted_files": [
   {
-   "name": "payload.enc.000",
-   "bytes": 47185920,
-   "sha256": "2f48c788f32ab78650d4742ae911f953664ceb16552af56ac7df90ea867418ad"
-  },
-  {
-   "name": "payload.enc.001",
-   "bytes": 26110368,
-   "sha256": "e78c6b84dfefc82fe90f46b0c43eb3a032d6bd5a0567888e12453c9907338fff"
+   "name": "payload.enc",
+   "bytes": 1168,
+   "sha256": "d864ef5bbad6bdaf51b49a0cadddba398c3cad54694e9716dc5a9d7436e86927"
   }
  ],
- "hmac_sha256": "b059348cc2a01d32e08b7c01842d196146b4169fc8df8d0f4cef2ef78b85b0c6",
+ "hmac_sha256": "860a34a3ea3a1b05f8041edbb1c3d556587fb65f5e54c851ef63320b72f94ce3",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45897280707",
- "created_at": "2026-11-26T21:57:16+00:00",
- "sheets": {
-  "key_file": "sheets.key.enc",
-  "encrypted_files": [
-   {
-    "name": "sheets.enc",
-    "bytes": 989456,
-    "sha256": "3031aad4b6c066aaeb2dd8426a8268995f1907bcb20b74ae4a9a74b7e3a9e7d2"
-   }
-  ],
-  "hmac_sha256": "26b05de30fc28a4c64d74525a9395fc9185ddaa75f61b101b045627e0312a6c6",
-  "files": 8,
-  "sheets": 4,
-  "bytes": {
-   "plain": 1020989,
-   "tar_gz": 989455,
-   "encrypted": 989456
-  }
- }
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45927790562",
+ "created_at": "2026-11-27T03:40:11+00:00"
 }
