@@ -5,58 +5,37 @@
  "dest": "ir-qwKKlr2k/clips",
  "video": "ir-qwKKlr2k",
  "channel": null,
- "request": "shorts/requests/seven-clips-ir-qwKKlr2k-p5b-20261126.json",
- "status": "ok",
+ "request": "shorts/requests/seven-clips-ir-qwKKlr2k-p5v8-20261127.json",
+ "status": "failed",
  "stages": {
-  "download": "ok",
-  "meta": "ok",
-  "clips": "ok",
-  "sheets": "ok"
+  "download": "failed"
  },
  "counts": {
-  "sheets": 4,
+  "sheets": 0,
   "caption_segments": 0,
   "transcript_segments": 0,
   "cuts": 0,
-  "clips": 3,
-  "clips_ok": 3,
-  "clip_seconds": 145.0,
+  "clips": 0,
+  "clips_ok": 0,
+  "clip_seconds": 0,
   "channel_entries": 0,
-  "files": 15
+  "files": 2
  },
  "bytes": {
-  "plain": 42431717,
-  "tar_gz": 42311478,
-  "encrypted": 42311488
+  "plain": 1349,
+  "tar_gz": 1153,
+  "encrypted": 1168
  },
  "encrypted_files": [
   {
    "name": "payload.enc",
-   "bytes": 42311488,
-   "sha256": "fc5d7a5695d6ebb336f85cbeda7ffb42ac9072f4edb15e57630292e82213c29a"
+   "bytes": 1168,
+   "sha256": "0c07947022b6136eefccd2a79de677f0d8454c27437e8f86cea3919282ff70d0"
   }
  ],
- "hmac_sha256": "587b8543f86a88c24b7c1f88fcc018b042c15b88c6807c6d8ee2e2b8dc005d9d",
+ "hmac_sha256": "53a8bec09fd7920ccd9765505a5cd55d5f2755aedb7fb325ab435f1bad7a0092",
  "pubkey_sha256": "d75569f119d2376d844ef848dbae4db5c7486a0d562ef8ce0ef28ae7a7e6e915",
  "cipher": "AES-256-CBC (openssl enc -K/-iv) + HMAC-SHA256 over ciphertext; keys (32+32+16 bytes) wrapped with RSA-OAEP(SHA-256, MGF1-SHA-256) in key.enc",
- "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45897280707",
- "created_at": "2026-11-26T21:57:03+00:00",
- "sheets": {
-  "key_file": "sheets.key.enc",
-  "encrypted_files": [
-   {
-    "name": "sheets.enc",
-    "bytes": 811616,
-    "sha256": "6d7919d4a1736e7d3e4255b50207e1a1857d719f903cfe2f4cb99408cefca87e"
-   }
-  ],
-  "hmac_sha256": "56acc5b3ea0ff60af360340097fbfa913e86ce16ee09d8ffedda514c64b89b5d",
-  "files": 8,
-  "sheets": 4,
-  "bytes": {
-   "plain": 847587,
-   "tar_gz": 811612,
-   "encrypted": 811616
-  }
- }
+ "run": "https://github.com/Ayato-kosaka/live-streaming/actions/runs/45927790562",
+ "created_at": "2026-11-27T03:42:25+00:00"
 }
