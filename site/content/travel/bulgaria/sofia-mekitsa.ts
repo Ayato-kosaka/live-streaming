@@ -200,11 +200,12 @@ export const ARTICLE: GuideArticle = /* BEGIN GUIDE */
   {
    "youtube": "mkKhv8t3bLM",
    "tiktok": "https://www.tiktok.com/@ayato_arigato/video/7712426090442116360",
+   "instagram": "https://www.instagram.com/ayato.arigato/reel/DgPry-th6Tr/",
    "at": "2026-11-27T21:30:00+09:00"
   }
  ],
  "published": "2026-11-26",
- "updated": "2026-11-26",
- "hash": "4675cb7cb3163eb5"
+ "updated": "2026-11-28",
+ "hash": "1b1bcdb3ba1e2905"
 }
 /* END GUIDE */;

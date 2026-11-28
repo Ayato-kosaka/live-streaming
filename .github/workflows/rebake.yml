@@ -299,6 +299,13 @@ concurrency:
 jobs:
   rebake:
     runs-on: ubuntu-24.04  # Playwright 1.56 は ubuntu-26.04 に Chromium を入れられない（2026-11-13 から og.png の撮り直しで毎晩落ちていた）
+    # **job ぜんたいの上限。** 無いと、どこか1つが返らない晩に GitHub の既定の
+    # 6時間まで待ち、そのあいだ同じ `concurrency` のうしろの焼き直しがぜんぶ止まる。
+    # 2026-11-28 は「押しても見られない配信」が45分返らず、取り消すまで
+    # 揚げパンのショートが記事に焼けなかった（#1464）。
+    # ふだんは 18〜31分（2026-11-21〜28 の29回。155分の4回は、ぜんぶその step の待ち）。
+    # その倍
+    timeout-minutes: 60
     permissions:
       # 焼き直した site/content/*.ts を master に押し戻す
       contents: write
@@ -662,18 +669,43 @@ jobs:
       # 2（測れなかった）は赤にしない。**「0本でした」とも言わない。**
       # どちらの JSON も1バイトも書き換えずに、要約へ「測れませんでした」と残す。
       # ------------------------------------------------------------------
+      #
+      # ## なぜ上限を3重にしたか（#1464）
+      #
+      # ふだんは **0.4〜1.8分**（2026-11-21〜28 の29回）。ところが締め出しが解けない晩は、
+      # 全員で休む秒数を倍にしながら1本8回まで当て直すので、**155分**（4晩）・
+      # **45分で取り消し**（11-28 に2晩）まで延びた。上限が無いので、うしろの焼き直しが
+      # ぜんぶ待たされた。
+      #   1. `build_dead_streams.py` の締め切り（6分）。過ぎたら当てに行かず「測れませんでした」（2）
+      #   2. シェルの `timeout 8m`。1 が効かなかった晩（124 / 137）
+      #   3. `timeout-minutes: 10`。2 も効かなかった晩（`steps.dead.outcome` が failure）
+      # どれで切れても**焼き直しへは進む**（`continue-on-error`）。2 と 3 は
+      # 見張りとして知らせ、配り終わったうしろの step で赤くする（`DEAD_SLOW`）
       - name: 押しても見られない配信が増えていないか
         id: dead
         if: ${{ !cancelled() }}
         continue-on-error: true
+        timeout-minutes: 10
         run: |
           set -uo pipefail
           # **落ちた理由を、あとから読める場所に残す。** ここは
           # `continue-on-error` なので、赤くなるのは deploy のうしろの step。
           # そこまでログが100本流れたあとでは、この step の中身に戻れない
-          python3 python/build_dead_streams.py > /tmp/dead.log 2>&1 && code=0 || code=$?
+          timeout --kill-after=30s 8m python3 python/build_dead_streams.py > /tmp/dead.log 2>&1 && code=0 || code=$?
           cat /tmp/dead.log
-          if [ "$code" = "1" ]; then
+          if [ "$code" = "124" ] || [ "$code" = "137" ]; then
+            # **測りの締め切り（6分）が効かなかった。** 取り置きも覚えも、書く前に
+            # 切られているか、書き終えているかのどちらか（書くのは最後の1回だけ）
+            echo "DEAD_SLOW=1" >> "$GITHUB_ENV"
+            {
+              echo ""
+              echo "### 押しても見られない配信を、8分で切りました"
+              echo ""
+              echo "測りの締め切り（6分）が効かずに8分たったので、シェルの \`timeout\` で止めました（終了コード ${code}）。"
+              echo "**島の数字のほうは、このあと焼いて配ります。** 「増えた／増えていない」は今夜は言えません。"
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::押しても見られない配信が8分で返りませんでした。run の最後で赤くします"
+          elif [ "$code" = "1" ]; then
             echo "DEAD_BAD=1" >> "$GITHUB_ENV"
             echo "::warning::知らなかった配信が見られなくなりました。run の最後で赤くします"
           elif [ "$code" = "2" ]; then
@@ -2478,6 +2510,27 @@ jobs:
             echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
           } >> "$GITHUB_STEP_SUMMARY"
           echo "::error::知らなかった配信が見られなくなりました。上の「押しても見られない配信」を見てください"
+          exit 1
+
+      # **「押しても見られない配信」が上限で切れた晩を、ここで赤にする**（#1464）。
+      # 切れても焼き直しは通って配り終わっている。赤くするのは、**測りの締め切りが
+      # 効かなかった**＝`python/build_dead_streams.py` の作りのほうを見る相手がいるから。
+      # `timeout-minutes` で切られたときはシェルごと止まって `DEAD_SLOW` を書けないので、
+      # `steps.dead.outcome`（`continue-on-error` でも failure が残る）でも拾う
+      - name: 押しても見られない配信が上限で切れたか
+        if: ${{ !cancelled() && (env.DEAD_SLOW == '1' || steps.dead.outcome == 'failure') }}
+        run: |
+          {
+            echo ""
+            echo "### 押しても見られない配信が、上限で切れました"
+            echo ""
+            echo "測りの締め切り（6分）が効かず、シェルの \`timeout 8m\` か step の \`timeout-minutes: 10\` で止めました。"
+            echo "ふだんは2分かかりません。締め出しの休み（\`_cool_down\`）か、口の上限（oembed 20秒・2段目 30秒）が"
+            echo "締め切りを見ずに待っていないかを \`python/dead_stream_watch.py\` で見てください。"
+            echo ""
+            echo "**この赤は「落ちた」ではありません。** 焼けたものは master に入れて、配るところまで済んでいます。"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::押しても見られない配信が上限で切れました。上の「押しても見られない配信が上限で切れました」を見てください"
           exit 1
 
       - name: 凍っていたら赤くする

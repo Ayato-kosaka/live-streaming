@@ -62,7 +62,8 @@ SHORTS_JSON = ROOT / "python/data/shorts.json"
 SHORT_URL = {
     "youtube": r"[A-Za-z0-9_-]{11}",
     "tiktok": r"https://www\.tiktok\.com/@[\w.-]+/video/\d+",
-    "instagram": r"https://www\.instagram\.com/(?:reel|p)/[\w-]+/?",
+    # アカウント名の入った形（`/ayato.arigato/reel/…`）も通す。予約の ID から割り出したリールの og:url がこの形（2026-11-28）
+    "instagram": r"https://www\.instagram\.com/(?:[\w.]+/)?(?:reel|p)/[\w-]+/?",
 }
 
 # 抜いて対照を当てる（`guide_article_selftest.py`）。本物の動きでは空

@@ -527,6 +527,19 @@ def _cannot_measure(why: str) -> int:
     return 2
 
 
+# 測る側ぜんたいの締め切り（秒）。**ふだんは 0.4〜1.8分**（2026-11-21〜28 の
+# 焼き直し29回の実測）なので、その3倍ほど。締め出しが解けない晩はここで切り上げる。
+# `rebake.yml` の step は、この上にシェルの `timeout` と `timeout-minutes` を重ねている
+BUDGET_SEC = 360.0
+
+
+def _late_note(budget: float) -> str:
+    """締め切りで切り上げたなら、そう書き足す。**時間切れと届かなかったを混ぜない**"""
+    if not watch.timed_out():
+        return ""
+    return f"。**{budget / 60:g}分の締め切りで切り上げました**（YouTube の締め出しが解けなかった）"
+
+
 def _arg(argv: list[str], flag: str) -> str | None:
     """`--flag あたい` を読む。あとに何も無ければ None。"""
     if flag not in argv:
@@ -548,6 +561,19 @@ def main() -> int:
             return 2
         out = Path(got) / OUT.name
         seen_path = Path(got) / SEEN.name
+
+    # **測る側ぜんたいの締め切り**（#1464。`dead_stream_watch.set_deadline` の注）。
+    # ふだんは対照から2段目まで2分かからない。締め出しが解けない晩に何時間も
+    # 待たずに、「測れませんでした」で切り上げて焼き直しへ渡す
+    budget = BUDGET_SEC
+    if "--budget-sec" in argv:
+        got = _arg(argv, "--budget-sec")
+        try:
+            budget = float(got or "")
+        except ValueError:
+            print("--budget-sec のあとに秒数を渡してください", file=sys.stderr)
+            return 2
+    watch.set_deadline(budget)
 
     if not deep:
         # **1段目だけでは `NO_REC` が見えない。** そのまま書くと、録画の無い
@@ -613,7 +639,8 @@ def main() -> int:
     print()
     if not ok:
         return _cannot_measure(
-            "対照が外れました（届いていないのか、見つからなかったのかが分けられない）")
+            "対照が外れました（届いていないのか、見つからなかったのかが分けられない）"
+            + _late_note(budget))
 
     known_bad = set(before) | set(watched_was)
     today = date.today().isoformat()
@@ -679,7 +706,8 @@ def main() -> int:
     if not new and blind2:
         return _cannot_measure(
             f"{len(blind2)}本が測れませんでした。"
-            "増えていないのか、届かなかっただけなのかが分けられません")
+            "増えていないのか、届かなかっただけなのかが分けられません"
+            + _late_note(budget))
 
     if dry:
         print("\n※ 書いていません（--dry-run / --no-deep）")
