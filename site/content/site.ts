@@ -114,8 +114,8 @@ export const LINKS: LinkItem[] = [
 
 /** サイトに出す数字の初期値。/island-api/state の stats で上書きされる。 */
 export const STATS_FALLBACK = {
-  streams: 857,
-  streamDays: 700,
+  streams: 858,
+  streamDays: 701,
   comments: 169870,
   people: 2475,
   /* **歩いた国の数はここに置かない。**「焼き込みから数える」まで来ていたが、
@@ -138,5 +138,5 @@ export const STATS_FALLBACK = {
      料理が増えるたびに同じことが起きるので、出どころを1つにする。 */
   recipes: RECIPES.length,
   since: "2024-10-28",
-  updatedAt: "2026-11-27",
+  updatedAt: "2026-11-28",
 };

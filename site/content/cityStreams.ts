@@ -3759,6 +3759,11 @@ export const CITY_STREAMS: Record<string, Record<string, CityStream[]>> =
         "videoId": "oMPiUcccEJs",
         "title": "🇷🇴ルーマニアでクッキング配信の準備しよか",
         "date": "2026-11-26"
+      },
+      {
+        "videoId": "9znUNPkikBQ",
+        "title": "🇷🇴ルーマニアでクスクスつくります",
+        "date": "2026-11-27"
       }
     ]
   }
