@@ -116,8 +116,8 @@ export const LINKS: LinkItem[] = [
 export const STATS_FALLBACK = {
   streams: 858,
   streamDays: 701,
-  comments: 169870,
-  people: 2475,
+  comments: 170144,
+  people: 2478,
   /* **歩いた国の数はここに置かない。**「焼き込みから数える」まで来ていたが、
      焼き込みでも足りなかった。この数は**日付で変わる**（旅程を今日で切って
      数える）のに、静的書き出しは焼いた日の数を固める。国境を越えた日の 00:00 から
