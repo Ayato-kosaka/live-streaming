@@ -189,6 +189,8 @@ code, out = bake_with({**BASE, "shorts": [{"youtube": "zzzzzzzzzzz", "at": "2020
 ok("公開の時刻から3日過ぎても名簿に無い", (code, "3日過ぎても" in out), (1, True))
 code, out = bake_with({**BASE, "shorts": [{"youtube": KNOWN_SHORT, "instagram": "https://example.com/reel/x"}]})
 ok("形の違う Instagram の URL", (code, "形が違う" in out), (1, True))
+code, out = bake_with({**BASE, "shorts": [{"youtube": KNOWN_SHORT, "instagram": "https://www.instagram.com/ayato.arigato/reel/DgPry-th6Tr/"}]})
+ok("アカウント名の入った Instagram のリールの URL", code, 0)
 
 # 写真の置き場: 記事の鍵（`<国>/<街>/<話>`）で取っても、面が読む街の置き場に落ちる（2026-11-23 ティラナ）。
 # 外に出ないよう、Commons から取る口を小さな絵に差し替え、置き場は一時の root に向ける

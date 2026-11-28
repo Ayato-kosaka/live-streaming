@@ -376,6 +376,56 @@ def _wait_cool() -> None:
         time.sleep(min(left, 5.0))
 
 
+def _cool_left() -> float:
+    """全員で休む刻限まで、あと何秒か。休んでいなければ 0。"""
+    with _cool_lock:
+        return max(0.0, _cool_until - time.monotonic())
+
+
+# **測る側ぜんたいの締め切り**（`time.monotonic()` の刻限。0 なら締め切り無し）。
+#
+# 1本ずつの口には上限がある（oembed 20秒・2段目 30秒）。**上限が無かったのは
+# 全体のほう**だった。締め出し（429 / UNPLAYABLE）を受けるたびに全員で休む秒数を
+# 倍にしていくので、締め出しが解けない晩は**1本あたり 8回 × 最大10分**を
+# 2本ずつ回すことになり、2026-11-21〜26 の4晩は 155分、11-28 は 45分たっても
+# 返らず、うしろの焼き直し（`build_shorts` ほか）がぜんぶ待たされた（#1464）。
+#
+# **締め切りを過ぎたら、当てに行かずに `BLIND`（測れなかった）を返す。**
+# `OK` にも `GONE` にも畳まないので、取り置きも覚えも書き換わらず、
+# 呼ぶ側は「測れませんでした」（終了コード 2）で終わる。
+_deadline = 0.0
+# 締め切りで諦めた1本があったか。**休み明けを先読みして諦めた晩は、
+# 時計の上ではまだ締め切り前**なので、刻限だけ見ても書き分けられない
+_cut = False
+
+
+def set_deadline(seconds: float) -> None:
+    """今から `seconds` 秒で締め切る。0 以下なら締め切りを外す。"""
+    global _deadline, _cut
+    _deadline = time.monotonic() + seconds if seconds > 0 else 0.0
+    _cut = False
+
+
+def _late(wait: float = 0.0) -> bool:
+    """いま（または `wait` 秒待ったあと）締め切りを過ぎているか。"""
+    return bool(_deadline) and time.monotonic() + wait >= _deadline
+
+
+def timed_out() -> bool:
+    """締め切りで諦めた1本があったか。要約に「時間切れ」と書き分けるため。"""
+    return _cut or _late()
+
+
+LATE = "締め切りを過ぎたので当てていない"
+
+
+def _give_up(vid: str, last: str) -> Probe:
+    """締め切りで諦める。**`OK` にも `GONE` にも畳まない。**"""
+    global _cut
+    _cut = True
+    return Probe(vid, BLIND, f"{last} / {LATE}" if last else LATE)
+
+
 OEMBED = "https://www.youtube.com/oembed?url=https%3A//www.youtube.com/watch%3Fv%3D{}&format=json"
 
 
@@ -460,6 +510,8 @@ def probe_oembed(vid: str, timeout: float = 20.0, tries: int = 3) -> Probe:
     """
     last = ""
     for _ in range(tries):
+        if _late():
+            return _give_up(vid, last)
         try:
             req = urllib.request.Request(OEMBED.format(vid), headers={"User-Agent": "island-watch"})
             with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -610,6 +662,10 @@ def probe_play(vid: str, timeout: float = 30.0, tries: int = PLAY_TRIES) -> Prob
     """
     last = ""
     for i in range(tries):
+        # **休み明けが締め切りより後なら、休まずに諦める。** 休んでから気づくと、
+        # 最大10分ぶん締め切りを踏み越える
+        if _late(_cool_left() + PLAY_GAP * 2):
+            return _give_up(vid, last)
         _wait_cool()  # 箱ごと締め出されているあいだは、誰も当てに行かない
         time.sleep(PLAY_GAP * random.random() * 2)  # 同時に出発したぶんをばらす
         try:

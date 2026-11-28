@@ -16,7 +16,7 @@
 ## なぜ「落ちるまで壊す」だけでは対照にならないか
 
 `island-misses.md` #128 の決めごと1。判定の足を1本ずつ抜く。
-ここでいう足は7本ある（`BREAK` は要らない。下の表のとおりに1行ずつ当てれば落ちる）。
+ここでいう足は8本ある（`BREAK` は要らない。下の表のとおりに1行ずつ当てれば落ちる）。
 
 | 足 | 抜くと何が起きるか |
 | --- | --- |
@@ -27,6 +27,7 @@
 | 覚えるほうの種類（`WATCHED`） | 403 を落とすと、**毎晩17本ぶら下がって毎晩赤くなる。**「いつもの赤」に化けて、本当に1本死んだ晩に見分けがつかない |
 | 今夜深く見るぶん（`pick_deep`） | 「もう見られないと知っているぶん」を外すと、**録画の無い id が1段目の 200 だけで「もどりました」に化けて**取り置きから外れ、翌晩また焼き込みに入る |
 | 深く見た日（`merge_deep`） | 見られないものまで覚えると、次の晩に飛ばされて上と同じことが起きる |
+| 締め切り（`_late`） | 見ないと、締め出しが解けない晩に2段目が何時間も返らず、**うしろの焼き直しがぜんぶ待たされる**（#1464。155分が4晩） |
 
 **両側から当てる。** 「拾えること」だけでなく「拾ってはいけないものを
 拾わないこと」も見る。焼き込みには 11字の別物（料理の合言葉 `french-toast`
@@ -136,8 +137,9 @@ def _shape(v: str) -> bool:
 # | `novideo` | `video:` だけ見ない | 分母（`nordic.ts` が消える）・面の表 |
 # | `nogate` | 形の確かめ（`looks_like_video`）を外す | 配信ではない11字を拾わない |
 # | `nopages` | 面の表から、新しく見えた焼き込みを落とす | 面の表 |
+# | `nodeadline` | 測る側ぜんたいの締め切り（`_late`）を見ない＝2026-11-28 まで本番がこれ（#1464） | 締め切り |
 BREAK = os.environ.get("BREAK", "")
-LEGS = ("narrow", "novideo", "nogate", "nopages")
+LEGS = ("narrow", "novideo", "nogate", "nopages", "nodeadline")
 
 
 def _apply_break() -> None:
@@ -152,6 +154,8 @@ def _apply_break() -> None:
         for name in ("chapterStreams.ts", "shorts.ts", "streamPeaks.ts",
                      "legendDays.ts", "countryStats.ts", "nordic.ts"):
             watch.PAGES.pop(name, None)
+    elif BREAK == "nodeadline":
+        watch._late = lambda wait=0.0: False
 
 
 def _is_day(x: str) -> bool:
@@ -619,6 +623,73 @@ def main() -> int:
         r = subprocess.run([sys.executable, str(BUILD), "--data-dir"],
                            capture_output=True, text=True, env=env)
         check("--data-dir のあとが空のときの終了コード", r.returncode, 2)
+
+    # --- 16. 締め切り（#1464）。**ネットに出ない道だけ** -----------------------
+    # 締め出しが解けない晩に、2段目が何時間も返らなかった（155分が4晩・45分で
+    # 取り消しが2晩）。締め切りを過ぎたら**当てに行かずに** `BLIND` を返すこと、
+    # 休み明けが締め切りより後なら**休まずに**諦めることを見る。
+    # 当てに行ってしまう作り（`BREAK=nodeadline`）のときに外へ出ないよう、
+    # 別の糸で回して3秒で見切る（糸は daemon なので、見切ったあとは捨てる）
+    import threading
+    import time
+
+    def within(fn, secs: float = 3.0):
+        box: list = []
+        th = threading.Thread(target=lambda: box.append(fn()), daemon=True)
+        th.start()
+        th.join(secs)
+        return box[0] if box else None
+
+    try:
+        watch.set_deadline(0.001)
+        time.sleep(0.01)
+        got = within(lambda: watch.probe_oembed("dQw4w9WgXcQ"))
+        check("締め切りを過ぎたら、1段目は当てに行かずに BLIND",
+              (got.kind, watch.LATE in got.why) if got else "返らなかった", (BLIND, True))
+        got = within(lambda: watch.probe_play("dQw4w9WgXcQ"))
+        check("締め切りを過ぎたら、2段目は当てに行かずに BLIND",
+              (got.kind, watch.LATE in got.why) if got else "返らなかった", (BLIND, True))
+        # 締め切りはまだ先（60秒）でも、**休み明け（10分後）がそれより後なら休まない**
+        watch.set_deadline(60)
+        with watch._cool_lock:
+            watch._cool_until = time.monotonic() + 600
+        got = within(lambda: watch.probe_play("dQw4w9WgXcQ"))
+        check("休み明けが締め切りより後なら、休まずに BLIND",
+              (got.kind, watch.LATE in got.why) if got else "返らなかった", (BLIND, True))
+        check("休み明けを先読みして諦めた晩も「時間切れ」と書き分ける", watch.timed_out(), True)
+        watch.set_deadline(60)
+        check("締め切り前は「時間切れ」と言わない", watch.timed_out(), False)
+        # 締め切りを外せば、休む刻限は休む刻限のまま（**締め切りの無い道を壊さない**）
+        watch.set_deadline(0)
+        check("締め切りを外したら、遅れていると言わない", watch._late(10_000), False)
+    finally:
+        watch.set_deadline(0)
+        with watch._cool_lock:
+            watch._cool_until = 0.0
+
+    # 通しで：締め切りを過ぎた晩は「測れませんでした」（2）で終わり、**時間切れと書き分け**、
+    # 取り置きも覚えも書き換えない。**口は1回も叩かない**（叩いたら 60秒で見切る）
+    with tempfile.TemporaryDirectory() as tmp2:
+        seed = Path(tmp2) / "種"
+        seed.mkdir()
+        (seed / "x.ts").write_text('export const x = [{ videoId: "dQw4w9WgXcQ" }];\n',
+                                   encoding="utf-8")
+        summary = Path(tmp2) / "summary.md"
+        env = dict(os.environ, GITHUB_STEP_SUMMARY=str(summary))
+        try:
+            r = subprocess.run([sys.executable, str(BUILD), "--data-dir", tmp2,
+                                "--dir", str(seed), "--budget-sec", "0.0001"],
+                               capture_output=True, text=True, env=env, timeout=60)
+            code = r.returncode
+        except subprocess.TimeoutExpired:
+            code = "60秒たっても返らなかった"
+        check("締め切りを過ぎた晩の終了コード（赤くしない・焼き直しを止めない）", code, 2)
+        text = summary.read_text(encoding="utf-8") if summary.exists() else ""
+        check("締め切りで切り上げた晩は、run の1枚目にそう書く", "締め切りで切り上げました" in text, True)
+        check("締め切りを過ぎた晩は、取り置きを書かない",
+              (Path(tmp2) / build.OUT.name).exists(), False)
+        check("締め切りを過ぎた晩は、覚えを書かない",
+              (Path(tmp2) / build.SEEN.name).exists(), False)
 
     print(f"対照 {len(ok) + len(ng)}件中 {len(ok)}件通った")
     for line in ng:
